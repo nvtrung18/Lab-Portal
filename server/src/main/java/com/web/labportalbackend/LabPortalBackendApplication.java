@@ -1,13 +1,13 @@
-package com.web.labportal;
+package com.web.labportalbackend;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class LabPortalApplication {
+public class LabPortalBackendApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(LabPortalApplication.class, args);
+        SpringApplication.run(LabPortalBackendApplication.class, args);
     }
 
 }
