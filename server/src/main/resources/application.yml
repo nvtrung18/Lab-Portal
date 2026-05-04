@@ -1,0 +1,74 @@
+# ========================================================
+#  Lab Portal Backend - Application Configuration
+#  Profile: default (development)
+# ========================================================
+
+spring:
+  application:
+    name: lab-portal-backend
+
+  # -------------------- DataSource --------------------
+  datasource:
+    url: jdbc:mysql://localhost:3306/lab_portal?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: root
+    password: YES
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      connection-timeout: 20000
+      idle-timeout: 300000
+      max-lifetime: 1200000
+      pool-name: LabPortalHikariPool
+
+  # -------------------- JPA / Hibernate --------------------
+  jpa:
+    database-platform: org.hibernate.dialect.MySQLDialect
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+        use_sql_comments: true
+        jdbc:
+          batch_size: 20
+          time_zone: UTC
+        order_inserts: true
+        order_updates: true
+
+  # -------------------- Jackson --------------------
+  jackson:
+    time-zone: UTC
+    default-property-inclusion: non_null
+    serialization:
+      write-dates-as-timestamps: false
+
+# -------------------- Server --------------------
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+  compression:
+    enabled: true
+    min-response-size: 1024
+
+# -------------------- Logging --------------------
+logging:
+  level:
+    root: INFO
+    com.web.labportalbackend: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+
+# -------------------- SpringDoc / Swagger --------------------
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+    operations-sorter: method
+    tags-sorter: alpha
+    display-request-duration: true
