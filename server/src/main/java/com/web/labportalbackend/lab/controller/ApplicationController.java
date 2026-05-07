@@ -1,0 +1,116 @@
+package com.web.labportalbackend.lab.controller;
+
+import com.web.labportalbackend.auth.service.ApplicationService;
+import com.web.labportalbackend.common.dto.ApiResponse;
+import com.web.labportalbackend.common.dto.ApplicationResponseDTO;
+import com.web.labportalbackend.common.dto.ApplyRequestDTO;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+/**
+ * Application (CV submission) management endpoints.
+ * Provides RESTful API for users to apply to laboratories and for admins to manage applications.
+ */
+@RestController
+@RequestMapping("/api/applications")
+@Tag(name = "Applications", description = "CV application management endpoints")
+@RequiredArgsConstructor
+public class ApplicationController {
+
+    private final ApplicationService applicationService;
+
+    /**
+     * Submit a new CV application to a laboratory.
+     *
+     * @param labId the ID of the target laboratory
+     * @param request the application request containing userId and cvUrl
+     * @return the created application response
+     */
+    @PostMapping("/labs/{labId}/apply")
+    @Operation(summary = "Apply to a laboratory", description = "Submit a CV application to a laboratory")
+    @SecurityRequirement(name = "Bearer Authentication")
+    public ResponseEntity<ApiResponse<ApplicationResponseDTO>> apply(
+            @PathVariable Long labId,
+            @Valid @RequestBody ApplyRequestDTO request) {
+        ApplicationResponseDTO application = applicationService.apply(labId, request.getUserId(), request.getCvUrl());
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(ApiResponse.success("Application submitted successfully", application));
+    }
+
+    /**
+     * Retrieve all applications with pagination.
+     *
+     * @param pageable pagination parameters
+     * @return paginated list of applications
+     */
+    @GetMapping
+    @Operation(summary = "Get all applications", description = "Retrieve all applications with pagination")
+    @SecurityRequirement(name = "Bearer Authentication")
+    public ResponseEntity<ApiResponse<Page<ApplicationResponseDTO>>> getApplications(
+            @PageableDefault(size = 20, page = 0, sort = "createdAt", direction = Sort.Direction.DESC)
+            Pageable pageable) {
+        Page<ApplicationResponseDTO> applications = applicationService.getApplications(pageable);
+        return ResponseEntity.ok(ApiResponse.success("Applications retrieved successfully", applications));
+    }
+
+    /**
+     * Retrieve a specific application by ID.
+     *
+     * @param applicationId the ID of the application
+     * @return the application details
+     */
+    @GetMapping("/{applicationId}")
+    @Operation(summary = "Get application by ID", description = "Retrieve a specific application")
+    @SecurityRequirement(name = "Bearer Authentication")
+    public ResponseEntity<ApiResponse<ApplicationResponseDTO>> getApplicationById(@PathVariable Long applicationId) {
+        ApplicationResponseDTO application = applicationService.getApplicationById(applicationId);
+        return ResponseEntity.ok(ApiResponse.success("Application retrieved successfully", application));
+    }
+
+    /**
+     * Retrieve all applications by a specific user.
+     *
+     * @param userId the ID of the user
+     * @param pageable pagination parameters
+     * @return paginated list of applications for the user
+     */
+    @GetMapping("/users/{userId}")
+    @Operation(summary = "Get applications by user", description = "Retrieve all applications for a specific user")
+    @SecurityRequirement(name = "Bearer Authentication")
+    public ResponseEntity<ApiResponse<Page<ApplicationResponseDTO>>> getApplicationsByUserId(
+            @PathVariable Long userId,
+            @PageableDefault(size = 20, page = 0, sort = "createdAt", direction = Sort.Direction.DESC)
+            Pageable pageable) {
+        Page<ApplicationResponseDTO> applications = applicationService.getApplicationsByUserId(userId, pageable);
+        return ResponseEntity.ok(ApiResponse.success("Applications retrieved successfully", applications));
+    }
+
+    /**
+     * Retrieve all applications for a specific laboratory.
+     *
+     * @param labId the ID of the laboratory
+     * @param pageable pagination parameters
+     * @return paginated list of applications for the laboratory
+     */
+    @GetMapping("/labs/{labId}")
+    @Operation(summary = "Get applications by lab", description = "Retrieve all applications for a specific laboratory")
+    @SecurityRequirement(name = "Bearer Authentication")
+    public ResponseEntity<ApiResponse<Page<ApplicationResponseDTO>>> getApplicationsByLabId(
+            @PathVariable Long labId,
+            @PageableDefault(size = 20, page = 0, sort = "createdAt", direction = Sort.Direction.DESC)
+            Pageable pageable) {
+        Page<ApplicationResponseDTO> applications = applicationService.getApplicationsByLabId(labId, pageable);
+        return ResponseEntity.ok(ApiResponse.success("Applications retrieved successfully", applications));
+    }
+}
