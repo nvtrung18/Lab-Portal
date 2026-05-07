@@ -1,9 +1,10 @@
 package com.web.labportalbackend.lab.controller;
 
 import com.web.labportalbackend.auth.service.ApplicationService;
-import com.web.labportalbackend.common.dto.ApiResponse;
 import com.web.labportalbackend.common.dto.ApplicationResponseDTO;
 import com.web.labportalbackend.common.dto.ApplyRequestDTO;
+import com.web.labportalbackend.common.dto.Response;
+import com.web.labportalbackend.common.dto.ReviewApplicationDTO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -39,13 +40,32 @@ public class ApplicationController {
     @PostMapping("/labs/{labId}/apply")
     @Operation(summary = "Apply to a laboratory", description = "Submit a CV application to a laboratory")
     @SecurityRequirement(name = "Bearer Authentication")
-    public ResponseEntity<ApiResponse<ApplicationResponseDTO>> apply(
+    public ResponseEntity<Response<ApplicationResponseDTO>> apply(
             @PathVariable Long labId,
             @Valid @RequestBody ApplyRequestDTO request) {
         ApplicationResponseDTO application = applicationService.apply(labId, request.getUserId(), request.getCvUrl());
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(ApiResponse.success("Application submitted successfully", application));
+                .body(Response.ok("Application submitted successfully", application));
+    }
+
+    /**
+     * Review an application (approve or reject).
+     *
+     * @param applicationId the ID of the application to review
+     * @param request the review request containing the new status
+     * @return the updated application response
+     */
+    @PutMapping("/{applicationId}/review")
+    @Operation(summary = "Review an application", description = "Approve or reject a CV application")
+    @SecurityRequirement(name = "Bearer Authentication")
+    public ResponseEntity<Response<ApplicationResponseDTO>> review(
+            @PathVariable Long applicationId,
+            @Valid @RequestBody ReviewApplicationDTO request) {
+        ApplicationResponseDTO application = applicationService.review(applicationId, request.getStatus());
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(Response.ok("Application reviewed successfully", application));
     }
 
     /**
@@ -57,11 +77,11 @@ public class ApplicationController {
     @GetMapping
     @Operation(summary = "Get all applications", description = "Retrieve all applications with pagination")
     @SecurityRequirement(name = "Bearer Authentication")
-    public ResponseEntity<ApiResponse<Page<ApplicationResponseDTO>>> getApplications(
+    public ResponseEntity<Response<Page<ApplicationResponseDTO>>> getApplications(
             @PageableDefault(size = 20, page = 0, sort = "createdAt", direction = Sort.Direction.DESC)
             Pageable pageable) {
         Page<ApplicationResponseDTO> applications = applicationService.getApplications(pageable);
-        return ResponseEntity.ok(ApiResponse.success("Applications retrieved successfully", applications));
+        return ResponseEntity.ok(Response.ok("Applications retrieved successfully", applications));
     }
 
     /**
@@ -73,9 +93,9 @@ public class ApplicationController {
     @GetMapping("/{applicationId}")
     @Operation(summary = "Get application by ID", description = "Retrieve a specific application")
     @SecurityRequirement(name = "Bearer Authentication")
-    public ResponseEntity<ApiResponse<ApplicationResponseDTO>> getApplicationById(@PathVariable Long applicationId) {
+    public ResponseEntity<Response<ApplicationResponseDTO>> getApplicationById(@PathVariable Long applicationId) {
         ApplicationResponseDTO application = applicationService.getApplicationById(applicationId);
-        return ResponseEntity.ok(ApiResponse.success("Application retrieved successfully", application));
+        return ResponseEntity.ok(Response.ok("Application retrieved successfully", application));
     }
 
     /**
@@ -88,12 +108,12 @@ public class ApplicationController {
     @GetMapping("/users/{userId}")
     @Operation(summary = "Get applications by user", description = "Retrieve all applications for a specific user")
     @SecurityRequirement(name = "Bearer Authentication")
-    public ResponseEntity<ApiResponse<Page<ApplicationResponseDTO>>> getApplicationsByUserId(
+    public ResponseEntity<Response<Page<ApplicationResponseDTO>>> getApplicationsByUserId(
             @PathVariable Long userId,
             @PageableDefault(size = 20, page = 0, sort = "createdAt", direction = Sort.Direction.DESC)
             Pageable pageable) {
         Page<ApplicationResponseDTO> applications = applicationService.getApplicationsByUserId(userId, pageable);
-        return ResponseEntity.ok(ApiResponse.success("Applications retrieved successfully", applications));
+        return ResponseEntity.ok(Response.ok("Applications retrieved successfully", applications));
     }
 
     /**
@@ -106,11 +126,11 @@ public class ApplicationController {
     @GetMapping("/labs/{labId}")
     @Operation(summary = "Get applications by lab", description = "Retrieve all applications for a specific laboratory")
     @SecurityRequirement(name = "Bearer Authentication")
-    public ResponseEntity<ApiResponse<Page<ApplicationResponseDTO>>> getApplicationsByLabId(
+    public ResponseEntity<Response<Page<ApplicationResponseDTO>>> getApplicationsByLabId(
             @PathVariable Long labId,
             @PageableDefault(size = 20, page = 0, sort = "createdAt", direction = Sort.Direction.DESC)
             Pageable pageable) {
         Page<ApplicationResponseDTO> applications = applicationService.getApplicationsByLabId(labId, pageable);
-        return ResponseEntity.ok(ApiResponse.success("Applications retrieved successfully", applications));
+        return ResponseEntity.ok(Response.ok("Applications retrieved successfully", applications));
     }
 }

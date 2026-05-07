@@ -1,6 +1,7 @@
 package com.web.labportalbackend.auth.service;
 
 import com.web.labportalbackend.common.dto.ApplicationResponseDTO;
+import com.web.labportalbackend.common.enums.ApplicationStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -18,9 +19,22 @@ public interface ApplicationService {
      * @param cvUrl the URL/path to the CV file
      * @return the created application DTO
      * @throws com.web.labportalbackend.common.exception.DuplicateApplicationException if user already applied to this lab
-     * @throws jakarta.persistence.EntityNotFoundException if lab or user not found
+     * @throws com.web.labportalbackend.common.exception.ResourceNotFoundException if lab or user not found
      */
     ApplicationResponseDTO apply(Long labId, Long userId, String cvUrl);
+
+    /**
+     * Review an application (approve or reject).
+     * If approved, creates a membership record for the user in the laboratory.
+     * Uses @Transactional to ensure atomicity of status update and membership creation.
+     *
+     * @param applicationId the ID of the application to review
+     * @param newStatus the new status (APPROVED or REJECTED)
+     * @return the updated application DTO
+     * @throws com.web.labportalbackend.common.exception.ResourceNotFoundException if application not found
+     * @throws com.web.labportalbackend.common.exception.ApplicationAlreadyReviewedException if already reviewed
+     */
+    ApplicationResponseDTO review(Long applicationId, ApplicationStatus newStatus);
 
     /**
      * Retrieve a paginated list of all applications.
@@ -35,7 +49,7 @@ public interface ApplicationService {
      *
      * @param applicationId the ID of the application
      * @return the application DTO
-     * @throws jakarta.persistence.EntityNotFoundException if not found
+     * @throws com.web.labportalbackend.common.exception.ResourceNotFoundException if not found
      */
     ApplicationResponseDTO getApplicationById(Long applicationId);
 

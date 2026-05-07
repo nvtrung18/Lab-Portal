@@ -2,14 +2,18 @@ package com.web.labportalbackend.auth.controller;
 
 import com.web.labportalbackend.auth.entity.User;
 import com.web.labportalbackend.auth.repository.UserRepository;
+import com.web.labportalbackend.auth.service.ApplicationServiceImpl;
 import com.web.labportalbackend.common.dto.ApplicationResponseDTO;
 import com.web.labportalbackend.common.enums.ApplicationStatus;
+import com.web.labportalbackend.common.exception.ApplicationAlreadyReviewedException;
 import com.web.labportalbackend.common.exception.DuplicateApplicationException;
+import com.web.labportalbackend.common.exception.ResourceNotFoundException;
 import com.web.labportalbackend.lab.entity.Application;
 import com.web.labportalbackend.lab.entity.Laboratory;
+import com.web.labportalbackend.lab.entity.Membership;
 import com.web.labportalbackend.lab.repository.ApplicationRepository;
 import com.web.labportalbackend.lab.repository.LaboratoryRepository;
-import jakarta.persistence.EntityNotFoundException;
+import com.web.labportalbackend.lab.repository.MembershipRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -21,8 +25,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 
-import com.web.labportalbackend.auth.service.ApplicationServiceImpl;
-
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -33,7 +35,7 @@ import static org.mockito.Mockito.*;
 
 /**
  * Unit tests for ApplicationService.
- * Tests cover: application submission, duplicate prevention, and listing scenarios.
+ * Tests cover: application submission, duplicate prevention, review (approve/reject), and listing scenarios.
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ApplicationService Unit Tests")
@@ -47,6 +49,9 @@ class ApplicationServiceImplTest {
 
     @Mock
     private LaboratoryRepository laboratoryRepository;
+
+    @Mock
+    private MembershipRepository membershipRepository;
 
     @InjectMocks
     private ApplicationServiceImpl applicationService;
@@ -106,26 +111,26 @@ class ApplicationServiceImplTest {
     }
 
     @Test
-    @DisplayName("Apply - Should throw EntityNotFoundException when user not found")
+    @DisplayName("Apply - Should throw ResourceNotFoundException when user not found")
     void testApplyUserNotFound() {
         // Arrange
         when(userRepository.findById(999L)).thenReturn(Optional.empty());
 
         // Act & Assert
-        assertThrows(EntityNotFoundException.class, () -> 
+        assertThrows(ResourceNotFoundException.class, () -> 
                 applicationService.apply(1L, 999L, "https://example.com/cv.pdf"));
         verify(applicationRepository, never()).save(any());
     }
 
     @Test
-    @DisplayName("Apply - Should throw EntityNotFoundException when lab not found")
+    @DisplayName("Apply - Should throw ResourceNotFoundException when lab not found")
     void testApplyLabNotFound() {
         // Arrange
         when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
         when(laboratoryRepository.findById(999L)).thenReturn(Optional.empty());
 
         // Act & Assert
-        assertThrows(EntityNotFoundException.class, () -> 
+        assertThrows(ResourceNotFoundException.class, () -> 
                 applicationService.apply(999L, 1L, "https://example.com/cv.pdf"));
         verify(applicationRepository, never()).save(any());
     }
@@ -197,37 +202,108 @@ class ApplicationServiceImplTest {
     }
 
     @Test
-    @DisplayName("GetApplicationById - Should throw EntityNotFoundException when not found")
+    @DisplayName("GetApplicationById - Should throw ResourceNotFoundException when not found")
     void testGetApplicationByIdNotFound() {
         // Arrange
         when(applicationRepository.findById(999L)).thenReturn(Optional.empty());
 
         // Act & Assert
-        assertThrows(EntityNotFoundException.class, () -> 
+        assertThrows(ResourceNotFoundException.class, () -> 
                 applicationService.getApplicationById(999L));
     }
 
     @Test
-    @DisplayName("GetApplicationsByUserId - Should throw EntityNotFoundException when user not found")
+    @DisplayName("GetApplicationsByUserId - Should throw ResourceNotFoundException when user not found")
     void testGetApplicationsByUserIdUserNotFound() {
         // Arrange
         Pageable pageable = org.springframework.data.domain.PageRequest.of(0, 10);
         when(userRepository.existsById(999L)).thenReturn(false);
 
         // Act & Assert
-        assertThrows(EntityNotFoundException.class, () -> 
+        assertThrows(ResourceNotFoundException.class, () -> 
                 applicationService.getApplicationsByUserId(999L, pageable));
     }
 
     @Test
-    @DisplayName("GetApplicationsByLabId - Should throw EntityNotFoundException when lab not found")
+    @DisplayName("GetApplicationsByLabId - Should throw ResourceNotFoundException when lab not found")
     void testGetApplicationsByLabIdLabNotFound() {
         // Arrange
         Pageable pageable = org.springframework.data.domain.PageRequest.of(0, 10);
         when(laboratoryRepository.existsById(999L)).thenReturn(false);
 
         // Act & Assert
-        assertThrows(EntityNotFoundException.class, () -> 
+        assertThrows(ResourceNotFoundException.class, () -> 
                 applicationService.getApplicationsByLabId(999L, pageable));
+    }
+
+    @Test
+    @DisplayName("Review - Should approve application and create membership")
+    void testReviewApprove() {
+        // Arrange
+        testApplication.setStatus(ApplicationStatus.PENDING);
+        when(applicationRepository.findById(1L)).thenReturn(Optional.of(testApplication));
+        when(membershipRepository.existsByUserIdAndLaboratoryIdAndDeletedFalse(1L, 1L)).thenReturn(false);
+        when(applicationRepository.save(any(Application.class))).thenReturn(testApplication);
+        when(membershipRepository.save(any())).thenReturn(new com.web.labportalbackend.lab.entity.Membership());
+
+        // Act
+        ApplicationResponseDTO result = applicationService.review(1L, ApplicationStatus.APPROVED);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(1L, result.getId());
+        // Verify membership save was called once
+        verify(membershipRepository, times(1)).save(any());
+        // Verify application save was called once
+        verify(applicationRepository, times(1)).save(any(Application.class));
+    }
+
+    @Test
+    @DisplayName("Review - Should reject application without creating membership")
+    void testReviewReject() {
+        // Arrange
+        testApplication.setStatus(ApplicationStatus.PENDING);
+        when(applicationRepository.findById(1L)).thenReturn(Optional.of(testApplication));
+        when(applicationRepository.save(any(Application.class))).thenReturn(testApplication);
+
+        // Act
+        ApplicationResponseDTO result = applicationService.review(1L, ApplicationStatus.REJECTED);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(1L, result.getId());
+        // Verify membership save was NOT called
+        verify(membershipRepository, never()).save(any());
+        // Verify application save was called once
+        verify(applicationRepository, times(1)).save(any(Application.class));
+    }
+
+    @Test
+    @DisplayName("Review - Should throw exception when application not found")
+    void testReviewApplicationNotFound() {
+        // Arrange
+        when(applicationRepository.findById(999L)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        assertThrows(ResourceNotFoundException.class, () -> 
+                applicationService.review(999L, ApplicationStatus.APPROVED));
+        // Verify no save operations were called
+        verify(applicationRepository, never()).save(any());
+        verify(membershipRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Review - Should throw exception when application already reviewed")
+    void testReviewAlreadyReviewed() {
+        // Arrange
+        testApplication.setStatus(ApplicationStatus.APPROVED);  // Already reviewed
+        when(applicationRepository.findById(1L)).thenReturn(Optional.of(testApplication));
+
+        // Act & Assert
+        assertThrows(ApplicationAlreadyReviewedException.class, () -> 
+                applicationService.review(1L, ApplicationStatus.APPROVED));
+        // Verify no save operations were called
+        verify(applicationRepository, never()).save(any());
+        verify(membershipRepository, never()).save(any());
     }
 }
