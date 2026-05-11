@@ -20,6 +20,15 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     List<Booking> findByStatus(BookingStatus status);
 
     /**
+     * Count bookings for a specific time slot.
+     * Used for capacity validation.
+     *
+     * @param slotId the time slot ID
+     * @return count of bookings for this slot
+     */
+    long countByTimeSlotId(Long slotId);
+
+    /**
      * Find overlapping bookings for a given lab in a specific time window.
      * Used for conflict detection when creating / updating a booking.
      */
@@ -31,4 +40,13 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
             @Param("startTime") Instant startTime,
             @Param("endTime") Instant endTime
     );
+
+    /**
+     * Find bookings by time slot.
+     *
+     * @param slotId the time slot ID
+     * @return list of bookings for the slot
+     */
+    @Query("SELECT b FROM Booking b WHERE b.timeSlot.id = :slotId AND b.deleted = false AND b.active = true")
+    List<Booking> findBySlotId(@Param("slotId") Long slotId);
 }

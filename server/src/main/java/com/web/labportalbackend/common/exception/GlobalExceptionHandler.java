@@ -108,6 +108,17 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * Handles slot full errors (capacity reached).
+     */
+    @ExceptionHandler(SlotFullException.class)
+    public ResponseEntity<ApiResponse<Void>> handleSlotFull(SlotFullException ex) {
+        log.warn("Slot full: {}", ex.getMessage());
+        return ResponseEntity
+                .badRequest()
+                .body(ApiResponse.error(ex.getMessage()));
+    }
+
+    /**
      * Catch-all for unexpected errors.
      */
     @ExceptionHandler(Exception.class)
