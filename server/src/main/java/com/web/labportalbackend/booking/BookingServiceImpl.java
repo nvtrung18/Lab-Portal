@@ -8,6 +8,7 @@ import com.web.labportalbackend.common.dto.BookingResponse;
 import com.web.labportalbackend.common.dto.CreateBookingRequest;
 import com.web.labportalbackend.common.enums.BookingStatus;
 import com.web.labportalbackend.common.exception.SlotFullException;
+import com.web.labportalbackend.common.exception.DuplicateBookingException;
 import com.web.labportalbackend.auth.entity.User;
 import com.web.labportalbackend.auth.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -15,6 +16,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,12 +37,20 @@ public class BookingServiceImpl implements BookingService {
     private final UserRepository userRepository;
 
     /**
-     * Create a new booking with capacity validation.
+     * Create a new booking with capacity validation and duplicate prevention.
      * Flow:
      * 1. Validate user exists
      * 2. Validate time slot exists
-     * 3. Check slot capacity
-     * 4. Create and save booking
+     * 3. Check for duplicate booking
+     * 4. Check slot capacity (only count CONFIRMED bookings)
+     * 5. Create and save booking
+     * 
+     * @param userId the user ID
+     * @param request the booking request
+     * @return the created booking response
+     * @throws EntityNotFoundException if user or slot not found
+     * @throws DuplicateBookingException if user already booked this slot
+     * @throws SlotFullException if slot capacity is reached
      */
     @Override
     @Transactional
@@ -54,15 +65,21 @@ public class BookingServiceImpl implements BookingService {
         TimeSlot timeSlot = timeSlotRepository.findById(request.getSlotId())
                 .orElseThrow(() -> new EntityNotFoundException("Time slot not found with ID: " + request.getSlotId()));
 
-        // 3. Check slot capacity
-        long currentBookingCount = bookingRepository.countByTimeSlotId(request.getSlotId());
-        if (currentBookingCount >= timeSlot.getCapacity()) {
-            log.warn("Slot {} is full. Current bookings: {}, Capacity: {}", 
-                    request.getSlotId(), currentBookingCount, timeSlot.getCapacity());
-            throw new SlotFullException(request.getSlotId(), timeSlot.getCapacity(), (int) currentBookingCount);
+        // 3. Check for duplicate booking (application-level check)
+        if (bookingRepository.existsActiveBookingByUserAndSlot(userId, request.getSlotId())) {
+            log.warn("Duplicate booking attempt: User {} trying to book slot {} again", userId, request.getSlotId());
+            throw new DuplicateBookingException(userId, request.getSlotId());
         }
 
-        // 4. Create and save booking
+        // 4. Check slot capacity (only count CONFIRMED bookings)
+        long confirmedBookingCount = bookingRepository.countByTimeSlotIdAndStatus(request.getSlotId(), BookingStatus.CONFIRMED);
+        if (confirmedBookingCount >= timeSlot.getCapacity()) {
+            log.warn("Slot {} is full. Current CONFIRMED bookings: {}, Capacity: {}", 
+                    request.getSlotId(), confirmedBookingCount, timeSlot.getCapacity());
+            throw new SlotFullException(request.getSlotId(), timeSlot.getCapacity(), (int) confirmedBookingCount);
+        }
+
+        // 5. Create and save booking
         Booking booking = new Booking();
         booking.setUser(user);
         booking.setLab(timeSlot.getLab());
@@ -72,11 +89,16 @@ public class BookingServiceImpl implements BookingService {
         booking.setStatus(BookingStatus.CONFIRMED);
         booking.setParticipantsCount(1);
 
-        Booking saved = bookingRepository.save(booking);
-        log.info("Booking created successfully. Booking ID: {}, User ID: {}, Slot ID: {}", 
-                saved.getId(), userId, request.getSlotId());
-
-        return mapToResponse(saved);
+        try {
+            Booking saved = bookingRepository.save(booking);
+            log.info("Booking created successfully. Booking ID: {}, User ID: {}, Slot ID: {}", 
+                    saved.getId(), userId, request.getSlotId());
+            return mapToResponse(saved);
+        } catch (DataIntegrityViolationException e) {
+            // Database-level unique constraint violation (backup check)
+            log.warn("Database unique constraint violation for user {} booking slot {}", userId, request.getSlotId());
+            throw new DuplicateBookingException(userId, request.getSlotId());
+        }
     }
 
     /**
@@ -129,10 +151,58 @@ public class BookingServiceImpl implements BookingService {
     }
 
     /**
-     * Cancel a booking by marking it as CANCELLED.
+     * Cancel a booking with ownership and state validation.
+     * Logic:
+     * 1. Find booking by ID
+     * 2. Verify user owns the booking
+     * 3. Check current status (cannot cancel already cancelled booking)
+     * 4. Update status to CANCELLED and save
+     * 
+     * When a booking is cancelled, it no longer counts toward capacity,
+     * allowing other users to book the freed slot.
+     *
+     * @param bookingId the booking ID
+     * @param userId the user ID requesting cancellation
+     * @throws EntityNotFoundException if booking not found
+     * @throws AccessDeniedException if user doesn't own the booking
+     * @throws IllegalStateException if booking is already cancelled
+     */
+    @Transactional
+    public void cancelBooking(Long bookingId, Long userId) {
+        log.debug("Cancelling booking {} for user {}", bookingId, userId);
+
+        // 1. Find booking
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new EntityNotFoundException("Booking not found with ID: " + bookingId));
+
+        // 2. Verify ownership
+        if (!booking.getUser().getId().equals(userId)) {
+            log.warn("User {} attempted to cancel booking {} owned by user {}", 
+                    userId, bookingId, booking.getUser().getId());
+            throw new AccessDeniedException("You can only cancel your own bookings");
+        }
+
+        // 3. Check current status
+        if (booking.getStatus() == BookingStatus.CANCELLED) {
+            log.warn("Booking {} is already cancelled", bookingId);
+            throw new IllegalStateException("Booking is already cancelled");
+        }
+
+        // 4. Update status and save
+        booking.setStatus(BookingStatus.CANCELLED);
+        bookingRepository.save(booking);
+        log.info("Booking {} cancelled successfully by user {}", bookingId, userId);
+    }
+
+    /**
+     * Legacy method for backward compatibility.
+     * Cancels booking without ownership verification.
+     * 
+     * @deprecated Use cancelBooking(Long bookingId, Long userId) instead
      */
     @Override
     @Transactional
+    @Deprecated(since = "1.0", forRemoval = true)
     public void cancelBooking(Long bookingId) {
         log.debug("Cancelling booking: {}", bookingId);
 

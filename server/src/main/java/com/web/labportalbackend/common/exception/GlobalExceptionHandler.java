@@ -119,6 +119,28 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * Handles duplicate booking errors (user tries to book same slot twice).
+     */
+    @ExceptionHandler(DuplicateBookingException.class)
+    public ResponseEntity<ApiResponse<Void>> handleDuplicateBooking(DuplicateBookingException ex) {
+        log.warn("Duplicate booking attempted: {}", ex.getMessage());
+        return ResponseEntity
+                .badRequest()
+                .body(ApiResponse.error(ex.getMessage()));
+    }
+
+    /**
+     * Handles illegal state exceptions (e.g., cancelling already cancelled booking).
+     */
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<ApiResponse<Void>> handleIllegalState(IllegalStateException ex) {
+        log.warn("Illegal state: {}", ex.getMessage());
+        return ResponseEntity
+                .badRequest()
+                .body(ApiResponse.error(ex.getMessage()));
+    }
+
+    /**
      * Catch-all for unexpected errors.
      */
     @ExceptionHandler(Exception.class)

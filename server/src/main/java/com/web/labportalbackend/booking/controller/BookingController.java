@@ -126,15 +126,19 @@ public class BookingController {
 
     /**
      * Cancel an existing booking.
+     * Only the booking owner can cancel their own booking.
      *
      * @param id the booking ID
      * @return success message wrapped in Response
      */
     @PatchMapping("/{id}/cancel")
-    @Operation(summary = "Cancel booking", description = "Cancel an existing booking")
+    @Operation(summary = "Cancel booking", description = "Cancel an existing booking (ownership validated)")
     public ResponseEntity<Response<Void>> cancelBooking(@PathVariable Long id) {
-        log.info("Cancelling booking with ID: {}", id);
-        bookingService.cancelBooking(id);
+        // In a real scenario, userId would come from Security Context
+        Long userId = 1L;  // TODO: Extract from Security Context
+        
+        log.info("Cancelling booking {} for user {}", id, userId);
+        bookingService.cancelBooking(id, userId);
         
         return ResponseEntity.ok(
                 Response.ok("Booking cancelled successfully")

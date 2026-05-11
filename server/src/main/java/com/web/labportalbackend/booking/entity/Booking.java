@@ -24,6 +24,9 @@ import java.util.Objects;
         @Index(name = "idx_booking_status", columnList = "status"),
         @Index(name = "idx_booking_time_range", columnList = "start_time, end_time"),
         @Index(name = "idx_booking_slot_user", columnList = "slot_id, user_id")
+},
+uniqueConstraints = {
+        @UniqueConstraint(name = "uk_booking_user_slot", columnNames = {"user_id", "slot_id", "deleted"})
 })
 @Getter
 @Setter

@@ -29,6 +29,16 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     long countByTimeSlotId(Long slotId);
 
     /**
+     * Count confirmed bookings for a specific time slot.
+     * Used for accurate capacity validation - only counts CONFIRMED bookings.
+     *
+     * @param slotId the time slot ID
+     * @param status the booking status (usually CONFIRMED)
+     * @return count of confirmed bookings for this slot
+     */
+    long countByTimeSlotIdAndStatus(Long slotId, BookingStatus status);
+
+    /**
      * Find overlapping bookings for a given lab in a specific time window.
      * Used for conflict detection when creating / updating a booking.
      */
@@ -49,4 +59,16 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
      */
     @Query("SELECT b FROM Booking b WHERE b.timeSlot.id = :slotId AND b.deleted = false AND b.active = true")
     List<Booking> findBySlotId(@Param("slotId") Long slotId);
+
+    /**
+     * Check if a user has an existing (non-cancelled) booking for a slot.
+     * Used for duplicate booking prevention.
+     *
+     * @param userId the user ID
+     * @param slotId the slot ID
+     * @return true if user already has a booking for this slot
+     */
+    @Query("SELECT COUNT(b) > 0 FROM Booking b WHERE b.user.id = :userId AND b.timeSlot.id = :slotId " +
+           "AND b.status <> 'CANCELLED' AND b.deleted = false AND b.active = true")
+    boolean existsActiveBookingByUserAndSlot(@Param("userId") Long userId, @Param("slotId") Long slotId);
 }
