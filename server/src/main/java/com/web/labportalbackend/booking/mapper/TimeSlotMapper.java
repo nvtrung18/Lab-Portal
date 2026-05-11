@@ -1,7 +1,7 @@
 package com.web.labportalbackend.booking.mapper;
 
 import com.web.labportalbackend.booking.entity.TimeSlot;
-import com.web.labportalbackend.common.dto.TimeSlotResponse;
+import com.web.labportalbackend.booking.dto.response.TimeSlotResponse;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 

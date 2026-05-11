@@ -1,9 +1,9 @@
 package com.web.labportalbackend.booking.controller;
 
-import com.web.labportalbackend.booking.TimeSlotService;
-import com.web.labportalbackend.common.dto.CreateTimeSlotRequest;
+import com.web.labportalbackend.booking.service.TimeSlotService;
+import com.web.labportalbackend.booking.dto.request.CreateTimeSlotRequest;
 import com.web.labportalbackend.common.dto.Response;
-import com.web.labportalbackend.common.dto.TimeSlotResponse;
+import com.web.labportalbackend.booking.dto.response.TimeSlotResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;

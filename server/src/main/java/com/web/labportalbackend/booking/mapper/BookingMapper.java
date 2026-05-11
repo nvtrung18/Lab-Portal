@@ -1,7 +1,7 @@
 package com.web.labportalbackend.booking.mapper;
 
 import com.web.labportalbackend.booking.entity.Booking;
-import com.web.labportalbackend.common.dto.BookingResponse;
+import com.web.labportalbackend.booking.dto.response.BookingResponse;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 

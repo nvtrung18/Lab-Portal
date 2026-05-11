@@ -1,6 +1,6 @@
 package com.web.labportalbackend.research.controller;
 
-import com.web.labportalbackend.common.dto.ApiResponse;
+import com.web.labportalbackend.common.dto.Response;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
@@ -17,49 +17,49 @@ public class ResearchProjectController {
 
     @GetMapping("/health")
     @Operation(summary = "Research service health check")
-    public ResponseEntity<ApiResponse<String>> health() {
-        return ResponseEntity.ok(ApiResponse.success("Research service is healthy", "UP"));
+    public ResponseEntity<Response<String>> health() {
+        return ResponseEntity.ok(Response.ok("Research service is healthy", "UP"));
     }
 
     @GetMapping
-    @Operation(summary = "Get all research projects")
-    public ResponseEntity<ApiResponse<String>> getAllProjects() {
-        return ResponseEntity.ok(ApiResponse.success("Get all research projects — service pending"));
+    @Operation(summary = "Get all research projects", description = "Retrieve all research projects with pagination")
+    public ResponseEntity<Response<String>> getAllProjects() {
+        return ResponseEntity.ok(Response.ok("Get all research projects — service pending"));
     }
 
     @GetMapping("/{id}")
-    @Operation(summary = "Get research project by ID")
-    public ResponseEntity<ApiResponse<String>> getProjectById(@PathVariable Long id) {
-        return ResponseEntity.ok(ApiResponse.success("Get research project — service pending", "ID: " + id));
+    @Operation(summary = "Get project by ID")
+    public ResponseEntity<Response<String>> getProjectById(@PathVariable Long id) {
+        return ResponseEntity.ok(Response.ok("Get research project — service pending", "ID: " + id));
     }
 
     @PostMapping
     @Operation(summary = "Create research project")
-    public ResponseEntity<ApiResponse<String>> createProject() {
-        return ResponseEntity.ok(ApiResponse.success("Create research project — service pending"));
+    public ResponseEntity<Response<String>> createProject() {
+        return ResponseEntity.ok(Response.ok("Create research project — service pending"));
     }
 
     @PutMapping("/{id}")
     @Operation(summary = "Update research project")
-    public ResponseEntity<ApiResponse<String>> updateProject(@PathVariable Long id) {
-        return ResponseEntity.ok(ApiResponse.success("Update research project — service pending", "ID: " + id));
+    public ResponseEntity<Response<String>> updateProject(@PathVariable Long id) {
+        return ResponseEntity.ok(Response.ok("Update research project — service pending", "ID: " + id));
     }
 
     @DeleteMapping("/{id}")
-    @Operation(summary = "Delete research project", description = "Soft-delete a research project")
-    public ResponseEntity<ApiResponse<String>> deleteProject(@PathVariable Long id) {
-        return ResponseEntity.ok(ApiResponse.success("Delete research project — service pending", "ID: " + id));
+    @Operation(summary = "Delete research project")
+    public ResponseEntity<Response<String>> deleteProject(@PathVariable Long id) {
+        return ResponseEntity.ok(Response.ok("Delete research project — service pending", "ID: " + id));
     }
 
-    @GetMapping("/lab/{labId}")
-    @Operation(summary = "Get projects by lab")
-    public ResponseEntity<ApiResponse<String>> getProjectsByLab(@PathVariable Long labId) {
-        return ResponseEntity.ok(ApiResponse.success("Get projects by lab — service pending", "Lab ID: " + labId));
+    @GetMapping("/labs/{labId}")
+    @Operation(summary = "Get projects by laboratory")
+    public ResponseEntity<Response<String>> getProjectsByLab(@PathVariable Long labId) {
+        return ResponseEntity.ok(Response.ok("Get projects by lab — service pending", "Lab ID: " + labId));
     }
 
-    @GetMapping("/leader/{leaderId}")
+    @GetMapping("/leaders/{leaderId}")
     @Operation(summary = "Get projects by leader")
-    public ResponseEntity<ApiResponse<String>> getProjectsByLeader(@PathVariable Long leaderId) {
-        return ResponseEntity.ok(ApiResponse.success("Get projects by leader — service pending", "Leader ID: " + leaderId));
+    public ResponseEntity<Response<String>> getProjectsByLeader(@PathVariable Long leaderId) {
+        return ResponseEntity.ok(Response.ok("Get projects by leader — service pending", "Leader ID: " + leaderId));
     }
 }

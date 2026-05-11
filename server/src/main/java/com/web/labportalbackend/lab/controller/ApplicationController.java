@@ -1,10 +1,10 @@
 package com.web.labportalbackend.lab.controller;
 
-import com.web.labportalbackend.auth.service.ApplicationService;
-import com.web.labportalbackend.common.dto.ApplicationResponseDTO;
-import com.web.labportalbackend.common.dto.ApplyRequestDTO;
+import com.web.labportalbackend.lab.service.ApplicationService;
+import com.web.labportalbackend.lab.dto.response.ApplicationResponseDTO;
+import com.web.labportalbackend.lab.dto.request.ApplyRequestDTO;
 import com.web.labportalbackend.common.dto.Response;
-import com.web.labportalbackend.common.dto.ReviewApplicationDTO;
+import com.web.labportalbackend.lab.dto.request.ReviewApplicationDTO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;

@@ -1,8 +1,8 @@
 package com.web.labportalbackend.lab.controller;
 
-import com.web.labportalbackend.auth.service.LabService;
-import com.web.labportalbackend.common.dto.CreateLabRequest;
-import com.web.labportalbackend.common.dto.LabDTO;
+import com.web.labportalbackend.lab.service.LabService;
+import com.web.labportalbackend.lab.dto.request.CreateLabRequest;
+import com.web.labportalbackend.lab.dto.response.LabResponse;
 import com.web.labportalbackend.common.dto.Response;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -36,8 +36,8 @@ public class LaboratoryController {
     @Operation(summary = "Create laboratory", description = "Create a new laboratory (ADMIN only)")
     @SecurityRequirement(name = "Bearer Authentication")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Response<LabDTO>> createLab(@Valid @RequestBody CreateLabRequest request) {
-        LabDTO laboratory = labService.createLab(request);
+    public ResponseEntity<Response<LabResponse>> createLab(@Valid @RequestBody CreateLabRequest request) {
+        LabResponse laboratory = labService.createLab(request);
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(Response.ok("Laboratory created successfully", laboratory));
@@ -46,8 +46,8 @@ public class LaboratoryController {
     @GetMapping("/{id}")
     @Operation(summary = "Get laboratory by ID")
     @SecurityRequirement(name = "Bearer Authentication")
-    public ResponseEntity<Response<LabDTO>> getLabById(@PathVariable Long id) {
-        LabDTO laboratory = labService.getLabById(id);
+    public ResponseEntity<Response<LabResponse>> getLabById(@PathVariable Long id) {
+        LabResponse laboratory = labService.getLabById(id);
         return ResponseEntity.ok(Response.ok("Laboratory retrieved successfully", laboratory));
     }
 
@@ -55,10 +55,10 @@ public class LaboratoryController {
     @Operation(summary = "Assign manager to laboratory", description = "Assign a lab manager (ADMIN only)")
     @SecurityRequirement(name = "Bearer Authentication")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Response<LabDTO>> assignManager(
+    public ResponseEntity<Response<LabResponse>> assignManager(
             @PathVariable Long id,
             @RequestParam Long managerId) {
-        LabDTO laboratory = labService.assignManager(id, managerId);
+        LabResponse laboratory = labService.assignManager(id, managerId);
         return ResponseEntity.ok(Response.ok("Manager assigned successfully", laboratory));
     }
 

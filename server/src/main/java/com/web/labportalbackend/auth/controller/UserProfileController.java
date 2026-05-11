@@ -3,7 +3,7 @@ package com.web.labportalbackend.auth.controller;
 import com.web.labportalbackend.auth.dto.UpdateProfileRequest;
 import com.web.labportalbackend.auth.dto.UserProfileDTO;
 import com.web.labportalbackend.auth.service.UserService;
-import com.web.labportalbackend.common.dto.ApiResponse;
+import com.web.labportalbackend.common.dto.Response;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -33,9 +33,9 @@ public class UserProfileController {
             description = "Returns the profile of the currently authenticated user",
             security = @SecurityRequirement(name = "bearerAuth")
     )
-    public ResponseEntity<ApiResponse<UserProfileDTO>> getCurrentUser() {
+    public ResponseEntity<Response<UserProfileDTO>> getCurrentUser() {
         UserProfileDTO profile = userService.getCurrentUser();
-        return ResponseEntity.ok(ApiResponse.success("Current user profile retrieved", profile));
+        return ResponseEntity.ok(Response.ok("Current user profile retrieved", profile));
     }
 
     /**
@@ -47,9 +47,9 @@ public class UserProfileController {
             description = "Update the profile of the currently authenticated user (fullName and phone only)",
             security = @SecurityRequirement(name = "bearerAuth")
     )
-    public ResponseEntity<ApiResponse<UserProfileDTO>> updateProfile(@Valid @RequestBody UpdateProfileRequest updateRequest) {
+    public ResponseEntity<Response<UserProfileDTO>> updateProfile(@Valid @RequestBody UpdateProfileRequest updateRequest) {
         UserProfileDTO updatedProfile = userService.updateProfile(updateRequest);
-        return ResponseEntity.ok(ApiResponse.success("User profile updated successfully", updatedProfile));
+        return ResponseEntity.ok(Response.ok("User profile updated successfully", updatedProfile));
     }
 }
 

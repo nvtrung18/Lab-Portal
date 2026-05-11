@@ -1,8 +1,8 @@
 package com.web.labportalbackend.booking.controller;
 
-import com.web.labportalbackend.booking.BookingService;
-import com.web.labportalbackend.common.dto.BookingResponse;
-import com.web.labportalbackend.common.dto.CreateBookingRequest;
+import com.web.labportalbackend.booking.service.BookingService;
+import com.web.labportalbackend.booking.dto.response.BookingResponse;
+import com.web.labportalbackend.booking.dto.request.CreateBookingRequest;
 import com.web.labportalbackend.common.dto.Response;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
