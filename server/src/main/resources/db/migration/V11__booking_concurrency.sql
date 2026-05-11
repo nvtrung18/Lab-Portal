@@ -1,0 +1,39 @@
+-- V11__booking_concurrency.sql
+-- Day 11: Concurrency Implementation with Pessimistic Locking
+-- 
+-- CHANGELOG:
+-- - Added BookingStatus.WAITLISTED support (enum, not stored as migration)
+-- - Pessimistic Locking enabled on TimeSlot retrieval in code layer
+-- - Retry logic implemented with 3 attempts and exponential backoff
+-- - Fallback to WAITLISTED booking for high-concurrency scenarios
+--
+-- This migration is mainly for documentation. No schema changes required.
+-- The concurrency handling is implemented in the application layer:
+--
+-- 1. BookingCoreService.lockSlotAndBook():
+--    - Uses @Lock(LockModeType.PESSIMISTIC_WRITE) for exclusive database lock
+--    - Timeout: 3 seconds (set via @QueryHint)
+--    - Validates capacity and creates CONFIRMED booking
+--
+-- 2. BookingServiceImpl.book():
+--    - Retry loop: up to 3 attempts with 150ms sleep + jitter
+--    - Catches: PessimisticLockingFailureException, CannotAcquireLockException
+--    - Fallback: Creates WAITLISTED booking on lock failure/timeout
+--
+-- 3. Booking Status Values:
+--    - PENDING: Initial state
+--    - CONFIRMED: Successfully booked within capacity
+--    - WAITLISTED: Booked when slot is full (new for Day 11)
+--    - CANCELLED: User cancelled the booking
+--    - IN_PROGRESS, COMPLETED: Lifecycle states
+
+-- No actual schema changes required. Pessimistic locking is handled by:
+-- 1. Database-level row locks (handled by @Lock annotation)
+-- 2. Application-level retry logic (Spring/Hibernate managed)
+-- 3. Existing UNIQUE constraint on (user_id, slot_id, deleted) prevents duplicates
+-- 4. CONFIRMED booking count includes status filtering (not just row existence)
+
+-- Note: In future releases, consider:
+-- - Adding a `waitlist_position` column to optimize waitlist ordering
+-- - Adding a `lock_timeout_ms` configuration property
+-- - Adding metrics for retry attempts and lock contention

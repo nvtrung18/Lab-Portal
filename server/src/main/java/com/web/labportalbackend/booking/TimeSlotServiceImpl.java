@@ -1,6 +1,7 @@
 package com.web.labportalbackend.booking;
 
 import com.web.labportalbackend.booking.entity.TimeSlot;
+import com.web.labportalbackend.booking.mapper.TimeSlotMapper;
 import com.web.labportalbackend.booking.repository.TimeSlotRepository;
 import com.web.labportalbackend.common.dto.CreateTimeSlotRequest;
 import com.web.labportalbackend.common.dto.TimeSlotResponse;
@@ -70,7 +71,7 @@ public class TimeSlotServiceImpl implements TimeSlotService {
         TimeSlot saved = timeSlotRepository.save(timeSlot);
         log.info("Time slot created successfully with ID: {}", saved.getId());
 
-        return mapToResponse(saved);
+        return TimeSlotMapper.toResponse(saved);
     }
 
     /**
@@ -90,7 +91,7 @@ public class TimeSlotServiceImpl implements TimeSlotService {
         log.debug("Found {} time slots for lab: {}", slots.size(), labId);
 
         return slots.stream()
-                .map(this::mapToResponse)
+                .map(TimeSlotMapper::toResponse)
                 .toList();
     }
 
@@ -107,7 +108,7 @@ public class TimeSlotServiceImpl implements TimeSlotService {
                         "Time slot not found with ID: " + slotId
                 ));
 
-        return mapToResponse(timeSlot);
+        return TimeSlotMapper.toResponse(timeSlot);
     }
 
     /**
@@ -128,7 +129,7 @@ public class TimeSlotServiceImpl implements TimeSlotService {
             timeSlot.setStatus(newStatus);
             TimeSlot updated = timeSlotRepository.save(timeSlot);
             log.info("Time slot {} status updated to {}", slotId, newStatus);
-            return mapToResponse(updated);
+            return TimeSlotMapper.toResponse(updated);
         } catch (IllegalArgumentException e) {
             log.warn("Invalid status provided: {}", status);
             throw new IllegalArgumentException(
@@ -155,21 +156,4 @@ public class TimeSlotServiceImpl implements TimeSlotService {
         log.info("Time slot {} marked as deleted", slotId);
     }
 
-    // ---- Mapper ----
-
-    /**
-     * Map TimeSlot entity to TimeSlotResponse DTO.
-     */
-    private TimeSlotResponse mapToResponse(TimeSlot timeSlot) {
-        return TimeSlotResponse.builder()
-                .id(timeSlot.getId())
-                .labId(timeSlot.getLab().getId())
-                .startTime(timeSlot.getStartTime())
-                .endTime(timeSlot.getEndTime())
-                .capacity(timeSlot.getCapacity())
-                .status(timeSlot.getStatus())
-                .createdAt(timeSlot.getCreatedAt())
-                .updatedAt(timeSlot.getUpdatedAt())
-                .build();
-    }
 }

@@ -1,4 +1,4 @@
-package com.web.labportalbackend.booking.service;
+package com.web.labportalbackend.booking;
 
 import com.web.labportalbackend.common.dto.CreateTimeSlotRequest;
 import com.web.labportalbackend.common.dto.TimeSlotResponse;

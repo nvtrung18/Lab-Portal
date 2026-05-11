@@ -3,10 +3,14 @@ package com.web.labportalbackend.booking.repository;
 import com.web.labportalbackend.booking.entity.TimeSlot;
 import com.web.labportalbackend.common.enums.TimeSlotStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.QueryHints;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import jakarta.persistence.LockModeType;
+import jakarta.persistence.QueryHint;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -81,4 +85,20 @@ public interface TimeSlotRepository extends JpaRepository<TimeSlot, Long> {
      */
     @Query("SELECT ts FROM TimeSlot ts WHERE ts.id = :id AND ts.deleted = false AND ts.active = true")
     Optional<TimeSlot> findActiveById(@Param("id") Long id);
+
+    /**
+     * Find and lock a time slot for booking. Uses pessimistic write lock at database level.
+     * This ensures exclusive access to the slot during high-concurrency booking operations.
+     *
+     * @param id the time slot ID
+     * @return Optional containing the locked time slot if found
+     * @throws PessimisticLockingFailureException if lock cannot be acquired within timeout
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @QueryHints({
+            @QueryHint(name = "jakarta.persistence.lock.timeout", value = "3000"),
+            @QueryHint(name = "jakarta.persistence.lock.scope", value = "EXTENDED")
+    })
+    @Query("SELECT ts FROM TimeSlot ts WHERE ts.id = :id AND ts.deleted = false AND ts.active = true")
+    Optional<TimeSlot> findByIdWithLock(@Param("id") Long id);
 }

@@ -4,10 +4,7 @@ import com.web.labportalbackend.common.entity.BaseEntity;
 import com.web.labportalbackend.common.enums.TimeSlotStatus;
 import com.web.labportalbackend.lab.entity.Laboratory;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.time.Instant;
 
@@ -28,6 +25,7 @@ import java.time.Instant;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class TimeSlot extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)

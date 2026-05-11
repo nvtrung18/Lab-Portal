@@ -55,4 +55,14 @@ public interface BookingService {
      * @throws jakarta.persistence.EntityNotFoundException if booking doesn't exist
      */
     void cancelBooking(Long bookingId);
+
+    /**
+     * Cancel a booking with ownership verification.
+     *
+     * @param bookingId the booking ID
+     * @param userId the user ID requesting cancellation
+     * @throws jakarta.persistence.EntityNotFoundException if booking doesn't exist
+     * @throws org.springframework.security.access.AccessDeniedException if user doesn't own the booking
+     */
+    void cancelBooking(Long bookingId, Long userId);
 }
