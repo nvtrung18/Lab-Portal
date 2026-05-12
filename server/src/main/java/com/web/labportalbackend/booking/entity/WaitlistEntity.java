@@ -2,6 +2,7 @@ package com.web.labportalbackend.booking.entity;
 
 import com.web.labportalbackend.auth.entity.User;
 import com.web.labportalbackend.common.entity.BaseEntity;
+import com.web.labportalbackend.common.enums.WaitlistStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -26,6 +27,7 @@ import lombok.Setter;
     },
     indexes = {
         @Index(name = "idx_waitlist_slot_position", columnList = "slot_id, position"),
+        @Index(name = "idx_waitlist_slot_status_position", columnList = "slot_id, status, position"),
         @Index(name = "idx_waitlist_user", columnList = "user_id")
     }
 )
@@ -50,4 +52,17 @@ public class WaitlistEntity extends BaseEntity {
      */
     @Column(nullable = false)
     private Integer position;
+
+    /**
+     * Status of the waitlist entry.
+     * PENDING: User is in queue
+     * PROMOTED: User has been moved to confirmed booking
+     * CANCELLED: Entry was cancelled
+     * <p>
+     * Defaults to PENDING. Changed to PROMOTED when user is promoted to booking.
+     * Soft delete approach (keep historical records).
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private WaitlistStatus status = WaitlistStatus.PENDING;
 }

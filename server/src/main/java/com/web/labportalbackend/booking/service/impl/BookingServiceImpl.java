@@ -111,8 +111,17 @@ public class BookingServiceImpl implements BookingService {
         Booking booking = bookingRepository.findById(bookingId).orElseThrow(() -> new EntityNotFoundException("Booking not found: " + bookingId));
         if (!booking.getUser().getId().equals(userId)) throw new AccessDeniedException("You can only cancel your own bookings");
         if (booking.getStatus() == BookingStatus.CANCELLED) throw new IllegalStateException("Booking already cancelled");
+        
+        Long slotId = booking.getTimeSlot().getId();
+        
         booking.setStatus(BookingStatus.CANCELLED);
         bookingRepository.save(booking);
+        
+        // Promote next user from waitlist if slot exists
+        if (slotId != null) {
+            log.debug("Promoting next user from waitlist for slot {} after cancellation", slotId);
+            waitlistService.promoteNext(slotId);
+        }
     }
 
     @Override @Transactional @Deprecated(since = "1.0", forRemoval = true)

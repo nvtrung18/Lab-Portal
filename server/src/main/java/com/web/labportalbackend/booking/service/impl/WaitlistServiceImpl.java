@@ -3,12 +3,16 @@ package com.web.labportalbackend.booking.service.impl;
 import com.web.labportalbackend.auth.entity.User;
 import com.web.labportalbackend.auth.repository.UserRepository;
 import com.web.labportalbackend.booking.dto.response.WaitlistResponse;
+import com.web.labportalbackend.booking.entity.Booking;
 import com.web.labportalbackend.booking.entity.TimeSlot;
 import com.web.labportalbackend.booking.entity.WaitlistEntity;
 import com.web.labportalbackend.booking.mapper.WaitlistMapper;
+import com.web.labportalbackend.booking.repository.BookingRepository;
 import com.web.labportalbackend.booking.repository.TimeSlotRepository;
 import com.web.labportalbackend.booking.repository.WaitlistRepository;
 import com.web.labportalbackend.booking.service.WaitlistService;
+import com.web.labportalbackend.common.enums.BookingStatus;
+import com.web.labportalbackend.common.enums.WaitlistStatus;
 import com.web.labportalbackend.common.exception.WaitlistDuplicateException;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +42,7 @@ public class WaitlistServiceImpl implements WaitlistService {
     private final WaitlistRepository waitlistRepository;
     private final TimeSlotRepository timeSlotRepository;
     private final UserRepository userRepository;
+    private final BookingRepository bookingRepository;
 
     @Override
     @Transactional
@@ -91,5 +96,62 @@ public class WaitlistServiceImpl implements WaitlistService {
                 .stream()
                 .map(WaitlistMapper::toResponse)
                 .toList();
+    }
+
+    @Override
+    @Transactional
+    public void promoteNext(Long slotId) {
+        log.debug("Attempting to promote next user in waitlist for slot {}", slotId);
+
+        // Find the first user in waitlist with PENDING status
+        // Uses PESSIMISTIC_WRITE lock to ensure only one thread promotes at a time
+        var nextUser = waitlistRepository.findFirstBySlotIdAndStatusOrderByPositionAsc(
+                slotId, WaitlistStatus.PENDING);
+
+        if (nextUser.isEmpty()) {
+            log.debug("No pending users in waitlist for slot {}", slotId);
+            return;
+        }
+
+        WaitlistEntity waitlistEntry = nextUser.get();
+        User user = waitlistEntry.getUser();
+        Long userId = user.getId();
+
+        log.debug("Found next user {} at position {} for slot {}", userId, waitlistEntry.getPosition(), slotId);
+
+        // EDGE CASE: Check if user already has an active booking for this slot
+        // This can happen due to data inconsistency or concurrent operations
+        if (bookingRepository.existsActiveBookingByUserAndSlot(userId, slotId)) {
+            log.warn("User {} already has active booking for slot {}. Marking waitlist as PROMOTED and trying next.", userId, slotId);
+            waitlistEntry.setStatus(WaitlistStatus.PROMOTED);
+            waitlistRepository.save(waitlistEntry);
+            
+            // Recursively try the next user
+            promoteNext(slotId);
+            return;
+        }
+
+        // Get time slot details for creating booking
+        TimeSlot timeSlot = timeSlotRepository.findById(slotId)
+                .orElseThrow(() -> new EntityNotFoundException("Time slot not found: " + slotId));
+
+        // Create new CONFIRMED booking for the promoted user
+        Booking newBooking = new Booking();
+        newBooking.setUser(user);
+        newBooking.setLab(timeSlot.getLab());
+        newBooking.setTimeSlot(timeSlot);
+        newBooking.setStartTime(timeSlot.getStartTime());
+        newBooking.setEndTime(timeSlot.getEndTime());
+        newBooking.setStatus(BookingStatus.CONFIRMED);
+        newBooking.setParticipantsCount(1);
+
+        Booking savedBooking = bookingRepository.save(newBooking);
+        log.debug("Created confirmed booking {} for user {} from waitlist", savedBooking.getId(), userId);
+
+        // Mark waitlist entry as PROMOTED
+        waitlistEntry.setStatus(WaitlistStatus.PROMOTED);
+        waitlistRepository.save(waitlistEntry);
+
+        log.info("User {} promoted to confirmed booking {} for slot {}", userId, savedBooking.getId(), slotId);
     }
 }
