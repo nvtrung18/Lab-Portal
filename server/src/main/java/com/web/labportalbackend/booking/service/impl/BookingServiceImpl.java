@@ -1,6 +1,7 @@
 package com.web.labportalbackend.booking.service.impl;
 
 import com.web.labportalbackend.booking.service.BookingService;
+import com.web.labportalbackend.booking.service.WaitlistService;
 import com.web.labportalbackend.booking.entity.Booking;
 import com.web.labportalbackend.booking.entity.TimeSlot;
 import com.web.labportalbackend.booking.mapper.BookingMapper;
@@ -24,6 +25,8 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 @Slf4j
 @Service
@@ -34,6 +37,7 @@ public class BookingServiceImpl implements BookingService {
     private final TimeSlotRepository timeSlotRepository;
     private final UserRepository userRepository;
     private final BookingCoreService bookingCoreService;
+    private final WaitlistService waitlistService;
 
     private static final int MAX_RETRIES = 3;
     private static final long RETRY_DELAY_MS = 150;
@@ -48,7 +52,11 @@ public class BookingServiceImpl implements BookingService {
         }
         BookingResponse response = attemptConfirmedBookingWithRetry(userId, request.getSlotId(), user);
         if (response != null) return response;
-        return createWaitlistedBooking(user, timeSlot);
+        log.info("Slot {} full for user {}. Adding to waitlist instead.", request.getSlotId(), userId);
+        waitlistService.addToWaitlist(userId, request.getSlotId());
+        // Note: After being added to waitlist, we return a booking response with WAITLISTED status
+        // for backwards compatibility with frontend. In production, you might return WaitlistResponse directly.
+        return createFallbackWaitlistedBooking(user, timeSlot);
     }
 
     private BookingResponse attemptConfirmedBookingWithRetry(Long userId, Long slotId, User user) {
@@ -73,7 +81,7 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Transactional
-    private BookingResponse createWaitlistedBooking(User user, TimeSlot timeSlot) {
+    private BookingResponse createFallbackWaitlistedBooking(User user, TimeSlot timeSlot) {
         Booking booking = new Booking();
         booking.setUser(user); booking.setLab(timeSlot.getLab()); booking.setTimeSlot(timeSlot);
         booking.setStartTime(timeSlot.getStartTime()); booking.setEndTime(timeSlot.getEndTime());

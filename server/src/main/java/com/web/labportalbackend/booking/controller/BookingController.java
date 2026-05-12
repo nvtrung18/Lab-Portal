@@ -1,7 +1,9 @@
 package com.web.labportalbackend.booking.controller;
 
 import com.web.labportalbackend.booking.service.BookingService;
+import com.web.labportalbackend.booking.service.WaitlistService;
 import com.web.labportalbackend.booking.dto.response.BookingResponse;
+import com.web.labportalbackend.booking.dto.response.WaitlistResponse;
 import com.web.labportalbackend.booking.dto.request.CreateBookingRequest;
 import com.web.labportalbackend.common.dto.Response;
 import io.swagger.v3.oas.annotations.Operation;
@@ -29,6 +31,7 @@ import java.util.List;
 public class BookingController {
 
     private final BookingService bookingService;
+    private final WaitlistService waitlistService;
 
     /**
      * Create a new booking for a time slot.
@@ -142,6 +145,26 @@ public class BookingController {
         
         return ResponseEntity.ok(
                 Response.ok("Booking cancelled successfully")
+        );
+    }
+
+    /**
+     * Get waitlist for a specific time slot.
+     * Returns all users waiting for the slot, ordered by position (lowest first).
+     *
+     * @param slotId the time slot ID
+     * @return ordered list of waitlist entries wrapped in Response
+     */
+    @GetMapping("/slots/{slotId}/waitlist")
+    @Operation(summary = "Get slot waitlist", description = "Get all waitlist entries for a specific time slot, ordered by position")
+    public ResponseEntity<Response<List<WaitlistResponse>>> getSlotWaitlist(
+            @PathVariable Long slotId
+    ) {
+        log.info("Fetching waitlist for slot: {}", slotId);
+        List<WaitlistResponse> waitlist = waitlistService.getWaitlistBySlot(slotId);
+        
+        return ResponseEntity.ok(
+                Response.ok("Slot waitlist retrieved successfully", waitlist)
         );
     }
 }
