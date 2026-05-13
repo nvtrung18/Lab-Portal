@@ -71,4 +71,12 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     @Query("SELECT COUNT(b) > 0 FROM Booking b WHERE b.user.id = :userId AND b.timeSlot.id = :slotId " +
            "AND b.status <> 'CANCELLED' AND b.deleted = false AND b.active = true")
     boolean existsActiveBookingByUserAndSlot(@Param("userId") Long userId, @Param("slotId") Long slotId);
+
+    @Query("SELECT b FROM Booking b WHERE b.status = :status " +
+           "AND b.endTime <= :cutoff " +
+           "AND b.deleted = false AND b.active = true")
+    List<Booking> findNoShowCandidates(
+            @Param("status") BookingStatus status,
+            @Param("cutoff") Instant cutoff
+    );
 }

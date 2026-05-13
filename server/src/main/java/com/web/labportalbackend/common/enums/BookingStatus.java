@@ -16,6 +16,7 @@ public enum BookingStatus {
     CHECKED_IN,
     IN_PROGRESS,
     COMPLETED,
+    NO_SHOW,
     CANCELLED,
     WAITLISTED  // Fallback status when booking fails due to full slot or lock timeout
 }

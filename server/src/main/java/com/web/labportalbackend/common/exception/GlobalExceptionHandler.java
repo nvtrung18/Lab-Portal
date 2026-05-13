@@ -102,6 +102,13 @@ public class GlobalExceptionHandler {
                 .body(Response.conflict(ex.getMessage()));
     }
 
+    @ExceptionHandler(DuplicateMemberException.class)
+    public ResponseEntity<Response<Void>> handleDuplicateMember(DuplicateMemberException ex) {
+        log.warn("Duplicate group member: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(Response.conflict(ex.getMessage()));
+    }
+
     @ExceptionHandler(DuplicateApplicationException.class)
     public ResponseEntity<Response<Void>> handleDuplicateApplication(DuplicateApplicationException ex) {
         log.warn("Duplicate application: {}", ex.getMessage());
