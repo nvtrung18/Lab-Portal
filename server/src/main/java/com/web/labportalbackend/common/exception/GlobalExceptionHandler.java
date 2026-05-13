@@ -100,6 +100,12 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(Response.badRequest(ex.getMessage()));
     }
 
+    @ExceptionHandler(InvalidEvaluationScoreException.class)
+    public ResponseEntity<Response<Void>> handleInvalidEvaluationScore(InvalidEvaluationScoreException ex) {
+        log.warn("Invalid evaluation score: {}", ex.getMessage());
+        return ResponseEntity.badRequest().body(Response.badRequest(ex.getMessage()));
+    }
+
     @ExceptionHandler(SlotFullException.class)
     public ResponseEntity<Response<Void>> handleSlotFull(SlotFullException ex) {
         log.warn("Slot full: {}", ex.getMessage());
