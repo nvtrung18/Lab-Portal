@@ -88,6 +88,12 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(Response.badRequest(ex.getMessage()));
     }
 
+    @ExceptionHandler(InvalidDateRangeException.class)
+    public ResponseEntity<Response<Void>> handleInvalidDateRange(InvalidDateRangeException ex) {
+        log.warn("Invalid date range: {}", ex.getMessage());
+        return ResponseEntity.badRequest().body(Response.badRequest(ex.getMessage()));
+    }
+
     @ExceptionHandler(SlotFullException.class)
     public ResponseEntity<Response<Void>> handleSlotFull(SlotFullException ex) {
         log.warn("Slot full: {}", ex.getMessage());
