@@ -121,6 +121,13 @@ public class GlobalExceptionHandler {
                 .body(Response.conflict(ex.getMessage()));
     }
 
+    @ExceptionHandler(ReportVersionConflictException.class)
+    public ResponseEntity<Response<Void>> handleReportVersionConflict(ReportVersionConflictException ex) {
+        log.warn("Report version conflict: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(Response.conflict(ex.getMessage()));
+    }
+
     @ExceptionHandler(DuplicateApplicationException.class)
     public ResponseEntity<Response<Void>> handleDuplicateApplication(DuplicateApplicationException ex) {
         log.warn("Duplicate application: {}", ex.getMessage());
