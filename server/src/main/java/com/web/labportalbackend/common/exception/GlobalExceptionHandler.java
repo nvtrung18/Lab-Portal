@@ -116,12 +116,18 @@ public class GlobalExceptionHandler {
                 .body(Response.conflict(ex.getMessage()));
     }
 
-    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
-    public ResponseEntity<Response<Void>> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
-        String message = String.format("Parameter '%s' must be of type '%s'",
-                ex.getName(), ex.getRequiredType() != null ? ex.getRequiredType().getSimpleName() : "unknown");
-        log.warn("Type mismatch: {}", message);
-        return ResponseEntity.badRequest().body(Response.badRequest(message));
+    @ExceptionHandler(WaitlistDuplicateException.class)
+    public ResponseEntity<Response<Void>> handleWaitlistDuplicate(WaitlistDuplicateException ex) {
+        log.warn("Waitlist duplicate: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(Response.conflict(ex.getMessage()));
+    }
+
+    @ExceptionHandler(InvalidCheckinTimeException.class)
+    public ResponseEntity<Response<Void>> handleInvalidCheckinTime(InvalidCheckinTimeException ex) {
+        log.warn("Check-in validation failed: {}", ex.getMessage());
+        return ResponseEntity.badRequest()
+                .body(Response.badRequest("Check-in validation failed: " + ex.getMessage()));
     }
 
     // ---- Catch-all ----
