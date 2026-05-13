@@ -94,6 +94,12 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(Response.badRequest(ex.getMessage()));
     }
 
+    @ExceptionHandler(InvalidAssigneeException.class)
+    public ResponseEntity<Response<Void>> handleInvalidAssignee(InvalidAssigneeException ex) {
+        log.warn("Invalid assignee: {}", ex.getMessage());
+        return ResponseEntity.badRequest().body(Response.badRequest(ex.getMessage()));
+    }
+
     @ExceptionHandler(SlotFullException.class)
     public ResponseEntity<Response<Void>> handleSlotFull(SlotFullException ex) {
         log.warn("Slot full: {}", ex.getMessage());
