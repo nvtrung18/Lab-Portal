@@ -16,4 +16,13 @@ public interface ReportRepository extends JpaRepository<ReportEntity, Long> {
     Optional<Integer> findMaxVersionByTaskId(@Param("taskId") Long taskId);
 
     List<ReportEntity> findByTaskIdOrderByVersionDesc(Long taskId);
+
+    @Query("""
+            SELECT COUNT(r)
+            FROM ReportEntity r
+            JOIN TaskEntity t ON t.id = r.taskId
+            JOIN MilestoneEntity m ON m.id = t.milestoneId
+            WHERE m.project.id = :projectId
+            """)
+    long countByProjectId(@Param("projectId") Long projectId);
 }
