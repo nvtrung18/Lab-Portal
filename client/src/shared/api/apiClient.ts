@@ -5,13 +5,15 @@ export const AUTH_TOKEN_KEY = 'accessToken';
 export const REFRESH_TOKEN_KEY = 'refreshToken';
 
 export function getAuthToken() {
-  const tokenFromStorage = localStorage.getItem(AUTH_TOKEN_KEY);
-  const tokenFromCookie = document.cookie
-    .split('; ')
-    .find((row) => row.startsWith(`${AUTH_TOKEN_KEY}=`))
-    ?.split('=')[1];
+  return localStorage.getItem(AUTH_TOKEN_KEY);
+}
 
-  return tokenFromStorage ?? tokenFromCookie ?? null;
+export function setAuthTokens(accessToken: string, refreshToken?: string) {
+  localStorage.setItem(AUTH_TOKEN_KEY, accessToken);
+
+  if (refreshToken) {
+    localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
+  }
 }
 
 export function clearAuthTokens() {
@@ -39,7 +41,7 @@ apiClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   const token = getAuthToken();
 
   if (token) {
-    config.headers.Authorization = `Bearer ${decodeURIComponent(token)}`;
+    config.headers.Authorization = `Bearer ${token}`;
   }
 
   return config;

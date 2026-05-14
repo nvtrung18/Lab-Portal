@@ -1,15 +1,12 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { AxiosError } from 'axios';
+import axios from 'axios';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 
 import { loginAPI } from '../api';
-import {
-  AUTH_TOKEN_KEY,
-  REFRESH_TOKEN_KEY,
-} from '../../../shared/api';
+import { setAuthTokens } from '../../../shared/api';
 import type { Response } from '../../../shared/types';
 
 const loginSchema = z.object({
@@ -24,7 +21,7 @@ const loginSchema = z.object({
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 function getErrorMessage(error: unknown) {
-  if (error instanceof AxiosError) {
+  if (axios.isAxiosError(error)) {
     const response = error.response?.data as Partial<Response<unknown>> | undefined;
     return response?.message ?? 'Email hoặc mật khẩu không chính xác';
   }
@@ -60,12 +57,7 @@ export function LoginPage() {
         return;
       }
 
-      localStorage.setItem(AUTH_TOKEN_KEY, accessToken);
-
-      if (auth.refreshToken) {
-        localStorage.setItem(REFRESH_TOKEN_KEY, auth.refreshToken);
-      }
-
+      setAuthTokens(accessToken, auth.refreshToken);
       navigate('/', { replace: true });
     } catch (error) {
       setServerError(getErrorMessage(error));

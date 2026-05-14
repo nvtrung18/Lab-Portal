@@ -42,7 +42,7 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public AuthResponse login(LoginRequest request) {
         Authentication auth = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.getUsernameOrEmail(), request.getPassword()));
+                new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
         SecurityContextHolder.getContext().setAuthentication(auth);
         User user = userRepository.findByUsername(auth.getName())
                 .orElseThrow(() -> new BadCredentialsException("User not found"));
