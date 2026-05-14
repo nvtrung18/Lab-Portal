@@ -9,8 +9,15 @@ export interface UserProfileResponse {
   phone: string | null;
   status: string;
   roles: string[];
+  memberships?: UserMembershipResponse[];
   createdAt: string;
   updatedAt: string;
+}
+
+export interface UserMembershipResponse {
+  labId: number;
+  labName: string;
+  status: string;
 }
 
 export interface UpdateProfileRequest {

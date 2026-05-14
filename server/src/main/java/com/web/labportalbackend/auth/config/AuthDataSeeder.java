@@ -23,19 +23,25 @@ public class AuthDataSeeder implements ApplicationRunner {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
-    private static final String ADMIN_USERNAME = "admin";
-    private static final String ADMIN_DEFAULT_PASSWORD = "admin123";
+    private record SeedPassword(String username, String rawPassword) {}
+
+    private static final SeedPassword[] DEFAULT_PASSWORDS = {
+            new SeedPassword("admin", "admin123"),
+            new SeedPassword("lab_manager", "manager123"),
+            new SeedPassword("user1", "user123")
+    };
 
     @Override
     @Transactional
     public void run(ApplicationArguments args) {
-        userRepository.findByUsername(ADMIN_USERNAME).ifPresent(admin -> {
-            // Only update if the password doesn't match (e.g., seed hash was wrong)
-            if (!passwordEncoder.matches(ADMIN_DEFAULT_PASSWORD, admin.getPassword())) {
-                admin.setPassword(passwordEncoder.encode(ADMIN_DEFAULT_PASSWORD));
-                userRepository.save(admin);
-                log.info("Admin password re-encoded with BCrypt on startup");
-            }
-        });
+        for (SeedPassword seedPassword : DEFAULT_PASSWORDS) {
+            userRepository.findByUsername(seedPassword.username()).ifPresent(user -> {
+                if (!passwordEncoder.matches(seedPassword.rawPassword(), user.getPassword())) {
+                    user.setPassword(passwordEncoder.encode(seedPassword.rawPassword()));
+                    userRepository.save(user);
+                    log.info("Default password re-encoded with BCrypt on startup for user: {}", seedPassword.username());
+                }
+            });
+        }
     }
 }
