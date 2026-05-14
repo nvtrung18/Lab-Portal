@@ -1,11 +1,11 @@
 import { Navigate, type RouteObject } from 'react-router-dom';
 
-import { LoginPage, RegisterPage } from '../modules/auth/pages';
-import { BookingPage } from '../modules/booking/pages';
-import { LabPage } from '../modules/lab/pages';
-import { ResearchPage } from '../modules/research/pages';
-import { ProtectedRoute } from '../shared/components';
+import { LoginPage } from '../modules/auth/pages';
+import { RoleBasedRoute } from '../shared/components';
 import { AuthLayout, MainLayout } from '../shared/layout';
+import { ApplicationsPlaceholder } from './ApplicationsPlaceholder';
+import { DashboardPlaceholder } from './DashboardPlaceholder';
+import { LabsPlaceholder } from './LabsPlaceholder';
 
 export const appRoutes: RouteObject[] = [
   {
@@ -15,33 +15,45 @@ export const appRoutes: RouteObject[] = [
         path: '/login',
         element: <LoginPage />,
       },
-      {
-        path: '/register',
-        element: <RegisterPage />,
-      },
     ],
   },
   {
-    element: <ProtectedRoute />,
+    element: <RoleBasedRoute allowedRoles={['USER', 'MANAGER']} />,
     children: [
       {
         element: <MainLayout />,
         children: [
           {
             index: true,
-            element: <Navigate to="/labs" replace />,
+            element: <DashboardPlaceholder />,
           },
+        ],
+      },
+    ],
+  },
+  {
+    element: <RoleBasedRoute allowedRoles={['USER']} />,
+    children: [
+      {
+        element: <MainLayout />,
+        children: [
           {
             path: '/labs',
-            element: <LabPage />,
+            element: <LabsPlaceholder />,
           },
+        ],
+      },
+    ],
+  },
+  {
+    element: <RoleBasedRoute allowedRoles={['MANAGER']} />,
+    children: [
+      {
+        element: <MainLayout />,
+        children: [
           {
-            path: '/booking',
-            element: <BookingPage />,
-          },
-          {
-            path: '/research',
-            element: <ResearchPage />,
+            path: '/applications',
+            element: <ApplicationsPlaceholder />,
           },
         ],
       },

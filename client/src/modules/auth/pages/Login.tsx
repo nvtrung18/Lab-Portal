@@ -1,15 +1,14 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { AxiosError } from 'axios';
+import axios from 'axios';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 
 import { loginAPI } from '../api';
-import {
-  AUTH_TOKEN_KEY,
-  REFRESH_TOKEN_KEY,
-} from '../../../shared/api';
+import { getPrimaryRedirectPath, useAuth } from '../hooks';
+import { USER_ME_QUERY_KEY } from '../../user/hooks';
 import type { Response } from '../../../shared/types';
 
 const loginSchema = z.object({
@@ -24,9 +23,13 @@ const loginSchema = z.object({
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 function getErrorMessage(error: unknown) {
-  if (error instanceof AxiosError) {
+  if (axios.isAxiosError(error)) {
     const response = error.response?.data as Partial<Response<unknown>> | undefined;
     return response?.message ?? 'Email hoặc mật khẩu không chính xác';
+  }
+
+  if (error instanceof Error) {
+    return error.message;
   }
 
   return 'Không thể đăng nhập. Vui lòng thử lại sau.';
@@ -34,6 +37,8 @@ function getErrorMessage(error: unknown) {
 
 export function LoginPage() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { saveSession } = useAuth();
   const [serverError, setServerError] = useState<string | null>(null);
 
   const {
@@ -52,32 +57,27 @@ export function LoginPage() {
     setServerError(null);
 
     try {
-      const auth = await loginAPI(values);
-      const accessToken = auth.accessToken ?? auth.token;
-
-      if (!accessToken) {
-        setServerError('Phản hồi đăng nhập không có access token.');
-        return;
-      }
-
-      localStorage.setItem(AUTH_TOKEN_KEY, accessToken);
-
-      if (auth.refreshToken) {
-        localStorage.setItem(REFRESH_TOKEN_KEY, auth.refreshToken);
-      }
-
-      navigate('/', { replace: true });
+      queryClient.clear();
+      const result = await loginAPI(values);
+      const { user, profile } = await saveSession(result.token);
+      queryClient.setQueryData(USER_ME_QUERY_KEY, profile);
+      console.log('[Auth] User profile loaded after login:', {
+        id: user.id,
+        email: user.email,
+        roles: user.roles,
+      });
+      navigate(getPrimaryRedirectPath(user.roles), { replace: true });
     } catch (error) {
       setServerError(getErrorMessage(error));
     }
   };
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-8 shadow-sm">
+    <section className="rounded-lg border border-slate-200 bg-white p-8 shadow-sm">
       <div>
         <h1 className="text-2xl font-semibold text-slate-950">Đăng nhập</h1>
         <p className="mt-2 text-sm text-slate-600">
-          Sử dụng tài khoản Lab Portal để tiếp tục.
+          Đăng nhập để vào đúng không gian làm việc theo vai trò.
         </p>
       </div>
 
@@ -140,13 +140,6 @@ export function LoginPage() {
           {isSubmitting ? 'Đang đăng nhập...' : 'Đăng nhập'}
         </button>
       </form>
-
-      <p className="mt-6 text-center text-sm text-slate-600">
-        Chưa có tài khoản?{' '}
-        <Link className="font-medium text-slate-950 hover:underline" to="/register">
-          Đăng ký
-        </Link>
-      </p>
-    </div>
+    </section>
   );
 }

@@ -89,7 +89,10 @@ public class ApplicationServiceImpl implements ApplicationService {
 
     private ApplicationResponseDTO mapToDTO(Application app) {
         return ApplicationResponseDTO.builder()
-                .id(app.getId()).userId(app.getUser().getId()).labId(app.getLaboratory().getId())
+                .id(app.getId()).userId(app.getUser().getId())
+                .applicantName(app.getUser().getFullName())
+                .applicantEmail(app.getUser().getEmail())
+                .labId(app.getLaboratory().getId())
                 .labName(app.getLaboratory().getLabName()).cvUrl(app.getCvUrl()).status(app.getStatus())
                 .createdAt(app.getCreatedAt()).updatedAt(app.getUpdatedAt()).build();
     }

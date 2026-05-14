@@ -1,0 +1,63 @@
+import { getProfile } from '../../user/api';
+import type { UserProfileResponse } from '../../user/api';
+import {
+  clearAuthTokens,
+  getAuthToken,
+  getStoredUser,
+  setAuthTokens,
+  setStoredUser,
+  type StoredUser,
+} from '../../../shared/api';
+import { ADMIN, LAB_MANAGER, STUDENT, type Role } from '../../../shared/constants/roles';
+
+function normalizeRoles(roles: string[]): Role[] {
+  return roles
+    .map((role) => role.replace(/^ROLE_/, '').toUpperCase())
+    .filter((role): role is Role =>
+      role === ADMIN || role === LAB_MANAGER || role === STUDENT,
+    );
+}
+
+export function getPrimaryRedirectPath(roles: string[]) {
+  const normalizedRoles = normalizeRoles(roles);
+
+  if (normalizedRoles.includes(ADMIN)) {
+    return '/admin/dashboard';
+  }
+
+  if (normalizedRoles.includes(LAB_MANAGER) || normalizedRoles.includes(STUDENT)) {
+    return '/app/profile';
+  }
+
+  return '/403';
+}
+
+export function useAuth() {
+  const token = getAuthToken();
+  const user = getStoredUser();
+
+  const saveSession = async (
+    accessToken: string,
+  ): Promise<{ user: StoredUser; profile: UserProfileResponse }> => {
+    setAuthTokens(accessToken);
+    const profile = await getProfile();
+    const normalizedRoles = normalizeRoles(profile.roles);
+    const storedUser: StoredUser = {
+      id: profile.id,
+      fullName: profile.fullName,
+      email: profile.email,
+      roles: normalizedRoles,
+      memberships: profile.memberships,
+    };
+
+    setStoredUser(storedUser);
+    return { user: storedUser, profile };
+  };
+
+  return {
+    isAuthenticated: Boolean(token),
+    user,
+    saveSession,
+    logout: clearAuthTokens,
+  };
+}
