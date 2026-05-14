@@ -1,5 +1,6 @@
 package com.web.labportalbackend.lab.entity;
 
+import com.web.labportalbackend.auth.entity.User;
 import com.web.labportalbackend.common.entity.BaseEntity;
 import com.web.labportalbackend.common.enums.LabStatus;
 import jakarta.persistence.*;
@@ -10,12 +11,14 @@ import lombok.Setter;
 
 /**
  * Represents a physical laboratory in the system.
+ * A laboratory can have a manager (User entity) assigned to it.
  */
 @Entity
 @Table(name = "laboratories", indexes = {
         @Index(name = "idx_lab_name", columnList = "labName", unique = true),
         @Index(name = "idx_lab_department", columnList = "department"),
-        @Index(name = "idx_lab_status", columnList = "status")
+        @Index(name = "idx_lab_status", columnList = "status"),
+        @Index(name = "idx_lab_manager", columnList = "managerId")
 })
 @Getter
 @Setter
@@ -41,4 +44,8 @@ public class Laboratory extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private LabStatus status = LabStatus.AVAILABLE;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "manager_id", referencedColumnName = "id")
+    private User manager;
 }

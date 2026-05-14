@@ -79,3 +79,19 @@ springdoc:
     operations-sorter: method
     tags-sorter: alpha
     display-request-duration: true
+
+# -------------------- JWT --------------------
+jwt:
+  secret: dGhpc0lzQVN1cGVyU2VjcmV0S2V5Rm9yTGFiUG9ydGFsQXBwbGljYXRpb24yMDI2IQ==
+  access-token-expiration: 86400000    # 24 hours in ms
+  refresh-token-expiration: 604800000  # 7 days in ms
+
+# -------------------- Booking automation --------------------
+# Local testing: keep "0 * * * * *" to scan once per minute.
+# Production can increase the interval, for example "0 */15 * * * *".
+booking:
+  task:
+    cron: "0 * * * * *"
+    no-show-grace-minutes: 15
+  penalty:
+    default-amount: 0

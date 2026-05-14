@@ -11,6 +11,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.Instant;
+import java.util.Objects;
 
 /**
  * Represents a lab booking / reservation.
@@ -19,8 +20,13 @@ import java.time.Instant;
 @Table(name = "bookings", indexes = {
         @Index(name = "idx_booking_user", columnList = "user_id"),
         @Index(name = "idx_booking_lab", columnList = "lab_id"),
+        @Index(name = "idx_booking_slot", columnList = "slot_id"),
         @Index(name = "idx_booking_status", columnList = "status"),
-        @Index(name = "idx_booking_time_range", columnList = "start_time, end_time")
+        @Index(name = "idx_booking_time_range", columnList = "start_time, end_time"),
+        @Index(name = "idx_booking_slot_user", columnList = "slot_id, user_id")
+},
+uniqueConstraints = {
+        @UniqueConstraint(name = "uk_booking_user_slot", columnNames = {"user_id", "slot_id", "deleted"})
 })
 @Getter
 @Setter
@@ -35,6 +41,10 @@ public class Booking extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "lab_id", nullable = false)
     private Laboratory lab;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "slot_id", nullable = true)
+    private com.web.labportalbackend.booking.entity.TimeSlot timeSlot;
 
     @Column(name = "start_time", nullable = false)
     private Instant startTime;

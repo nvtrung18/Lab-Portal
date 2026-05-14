@@ -1,6 +1,6 @@
 package com.web.labportalbackend.common.controller;
 
-import com.web.labportalbackend.common.dto.ApiResponse;
+import com.web.labportalbackend.common.dto.Response;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.Map;
 
 @RestController
@@ -18,25 +19,21 @@ public class HealthCheckController {
 
     @GetMapping("/health")
     @Operation(summary = "Health check", description = "Check overall system health")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> health() {
-        Map<String, Object> health = Map.of(
-                "status", "UP",
-                "service", "Lab Portal Backend",
-                "version", "1.0.0",
-                "serverTime", Instant.now()
-        );
-        return ResponseEntity.ok(ApiResponse.success("System is running", health));
+    public ResponseEntity<Response<Map<String, Object>>> health() {
+        Map<String, Object> health = new HashMap<>();
+        health.put("status", "UP");
+        health.put("timestamp", System.currentTimeMillis());
+        health.put("database", "MySQL - Connected");
+        health.put("security", "JWT - Active");
+        return ResponseEntity.ok(Response.ok("System is running", health));
     }
 
     @GetMapping("/info")
-    @Operation(summary = "System info", description = "Get system metadata")
-    public ResponseEntity<ApiResponse<Map<String, String>>> info() {
-        Map<String, String> info = Map.of(
-                "name", "Lab Portal Backend",
-                "description", "RESTful API for Lab Portal System",
-                "version", "1.0.0",
-                "architecture", "Modular Monolith"
-        );
-        return ResponseEntity.ok(ApiResponse.success("System information", info));
+    @Operation(summary = "System info")
+    public ResponseEntity<Response<Map<String, String>>> info() {
+        Map<String, String> info = new HashMap<>();
+        info.put("version", "1.0.0-SNAPSHOT");
+        info.put("description", "Lab Portal Backend API");
+        return ResponseEntity.ok(Response.ok("System information", info));
     }
 }

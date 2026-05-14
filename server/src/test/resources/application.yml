@@ -1,0 +1,27 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:lab_portal_test;MODE=MySQL;DATABASE_TO_LOWER=TRUE;CASE_INSENSITIVE_IDENTIFIERS=TRUE;DB_CLOSE_DELAY=-1
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  flyway:
+    enabled: false
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+        jdbc:
+          time_zone: UTC
+    open-in-view: false
+
+logging:
+  level:
+    root: WARN
+    com.web.labportalbackend: INFO
+
+jwt:
+  secret: dGhpc0lzQVN1cGVyU2VjcmV0S2V5Rm9yTGFiUG9ydGFsQXBwbGljYXRpb24yMDI2IQ==
+  access-token-expiration: 86400000
+  refresh-token-expiration: 604800000
