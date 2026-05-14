@@ -1,14 +1,17 @@
-import axios, {
-  AxiosError,
-  type InternalAxiosRequestConfig,
-} from 'axios';
+import axios, { type AxiosError, type InternalAxiosRequestConfig } from 'axios';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8080';
 export const AUTH_TOKEN_KEY = 'accessToken';
 export const REFRESH_TOKEN_KEY = 'refreshToken';
 
 export function getAuthToken() {
-  return localStorage.getItem(AUTH_TOKEN_KEY);
+  const tokenFromStorage = localStorage.getItem(AUTH_TOKEN_KEY);
+  const tokenFromCookie = document.cookie
+    .split('; ')
+    .find((row) => row.startsWith(`${AUTH_TOKEN_KEY}=`))
+    ?.split('=')[1];
+
+  return tokenFromStorage ?? tokenFromCookie ?? null;
 }
 
 export function clearAuthTokens() {
@@ -36,7 +39,7 @@ apiClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   const token = getAuthToken();
 
   if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+    config.headers.Authorization = `Bearer ${decodeURIComponent(token)}`;
   }
 
   return config;
