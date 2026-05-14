@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.*;
  * All endpoints require Bearer token authentication.
  */
 @RestController
-@RequestMapping("/api/users")
+@RequestMapping("/users")
 @RequiredArgsConstructor
 @Tag(name = "User Profile", description = "User profile management")
 public class UserProfileController {

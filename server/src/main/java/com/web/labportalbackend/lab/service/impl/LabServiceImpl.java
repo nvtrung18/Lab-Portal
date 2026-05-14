@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.util.List;
 
 @Slf4j
 @Service
@@ -59,5 +60,14 @@ public class LabServiceImpl implements LabService {
         Laboratory laboratory = laboratoryRepository.findById(labId)
                 .orElseThrow(() -> new EntityNotFoundException("Laboratory not found with ID: " + labId));
         return LabMapper.toResponse(laboratory);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<LabResponse> getAllLabs() {
+        return laboratoryRepository.findAll().stream()
+                .filter(lab -> Boolean.TRUE.equals(lab.getActive()) && Boolean.FALSE.equals(lab.getDeleted()))
+                .map(LabMapper::toResponse)
+                .toList();
     }
 }

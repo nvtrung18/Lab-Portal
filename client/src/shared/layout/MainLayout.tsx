@@ -1,9 +1,13 @@
 import { NavLink, Outlet } from 'react-router-dom';
 
+import { Header } from './Header';
+
 const navigationItems = [
   { label: 'Labs', path: '/labs' },
+  { label: 'Applications', path: '/applications' },
   { label: 'Booking', path: '/booking' },
   { label: 'Research', path: '/research' },
+  { label: 'Profile', path: '/profile' },
 ];
 
 export function MainLayout() {
@@ -35,17 +39,7 @@ export function MainLayout() {
       </aside>
 
       <div className="lg:pl-64">
-        <header className="sticky top-0 z-10 border-b border-slate-200 bg-white/95 px-4 py-4 shadow-sm backdrop-blur lg:px-8">
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <p className="text-xs font-medium uppercase text-slate-500">Dashboard</p>
-              <h1 className="text-xl font-semibold text-slate-950">Lab Management</h1>
-            </div>
-            <div className="rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-600">
-              User
-            </div>
-          </div>
-        </header>
+        <Header />
 
         <main className="px-4 py-6 lg:px-8">
           <Outlet />

@@ -1,5 +1,7 @@
 package com.web.labportalbackend.lab.controller;
 
+import com.web.labportalbackend.auth.entity.User;
+import com.web.labportalbackend.auth.repository.UserRepository;
 import com.web.labportalbackend.lab.service.ApplicationService;
 import com.web.labportalbackend.lab.dto.response.ApplicationResponseDTO;
 import com.web.labportalbackend.lab.dto.request.ApplyRequestDTO;
@@ -8,6 +10,7 @@ import com.web.labportalbackend.lab.dto.request.ReviewApplicationDTO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -16,6 +19,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -23,12 +27,13 @@ import org.springframework.web.bind.annotation.*;
  * Provides RESTful API for users to apply to laboratories and for admins to manage applications.
  */
 @RestController
-@RequestMapping("/api/applications")
+@RequestMapping("/applications")
 @Tag(name = "Applications", description = "CV application management endpoints")
 @RequiredArgsConstructor
 public class ApplicationController {
 
     private final ApplicationService applicationService;
+    private final UserRepository userRepository;
 
     /**
      * Submit a new CV application to a laboratory.
@@ -42,8 +47,11 @@ public class ApplicationController {
     @SecurityRequirement(name = "Bearer Authentication")
     public ResponseEntity<Response<ApplicationResponseDTO>> apply(
             @PathVariable Long labId,
-            @Valid @RequestBody ApplyRequestDTO request) {
-        ApplicationResponseDTO application = applicationService.apply(labId, request.getUserId(), request.getCvUrl());
+            @Valid @RequestBody ApplyRequestDTO request,
+            Authentication authentication) {
+        User currentUser = userRepository.findByUsername(authentication.getName())
+                .orElseThrow(() -> new EntityNotFoundException("Current user not found"));
+        ApplicationResponseDTO application = applicationService.apply(labId, currentUser.getId(), request.getCvUrl());
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(Response.ok("Application submitted successfully", application));
