@@ -4,25 +4,34 @@ import type { Response } from '../../../shared/types';
 export interface UserProfileResponse {
   id: number;
   email: string;
-  username: string;
+  username?: string;
   fullName: string;
   phone: string | null;
-  status: string;
+  avatarUrl?: string | null;
+  status?: string;
   roles: string[];
   memberships?: UserMembershipResponse[];
-  createdAt: string;
-  updatedAt: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface UserMembershipResponse {
-  labId: number;
-  labName: string;
+  id?: number;
+  labId?: number;
+  labName?: string;
+  lab?: {
+    id?: number;
+    name?: string;
+    labName?: string;
+  };
+  role?: string;
   status: string;
 }
 
 export interface UpdateProfileRequest {
   fullName: string;
   phone?: string | null;
+  avatarUrl?: string | null;
 }
 
 export async function getProfile(): Promise<UserProfileResponse> {

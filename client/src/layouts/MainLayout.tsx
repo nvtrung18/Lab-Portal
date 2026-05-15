@@ -4,6 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { clearAuthTokens, getStoredUser } from '../shared/api';
 import { LAB_MANAGER, STUDENT } from '../shared/constants/roles';
 import { hasActiveMembership } from '../shared/utils/membership';
+import { useCurrentUser } from '../modules/user/hooks';
 
 const studentNavItems = [
   { label: 'Profile', path: '/app/profile' },
@@ -30,7 +31,21 @@ const managerNavItems = [
 export function MainLayout() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const user = getStoredUser();
+  const storedUser = getStoredUser();
+  const { data: currentUser } = useCurrentUser();
+  const user = currentUser
+    ? {
+        id: currentUser.id,
+        fullName: currentUser.fullName,
+        email: currentUser.email,
+        roles: currentUser.roles.map((role) => role.replace(/^ROLE_/, '')),
+        memberships: currentUser.memberships?.map((membership) => ({
+          labId: membership.labId ?? membership.lab?.id ?? membership.id ?? 0,
+          labName: membership.labName ?? membership.lab?.name ?? membership.lab?.labName ?? 'Lab',
+          status: membership.status,
+        })),
+      }
+    : storedUser;
   const isManager = Boolean(user?.roles.includes(LAB_MANAGER));
   const isStudent = Boolean(user?.roles.includes(STUDENT));
   const portalTitle = isManager ? 'Manager Portal' : 'Student Portal';
@@ -90,7 +105,10 @@ export function MainLayout() {
                 <span className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-200 text-xs font-semibold text-slate-600">
                   {(user?.fullName || user?.email || 'U').charAt(0).toUpperCase()}
                 </span>
-                <span className="hidden sm:inline">{user?.fullName || user?.email || 'User'}</span>
+                <span className="hidden sm:block">
+                  <span className="block font-medium text-slate-800">{user?.fullName || user?.email || 'User'}</span>
+                  <span className="block text-xs text-slate-500">{roleLabel}</span>
+                </span>
               </div>
               <button
                 type="button"

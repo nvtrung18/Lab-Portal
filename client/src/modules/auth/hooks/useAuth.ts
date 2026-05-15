@@ -47,7 +47,11 @@ export function useAuth() {
       fullName: profile.fullName,
       email: profile.email,
       roles: normalizedRoles,
-      memberships: profile.memberships,
+      memberships: profile.memberships?.map((membership) => ({
+        labId: membership.labId ?? membership.lab?.id ?? membership.id ?? 0,
+        labName: membership.labName ?? membership.lab?.name ?? membership.lab?.labName ?? 'Lab',
+        status: membership.status,
+      })),
     };
 
     setStoredUser(storedUser);
