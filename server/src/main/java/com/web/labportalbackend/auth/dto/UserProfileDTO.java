@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Getter;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -36,6 +37,15 @@ public class UserProfileDTO {
 
     @Schema(description = "Assigned role names", example = "[\"STUDENT\"]")
     private Set<String> roles;
+
+    @Schema(description = "Current user's laboratory memberships")
+    private List<UserMembershipDTO> memberships;
+
+    @Schema(description = "Laboratory managed by current user when user is LAB_MANAGER")
+    private ManagedLabDTO managedLab;
+
+    @Schema(description = "Managed laboratory ID when user is LAB_MANAGER", example = "1")
+    private Long managedLabId;
 
     @Schema(description = "Account creation timestamp")
     private Instant createdAt;

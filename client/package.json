@@ -5,6 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:admin": "vite --host localhost --port 5173 --strictPort",
+    "dev:manager": "vite --host localhost --port 5174 --strictPort",
+    "dev:user": "vite --host localhost --port 5175 --strictPort",
     "build": "tsc --noEmit -p tsconfig.json && vite build",
     "preview": "vite preview",
     "lint": "eslint ."

@@ -1,10 +1,9 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
-import {
-  reviewApplication,
-  type ApplicationStatus,
-} from '../api';
 import { toast } from '../../../shared/components';
+import { LAB_MEMBERS_QUERY_KEY } from '../../lab/hooks/useLabMembers';
+import { USER_ME_QUERY_KEY } from '../../user/hooks';
+import { reviewApplication, type ApplicationStatus } from '../api';
 import { APPLICATIONS_QUERY_KEY } from './useApplications';
 
 interface ReviewApplicationVariables {
@@ -21,6 +20,8 @@ export function useReviewApplication() {
     onSuccess: () => {
       toast.success('Cập nhật trạng thái đơn thành công.');
       void queryClient.invalidateQueries({ queryKey: APPLICATIONS_QUERY_KEY });
+      void queryClient.invalidateQueries({ queryKey: LAB_MEMBERS_QUERY_KEY });
+      void queryClient.invalidateQueries({ queryKey: USER_ME_QUERY_KEY });
     },
     onError: () => {
       toast.error('Không thể duyệt đơn. Vui lòng thử lại.');

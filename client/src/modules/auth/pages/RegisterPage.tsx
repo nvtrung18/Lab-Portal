@@ -1,10 +1,207 @@
+import { zodResolver } from '@hookform/resolvers/zod';
+import axios from 'axios';
+import { Link, useNavigate } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { useState } from 'react';
+
+import { registerAPI } from '../api';
+import { PasswordVisibilityIcon } from '../components/PasswordVisibilityIcon';
+import type { Response } from '../../../shared/types';
+
+const registerSchema = z
+  .object({
+    fullName: z.string().trim().min(1, 'Vui lòng nhập họ tên'),
+    email: z
+      .string()
+      .trim()
+      .min(1, 'Vui lòng nhập email')
+      .email('Email không đúng định dạng'),
+    password: z.string().min(6, 'Mật khẩu tối thiểu 6 ký tự'),
+    confirmPassword: z.string().min(1, 'Vui lòng xác nhận mật khẩu'),
+  })
+  .refine((values) => values.password === values.confirmPassword, {
+    message: 'Mật khẩu xác nhận không khớp',
+    path: ['confirmPassword'],
+  });
+
+type RegisterFormValues = z.infer<typeof registerSchema>;
+
+function getErrorMessage(error: unknown) {
+  if (axios.isAxiosError(error)) {
+    const response = error.response?.data as Partial<Response<unknown>> | undefined;
+    return response?.message ?? 'Không thể đăng ký tài khoản.';
+  }
+
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  return 'Không thể đăng ký tài khoản. Vui lòng thử lại sau.';
+}
+
 export function RegisterPage() {
+  const navigate = useNavigate();
+  const [serverError, setServerError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<RegisterFormValues>({
+    resolver: zodResolver(registerSchema),
+    defaultValues: {
+      fullName: '',
+      email: '',
+      password: '',
+      confirmPassword: '',
+    },
+  });
+
+  const onSubmit = async (values: RegisterFormValues) => {
+    setServerError(null);
+    setSuccessMessage(null);
+
+    try {
+      await registerAPI({
+        fullName: values.fullName.trim(),
+        email: values.email.trim(),
+        password: values.password,
+      });
+      setSuccessMessage('Đăng ký thành công. Tài khoản mới sẽ có role STUDENT.');
+      window.setTimeout(() => navigate('/login', { replace: true }), 800);
+    } catch (error) {
+      setServerError(getErrorMessage(error));
+    }
+  };
+
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-8 shadow-sm">
-      <h1 className="text-2xl font-semibold text-slate-950">Register</h1>
-      <p className="mt-2 text-sm text-slate-600">
-        Registration screen placeholder.
-      </p>
-    </div>
+    <section className="w-full rounded-lg border border-slate-200 bg-white p-5 shadow-sm sm:p-8">
+      <div>
+        <h1 className="text-2xl font-semibold text-slate-950">Đăng ký tài khoản</h1>
+        <p className="mt-2 text-sm text-slate-600">
+          Tài khoản đăng ký mới mặc định là STUDENT.
+        </p>
+      </div>
+
+      <form className="mt-8 space-y-5" onSubmit={handleSubmit(onSubmit)}>
+        <div>
+          <label className="block text-sm font-medium text-slate-700" htmlFor="fullName">
+            Họ tên
+          </label>
+          <input
+            id="fullName"
+            autoComplete="name"
+            className="mt-2 block w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
+            disabled={isSubmitting}
+            {...register('fullName')}
+          />
+          {errors.fullName ? (
+            <p className="mt-2 text-sm text-red-600">{errors.fullName.message}</p>
+          ) : null}
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-slate-700" htmlFor="email">
+            Email
+          </label>
+          <input
+            id="email"
+            type="email"
+            autoComplete="email"
+            className="mt-2 block w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
+            disabled={isSubmitting}
+            {...register('email')}
+          />
+          {errors.email ? (
+            <p className="mt-2 text-sm text-red-600">{errors.email.message}</p>
+          ) : null}
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-slate-700" htmlFor="password">
+            Mật khẩu
+          </label>
+          <div className="relative mt-2">
+            <input
+              id="password"
+              type={showPassword ? 'text' : 'password'}
+              autoComplete="new-password"
+              className="block w-full rounded-md border border-slate-300 px-3 py-2 pr-12 text-sm text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
+              disabled={isSubmitting}
+              {...register('password')}
+            />
+            <button
+              type="button"
+              className="absolute inset-y-0 right-0 flex items-center px-3 text-slate-600 hover:text-slate-950 disabled:cursor-not-allowed disabled:text-slate-300"
+              disabled={isSubmitting}
+              aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+              onClick={() => setShowPassword((value) => !value)}
+            >
+              <PasswordVisibilityIcon visible={showPassword} />
+            </button>
+          </div>
+          {errors.password ? (
+            <p className="mt-2 text-sm text-red-600">{errors.password.message}</p>
+          ) : null}
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-slate-700" htmlFor="confirmPassword">
+            Xác nhận mật khẩu
+          </label>
+          <div className="relative mt-2">
+            <input
+              id="confirmPassword"
+              type={showConfirmPassword ? 'text' : 'password'}
+              autoComplete="new-password"
+              className="block w-full rounded-md border border-slate-300 px-3 py-2 pr-12 text-sm text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
+              disabled={isSubmitting}
+              {...register('confirmPassword')}
+            />
+            <button
+              type="button"
+              className="absolute inset-y-0 right-0 flex items-center px-3 text-slate-600 hover:text-slate-950 disabled:cursor-not-allowed disabled:text-slate-300"
+              disabled={isSubmitting}
+              aria-label={showConfirmPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+              onClick={() => setShowConfirmPassword((value) => !value)}
+            >
+              <PasswordVisibilityIcon visible={showConfirmPassword} />
+            </button>
+          </div>
+          {errors.confirmPassword ? (
+            <p className="mt-2 text-sm text-red-600">{errors.confirmPassword.message}</p>
+          ) : null}
+        </div>
+
+        {serverError ? (
+          <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+            {serverError}
+          </div>
+        ) : null}
+        {successMessage ? (
+          <div className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+            {successMessage}
+          </div>
+        ) : null}
+
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className="flex w-full items-center justify-center rounded-md bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400"
+        >
+          {isSubmitting ? 'Đang đăng ký...' : 'Đăng ký'}
+        </button>
+      </form>
+
+      <div className="mt-6 text-center text-sm text-slate-600">
+        Đã có tài khoản?{' '}
+        <Link className="font-semibold text-slate-950 hover:underline" to="/login">
+          Đăng nhập
+        </Link>
+      </div>
+    </section>
   );
 }

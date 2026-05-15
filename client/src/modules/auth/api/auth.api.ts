@@ -8,6 +8,12 @@ export interface LoginRequest {
   password: string;
 }
 
+export interface RegisterRequest {
+  fullName: string;
+  email: string;
+  password: string;
+}
+
 export interface LoginResponse {
   token?: string;
   accessToken?: string;
@@ -20,6 +26,8 @@ export interface LoginResponse {
   role?: string;
   roles?: string[];
 }
+
+export type RegisterResponse = LoginResponse;
 
 interface JwtPayload {
   role?: string;
@@ -114,4 +122,25 @@ export async function loginAPI(data: LoginRequest): Promise<LoginResult> {
     raw: auth,
     roleSource: 'jwt',
   };
+}
+
+function buildUsernameFromEmail(email: string) {
+  const [localPart] = email.trim().toLowerCase().split('@');
+  const normalized = localPart.replace(/[^a-z0-9._-]/g, '') || 'student';
+  const suffix = Date.now().toString().slice(-6);
+  return `${normalized.slice(0, 40)}${suffix}`;
+}
+
+export async function registerAPI(data: RegisterRequest): Promise<RegisterResponse> {
+  const response = await apiClient.post<Response<RegisterResponse>>(
+    '/api/auth/register',
+    {
+      fullName: data.fullName,
+      email: data.email,
+      username: buildUsernameFromEmail(data.email),
+      password: data.password,
+    },
+  );
+
+  return response.data.data;
 }

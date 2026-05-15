@@ -11,6 +11,12 @@ export interface UserProfileResponse {
   status?: string;
   roles: string[];
   memberships?: UserMembershipResponse[];
+  managedLab?: {
+    id?: number;
+    name?: string;
+    labName?: string;
+  } | null;
+  managedLabId?: number | null;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -26,6 +32,8 @@ export interface UserMembershipResponse {
   };
   role?: string;
   status: string;
+  joinedAt?: string;
+  createdAt?: string;
 }
 
 export interface UpdateProfileRequest {

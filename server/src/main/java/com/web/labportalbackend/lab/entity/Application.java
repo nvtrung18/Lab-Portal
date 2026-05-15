@@ -20,8 +20,6 @@ import lombok.Setter;
         @Index(name = "idx_app_status", columnList = "status"),
         @Index(name = "idx_app_created", columnList = "created_at"),
         @Index(name = "idx_app_deleted", columnList = "deleted")
-}, uniqueConstraints = {
-        @UniqueConstraint(name = "uk_app_user_lab", columnNames = {"user_id", "lab_id", "deleted"})
 })
 @Getter
 @Setter
@@ -37,8 +35,20 @@ public class Application extends BaseEntity {
     @JoinColumn(name = "lab_id", nullable = false, referencedColumnName = "id")
     private Laboratory laboratory;
 
-    @Column(name = "cv_url", nullable = false, length = 500)
+    @Column(name = "cv_url", length = 500)
     private String cvUrl;
+
+    @Column(name = "cv_file_url", length = 500)
+    private String cvFileUrl;
+
+    @Column(name = "cv_file_name", length = 255)
+    private String cvFileName;
+
+    @Column(name = "cv_content_type", length = 100)
+    private String cvContentType;
+
+    @Column(name = "cv_size")
+    private Long cvSize;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)

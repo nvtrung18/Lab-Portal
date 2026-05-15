@@ -9,6 +9,7 @@ import com.web.labportalbackend.auth.repository.UserRepository;
 import com.web.labportalbackend.auth.security.JwtProvider;
 import com.web.labportalbackend.auth.service.AuthService;
 import com.web.labportalbackend.common.enums.UserStatus;
+import com.web.labportalbackend.lab.repository.LaboratoryRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +23,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -33,6 +35,7 @@ public class AuthServiceImpl implements AuthService {
     private final AuthenticationManager authenticationManager;
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
+    private final LaboratoryRepository laboratoryRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtProvider jwtProvider;
 
@@ -92,6 +95,60 @@ public class AuthServiceImpl implements AuthService {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("User not found with ID: " + id));
         return AuthMapper.toUserResponse(user);
+    }
+
+    @Override @Transactional
+    public UserResponse updateUserRoles(Long id, Set<String> roles) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("User not found with ID: " + id));
+        if (user.hasRole("ADMIN")) {
+            throw new IllegalArgumentException("ADMIN user cannot be managed");
+        }
+        Set<String> normalizedRoles = roles.stream()
+                .map(role -> role.replace("ROLE_", "").toUpperCase())
+                .collect(Collectors.toSet());
+        if (normalizedRoles.contains("ADMIN")) {
+            throw new IllegalArgumentException("Cannot assign ADMIN role from admin user management");
+        }
+        if (user.hasRole("LAB_MANAGER") && !normalizedRoles.contains("LAB_MANAGER")
+                && laboratoryRepository.findFirstByManagerIdAndDeletedFalse(id).isPresent()) {
+            throw new IllegalArgumentException("Please unassign this manager from lab before changing role");
+        }
+        Set<Role> nextRoles = new HashSet<>();
+        for (String roleName : normalizedRoles) {
+            Role role = roleRepository.findByName(roleName)
+                    .orElseThrow(() -> new EntityNotFoundException("Role not found: " + roleName));
+            nextRoles.add(role);
+        }
+        user.setRoles(nextRoles);
+        return AuthMapper.toUserResponse(userRepository.save(user));
+    }
+
+    @Override @Transactional
+    public UserResponse banUser(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("User not found with ID: " + id));
+        if (user.hasRole("ADMIN")) {
+            throw new IllegalArgumentException("ADMIN user cannot be banned");
+        }
+        if (user.hasRole("LAB_MANAGER") && laboratoryRepository.findFirstByManagerIdAndDeletedFalse(id).isPresent()) {
+            throw new IllegalArgumentException("Please unassign this manager from lab before banning");
+        }
+        user.setStatus(UserStatus.SUSPENDED);
+        user.setActive(false);
+        return AuthMapper.toUserResponse(userRepository.save(user));
+    }
+
+    @Override @Transactional
+    public UserResponse unbanUser(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("User not found with ID: " + id));
+        if (user.hasRole("ADMIN")) {
+            throw new IllegalArgumentException("ADMIN user cannot be managed");
+        }
+        user.setStatus(UserStatus.ACTIVE);
+        user.setActive(true);
+        return AuthMapper.toUserResponse(userRepository.save(user));
     }
 
     private AuthResponse buildAuthResponse(User user) {

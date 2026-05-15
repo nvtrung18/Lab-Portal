@@ -21,6 +21,11 @@ spring:
       max-lifetime: 1200000
       pool-name: LabPortalHikariPool
 
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 12MB
+
   # -------------------- JPA / Hibernate --------------------
   jpa:
     hibernate:

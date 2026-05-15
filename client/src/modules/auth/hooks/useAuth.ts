@@ -47,10 +47,19 @@ export function useAuth() {
       fullName: profile.fullName,
       email: profile.email,
       roles: normalizedRoles,
+      managedLab: profile.managedLab?.id
+        ? {
+            id: profile.managedLab.id,
+            name: profile.managedLab.name ?? profile.managedLab.labName ?? 'Lab',
+          }
+        : null,
+      managedLabId: profile.managedLab?.id ?? profile.managedLabId ?? null,
       memberships: profile.memberships?.map((membership) => ({
         labId: membership.labId ?? membership.lab?.id ?? membership.id ?? 0,
         labName: membership.labName ?? membership.lab?.name ?? membership.lab?.labName ?? 'Lab',
+        role: membership.role,
         status: membership.status,
+        joinedAt: membership.joinedAt ?? membership.createdAt,
       })),
     };
 

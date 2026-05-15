@@ -6,11 +6,12 @@ import {
   AdminSettingsPage,
   AdminUsersPage,
 } from '../../modules/admin/pages';
-import { LoginPage } from '../../modules/auth/pages';
+import { ForgotPasswordPage, LoginPage, RegisterPage } from '../../modules/auth/pages';
 import { BookingPage, MyBookingsPage } from '../../modules/booking/pages';
 import {
   ApplicationListPage,
   CleaningPage,
+  LabMembersPage,
   LabListPage,
   LabOverviewPage,
 } from '../../modules/lab/pages';
@@ -37,6 +38,8 @@ export function AppRouter() {
     <Routes>
       <Route element={<AuthLayout />}>
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       </Route>
 
       <Route path="/403" element={<ForbiddenPage />} />
@@ -57,15 +60,15 @@ export function AppRouter() {
           <Route index element={<Navigate to="/app/profile" replace />} />
           <Route path="dashboard" element={<DashboardPlaceholder />} />
           <Route path="profile" element={<ProfilePage />} />
-          <Route path="research" element={<ResearchPage />} />
         </Route>
       </Route>
 
       <Route element={<ProtectedRoute allowedRoles={[STUDENT]} />}>
         <Route path="/app" element={<MainLayout />}>
           <Route path="labs" element={<LabListPage />} />
-          <Route path="my-bookings" element={<MyBookingsPage />} />
           <Route element={<ActiveMembershipRoute />}>
+            <Route path="my-bookings" element={<MyBookingsPage />} />
+            <Route path="research" element={<ResearchPage />} />
             <Route path="other" element={<OtherPage />} />
           </Route>
         </Route>
@@ -78,8 +81,9 @@ export function AppRouter() {
           <Route path="lab-info" element={<Navigate to="/app/lab-overview" replace />} />
           <Route path="lab-slots" element={<PlaceholderPage title="Lab Slots" />} />
           <Route path="lab-bookings" element={<BookingPage />} />
-          <Route path="lab-members" element={<PlaceholderPage title="Lab Members" />} />
+          <Route path="lab-members" element={<LabMembersPage />} />
           <Route path="cleaning" element={<CleaningPage />} />
+          <Route path="research" element={<ResearchPage />} />
         </Route>
       </Route>
 

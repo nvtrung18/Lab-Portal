@@ -44,13 +44,32 @@ public class LabServiceImpl implements LabService {
                 .orElseThrow(() -> new EntityNotFoundException("Laboratory not found with ID: " + labId));
         User manager = userRepository.findById(managerId)
                 .orElseThrow(() -> new EntityNotFoundException("User not found with ID: " + managerId));
-        if (!manager.hasRole("ADMIN")) {
-            throw new IllegalArgumentException("User must have ADMIN role to be assigned as lab manager");
+        if (!manager.hasRole("LAB_MANAGER")) {
+            throw new IllegalArgumentException("User must have LAB_MANAGER role to be assigned as lab manager");
+        }
+        laboratoryRepository.findFirstByManagerIdAndDeletedFalse(managerId)
+                .filter(existingLab -> !existingLab.getId().equals(labId))
+                .ifPresent(existingLab -> {
+                    throw new IllegalArgumentException("Lab manager is already assigned to another lab: " + existingLab.getLabName());
+                });
+        if (laboratory.getManager() != null && !laboratory.getManager().getId().equals(managerId)) {
+            laboratory.setManager(null);
         }
         laboratory.setManager(manager);
         Laboratory updatedLab = laboratoryRepository.save(laboratory);
         log.info("Manager assigned to laboratory: {} -> User: {} (ID: {})",
                 updatedLab.getLabName(), manager.getUsername(), manager.getId());
+        return LabMapper.toResponse(updatedLab);
+    }
+
+    @Override
+    @Transactional
+    public LabResponse updateStatus(Long labId, LabStatus status) {
+        Laboratory laboratory = laboratoryRepository.findById(labId)
+                .orElseThrow(() -> new EntityNotFoundException("Laboratory not found with ID: " + labId));
+        laboratory.setStatus(status);
+        Laboratory updatedLab = laboratoryRepository.save(laboratory);
+        log.info("Laboratory status updated: {} -> {}", updatedLab.getLabName(), status);
         return LabMapper.toResponse(updatedLab);
     }
 

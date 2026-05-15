@@ -9,11 +9,11 @@ import { useCurrentUser } from '../modules/user/hooks';
 const studentNavItems = [
   { label: 'Profile', path: '/app/profile' },
   { label: 'Labs', path: '/app/labs' },
-  { label: 'My Bookings', path: '/app/my-bookings' },
-  { label: 'Research', path: '/app/research' },
 ];
 
 const studentMembershipNavItems = [
+  { label: 'My Bookings', path: '/app/my-bookings' },
+  { label: 'Research', path: '/app/research' },
   { label: 'Other', path: '/app/other' },
 ];
 
@@ -39,10 +39,19 @@ export function MainLayout() {
         fullName: currentUser.fullName,
         email: currentUser.email,
         roles: currentUser.roles.map((role) => role.replace(/^ROLE_/, '')),
+        managedLab: currentUser.managedLab?.id
+          ? {
+              id: currentUser.managedLab.id,
+              name: currentUser.managedLab.name ?? currentUser.managedLab.labName ?? 'Lab',
+            }
+          : null,
+        managedLabId: currentUser.managedLab?.id ?? currentUser.managedLabId ?? null,
         memberships: currentUser.memberships?.map((membership) => ({
           labId: membership.labId ?? membership.lab?.id ?? membership.id ?? 0,
           labName: membership.labName ?? membership.lab?.name ?? membership.lab?.labName ?? 'Lab',
+          role: membership.role,
           status: membership.status,
+          joinedAt: membership.joinedAt ?? membership.createdAt,
         })),
       }
     : storedUser;
@@ -119,6 +128,24 @@ export function MainLayout() {
               </button>
             </div>
           </div>
+          <nav className="mt-4 flex gap-2 overflow-x-auto pb-1 lg:hidden">
+            {navItems.map((item) => (
+              <NavLink
+                key={item.path}
+                to={item.path}
+                className={({ isActive }) =>
+                  [
+                    'whitespace-nowrap rounded-md px-3 py-2 text-sm font-medium transition',
+                    isActive
+                      ? 'bg-slate-900 text-white'
+                      : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 hover:text-slate-950',
+                  ].join(' ')
+                }
+              >
+                {item.label}
+              </NavLink>
+            ))}
+          </nav>
         </header>
 
         <main className="px-4 py-6 lg:px-8">

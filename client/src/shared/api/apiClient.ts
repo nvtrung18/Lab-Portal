@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8080';
+export const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8080';
 export const AUTH_TOKEN_KEY = 'access_token';
 export const REFRESH_TOKEN_KEY = 'refreshToken';
 export const USER_ROLE_KEY = 'user_role';
@@ -12,12 +12,21 @@ export interface StoredUser {
   email: string;
   roles: string[];
   memberships?: UserMembership[];
+  managedLab?: ManagedLab | null;
+  managedLabId?: number | null;
 }
 
 export interface UserMembership {
   labId: number;
   labName: string;
+  role?: string;
   status: string;
+  joinedAt?: string;
+}
+
+export interface ManagedLab {
+  id: number;
+  name: string;
 }
 
 export function getAuthToken() {
@@ -113,3 +122,15 @@ apiClient.interceptors.response.use(
 );
 
 export default apiClient;
+
+export function resolveApiAssetUrl(url?: string | null) {
+  if (!url) {
+    return '';
+  }
+
+  if (/^https?:\/\//i.test(url)) {
+    return url;
+  }
+
+  return `${API_BASE_URL.replace(/\/$/, '')}/${url.replace(/^\//, '')}`;
+}

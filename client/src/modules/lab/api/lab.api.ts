@@ -13,13 +13,27 @@ export interface LabResponse {
   id: number;
   labName: string;
   description: string | null;
-  location: string;
-  capacity: number;
+  location: string | null;
+  capacity: number | null;
   department: string | null;
-  status: 'AVAILABLE' | 'MAINTENANCE' | 'CLOSED';
+  status: 'AVAILABLE' | 'ACTIVE' | 'MAINTENANCE' | 'INACTIVE' | 'ARCHIVED' | 'CLOSED';
   manager: LabManager | null;
+  applicationStatus?: 'PENDING' | 'APPROVED' | 'REJECTED' | null;
+  membershipStatus?: 'ACTIVE' | 'INACTIVE' | 'REMOVED' | null;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface LabMemberResponse {
+  id: number;
+  userId: number;
+  fullName: string | null;
+  email: string;
+  labId: number;
+  labName: string;
+  role: string;
+  status: string;
+  joinedAt?: string;
 }
 
 export async function getLabs(): Promise<LabResponse[]> {
@@ -27,13 +41,51 @@ export async function getLabs(): Promise<LabResponse[]> {
   return response.data.data;
 }
 
+export async function getLabById(labId: number): Promise<LabResponse> {
+  const response = await apiClient.get<Response<LabResponse>>(`/api/labs/${labId}`);
+  return response.data.data;
+}
+
+export async function getLabMembers(labId: number): Promise<LabMemberResponse[]> {
+  const response = await apiClient.get<Response<LabMemberResponse[]>>(
+    `/api/labs/${labId}/members`,
+  );
+  return response.data.data;
+}
+
+export async function removeLabMember(
+  labId: number,
+  userId: number,
+): Promise<LabMemberResponse> {
+  const response = await apiClient.patch<Response<LabMemberResponse>>(
+    `/api/labs/${labId}/members/${userId}/remove`,
+  );
+  return response.data.data;
+}
+
 export async function applyForLab(
   labId: number,
-  cvUrl: string,
+  payload: { cvUrl?: string; cvFile?: File | null },
 ): Promise<ApplicationResponse> {
+  const formData = new FormData();
+  const cvUrl = payload.cvUrl?.trim();
+
+  if (cvUrl) {
+    formData.append('cvUrl', cvUrl);
+  }
+
+  if (payload.cvFile) {
+    formData.append('cvFile', payload.cvFile);
+  }
+
   const response = await apiClient.post<Response<ApplicationResponse>>(
     `/api/labs/${labId}/apply`,
-    { cvUrl },
+    formData,
+    {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    },
   );
 
   return response.data.data;

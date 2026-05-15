@@ -6,5 +6,6 @@ package com.web.labportalbackend.common.enums;
 public enum LabStatus {
     AVAILABLE,
     MAINTENANCE,
+    INACTIVE,
     CLOSED
 }
