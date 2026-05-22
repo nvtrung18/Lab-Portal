@@ -2,7 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import axios from 'axios';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 
@@ -38,6 +38,7 @@ function getErrorMessage(error: unknown) {
 
 export function LoginPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const { saveSession } = useAuth();
   const [serverError, setServerError] = useState<string | null>(null);
@@ -68,7 +69,8 @@ export function LoginPage() {
         email: user.email,
         roles: user.roles,
       });
-      navigate(getPrimaryRedirectPath(user.roles), { replace: true });
+      const returnUrl = searchParams.get('returnUrl');
+      navigate(returnUrl || getPrimaryRedirectPath(user.roles), { replace: true });
     } catch (error) {
       setServerError(getErrorMessage(error));
     }

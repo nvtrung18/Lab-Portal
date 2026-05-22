@@ -23,6 +23,10 @@ public class TimeSlotResponse {
     @JsonProperty("endTime") private Instant endTime;
     @JsonProperty("capacity") private Integer capacity;
     @JsonProperty("bookedCount") private Long bookedCount;
+    @JsonProperty("approvedCount") private Long approvedCount;
+    @JsonProperty("checkedInCount") private Long checkedInCount;
+    @JsonProperty("pendingCount") private Long pendingCount;
+    @JsonProperty("remainingCapacity") private Long remainingCapacity;
     @JsonProperty("status") private TimeSlotStatus status;
     @JsonProperty("createdAt") private Instant createdAt;
     @JsonProperty("updatedAt") private Instant updatedAt;

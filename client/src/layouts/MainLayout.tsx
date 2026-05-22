@@ -24,6 +24,7 @@ const managerNavItems = [
   { label: 'Thành viên PTN', path: '/app/lab-members' },
   { label: 'Khung giờ sử dụng', path: '/app/lab-slots' },
   { label: 'Lịch sử dụng PTN', path: '/app/lab-bookings' },
+  { label: 'Xác nhận có mặt', path: '/app/checkin-scan' },
   { label: 'Vệ sinh PTN', path: '/app/cleaning' },
   { label: 'Nghiên cứu khoa học', path: '/app/research' },
 ];

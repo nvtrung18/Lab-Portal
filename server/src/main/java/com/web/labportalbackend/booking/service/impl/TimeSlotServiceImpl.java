@@ -214,11 +214,19 @@ public class TimeSlotServiceImpl implements TimeSlotService {
     }
 
     private TimeSlotResponse toResponse(TimeSlot slot) {
-        long bookedCount = bookingRepository.countActiveByTimeSlotIdAndStatus(
+        long approvedCount = bookingRepository.countActiveByTimeSlotIdAndStatusIn(
                 slot.getId(),
-                BookingStatus.APPROVED
+                List.of(BookingStatus.APPROVED, BookingStatus.CHECKED_IN)
         );
-        return TimeSlotMapper.toResponse(slot, bookedCount);
+        long checkedInCount = bookingRepository.countActiveByTimeSlotIdAndStatus(
+                slot.getId(),
+                BookingStatus.CHECKED_IN
+        );
+        long pendingCount = bookingRepository.countActiveByTimeSlotIdAndStatus(
+                slot.getId(),
+                BookingStatus.PENDING_APPROVAL
+        );
+        return TimeSlotMapper.toResponse(slot, approvedCount, checkedInCount, pendingCount);
     }
 
     private void notifySlotCancelled(
@@ -234,6 +242,12 @@ public class TimeSlotServiceImpl implements TimeSlotService {
                 .reason(reason)
                 .managerName(manager.getFullName() != null ? manager.getFullName() : manager.getEmail())
                 .build();
-        bookings.forEach(booking -> emailService.sendSlotCancelledEmail(booking.getUser().getEmail(), emailData));
+        bookings.forEach(booking -> {
+            try {
+                emailService.sendSlotCancelledEmail(booking.getUser().getEmail(), emailData);
+            } catch (RuntimeException ex) {
+                log.warn("Could not send slot cancellation email for booking {}: {}", booking.getId(), ex.getMessage());
+            }
+        });
     }
 }

@@ -5,6 +5,7 @@ export const BOOKING_STATUS_LABELS: Record<string, string> = {
   CANCELLED_BY_STUDENT: 'Sinh viên đã hủy',
   CANCELLED_BY_MANAGER: 'Quản lý đã hủy',
   CHECKED_IN: 'Đã xác nhận có mặt',
+  NO_SHOW: 'Vắng mặt',
   PENDING: 'Chờ phê duyệt',
   CONFIRMED: 'Đã phê duyệt',
   CANCELLED: 'Đã hủy',

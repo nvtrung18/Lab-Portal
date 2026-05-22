@@ -1,97 +1,161 @@
 package com.web.labportalbackend.booking.service.impl;
 
-import com.web.labportalbackend.booking.dto.response.CheckinResponse;
+import com.web.labportalbackend.auth.entity.User;
+import com.web.labportalbackend.auth.repository.UserRepository;
+import com.web.labportalbackend.booking.dto.response.BookingResponse;
+import com.web.labportalbackend.booking.dto.response.CheckinQrResponse;
 import com.web.labportalbackend.booking.entity.Booking;
 import com.web.labportalbackend.booking.mapper.BookingMapper;
 import com.web.labportalbackend.booking.repository.BookingRepository;
 import com.web.labportalbackend.booking.service.CheckinService;
 import com.web.labportalbackend.common.enums.BookingStatus;
-import com.web.labportalbackend.common.exception.InvalidCheckinTimeException;
+import com.web.labportalbackend.common.enums.TimeSlotStatus;
+import com.web.labportalbackend.lab.entity.Laboratory;
+import com.web.labportalbackend.lab.repository.LaboratoryRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.security.SecureRandom;
+import java.time.Duration;
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
+import java.util.Base64;
 
-/**
- * Implementation of CheckinService with time window validation.
- * 
- * Check-in window: [startTime - 15 minutes, endTime]
- * Only users with CONFIRMED bookings can check in.
- */
-@Slf4j
 @Service
 @RequiredArgsConstructor
 public class CheckinServiceImpl implements CheckinService {
 
-    private final BookingRepository bookingRepository;
+    private static final long CHECKIN_AFTER_START_MINUTES = 10;
+    private static final Duration QR_TOKEN_TTL = Duration.ofMinutes(2);
+    private static final String TOKEN_PREFIX = "checkin:token:";
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
-    private static final long CHECKIN_WINDOW_BEFORE_START_MINUTES = 15;
+    private final BookingRepository bookingRepository;
+    private final UserRepository userRepository;
+    private final LaboratoryRepository laboratoryRepository;
+    private final StringRedisTemplate redisTemplate;
+
+    @Override
+    @Transactional(readOnly = true)
+    public CheckinQrResponse createQrForCurrentStudent(Long bookingId) {
+        User currentUser = getCurrentUser();
+        if (!currentUser.hasRole("STUDENT")) {
+            throw new AccessDeniedException("Chỉ sinh viên mới được tạo mã QR check-in.");
+        }
+
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy đăng ký sử dụng PTN."));
+        validateStudentCanCreateQr(booking, currentUser);
+
+        Instant now = Instant.now();
+        Instant checkinEnd = checkinEnd(booking);
+        Duration remainingWindow = Duration.between(now, checkinEnd);
+        Duration ttl = remainingWindow.compareTo(QR_TOKEN_TTL) < 0 ? remainingWindow : QR_TOKEN_TTL;
+        if (ttl.isNegative() || ttl.isZero()) {
+            throw new IllegalStateException("Đã quá thời gian check-in.");
+        }
+
+        String token = createToken();
+        redisTemplate.opsForValue().set(tokenKey(token), booking.getId().toString(), ttl);
+        return CheckinQrResponse.builder()
+                .token(token)
+                .expiresAt(now.plus(ttl))
+                .message("Mã QR check-in đã được tạo.")
+                .build();
+    }
 
     @Override
     @Transactional
-    public CheckinResponse checkIn(Long bookingId, Long userId) {
-        log.debug("Processing check-in for booking {} by user {}", bookingId, userId);
-
-        // 1. Fetch and validate booking exists
-        Booking booking = bookingRepository.findById(bookingId)
-                .orElseThrow(() -> new EntityNotFoundException("Booking not found with ID: " + bookingId));
-
-        // 2. Verify ownership
-        if (!booking.getUser().getId().equals(userId)) {
-            throw new AccessDeniedException("You can only check in to your own bookings");
+    public BookingResponse confirmByCurrentManager(String token) {
+        User currentUser = getCurrentUser();
+        if (!currentUser.hasRole("LAB_MANAGER")) {
+            throw new AccessDeniedException("Chỉ quản lý PTN mới được xác nhận có mặt.");
         }
 
-        // 3. Verify booking status is CONFIRMED
-        if (booking.getStatus() != BookingStatus.CONFIRMED) {
-            throw new InvalidCheckinTimeException(bookingId, InvalidCheckinTimeException.Reason.INVALID_STATUS);
+        String normalizedToken = token == null ? "" : token.trim();
+        String redisKey = tokenKey(normalizedToken);
+        String bookingIdValue = redisTemplate.opsForValue().get(redisKey);
+        if (bookingIdValue == null) {
+            throw new IllegalArgumentException("Mã QR không hợp lệ hoặc đã hết hạn.");
         }
 
-        // 4. Verify already not checked in
-        if (booking.getStatus() == BookingStatus.CHECKED_IN) {
-            throw new IllegalStateException("Booking already checked in");
+        Booking booking = bookingRepository.findById(Long.valueOf(bookingIdValue))
+                .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy đăng ký sử dụng PTN."));
+        validateManagerCanConfirm(booking, currentUser);
+        if (!Boolean.TRUE.equals(redisTemplate.delete(redisKey))) {
+            throw new IllegalArgumentException("Mã QR không hợp lệ hoặc đã hết hạn.");
         }
 
-        // 5. Validate time window
-        Instant now = Instant.now();
-        Instant startTime = booking.getStartTime();
-        Instant endTime = booking.getEndTime();
-        Instant checkinWindowStart = startTime.minus(CHECKIN_WINDOW_BEFORE_START_MINUTES, ChronoUnit.MINUTES);
-
-        if (now.isBefore(checkinWindowStart)) {
-            log.warn("Check-in too early for booking {}: now={}, window_start={}", bookingId, now, checkinWindowStart);
-            throw new InvalidCheckinTimeException(bookingId, InvalidCheckinTimeException.Reason.TOO_EARLY);
-        }
-
-        if (now.isAfter(endTime)) {
-            log.warn("Check-in too late for booking {}: now={}, end_time={}", bookingId, now, endTime);
-            throw new InvalidCheckinTimeException(bookingId, InvalidCheckinTimeException.Reason.TOO_LATE);
-        }
-
-        // 6. Update booking status and timestamp
         booking.setStatus(BookingStatus.CHECKED_IN);
-        booking.setUpdatedAt(Instant.now());
-        Booking savedBooking = bookingRepository.save(booking);
+        Booking saved = bookingRepository.save(booking);
+        return BookingMapper.toResponse(saved);
+    }
 
-        log.info("User {} successfully checked in to booking {}", userId, bookingId);
+    private void validateStudentCanCreateQr(Booking booking, User student) {
+        if (!booking.getUser().getId().equals(student.getId())) {
+            throw new AccessDeniedException("Bạn không có quyền tạo mã QR cho đăng ký này.");
+        }
+        validateBookingCanCheckIn(booking);
+        validateCheckinWindow(booking);
+    }
 
-        // 7. Build response
-        return CheckinResponse.builder()
-                .bookingId(savedBooking.getId())
-                .userId(savedBooking.getUser().getId())
-                .labId(savedBooking.getLab().getId())
-                .slotId(savedBooking.getTimeSlot() != null ? savedBooking.getTimeSlot().getId() : null)
-                .checkedInAt(Instant.now())
-                .startTime(savedBooking.getStartTime())
-                .endTime(savedBooking.getEndTime())
-                .status(savedBooking.getStatus())
-                .message("Check-in successful")
-                .createdAt(savedBooking.getCreatedAt())
-                .updatedAt(savedBooking.getUpdatedAt())
-                .build();
+    private void validateManagerCanConfirm(Booking booking, User manager) {
+        Laboratory managedLab = laboratoryRepository.findFirstByManagerIdAndDeletedFalse(manager.getId())
+                .orElseThrow(() -> new AccessDeniedException("Quản lý PTN chưa được phân công phòng thí nghiệm."));
+        if (!booking.getLab().getId().equals(managedLab.getId())) {
+            throw new AccessDeniedException("Bạn không có quyền xác nhận cho PTN này.");
+        }
+        validateBookingCanCheckIn(booking);
+        validateCheckinWindow(booking);
+    }
+
+    private void validateBookingCanCheckIn(Booking booking) {
+        if (booking.getStatus() == BookingStatus.CHECKED_IN) {
+            throw new IllegalStateException("Đã xác nhận có mặt.");
+        }
+        if (booking.getStatus() != BookingStatus.APPROVED) {
+            throw new IllegalStateException("Đăng ký chưa được phê duyệt.");
+        }
+        if (booking.getTimeSlot() == null || booking.getTimeSlot().getStatus() == TimeSlotStatus.CANCELLED) {
+            throw new IllegalStateException("Khung giờ sử dụng đã bị hủy.");
+        }
+    }
+
+    private void validateCheckinWindow(Booking booking) {
+        Instant now = Instant.now();
+        if (now.isBefore(booking.getStartTime())) {
+            throw new IllegalStateException("Chưa đến giờ check-in.");
+        }
+        if (now.isAfter(checkinEnd(booking))) {
+            throw new IllegalStateException("Đã quá thời gian check-in.");
+        }
+    }
+
+    private Instant checkinEnd(Booking booking) {
+        return booking.getStartTime().plus(Duration.ofMinutes(CHECKIN_AFTER_START_MINUTES));
+    }
+
+    private String createToken() {
+        byte[] bytes = new byte[32];
+        SECURE_RANDOM.nextBytes(bytes);
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+    }
+
+    private String tokenKey(String token) {
+        return TOKEN_PREFIX + token;
+    }
+
+    private User getCurrentUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new AccessDeniedException("Yêu cầu đăng nhập.");
+        }
+        return userRepository.findByUsername(authentication.getName())
+                .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy người dùng hiện tại."));
     }
 }

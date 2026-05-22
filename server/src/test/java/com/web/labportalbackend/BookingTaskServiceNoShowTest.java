@@ -62,10 +62,10 @@ class BookingTaskServiceNoShowTest {
         Booking booking = new Booking();
         booking.setId(99L);
         booking.setUser(user);
-        booking.setStatus(BookingStatus.CONFIRMED);
+        booking.setStatus(BookingStatus.APPROVED);
         booking.setEndTime(Instant.now().minusSeconds(1800));
 
-        when(bookingRepository.findNoShowCandidates(eq(BookingStatus.CONFIRMED), any(Instant.class)))
+        when(bookingRepository.findNoShowCandidates(eq(BookingStatus.APPROVED), any(Instant.class)))
                 .thenReturn(List.of(booking));
         when(penaltyRepository.existsByBookingId(99L)).thenReturn(false);
         when(penaltyService.getCurrentPenaltyAmount()).thenReturn(BigDecimal.valueOf(50_000));

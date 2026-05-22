@@ -13,7 +13,7 @@ import {
   ResetPasswordPage,
   VerifyRegisterPage,
 } from '../../modules/auth/pages';
-import { BookingPage, LabSlotsPage, MyBookingsPage, SlotDetailPage } from '../../modules/booking/pages';
+import { BookingPage, CheckInPage, LabSlotsPage, MyBookingsPage, SlotDetailPage } from '../../modules/booking/pages';
 import {
   ApplicationListPage,
   CleaningPage,
@@ -81,6 +81,7 @@ export function AppRouter() {
           <Route path="lab-slots" element={<LabSlotsPage />} />
           <Route path="lab-slots/:slotId" element={<SlotDetailPage />} />
           <Route path="lab-bookings" element={<BookingPage />} />
+          <Route path="checkin-scan" element={<CheckInPage />} />
           <Route path="lab-members" element={<LabMembersPage />} />
           <Route path="cleaning" element={<CleaningPage />} />
           <Route path="research" element={<ResearchPage />} />

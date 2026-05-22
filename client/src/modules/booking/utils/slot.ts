@@ -18,7 +18,7 @@ function toNumber(value: unknown, fallback = 0): number {
 function normalizeStatus(
   rawStatus: string | undefined,
   capacity: number,
-  bookedCount: number,
+  approvedCount: number,
   endTime: string,
 ): string {
   const status = rawStatus?.toUpperCase() || 'AVAILABLE';
@@ -33,7 +33,7 @@ function normalizeStatus(
     return 'EXPIRED';
   }
 
-  if (status === 'AVAILABLE' && capacity > 0 && bookedCount >= capacity) {
+  if (status === 'AVAILABLE' && capacity > 0 && approvedCount >= capacity) {
     return 'FULL';
   }
 
@@ -42,20 +42,29 @@ function normalizeStatus(
 
 export function normalizeSlot(slot: RawSlotResponse): LabSlot {
   const capacity = toNumber(slot.capacity);
-  const bookedValue =
-    slot.bookedCount ?? slot.booked_count ?? slot.currentBookings ?? slot.current_bookings;
-  const hasBookedCount = typeof bookedValue === 'number' && Number.isFinite(bookedValue);
-  const bookedCount = toNumber(bookedValue);
+  const approvedValue =
+    slot.approvedCount ??
+    slot.approved_count ??
+    slot.bookedCount ??
+    slot.booked_count ??
+    slot.currentBookings ??
+    slot.current_bookings;
+  const checkedInValue = slot.checkedInCount ?? slot.checked_in_count;
+  const pendingValue = slot.pendingCount ?? slot.pending_count;
+  const hasBookedCount = typeof approvedValue === 'number' && Number.isFinite(approvedValue);
+  const approvedCount = toNumber(approvedValue);
+  const checkedInCount = toNumber(checkedInValue);
+  const pendingCount = toNumber(pendingValue);
   const remainingValue = slot.remainingCapacity ?? slot.remaining_capacity;
   const remainingCapacity =
     typeof remainingValue === 'number' && Number.isFinite(remainingValue)
       ? remainingValue
       : capacity > 0 && hasBookedCount
-        ? Math.max(capacity - bookedCount, 0)
+        ? Math.max(capacity - approvedCount, 0)
         : null;
   const startTime = slot.startTime ?? slot.start_time ?? '';
   const endTime = slot.endTime ?? slot.end_time ?? '';
-  const status = normalizeStatus(slot.status, capacity, bookedCount, endTime);
+  const status = normalizeStatus(slot.status, capacity, approvedCount, endTime);
 
   return {
     id: toNumber(slot.id),
@@ -64,7 +73,10 @@ export function normalizeSlot(slot: RawSlotResponse): LabSlot {
     startTime,
     endTime,
     capacity,
-    bookedCount,
+    bookedCount: approvedCount,
+    approvedCount,
+    checkedInCount,
+    pendingCount,
     hasBookedCount,
     remainingCapacity,
     status,

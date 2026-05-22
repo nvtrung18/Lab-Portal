@@ -72,6 +72,12 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     @Query("SELECT COUNT(b) FROM Booking b WHERE b.timeSlot.id = :slotId AND b.status = :status AND b.deleted = false AND b.active = true")
     long countActiveByTimeSlotIdAndStatus(@Param("slotId") Long slotId, @Param("status") BookingStatus status);
 
+    @Query("SELECT COUNT(b) FROM Booking b WHERE b.timeSlot.id = :slotId AND b.status IN :statuses AND b.deleted = false AND b.active = true")
+    long countActiveByTimeSlotIdAndStatusIn(
+            @Param("slotId") Long slotId,
+            @Param("statuses") List<BookingStatus> statuses
+    );
+
     /**
      * Check if a user has an existing (non-cancelled) booking for a slot.
      * Used for duplicate booking prevention.
@@ -92,13 +98,4 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
             @Param("cutoff") Instant cutoff
     );
 
-    @Query("SELECT b FROM Booking b JOIN FETCH b.user JOIN FETCH b.lab JOIN FETCH b.timeSlot ts " +
-           "WHERE b.status = 'APPROVED' " +
-           "AND ts.status <> 'CANCELLED' " +
-           "AND b.startTime >= :fromTime AND b.startTime <= :toTime " +
-           "AND b.deleted = false AND b.active = true")
-    List<Booking> findApprovedBookingsOpeningCheckinWindow(
-            @Param("fromTime") Instant fromTime,
-            @Param("toTime") Instant toTime
-    );
 }

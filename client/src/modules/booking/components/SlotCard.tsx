@@ -112,8 +112,14 @@ export function SlotCard({
         </div>
         {slot.hasBookedCount ? (
           <div>
-            <dt className="text-slate-500">Đã đăng ký</dt>
-            <dd className="mt-1 font-semibold text-slate-950">{slot.bookedCount}</dd>
+            <dt className="text-slate-500">Đã phê duyệt</dt>
+            <dd className="mt-1 font-semibold text-slate-950">{slot.approvedCount}</dd>
+          </div>
+        ) : null}
+        {slot.hasBookedCount ? (
+          <div>
+            <dt className="text-slate-500">Đã có mặt</dt>
+            <dd className="mt-1 font-semibold text-slate-950">{slot.checkedInCount}</dd>
           </div>
         ) : null}
         {slot.remainingCapacity !== null ? (

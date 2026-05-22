@@ -8,6 +8,5 @@ public interface EmailService {
     void sendBookingApprovedEmail(String email, BookingEmailData data);
     void sendBookingRejectedEmail(String email, BookingEmailData data);
     void sendBookingCancelledByStudentEmail(String email, BookingEmailData data);
-    void sendCheckInQrEmail(String email, BookingEmailData data);
     void sendSlotCancelledEmail(String email, SlotCancelledEmailData data);
 }

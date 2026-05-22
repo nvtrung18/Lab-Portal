@@ -19,6 +19,12 @@ export interface RawSlotResponse {
   capacity?: number;
   bookedCount?: number;
   booked_count?: number;
+  approvedCount?: number;
+  approved_count?: number;
+  checkedInCount?: number;
+  checked_in_count?: number;
+  pendingCount?: number;
+  pending_count?: number;
   currentBookings?: number;
   current_bookings?: number;
   remainingCapacity?: number;

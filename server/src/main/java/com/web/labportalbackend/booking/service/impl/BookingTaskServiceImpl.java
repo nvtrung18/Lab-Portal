@@ -45,7 +45,7 @@ public class BookingTaskServiceImpl implements BookingTaskService {
     @Transactional
     public int processNoShows() {
         Instant cutoff = Instant.now().minus(noShowGraceMinutes, ChronoUnit.MINUTES);
-        List<Booking> candidates = bookingRepository.findNoShowCandidates(BookingStatus.CONFIRMED, cutoff);
+        List<Booking> candidates = bookingRepository.findNoShowCandidates(BookingStatus.APPROVED, cutoff);
 
         for (Booking booking : candidates) {
             booking.setStatus(BookingStatus.NO_SHOW);

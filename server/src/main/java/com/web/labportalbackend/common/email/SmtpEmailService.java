@@ -100,7 +100,7 @@ public class SmtpEmailService implements EmailService {
                 "PTN: " + data.getLabName(),
                 "Thời gian: " + formatRange(data),
                 "Trạng thái: Đã phê duyệt",
-                "QR check-in sẽ được gửi khi đến thời gian check-in."
+                "Khi đến giờ sử dụng, sinh viên vui lòng mở hệ thống để tạo mã QR check-in và đưa cho quản lý PTN quét xác nhận."
         ));
     }
 
@@ -126,26 +126,13 @@ public class SmtpEmailService implements EmailService {
     }
 
     @Override
-    public void sendCheckInQrEmail(String email, BookingEmailData data) {
-        sendEmail(email, "QR check-in khung giờ sử dụng PTN", String.join("\n",
-                greeting(data),
-                "Bạn đã được phê duyệt tham gia khung giờ sử dụng PTN.",
-                "PTN: " + data.getLabName(),
-                "Thời gian: " + formatRange(data),
-                "Vui lòng sử dụng mã QR/link bên dưới để check-in trong thời gian cho phép.",
-                "Thời gian check-in: " + DATE_TIME_FORMATTER.format(data.getCheckInStart()) + " - " + DATE_TIME_FORMATTER.format(data.getCheckInEnd()),
-                "Check-in tại đây: " + data.getCheckInUrl()
-        ));
-    }
-
-    @Override
     public void sendSlotCancelledEmail(String email, SlotCancelledEmailData data) {
         String body = String.join("\n",
                 "Khung giờ sử dụng PTN của bạn đã bị hủy.",
                 "PTN: " + data.getLabName(),
                 "Thời gian: " + DATE_TIME_FORMATTER.format(data.getStartTime()) + " - " + DATE_TIME_FORMATTER.format(data.getEndTime()),
-                "Lý do: " + (data.getReason() == null || data.getReason().isBlank() ? "Không có ghi chú" : data.getReason()),
-                "Người quản lý PTN: " + (data.getManagerName() == null ? "Chưa cập nhật" : data.getManagerName()),
+                "Lý do: " + blankToDefault(data.getReason(), "Không có ghi chú"),
+                "Người quản lý PTN: " + blankToDefault(data.getManagerName(), "Chưa cập nhật"),
                 "Bạn có thể đăng ký khung giờ khác trên hệ thống."
         );
         sendEmail(email, "Thông báo hủy khung giờ sử dụng PTN", body);

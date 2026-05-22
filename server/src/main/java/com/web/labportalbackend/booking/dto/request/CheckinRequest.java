@@ -6,7 +6,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class CheckInRequest {
-    @NotBlank(message = "Token is required")
+public class CheckinRequest {
+    @NotBlank(message = "Vui lòng cung cấp token check-in.")
     private String token;
 }

@@ -1,9 +1,10 @@
 package com.web.labportalbackend.booking.service;
 
 import com.web.labportalbackend.booking.dto.response.BookingResponse;
+import com.web.labportalbackend.booking.dto.response.CheckinQrResponse;
 
-public interface CheckInService {
-    BookingResponse checkInCurrentUser(String token);
+public interface CheckinService {
+    CheckinQrResponse createQrForCurrentStudent(Long bookingId);
 
-    int sendDueCheckInEmails();
+    BookingResponse confirmByCurrentManager(String token);
 }

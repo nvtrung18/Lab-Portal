@@ -6,11 +6,19 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.Instant;
+
 @Getter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class CheckinResponse {
-    @JsonProperty("booking")
-    private BookingResponse booking;
+public class CheckinQrResponse {
+    @JsonProperty("token")
+    private String token;
+
+    @JsonProperty("expiresAt")
+    private Instant expiresAt;
+
+    @JsonProperty("message")
+    private String message;
 }

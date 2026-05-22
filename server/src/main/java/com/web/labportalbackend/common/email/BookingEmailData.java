@@ -14,7 +14,4 @@ public class BookingEmailData {
     private Instant endTime;
     private String status;
     private String note;
-    private String checkInUrl;
-    private Instant checkInStart;
-    private Instant checkInEnd;
 }

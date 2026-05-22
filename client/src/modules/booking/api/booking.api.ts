@@ -24,6 +24,16 @@ export interface ReviewBookingPayload {
   note?: string;
 }
 
+export interface CheckInResponse {
+  booking: BookingResponse;
+}
+
+export interface CheckinQrResponse {
+  token: string;
+  expiresAt: string;
+  message: string;
+}
+
 export async function createBooking(slotId: number): Promise<BookingResponse> {
   const response = await apiClient.post<Response<BookingResponse>>('/api/bookings', { slotId });
   return response.data.data;
@@ -44,7 +54,7 @@ export async function getMyBookings(): Promise<BookingResponse[]> {
 
 export async function getSlotRegistrations(slotId: number): Promise<BookingResponse[]> {
   const response = await apiClient.get<Response<BookingResponse[]>>(
-    `/api/slots/${slotId}/registrations`,
+    `/api/slots/${slotId}/bookings`,
   );
   return response.data.data;
 }
@@ -57,5 +67,15 @@ export async function reviewBooking(payload: ReviewBookingPayload): Promise<Book
       note: payload.note,
     },
   );
+  return response.data.data;
+}
+
+export async function createCheckinQr(bookingId: number): Promise<CheckinQrResponse> {
+  const response = await apiClient.post<Response<CheckinQrResponse>>('/api/checkin/qr', { bookingId });
+  return response.data.data;
+}
+
+export async function confirmCheckinByToken(token: string): Promise<CheckInResponse> {
+  const response = await apiClient.post<Response<CheckInResponse>>('/api/checkin/confirm', { token });
   return response.data.data;
 }

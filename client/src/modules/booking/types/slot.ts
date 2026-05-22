@@ -6,6 +6,9 @@ export interface LabSlot {
   endTime: string;
   capacity: number;
   bookedCount: number;
+  approvedCount: number;
+  checkedInCount: number;
+  pendingCount: number;
   hasBookedCount: boolean;
   remainingCapacity: number | null;
   status: string;

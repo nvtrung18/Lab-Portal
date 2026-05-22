@@ -11,6 +11,8 @@ import com.web.labportalbackend.booking.mapper.BookingMapper;
 import com.web.labportalbackend.booking.repository.BookingRepository;
 import com.web.labportalbackend.booking.repository.TimeSlotRepository;
 import com.web.labportalbackend.booking.service.BookingService;
+import com.web.labportalbackend.common.email.BookingEmailData;
+import com.web.labportalbackend.common.email.EmailService;
 import com.web.labportalbackend.common.enums.BookingStatus;
 import com.web.labportalbackend.common.enums.TimeSlotStatus;
 import com.web.labportalbackend.common.exception.DuplicateBookingException;
@@ -41,6 +43,7 @@ public class BookingServiceImpl implements BookingService {
     private final UserRepository userRepository;
     private final MembershipRepository membershipRepository;
     private final LaboratoryRepository laboratoryRepository;
+    private final EmailService emailService;
 
     @Override
     @Transactional
@@ -72,7 +75,12 @@ public class BookingServiceImpl implements BookingService {
         booking.setPurpose(request.getPurpose());
         booking.setParticipantsCount(request.getParticipantsCount() != null ? request.getParticipantsCount() : 1);
 
-        return BookingMapper.toResponse(bookingRepository.save(booking));
+        Booking saved = bookingRepository.save(booking);
+        safeSendEmail(() -> emailService.sendBookingCreatedEmail(
+                saved.getUser().getEmail(),
+                buildEmailData(saved, "Chờ phê duyệt", "Vui lòng chờ quản lý PTN phê duyệt.")
+        ));
+        return BookingMapper.toResponse(saved);
     }
 
     @Override
@@ -134,7 +142,11 @@ public class BookingServiceImpl implements BookingService {
         }
 
         booking.setStatus(BookingStatus.CANCELLED_BY_STUDENT);
-        bookingRepository.save(booking);
+        Booking saved = bookingRepository.save(booking);
+        safeSendEmail(() -> emailService.sendBookingCancelledByStudentEmail(
+                saved.getUser().getEmail(),
+                buildEmailData(saved, "Sinh viên đã hủy", null)
+        ));
         refreshSlotFullStatus(booking.getTimeSlot());
     }
 
@@ -151,9 +163,9 @@ public class BookingServiceImpl implements BookingService {
 
         String decision = request.getDecision().trim().toUpperCase();
         if ("APPROVE".equals(decision)) {
-            long approvedCount = bookingRepository.countActiveByTimeSlotIdAndStatus(
+            long approvedCount = bookingRepository.countActiveByTimeSlotIdAndStatusIn(
                     booking.getTimeSlot().getId(),
-                    BookingStatus.APPROVED
+                    List.of(BookingStatus.APPROVED, BookingStatus.CHECKED_IN)
             );
             if (approvedCount >= booking.getTimeSlot().getCapacity()) {
                 throw new IllegalStateException("Khung giờ đã đủ số lượng.");
@@ -167,6 +179,17 @@ public class BookingServiceImpl implements BookingService {
 
         Booking saved = bookingRepository.save(booking);
         refreshSlotFullStatus(saved.getTimeSlot());
+        if (saved.getStatus() == BookingStatus.APPROVED) {
+            safeSendEmail(() -> emailService.sendBookingApprovedEmail(
+                    saved.getUser().getEmail(),
+                    buildEmailData(saved, "Đã phê duyệt", "Khi đến giờ sử dụng, sinh viên vui lòng mở hệ thống để tạo mã QR check-in và đưa cho quản lý PTN quét xác nhận.")
+            ));
+        } else if (saved.getStatus() == BookingStatus.REJECTED) {
+            safeSendEmail(() -> emailService.sendBookingRejectedEmail(
+                    saved.getUser().getEmail(),
+                    buildEmailData(saved, "Không được phê duyệt", request.getNote())
+            ));
+        }
         return BookingMapper.toResponse(saved);
     }
 
@@ -202,13 +225,35 @@ public class BookingServiceImpl implements BookingService {
         if (slot == null || slot.getStatus() == TimeSlotStatus.CANCELLED) {
             return;
         }
-        long approvedCount = bookingRepository.countActiveByTimeSlotIdAndStatus(slot.getId(), BookingStatus.APPROVED);
+        long approvedCount = bookingRepository.countActiveByTimeSlotIdAndStatusIn(
+                slot.getId(),
+                List.of(BookingStatus.APPROVED, BookingStatus.CHECKED_IN)
+        );
         if (approvedCount >= slot.getCapacity()) {
             slot.setStatus(TimeSlotStatus.FULL);
         } else if (slot.getStatus() == TimeSlotStatus.FULL) {
             slot.setStatus(TimeSlotStatus.AVAILABLE);
         }
         timeSlotRepository.save(slot);
+    }
+
+    private BookingEmailData buildEmailData(Booking booking, String status, String note) {
+        return BookingEmailData.builder()
+                .studentName(booking.getUser().getFullName())
+                .labName(booking.getLab().getLabName())
+                .startTime(booking.getStartTime())
+                .endTime(booking.getEndTime())
+                .status(status)
+                .note(note)
+                .build();
+    }
+
+    private void safeSendEmail(Runnable emailAction) {
+        try {
+            emailAction.run();
+        } catch (RuntimeException ex) {
+            log.warn("Could not send booking notification email: {}", ex.getMessage());
+        }
     }
 
     private void assertManagerOwnsLab(User currentUser, Laboratory lab) {

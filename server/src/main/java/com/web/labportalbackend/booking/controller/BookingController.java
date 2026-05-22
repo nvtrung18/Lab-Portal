@@ -76,4 +76,11 @@ public class BookingController {
     public ResponseEntity<Response<List<BookingResponse>>> getSlotRegistrations(@PathVariable Long slotId) {
         return ResponseEntity.ok(Response.ok("Slot registrations retrieved successfully", bookingService.getBookingsBySlot(slotId)));
     }
+
+    @GetMapping("/slots/{slotId}/bookings")
+    @PreAuthorize("hasRole('LAB_MANAGER')")
+    @Operation(summary = "Get slot bookings", description = "Get bookings registered for a time slot")
+    public ResponseEntity<Response<List<BookingResponse>>> getSlotBookings(@PathVariable Long slotId) {
+        return ResponseEntity.ok(Response.ok("Slot bookings retrieved successfully", bookingService.getBookingsBySlot(slotId)));
+    }
 }

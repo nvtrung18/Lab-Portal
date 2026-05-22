@@ -1,9 +1,11 @@
 package com.web.labportalbackend.booking.controller;
 
-import com.web.labportalbackend.booking.dto.request.CheckInRequest;
+import com.web.labportalbackend.booking.dto.request.CheckinRequest;
+import com.web.labportalbackend.booking.dto.request.CreateCheckinQrRequest;
 import com.web.labportalbackend.booking.dto.response.BookingResponse;
-import com.web.labportalbackend.booking.dto.response.CheckInResponse;
-import com.web.labportalbackend.booking.service.CheckInService;
+import com.web.labportalbackend.booking.dto.response.CheckinQrResponse;
+import com.web.labportalbackend.booking.dto.response.CheckinResponse;
+import com.web.labportalbackend.booking.service.CheckinService;
 import com.web.labportalbackend.common.dto.Response;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
@@ -16,18 +18,26 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
-public class CheckInController {
+public class CheckinController {
 
-    private final CheckInService checkInService;
+    private final CheckinService checkinService;
 
-    @PostMapping("/checkin")
+    @PostMapping("/checkin/qr")
     @PreAuthorize("hasRole('STUDENT')")
-    @Operation(summary = "Check in by QR token", description = "Confirm attendance for an approved booking")
-    public ResponseEntity<Response<CheckInResponse>> checkIn(@Valid @RequestBody CheckInRequest request) {
-        BookingResponse booking = checkInService.checkInCurrentUser(request.getToken());
+    @Operation(summary = "Create check-in QR token", description = "Create a short-lived QR token for an approved booking")
+    public ResponseEntity<Response<CheckinQrResponse>> createQr(@Valid @RequestBody CreateCheckinQrRequest request) {
+        CheckinQrResponse result = checkinService.createQrForCurrentStudent(request.getBookingId());
+        return ResponseEntity.ok(Response.ok(result.getMessage(), result));
+    }
+
+    @PostMapping("/checkin/confirm")
+    @PreAuthorize("hasRole('LAB_MANAGER')")
+    @Operation(summary = "Confirm check-in by QR token", description = "Lab manager confirms student attendance by QR token")
+    public ResponseEntity<Response<CheckinResponse>> confirm(@Valid @RequestBody CheckinRequest request) {
+        BookingResponse booking = checkinService.confirmByCurrentManager(request.getToken());
         return ResponseEntity.ok(Response.ok(
-                "Check-in thành công.",
-                CheckInResponse.builder().booking(booking).build()
+                "Xác nhận có mặt thành công.",
+                CheckinResponse.builder().booking(booking).build()
         ));
     }
 }

@@ -1,9 +1,11 @@
-import axios from 'axios';
+﻿import axios from 'axios';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { toast } from '../../../shared/components';
 import {
   cancelBooking,
+  confirmCheckinByToken,
+  createCheckinQr,
   createBooking,
   getMyBookings,
   getSlotRegistrations,
@@ -104,3 +106,34 @@ export function useReviewBooking(labId?: number | null, slotId?: number | null) 
     },
   });
 }
+
+export function useCreateCheckinQr() {
+  return useMutation({
+    mutationFn: (bookingId: number) => createCheckinQr(bookingId),
+    onError: (error) => {
+      toast.error(getErrorMessage(error, 'Không thể tạo mã QR check-in.'));
+    },
+  });
+}
+
+export function useConfirmCheckIn() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (token: string) => confirmCheckinByToken(token),
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: MY_BOOKINGS_QUERY_KEY });
+      if (result.booking.labId) {
+        queryClient.invalidateQueries({ queryKey: [...LAB_SLOTS_QUERY_KEY, result.booking.labId] });
+      }
+      if (result.booking.slotId) {
+        queryClient.invalidateQueries({ queryKey: [...SLOT_REGISTRATIONS_QUERY_KEY, result.booking.slotId] });
+      }
+      toast.success('Xác nhận có mặt thành công.');
+    },
+    onError: (error) => {
+      toast.error(getErrorMessage(error, 'Không thể xác nhận có mặt. Vui lòng thử lại sau.'));
+    },
+  });
+}
+
