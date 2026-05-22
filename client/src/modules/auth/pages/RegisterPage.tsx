@@ -1,200 +1,281 @@
-import { zodResolver } from '@hookform/resolvers/zod';
 import axios from 'axios';
+import { type FormEvent, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
-import { z } from 'zod';
-import { useState } from 'react';
 
-import { registerAPI } from '../api';
-import { PasswordVisibilityIcon } from '../components/PasswordVisibilityIcon';
+import { PasswordVisibilityIcon } from '../components';
+import { registerAPI, sendRegisterCodeAPI, verifyRegisterCodeAPI } from '../api';
 import type { Response } from '../../../shared/types';
 
-const registerSchema = z
-  .object({
-    fullName: z.string().trim().min(1, 'Vui lòng nhập họ tên'),
-    email: z
-      .string()
-      .trim()
-      .min(1, 'Vui lòng nhập email')
-      .email('Email không đúng định dạng'),
-    password: z.string().min(6, 'Mật khẩu tối thiểu 6 ký tự'),
-    confirmPassword: z.string().min(1, 'Vui lòng xác nhận mật khẩu'),
-  })
-  .refine((values) => values.password === values.confirmPassword, {
-    message: 'Mật khẩu xác nhận không khớp',
-    path: ['confirmPassword'],
-  });
+type RegisterStep = 'email' | 'otp' | 'profile';
 
-type RegisterFormValues = z.infer<typeof registerSchema>;
+const steps: Array<{ key: RegisterStep; label: string }> = [
+  { key: 'email', label: 'Email' },
+  { key: 'otp', label: 'Mã xác nhận' },
+  { key: 'profile', label: 'Tài khoản' },
+];
 
 function getErrorMessage(error: unknown) {
   if (axios.isAxiosError(error)) {
     const response = error.response?.data as Partial<Response<unknown>> | undefined;
-    return response?.message ?? 'Không thể đăng ký tài khoản.';
-  }
-
-  if (error instanceof Error) {
-    return error.message;
+    return response?.message ?? response?.errors?.[0] ?? 'Không thể đăng ký tài khoản.';
   }
 
   return 'Không thể đăng ký tài khoản. Vui lòng thử lại sau.';
 }
 
+function isValidEmail(value: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
 export function RegisterPage() {
   const navigate = useNavigate();
-  const [serverError, setServerError] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [step, setStep] = useState<RegisterStep>('email');
+  const [email, setEmail] = useState('');
+  const [code, setCode] = useState('');
+  const [verificationToken, setVerificationToken] = useState('');
+  const [fullName, setFullName] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-  } = useForm<RegisterFormValues>({
-    resolver: zodResolver(registerSchema),
-    defaultValues: {
-      fullName: '',
-      email: '',
-      password: '',
-      confirmPassword: '',
-    },
-  });
+  const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const onSubmit = async (values: RegisterFormValues) => {
-    setServerError(null);
-    setSuccessMessage(null);
+  const normalizedEmail = email.trim().toLowerCase();
+  const currentStepIndex = steps.findIndex((item) => item.key === step);
 
+  const handleSendCode = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setError('');
+    setMessage('');
+
+    if (!normalizedEmail) {
+      setError('Vui lòng nhập email.');
+      return;
+    }
+    if (!isValidEmail(normalizedEmail)) {
+      setError('Email không hợp lệ.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const result = await sendRegisterCodeAPI({ email: normalizedEmail });
+      setEmail(result.email || normalizedEmail);
+      setMessage(result.message);
+      setStep('otp');
+    } catch (submitError) {
+      setError(getErrorMessage(submitError));
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleVerifyCode = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setError('');
+    setMessage('');
+
+    if (!/^\d{6}$/.test(code.trim())) {
+      setError('Vui lòng nhập mã xác nhận gồm 6 số.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const result = await verifyRegisterCodeAPI({
+        email: normalizedEmail,
+        code: code.trim(),
+      });
+      setVerificationToken(result.verificationToken);
+      setMessage(result.message);
+      setStep('profile');
+    } catch (submitError) {
+      setError(getErrorMessage(submitError));
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleCompleteRegister = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setError('');
+    setMessage('');
+
+    if (!verificationToken) {
+      setError('Phiên xác thực email đã hết hạn. Vui lòng gửi lại mã xác nhận.');
+      setStep('email');
+      return;
+    }
+    if (!fullName.trim()) {
+      setError('Vui lòng nhập họ và tên.');
+      return;
+    }
+    if (password.length < 6) {
+      setError('Mật khẩu tối thiểu 6 ký tự.');
+      return;
+    }
+    if (password !== confirmPassword) {
+      setError('Mật khẩu nhập lại không khớp.');
+      return;
+    }
+
+    setIsSubmitting(true);
     try {
       await registerAPI({
-        fullName: values.fullName.trim(),
-        email: values.email.trim(),
-        password: values.password,
+        email: normalizedEmail,
+        verificationToken,
+        fullName: fullName.trim(),
+        password,
       });
-      setSuccessMessage('Đăng ký thành công. Tài khoản mới sẽ có role STUDENT.');
-      window.setTimeout(() => navigate('/login', { replace: true }), 800);
-    } catch (error) {
-      setServerError(getErrorMessage(error));
+      navigate('/login', { replace: true });
+    } catch (submitError) {
+      setError(getErrorMessage(submitError));
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
     <section className="w-full rounded-lg border border-slate-200 bg-white p-5 shadow-sm sm:p-8">
-      <div>
-        <h1 className="text-2xl font-semibold text-slate-950">Đăng ký tài khoản</h1>
-        <p className="mt-2 text-sm text-slate-600">
-          Tài khoản đăng ký mới mặc định là STUDENT.
-        </p>
+      <h1 className="text-2xl font-semibold text-slate-950">Đăng ký tài khoản</h1>
+      <p className="mt-2 text-sm text-slate-600">
+        Tài khoản mới mặc định là STUDENT và cần xác thực email trước khi tạo.
+      </p>
+
+      <div className="my-6 grid w-full grid-cols-3 items-center gap-2 text-center">
+        {steps.map((item, index) => (
+          <div
+            key={item.key}
+            className={[
+              'flex min-w-0 items-center justify-center whitespace-nowrap text-xs font-medium text-slate-400 sm:text-sm',
+              index === currentStepIndex ? 'font-bold text-slate-950' : '',
+              index < currentStepIndex ? 'text-emerald-700' : '',
+            ].join(' ')}
+          >
+            {index + 1}. {item.label}
+          </div>
+        ))}
       </div>
 
-      <form className="mt-8 space-y-5" onSubmit={handleSubmit(onSubmit)}>
-        <div>
-          <label className="block text-sm font-medium text-slate-700" htmlFor="fullName">
-            Họ tên
-          </label>
+      {step === 'email' ? (
+        <form className="space-y-5" onSubmit={handleSendCode}>
           <input
-            id="fullName"
-            autoComplete="name"
-            className="mt-2 block w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
-            disabled={isSubmitting}
-            {...register('fullName')}
-          />
-          {errors.fullName ? (
-            <p className="mt-2 text-sm text-red-600">{errors.fullName.message}</p>
-          ) : null}
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-slate-700" htmlFor="email">
-            Email
-          </label>
-          <input
-            id="email"
+            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-900"
+            placeholder="Email"
             type="email"
-            autoComplete="email"
-            className="mt-2 block w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
-            disabled={isSubmitting}
-            {...register('email')}
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
           />
-          {errors.email ? (
-            <p className="mt-2 text-sm text-red-600">{errors.email.message}</p>
-          ) : null}
-        </div>
+          <button
+            className="w-full rounded-md bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white disabled:bg-slate-400"
+            disabled={isSubmitting}
+            type="submit"
+          >
+            {isSubmitting ? 'Đang gửi...' : 'Gửi mã xác nhận'}
+          </button>
+        </form>
+      ) : null}
 
-        <div>
-          <label className="block text-sm font-medium text-slate-700" htmlFor="password">
-            Mật khẩu
-          </label>
-          <div className="relative mt-2">
+      {step === 'otp' ? (
+        <form className="space-y-5" onSubmit={handleVerifyCode}>
+          <p className="break-words rounded-md bg-slate-50 px-3 py-2 text-sm text-slate-700">
+            Mã xác nhận đã được gửi tới:{' '}
+            <span className="font-semibold text-slate-950">{normalizedEmail}</span>
+          </p>
+          <input
+            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-900"
+            inputMode="numeric"
+            maxLength={6}
+            placeholder="Mã xác nhận 6 số"
+            value={code}
+            onChange={(event) => setCode(event.target.value.replace(/\D/g, ''))}
+          />
+          <button
+            className="w-full rounded-md bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white disabled:bg-slate-400"
+            disabled={isSubmitting}
+            type="submit"
+          >
+            {isSubmitting ? 'Đang xác thực...' : 'Xác thực email'}
+          </button>
+          <button
+            className="w-full rounded-md border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700 disabled:text-slate-400"
+            disabled={isSubmitting}
+            type="button"
+            onClick={() => setStep('email')}
+          >
+            Đổi email
+          </button>
+        </form>
+      ) : null}
+
+      {step === 'profile' ? (
+        <form className="space-y-5" onSubmit={handleCompleteRegister}>
+          <p className="break-words rounded-md bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+            Email đã được xác thực:{' '}
+            <span className="font-semibold text-emerald-900">{normalizedEmail}</span>
+          </p>
+          <input
+            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-900"
+            placeholder="Họ và tên"
+            value={fullName}
+            onChange={(event) => setFullName(event.target.value)}
+          />
+          <div className="relative">
             <input
-              id="password"
+              className="w-full rounded-md border border-slate-300 px-3 py-2 pr-12 text-sm outline-none focus:border-slate-900"
+              placeholder="Mật khẩu"
               type={showPassword ? 'text' : 'password'}
-              autoComplete="new-password"
-              className="block w-full rounded-md border border-slate-300 px-3 py-2 pr-12 text-sm text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
-              disabled={isSubmitting}
-              {...register('password')}
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
             />
             <button
-              type="button"
-              className="absolute inset-y-0 right-0 flex items-center px-3 text-slate-600 hover:text-slate-950 disabled:cursor-not-allowed disabled:text-slate-300"
-              disabled={isSubmitting}
               aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+              className="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-slate-600"
               onClick={() => setShowPassword((value) => !value)}
+              type="button"
             >
               <PasswordVisibilityIcon visible={showPassword} />
             </button>
           </div>
-          {errors.password ? (
-            <p className="mt-2 text-sm text-red-600">{errors.password.message}</p>
-          ) : null}
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-slate-700" htmlFor="confirmPassword">
-            Xác nhận mật khẩu
-          </label>
-          <div className="relative mt-2">
+          <div className="relative">
             <input
-              id="confirmPassword"
+              className="w-full rounded-md border border-slate-300 px-3 py-2 pr-12 text-sm outline-none focus:border-slate-900"
+              placeholder="Nhập lại mật khẩu"
               type={showConfirmPassword ? 'text' : 'password'}
-              autoComplete="new-password"
-              className="block w-full rounded-md border border-slate-300 px-3 py-2 pr-12 text-sm text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
-              disabled={isSubmitting}
-              {...register('confirmPassword')}
+              value={confirmPassword}
+              onChange={(event) => setConfirmPassword(event.target.value)}
             />
             <button
-              type="button"
-              className="absolute inset-y-0 right-0 flex items-center px-3 text-slate-600 hover:text-slate-950 disabled:cursor-not-allowed disabled:text-slate-300"
-              disabled={isSubmitting}
               aria-label={showConfirmPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+              className="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-slate-600"
               onClick={() => setShowConfirmPassword((value) => !value)}
+              type="button"
             >
               <PasswordVisibilityIcon visible={showConfirmPassword} />
             </button>
           </div>
-          {errors.confirmPassword ? (
-            <p className="mt-2 text-sm text-red-600">{errors.confirmPassword.message}</p>
-          ) : null}
+          <button
+            className="w-full rounded-md bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white disabled:bg-slate-400"
+            disabled={isSubmitting}
+            type="submit"
+          >
+            {isSubmitting ? 'Đang đăng ký...' : 'Đăng ký'}
+          </button>
+        </form>
+      ) : null}
+
+      {error ? (
+        <div className="mt-5 break-words rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          {error}
         </div>
-
-        {serverError ? (
-          <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-            {serverError}
-          </div>
-        ) : null}
-        {successMessage ? (
-          <div className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
-            {successMessage}
-          </div>
-        ) : null}
-
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="flex w-full items-center justify-center rounded-md bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400"
-        >
-          {isSubmitting ? 'Đang đăng ký...' : 'Đăng ký'}
-        </button>
-      </form>
+      ) : null}
+      {message ? (
+        <div className="mt-5 break-words rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+          {message}
+        </div>
+      ) : null}
 
       <div className="mt-6 text-center text-sm text-slate-600">
         Đã có tài khoản?{' '}

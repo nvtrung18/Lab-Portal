@@ -28,7 +28,7 @@ public interface TimeSlotRepository extends JpaRepository<TimeSlot, Long> {
      * @param labId the lab ID
      * @return list of active time slots for the lab
      */
-    @Query("SELECT ts FROM TimeSlot ts WHERE ts.lab.id = :labId AND ts.deleted = false AND ts.active = true")
+    @Query("SELECT ts FROM TimeSlot ts WHERE ts.lab.id = :labId AND ts.deleted = false AND ts.active = true ORDER BY ts.startTime ASC")
     List<TimeSlot> findByLabId(@Param("labId") Long labId);
 
     /**

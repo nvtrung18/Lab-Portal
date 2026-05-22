@@ -1,6 +1,8 @@
 package com.web.labportalbackend.booking.dto.request;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.web.labportalbackend.common.enums.TimeSlotStatus;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -18,8 +20,9 @@ import java.time.Instant;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CreateTimeSlotRequest {
-    @NotNull(message = "Lab ID is required") @JsonProperty("lab_id") private Long labId;
-    @NotNull(message = "Start time is required") @JsonProperty("start_time") private Instant startTime;
-    @NotNull(message = "End time is required") @JsonProperty("end_time") private Instant endTime;
+    @NotNull(message = "Lab ID is required") @JsonProperty("labId") @JsonAlias("lab_id") private Long labId;
+    @NotNull(message = "Start time is required") @JsonProperty("startTime") @JsonAlias("start_time") private Instant startTime;
+    @NotNull(message = "End time is required") @JsonProperty("endTime") @JsonAlias("end_time") private Instant endTime;
     @NotNull(message = "Capacity is required") @Min(value = 1, message = "Capacity must be at least 1") @JsonProperty("capacity") private Integer capacity;
+    @JsonProperty("status") private TimeSlotStatus status;
 }

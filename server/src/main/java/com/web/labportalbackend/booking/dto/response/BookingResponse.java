@@ -18,14 +18,17 @@ import java.time.Instant;
 @AllArgsConstructor
 public class BookingResponse {
     @JsonProperty("id") private Long id;
-    @JsonProperty("user_id") private Long userId;
-    @JsonProperty("lab_id") private Long labId;
-    @JsonProperty("slot_id") private Long slotId;
-    @JsonProperty("start_time") private Instant startTime;
-    @JsonProperty("end_time") private Instant endTime;
+    @JsonProperty("userId") private Long userId;
+    @JsonProperty("studentName") private String studentName;
+    @JsonProperty("studentEmail") private String studentEmail;
+    @JsonProperty("labId") private Long labId;
+    @JsonProperty("labName") private String labName;
+    @JsonProperty("slotId") private Long slotId;
+    @JsonProperty("startTime") private Instant startTime;
+    @JsonProperty("endTime") private Instant endTime;
     @JsonProperty("status") private BookingStatus status;
     @JsonProperty("purpose") private String purpose;
-    @JsonProperty("participants_count") private Integer participantsCount;
-    @JsonProperty("created_at") private Instant createdAt;
-    @JsonProperty("updated_at") private Instant updatedAt;
+    @JsonProperty("participantsCount") private Integer participantsCount;
+    @JsonProperty("createdAt") private Instant createdAt;
+    @JsonProperty("updatedAt") private Instant updatedAt;
 }

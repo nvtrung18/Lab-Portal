@@ -1,6 +1,7 @@
 package com.web.labportalbackend.booking.service;
 
 import com.web.labportalbackend.booking.dto.request.CreateTimeSlotRequest;
+import com.web.labportalbackend.booking.dto.request.CancelTimeSlotRequest;
 import com.web.labportalbackend.booking.dto.response.TimeSlotResponse;
 import java.util.List;
 
@@ -12,5 +13,6 @@ public interface TimeSlotService {
     List<TimeSlotResponse> getSlotsByLab(Long labId);
     TimeSlotResponse getSlotById(Long slotId);
     TimeSlotResponse updateSlotStatus(Long slotId, String status);
+    TimeSlotResponse cancelSlot(Long slotId, CancelTimeSlotRequest request);
     void deleteSlot(Long slotId);
 }

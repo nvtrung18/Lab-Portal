@@ -44,3 +44,6 @@ client/yarn-error.log*
 bin/
 build/
 out/
+
+# Local backend environment
+server/.env.properties

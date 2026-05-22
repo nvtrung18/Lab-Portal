@@ -20,10 +20,13 @@ public class RegisterRequest {
     @Schema(description = "Email address", example = "user@labportal.com")
     private String email;
 
-    @NotBlank(message = "Username is required")
     @Size(min = 3, max = 50, message = "Username must be 3-50 characters")
     @Schema(description = "Username", example = "johndoe")
     private String username;
+
+    @NotBlank(message = "Verification token is required")
+    @Schema(description = "Temporary email verification token")
+    private String verificationToken;
 
     @NotBlank(message = "Password is required")
     @Size(min = 6, max = 100, message = "Password must be 6-100 characters")

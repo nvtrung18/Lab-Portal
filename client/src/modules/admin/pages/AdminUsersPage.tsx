@@ -36,9 +36,7 @@ export function AdminUsersPage() {
   const filteredUsers = useMemo(() => {
     const keyword = search.trim().toLowerCase();
     return users.filter((user) => {
-      // Backend should also omit ADMIN from this management endpoint. This FE
-      // filter keeps the single system admin out of all user-management actions.
-      if (user.roles.includes('ADMIN')) {
+      if (user.roles.includes('ADMIN') || user.status.toUpperCase() === 'PENDING_VERIFICATION') {
         return false;
       }
 

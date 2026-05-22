@@ -12,6 +12,7 @@ export interface RegisterRequest {
   fullName: string;
   email: string;
   password: string;
+  verificationToken: string;
 }
 
 export interface LoginResponse {
@@ -27,7 +28,42 @@ export interface LoginResponse {
   roles?: string[];
 }
 
-export type RegisterResponse = LoginResponse;
+export interface AuthEmailResponse {
+  email: string;
+  message: string;
+}
+
+export type RegisterResponse = AuthEmailResponse;
+
+export interface RegisterVerifyCodeResponse {
+  email: string;
+  verificationToken: string;
+  message: string;
+}
+
+export interface PasswordResetVerifyResponse {
+  resetToken: string;
+  message: string;
+}
+
+export interface VerifyRegisterRequest {
+  email: string;
+  code: string;
+}
+
+export interface ForgotPasswordRequest {
+  email: string;
+}
+
+export interface ResetPasswordRequest {
+  email: string;
+  resetToken: string;
+  newPassword: string;
+}
+
+export interface ResendCodeRequest {
+  email: string;
+}
 
 interface JwtPayload {
   role?: string;
@@ -124,23 +160,43 @@ export async function loginAPI(data: LoginRequest): Promise<LoginResult> {
   };
 }
 
-function buildUsernameFromEmail(email: string) {
-  const [localPart] = email.trim().toLowerCase().split('@');
-  const normalized = localPart.replace(/[^a-z0-9._-]/g, '') || 'student';
-  const suffix = Date.now().toString().slice(-6);
-  return `${normalized.slice(0, 40)}${suffix}`;
+export async function sendRegisterCodeAPI(data: ResendCodeRequest): Promise<AuthEmailResponse> {
+  const response = await apiClient.post<Response<AuthEmailResponse>>(
+    '/api/auth/register/send-code',
+    data,
+  );
+  return response.data.data;
 }
 
-export async function registerAPI(data: RegisterRequest): Promise<RegisterResponse> {
-  const response = await apiClient.post<Response<RegisterResponse>>(
-    '/api/auth/register',
-    {
-      fullName: data.fullName,
-      email: data.email,
-      username: buildUsernameFromEmail(data.email),
-      password: data.password,
-    },
+export async function verifyRegisterCodeAPI(data: VerifyRegisterRequest): Promise<RegisterVerifyCodeResponse> {
+  const response = await apiClient.post<Response<RegisterVerifyCodeResponse>>(
+    '/api/auth/register/verify-code',
+    data,
   );
-
   return response.data.data;
+}
+
+export async function registerAPI(data: RegisterRequest): Promise<AuthEmailResponse> {
+  const response = await apiClient.post<Response<AuthEmailResponse>>(
+    '/api/auth/register',
+    data,
+  );
+  return response.data.data;
+}
+
+export async function sendForgotPasswordCodeAPI(data: ForgotPasswordRequest): Promise<AuthEmailResponse> {
+  const response = await apiClient.post<Response<AuthEmailResponse>>('/api/auth/forgot-password/send-code', data);
+  return response.data.data;
+}
+
+export async function verifyForgotPasswordCodeAPI(data: VerifyRegisterRequest): Promise<PasswordResetVerifyResponse> {
+  const response = await apiClient.post<Response<PasswordResetVerifyResponse>>(
+    '/api/auth/forgot-password/verify-code',
+    data,
+  );
+  return response.data.data;
+}
+
+export async function resetPasswordAPI(data: ResetPasswordRequest): Promise<void> {
+  await apiClient.post<Response<void>>('/api/auth/reset-password', data);
 }

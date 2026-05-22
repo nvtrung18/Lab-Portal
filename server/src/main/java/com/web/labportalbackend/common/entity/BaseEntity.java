@@ -50,6 +50,30 @@ public abstract class BaseEntity implements Serializable {
     @Column(nullable = false)
     private Boolean deleted = false;
 
+    @PrePersist
+    protected void prePersist() {
+        Instant now = Instant.now();
+        if (createdAt == null) {
+            createdAt = now;
+        }
+        if (updatedAt == null) {
+            updatedAt = now;
+        }
+        if (active == null) {
+            active = true;
+        }
+        if (deleted == null) {
+            deleted = false;
+        }
+    }
+
+    @PreUpdate
+    protected void preUpdate() {
+        if (updatedAt == null) {
+            updatedAt = Instant.now();
+        }
+    }
+
     // --- equals & hashCode based on ID for JPA best practices ---
 
     @Override

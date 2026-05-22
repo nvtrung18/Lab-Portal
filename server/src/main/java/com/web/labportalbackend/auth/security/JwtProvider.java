@@ -33,6 +33,9 @@ public class JwtProvider {
             @Value("${jwt.secret}") String secret,
             @Value("${jwt.access-token-expiration}") long accessTokenExpiration,
             @Value("${jwt.refresh-token-expiration}") long refreshTokenExpiration) {
+        if (secret == null || secret.isBlank()) {
+            throw new IllegalStateException("Chưa cấu hình JWT_SECRET.");
+        }
         this.signingKey = Keys.hmacShaKeyFor(Decoders.BASE64.decode(secret));
         this.accessTokenExpiration = accessTokenExpiration;
         this.refreshTokenExpiration = refreshTokenExpiration;

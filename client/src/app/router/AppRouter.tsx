@@ -6,8 +6,14 @@ import {
   AdminSettingsPage,
   AdminUsersPage,
 } from '../../modules/admin/pages';
-import { ForgotPasswordPage, LoginPage, RegisterPage } from '../../modules/auth/pages';
-import { BookingPage, MyBookingsPage } from '../../modules/booking/pages';
+import {
+  ForgotPasswordPage,
+  LoginPage,
+  RegisterPage,
+  ResetPasswordPage,
+  VerifyRegisterPage,
+} from '../../modules/auth/pages';
+import { BookingPage, LabSlotsPage, MyBookingsPage, SlotDetailPage } from '../../modules/booking/pages';
 import {
   ApplicationListPage,
   CleaningPage,
@@ -24,22 +30,15 @@ import { DashboardPlaceholder } from '../DashboardPlaceholder';
 import { ActiveMembershipRoute } from './ActiveMembershipRoute';
 import { ProtectedRoute } from './ProtectedRoute';
 
-function PlaceholderPage({ title }: { title: string }) {
-  return (
-    <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-      <h2 className="text-xl font-semibold text-slate-950">{title}</h2>
-      <p className="mt-2 text-sm text-slate-600">Placeholder.</p>
-    </section>
-  );
-}
-
 export function AppRouter() {
   return (
     <Routes>
       <Route element={<AuthLayout />}>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/register/verify" element={<VerifyRegisterPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
       </Route>
 
       <Route path="/403" element={<ForbiddenPage />} />
@@ -79,7 +78,8 @@ export function AppRouter() {
           <Route path="applications" element={<ApplicationListPage />} />
           <Route path="lab-overview" element={<LabOverviewPage />} />
           <Route path="lab-info" element={<Navigate to="/app/lab-overview" replace />} />
-          <Route path="lab-slots" element={<PlaceholderPage title="Lab Slots" />} />
+          <Route path="lab-slots" element={<LabSlotsPage />} />
+          <Route path="lab-slots/:slotId" element={<SlotDetailPage />} />
           <Route path="lab-bookings" element={<BookingPage />} />
           <Route path="lab-members" element={<LabMembersPage />} />
           <Route path="cleaning" element={<CleaningPage />} />

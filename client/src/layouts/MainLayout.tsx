@@ -1,31 +1,31 @@
-import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
+import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 
+import { useCurrentUser } from '../modules/user/hooks';
 import { clearAuthTokens, getStoredUser } from '../shared/api';
 import { LAB_MANAGER, STUDENT } from '../shared/constants/roles';
 import { hasActiveMembership } from '../shared/utils/membership';
-import { useCurrentUser } from '../modules/user/hooks';
 
 const studentNavItems = [
-  { label: 'Profile', path: '/app/profile' },
-  { label: 'Labs', path: '/app/labs' },
+  { label: 'Hồ sơ cá nhân', path: '/app/profile' },
+  { label: 'Danh sách phòng thí nghiệm', path: '/app/labs' },
 ];
 
 const studentMembershipNavItems = [
-  { label: 'My Bookings', path: '/app/my-bookings' },
-  { label: 'Research', path: '/app/research' },
-  { label: 'Other', path: '/app/other' },
+  { label: 'Lịch sử dụng PTN', path: '/app/my-bookings' },
+  { label: 'Nghiên cứu khoa học', path: '/app/research' },
+  { label: 'PTN của tôi', path: '/app/other' },
 ];
 
 const managerNavItems = [
-  { label: 'Profile', path: '/app/profile' },
-  { label: 'Lab Overview', path: '/app/lab-overview' },
-  { label: 'Applications', path: '/app/applications' },
-  { label: 'Lab Members', path: '/app/lab-members' },
-  { label: 'Lab Slots', path: '/app/lab-slots' },
-  { label: 'Lab Bookings', path: '/app/lab-bookings' },
-  { label: 'Cleaning', path: '/app/cleaning' },
-  { label: 'Research', path: '/app/research' },
+  { label: 'Hồ sơ cá nhân', path: '/app/profile' },
+  { label: 'Tổng quan PTN', path: '/app/lab-overview' },
+  { label: 'Hồ sơ ứng tuyển', path: '/app/applications' },
+  { label: 'Thành viên PTN', path: '/app/lab-members' },
+  { label: 'Khung giờ sử dụng', path: '/app/lab-slots' },
+  { label: 'Lịch sử dụng PTN', path: '/app/lab-bookings' },
+  { label: 'Vệ sinh PTN', path: '/app/cleaning' },
+  { label: 'Nghiên cứu khoa học', path: '/app/research' },
 ];
 
 export function MainLayout() {
@@ -42,13 +42,14 @@ export function MainLayout() {
         managedLab: currentUser.managedLab?.id
           ? {
               id: currentUser.managedLab.id,
-              name: currentUser.managedLab.name ?? currentUser.managedLab.labName ?? 'Lab',
+              name: currentUser.managedLab.name ?? currentUser.managedLab.labName ?? 'PTN',
             }
           : null,
         managedLabId: currentUser.managedLab?.id ?? currentUser.managedLabId ?? null,
         memberships: currentUser.memberships?.map((membership) => ({
           labId: membership.labId ?? membership.lab?.id ?? membership.id ?? 0,
-          labName: membership.labName ?? membership.lab?.name ?? membership.lab?.labName ?? 'Lab',
+          labName:
+            membership.labName ?? membership.lab?.name ?? membership.lab?.labName ?? 'PTN',
           role: membership.role,
           status: membership.status,
           joinedAt: membership.joinedAt ?? membership.createdAt,
@@ -57,8 +58,8 @@ export function MainLayout() {
     : storedUser;
   const isManager = Boolean(user?.roles.includes(LAB_MANAGER));
   const isStudent = Boolean(user?.roles.includes(STUDENT));
-  const portalTitle = isManager ? 'Manager Portal' : 'Student Portal';
-  const roleLabel = isManager ? LAB_MANAGER : isStudent ? STUDENT : 'No role';
+  const portalTitle = isManager ? 'Cổng quản lý PTN' : 'Cổng sinh viên';
+  const roleLabel = isManager ? LAB_MANAGER : isStudent ? STUDENT : 'Chưa có vai trò';
   const navItems = isManager
     ? managerNavItems
     : [
@@ -106,8 +107,12 @@ export function MainLayout() {
         <header className="sticky top-0 z-10 border-b border-slate-200 bg-white/95 px-4 py-4 shadow-sm backdrop-blur lg:px-8">
           <div className="flex items-center justify-between gap-4">
             <div>
-              <p className="text-xs font-medium uppercase text-slate-500">Workspace</p>
-              <h1 className="text-xl font-semibold text-slate-950">Lab Management</h1>
+              <p className="text-xs font-medium uppercase text-slate-500">
+                Không gian làm việc
+              </p>
+              <h1 className="text-xl font-semibold text-slate-950">
+                Quản lý phòng thí nghiệm
+              </h1>
             </div>
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-3 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 shadow-sm">
@@ -115,7 +120,9 @@ export function MainLayout() {
                   {(user?.fullName || user?.email || 'U').charAt(0).toUpperCase()}
                 </span>
                 <span className="hidden sm:block">
-                  <span className="block font-medium text-slate-800">{user?.fullName || user?.email || 'User'}</span>
+                  <span className="block font-medium text-slate-800">
+                    {user?.fullName || user?.email || 'Người dùng'}
+                  </span>
                   <span className="block text-xs text-slate-500">{roleLabel}</span>
                 </span>
               </div>

@@ -12,12 +12,17 @@ import lombok.NoArgsConstructor;
 public final class TimeSlotMapper {
 
     public static TimeSlotResponse toResponse(TimeSlot timeSlot) {
+        return toResponse(timeSlot, null);
+    }
+
+    public static TimeSlotResponse toResponse(TimeSlot timeSlot, Long bookedCount) {
         return TimeSlotResponse.builder()
                 .id(timeSlot.getId())
                 .labId(timeSlot.getLab().getId())
                 .startTime(timeSlot.getStartTime())
                 .endTime(timeSlot.getEndTime())
                 .capacity(timeSlot.getCapacity())
+                .bookedCount(bookedCount)
                 .status(timeSlot.getStatus())
                 .createdAt(timeSlot.getCreatedAt())
                 .updatedAt(timeSlot.getUpdatedAt())
