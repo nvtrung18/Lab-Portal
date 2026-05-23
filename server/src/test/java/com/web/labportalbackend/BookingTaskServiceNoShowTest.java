@@ -3,6 +3,7 @@ package com.web.labportalbackend;
 import com.web.labportalbackend.auth.entity.User;
 import com.web.labportalbackend.booking.entity.Booking;
 import com.web.labportalbackend.booking.entity.PenaltyEntity;
+import com.web.labportalbackend.booking.entity.TimeSlot;
 import com.web.labportalbackend.booking.repository.BookingRepository;
 import com.web.labportalbackend.booking.repository.CleaningRepository;
 import com.web.labportalbackend.booking.repository.PenaltyRepository;
@@ -12,6 +13,8 @@ import com.web.labportalbackend.booking.service.PenaltyService;
 import com.web.labportalbackend.booking.service.impl.BookingTaskServiceImpl;
 import com.web.labportalbackend.common.enums.BookingStatus;
 import com.web.labportalbackend.common.enums.PenaltyStatus;
+import com.web.labportalbackend.common.enums.PenaltyType;
+import com.web.labportalbackend.lab.entity.Laboratory;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -58,16 +61,24 @@ class BookingTaskServiceNoShowTest {
 
         User user = new User();
         user.setId(10L);
+        Laboratory lab = new Laboratory();
+        lab.setId(20L);
+        TimeSlot slot = new TimeSlot();
+        slot.setId(30L);
+        slot.setLab(lab);
 
         Booking booking = new Booking();
         booking.setId(99L);
         booking.setUser(user);
+        booking.setLab(lab);
+        booking.setTimeSlot(slot);
         booking.setStatus(BookingStatus.APPROVED);
         booking.setEndTime(Instant.now().minusSeconds(1800));
 
         when(bookingRepository.findNoShowCandidates(eq(BookingStatus.APPROVED), any(Instant.class)))
                 .thenReturn(List.of(booking));
-        when(penaltyRepository.existsByBookingId(99L)).thenReturn(false);
+        when(penaltyRepository.existsByBookingIdAndTypeAndStatus(99L, PenaltyType.NO_SHOW, PenaltyStatus.ACTIVE))
+                .thenReturn(false);
         when(penaltyService.getCurrentPenaltyAmount()).thenReturn(BigDecimal.valueOf(50_000));
 
         int processed = bookingTaskService.processNoShows();
@@ -81,7 +92,11 @@ class BookingTaskServiceNoShowTest {
         PenaltyEntity penalty = penaltyCaptor.getValue();
 
         assertSame(user, penalty.getUser());
+        assertSame(lab, penalty.getLab());
+        assertSame(slot, penalty.getSlot());
         assertSame(booking, penalty.getBooking());
+        assertEquals(PenaltyType.NO_SHOW, penalty.getType());
+        assertEquals(1, penalty.getPoint());
         assertEquals("Vắng mặt không thông báo", penalty.getReason());
         assertEquals(BigDecimal.valueOf(50_000), penalty.getAmount());
         assertEquals(PenaltyStatus.ACTIVE, penalty.getStatus());

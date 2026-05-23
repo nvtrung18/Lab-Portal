@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 
-import { SlotList } from '../../booking/components';
+import { MyCleaningTasks, SlotList } from '../../booking/components';
 import {
   getActiveMemberships,
   getMembershipLabId,
@@ -149,6 +149,8 @@ export function OtherPage() {
         </div>
         <SlotList labId={activeLabId} mode="student" readonly />
       </div>
+
+      <MyCleaningTasks />
     </section>
   );
 }

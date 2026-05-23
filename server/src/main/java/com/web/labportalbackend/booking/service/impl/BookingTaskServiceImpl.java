@@ -12,6 +12,7 @@ import com.web.labportalbackend.booking.service.CleaningService;
 import com.web.labportalbackend.booking.service.PenaltyService;
 import com.web.labportalbackend.common.enums.BookingStatus;
 import com.web.labportalbackend.common.enums.PenaltyStatus;
+import com.web.labportalbackend.common.enums.PenaltyType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -51,10 +52,18 @@ public class BookingTaskServiceImpl implements BookingTaskService {
             booking.setStatus(BookingStatus.NO_SHOW);
             bookingRepository.save(booking);
 
-            if (!penaltyRepository.existsByBookingId(booking.getId())) {
+            if (!penaltyRepository.existsByBookingIdAndTypeAndStatus(
+                    booking.getId(),
+                    PenaltyType.NO_SHOW,
+                    PenaltyStatus.ACTIVE
+            )) {
                 PenaltyEntity penalty = PenaltyEntity.builder()
                         .user(booking.getUser())
+                        .lab(booking.getLab())
+                        .slot(booking.getTimeSlot())
                         .booking(booking)
+                        .type(PenaltyType.NO_SHOW)
+                        .point(1)
                         .reason(NO_SHOW_REASON)
                         .amount(penaltyService.getCurrentPenaltyAmount())
                         .status(PenaltyStatus.ACTIVE)

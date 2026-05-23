@@ -34,6 +34,9 @@ import java.util.List;
 @RequiredArgsConstructor
 public class TimeSlotServiceImpl implements TimeSlotService {
 
+    private static final List<TimeSlotStatus> HIDDEN_SLOT_STATUSES =
+            List.of(TimeSlotStatus.CANCELLED, TimeSlotStatus.INACTIVE, TimeSlotStatus.ARCHIVED);
+
     private final TimeSlotRepository timeSlotRepository;
     private final LaboratoryRepository laboratoryRepository;
     private final MembershipRepository membershipRepository;
@@ -74,7 +77,7 @@ public class TimeSlotServiceImpl implements TimeSlotService {
 
         assertCanViewSlots(getCurrentUser(), lab);
 
-        return timeSlotRepository.findByLabId(labId).stream()
+        return timeSlotRepository.findUsableByLabId(labId, java.time.Instant.now(), HIDDEN_SLOT_STATUSES).stream()
                 .map(this::toResponse)
                 .toList();
     }

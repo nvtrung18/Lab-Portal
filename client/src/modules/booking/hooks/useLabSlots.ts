@@ -10,7 +10,8 @@ import {
   type CancelSlotPayload,
   type CreateSlotPayload,
 } from '../api';
-import { normalizeSlot } from '../utils';
+import { isUsableSlot, normalizeSlot } from '../utils';
+import { CLEANING_TASKS_QUERY_KEY } from './useCleaningTasks';
 
 export const LAB_SLOTS_QUERY_KEY = ['labSlots'] as const;
 export const SLOT_QUERY_KEY = ['slot'] as const;
@@ -20,11 +21,12 @@ export function useLabSlots(labId?: number | null) {
     queryKey: labId ? [...LAB_SLOTS_QUERY_KEY, labId] : LAB_SLOTS_QUERY_KEY,
     queryFn: async () => {
       const slots = await getLabSlots(labId as number);
-      return slots.map(normalizeSlot);
+      return slots.map(normalizeSlot).filter(isUsableSlot);
     },
     enabled: Boolean(labId),
     refetchOnWindowFocus: true,
     refetchOnReconnect: true,
+    refetchInterval: 60000,
     staleTime: 30000,
   });
 }
@@ -54,6 +56,7 @@ export function useCreateSlot() {
     mutationFn: (payload: CreateSlotPayload) => createSlot(payload),
     onSuccess: (_slot, payload) => {
       queryClient.invalidateQueries({ queryKey: [...LAB_SLOTS_QUERY_KEY, payload.labId] });
+      queryClient.invalidateQueries({ queryKey: [...CLEANING_TASKS_QUERY_KEY, payload.labId] });
       toast.success('Đã tạo khung giờ sử dụng thành công.');
     },
     onError: (error) => {
@@ -70,8 +73,11 @@ export function useCancelSlot(labId?: number | null, slotId?: number | null) {
     onSuccess: (_slot, payload) => {
       if (labId) {
         queryClient.invalidateQueries({ queryKey: [...LAB_SLOTS_QUERY_KEY, labId] });
+        queryClient.invalidateQueries({ queryKey: [...CLEANING_TASKS_QUERY_KEY, labId] });
       }
+      queryClient.invalidateQueries({ queryKey: [...SLOT_QUERY_KEY, slotId ?? payload.slotId] });
       queryClient.invalidateQueries({ queryKey: ['slotRegistrations', slotId ?? payload.slotId] });
+      queryClient.invalidateQueries({ queryKey: ['myBookings'] });
       toast.success('Đã hủy khung giờ sử dụng.');
     },
     onError: (error) => {

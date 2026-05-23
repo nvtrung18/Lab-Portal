@@ -12,8 +12,6 @@ import java.time.Instant;
 @Table(name = "cleanings", indexes = {
         @Index(name = "idx_cleaning_staff", columnList = "staff_id"),
         @Index(name = "idx_cleaning_status", columnList = "status")
-}, uniqueConstraints = {
-        @UniqueConstraint(name = "uk_cleaning_slot", columnNames = "slot_id")
 })
 @Getter
 @Setter
@@ -22,7 +20,7 @@ import java.time.Instant;
 @Builder
 public class CleaningEntity extends BaseEntity {
 
-    @OneToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "slot_id", nullable = false)
     private TimeSlot slot;
 

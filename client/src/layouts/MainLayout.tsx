@@ -15,6 +15,7 @@ const studentMembershipNavItems = [
   { label: 'Lịch sử dụng PTN', path: '/app/my-bookings' },
   { label: 'Nghiên cứu khoa học', path: '/app/research' },
   { label: 'PTN của tôi', path: '/app/other' },
+  { label: 'Vi phạm & khiếu nại', path: '/app/penalties' },
 ];
 
 const managerNavItems = [
@@ -26,6 +27,7 @@ const managerNavItems = [
   { label: 'Lịch sử dụng PTN', path: '/app/lab-bookings' },
   { label: 'Xác nhận có mặt', path: '/app/checkin-scan' },
   { label: 'Vệ sinh PTN', path: '/app/cleaning' },
+  { label: 'Khiếu nại vi phạm', path: '/app/complaints' },
   { label: 'Nghiên cứu khoa học', path: '/app/research' },
 ];
 

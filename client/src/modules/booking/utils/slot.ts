@@ -9,7 +9,10 @@ const STATUS_LABELS: Record<string, string> = {
   MAINTENANCE: 'Bảo trì',
   EXPIRED: 'Đã qua',
   CANCELLED: 'Đã hủy',
+  ARCHIVED: 'Đã lưu trữ',
 };
+
+const HIDDEN_SLOT_STATUSES = ['CANCELLED', 'INACTIVE', 'ARCHIVED'];
 
 function toNumber(value: unknown, fallback = 0): number {
   return typeof value === 'number' && Number.isFinite(value) ? value : fallback;
@@ -28,7 +31,7 @@ function normalizeStatus(
     endDate &&
     !Number.isNaN(endDate.getTime()) &&
     endDate.getTime() < Date.now() &&
-    !['CLOSED', 'CANCELLED', 'INACTIVE', 'MAINTENANCE'].includes(status)
+    !['CLOSED', 'CANCELLED', 'INACTIVE', 'MAINTENANCE', 'ARCHIVED'].includes(status)
   ) {
     return 'EXPIRED';
   }
@@ -82,4 +85,17 @@ export function normalizeSlot(slot: RawSlotResponse): LabSlot {
     status,
     statusLabel: STATUS_LABELS[status] ?? status,
   };
+}
+
+export function isUsableSlot(slot: { endTime?: string | null; status?: string | null; slotStatus?: string | null }): boolean {
+  const endTime = new Date(slot.endTime ?? '').getTime();
+  const status = (slot.slotStatus ?? slot.status ?? '').toUpperCase();
+
+  return Number.isFinite(endTime) && endTime >= Date.now() && !HIDDEN_SLOT_STATUSES.includes(status);
+}
+
+export function isCurrentOrFutureSlot(slot: Pick<LabSlot, 'endTime'>): boolean {
+  const endDate = new Date(slot.endTime);
+
+  return !Number.isNaN(endDate.getTime()) && endDate.getTime() >= Date.now();
 }

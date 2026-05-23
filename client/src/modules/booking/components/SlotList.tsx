@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import type { BookingResponse } from '../api';
 import { useCancelBooking, useCreateBooking, useMyBookings } from '../hooks';
 import { useLabSlots } from '../hooks';
+import { isUsableSlot } from '../utils';
 import { SlotCard } from './SlotCard';
 
 interface SlotListProps {
@@ -28,13 +29,13 @@ function findActiveBookingForSlot(bookings: BookingResponse[], slotId: number) {
 
 export function SlotList({
   labId,
-  canCreate = false,
   mode = 'readonly',
   showLabName = false,
   onCancelSlot,
 }: SlotListProps) {
   const navigate = useNavigate();
   const { data: slots = [], isError, isLoading, isFetching, refetch } = useLabSlots(labId);
+  const visibleSlots = slots.filter(isUsableSlot);
   const { data: myBookings = [] } = useMyBookings(mode === 'student');
   const createBooking = useCreateBooking(labId);
   const cancelBooking = useCancelBooking(labId);
@@ -82,12 +83,10 @@ export function SlotList({
     );
   }
 
-  if (!slots.length) {
+  if (!visibleSlots.length) {
     return (
       <div className="rounded-lg border border-slate-200 bg-white p-6 text-sm text-slate-600 shadow-sm">
-        {canCreate
-          ? 'Chưa có khung giờ sử dụng nào. Hãy tạo khung giờ đầu tiên cho PTN này.'
-          : 'Chưa có khung giờ sử dụng nào.'}
+        Hiện chưa có khung giờ sử dụng nào còn hiệu lực.
       </div>
     );
   }
@@ -95,10 +94,12 @@ export function SlotList({
   return (
     <div className="space-y-3">
       {isFetching ? (
-        <p className="text-xs font-medium text-slate-500">Đang cập nhật khung giờ sử dụng...</p>
+        <p className="text-xs font-medium text-slate-500">
+          Đang cập nhật khung giờ sử dụng...
+        </p>
       ) : null}
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {slots.map((slot) => (
+        {visibleSlots.map((slot) => (
           <SlotCard
             key={slot.id}
             slot={slot}

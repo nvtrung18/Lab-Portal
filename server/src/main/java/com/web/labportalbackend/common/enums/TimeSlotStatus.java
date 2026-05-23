@@ -18,5 +18,6 @@ public enum TimeSlotStatus {
     INACTIVE,
     MAINTENANCE,
     EXPIRED,
-    CANCELLED
+    CANCELLED,
+    ARCHIVED
 }

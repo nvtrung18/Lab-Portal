@@ -21,6 +21,7 @@ import {
   LabListPage,
   LabOverviewPage,
 } from '../../modules/lab/pages';
+import { ManagerComplaintsPage, PenaltyPage } from '../../modules/penalty/pages';
 import { ResearchPage } from '../../modules/research/pages';
 import { OtherPage, ProfilePage } from '../../modules/user/pages';
 import { AdminLayout, AuthLayout, MainLayout } from '../../layouts';
@@ -67,6 +68,7 @@ export function AppRouter() {
           <Route path="labs" element={<LabListPage />} />
           <Route element={<ActiveMembershipRoute />}>
             <Route path="my-bookings" element={<MyBookingsPage />} />
+            <Route path="penalties" element={<PenaltyPage />} />
             <Route path="research" element={<ResearchPage />} />
             <Route path="other" element={<OtherPage />} />
           </Route>
@@ -84,6 +86,7 @@ export function AppRouter() {
           <Route path="checkin-scan" element={<CheckInPage />} />
           <Route path="lab-members" element={<LabMembersPage />} />
           <Route path="cleaning" element={<CleaningPage />} />
+          <Route path="complaints" element={<ManagerComplaintsPage />} />
           <Route path="research" element={<ResearchPage />} />
         </Route>
       </Route>
