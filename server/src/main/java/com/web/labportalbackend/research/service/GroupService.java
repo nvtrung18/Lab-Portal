@@ -15,4 +15,8 @@ public interface GroupService {
     List<GroupResponse> getByLab(Long labId);
 
     List<GroupResponse> getByTopic(Long topicId);
+
+    List<GroupResponse> getByProject(Long projectId);
+
+    List<GroupResponse> getMyGroups();
 }

@@ -11,6 +11,9 @@ export interface UserProfileResponse {
   status?: string;
   roles: string[];
   memberships?: UserMembershipResponse[];
+  researchGroupMemberships?: UserResearchGroupMembershipResponse[];
+  groupMemberships?: UserResearchGroupMembershipResponse[];
+  researchGroups?: UserResearchGroupMembershipResponse[];
   managedLab?: {
     id?: number;
     name?: string;
@@ -34,6 +37,30 @@ export interface UserMembershipResponse {
   status: string;
   joinedAt?: string;
   createdAt?: string;
+}
+
+export interface UserResearchGroupMembershipResponse {
+  labId?: number;
+  labName?: string;
+  status?: string;
+  group?: {
+    labId?: number;
+    labName?: string;
+    lab?: {
+      id?: number;
+      name?: string;
+      labName?: string;
+    };
+  };
+  researchGroup?: {
+    labId?: number;
+    labName?: string;
+    lab?: {
+      id?: number;
+      name?: string;
+      labName?: string;
+    };
+  };
 }
 
 export interface UpdateProfileRequest {

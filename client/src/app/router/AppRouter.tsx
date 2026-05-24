@@ -22,7 +22,7 @@ import {
   LabOverviewPage,
 } from '../../modules/lab/pages';
 import { ManagerComplaintsPage, PenaltyPage } from '../../modules/penalty/pages';
-import { ResearchPage } from '../../modules/research/pages';
+import { ResearchPage, ResearchProjectDetailPage } from '../../modules/research/pages';
 import { OtherPage, ProfilePage } from '../../modules/user/pages';
 import { AdminLayout, AuthLayout, MainLayout } from '../../layouts';
 import { ForbiddenPage, NotFoundPage } from '../../shared/components';
@@ -60,7 +60,6 @@ export function AppRouter() {
           <Route index element={<Navigate to="/app/profile" replace />} />
           <Route path="dashboard" element={<DashboardPlaceholder />} />
           <Route path="profile" element={<ProfilePage />} />
-          <Route path="research" element={<ResearchPage />} />
         </Route>
       </Route>
 
@@ -87,6 +86,8 @@ export function AppRouter() {
           <Route path="lab-members" element={<LabMembersPage />} />
           <Route path="cleaning" element={<CleaningPage />} />
           <Route path="complaints" element={<ManagerComplaintsPage />} />
+          <Route path="research" element={<ResearchPage />} />
+          <Route path="research/projects/:projectId" element={<ResearchProjectDetailPage />} />
         </Route>
       </Route>
 

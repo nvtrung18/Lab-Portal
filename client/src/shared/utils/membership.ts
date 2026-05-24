@@ -19,9 +19,36 @@ export interface MembershipLike {
   };
 }
 
+export interface ResearchGroupMembershipLike {
+  labId?: number;
+  labName?: string;
+  status?: string;
+  group?: {
+    labId?: number;
+    labName?: string;
+    lab?: {
+      id?: number;
+      name?: string;
+      labName?: string;
+    };
+  };
+  researchGroup?: {
+    labId?: number;
+    labName?: string;
+    lab?: {
+      id?: number;
+      name?: string;
+      labName?: string;
+    };
+  };
+}
+
 interface UserWithLabScope {
   id?: number;
   memberships?: MembershipLike[];
+  researchGroupMemberships?: ResearchGroupMembershipLike[];
+  groupMemberships?: ResearchGroupMembershipLike[];
+  researchGroups?: ResearchGroupMembershipLike[];
   managedLab?: ManagedLabLike | null;
   managedLabId?: number | null;
 }
@@ -55,6 +82,55 @@ export function getActiveMemberships(
 export function hasActiveMembership(user: UserWithLabScope | null | undefined): boolean {
   return Boolean(
     getActiveMemberships(user).length,
+  );
+}
+
+export function getResearchGroupMemberships(
+  user: UserWithLabScope | null | undefined,
+): ResearchGroupMembershipLike[] {
+  const memberships = [
+    ...(user?.researchGroupMemberships ?? []),
+    ...(user?.groupMemberships ?? []),
+    ...(user?.researchGroups ?? []),
+  ];
+
+  return memberships.filter((membership) => {
+    const status = membership.status?.toUpperCase();
+    return !status || status === 'ACTIVE';
+  });
+}
+
+export function hasResearchGroupMembership(
+  user: UserWithLabScope | null | undefined,
+): boolean {
+  return Boolean(getResearchGroupMemberships(user).length);
+}
+
+export function getResearchGroupMembershipLabId(
+  membership: ResearchGroupMembershipLike,
+): number | null {
+  return (
+    membership.labId ??
+    membership.group?.labId ??
+    membership.group?.lab?.id ??
+    membership.researchGroup?.labId ??
+    membership.researchGroup?.lab?.id ??
+    null
+  );
+}
+
+export function getResearchGroupMembershipLabName(
+  membership: ResearchGroupMembershipLike,
+): string {
+  return (
+    membership.labName ??
+    membership.group?.labName ??
+    membership.group?.lab?.name ??
+    membership.group?.lab?.labName ??
+    membership.researchGroup?.labName ??
+    membership.researchGroup?.lab?.name ??
+    membership.researchGroup?.lab?.labName ??
+    'PTN'
   );
 }
 

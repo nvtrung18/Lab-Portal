@@ -30,6 +30,10 @@ public class GroupEntity extends BaseEntity {
     @JoinColumn(name = "topic_id")
     private ResearchTopicEntity topic;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "project_id")
+    private ProjectEntity project;
+
     @Column(nullable = false, length = 150)
     private String name;
 

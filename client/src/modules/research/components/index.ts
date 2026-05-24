@@ -1,7 +1,13 @@
 export {};
 export * from './CreateGroupModal';
 export * from './CreateProjectModal';
+export * from './CreateResearchGroupModal';
+export * from './CreateResearchProjectModal';
 export * from './CreateTopicModal';
+export * from './GroupMemberSelector';
 export * from './GroupPage';
+export * from './MyResearchGroups';
 export * from './ProjectPage';
+export * from './ResearchGroupList';
+export * from './ResearchProjectList';
 export * from './TopicPage';

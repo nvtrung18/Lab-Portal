@@ -21,15 +21,19 @@ public final class GroupMapper {
                 .id(group.getId())
                 .labId(group.getLab().getId())
                 .topicId(group.getTopic() != null ? group.getTopic().getId() : null)
+                .projectId(group.getProject() != null ? group.getProject().getId() : null)
+                .topicName(group.getTopic() != null ? group.getTopic().getName() : null)
+                .projectTitle(group.getProject() != null ? group.getProject().getTitle() : null)
+                .projectCode(group.getProject() != null ? group.getProject().getCode() : null)
+                .leaderName(toDisplayName(group.getLeader()))
+                .managerName(resolveManagerName(group))
                 .name(group.getName())
                 .description(group.getDescription())
                 .objective(group.getObjective())
                 .plan(group.getPlan())
                 .status(group.getStatus())
                 .leaderId(group.getLeader().getId())
-                .createdByName(group.getLeader().getFullName() != null
-                        ? group.getLeader().getFullName()
-                        : group.getLeader().getEmail())
+                .createdByName(toDisplayName(group.getLeader()))
                 .memberCount(group.getMembers().size())
                 .projectCount(projectCount)
                 .createdAt(group.getCreatedAt())
@@ -46,8 +50,30 @@ public final class GroupMapper {
                 .id(member.getId())
                 .groupId(member.getGroup().getId())
                 .userId(member.getUser().getId())
+                .fullName(member.getUser().getFullName())
+                .email(member.getUser().getEmail())
                 .role(member.getRole())
                 .joinedAt(member.getJoinedAt())
                 .build();
+    }
+
+    private static String resolveManagerName(GroupEntity group) {
+        if (group.getProject() != null && group.getProject().getManager() != null) {
+            return toDisplayName(group.getProject().getManager());
+        }
+        if (group.getTopic() != null && group.getTopic().getManager() != null) {
+            return toDisplayName(group.getTopic().getManager());
+        }
+        if (group.getLab().getManager() != null) {
+            return toDisplayName(group.getLab().getManager());
+        }
+        return null;
+    }
+
+    private static String toDisplayName(com.web.labportalbackend.auth.entity.User user) {
+        if (user == null) {
+            return null;
+        }
+        return user.getFullName() != null ? user.getFullName() : user.getEmail();
     }
 }

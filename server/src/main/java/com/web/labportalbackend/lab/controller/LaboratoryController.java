@@ -93,6 +93,22 @@ public class LaboratoryController {
         return ResponseEntity.ok(Response.ok("Laboratory members retrieved successfully", members));
     }
 
+    @GetMapping("/{id}/research-eligible-students")
+    @Operation(summary = "Get research eligible students", description = "Retrieve ACTIVE student members of a managed laboratory")
+    @SecurityRequirement(name = "Bearer Authentication")
+    @PreAuthorize("hasRole('LAB_MANAGER')")
+    public ResponseEntity<Response<List<LabMemberResponse>>> getResearchEligibleStudents(
+            @PathVariable Long id,
+            Authentication authentication) {
+        assertCanViewLabMembers(id, authentication);
+        List<LabMemberResponse> students = membershipRepository.findByLaboratoryIdAndDeletedFalse(id).stream()
+                .filter(membership -> Boolean.TRUE.equals(membership.getActive()))
+                .filter(membership -> membership.getUser().hasRole("STUDENT"))
+                .map(this::toLabMemberResponse)
+                .toList();
+        return ResponseEntity.ok(Response.ok("Research eligible students retrieved successfully", students));
+    }
+
     @PatchMapping("/{id}/members/{userId}/remove")
     @Operation(summary = "Remove laboratory member", description = "Remove a member from the managed laboratory without deleting the user account")
     @SecurityRequirement(name = "Bearer Authentication")

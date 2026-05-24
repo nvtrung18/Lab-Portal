@@ -2,6 +2,7 @@ package com.web.labportalbackend.research.entity;
 
 import com.web.labportalbackend.auth.entity.User;
 import com.web.labportalbackend.common.entity.BaseEntity;
+import com.web.labportalbackend.lab.entity.Laboratory;
 import com.web.labportalbackend.research.enums.ProjectStatus;
 import jakarta.persistence.*;
 import lombok.*;
@@ -21,7 +22,11 @@ import java.time.LocalDate;
 public class ProjectEntity extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "group_id", nullable = false)
+    @JoinColumn(name = "lab_id", nullable = false)
+    private Laboratory lab;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "group_id")
     private GroupEntity group;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -33,6 +38,9 @@ public class ProjectEntity extends BaseEntity {
 
     @Column(nullable = false, length = 200)
     private String title;
+
+    @Column(name = "research_direction", length = 200)
+    private String researchDirection;
 
     @Column(columnDefinition = "TEXT")
     private String description;

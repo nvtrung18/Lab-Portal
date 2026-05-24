@@ -7,6 +7,7 @@ import com.web.labportalbackend.lab.entity.Laboratory;
 import com.web.labportalbackend.lab.repository.LaboratoryRepository;
 import com.web.labportalbackend.lab.repository.MembershipRepository;
 import com.web.labportalbackend.research.dto.request.CreateProjectRequest;
+import com.web.labportalbackend.research.dto.request.CreateResearchProjectRequest;
 import com.web.labportalbackend.research.dto.response.ProjectDetailResponse;
 import com.web.labportalbackend.research.dto.response.ProjectResponse;
 import com.web.labportalbackend.research.entity.GroupEntity;
@@ -47,6 +48,7 @@ public class ProjectServiceImpl implements ProjectService {
         assertCanCreateInLab(currentUser, group.getLab());
 
         ProjectEntity project = ProjectEntity.builder()
+                .lab(group.getLab())
                 .group(group)
                 .topic(group.getTopic())
                 .code(request.getCode())
@@ -67,6 +69,49 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
+    @Transactional
+    public ProjectResponse createResearchProject(CreateResearchProjectRequest request) {
+        validateDateRange(request.getStartDate(), request.getExpectedEndDate());
+
+        User currentUser = getCurrentUser();
+        Laboratory lab = laboratoryRepository.findById(request.getLabId())
+                .orElseThrow(() -> new ResourceNotFoundException("Laboratory", request.getLabId()));
+        assertCanCreateInLab(currentUser, lab);
+
+        ProjectEntity project = ProjectEntity.builder()
+                .lab(lab)
+                .code(request.getCode())
+                .title(request.getTitle())
+                .researchDirection(request.getResearchDirection())
+                .description(request.getDescription())
+                .objective(request.getObjective())
+                .status(request.getStatus() != null ? request.getStatus() : ProjectStatus.DRAFT)
+                .startDate(request.getStartDate())
+                .endDate(request.getExpectedEndDate())
+                .priority(request.getPriority())
+                .requiredProducts(request.getRequiredProducts())
+                .evaluationCriteria(request.getEvaluationCriteria())
+                .manager(currentUser)
+                .createdBy(currentUser)
+                .build();
+
+        return ProjectMapper.toResponse(projectRepository.save(project));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ProjectResponse> getByLab(Long labId) {
+        Laboratory lab = laboratoryRepository.findById(labId)
+                .orElseThrow(() -> new ResourceNotFoundException("Laboratory", labId));
+        assertCanCreateInLab(getCurrentUser(), lab);
+
+        return projectRepository.findByLabIdAndDeletedFalseAndActiveTrue(labId)
+                .stream()
+                .map(ProjectMapper::toResponse)
+                .toList();
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public List<ProjectResponse> getByGroup(Long groupId) {
         GroupEntity group = groupRepository.findByIdAndDeletedFalseAndActiveTrue(groupId)
@@ -84,19 +129,27 @@ public class ProjectServiceImpl implements ProjectService {
     public ProjectDetailResponse getDetail(Long projectId) {
         ProjectEntity project = projectRepository.findByIdAndDeletedFalseAndActiveTrue(projectId)
                 .orElseThrow(() -> new ResourceNotFoundException("Project", projectId));
-        assertCanAccessLab(getCurrentUser(), project.getGroup().getLab());
+        assertCanAccessLab(getCurrentUser(), resolveProjectLab(project));
         return ProjectMapper.toDetailResponse(project);
     }
 
     private void validateDateRange(CreateProjectRequest request) {
         LocalDate endDate = resolveEndDate(request);
-        if (request.getStartDate() != null && endDate != null && !endDate.isAfter(request.getStartDate())) {
+        validateDateRange(request.getStartDate(), endDate);
+    }
+
+    private void validateDateRange(LocalDate startDate, LocalDate endDate) {
+        if (startDate != null && endDate != null && !endDate.isAfter(startDate)) {
             throw new IllegalArgumentException("Expected end date must be after start date");
         }
     }
 
     private LocalDate resolveEndDate(CreateProjectRequest request) {
         return request.getExpectedEndDate() != null ? request.getExpectedEndDate() : request.getEndDate();
+    }
+
+    private Laboratory resolveProjectLab(ProjectEntity project) {
+        return project.getLab() != null ? project.getLab() : project.getGroup().getLab();
     }
 
     private void assertCanCreateInLab(User currentUser, Laboratory lab) {

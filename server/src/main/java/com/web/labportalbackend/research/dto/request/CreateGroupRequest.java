@@ -1,21 +1,22 @@
 package com.web.labportalbackend.research.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 import com.web.labportalbackend.research.enums.GroupStatus;
 
+import java.util.List;
+
 @Getter
 @Setter
 public class CreateGroupRequest {
 
-    @NotNull(message = "Lab ID is required")
     private Long labId;
 
-    @NotNull(message = "Topic ID is required")
     private Long topicId;
+
+    private Long projectId;
 
     @NotBlank(message = "Group name is required")
     @Size(min = 3, max = 150, message = "Group name must be between 3 and 150 characters")
@@ -36,4 +37,8 @@ public class CreateGroupRequest {
      * Kept for backward compatibility. New requests use the authenticated user as group leader.
      */
     private Long leaderId;
+
+    private Long leaderStudentId;
+
+    private List<Long> memberIds;
 }

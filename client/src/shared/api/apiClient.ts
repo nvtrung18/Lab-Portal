@@ -12,6 +12,9 @@ export interface StoredUser {
   email: string;
   roles: string[];
   memberships?: UserMembership[];
+  researchGroupMemberships?: UserResearchGroupMembership[];
+  groupMemberships?: UserResearchGroupMembership[];
+  researchGroups?: UserResearchGroupMembership[];
   managedLab?: ManagedLab | null;
   managedLabId?: number | null;
 }
@@ -27,6 +30,30 @@ export interface UserMembership {
 export interface ManagedLab {
   id: number;
   name: string;
+}
+
+export interface UserResearchGroupMembership {
+  labId?: number;
+  labName?: string;
+  status?: string;
+  group?: {
+    labId?: number;
+    labName?: string;
+    lab?: {
+      id?: number;
+      name?: string;
+      labName?: string;
+    };
+  };
+  researchGroup?: {
+    labId?: number;
+    labName?: string;
+    lab?: {
+      id?: number;
+      name?: string;
+      labName?: string;
+    };
+  };
 }
 
 export function getAuthToken() {

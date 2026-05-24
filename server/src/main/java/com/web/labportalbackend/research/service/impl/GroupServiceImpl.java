@@ -14,6 +14,7 @@ import com.web.labportalbackend.research.dto.response.GroupMemberResponse;
 import com.web.labportalbackend.research.dto.response.GroupResponse;
 import com.web.labportalbackend.research.entity.GroupEntity;
 import com.web.labportalbackend.research.entity.GroupMemberEntity;
+import com.web.labportalbackend.research.entity.ProjectEntity;
 import com.web.labportalbackend.research.entity.ResearchTopicEntity;
 import com.web.labportalbackend.research.enums.GroupRole;
 import com.web.labportalbackend.research.enums.GroupStatus;
@@ -32,6 +33,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -49,6 +52,10 @@ public class GroupServiceImpl implements GroupService {
     @Transactional
     public GroupResponse createGroup(CreateGroupRequest request) {
         User currentUser = getCurrentUser();
+        if (request.getProjectId() != null) {
+            return createProjectGroup(request, currentUser);
+        }
+
         ResearchTopicEntity topic = topicRepository.findByIdAndDeletedFalseAndActiveTrue(request.getTopicId())
                 .orElseThrow(() -> new ResourceNotFoundException("Research topic", request.getTopicId()));
         Laboratory lab = topic.getLab();
@@ -79,6 +86,47 @@ public class GroupServiceImpl implements GroupService {
                 .build();
         GroupMemberEntity savedLeaderMember = groupMemberRepository.save(leaderMember);
         savedGroup.getMembers().add(savedLeaderMember);
+
+        return GroupMapper.toResponse(savedGroup);
+    }
+
+    private GroupResponse createProjectGroup(CreateGroupRequest request, User currentUser) {
+        ProjectEntity project = projectRepository.findByIdAndDeletedFalseAndActiveTrue(request.getProjectId())
+                .orElseThrow(() -> new ResourceNotFoundException("Project", request.getProjectId()));
+        Laboratory lab = project.getLab();
+
+        assertCanCreateInLab(currentUser, lab);
+        assertLabCanHostResearch(lab);
+        validateProjectGroupMembers(request, lab.getId());
+
+        User leader = userRepository.findById(request.getLeaderStudentId())
+                .orElseThrow(() -> new ResourceNotFoundException("User", request.getLeaderStudentId()));
+
+        GroupEntity group = GroupEntity.builder()
+                .lab(lab)
+                .topic(project.getTopic())
+                .project(project)
+                .name(request.getName())
+                .description(request.getDescription())
+                .objective(request.getObjective())
+                .plan(request.getPlan())
+                .status(request.getStatus() != null ? request.getStatus() : GroupStatus.ACTIVE)
+                .leader(leader)
+                .build();
+        GroupEntity savedGroup = groupRepository.save(group);
+
+        for (Long memberId : new LinkedHashSet<>(request.getMemberIds())) {
+            User member = userRepository.findById(memberId)
+                    .orElseThrow(() -> new ResourceNotFoundException("User", memberId));
+            GroupMemberEntity groupMember = GroupMemberEntity.builder()
+                    .group(savedGroup)
+                    .user(member)
+                    .role(memberId.equals(request.getLeaderStudentId()) ? GroupRole.LEADER : GroupRole.MEMBER)
+                    .joinedAt(Instant.now())
+                    .build();
+            GroupMemberEntity savedMember = groupMemberRepository.save(groupMember);
+            savedGroup.getMembers().add(savedMember);
+        }
 
         return GroupMapper.toResponse(savedGroup);
     }
@@ -136,6 +184,66 @@ public class GroupServiceImpl implements GroupService {
                         projectRepository.countByGroupIdAndDeletedFalseAndActiveTrue(group.getId())
                 ))
                 .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<GroupResponse> getByProject(Long projectId) {
+        ProjectEntity project = projectRepository.findByIdAndDeletedFalseAndActiveTrue(projectId)
+                .orElseThrow(() -> new ResourceNotFoundException("Project", projectId));
+        assertCanAccessLab(getCurrentUser(), project.getLab());
+
+        return groupRepository.findByProjectIdAndDeletedFalseAndActiveTrue(projectId)
+                .stream()
+                .map(group -> GroupMapper.toResponse(
+                        group,
+                        projectRepository.countByGroupIdAndDeletedFalseAndActiveTrue(group.getId())
+                ))
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<GroupResponse> getMyGroups() {
+        User currentUser = getCurrentUser();
+        if (!currentUser.hasRole("STUDENT")) {
+            throw new AccessDeniedException("Only students can view their research groups");
+        }
+
+        return groupMemberRepository
+                .findByUserIdAndActiveTrueAndDeletedFalseAndGroupActiveTrueAndGroupDeletedFalse(currentUser.getId())
+                .stream()
+                .map(GroupMemberEntity::getGroup)
+                .map(group -> GroupMapper.toResponse(
+                        group,
+                        projectRepository.countByGroupIdAndDeletedFalseAndActiveTrue(group.getId())
+                ))
+                .toList();
+    }
+
+    private void validateProjectGroupMembers(CreateGroupRequest request, Long labId) {
+        if (request.getLeaderStudentId() == null) {
+            throw new IllegalArgumentException("Leader student ID is required");
+        }
+        if (request.getMemberIds() == null || request.getMemberIds().isEmpty()) {
+            throw new IllegalArgumentException("At least one group member is required");
+        }
+
+        Set<Long> memberIds = new LinkedHashSet<>(request.getMemberIds());
+        if (!memberIds.contains(request.getLeaderStudentId())) {
+            throw new IllegalArgumentException("Leader student must be included in member IDs");
+        }
+
+        for (Long memberId : memberIds) {
+            User member = userRepository.findById(memberId)
+                    .orElseThrow(() -> new ResourceNotFoundException("User", memberId));
+            if (!member.hasRole("STUDENT")) {
+                throw new AccessDeniedException("Only students can be added to research groups");
+            }
+            if (!membershipRepository.existsByUserIdAndLaboratoryIdAndActiveTrueAndDeletedFalse(memberId, labId)) {
+                throw new AccessDeniedException("Student is not an active member of this lab");
+            }
+        }
     }
 
     private void assertCanCreateInLab(User currentUser, Laboratory lab) {

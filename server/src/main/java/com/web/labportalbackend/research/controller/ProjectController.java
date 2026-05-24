@@ -2,6 +2,7 @@ package com.web.labportalbackend.research.controller;
 
 import com.web.labportalbackend.common.dto.Response;
 import com.web.labportalbackend.research.dto.request.CreateProjectRequest;
+import com.web.labportalbackend.research.dto.request.CreateResearchProjectRequest;
 import com.web.labportalbackend.research.dto.response.ProjectDetailResponse;
 import com.web.labportalbackend.research.dto.response.ProjectResponse;
 import com.web.labportalbackend.research.service.ProjectService;
@@ -11,6 +12,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,6 +23,23 @@ import java.util.List;
 public class ProjectController {
 
     private final ProjectService projectService;
+
+    @GetMapping("/labs/{labId}/research-projects")
+    @Operation(summary = "Get research projects by lab")
+    public ResponseEntity<Response<List<ProjectResponse>>> getByLab(@PathVariable Long labId) {
+        return ResponseEntity.ok(
+                Response.ok("Research projects retrieved successfully", projectService.getByLab(labId))
+        );
+    }
+
+    @PostMapping("/research-projects")
+    @Operation(summary = "Create research project")
+    public ResponseEntity<Response<ProjectResponse>> createResearchProject(
+            @Valid @RequestBody CreateResearchProjectRequest request
+    ) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(Response.ok("Research project created successfully", projectService.createResearchProject(request)));
+    }
 
     @PostMapping("/projects")
     @Operation(summary = "Create project")
@@ -44,6 +63,15 @@ public class ProjectController {
     public ResponseEntity<Response<ProjectDetailResponse>> getDetail(@PathVariable Long id) {
         return ResponseEntity.ok(
                 Response.ok("Project detail retrieved successfully", projectService.getDetail(id))
+        );
+    }
+
+    @GetMapping("/research-projects/{id}")
+    @Operation(summary = "Get research project detail")
+    @PreAuthorize("hasRole('LAB_MANAGER')")
+    public ResponseEntity<Response<ProjectDetailResponse>> getResearchProjectDetail(@PathVariable Long id) {
+        return ResponseEntity.ok(
+                Response.ok("Research project detail retrieved successfully", projectService.getDetail(id))
         );
     }
 }

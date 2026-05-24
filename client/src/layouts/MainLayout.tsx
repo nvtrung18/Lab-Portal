@@ -13,7 +13,6 @@ const studentNavItems = [
 
 const studentMembershipNavItems = [
   { label: 'Lịch sử dụng PTN', path: '/app/my-bookings' },
-  { label: 'Nghiên cứu khoa học', path: '/app/research' },
   { label: 'PTN của tôi', path: '/app/other' },
   { label: 'Vi phạm & khiếu nại', path: '/app/penalties' },
 ];

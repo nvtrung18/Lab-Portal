@@ -11,10 +11,12 @@ import java.time.LocalDate;
 @Builder
 public class ProjectDetailResponse {
     private Long id;
+    private Long labId;
     private Long groupId;
     private Long topicId;
     private String code;
     private String title;
+    private String researchDirection;
     private String description;
     private String objective;
     private ProjectStatus status;

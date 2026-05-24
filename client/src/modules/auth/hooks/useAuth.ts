@@ -61,6 +61,9 @@ export function useAuth() {
         status: membership.status,
         joinedAt: membership.joinedAt ?? membership.createdAt,
       })),
+      researchGroupMemberships: profile.researchGroupMemberships,
+      groupMemberships: profile.groupMemberships,
+      researchGroups: profile.researchGroups,
     };
 
     setStoredUser(storedUser);
