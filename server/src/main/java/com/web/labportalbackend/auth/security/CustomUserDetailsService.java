@@ -31,7 +31,7 @@ public class CustomUserDetailsService implements UserDetailsService {
                         "User not found with email or username: " + usernameOrEmail));
 
         List<SimpleGrantedAuthority> authorities = user.getRoles().stream()
-                .map(role -> new SimpleGrantedAuthority("ROLE_" + role.getName()))
+                .map(role -> new SimpleGrantedAuthority(toAuthorityName(role.getName())))
                 .toList();
 
         return new org.springframework.security.core.userdetails.User(
@@ -43,5 +43,9 @@ public class CustomUserDetailsService implements UserDetailsService {
                 !user.getDeleted(),        // accountNonLocked
                 authorities
         );
+    }
+
+    private String toAuthorityName(String roleName) {
+        return roleName != null && roleName.startsWith("ROLE_") ? roleName : "ROLE_" + roleName;
     }
 }

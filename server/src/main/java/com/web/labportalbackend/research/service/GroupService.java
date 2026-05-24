@@ -13,4 +13,6 @@ public interface GroupService {
     GroupMemberResponse addMember(Long groupId, AddMemberRequest request);
 
     List<GroupResponse> getByLab(Long labId);
+
+    List<GroupResponse> getByTopic(Long topicId);
 }

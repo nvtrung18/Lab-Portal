@@ -13,10 +13,29 @@ public final class ProjectMapper {
         return ProjectResponse.builder()
                 .id(project.getId())
                 .groupId(project.getGroup().getId())
+                .topicId(project.getTopic() != null ? project.getTopic().getId() : null)
+                .code(project.getCode())
                 .title(project.getTitle())
+                .description(project.getDescription())
+                .objective(project.getObjective())
                 .status(project.getStatus())
+                .createdByName(project.getCreatedBy() != null
+                        ? project.getCreatedBy().getFullName() != null
+                            ? project.getCreatedBy().getFullName()
+                            : project.getCreatedBy().getEmail()
+                        : null)
+                .managerName(project.getManager() != null
+                        ? project.getManager().getFullName() != null
+                            ? project.getManager().getFullName()
+                            : project.getManager().getEmail()
+                        : null)
+                .priority(project.getPriority())
+                .requiredProducts(project.getRequiredProducts())
+                .evaluationCriteria(project.getEvaluationCriteria())
                 .startDate(project.getStartDate())
                 .endDate(project.getEndDate())
+                .expectedEndDate(project.getEndDate())
+                .createdAt(project.getCreatedAt())
                 .build();
     }
 
@@ -24,11 +43,28 @@ public final class ProjectMapper {
         return ProjectDetailResponse.builder()
                 .id(project.getId())
                 .groupId(project.getGroup().getId())
+                .topicId(project.getTopic() != null ? project.getTopic().getId() : null)
+                .code(project.getCode())
                 .title(project.getTitle())
                 .description(project.getDescription())
+                .objective(project.getObjective())
                 .status(project.getStatus())
+                .createdByName(project.getCreatedBy() != null
+                        ? project.getCreatedBy().getFullName() != null
+                            ? project.getCreatedBy().getFullName()
+                            : project.getCreatedBy().getEmail()
+                        : null)
+                .managerName(project.getManager() != null
+                        ? project.getManager().getFullName() != null
+                            ? project.getManager().getFullName()
+                            : project.getManager().getEmail()
+                        : null)
+                .priority(project.getPriority())
+                .requiredProducts(project.getRequiredProducts())
+                .evaluationCriteria(project.getEvaluationCriteria())
                 .startDate(project.getStartDate())
                 .endDate(project.getEndDate())
+                .expectedEndDate(project.getEndDate())
                 .createdAt(project.getCreatedAt())
                 .updatedAt(project.getUpdatedAt())
                 .build();

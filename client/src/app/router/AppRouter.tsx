@@ -60,6 +60,7 @@ export function AppRouter() {
           <Route index element={<Navigate to="/app/profile" replace />} />
           <Route path="dashboard" element={<DashboardPlaceholder />} />
           <Route path="profile" element={<ProfilePage />} />
+          <Route path="research" element={<ResearchPage />} />
         </Route>
       </Route>
 
@@ -69,7 +70,6 @@ export function AppRouter() {
           <Route element={<ActiveMembershipRoute />}>
             <Route path="my-bookings" element={<MyBookingsPage />} />
             <Route path="penalties" element={<PenaltyPage />} />
-            <Route path="research" element={<ResearchPage />} />
             <Route path="other" element={<OtherPage />} />
           </Route>
         </Route>
@@ -87,7 +87,6 @@ export function AppRouter() {
           <Route path="lab-members" element={<LabMembersPage />} />
           <Route path="cleaning" element={<CleaningPage />} />
           <Route path="complaints" element={<ManagerComplaintsPage />} />
-          <Route path="research" element={<ResearchPage />} />
         </Route>
       </Route>
 

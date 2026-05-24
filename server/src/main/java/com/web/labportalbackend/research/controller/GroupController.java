@@ -49,4 +49,12 @@ public class GroupController {
                 Response.ok("Research groups retrieved successfully", groupService.getByLab(id))
         );
     }
+
+    @GetMapping("/research-topics/{id}/groups")
+    @Operation(summary = "Get research groups by topic")
+    public ResponseEntity<Response<List<GroupResponse>>> getByTopic(@PathVariable Long id) {
+        return ResponseEntity.ok(
+                Response.ok("Research groups retrieved successfully", groupService.getByTopic(id))
+        );
+    }
 }

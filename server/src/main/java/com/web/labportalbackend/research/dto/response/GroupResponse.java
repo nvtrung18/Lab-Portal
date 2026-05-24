@@ -1,5 +1,6 @@
 package com.web.labportalbackend.research.dto.response;
 
+import com.web.labportalbackend.research.enums.GroupStatus;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -11,8 +12,16 @@ import java.util.List;
 public class GroupResponse {
     private Long id;
     private Long labId;
+    private Long topicId;
     private String name;
+    private String description;
+    private String objective;
+    private String plan;
+    private GroupStatus status;
     private Long leaderId;
+    private String createdByName;
+    private Integer memberCount;
+    private Long projectCount;
     private Instant createdAt;
     private Instant updatedAt;
     private List<GroupMemberResponse> members;

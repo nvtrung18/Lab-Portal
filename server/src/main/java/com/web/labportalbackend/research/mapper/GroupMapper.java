@@ -13,11 +13,25 @@ import java.util.Comparator;
 public final class GroupMapper {
 
     public static GroupResponse toResponse(GroupEntity group) {
+        return toResponse(group, null);
+    }
+
+    public static GroupResponse toResponse(GroupEntity group, Long projectCount) {
         return GroupResponse.builder()
                 .id(group.getId())
                 .labId(group.getLab().getId())
+                .topicId(group.getTopic() != null ? group.getTopic().getId() : null)
                 .name(group.getName())
+                .description(group.getDescription())
+                .objective(group.getObjective())
+                .plan(group.getPlan())
+                .status(group.getStatus())
                 .leaderId(group.getLeader().getId())
+                .createdByName(group.getLeader().getFullName() != null
+                        ? group.getLeader().getFullName()
+                        : group.getLeader().getEmail())
+                .memberCount(group.getMembers().size())
+                .projectCount(projectCount)
                 .createdAt(group.getCreatedAt())
                 .updatedAt(group.getUpdatedAt())
                 .members(group.getMembers().stream()

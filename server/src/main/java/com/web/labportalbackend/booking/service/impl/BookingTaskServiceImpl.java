@@ -41,10 +41,17 @@ public class BookingTaskServiceImpl implements BookingTaskService {
     @Value("${booking.task.no-show-grace-minutes:15}")
     private long noShowGraceMinutes;
 
+    @Value("${booking.task.auto-no-show-enabled:false}")
+    private boolean autoNoShowEnabled;
+
     @Override
     @Scheduled(cron = "${booking.task.cron:0 * * * * *}")
     @Transactional
     public int processNoShows() {
+        if (!autoNoShowEnabled) {
+            return 0;
+        }
+
         Instant cutoff = Instant.now().minus(noShowGraceMinutes, ChronoUnit.MINUTES);
         List<Booking> candidates = bookingRepository.findNoShowCandidates(BookingStatus.APPROVED, cutoff);
 

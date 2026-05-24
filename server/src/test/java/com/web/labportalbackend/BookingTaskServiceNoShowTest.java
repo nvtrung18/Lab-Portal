@@ -57,6 +57,7 @@ class BookingTaskServiceNoShowTest {
 
     @Test
     void processNoShows_marksOverdueBookingNoShowAndCreatesPenalty() {
+        ReflectionTestUtils.setField(bookingTaskService, "autoNoShowEnabled", true);
         ReflectionTestUtils.setField(bookingTaskService, "noShowGraceMinutes", 15L);
 
         User user = new User();
