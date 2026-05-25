@@ -13,6 +13,8 @@ import java.util.List;
 public interface GroupMemberRepository extends JpaRepository<GroupMemberEntity, Long> {
     boolean existsByGroupIdAndUserId(Long groupId, Long userId);
 
+    boolean existsByGroupIdAndUserIdAndActiveTrueAndDeletedFalse(Long groupId, Long userId);
+
     @EntityGraph(attributePaths = {
             "group",
             "group.lab",
@@ -26,6 +28,39 @@ public interface GroupMemberRepository extends JpaRepository<GroupMemberEntity, 
             "group.members.user"
     })
     List<GroupMemberEntity> findByUserIdAndActiveTrueAndDeletedFalseAndGroupActiveTrueAndGroupDeletedFalse(Long userId);
+
+    @EntityGraph(attributePaths = {
+            "group",
+            "group.lab",
+            "group.lab.manager",
+            "group.topic",
+            "group.topic.manager",
+            "group.project",
+            "group.project.manager",
+            "group.leader",
+            "group.members",
+            "group.members.user"
+    })
+    List<GroupMemberEntity> findByUserIdAndGroupLabIdAndActiveTrueAndDeletedFalseAndGroupActiveTrueAndGroupDeletedFalse(
+            Long userId,
+            Long labId
+    );
+
+    @Query("""
+            SELECT COUNT(gm) > 0
+            FROM GroupMemberEntity gm
+            JOIN gm.group g
+            WHERE gm.user.id = :userId
+              AND gm.active = true
+              AND gm.deleted = false
+              AND g.active = true
+              AND g.deleted = false
+              AND g.project.id = :projectId
+            """)
+    boolean existsActiveMemberByProjectIdAndUserId(
+            @Param("projectId") Long projectId,
+            @Param("userId") Long userId
+    );
 
     @Query("""
             SELECT COUNT(gm) > 0

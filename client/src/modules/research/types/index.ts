@@ -6,6 +6,8 @@ export type ProjectStatus = 'DRAFT' | 'PLANNED' | 'ONGOING' | 'WAITING_REVIEW' |
 
 export type ResearchPriority = 'HIGH' | 'MEDIUM' | 'LOW';
 
+export type MilestoneStatus = 'NOT_STARTED' | 'IN_PROGRESS' | 'WAITING_REVIEW' | 'COMPLETED' | 'OVERDUE' | 'CANCELLED';
+
 export interface ResearchTopic {
   id: number;
   labId: number;
@@ -102,6 +104,46 @@ export interface CreateResearchProjectPayload {
   status?: ProjectStatus;
 }
 
+export interface ResearchMilestone {
+  id: number;
+  projectId: number;
+  projectTitle?: string | null;
+  title: string;
+  description?: string | null;
+  assignedToStudentId?: number | null;
+  assignedToStudentName?: string | null;
+  deadline?: string | null;
+  status?: MilestoneStatus | null;
+  progressPercent: number;
+  evidenceUrl?: string | null;
+  managerComment?: string | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+}
+
+export interface CreateMilestonePayload {
+  projectId: number;
+  title: string;
+  description?: string;
+  assignedToStudentId?: number;
+  deadline?: string;
+  status?: MilestoneStatus;
+  progressPercent: number;
+  evidenceUrl?: string;
+  managerComment?: string;
+}
+
+export interface UpdateMilestonePayload {
+  title: string;
+  description?: string;
+  assignedToStudentId?: number;
+  deadline?: string;
+  status: MilestoneStatus;
+  progressPercent: number;
+  evidenceUrl?: string;
+  managerComment?: string;
+}
+
 export interface CreateTopicPayload {
   labId: number;
   name: string;
@@ -128,6 +170,15 @@ export interface CreateResearchGroupPayload {
   plan?: string;
   leaderStudentId: number;
   memberIds: number[];
+}
+
+export interface UpdateResearchGroupPayload {
+  name: string;
+  objective?: string;
+  plan?: string;
+  leaderStudentId: number;
+  memberIds: number[];
+  status: GroupStatus;
 }
 
 export interface CreateProjectPayload {

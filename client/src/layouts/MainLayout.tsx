@@ -15,6 +15,7 @@ const studentMembershipNavItems = [
   { label: 'Lịch sử dụng PTN', path: '/app/my-bookings' },
   { label: 'PTN của tôi', path: '/app/other' },
   { label: 'Vi phạm & khiếu nại', path: '/app/penalties' },
+  { label: 'Nghiên cứu khoa học', path: '/app/research' },
 ];
 
 const managerNavItems = [

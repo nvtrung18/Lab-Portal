@@ -20,7 +20,7 @@ public interface GroupRepository extends JpaRepository<GroupEntity, Long> {
     @EntityGraph(attributePaths = {"lab", "topic", "project", "leader", "members", "members.user"})
     List<GroupEntity> findByProjectIdAndDeletedFalseAndActiveTrue(Long projectId);
 
-    @EntityGraph(attributePaths = {"lab", "topic", "leader", "members", "members.user"})
+    @EntityGraph(attributePaths = {"lab", "lab.manager", "topic", "topic.manager", "project", "project.manager", "leader", "members", "members.user"})
     Optional<GroupEntity> findByIdAndDeletedFalseAndActiveTrue(Long id);
 
     long countByTopicIdAndDeletedFalseAndActiveTrue(Long topicId);

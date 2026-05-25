@@ -6,10 +6,20 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface MilestoneRepository extends JpaRepository<MilestoneEntity, Long> {
 
+    @EntityGraph(attributePaths = {"project", "createdBy", "assignedToStudent"})
+    List<MilestoneEntity> findByProjectIdAndDeletedFalseAndActiveTrueOrderByDeadlineAscCreatedAtAsc(Long projectId);
+
+    @EntityGraph(attributePaths = {"project", "project.lab", "createdBy", "assignedToStudent"})
+    Optional<MilestoneEntity> findByIdAndDeletedFalseAndActiveTrue(Long milestoneId);
+
+    /**
+     * Legacy timeline query retained for older task/report tests.
+     */
     @EntityGraph(attributePaths = "project")
     List<MilestoneEntity> findByProjectIdOrderByStartDateAsc(Long projectId);
 }

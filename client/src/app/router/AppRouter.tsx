@@ -74,6 +74,15 @@ export function AppRouter() {
         </Route>
       </Route>
 
+      <Route element={<ProtectedRoute allowedRoles={[STUDENT, LAB_MANAGER]} />}>
+        <Route path="/app" element={<MainLayout />}>
+          <Route element={<ActiveMembershipRoute allowLabManager />}>
+            <Route path="research" element={<ResearchPage />} />
+            <Route path="research/projects/:projectId" element={<ResearchProjectDetailPage />} />
+          </Route>
+        </Route>
+      </Route>
+
       <Route element={<ProtectedRoute allowedRoles={[LAB_MANAGER]} />}>
         <Route path="/app" element={<MainLayout />}>
           <Route path="applications" element={<ApplicationListPage />} />
@@ -86,8 +95,6 @@ export function AppRouter() {
           <Route path="lab-members" element={<LabMembersPage />} />
           <Route path="cleaning" element={<CleaningPage />} />
           <Route path="complaints" element={<ManagerComplaintsPage />} />
-          <Route path="research" element={<ResearchPage />} />
-          <Route path="research/projects/:projectId" element={<ResearchProjectDetailPage />} />
         </Route>
       </Route>
 

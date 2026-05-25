@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 
-import type { CreateResearchProjectPayload, ProjectStatus, ResearchPriority } from '../types';
+import type { CreateResearchProjectPayload, ProjectStatus, ResearchPriority, ResearchProject } from '../types';
 
 interface CreateResearchProjectModalProps {
   labId: number | null;
+  project?: ResearchProject | null;
   isOpen: boolean;
   isSubmitting: boolean;
   onClose: () => void;
@@ -24,8 +25,28 @@ const initialForm = {
   status: 'DRAFT' as ProjectStatus,
 };
 
+function toForm(project?: ResearchProject | null) {
+  if (!project) {
+    return initialForm;
+  }
+  return {
+    code: project.code ?? '',
+    title: project.title,
+    researchDirection: project.researchDirection ?? '',
+    description: project.description ?? '',
+    objective: project.objective ?? '',
+    startDate: project.startDate ?? '',
+    expectedEndDate: project.expectedEndDate ?? project.endDate ?? '',
+    priority: project.priority ?? ('MEDIUM' as ResearchPriority),
+    requiredProducts: project.requiredProducts ?? '',
+    evaluationCriteria: project.evaluationCriteria ?? '',
+    status: project.status ?? ('DRAFT' as ProjectStatus),
+  };
+}
+
 export function CreateResearchProjectModal({
   labId,
+  project,
   isOpen,
   isSubmitting,
   onClose,
@@ -35,11 +56,11 @@ export function CreateResearchProjectModal({
   const [touched, setTouched] = useState(false);
 
   useEffect(() => {
-    if (!isOpen) {
-      setForm(initialForm);
+    if (isOpen) {
+      setForm(toForm(project));
       setTouched(false);
     }
-  }, [isOpen]);
+  }, [isOpen, project]);
 
   if (!isOpen || !labId) {
     return null;
@@ -52,6 +73,7 @@ export function CreateResearchProjectModal({
       ? 'Ngày kết thúc dự kiến phải sau ngày bắt đầu.'
       : null;
   const canSubmit = trimmedTitle.length >= 3 && !dateError;
+  const isEditing = Boolean(project);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 px-4 py-6">
@@ -82,8 +104,12 @@ export function CreateResearchProjectModal({
       >
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h3 className="text-lg font-semibold text-slate-950">Tạo đề tài nghiên cứu</h3>
-            <p className="mt-1 text-sm text-slate-600">Đề tài được tạo trong PTN đang quản lý.</p>
+            <h3 className="text-lg font-semibold text-slate-950">
+              {isEditing ? 'Sửa đề tài nghiên cứu' : 'Tạo đề tài nghiên cứu'}
+            </h3>
+            <p className="mt-1 text-sm text-slate-600">
+              {isEditing ? 'Cập nhật thông tin đề tài trong PTN đang quản lý.' : 'Đề tài được tạo trong PTN đang quản lý.'}
+            </p>
           </div>
           <button className="text-sm font-semibold text-slate-500 hover:text-slate-900" type="button" onClick={onClose}>
             Đóng
@@ -125,7 +151,7 @@ export function CreateResearchProjectModal({
           </label>
 
           <label className="block text-sm font-medium text-slate-700 sm:col-span-2">
-            Chủ đề nghiên cứu / hướng nghiên cứu
+            Chủ đề nghiên cứu
             <input
               className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
               value={form.researchDirection}
@@ -213,7 +239,7 @@ export function CreateResearchProjectModal({
             Hủy
           </button>
           <button className="rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60" disabled={isSubmitting} type="submit">
-            {isSubmitting ? 'Đang tạo...' : 'Tạo đề tài nghiên cứu'}
+            {isSubmitting ? (isEditing ? 'Đang lưu...' : 'Đang tạo...') : (isEditing ? 'Lưu thay đổi' : 'Tạo đề tài nghiên cứu')}
           </button>
         </div>
       </form>

@@ -1,7 +1,14 @@
+import { useEffect, useMemo, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 
 import { LAB_MANAGER, STUDENT } from '../../../shared/constants/roles';
-import { getManagedLabId, getManagedLabName } from '../../../shared/utils/membership';
+import {
+  getActiveMemberships,
+  getManagedLabId,
+  getManagedLabName,
+  getMembershipLabId,
+  getMembershipLabName,
+} from '../../../shared/utils/membership';
 import { MyResearchGroups, ResearchProjectList } from '../components';
 import { useCurrentUser } from '../../user/hooks';
 
@@ -12,6 +19,7 @@ export function ResearchPage() {
   const isStudent = roles.includes(STUDENT);
   const managedLabId = getManagedLabId(currentUser);
   const managedLabName = getManagedLabName(currentUser);
+  const activeMemberships = useMemo(() => getActiveMemberships(currentUser), [currentUser]);
 
   if (isLoading) {
     return (
@@ -27,7 +35,7 @@ export function ResearchPage() {
   }
 
   if (isStudent && !isManager) {
-    return <MyResearchGroups currentUserId={currentUser?.id} />;
+    return <StudentResearchView currentUserId={currentUser?.id} activeMemberships={activeMemberships} />;
   }
 
   if (!managedLabId) {
@@ -54,7 +62,92 @@ export function ResearchPage() {
         </div>
       </div>
 
-      <ResearchProjectList labId={managedLabId} canCreate={isManager} />
+      <ResearchProjectList labId={managedLabId} canCreate={isManager} mode="manager" />
+    </section>
+  );
+}
+
+interface StudentResearchViewProps {
+  currentUserId?: number | null;
+  activeMemberships: ReturnType<typeof getActiveMemberships>;
+}
+
+function StudentResearchView({ currentUserId, activeMemberships }: StudentResearchViewProps) {
+  const [tab, setTab] = useState<'projects' | 'groups'>('projects');
+  const [selectedLabId, setSelectedLabId] = useState<number | null>(
+    activeMemberships[0] ? getMembershipLabId(activeMemberships[0]) : null,
+  );
+
+  useEffect(() => {
+    if (!activeMemberships.some((membership) => getMembershipLabId(membership) === selectedLabId)) {
+      setSelectedLabId(activeMemberships[0] ? getMembershipLabId(activeMemberships[0]) : null);
+    }
+  }, [activeMemberships, selectedLabId]);
+
+  if (!activeMemberships.length || !selectedLabId) {
+    return <Navigate to="/app/labs" replace />;
+  }
+
+  return (
+    <section className="space-y-6">
+      <header className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+        <h2 className="text-xl font-semibold text-slate-950">Nghiên cứu khoa học</h2>
+        <p className="mt-2 text-sm text-slate-600">
+          Theo dõi đề tài và nhóm nghiên cứu trong các PTN bạn tham gia.
+        </p>
+      </header>
+
+      <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+        <label className="block max-w-sm text-sm font-semibold text-slate-700">
+          PTN đang chọn
+          <select
+            className="mt-2 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-normal text-slate-900"
+            value={selectedLabId}
+            onChange={(event) => setSelectedLabId(Number(event.target.value))}
+          >
+            {activeMemberships.map((membership) => {
+              const labId = getMembershipLabId(membership);
+              return labId ? (
+                <option key={labId} value={labId}>
+                  {getMembershipLabName(membership)}
+                </option>
+              ) : null;
+            })}
+          </select>
+        </label>
+        <p className="mt-3 text-sm text-slate-600">Chỉ hiển thị dữ liệu NCKH của PTN bạn đang chọn.</p>
+      </section>
+
+      <div className="flex gap-1 border-b border-slate-200" role="tablist" aria-label="Nghiên cứu khoa học">
+        <button
+          className={`border-b-2 px-4 py-3 text-sm font-semibold ${
+            tab === 'projects' ? 'border-slate-900 text-slate-950' : 'border-transparent text-slate-600'
+          }`}
+          type="button"
+          role="tab"
+          aria-selected={tab === 'projects'}
+          onClick={() => setTab('projects')}
+        >
+          NCKH trong PTN
+        </button>
+        <button
+          className={`border-b-2 px-4 py-3 text-sm font-semibold ${
+            tab === 'groups' ? 'border-slate-900 text-slate-950' : 'border-transparent text-slate-600'
+          }`}
+          type="button"
+          role="tab"
+          aria-selected={tab === 'groups'}
+          onClick={() => setTab('groups')}
+        >
+          Nhóm của tôi
+        </button>
+      </div>
+
+      {tab === 'projects' ? (
+        <ResearchProjectList labId={selectedLabId} canCreate={false} mode="student" />
+      ) : (
+        <MyResearchGroups labId={selectedLabId} currentUserId={currentUserId} />
+      )}
     </section>
   );
 }

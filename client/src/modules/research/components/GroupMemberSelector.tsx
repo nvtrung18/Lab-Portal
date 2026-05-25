@@ -37,13 +37,13 @@ export function GroupMemberSelector({
   }
 
   if (isLoading) {
-    return <p className="text-sm text-slate-600">Dang tai danh sach sinh vien...</p>;
+    return <p className="text-sm text-slate-600">Đang tải danh sách sinh viên...</p>;
   }
 
   if (!students.length) {
     return (
       <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-700">
-        PTN chua co sinh vien ACTIVE nao de them vao nhom.
+        PTN chưa có sinh viên đang hoạt động nào để thêm vào nhóm.
       </div>
     );
   }
@@ -51,7 +51,7 @@ export function GroupMemberSelector({
   return (
     <div className="space-y-3">
       <label className="block text-sm font-medium text-slate-700">
-        Truong nhom
+        Trưởng nhóm
         <select
           className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
           value={leaderStudentId ?? ''}
@@ -64,7 +64,7 @@ export function GroupMemberSelector({
           }}
         >
           <option value="" disabled>
-            Chon truong nhom
+            Chọn trưởng nhóm
           </option>
           {students.map((student) => (
             <option key={student.userId} value={student.userId}>
@@ -75,7 +75,7 @@ export function GroupMemberSelector({
       </label>
 
       <div>
-        <p className="text-sm font-medium text-slate-700">Thanh vien nhom</p>
+        <p className="text-sm font-medium text-slate-700">Thành viên nhóm</p>
         <div className="mt-2 max-h-56 space-y-2 overflow-y-auto rounded-md border border-slate-200 p-3">
           {students.map((student) => (
             <label key={student.userId} className="flex items-start gap-3 rounded-md px-2 py-2 hover:bg-slate-50">

@@ -1,10 +1,9 @@
 package com.web.labportalbackend.research.dto.request;
 
 import com.web.labportalbackend.research.enums.MilestoneStatus;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
@@ -13,10 +12,7 @@ import java.time.LocalDate;
 
 @Getter
 @Setter
-public class CreateMilestoneRequest {
-
-    @NotNull(message = "Project ID is required")
-    private Long projectId;
+public class UpdateMilestoneRequest {
 
     @NotBlank(message = "Milestone title is required")
     @Size(min = 3, max = 200, message = "Milestone title must be between 3 and 200 characters")

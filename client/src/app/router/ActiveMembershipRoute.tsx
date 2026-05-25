@@ -3,8 +3,13 @@ import { Navigate, Outlet } from 'react-router-dom';
 import { getStoredUser } from '../../shared/api';
 import { hasActiveMembership } from '../../shared/utils/membership';
 import { useCurrentUser } from '../../modules/user/hooks';
+import { LAB_MANAGER } from '../../shared/constants/roles';
 
-export function ActiveMembershipRoute() {
+interface ActiveMembershipRouteProps {
+  allowLabManager?: boolean;
+}
+
+export function ActiveMembershipRoute({ allowLabManager = false }: ActiveMembershipRouteProps) {
   const storedUser = getStoredUser();
   const { data: currentUser, isLoading } = useCurrentUser();
   const user = currentUser
@@ -22,6 +27,10 @@ export function ActiveMembershipRoute() {
         })),
       }
     : storedUser;
+
+  if (allowLabManager && user?.roles.map((role) => role.replace(/^ROLE_/, '')).includes(LAB_MANAGER)) {
+    return <Outlet />;
+  }
 
   if (isLoading && !storedUser) {
     return (

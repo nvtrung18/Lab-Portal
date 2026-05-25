@@ -8,12 +8,15 @@ import com.web.labportalbackend.lab.entity.Laboratory;
 import com.web.labportalbackend.lab.repository.LaboratoryRepository;
 import com.web.labportalbackend.lab.repository.MembershipRepository;
 import com.web.labportalbackend.research.dto.request.CreateProjectRequest;
+import com.web.labportalbackend.research.dto.request.CreateResearchProjectRequest;
 import com.web.labportalbackend.research.dto.response.ProjectDetailResponse;
 import com.web.labportalbackend.research.dto.response.ProjectResponse;
 import com.web.labportalbackend.research.entity.GroupEntity;
+import com.web.labportalbackend.research.entity.GroupMemberEntity;
 import com.web.labportalbackend.research.entity.ProjectEntity;
 import com.web.labportalbackend.research.enums.ProjectStatus;
 import com.web.labportalbackend.research.repository.GroupRepository;
+import com.web.labportalbackend.research.repository.GroupMemberRepository;
 import com.web.labportalbackend.research.repository.ProjectRepository;
 import com.web.labportalbackend.research.service.impl.ProjectServiceImpl;
 import org.junit.jupiter.api.Test;
@@ -23,6 +26,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.time.LocalDate;
@@ -41,6 +45,9 @@ class ProjectServiceImplTest {
 
     @Mock
     private GroupRepository groupRepository;
+
+    @Mock
+    private GroupMemberRepository groupMemberRepository;
 
     @Mock
     private LaboratoryRepository laboratoryRepository;
@@ -129,6 +136,102 @@ class ProjectServiceImplTest {
     }
 
     @Test
+    void getByLab_returnsProjectsForStudentWithActiveMembership() {
+        User student = authenticateStudent();
+        Laboratory lab = lab(1L);
+        ProjectEntity project = ProjectEntity.builder()
+                .lab(lab)
+                .title("Lab Project")
+                .status(ProjectStatus.ONGOING)
+                .build();
+        project.setId(20L);
+
+        when(laboratoryRepository.findById(1L)).thenReturn(Optional.of(lab));
+        when(membershipRepository.existsByUserIdAndLaboratoryIdAndActiveTrueAndDeletedFalse(student.getId(), lab.getId()))
+                .thenReturn(true);
+        when(projectRepository.findByLabIdAndDeletedFalseAndActiveTrue(1L)).thenReturn(List.of(project));
+
+        List<ProjectResponse> responses = projectService.getByLab(1L);
+
+        assertEquals(1, responses.size());
+        assertEquals(20L, responses.get(0).getId());
+    }
+
+    @Test
+    void updateResearchProject_updatesProjectForManagerOfSameLab() {
+        User manager = authenticateManager();
+        Laboratory lab = lab(1L);
+        ProjectEntity project = ProjectEntity.builder()
+                .lab(lab)
+                .title("Original title")
+                .status(ProjectStatus.DRAFT)
+                .build();
+        project.setId(20L);
+        CreateResearchProjectRequest request = researchRequest(1L);
+        request.setTitle("Updated research project");
+
+        when(projectRepository.findByIdAndDeletedFalseAndActiveTrue(20L)).thenReturn(Optional.of(project));
+        when(laboratoryRepository.findFirstByManagerIdAndDeletedFalse(manager.getId())).thenReturn(Optional.of(lab));
+        when(projectRepository.save(project)).thenReturn(project);
+
+        ProjectResponse response = projectService.updateResearchProject(20L, request);
+
+        assertEquals("Updated research project", response.getTitle());
+        assertEquals(LocalDate.of(2026, 3, 15), project.getEndDate());
+        verify(projectRepository).save(project);
+    }
+
+    @Test
+    void updateResearchProject_deniesManagerOfAnotherLab() {
+        User manager = authenticateManager();
+        Laboratory projectLab = lab(1L);
+        Laboratory managedLab = lab(2L);
+        ProjectEntity project = ProjectEntity.builder()
+                .lab(projectLab)
+                .title("Protected project")
+                .status(ProjectStatus.DRAFT)
+                .build();
+        project.setId(20L);
+
+        when(projectRepository.findByIdAndDeletedFalseAndActiveTrue(20L)).thenReturn(Optional.of(project));
+        when(laboratoryRepository.findFirstByManagerIdAndDeletedFalse(manager.getId())).thenReturn(Optional.of(managedLab));
+
+        assertThrows(AccessDeniedException.class, () -> projectService.updateResearchProject(20L, researchRequest(1L)));
+        verify(projectRepository, never()).save(any());
+    }
+
+    @Test
+    void updateResearchProject_deniesChangingProjectLabThroughPayload() {
+        User manager = authenticateManager();
+        Laboratory lab = lab(1L);
+        ProjectEntity project = ProjectEntity.builder()
+                .lab(lab)
+                .title("Protected project")
+                .status(ProjectStatus.DRAFT)
+                .build();
+        project.setId(20L);
+
+        when(projectRepository.findByIdAndDeletedFalseAndActiveTrue(20L)).thenReturn(Optional.of(project));
+        when(laboratoryRepository.findFirstByManagerIdAndDeletedFalse(manager.getId())).thenReturn(Optional.of(lab));
+
+        assertThrows(AccessDeniedException.class, () -> projectService.updateResearchProject(20L, researchRequest(2L)));
+        verify(projectRepository, never()).save(any());
+    }
+
+    @Test
+    void getByLab_deniesStudentWithoutActiveMembership() {
+        User student = authenticateStudent();
+        Laboratory lab = lab(1L);
+
+        when(laboratoryRepository.findById(1L)).thenReturn(Optional.of(lab));
+        when(membershipRepository.existsByUserIdAndLaboratoryIdAndActiveTrueAndDeletedFalse(student.getId(), lab.getId()))
+                .thenReturn(false);
+
+        assertThrows(AccessDeniedException.class, () -> projectService.getByLab(1L));
+        verify(projectRepository, never()).findByLabIdAndDeletedFalseAndActiveTrue(any());
+    }
+
+    @Test
     void getDetail_returnsProjectWhenFound() {
         User student = authenticateStudent();
         Laboratory lab = lab(1L);
@@ -144,6 +247,32 @@ class ProjectServiceImplTest {
         assertEquals(20L, response.getId());
         assertEquals(10L, response.getGroupId());
         assertEquals("Project Detail", response.getTitle());
+    }
+
+    @Test
+    void getDetail_returnsProjectForActiveResearchGroupMemberWithoutLabMembership() {
+        User student = authenticateStudent();
+        Laboratory lab = lab(1L);
+        ProjectEntity project = ProjectEntity.builder()
+                .lab(lab)
+                .title("Group Project")
+                .status(ProjectStatus.ONGOING)
+                .build();
+        project.setId(20L);
+        GroupEntity group = group(10L, lab);
+        group.setProject(project);
+        GroupMemberEntity member = GroupMemberEntity.builder().group(group).user(student).build();
+
+        when(projectRepository.findByIdAndDeletedFalseAndActiveTrue(20L)).thenReturn(Optional.of(project));
+        when(membershipRepository.existsByUserIdAndLaboratoryIdAndActiveTrueAndDeletedFalse(student.getId(), lab.getId()))
+                .thenReturn(false);
+        when(groupMemberRepository.findByUserIdAndActiveTrueAndDeletedFalseAndGroupActiveTrueAndGroupDeletedFalse(student.getId()))
+                .thenReturn(List.of(member));
+
+        ProjectDetailResponse response = projectService.getDetail(20L);
+
+        assertEquals(20L, response.getId());
+        assertEquals("Group Project", response.getTitle());
     }
 
     @Test
@@ -201,6 +330,17 @@ class ProjectServiceImplTest {
         request.setStatus(ProjectStatus.PLANNED);
         request.setStartDate(startDate);
         request.setEndDate(endDate);
+        return request;
+    }
+
+    private CreateResearchProjectRequest researchRequest(Long labId) {
+        CreateResearchProjectRequest request = new CreateResearchProjectRequest();
+        request.setLabId(labId);
+        request.setTitle("Updated title");
+        request.setDescription("Updated description");
+        request.setStartDate(LocalDate.of(2026, 2, 1));
+        request.setExpectedEndDate(LocalDate.of(2026, 3, 15));
+        request.setStatus(ProjectStatus.ONGOING);
         return request;
     }
 

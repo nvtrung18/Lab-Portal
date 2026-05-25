@@ -1,4 +1,4 @@
-import type { GroupStatus, ProjectStatus, ResearchPriority, TopicStatus } from './types';
+import type { GroupStatus, MilestoneStatus, ProjectStatus, ResearchPriority, TopicStatus } from './types';
 
 export function formatTopicStatus(status?: TopicStatus | null) {
   const labels: Record<TopicStatus, string> = {
@@ -42,10 +42,44 @@ export function formatPriority(priority?: ResearchPriority | null) {
   return priority ? labels[priority] ?? priority : 'Chưa cập nhật';
 }
 
+export function formatGroupRole(role?: 'LEADER' | 'MEMBER' | null) {
+  const labels = {
+    LEADER: 'Trưởng nhóm',
+    MEMBER: 'Thành viên',
+  } as const;
+  return role ? labels[role] ?? role : 'Chưa cập nhật';
+}
+
+export function formatMilestoneStatus(status?: MilestoneStatus | null) {
+  const labels: Record<MilestoneStatus, string> = {
+    NOT_STARTED: 'Chưa bắt đầu',
+    IN_PROGRESS: 'Đang thực hiện',
+    WAITING_REVIEW: 'Chờ duyệt',
+    COMPLETED: 'Hoàn thành',
+    OVERDUE: 'Quá hạn',
+    CANCELLED: 'Đã hủy',
+  };
+  return status ? labels[status] ?? status : 'Chưa cập nhật';
+}
+
+export function isMilestoneOverdue(deadline?: string | null, status?: MilestoneStatus | null) {
+  if (!deadline || status === 'COMPLETED' || status === 'CANCELLED') {
+    return false;
+  }
+  const now = new Date();
+  const today = [
+    now.getFullYear(),
+    String(now.getMonth() + 1).padStart(2, '0'),
+    String(now.getDate()).padStart(2, '0'),
+  ].join('-');
+  return deadline < today;
+}
+
 export function getStatusClass(status?: string | null) {
   switch (status) {
     case 'ACTIVE':
     case 'ONGOING':
+    case 'IN_PROGRESS':
     case 'RECRUITING':
       return 'bg-emerald-50 text-emerald-700 ring-emerald-200';
     case 'COMPLETED':
@@ -53,8 +87,11 @@ export function getStatusClass(status?: string | null) {
     case 'PAUSED':
     case 'WAITING_REVIEW':
       return 'bg-amber-50 text-amber-700 ring-amber-200';
+    case 'OVERDUE':
+      return 'bg-red-50 text-red-700 ring-red-200';
     case 'ARCHIVED':
     case 'CANCELLED':
+    case 'NOT_STARTED':
       return 'bg-slate-100 text-slate-600 ring-slate-200';
     default:
       return 'bg-slate-100 text-slate-600 ring-slate-200';

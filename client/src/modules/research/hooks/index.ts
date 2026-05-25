@@ -4,12 +4,19 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from '../../../shared/components';
 import {
   createGroup,
+  createMilestone,
+  updateMilestone,
   createProject,
   createResearchGroup,
+  updateResearchGroup,
   createResearchProject,
+  updateResearchProject,
   getResearchEligibleStudents,
+  getResearchGroup,
   getResearchGroupsByProject,
-  getMyResearchGroups,
+  getMyResearchGroupsByLab,
+  getMilestone,
+  getMilestonesByProject,
   getResearchProject,
   getResearchProjectsByLab,
   createResearchTopic,
@@ -21,7 +28,10 @@ import type {
   CreateGroupPayload,
   CreateProjectPayload,
   CreateResearchGroupPayload,
+  UpdateResearchGroupPayload,
   CreateResearchProjectPayload,
+  CreateMilestonePayload,
+  UpdateMilestonePayload,
   CreateTopicPayload,
 } from '../types';
 
@@ -29,10 +39,14 @@ export const RESEARCH_TOPICS_QUERY_KEY = ['researchTopics'] as const;
 export const GROUPS_QUERY_KEY = ['groups'] as const;
 export const PROJECTS_QUERY_KEY = ['projects'] as const;
 export const RESEARCH_PROJECTS_QUERY_KEY = ['researchProjects'] as const;
+export const STUDENT_RESEARCH_PROJECTS_QUERY_KEY = ['studentResearchProjects'] as const;
 export const RESEARCH_PROJECT_QUERY_KEY = ['researchProject'] as const;
 export const RESEARCH_GROUPS_QUERY_KEY = ['researchGroups'] as const;
+export const RESEARCH_GROUP_QUERY_KEY = ['researchGroup'] as const;
 export const RESEARCH_ELIGIBLE_STUDENTS_QUERY_KEY = ['researchEligibleStudents'] as const;
 export const MY_RESEARCH_GROUPS_QUERY_KEY = ['myResearchGroups'] as const;
+export const MILESTONES_QUERY_KEY = ['milestones'] as const;
+export const MILESTONE_QUERY_KEY = ['milestone'] as const;
 
 function getErrorMessage(error: unknown, fallback: string) {
   if (axios.isAxiosError(error)) {
@@ -121,6 +135,17 @@ export function useResearchProjectsByLab(labId?: number | null) {
   });
 }
 
+export function useStudentResearchProjectsByLab(labId?: number | null) {
+  return useQuery({
+    queryKey: labId ? [...STUDENT_RESEARCH_PROJECTS_QUERY_KEY, labId] : STUDENT_RESEARCH_PROJECTS_QUERY_KEY,
+    queryFn: () => getResearchProjectsByLab(labId as number),
+    enabled: Boolean(labId),
+    staleTime: 30000,
+    refetchOnReconnect: true,
+    refetchOnWindowFocus: true,
+  });
+}
+
 export function useResearchProject(projectId?: number | null) {
   return useQuery({
     queryKey: projectId ? [...RESEARCH_PROJECT_QUERY_KEY, projectId] : RESEARCH_PROJECT_QUERY_KEY,
@@ -143,6 +168,17 @@ export function useResearchGroupsByProject(projectId?: number | null) {
   });
 }
 
+export function useResearchGroup(groupId?: number | null) {
+  return useQuery({
+    queryKey: groupId ? [...RESEARCH_GROUP_QUERY_KEY, groupId] : RESEARCH_GROUP_QUERY_KEY,
+    queryFn: () => getResearchGroup(groupId as number),
+    enabled: Boolean(groupId),
+    staleTime: 30000,
+    refetchOnReconnect: true,
+    refetchOnWindowFocus: true,
+  });
+}
+
 export function useResearchEligibleStudents(labId?: number | null) {
   return useQuery({
     queryKey: labId ? [...RESEARCH_ELIGIBLE_STUDENTS_QUERY_KEY, labId] : RESEARCH_ELIGIBLE_STUDENTS_QUERY_KEY,
@@ -154,13 +190,79 @@ export function useResearchEligibleStudents(labId?: number | null) {
   });
 }
 
-export function useMyResearchGroups() {
+export function useMyResearchGroups(labId?: number | null) {
   return useQuery({
-    queryKey: MY_RESEARCH_GROUPS_QUERY_KEY,
-    queryFn: getMyResearchGroups,
+    queryKey: labId ? [...MY_RESEARCH_GROUPS_QUERY_KEY, labId] : MY_RESEARCH_GROUPS_QUERY_KEY,
+    queryFn: () => getMyResearchGroupsByLab(labId as number),
+    enabled: Boolean(labId),
     staleTime: 30000,
     refetchOnReconnect: true,
     refetchOnWindowFocus: true,
+  });
+}
+
+export function useMilestonesByProject(projectId?: number | null) {
+  return useQuery({
+    queryKey: projectId ? [...MILESTONES_QUERY_KEY, projectId] : MILESTONES_QUERY_KEY,
+    queryFn: () => getMilestonesByProject(projectId as number),
+    enabled: Boolean(projectId),
+    staleTime: 30000,
+    refetchOnReconnect: true,
+    refetchOnWindowFocus: true,
+  });
+}
+
+export function useMilestone(milestoneId?: number | null) {
+  return useQuery({
+    queryKey: milestoneId ? [...MILESTONE_QUERY_KEY, milestoneId] : MILESTONE_QUERY_KEY,
+    queryFn: () => getMilestone(milestoneId as number),
+    enabled: Boolean(milestoneId),
+    staleTime: 30000,
+    refetchOnReconnect: true,
+    refetchOnWindowFocus: true,
+  });
+}
+
+export function useCreateMilestone(projectId?: number | null) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: CreateMilestonePayload) => createMilestone(payload),
+    onSuccess: async (_milestone, payload) => {
+      const targetProjectId = projectId ?? payload.projectId;
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: [...MILESTONES_QUERY_KEY, targetProjectId],
+        }),
+        queryClient.invalidateQueries({
+          queryKey: [...RESEARCH_PROJECT_QUERY_KEY, targetProjectId],
+        }),
+      ]);
+      toast.success('Đã tạo mốc nghiên cứu thành công.');
+    },
+    onError: (error) => {
+      toast.error(getErrorMessage(error, 'Không thể tạo mốc nghiên cứu.'));
+    },
+  });
+}
+
+export function useUpdateMilestone(projectId?: number | null) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ milestoneId, payload }: { milestoneId: number; payload: UpdateMilestonePayload }) =>
+      updateMilestone(milestoneId, payload),
+    onSuccess: async (_milestone, variables) => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: [...MILESTONES_QUERY_KEY, projectId] }),
+        queryClient.invalidateQueries({ queryKey: [...MILESTONE_QUERY_KEY, variables.milestoneId] }),
+        queryClient.invalidateQueries({ queryKey: [...RESEARCH_PROJECT_QUERY_KEY, projectId] }),
+      ]);
+      toast.success('Đã cập nhật mốc nghiên cứu thành công.');
+    },
+    onError: (error) => {
+      toast.error(getErrorMessage(error, 'Không thể cập nhật mốc nghiên cứu.'));
+    },
   });
 }
 
@@ -181,6 +283,29 @@ export function useCreateResearchProject(labId?: number | null) {
   });
 }
 
+export function useUpdateResearchProject(labId?: number | null) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ projectId, payload }: { projectId: number; payload: CreateResearchProjectPayload }) =>
+      updateResearchProject(projectId, payload),
+    onSuccess: async (_project, variables) => {
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: [...RESEARCH_PROJECTS_QUERY_KEY, labId ?? variables.payload.labId],
+        }),
+        queryClient.invalidateQueries({
+          queryKey: [...RESEARCH_PROJECT_QUERY_KEY, variables.projectId],
+        }),
+      ]);
+      toast.success('Đã cập nhật đề tài nghiên cứu thành công.');
+    },
+    onError: (error) => {
+      toast.error(getErrorMessage(error, 'Không thể cập nhật đề tài nghiên cứu.'));
+    },
+  });
+}
+
 export function useCreateResearchGroup(projectId?: number | null, labId?: number | null) {
   const queryClient = useQueryClient();
 
@@ -189,14 +314,41 @@ export function useCreateResearchGroup(projectId?: number | null, labId?: number
     onSuccess: async (_group, payload) => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: [...RESEARCH_GROUPS_QUERY_KEY, projectId ?? payload.projectId] }),
+        queryClient.invalidateQueries({ queryKey: [...RESEARCH_PROJECT_QUERY_KEY, projectId ?? payload.projectId] }),
         labId
           ? queryClient.invalidateQueries({ queryKey: [...RESEARCH_PROJECTS_QUERY_KEY, labId] })
           : Promise.resolve(),
       ]);
-      toast.success('Da tao nhom nghien cuu thanh cong.');
+      toast.success('Đã tạo nhóm nghiên cứu thành công.');
     },
     onError: (error) => {
-      toast.error(getErrorMessage(error, 'Khong the tao nhom nghien cuu.'));
+      toast.error(getErrorMessage(error, 'Không thể tạo nhóm nghiên cứu.'));
+    },
+  });
+}
+
+export function useUpdateResearchGroup(projectId?: number | null, labId?: number | null) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ groupId, payload }: { groupId: number; payload: UpdateResearchGroupPayload }) =>
+      updateResearchGroup(groupId, payload),
+    onSuccess: async (_group, variables) => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: [...RESEARCH_GROUPS_QUERY_KEY, projectId] }),
+        queryClient.invalidateQueries({ queryKey: [...RESEARCH_GROUP_QUERY_KEY, variables.groupId] }),
+        queryClient.invalidateQueries({ queryKey: [...RESEARCH_PROJECT_QUERY_KEY, projectId] }),
+        labId
+          ? queryClient.invalidateQueries({ queryKey: [...RESEARCH_PROJECTS_QUERY_KEY, labId] })
+          : Promise.resolve(),
+        labId
+          ? queryClient.invalidateQueries({ queryKey: [...MY_RESEARCH_GROUPS_QUERY_KEY, labId] })
+          : Promise.resolve(),
+      ]);
+      toast.success('Đã cập nhật nhóm nghiên cứu thành công.');
+    },
+    onError: (error) => {
+      toast.error(getErrorMessage(error, 'Không thể cập nhật nhóm nghiên cứu.'));
     },
   });
 }

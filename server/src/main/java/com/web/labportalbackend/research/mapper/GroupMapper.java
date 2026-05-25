@@ -8,6 +8,7 @@ import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
 import java.util.Comparator;
+import java.util.List;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class GroupMapper {
@@ -17,6 +18,9 @@ public final class GroupMapper {
     }
 
     public static GroupResponse toResponse(GroupEntity group, Long projectCount) {
+        List<GroupMemberEntity> activeMembers = group.getMembers().stream()
+                .filter(member -> !Boolean.FALSE.equals(member.getActive()) && !Boolean.TRUE.equals(member.getDeleted()))
+                .toList();
         return GroupResponse.builder()
                 .id(group.getId())
                 .labId(group.getLab().getId())
@@ -34,11 +38,11 @@ public final class GroupMapper {
                 .status(group.getStatus())
                 .leaderId(group.getLeader().getId())
                 .createdByName(toDisplayName(group.getLeader()))
-                .memberCount(group.getMembers().size())
+                .memberCount(activeMembers.size())
                 .projectCount(projectCount)
                 .createdAt(group.getCreatedAt())
                 .updatedAt(group.getUpdatedAt())
-                .members(group.getMembers().stream()
+                .members(activeMembers.stream()
                         .sorted(Comparator.comparing(GroupMemberEntity::getJoinedAt))
                         .map(GroupMapper::toMemberResponse)
                         .toList())

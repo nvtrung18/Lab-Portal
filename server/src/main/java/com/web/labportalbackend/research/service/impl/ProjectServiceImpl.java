@@ -11,10 +11,12 @@ import com.web.labportalbackend.research.dto.request.CreateResearchProjectReques
 import com.web.labportalbackend.research.dto.response.ProjectDetailResponse;
 import com.web.labportalbackend.research.dto.response.ProjectResponse;
 import com.web.labportalbackend.research.entity.GroupEntity;
+import com.web.labportalbackend.research.entity.GroupMemberEntity;
 import com.web.labportalbackend.research.entity.ProjectEntity;
 import com.web.labportalbackend.research.enums.ProjectStatus;
 import com.web.labportalbackend.research.mapper.ProjectMapper;
 import com.web.labportalbackend.research.repository.GroupRepository;
+import com.web.labportalbackend.research.repository.GroupMemberRepository;
 import com.web.labportalbackend.research.repository.ProjectRepository;
 import com.web.labportalbackend.research.service.ProjectService;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +35,7 @@ public class ProjectServiceImpl implements ProjectService {
 
     private final ProjectRepository projectRepository;
     private final GroupRepository groupRepository;
+    private final GroupMemberRepository groupMemberRepository;
     private final LaboratoryRepository laboratoryRepository;
     private final MembershipRepository membershipRepository;
     private final UserRepository userRepository;
@@ -99,11 +102,40 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
+    @Transactional
+    public ProjectResponse updateResearchProject(Long projectId, CreateResearchProjectRequest request) {
+        validateDateRange(request.getStartDate(), request.getExpectedEndDate());
+
+        User currentUser = getCurrentUser();
+        ProjectEntity project = projectRepository.findByIdAndDeletedFalseAndActiveTrue(projectId)
+                .orElseThrow(() -> new ResourceNotFoundException("Project", projectId));
+        Laboratory lab = resolveProjectLab(project);
+        assertCanCreateInLab(currentUser, lab);
+        if (!lab.getId().equals(request.getLabId())) {
+            throw new AccessDeniedException("Cannot move research projects to another lab");
+        }
+
+        project.setCode(request.getCode());
+        project.setTitle(request.getTitle());
+        project.setResearchDirection(request.getResearchDirection());
+        project.setDescription(request.getDescription());
+        project.setObjective(request.getObjective());
+        project.setStatus(request.getStatus() != null ? request.getStatus() : ProjectStatus.DRAFT);
+        project.setStartDate(request.getStartDate());
+        project.setEndDate(request.getExpectedEndDate());
+        project.setPriority(request.getPriority());
+        project.setRequiredProducts(request.getRequiredProducts());
+        project.setEvaluationCriteria(request.getEvaluationCriteria());
+
+        return ProjectMapper.toResponse(projectRepository.save(project));
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public List<ProjectResponse> getByLab(Long labId) {
         Laboratory lab = laboratoryRepository.findById(labId)
                 .orElseThrow(() -> new ResourceNotFoundException("Laboratory", labId));
-        assertCanCreateInLab(getCurrentUser(), lab);
+        assertCanAccessLab(getCurrentUser(), lab);
 
         return projectRepository.findByLabIdAndDeletedFalseAndActiveTrue(labId)
                 .stream()
@@ -129,7 +161,7 @@ public class ProjectServiceImpl implements ProjectService {
     public ProjectDetailResponse getDetail(Long projectId) {
         ProjectEntity project = projectRepository.findByIdAndDeletedFalseAndActiveTrue(projectId)
                 .orElseThrow(() -> new ResourceNotFoundException("Project", projectId));
-        assertCanAccessLab(getCurrentUser(), resolveProjectLab(project));
+        assertCanAccessProject(getCurrentUser(), project);
         return ProjectMapper.toDetailResponse(project);
     }
 
@@ -173,8 +205,6 @@ public class ProjectServiceImpl implements ProjectService {
             return;
         }
 
-        // TODO: Khi hoàn thiện group membership, STUDENT nên được kiểm tra là member/leader của group.
-        // Hiện tại phạm vi ngày 31 cho phép theo membership ACTIVE của PTN chứa group.
         if (currentUser.hasRole("STUDENT") &&
                 membershipRepository.existsByUserIdAndLaboratoryIdAndActiveTrueAndDeletedFalse(
                         currentUser.getId(),
@@ -184,6 +214,33 @@ public class ProjectServiceImpl implements ProjectService {
         }
 
         throw new AccessDeniedException("Cannot access research projects for this lab");
+    }
+
+    private void assertCanAccessProject(User currentUser, ProjectEntity project) {
+        Laboratory lab = resolveProjectLab(project);
+        if (currentUser.hasRole("LAB_MANAGER")) {
+            assertCanAccessLab(currentUser, lab);
+            return;
+        }
+
+        if (currentUser.hasRole("STUDENT")) {
+            if (membershipRepository.existsByUserIdAndLaboratoryIdAndActiveTrueAndDeletedFalse(
+                    currentUser.getId(), lab.getId())) {
+                return;
+            }
+
+            boolean belongsToProjectGroup = groupMemberRepository
+                    .findByUserIdAndActiveTrueAndDeletedFalseAndGroupActiveTrueAndGroupDeletedFalse(currentUser.getId())
+                    .stream()
+                    .map(GroupMemberEntity::getGroup)
+                    .anyMatch(group -> (group.getProject() != null && project.getId().equals(group.getProject().getId()))
+                            || (project.getGroup() != null && project.getGroup().getId().equals(group.getId())));
+            if (belongsToProjectGroup) {
+                return;
+            }
+        }
+
+        throw new AccessDeniedException("Cannot access this research project");
     }
 
     private User getCurrentUser() {

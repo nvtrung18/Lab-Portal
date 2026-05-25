@@ -12,6 +12,8 @@ public interface ProjectService {
 
     ProjectResponse createResearchProject(CreateResearchProjectRequest request);
 
+    ProjectResponse updateResearchProject(Long projectId, CreateResearchProjectRequest request);
+
     List<ProjectResponse> getByLab(Long labId);
 
     List<ProjectResponse> getByGroup(Long groupId);

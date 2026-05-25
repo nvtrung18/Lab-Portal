@@ -1,26 +1,18 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 
 import { useMyResearchGroups } from '../hooks';
 import type { ResearchGroup, ResearchGroupMember } from '../types';
-import { formatDate, formatGroupStatus, getStatusClass } from '../utils';
+import { formatDate, formatGroupRole, formatGroupStatus, getStatusClass } from '../utils';
+import { MilestoneList } from './MilestoneList';
 
 interface MyResearchGroupsProps {
+  labId: number;
   currentUserId?: number | null;
 }
 
-function formatRole(role?: string | null) {
-  if (role === 'LEADER') {
-    return 'Trưởng nhóm';
-  }
-  if (role === 'MEMBER') {
-    return 'Thành viên';
-  }
-  return 'Chưa cập nhật';
-}
-
 function getMemberName(member: ResearchGroupMember) {
-  return member.fullName || member.email || `User #${member.userId}`;
+  return member.fullName || member.email || `Người dùng #${member.userId}`;
 }
 
 function getProjectName(group: ResearchGroup) {
@@ -30,9 +22,13 @@ function getProjectName(group: ResearchGroup) {
   return 'Chưa cập nhật';
 }
 
-export function MyResearchGroups({ currentUserId }: MyResearchGroupsProps) {
+export function MyResearchGroups({ labId, currentUserId }: MyResearchGroupsProps) {
   const [selectedGroupId, setSelectedGroupId] = useState<number | null>(null);
-  const { data: groups = [], isError, isLoading, refetch } = useMyResearchGroups();
+  const { data: groups = [], isError, isLoading, refetch } = useMyResearchGroups(labId);
+
+  useEffect(() => {
+    setSelectedGroupId(null);
+  }, [labId]);
 
   const selectedGroup = useMemo(
     () => groups.find((group) => group.id === selectedGroupId) ?? groups[0] ?? null,
@@ -67,7 +63,7 @@ export function MyResearchGroups({ currentUserId }: MyResearchGroupsProps) {
           </div>
         ) : !groups.length ? (
           <div className="rounded-md border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
-            Bạn chưa được phân vào nhóm nghiên cứu nào.
+            Bạn chưa được phân vào nhóm nghiên cứu nào trong PTN này.
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -90,7 +86,7 @@ export function MyResearchGroups({ currentUserId }: MyResearchGroupsProps) {
                     <td className="px-3 py-3 font-semibold text-slate-950">{group.name}</td>
                     <td className="px-3 py-3 text-slate-600">{getProjectName(group)}</td>
                     <td className="px-3 py-3 text-slate-600">{group.topicName ?? 'Chưa cập nhật'}</td>
-                    <td className="px-3 py-3 text-slate-600">{formatRole(myRoleByGroupId.get(group.id))}</td>
+                    <td className="px-3 py-3 text-slate-600">{formatGroupRole(myRoleByGroupId.get(group.id))}</td>
                     <td className="px-3 py-3 text-slate-600">{group.leaderName ?? 'Chưa cập nhật'}</td>
                     <td className="px-3 py-3 text-slate-600">{group.memberCount ?? group.members?.length ?? 0}</td>
                     <td className="px-3 py-3">
@@ -116,38 +112,48 @@ export function MyResearchGroups({ currentUserId }: MyResearchGroupsProps) {
       </section>
 
       {selectedGroup ? (
-        <section className="grid gap-6 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
-          <div className="space-y-6">
-            <DetailPanel title="Thông tin nhóm">
-              <DescriptionRow label="Tên nhóm" value={selectedGroup.name} />
-              <DescriptionRow label="Mục tiêu" value={selectedGroup.objective ?? 'Chưa cập nhật'} />
-              <DescriptionRow label="Kế hoạch" value={selectedGroup.plan ?? 'Chưa cập nhật'} />
-              <DescriptionRow label="Trạng thái" value={formatGroupStatus(selectedGroup.status)} />
-              <DescriptionRow label="Ngày tạo" value={formatDate(selectedGroup.createdAt)} />
-            </DetailPanel>
+        <section className="space-y-6">
+          <div className="grid gap-6 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
+            <div className="space-y-6">
+              <DetailPanel title="Thông tin nhóm">
+                <DescriptionRow label="Tên nhóm" value={selectedGroup.name} />
+                <DescriptionRow label="Mục tiêu" value={selectedGroup.objective ?? 'Chưa cập nhật'} />
+                <DescriptionRow label="Kế hoạch" value={selectedGroup.plan ?? 'Chưa cập nhật'} />
+                <DescriptionRow label="Trạng thái" value={formatGroupStatus(selectedGroup.status)} />
+                <DescriptionRow label="Ngày tạo" value={formatDate(selectedGroup.createdAt)} />
+              </DetailPanel>
 
-            <DetailPanel title="Thông tin đề tài">
-              <DescriptionRow label="Đề tài nghiên cứu" value={getProjectName(selectedGroup)} />
-              <DescriptionRow label="Chủ đề nghiên cứu" value={selectedGroup.topicName ?? 'Chưa cập nhật'} />
-              <DescriptionRow label="Quản lý PTN / giảng viên hướng dẫn" value={selectedGroup.managerName ?? 'Chưa cập nhật'} />
+              <DetailPanel title="Thông tin đề tài">
+                <DescriptionRow label="Đề tài nghiên cứu" value={getProjectName(selectedGroup)} />
+                <DescriptionRow label="Chủ đề nghiên cứu" value={selectedGroup.topicName ?? 'Chưa cập nhật'} />
+                <DescriptionRow label="Quản lý PTN / giảng viên hướng dẫn" value={selectedGroup.managerName ?? 'Chưa cập nhật'} />
+              </DetailPanel>
+            </div>
+
+            <DetailPanel title="Thành viên nhóm">
+              <div className="space-y-3">
+                {(selectedGroup.members ?? []).map((member) => (
+                  <div key={member.id} className="flex items-start justify-between gap-3 rounded-md border border-slate-200 p-3">
+                    <div>
+                      <p className="font-semibold text-slate-950">{getMemberName(member)}</p>
+                      <p className="mt-1 text-xs text-slate-500">{member.email ?? `Người dùng #${member.userId}`}</p>
+                    </div>
+                    <span className="shrink-0 rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
+                      {formatGroupRole(member.role)}
+                    </span>
+                  </div>
+                ))}
+              </div>
             </DetailPanel>
           </div>
 
-          <DetailPanel title="Thành viên nhóm">
-            <div className="space-y-3">
-              {(selectedGroup.members ?? []).map((member) => (
-                <div key={member.id} className="flex items-start justify-between gap-3 rounded-md border border-slate-200 p-3">
-                  <div>
-                    <p className="font-semibold text-slate-950">{getMemberName(member)}</p>
-                    <p className="mt-1 text-xs text-slate-500">{member.email ?? `User #${member.userId}`}</p>
-                  </div>
-                  <span className="shrink-0 rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
-                    {formatRole(member.role)}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </DetailPanel>
+          {selectedGroup.projectId ? (
+            <MilestoneList
+              projectId={selectedGroup.projectId}
+              canCreate={false}
+              emptyMessage="Đề tài này chưa có mốc nghiên cứu nào."
+            />
+          ) : null}
         </section>
       ) : null}
     </section>
