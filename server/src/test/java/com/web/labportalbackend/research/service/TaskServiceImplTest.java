@@ -9,6 +9,7 @@ import com.web.labportalbackend.lab.entity.Laboratory;
 import com.web.labportalbackend.lab.repository.LaboratoryRepository;
 import com.web.labportalbackend.research.dto.request.AssignTaskRequest;
 import com.web.labportalbackend.research.dto.request.CreateTaskRequest;
+import com.web.labportalbackend.research.dto.request.UpdateTaskStatusRequest;
 import com.web.labportalbackend.research.dto.response.TaskResponse;
 import com.web.labportalbackend.research.entity.GroupEntity;
 import com.web.labportalbackend.research.entity.MilestoneEntity;
@@ -211,6 +212,209 @@ class TaskServiceImplTest {
         assertThrows(ResourceNotFoundException.class, () -> taskService.getByMilestone(10L));
     }
 
+    @Test
+    void updateStatus_studentMovesAssignedTodoToDoingAndStartsProgress() {
+        User currentStudent = authenticate("student", "STUDENT");
+        TaskEntity task = task(20L, 10L, currentStudent.getId());
+        MilestoneEntity milestone = milestone(10L, 100L);
+        UpdateTaskStatusRequest request = statusRequest(TaskStatus.DOING);
+
+        when(taskRepository.findByIdForUpdate(20L)).thenReturn(Optional.of(task));
+        when(milestoneRepository.findByIdAndDeletedFalseAndActiveTrue(10L)).thenReturn(Optional.of(milestone));
+        when(groupMemberRepository.existsActiveMemberByProjectIdAndUserId(50L, currentStudent.getId()))
+                .thenReturn(true);
+        when(taskRepository.save(task)).thenReturn(task);
+
+        TaskResponse response = taskService.updateStatus(20L, request);
+
+        assertEquals(TaskStatus.DOING, response.getStatus());
+        assertEquals(10, response.getProgressPercent());
+        verify(taskRepository).save(task);
+    }
+
+    @Test
+    void updateStatus_studentCannotMoveTaskToDone() {
+        User currentStudent = authenticate("student", "STUDENT");
+        TaskEntity task = task(20L, 10L, currentStudent.getId());
+        task.setStatus(TaskStatus.WAITING_REVIEW);
+
+        when(taskRepository.findByIdForUpdate(20L)).thenReturn(Optional.of(task));
+        when(milestoneRepository.findByIdAndDeletedFalseAndActiveTrue(10L))
+                .thenReturn(Optional.of(milestone(10L, 100L)));
+        when(groupMemberRepository.existsActiveMemberByProjectIdAndUserId(50L, currentStudent.getId()))
+                .thenReturn(true);
+
+        assertThrows(IllegalArgumentException.class,
+                () -> taskService.updateStatus(20L, statusRequest(TaskStatus.DONE)));
+        verify(taskRepository, never()).save(any());
+    }
+
+    @Test
+    void updateStatus_studentMovesAssignedRevisionTaskBackToDoing() {
+        User currentStudent = authenticate("student", "STUDENT");
+        TaskEntity task = task(20L, 10L, currentStudent.getId());
+        task.setStatus(TaskStatus.NEEDS_REVISION);
+        task.setProgressPercent(5);
+
+        when(taskRepository.findByIdForUpdate(20L)).thenReturn(Optional.of(task));
+        when(milestoneRepository.findByIdAndDeletedFalseAndActiveTrue(10L))
+                .thenReturn(Optional.of(milestone(10L, 100L)));
+        when(groupMemberRepository.existsActiveMemberByProjectIdAndUserId(50L, currentStudent.getId()))
+                .thenReturn(true);
+        when(taskRepository.save(task)).thenReturn(task);
+
+        TaskResponse response = taskService.updateStatus(20L, statusRequest(TaskStatus.DOING));
+
+        assertEquals(TaskStatus.DOING, response.getStatus());
+        assertEquals(10, response.getProgressPercent());
+        verify(taskRepository).save(task);
+    }
+
+    @Test
+    void updateStatus_studentSubmitsDoingTaskForReviewAtNinetyPercent() {
+        User currentStudent = authenticate("student", "STUDENT");
+        TaskEntity task = task(20L, 10L, currentStudent.getId());
+        task.setStatus(TaskStatus.DOING);
+        task.setProgressPercent(35);
+
+        when(taskRepository.findByIdForUpdate(20L)).thenReturn(Optional.of(task));
+        when(milestoneRepository.findByIdAndDeletedFalseAndActiveTrue(10L))
+                .thenReturn(Optional.of(milestone(10L, 100L)));
+        when(groupMemberRepository.existsActiveMemberByProjectIdAndUserId(50L, currentStudent.getId()))
+                .thenReturn(true);
+        when(taskRepository.save(task)).thenReturn(task);
+
+        TaskResponse response = taskService.updateStatus(20L, statusRequest(TaskStatus.WAITING_REVIEW));
+
+        assertEquals(TaskStatus.WAITING_REVIEW, response.getStatus());
+        assertEquals(90, response.getProgressPercent());
+        verify(taskRepository).save(task);
+    }
+
+    @Test
+    void updateStatus_studentCannotCancelAssignedTask() {
+        User currentStudent = authenticate("student", "STUDENT");
+        TaskEntity task = task(20L, 10L, currentStudent.getId());
+
+        when(taskRepository.findByIdForUpdate(20L)).thenReturn(Optional.of(task));
+        when(milestoneRepository.findByIdAndDeletedFalseAndActiveTrue(10L))
+                .thenReturn(Optional.of(milestone(10L, 100L)));
+        when(groupMemberRepository.existsActiveMemberByProjectIdAndUserId(50L, currentStudent.getId()))
+                .thenReturn(true);
+
+        assertThrows(IllegalArgumentException.class,
+                () -> taskService.updateStatus(20L, statusRequest(TaskStatus.CANCELLED)));
+        verify(taskRepository, never()).save(any());
+    }
+
+    @Test
+    void updateStatus_studentCannotUpdateTaskAssignedToAnotherStudent() {
+        User currentStudent = authenticate("student", "STUDENT");
+        TaskEntity task = task(20L, 10L, 7L);
+
+        when(taskRepository.findByIdForUpdate(20L)).thenReturn(Optional.of(task));
+        when(milestoneRepository.findByIdAndDeletedFalseAndActiveTrue(10L))
+                .thenReturn(Optional.of(milestone(10L, 100L)));
+        when(groupMemberRepository.existsActiveMemberByProjectIdAndUserId(50L, currentStudent.getId()))
+                .thenReturn(true);
+
+        assertThrows(AccessDeniedException.class,
+                () -> taskService.updateStatus(20L, statusRequest(TaskStatus.DOING)));
+        verify(taskRepository, never()).save(any());
+    }
+
+    @Test
+    void updateStatus_studentCannotUpdateTaskFromAnotherProjectGroup() {
+        User currentStudent = authenticate("student", "STUDENT");
+        TaskEntity task = task(20L, 10L, currentStudent.getId());
+
+        when(taskRepository.findByIdForUpdate(20L)).thenReturn(Optional.of(task));
+        when(milestoneRepository.findByIdAndDeletedFalseAndActiveTrue(10L))
+                .thenReturn(Optional.of(milestone(10L, 100L)));
+        when(groupMemberRepository.existsActiveMemberByProjectIdAndUserId(50L, currentStudent.getId()))
+                .thenReturn(false);
+
+        assertThrows(AccessDeniedException.class,
+                () -> taskService.updateStatus(20L, statusRequest(TaskStatus.DOING)));
+        verify(taskRepository, never()).save(any());
+    }
+
+    @Test
+    void updateStatus_managerCompletesReviewTaskInManagedLab() {
+        User manager = authenticate("manager", "LAB_MANAGER");
+        Laboratory lab = lab(1L);
+        MilestoneEntity milestone = milestone(10L, 100L);
+        milestone.getProject().setLab(lab);
+        TaskEntity task = task(20L, 10L, 7L);
+        task.setStatus(TaskStatus.WAITING_REVIEW);
+        task.setProgressPercent(70);
+
+        when(taskRepository.findByIdForUpdate(20L)).thenReturn(Optional.of(task));
+        when(milestoneRepository.findByIdAndDeletedFalseAndActiveTrue(10L)).thenReturn(Optional.of(milestone));
+        when(laboratoryRepository.findFirstByManagerIdAndDeletedFalse(manager.getId())).thenReturn(Optional.of(lab));
+        when(taskRepository.save(task)).thenReturn(task);
+
+        TaskResponse response = taskService.updateStatus(20L, statusRequest(TaskStatus.DONE));
+
+        assertEquals(TaskStatus.DONE, response.getStatus());
+        assertEquals(100, response.getProgressPercent());
+        verify(taskRepository).save(task);
+    }
+
+    @Test
+    void updateStatus_managerRequestsRevisionWithoutChangingProgress() {
+        User manager = authenticate("manager", "LAB_MANAGER");
+        Laboratory lab = lab(1L);
+        MilestoneEntity milestone = milestone(10L, 100L);
+        milestone.getProject().setLab(lab);
+        TaskEntity task = task(20L, 10L, 7L);
+        task.setStatus(TaskStatus.WAITING_REVIEW);
+        task.setProgressPercent(90);
+
+        when(taskRepository.findByIdForUpdate(20L)).thenReturn(Optional.of(task));
+        when(milestoneRepository.findByIdAndDeletedFalseAndActiveTrue(10L)).thenReturn(Optional.of(milestone));
+        when(laboratoryRepository.findFirstByManagerIdAndDeletedFalse(manager.getId())).thenReturn(Optional.of(lab));
+        when(taskRepository.save(task)).thenReturn(task);
+
+        TaskResponse response = taskService.updateStatus(20L, statusRequest(TaskStatus.NEEDS_REVISION));
+
+        assertEquals(TaskStatus.NEEDS_REVISION, response.getStatus());
+        assertEquals(90, response.getProgressPercent());
+        verify(taskRepository).save(task);
+    }
+
+    @Test
+    void updateStatus_managerCannotUpdateTaskOutsideManagedLab() {
+        User manager = authenticate("manager", "LAB_MANAGER");
+        MilestoneEntity milestone = milestone(10L, 100L);
+        milestone.getProject().setLab(lab(2L));
+
+        when(taskRepository.findByIdForUpdate(20L)).thenReturn(Optional.of(task(20L, 10L, 7L)));
+        when(milestoneRepository.findByIdAndDeletedFalseAndActiveTrue(10L)).thenReturn(Optional.of(milestone));
+        when(laboratoryRepository.findFirstByManagerIdAndDeletedFalse(manager.getId()))
+                .thenReturn(Optional.of(lab(1L)));
+
+        assertThrows(AccessDeniedException.class,
+                () -> taskService.updateStatus(20L, statusRequest(TaskStatus.DOING)));
+        verify(taskRepository, never()).save(any());
+    }
+
+    @Test
+    void updateStatus_rejectsManualOverdueTarget() {
+        User manager = authenticate("manager", "LAB_MANAGER");
+        Laboratory lab = lab(1L);
+        MilestoneEntity milestone = milestone(10L, 100L);
+        milestone.getProject().setLab(lab);
+
+        when(taskRepository.findByIdForUpdate(20L)).thenReturn(Optional.of(task(20L, 10L, 7L)));
+        when(milestoneRepository.findByIdAndDeletedFalseAndActiveTrue(10L)).thenReturn(Optional.of(milestone));
+        when(laboratoryRepository.findFirstByManagerIdAndDeletedFalse(manager.getId())).thenReturn(Optional.of(lab));
+
+        assertThrows(IllegalArgumentException.class,
+                () -> taskService.updateStatus(20L, statusRequest(TaskStatus.OVERDUE)));
+        verify(taskRepository, never()).save(any());
+    }
+
     private TaskEntity task(Long id, Long milestoneId, Long assigneeId) {
         TaskEntity task = TaskEntity.builder()
                 .milestoneId(milestoneId)
@@ -220,6 +424,12 @@ class TaskServiceImplTest {
                 .build();
         task.setId(id);
         return task;
+    }
+
+    private UpdateTaskStatusRequest statusRequest(TaskStatus status) {
+        UpdateTaskStatusRequest request = new UpdateTaskStatusRequest();
+        request.setStatus(status);
+        return request;
     }
 
     private MilestoneEntity milestone(Long id, Long groupId) {

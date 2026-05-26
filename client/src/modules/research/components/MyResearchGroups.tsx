@@ -153,6 +153,8 @@ export function MyResearchGroups({ labId, currentUserId }: MyResearchGroupsProps
               projectId={selectedGroup.projectId}
               canCreate={false}
               showTaskBoard
+              taskBoardRole={currentUserId != null ? 'STUDENT' : undefined}
+              taskBoardCurrentUserId={currentUserId}
               emptyMessage="Đề tài này chưa có mốc nghiên cứu nào."
             />
           ) : null}

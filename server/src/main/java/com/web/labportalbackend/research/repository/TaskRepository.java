@@ -35,6 +35,13 @@ public interface TaskRepository extends JpaRepository<TaskEntity, Long> {
     long countDoneByProjectId(@Param("projectId") Long projectId);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("SELECT t FROM TaskEntity t WHERE t.id = :id")
+    @EntityGraph(attributePaths = "assignedToStudent")
+    @Query("""
+            SELECT t
+            FROM TaskEntity t
+            WHERE t.id = :id
+              AND t.deleted = false
+              AND t.active = true
+            """)
     Optional<TaskEntity> findByIdForUpdate(@Param("id") Long id);
 }

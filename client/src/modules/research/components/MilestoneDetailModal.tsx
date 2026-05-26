@@ -1,14 +1,25 @@
 import { useMilestone } from '../hooks';
+import type { TaskBoardRole } from '../taskBoardHelpers';
 import { formatDate, formatMilestoneStatus, getStatusClass, isMilestoneOverdue } from '../utils';
 import { TaskBoard } from './TaskBoard';
 
 interface MilestoneDetailModalProps {
   milestoneId: number | null;
   showTaskBoard?: boolean;
+  taskBoardReadonly?: boolean;
+  taskBoardRole?: TaskBoardRole;
+  taskBoardCurrentUserId?: number | null;
   onClose: () => void;
 }
 
-export function MilestoneDetailModal({ milestoneId, showTaskBoard = false, onClose }: MilestoneDetailModalProps) {
+export function MilestoneDetailModal({
+  milestoneId,
+  showTaskBoard = false,
+  taskBoardReadonly = true,
+  taskBoardRole,
+  taskBoardCurrentUserId,
+  onClose,
+}: MilestoneDetailModalProps) {
   const { data: milestone, isError, isLoading, refetch } = useMilestone(milestoneId);
 
   if (!milestoneId) {
@@ -102,7 +113,14 @@ export function MilestoneDetailModal({ milestoneId, showTaskBoard = false, onClo
               <Detail label="Nhận xét của quản lý PTN" value={milestone.managerComment ?? 'Chưa cập nhật'} />
             </dl>
 
-            {showTaskBoard ? <TaskBoard milestoneId={milestone.id} readonly /> : null}
+            {showTaskBoard ? (
+              <TaskBoard
+                milestoneId={milestone.id}
+                readonly={taskBoardReadonly}
+                role={taskBoardRole}
+                currentUserId={taskBoardCurrentUserId}
+              />
+            ) : null}
           </div>
         )}
       </section>

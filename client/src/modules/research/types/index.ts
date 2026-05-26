@@ -17,7 +17,7 @@ export type ResearchTaskStatus =
   | 'OVERDUE'
   | 'CANCELLED';
 
-export type TaskColumn = 'TODO' | 'DOING' | 'WAITING_REVIEW' | 'DONE';
+export type TaskColumn = 'TODO' | 'DOING' | 'WAITING_REVIEW' | 'NEEDS_REVISION' | 'DONE';
 
 export interface ResearchTopic {
   id: number;

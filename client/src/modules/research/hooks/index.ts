@@ -18,6 +18,7 @@ import {
   getMilestone,
   getMilestonesByProject,
   getTasksByMilestone,
+  updateTaskStatus,
   getResearchProject,
   getResearchProjectsByLab,
   createResearchTopic,
@@ -34,7 +35,10 @@ import type {
   CreateMilestonePayload,
   UpdateMilestonePayload,
   CreateTopicPayload,
+  ResearchTask,
+  TaskColumn,
 } from '../types';
+import { updateTaskStatusInCache } from '../taskBoardHelpers';
 
 export const RESEARCH_TOPICS_QUERY_KEY = ['researchTopics'] as const;
 export const GROUPS_QUERY_KEY = ['groups'] as const;
@@ -232,6 +236,41 @@ export function useTasksByMilestone(milestoneId?: number | null) {
     enabled: Boolean(milestoneId),
     staleTime: 30000,
     refetchOnWindowFocus: true,
+  });
+}
+
+export function useUpdateTaskStatus(milestoneId: number) {
+  const queryClient = useQueryClient();
+  const queryKey = [...TASKS_QUERY_KEY, milestoneId] as const;
+
+  return useMutation({
+    mutationFn: ({ taskId, status }: { taskId: number; status: TaskColumn }) =>
+      updateTaskStatus(taskId, status),
+    onMutate: async ({ taskId, status }) => {
+      await queryClient.cancelQueries({ queryKey });
+      const previousTasks = queryClient.getQueryData<ResearchTask[]>(queryKey);
+
+      queryClient.setQueryData<ResearchTask[]>(queryKey, (currentTasks = []) =>
+        updateTaskStatusInCache(currentTasks, taskId, status),
+      );
+
+      return { previousTasks };
+    },
+    onError: (_error, _variables, context) => {
+      if (context?.previousTasks) {
+        queryClient.setQueryData(queryKey, context.previousTasks);
+      }
+      toast.error('Không thể cập nhật trạng thái nhiệm vụ. Dữ liệu đã được khôi phục.');
+    },
+    onSuccess: (updatedTask) => {
+      queryClient.setQueryData<ResearchTask[]>(queryKey, (currentTasks = []) =>
+        currentTasks.map((task) => (task.id === updatedTask.id ? updatedTask : task)),
+      );
+      toast.success('Đã cập nhật trạng thái nhiệm vụ.');
+    },
+    onSettled: async () => {
+      await queryClient.invalidateQueries({ queryKey });
+    },
   });
 }
 

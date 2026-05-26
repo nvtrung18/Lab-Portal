@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { useCreateMilestone, useMilestonesByProject, useResearchEligibleStudents, useUpdateMilestone } from '../hooks';
 import type { ResearchMilestone } from '../types';
+import type { TaskBoardRole } from '../taskBoardHelpers';
 import { formatDate, formatMilestoneStatus, getStatusClass, isMilestoneOverdue } from '../utils';
 import { CreateMilestoneModal } from './CreateMilestoneModal';
 import { EditMilestoneModal } from './EditMilestoneModal';
@@ -12,6 +13,8 @@ interface MilestoneListProps {
   labId?: number | null;
   canCreate: boolean;
   showTaskBoard?: boolean;
+  taskBoardRole?: TaskBoardRole;
+  taskBoardCurrentUserId?: number | null;
   emptyMessage?: string;
 }
 
@@ -20,6 +23,8 @@ export function MilestoneList({
   labId,
   canCreate,
   showTaskBoard = canCreate,
+  taskBoardRole = canCreate ? 'LAB_MANAGER' : undefined,
+  taskBoardCurrentUserId,
   emptyMessage = 'Chưa có mốc nghiên cứu nào.',
 }: MilestoneListProps) {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -184,6 +189,9 @@ export function MilestoneList({
       <MilestoneDetailModal
         milestoneId={detailMilestoneId}
         showTaskBoard={showTaskBoard}
+        taskBoardReadonly={!taskBoardRole}
+        taskBoardRole={taskBoardRole}
+        taskBoardCurrentUserId={taskBoardCurrentUserId}
         onClose={() => setDetailMilestoneId(null)}
       />
     </section>

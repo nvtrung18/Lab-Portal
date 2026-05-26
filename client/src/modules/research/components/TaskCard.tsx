@@ -1,13 +1,36 @@
+import type { DragEvent } from 'react';
+
 import type { ResearchTask } from '../types';
 import { getStatusClass, formatDate } from '../utils';
 
 interface TaskCardProps {
   task: ResearchTask;
+  draggable?: boolean;
+  isUpdating?: boolean;
+  dragDisabledReason?: string;
+  onDragStart?: (event: DragEvent<HTMLElement>) => void;
+  onDragEnd?: () => void;
 }
 
-export function TaskCard({ task }: TaskCardProps) {
+export function TaskCard({
+  task,
+  draggable = false,
+  isUpdating = false,
+  dragDisabledReason,
+  onDragStart,
+  onDragEnd,
+}: TaskCardProps) {
   return (
-    <article className="rounded-md border border-slate-200 bg-white p-3 shadow-sm">
+    <article
+      aria-busy={isUpdating}
+      className={`rounded-md border border-slate-200 bg-white p-3 shadow-sm transition ${
+        draggable ? 'cursor-grab active:cursor-grabbing' : ''
+      } ${isUpdating ? 'opacity-60' : ''}`}
+      draggable={draggable && !isUpdating}
+      onDragEnd={onDragEnd}
+      onDragStart={onDragStart}
+      title={dragDisabledReason}
+    >
       <div className="flex flex-wrap items-start justify-between gap-2">
         <h5 className="text-sm font-semibold text-slate-950">{task.title}</h5>
         {task.isOverdue ? (
@@ -54,6 +77,7 @@ export function TaskCard({ task }: TaskCardProps) {
       <span className={`mt-3 inline-flex rounded-full px-2 py-1 text-[11px] font-semibold ring-1 ${getStatusClass(task.status)}`}>
         {task.statusLabel}
       </span>
+      {isUpdating ? <p className="mt-2 text-[11px] font-medium text-slate-500">Đang cập nhật...</p> : null}
     </article>
   );
 }

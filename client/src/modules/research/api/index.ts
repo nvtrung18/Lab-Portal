@@ -12,6 +12,7 @@ import type {
   ResearchMilestone,
   RawResearchTask,
   ResearchTask,
+  TaskColumn,
   ResearchEligibleStudent,
   ResearchGroup,
   ResearchProject,
@@ -55,6 +56,11 @@ export async function getMilestone(milestoneId: number): Promise<ResearchMilesto
 export async function getTasksByMilestone(milestoneId: number): Promise<ResearchTask[]> {
   const response = await apiClient.get<Response<RawResearchTask[]>>(`/api/milestones/${milestoneId}/tasks`);
   return response.data.data.map(normalizeTask);
+}
+
+export async function updateTaskStatus(taskId: number, status: TaskColumn): Promise<ResearchTask> {
+  const response = await apiClient.put<Response<RawResearchTask>>(`/api/tasks/${taskId}/status`, { status });
+  return normalizeTask(response.data.data);
 }
 
 export async function createMilestone(payload: CreateMilestonePayload): Promise<ResearchMilestone> {

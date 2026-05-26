@@ -6,6 +6,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -34,6 +35,13 @@ public class GlobalExceptionHandler {
         log.warn("Validation failed: {}", fieldErrors);
         return ResponseEntity.badRequest()
                 .body(Response.badRequest("Validation failed", fieldErrors));
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<Response<Void>> handleUnreadableRequest(HttpMessageNotReadableException ex) {
+        log.warn("Request body cannot be parsed: {}", ex.getMessage());
+        return ResponseEntity.badRequest()
+                .body(Response.badRequest("Request body contains an invalid value"));
     }
 
     // ---- Not Found ----

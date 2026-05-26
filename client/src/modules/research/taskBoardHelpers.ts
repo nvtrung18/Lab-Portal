@@ -1,6 +1,8 @@
 import type { RawResearchTask, ResearchTask, ResearchTaskStatus, TaskColumn } from './types';
 
-export const TASK_COLUMNS: TaskColumn[] = ['TODO', 'DOING', 'WAITING_REVIEW', 'DONE'];
+export type TaskBoardRole = 'LAB_MANAGER' | 'STUDENT';
+
+export const TASK_COLUMNS: TaskColumn[] = ['TODO', 'DOING', 'WAITING_REVIEW', 'NEEDS_REVISION', 'DONE'];
 
 const taskStatusLabels: Record<ResearchTaskStatus, string> = {
   TODO: 'Cần làm',
@@ -16,6 +18,7 @@ const taskColumnLabels: Record<TaskColumn, string> = {
   TODO: 'Cần làm',
   DOING: 'Đang thực hiện',
   WAITING_REVIEW: 'Chờ duyệt',
+  NEEDS_REVISION: 'Cần chỉnh sửa',
   DONE: 'Hoàn thành',
 };
 
@@ -43,11 +46,12 @@ export function getTaskColumn(status: ResearchTaskStatus): TaskColumn {
       return 'TODO';
     case 'WAITING_REVIEW':
       return 'WAITING_REVIEW';
+    case 'NEEDS_REVISION':
+      return 'NEEDS_REVISION';
     case 'DONE':
     case 'CANCELLED':
       return 'DONE';
     case 'DOING':
-    case 'NEEDS_REVISION':
     case 'OVERDUE':
       return 'DOING';
   }
@@ -101,4 +105,97 @@ export function groupTasksByColumn(tasks: ResearchTask[]) {
 
   tasks.forEach((task) => grouped.get(task.column)?.push(task));
   return grouped;
+}
+
+const managerStatusTransitions: Partial<Record<ResearchTaskStatus, TaskColumn[]>> = {
+  TODO: ['DOING'],
+  DOING: ['WAITING_REVIEW'],
+  WAITING_REVIEW: ['DONE', 'NEEDS_REVISION'],
+  NEEDS_REVISION: ['DOING'],
+  OVERDUE: ['DOING', 'WAITING_REVIEW', 'NEEDS_REVISION', 'DONE'],
+};
+
+const studentStatusTransitions: Partial<Record<ResearchTaskStatus, TaskColumn[]>> = {
+  TODO: ['DOING'],
+  DOING: ['WAITING_REVIEW'],
+  NEEDS_REVISION: ['DOING'],
+};
+
+interface CanMoveTaskParams {
+  role?: TaskBoardRole;
+  currentUserId?: number | null;
+  task: ResearchTask;
+  fromStatus: ResearchTaskStatus;
+  toStatus: TaskColumn;
+}
+
+export function canMoveTask({ role, currentUserId, task, fromStatus, toStatus }: CanMoveTaskParams) {
+  if (fromStatus === toStatus) {
+    return false;
+  }
+  if (role === 'LAB_MANAGER') {
+    return managerStatusTransitions[fromStatus]?.includes(toStatus) ?? false;
+  }
+  if (role === 'STUDENT') {
+    return currentUserId != null
+      && task.assignedToStudentId === currentUserId
+      && (studentStatusTransitions[fromStatus]?.includes(toStatus) ?? false);
+  }
+  return false;
+}
+
+export function canDragTask(task: ResearchTask, role?: TaskBoardRole, currentUserId?: number | null) {
+  if (role === 'LAB_MANAGER') {
+    return task.status !== 'DONE' && task.status !== 'CANCELLED';
+  }
+  if (role === 'STUDENT') {
+    return currentUserId != null
+      && task.assignedToStudentId === currentUserId
+      && Boolean(studentStatusTransitions[task.status]?.length);
+  }
+  return false;
+}
+
+export function getTaskDragDisabledReason(
+  task: ResearchTask,
+  role?: TaskBoardRole,
+  currentUserId?: number | null,
+) {
+  if (role === 'STUDENT') {
+    if (currentUserId == null || task.assignedToStudentId !== currentUserId) {
+      return 'Bạn chỉ có thể cập nhật nhiệm vụ được giao cho mình.';
+    }
+    if (!canDragTask(task, role, currentUserId)) {
+      return 'Trạng thái hiện tại không cho phép bạn cập nhật nhiệm vụ bằng kéo thả.';
+    }
+  }
+  if (role === 'LAB_MANAGER' && !canDragTask(task, role, currentUserId)) {
+    return 'Nhiệm vụ đã kết thúc và không thể kéo thả.';
+  }
+  return undefined;
+}
+
+function updateTaskStatusLocally(task: ResearchTask, status: TaskColumn): ResearchTask {
+  const progressPercent = status === 'DONE'
+    ? 100
+    : status === 'WAITING_REVIEW'
+      ? 90
+      : status === 'DOING'
+      ? Math.max(10, task.progressPercent)
+      : task.progressPercent;
+
+  return {
+    ...task,
+    status,
+    statusLabel: formatTaskStatus(status),
+    column: getTaskColumn(status),
+    progressPercent,
+    isOverdue: isTaskOverdue({ deadline: task.deadline, status }),
+  };
+}
+
+export function updateTaskStatusInCache(tasks: ResearchTask[], taskId: number, newStatus: TaskColumn) {
+  return tasks.map((task) => (
+    task.id === taskId ? updateTaskStatusLocally(task, newStatus) : task
+  ));
 }
