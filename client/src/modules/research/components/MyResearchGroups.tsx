@@ -149,8 +149,10 @@ export function MyResearchGroups({ labId, currentUserId }: MyResearchGroupsProps
 
           {selectedGroup.projectId ? (
             <MilestoneList
+              key={`${labId}-${selectedGroup.projectId}`}
               projectId={selectedGroup.projectId}
               canCreate={false}
+              showTaskBoard
               emptyMessage="Đề tài này chưa có mốc nghiên cứu nào."
             />
           ) : null}

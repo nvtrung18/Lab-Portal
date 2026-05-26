@@ -17,3 +17,5 @@ export * from './ResearchGroupList';
 export * from './ResearchGroupDetailModal';
 export * from './ResearchProjectList';
 export * from './TopicPage';
+export * from './TaskBoard';
+export * from './TaskCard';

@@ -1,6 +1,12 @@
 package com.web.labportalbackend.research.service;
 
+import com.web.labportalbackend.auth.entity.Role;
+import com.web.labportalbackend.auth.entity.User;
+import com.web.labportalbackend.auth.repository.UserRepository;
 import com.web.labportalbackend.common.exception.InvalidAssigneeException;
+import com.web.labportalbackend.common.exception.ResourceNotFoundException;
+import com.web.labportalbackend.lab.entity.Laboratory;
+import com.web.labportalbackend.lab.repository.LaboratoryRepository;
 import com.web.labportalbackend.research.dto.request.AssignTaskRequest;
 import com.web.labportalbackend.research.dto.request.CreateTaskRequest;
 import com.web.labportalbackend.research.dto.response.TaskResponse;
@@ -14,13 +20,18 @@ import com.web.labportalbackend.research.repository.MilestoneRepository;
 import com.web.labportalbackend.research.repository.TaskRepository;
 import com.web.labportalbackend.research.service.impl.TaskServiceImpl;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -40,8 +51,19 @@ class TaskServiceImplTest {
     @Mock
     private GroupMemberRepository groupMemberRepository;
 
+    @Mock
+    private LaboratoryRepository laboratoryRepository;
+
+    @Mock
+    private UserRepository userRepository;
+
     @InjectMocks
     private TaskServiceImpl taskService;
+
+    @AfterEach
+    void clearSecurityContext() {
+        SecurityContextHolder.clearContext();
+    }
 
     @Test
     void createTask_savesTodoTaskWhenMilestoneExists() {
@@ -62,7 +84,7 @@ class TaskServiceImplTest {
         assertEquals(10L, response.getMilestoneId());
         assertEquals("Prepare dataset", response.getTitle());
         assertEquals(TaskStatus.TODO, response.getStatus());
-        assertNull(response.getAssigneeId());
+        assertNull(response.getAssignedToStudentId());
 
         ArgumentCaptor<TaskEntity> captor = ArgumentCaptor.forClass(TaskEntity.class);
         verify(taskRepository).save(captor.capture());
@@ -84,7 +106,7 @@ class TaskServiceImplTest {
 
         TaskResponse response = taskService.assign(20L, request);
 
-        assertEquals(7L, response.getAssigneeId());
+        assertEquals(7L, response.getAssignedToStudentId());
         assertEquals(20L, response.getId());
         verify(taskRepository).save(task);
     }
@@ -107,21 +129,86 @@ class TaskServiceImplTest {
     }
 
     @Test
-    void getByMilestone_returnsTasksForMilestone() {
+    void getByMilestone_returnsKanbanTasksForActiveStudentMember() {
+        User currentStudent = authenticate("student", "STUDENT");
+        MilestoneEntity milestone = milestone(10L, 100L);
         TaskEntity first = task(1L, 10L, 7L);
+        User assignee = student(7L);
+        first.setAssignedToStudent(assignee);
+        first.setDescription("Read papers and summarize architecture.");
+        first.setDeadline(LocalDate.of(2026, 6, 10));
+        first.setProgressPercent(35);
         first.setCreatedAt(Instant.parse("2026-01-01T00:00:00Z"));
         TaskEntity second = task(2L, 10L, null);
+        second.setStatus(TaskStatus.REVIEW);
         second.setCreatedAt(Instant.parse("2026-01-02T00:00:00Z"));
 
-        when(milestoneRepository.existsById(10L)).thenReturn(true);
-        when(taskRepository.findByMilestoneIdOrderByCreatedAtAsc(10L)).thenReturn(List.of(first, second));
+        when(milestoneRepository.findByIdAndDeletedFalseAndActiveTrue(10L)).thenReturn(Optional.of(milestone));
+        when(groupMemberRepository.existsActiveMemberByProjectIdAndUserId(50L, currentStudent.getId()))
+                .thenReturn(true);
+        when(taskRepository.findByMilestoneIdAndDeletedFalseAndActiveTrueOrderByDeadlineAscCreatedAtAsc(10L))
+                .thenReturn(List.of(first, second));
 
         List<TaskResponse> responses = taskService.getByMilestone(10L);
 
         assertEquals(2, responses.size());
         assertEquals(1L, responses.get(0).getId());
+        assertEquals(50L, responses.get(0).getProjectId());
+        assertEquals("Read papers and summarize architecture.", responses.get(0).getDescription());
+        assertEquals(7L, responses.get(0).getAssignedToStudentId());
+        assertEquals("Student Seven", responses.get(0).getAssignedToStudentName());
+        assertEquals("student7@uet.edu.vn", responses.get(0).getAssignedToStudentEmail());
+        assertEquals(LocalDate.of(2026, 6, 10), responses.get(0).getDeadline());
+        assertEquals(35, responses.get(0).getProgressPercent());
         assertEquals(2L, responses.get(1).getId());
-        verify(taskRepository).findByMilestoneIdOrderByCreatedAtAsc(10L);
+        assertEquals(TaskStatus.WAITING_REVIEW, responses.get(1).getStatus());
+        verify(taskRepository).findByMilestoneIdAndDeletedFalseAndActiveTrueOrderByDeadlineAscCreatedAtAsc(10L);
+    }
+
+    @Test
+    void getByMilestone_returnsTasksForManagerOfMilestoneLab() {
+        User manager = authenticate("manager", "LAB_MANAGER");
+        Laboratory lab = lab(1L);
+        MilestoneEntity milestone = milestone(10L, 100L);
+        milestone.getProject().setLab(lab);
+
+        when(milestoneRepository.findByIdAndDeletedFalseAndActiveTrue(10L)).thenReturn(Optional.of(milestone));
+        when(laboratoryRepository.findFirstByManagerIdAndDeletedFalse(manager.getId())).thenReturn(Optional.of(lab));
+        when(taskRepository.findByMilestoneIdAndDeletedFalseAndActiveTrueOrderByDeadlineAscCreatedAtAsc(10L))
+                .thenReturn(List.of());
+
+        assertTrue(taskService.getByMilestone(10L).isEmpty());
+    }
+
+    @Test
+    void getByMilestone_deniesStudentOutsideProjectGroup() {
+        User currentStudent = authenticate("student", "STUDENT");
+        when(milestoneRepository.findByIdAndDeletedFalseAndActiveTrue(10L))
+                .thenReturn(Optional.of(milestone(10L, 100L)));
+        when(groupMemberRepository.existsActiveMemberByProjectIdAndUserId(50L, currentStudent.getId()))
+                .thenReturn(false);
+
+        assertThrows(AccessDeniedException.class, () -> taskService.getByMilestone(10L));
+        verify(taskRepository, never())
+                .findByMilestoneIdAndDeletedFalseAndActiveTrueOrderByDeadlineAscCreatedAtAsc(any());
+    }
+
+    @Test
+    void getByMilestone_deniesAdminInAppScope() {
+        authenticate("admin", "ADMIN");
+        when(milestoneRepository.findByIdAndDeletedFalseAndActiveTrue(10L))
+                .thenReturn(Optional.of(milestone(10L, 100L)));
+
+        assertThrows(AccessDeniedException.class, () -> taskService.getByMilestone(10L));
+        verify(taskRepository, never())
+                .findByMilestoneIdAndDeletedFalseAndActiveTrueOrderByDeadlineAscCreatedAtAsc(any());
+    }
+
+    @Test
+    void getByMilestone_throwsWhenMilestoneMissing() {
+        when(milestoneRepository.findByIdAndDeletedFalseAndActiveTrue(10L)).thenReturn(Optional.empty());
+
+        assertThrows(ResourceNotFoundException.class, () -> taskService.getByMilestone(10L));
     }
 
     private TaskEntity task(Long id, Long milestoneId, Long assigneeId) {
@@ -147,5 +234,32 @@ class TaskServiceImplTest {
         milestone.setId(id);
         milestone.setProject(project);
         return milestone;
+    }
+
+    private User authenticate(String username, String roleName) {
+        User user = new User();
+        user.setId(roleName.equals("LAB_MANAGER") ? 2L : 3L);
+        user.setUsername(username);
+        user.setEmail(username + "@uet.edu.vn");
+        user.addRole(new Role(roleName, roleName));
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(username, null, List.of())
+        );
+        when(userRepository.findByUsername(username)).thenReturn(Optional.of(user));
+        return user;
+    }
+
+    private User student(Long id) {
+        User student = new User();
+        student.setId(id);
+        student.setFullName("Student Seven");
+        student.setEmail("student7@uet.edu.vn");
+        return student;
+    }
+
+    private Laboratory lab(Long id) {
+        Laboratory lab = new Laboratory();
+        lab.setId(id);
+        return lab;
     }
 }

@@ -10,11 +10,14 @@ import type {
   UpdateMilestonePayload,
   CreateTopicPayload,
   ResearchMilestone,
+  RawResearchTask,
+  ResearchTask,
   ResearchEligibleStudent,
   ResearchGroup,
   ResearchProject,
   ResearchTopic,
 } from '../types';
+import { normalizeTask } from '../taskBoardHelpers';
 
 export async function getResearchProjectsByLab(labId: number): Promise<ResearchProject[]> {
   const response = await apiClient.get<Response<ResearchProject[]>>(`/api/labs/${labId}/research-projects`);
@@ -47,6 +50,11 @@ export async function getMilestonesByProject(projectId: number): Promise<Researc
 export async function getMilestone(milestoneId: number): Promise<ResearchMilestone> {
   const response = await apiClient.get<Response<ResearchMilestone>>(`/api/milestones/${milestoneId}`);
   return response.data.data;
+}
+
+export async function getTasksByMilestone(milestoneId: number): Promise<ResearchTask[]> {
+  const response = await apiClient.get<Response<RawResearchTask[]>>(`/api/milestones/${milestoneId}/tasks`);
+  return response.data.data.map(normalizeTask);
 }
 
 export async function createMilestone(payload: CreateMilestonePayload): Promise<ResearchMilestone> {

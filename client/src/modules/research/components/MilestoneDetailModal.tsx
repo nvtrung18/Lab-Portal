@@ -1,12 +1,14 @@
 import { useMilestone } from '../hooks';
 import { formatDate, formatMilestoneStatus, getStatusClass, isMilestoneOverdue } from '../utils';
+import { TaskBoard } from './TaskBoard';
 
 interface MilestoneDetailModalProps {
   milestoneId: number | null;
+  showTaskBoard?: boolean;
   onClose: () => void;
 }
 
-export function MilestoneDetailModal({ milestoneId, onClose }: MilestoneDetailModalProps) {
+export function MilestoneDetailModal({ milestoneId, showTaskBoard = false, onClose }: MilestoneDetailModalProps) {
   const { data: milestone, isError, isLoading, refetch } = useMilestone(milestoneId);
 
   if (!milestoneId) {
@@ -19,7 +21,7 @@ export function MilestoneDetailModal({ milestoneId, onClose }: MilestoneDetailMo
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 px-4 py-6">
-      <section className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-lg bg-white p-6 shadow-xl">
+      <section className="max-h-[90vh] w-full max-w-7xl overflow-y-auto rounded-lg bg-white p-6 shadow-xl">
         <div className="flex items-start justify-between gap-4">
           <h3 className="text-lg font-semibold text-slate-950">Chi tiết mốc nghiên cứu</h3>
           <button className="text-sm font-semibold text-slate-500 hover:text-slate-900" type="button" onClick={onClose}>
@@ -99,6 +101,8 @@ export function MilestoneDetailModal({ milestoneId, onClose }: MilestoneDetailMo
               </div>
               <Detail label="Nhận xét của quản lý PTN" value={milestone.managerComment ?? 'Chưa cập nhật'} />
             </dl>
+
+            {showTaskBoard ? <TaskBoard milestoneId={milestone.id} readonly /> : null}
           </div>
         )}
       </section>

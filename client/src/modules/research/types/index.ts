@@ -8,6 +8,17 @@ export type ResearchPriority = 'HIGH' | 'MEDIUM' | 'LOW';
 
 export type MilestoneStatus = 'NOT_STARTED' | 'IN_PROGRESS' | 'WAITING_REVIEW' | 'COMPLETED' | 'OVERDUE' | 'CANCELLED';
 
+export type ResearchTaskStatus =
+  | 'TODO'
+  | 'DOING'
+  | 'WAITING_REVIEW'
+  | 'NEEDS_REVISION'
+  | 'DONE'
+  | 'OVERDUE'
+  | 'CANCELLED';
+
+export type TaskColumn = 'TODO' | 'DOING' | 'WAITING_REVIEW' | 'DONE';
+
 export interface ResearchTopic {
   id: number;
   labId: number;
@@ -119,6 +130,42 @@ export interface ResearchMilestone {
   managerComment?: string | null;
   createdAt?: string | null;
   updatedAt?: string | null;
+}
+
+export interface RawResearchTask {
+  id: number;
+  milestoneId: number;
+  projectId?: number | null;
+  title: string;
+  description?: string | null;
+  assignedToStudentId?: number | null;
+  assignedToStudentName?: string | null;
+  assignedToStudentEmail?: string | null;
+  assigneeId?: number | null;
+  deadline?: string | null;
+  status?: ResearchTaskStatus | 'IN_PROGRESS' | 'REVIEW' | null;
+  progressPercent?: number | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+}
+
+export interface ResearchTask {
+  id: number;
+  milestoneId: number;
+  projectId?: number | null;
+  title: string;
+  description: string | null;
+  assignedToStudentId: number | null;
+  assigneeName: string | null;
+  assigneeEmail: string | null;
+  deadline: string | null;
+  status: ResearchTaskStatus;
+  statusLabel: string;
+  column: TaskColumn;
+  progressPercent: number;
+  isOverdue: boolean;
+  createdAt: string | null;
+  updatedAt: string | null;
 }
 
 export interface CreateMilestonePayload {

@@ -17,6 +17,7 @@ import {
   getMyResearchGroupsByLab,
   getMilestone,
   getMilestonesByProject,
+  getTasksByMilestone,
   getResearchProject,
   getResearchProjectsByLab,
   createResearchTopic,
@@ -47,6 +48,7 @@ export const RESEARCH_ELIGIBLE_STUDENTS_QUERY_KEY = ['researchEligibleStudents']
 export const MY_RESEARCH_GROUPS_QUERY_KEY = ['myResearchGroups'] as const;
 export const MILESTONES_QUERY_KEY = ['milestones'] as const;
 export const MILESTONE_QUERY_KEY = ['milestone'] as const;
+export const TASKS_QUERY_KEY = ['tasks'] as const;
 
 function getErrorMessage(error: unknown, fallback: string) {
   if (axios.isAxiosError(error)) {
@@ -219,6 +221,16 @@ export function useMilestone(milestoneId?: number | null) {
     enabled: Boolean(milestoneId),
     staleTime: 30000,
     refetchOnReconnect: true,
+    refetchOnWindowFocus: true,
+  });
+}
+
+export function useTasksByMilestone(milestoneId?: number | null) {
+  return useQuery({
+    queryKey: milestoneId ? [...TASKS_QUERY_KEY, milestoneId] : TASKS_QUERY_KEY,
+    queryFn: () => getTasksByMilestone(milestoneId as number),
+    enabled: Boolean(milestoneId),
+    staleTime: 30000,
     refetchOnWindowFocus: true,
   });
 }

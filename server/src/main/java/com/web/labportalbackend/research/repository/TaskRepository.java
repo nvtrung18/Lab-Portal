@@ -2,6 +2,7 @@ package com.web.labportalbackend.research.repository;
 
 import com.web.labportalbackend.research.entity.TaskEntity;
 import jakarta.persistence.LockModeType;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
@@ -13,7 +14,8 @@ import java.util.Optional;
 
 @Repository
 public interface TaskRepository extends JpaRepository<TaskEntity, Long> {
-    List<TaskEntity> findByMilestoneIdOrderByCreatedAtAsc(Long milestoneId);
+    @EntityGraph(attributePaths = "assignedToStudent")
+    List<TaskEntity> findByMilestoneIdAndDeletedFalseAndActiveTrueOrderByDeadlineAscCreatedAtAsc(Long milestoneId);
 
     @Query("""
             SELECT COUNT(t)

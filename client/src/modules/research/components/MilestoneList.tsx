@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { useCreateMilestone, useMilestonesByProject, useResearchEligibleStudents, useUpdateMilestone } from '../hooks';
 import type { ResearchMilestone } from '../types';
@@ -11,6 +11,7 @@ interface MilestoneListProps {
   projectId: number;
   labId?: number | null;
   canCreate: boolean;
+  showTaskBoard?: boolean;
   emptyMessage?: string;
 }
 
@@ -18,6 +19,7 @@ export function MilestoneList({
   projectId,
   labId,
   canCreate,
+  showTaskBoard = canCreate,
   emptyMessage = 'Chưa có mốc nghiên cứu nào.',
 }: MilestoneListProps) {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -29,6 +31,13 @@ export function MilestoneList({
   );
   const createMilestone = useCreateMilestone(projectId);
   const updateMilestone = useUpdateMilestone(projectId);
+
+  useEffect(() => {
+    setIsCreateOpen(false);
+    setDetailMilestoneId(null);
+    setEditingMilestone(null);
+  }, [projectId]);
+
   const sortedMilestones = useMemo(
     () =>
       [...milestones].sort((left, right) => {
@@ -174,6 +183,7 @@ export function MilestoneList({
 
       <MilestoneDetailModal
         milestoneId={detailMilestoneId}
+        showTaskBoard={showTaskBoard}
         onClose={() => setDetailMilestoneId(null)}
       />
     </section>

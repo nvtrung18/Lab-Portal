@@ -50,12 +50,13 @@ public interface GroupMemberRepository extends JpaRepository<GroupMemberEntity, 
             SELECT COUNT(gm) > 0
             FROM GroupMemberEntity gm
             JOIN gm.group g
+            LEFT JOIN ProjectEntity p ON p.group.id = g.id
             WHERE gm.user.id = :userId
               AND gm.active = true
               AND gm.deleted = false
               AND g.active = true
               AND g.deleted = false
-              AND g.project.id = :projectId
+              AND (g.project.id = :projectId OR p.id = :projectId)
             """)
     boolean existsActiveMemberByProjectIdAndUserId(
             @Param("projectId") Long projectId,
