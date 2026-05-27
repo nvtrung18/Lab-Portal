@@ -120,7 +120,7 @@ export function MilestoneDetailModal({
             ) : null}
 
             {taskBoardRole === 'LAB_MANAGER' ? (
-              <ManagerReportsList milestoneId={milestone.id} />
+              <ManagerReportsList currentUserId={taskBoardCurrentUserId} milestoneId={milestone.id} />
             ) : null}
           </div>
         )}

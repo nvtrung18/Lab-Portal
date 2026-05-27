@@ -86,8 +86,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<Response<Void>> handleAccessDenied(AccessDeniedException ex) {
         log.warn("Access denied: {}", ex.getMessage());
+        String message = ex.getMessage() == null || ex.getMessage().isBlank()
+                ? "Access denied: insufficient permissions"
+                : ex.getMessage();
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .body(Response.forbidden("Access denied: insufficient permissions"));
+                .body(Response.forbidden(message));
     }
 
     // ---- Business Rule ----

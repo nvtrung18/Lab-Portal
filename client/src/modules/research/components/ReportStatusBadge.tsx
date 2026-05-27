@@ -8,7 +8,7 @@ const STATUS_LABELS: Record<ResearchReportStatus, string> = {
   SUBMITTED: 'Đã nộp, chờ kiểm tra',
   LEADER_REVIEWED: 'Trưởng nhóm đã kiểm tra',
   NEEDS_REVISION: 'Cần chỉnh sửa',
-  APPROVED: 'Báo cáo đã được duyệt',
+  APPROVED: 'Đã duyệt',
   REJECTED: 'Không đạt',
 };
 

@@ -283,25 +283,26 @@ public class ReportServiceImpl implements ReportService {
     public ReportResponse leaderReview(Long reportId, LeaderReviewReportRequest request) {
         ReportEntity report = findReport(reportId);
         User currentUser = getCurrentUser();
+        String note = request.getNote().trim();
         if (!currentUser.hasRole("STUDENT") || report.getGroupId() == null
                 || groupMemberRepository.findActiveRoleByGroupIdAndUserId(report.getGroupId(), currentUser.getId())
                 .filter(role -> role == GroupRole.LEADER)
                 .isEmpty()) {
-            throw new AccessDeniedException("Only the group leader may review this report");
+            throw new AccessDeniedException("Không thể kiểm tra báo cáo này");
         }
         if (currentUser.getId().equals(report.getSubmittedById())) {
-            throw new AccessDeniedException("Group leaders cannot review their own submitted reports");
+            throw new AccessDeniedException("Không thể kiểm tra báo cáo này");
         }
         assertCanViewReports(currentUser, findMilestone(report.getMilestoneId()));
         assertLatestSubmissionVersion(report);
         if (report.getStatus() != ReportStatus.SUBMITTED && report.getStatus() != ReportStatus.NEEDS_REVISION) {
-            throw new IllegalArgumentException("Only submitted or revision-required reports can be reviewed by the group leader");
+            throw new IllegalArgumentException("Không thể kiểm tra báo cáo này");
         }
 
         report.setStatus(ReportStatus.LEADER_REVIEWED);
         report.setLeaderReviewedAt(Instant.now());
-        report.setLeaderComment(request.getNote().trim());
-        saveReviewComment(reportId, currentUser.getId(), request.getNote());
+        report.setLeaderComment(note);
+        saveReviewComment(reportId, currentUser.getId(), "Trưởng nhóm đã kiểm tra: " + note);
         return ReportMapper.toResponse(reportRepository.save(report));
     }
 
@@ -321,6 +322,7 @@ public class ReportServiceImpl implements ReportService {
         }
 
         ManagerReportDecision decision = request.getDecision();
+        String comment = request.getComment().trim();
         if (decision == ManagerReportDecision.APPROVE) {
             report.setStatus(ReportStatus.APPROVED);
             approveSubmittedTask(report);
@@ -331,10 +333,10 @@ public class ReportServiceImpl implements ReportService {
             report.setStatus(ReportStatus.REJECTED);
         }
         report.setManagerReviewedAt(Instant.now());
-        report.setManagerComment(request.getComment().trim());
-        milestone.setManagerComment(request.getComment().trim());
+        report.setManagerComment(comment);
+        milestone.setManagerComment(comment);
 
-        saveReviewComment(reportId, currentUser.getId(), request.getComment());
+        saveReviewComment(reportId, currentUser.getId(), "Quản lý PTN: " + comment);
         reportRepository.saveAndFlush(report);
         recalculateMilestoneProgress(milestone, report);
         milestoneRepository.save(milestone);

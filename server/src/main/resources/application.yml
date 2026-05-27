@@ -26,8 +26,8 @@ spring:
 
   servlet:
     multipart:
-      max-file-size: 10MB
-      max-request-size: 12MB
+      max-file-size: 50MB
+      max-request-size: 55MB
 
   # -------------------- JPA / Hibernate --------------------
   jpa:
@@ -84,6 +84,7 @@ app:
   frontend-url: ${APP_FRONTEND_URL:http://localhost:5173}
   research:
     report-storage-path: ${REPORT_STORAGE_PATH:storage/reports}
+    product-storage-path: ${PRODUCT_STORAGE_PATH:storage/products}
 
 # -------------------- Server --------------------
 server:

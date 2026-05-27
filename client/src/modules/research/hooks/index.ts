@@ -31,6 +31,8 @@ import {
   managerReviewReport,
   updateTaskStatus,
   getResearchProject,
+  getProductsByProject,
+  submitProduct,
   getResearchProjectsByLab,
   createResearchTopic,
   getGroupsByTopic,
@@ -46,6 +48,7 @@ import type {
   CreateMilestonePayload,
   UpdateMilestonePayload,
   CreateTopicPayload,
+  SubmitProductPayload,
   ResearchTask,
   TaskColumn,
   ManagerReportDecision,
@@ -158,6 +161,35 @@ export function useResearchProject(projectId?: number | null) {
     staleTime: 30000,
     refetchOnReconnect: true,
     refetchOnWindowFocus: true,
+  });
+}
+
+export function useProductsByProject(projectId?: number | null) {
+  return useQuery({
+    queryKey: queryKeys.research.products(projectId as number),
+    queryFn: () => getProductsByProject(projectId as number),
+    enabled: Boolean(projectId),
+    staleTime: 30000,
+    refetchOnWindowFocus: true,
+  });
+}
+
+export function useSubmitProduct(projectId?: number | null, onUploadProgress?: (percent: number) => void) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: SubmitProductPayload) => submitProduct(payload, onUploadProgress),
+    onSuccess: async (_product, payload) => {
+      const targetProjectId = projectId ?? payload.projectId;
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: queryKeys.research.products(targetProjectId) }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.research.project(targetProjectId) }),
+      ]);
+      toast.success('Đã nộp sản phẩm nghiên cứu.');
+    },
+    onError: (error) => {
+      toast.error(getErrorMessage(error, 'Không thể nộp sản phẩm nghiên cứu.'));
+    },
   });
 }
 
@@ -320,6 +352,7 @@ function invalidateReviewedReport(
   milestoneId: number,
   projectId: number,
   groupId?: number | null,
+  taskId?: number | null,
 ) {
   const invalidations = [
     queryClient.invalidateQueries({ queryKey: queryKeys.research.reports(milestoneId) }),
@@ -331,16 +364,25 @@ function invalidateReviewedReport(
   if (groupId) {
     invalidations.push(queryClient.invalidateQueries({ queryKey: queryKeys.research.groupReports(groupId) }));
   }
+  if (taskId) {
+    invalidations.push(queryClient.invalidateQueries({ queryKey: queryKeys.research.taskReports(taskId) }));
+  }
   return Promise.all(invalidations);
 }
 
-export function useLeaderReviewReport(reportId: number, milestoneId: number, projectId: number, groupId?: number | null) {
+export function useLeaderReviewReport(
+  reportId: number,
+  milestoneId: number,
+  projectId: number,
+  groupId?: number | null,
+  taskId?: number | null,
+) {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (note: string) => leaderReviewReport(reportId, note),
     onSuccess: async () => {
-      await invalidateReviewedReport(queryClient, reportId, milestoneId, projectId, groupId);
+      await invalidateReviewedReport(queryClient, reportId, milestoneId, projectId, groupId, taskId);
       toast.success('Đã đánh dấu báo cáo đã kiểm tra.');
     },
     onError: (error) => {
@@ -349,14 +391,20 @@ export function useLeaderReviewReport(reportId: number, milestoneId: number, pro
   });
 }
 
-export function useManagerReviewReport(reportId: number, milestoneId: number, projectId: number, labId?: number | null) {
+export function useManagerReviewReport(
+  reportId: number,
+  milestoneId: number,
+  projectId: number,
+  labId?: number | null,
+  taskId?: number | null,
+) {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: ({ decision, comment }: { decision: ManagerReportDecision; comment: string }) =>
       managerReviewReport(reportId, decision, comment),
     onSuccess: async (_report, variables) => {
-      await invalidateReviewedReport(queryClient, reportId, milestoneId, projectId);
+      await invalidateReviewedReport(queryClient, reportId, milestoneId, projectId, undefined, taskId);
       if (labId) {
         await queryClient.invalidateQueries({ queryKey: queryKeys.research.managerReports(labId) });
       }

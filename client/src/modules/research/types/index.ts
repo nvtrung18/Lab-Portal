@@ -26,6 +26,18 @@ export type ResearchReportStatus =
   | 'APPROVED'
   | 'REJECTED';
 
+export type ResearchProductType =
+  | 'FINAL_REPORT'
+  | 'SLIDE'
+  | 'SOURCE_CODE'
+  | 'DATASET'
+  | 'DEMO_VIDEO'
+  | 'PAPER'
+  | 'SOFTWARE_DEMO'
+  | 'OTHER';
+
+export type ResearchProductStatus = 'SUBMITTED' | 'ACCEPTED' | 'NEEDS_REVISION' | 'REJECTED';
+
 export interface ResearchTopic {
   id: number;
   labId: number;
@@ -205,6 +217,7 @@ export interface ResearchReport {
   leaderComment?: string | null;
   managerReviewedAt?: string | null;
   managerComment?: string | null;
+  commentCount?: number | null;
   createdAt?: string | null;
   updatedAt?: string | null;
 }
@@ -219,6 +232,74 @@ export interface ResearchReportComment {
   groupRole: 'LEADER' | 'MEMBER' | null;
   content: string;
   createdAt: string;
+}
+
+export interface ResearchProduct {
+  id: number;
+  projectId: number;
+  groupId?: number | null;
+  submittedById?: number | null;
+  submittedByName?: string | null;
+  submittedByEmail?: string | null;
+  productType: ResearchProductType;
+  title: string;
+  description?: string | null;
+  fileUrl?: string | null;
+  fileName?: string | null;
+  fileType?: string | null;
+  fileSize?: number | null;
+  externalLink?: string | null;
+  version: number;
+  status: ResearchProductStatus;
+  submittedAt?: string | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+}
+
+export interface RawResearchProduct {
+  id: number;
+  projectId?: number;
+  project_id?: number;
+  groupId?: number | null;
+  group_id?: number | null;
+  submittedById?: number | null;
+  submitted_by_id?: number | null;
+  submittedByName?: string | null;
+  submitted_by_name?: string | null;
+  submittedByEmail?: string | null;
+  submitted_by_email?: string | null;
+  productType?: ResearchProductType;
+  product_type?: ResearchProductType;
+  title?: string;
+  description?: string | null;
+  fileUrl?: string | null;
+  file_url?: string | null;
+  fileName?: string | null;
+  file_name?: string | null;
+  fileType?: string | null;
+  file_type?: string | null;
+  fileSize?: number | null;
+  file_size?: number | null;
+  externalLink?: string | null;
+  external_link?: string | null;
+  version?: number;
+  status?: ResearchProductStatus;
+  submittedAt?: string | null;
+  submitted_at?: string | null;
+  createdAt?: string | null;
+  created_at?: string | null;
+  updatedAt?: string | null;
+  updated_at?: string | null;
+}
+
+export interface SubmitProductPayload {
+  projectId: number;
+  groupId?: number | null;
+  productType: ResearchProductType;
+  title: string;
+  description?: string;
+  externalLink?: string;
+  file?: File | null;
 }
 
 export interface SubmitReportPayload {

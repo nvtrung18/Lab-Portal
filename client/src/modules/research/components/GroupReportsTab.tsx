@@ -4,9 +4,10 @@ import { ReportReadOnlyItem } from './ReportList';
 
 interface GroupReportsTabProps {
   groupId: number;
+  currentUserId?: number | null;
 }
 
-export function GroupReportsTab({ groupId }: GroupReportsTabProps) {
+export function GroupReportsTab({ groupId, currentUserId }: GroupReportsTabProps) {
   const { data: reports = [], isError, isLoading, refetch } = useGroupReports(groupId);
 
   return (
@@ -27,7 +28,13 @@ export function GroupReportsTab({ groupId }: GroupReportsTabProps) {
       ) : (
         <div className="mt-5 space-y-4">
           {reports.map((report) => (
-            <ReportReadOnlyItem key={report.id} report={report} />
+            <ReportReadOnlyItem
+              currentUserId={currentUserId}
+              groupId={groupId}
+              key={report.id}
+              report={report}
+              role="GROUP_LEADER"
+            />
           ))}
         </div>
       )}

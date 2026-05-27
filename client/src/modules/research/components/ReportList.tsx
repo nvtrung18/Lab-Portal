@@ -5,13 +5,18 @@ import { downloadReportFile } from '../api';
 import { useReportsByTask } from '../hooks';
 import type { ResearchReport } from '../types';
 import { formatDate } from '../utils';
+import type { TaskBoardRole } from '../taskBoardHelpers';
+import { LeaderReviewButton } from './LeaderReviewButton';
+import { ManagerReviewActions } from './ManagerReviewActions';
 import { ReportStatusBadge } from './ReportStatusBadge';
+import { ReviewPanel } from './ReviewPanel';
 
 interface ReportListProps {
   taskId: number;
+  currentUserId?: number | null;
 }
 
-export function ReportList({ taskId }: ReportListProps) {
+export function ReportList({ taskId, currentUserId }: ReportListProps) {
   const { data: reports = [], isError, isLoading, refetch } = useReportsByTask(taskId);
   const orderedReports = sortReportsNewestFirst(reports);
 
@@ -29,7 +34,7 @@ export function ReportList({ taskId }: ReportListProps) {
       ) : (
         <div className="mt-3 space-y-3">
           {orderedReports.map((report, index) => (
-            <ReportReadOnlyItem isLatest={index === 0} key={report.id} report={report} />
+            <ReportReadOnlyItem currentUserId={currentUserId} isLatest={index === 0} key={report.id} report={report} />
           ))}
         </div>
       )}
@@ -45,13 +50,24 @@ export function sortReportsNewestFirst(reports: ResearchReport[]) {
 }
 
 export function ReportReadOnlyItem({
+  canComment = true,
+  currentUserId,
+  groupId,
   isLatest = false,
+  labId,
   report,
+  role,
 }: {
+  canComment?: boolean;
+  currentUserId?: number | null;
+  groupId?: number | null;
   isLatest?: boolean;
+  labId?: number | null;
   report: ResearchReport;
+  role?: TaskBoardRole;
 }) {
   const [isDownloading, setIsDownloading] = useState(false);
+  const [isReviewOpen, setIsReviewOpen] = useState(false);
 
   async function handleDownload() {
     setIsDownloading(true);
@@ -87,6 +103,8 @@ export function ReportReadOnlyItem({
         <ReportStatusBadge status={report.status} />
       </div>
 
+      <ReportStatusNotice status={report.status} />
+
       <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
         <ReportField label="Người nộp" value={getSubmitterLabel(report)} />
         <ReportField label="Ngày nộp" value={formatDate(report.createdAt)} />
@@ -106,6 +124,14 @@ export function ReportReadOnlyItem({
         >
           Tải tài liệu
         </Button>
+        {canComment ? (
+          <Button onClick={() => setIsReviewOpen((current) => !current)} size="sm" variant="outline">
+            {isReviewOpen ? 'Ẩn góp ý' : getReviewButtonLabel(report.commentCount)}
+          </Button>
+        ) : null}
+        {role === 'GROUP_LEADER' ? (
+          <LeaderReviewButton currentUserId={currentUserId} groupId={groupId} report={report} />
+        ) : null}
         {report.evidenceLink ? (
           <a
             className="font-semibold text-blue-700 underline"
@@ -117,8 +143,39 @@ export function ReportReadOnlyItem({
           </a>
         ) : null}
       </div>
+
+      {role === 'LAB_MANAGER' ? <ManagerReviewActions labId={labId} report={report} /> : null}
+
+      {canComment && isReviewOpen ? (
+        <ReviewPanel canComment currentUserId={currentUserId} reportId={report.id} />
+      ) : null}
     </article>
   );
+}
+
+function getReviewButtonLabel(commentCount?: number | null) {
+  if (commentCount == null) {
+    return 'Xem góp ý';
+  }
+  return `Xem góp ý (${commentCount})`;
+}
+
+function ReportStatusNotice({ status }: { status: ResearchReport['status'] }) {
+  if (status === 'NEEDS_REVISION') {
+    return (
+      <p className="mt-3 rounded-md border border-orange-200 bg-orange-50 px-3 py-2 text-sm font-semibold text-orange-800">
+        Báo cáo cần chỉnh sửa
+      </p>
+    );
+  }
+  if (status === 'APPROVED') {
+    return (
+      <p className="mt-3 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-800">
+        Báo cáo đã được duyệt
+      </p>
+    );
+  }
+  return null;
 }
 
 function ReportField({ label, value }: { label: string; value: string }) {

@@ -4,9 +4,11 @@ import { ReportReadOnlyItem } from './ReportList';
 
 interface ManagerReportsListProps {
   milestoneId: number;
+  currentUserId?: number | null;
+  labId?: number | null;
 }
 
-export function ManagerReportsList({ milestoneId }: ManagerReportsListProps) {
+export function ManagerReportsList({ milestoneId, currentUserId, labId }: ManagerReportsListProps) {
   const { data: reports = [], isError, isLoading, refetch } = useReportsByMilestone(milestoneId);
 
   return (
@@ -27,7 +29,13 @@ export function ManagerReportsList({ milestoneId }: ManagerReportsListProps) {
       ) : (
         <div className="mt-5 space-y-4">
           {reports.map((report) => (
-            <ReportReadOnlyItem key={report.id} report={report} />
+            <ReportReadOnlyItem
+              currentUserId={currentUserId}
+              key={report.id}
+              labId={labId}
+              report={report}
+              role="LAB_MANAGER"
+            />
           ))}
         </div>
       )}

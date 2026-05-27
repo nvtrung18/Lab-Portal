@@ -9,7 +9,7 @@ import lombok.Setter;
 @Setter
 public class LeaderReviewReportRequest {
 
-    @NotBlank(message = "Review note is required")
-    @Size(max = 5000, message = "Review note must not exceed 5000 characters")
+    @NotBlank(message = "Ghi chú kiểm tra không được để trống.")
+    @Size(max = 5000, message = "Ghi chú kiểm tra không được vượt quá 5000 ký tự.")
     private String note;
 }

@@ -1,15 +1,25 @@
 import { useState } from 'react';
 import { Link, Navigate, useParams } from 'react-router-dom';
 
+import { EmptyState } from '../../../shared/components';
 import { LAB_MANAGER, STUDENT } from '../../../shared/constants/roles';
 import { getManagedLabId } from '../../../shared/utils/membership';
 import { useCurrentUser } from '../../user/hooks';
-import { MilestoneList, ResearchGroupList } from '../components';
+import { MilestoneList, ProductPage, ResearchGroupList } from '../components';
 import { useResearchProject } from '../hooks';
 import { formatDate, formatPriority, formatProjectStatus, getStatusClass } from '../utils';
 
+type ProjectDetailTab = 'groups' | 'milestones' | 'products' | 'evaluation';
+
+const DETAIL_TABS: Array<{ value: ProjectDetailTab; label: string }> = [
+  { value: 'groups', label: 'Nhóm nghiên cứu' },
+  { value: 'milestones', label: 'Mốc nghiên cứu' },
+  { value: 'products', label: 'Sản phẩm nghiên cứu' },
+  { value: 'evaluation', label: 'Đánh giá' },
+];
+
 export function ResearchProjectDetailPage() {
-  const [managerTab, setManagerTab] = useState<'groups' | 'milestones'>('groups');
+  const [activeTab, setActiveTab] = useState<ProjectDetailTab>('groups');
   const { projectId } = useParams();
   const numericProjectId = Number(projectId);
   const { data: currentUser, isLoading: isLoadingUser } = useCurrentUser();
@@ -94,51 +104,41 @@ export function ResearchProjectDetailPage() {
         </dl>
       </div>
 
-      {isManager ? (
-        <>
-          <div className="flex gap-1 border-b border-slate-200" role="tablist" aria-label="Chi tiết đề tài nghiên cứu">
-            <button
-              className={`border-b-2 px-4 py-3 text-sm font-semibold ${
-                managerTab === 'groups' ? 'border-slate-900 text-slate-950' : 'border-transparent text-slate-600'
-              }`}
-              type="button"
-              role="tab"
-              aria-selected={managerTab === 'groups'}
-              onClick={() => setManagerTab('groups')}
-            >
-              Nhóm nghiên cứu
-            </button>
-            <button
-              className={`border-b-2 px-4 py-3 text-sm font-semibold ${
-                managerTab === 'milestones' ? 'border-slate-900 text-slate-950' : 'border-transparent text-slate-600'
-              }`}
-              type="button"
-              role="tab"
-              aria-selected={managerTab === 'milestones'}
-              onClick={() => setManagerTab('milestones')}
-            >
-              Mốc nghiên cứu
-            </button>
-          </div>
+      <div className="flex gap-1 overflow-x-auto border-b border-slate-200" role="tablist" aria-label="Chi tiết đề tài nghiên cứu">
+        {DETAIL_TABS.map((tab) => (
+          <button
+            className={`whitespace-nowrap border-b-2 px-4 py-3 text-sm font-semibold ${
+              activeTab === tab.value ? 'border-slate-900 text-slate-950' : 'border-transparent text-slate-600'
+            }`}
+            key={tab.value}
+            type="button"
+            role="tab"
+            aria-selected={activeTab === tab.value}
+            onClick={() => setActiveTab(tab.value)}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
 
-          {managerTab === 'groups' ? (
-            <ResearchGroupList project={project} canCreate />
-          ) : (
-            <MilestoneList
-              projectId={project.id}
-              labId={project.labId}
-              canCreate
-              emptyMessage="Đề tài này chưa có mốc nghiên cứu nào."
-            />
-          )}
-        </>
-      ) : (
+      {activeTab === 'groups' ? <ResearchGroupList project={project} canCreate={isManager} /> : null}
+
+      {activeTab === 'milestones' ? (
         <MilestoneList
           projectId={project.id}
-          canCreate={false}
+          labId={project.labId}
+          canCreate={isManager}
           emptyMessage="Đề tài này chưa có mốc nghiên cứu nào."
         />
-      )}
+      ) : null}
+
+      {activeTab === 'products' ? (
+        <ProductPage projectId={project.id} groupId={project.groupId} role={isManager ? LAB_MANAGER : STUDENT} />
+      ) : null}
+
+      {activeTab === 'evaluation' ? (
+        <EmptyState>Chức năng đánh giá sản phẩm không nằm trong phạm vi UC17.</EmptyState>
+      ) : null}
     </section>
   );
 }

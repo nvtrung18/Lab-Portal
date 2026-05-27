@@ -16,9 +16,12 @@ import type {
   ResearchEligibleStudent,
   ResearchGroup,
   ResearchProject,
+  ResearchProduct,
+  RawResearchProduct,
   ResearchTopic,
   ResearchReport,
   ResearchReportComment,
+  SubmitProductPayload,
   SubmitReportPayload,
   ManagerReportDecision,
 } from '../types';
@@ -45,6 +48,66 @@ export async function updateResearchProject(
 export async function getResearchProject(projectId: number): Promise<ResearchProject> {
   const response = await apiClient.get<Response<ResearchProject>>(`/api/research-projects/${projectId}`);
   return response.data.data;
+}
+
+export async function getProductsByProject(projectId: number): Promise<ResearchProduct[]> {
+  const response = await apiClient.get<Response<RawResearchProduct[]>>(`/api/projects/${projectId}/products`);
+  return response.data.data.map(normalizeProduct);
+}
+
+export async function submitProduct(
+  payload: SubmitProductPayload,
+  onUploadProgress?: (percent: number) => void,
+): Promise<ResearchProduct> {
+  const formData = new FormData();
+  formData.append('projectId', String(payload.projectId));
+  if (payload.groupId) {
+    formData.append('groupId', String(payload.groupId));
+  }
+  formData.append('productType', payload.productType);
+  formData.append('title', payload.title);
+  if (payload.description) {
+    formData.append('description', payload.description);
+  }
+  if (payload.externalLink) {
+    formData.append('externalLink', payload.externalLink);
+  }
+  if (payload.file) {
+    formData.append('file', payload.file);
+  }
+
+  const response = await apiClient.post<Response<RawResearchProduct>>('/api/products', formData, {
+    onUploadProgress: (event) => {
+      if (event.total) {
+        onUploadProgress?.(Math.min(100, Math.round((event.loaded * 100) / event.total)));
+      }
+    },
+  });
+  return normalizeProduct(response.data.data);
+}
+
+function normalizeProduct(product: RawResearchProduct): ResearchProduct {
+  return {
+    id: product.id,
+    projectId: product.projectId ?? product.project_id ?? 0,
+    groupId: product.groupId ?? product.group_id ?? null,
+    submittedById: product.submittedById ?? product.submitted_by_id ?? null,
+    submittedByName: product.submittedByName ?? product.submitted_by_name ?? null,
+    submittedByEmail: product.submittedByEmail ?? product.submitted_by_email ?? null,
+    productType: product.productType ?? product.product_type ?? 'OTHER',
+    title: product.title ?? 'Sản phẩm nghiên cứu',
+    description: product.description ?? null,
+    fileUrl: product.fileUrl ?? product.file_url ?? null,
+    fileName: product.fileName ?? product.file_name ?? null,
+    fileType: product.fileType ?? product.file_type ?? null,
+    fileSize: product.fileSize ?? product.file_size ?? null,
+    externalLink: product.externalLink ?? product.external_link ?? null,
+    version: product.version ?? 1,
+    status: product.status ?? 'SUBMITTED',
+    submittedAt: product.submittedAt ?? product.submitted_at ?? null,
+    createdAt: product.createdAt ?? product.created_at ?? null,
+    updatedAt: product.updatedAt ?? product.updated_at ?? null,
+  };
 }
 
 export async function getMilestonesByProject(projectId: number): Promise<ResearchMilestone[]> {

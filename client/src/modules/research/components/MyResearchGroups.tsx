@@ -150,12 +150,13 @@ export function MyResearchGroups({ labId, currentUserId }: MyResearchGroupsProps
             <>
               {!isLeader && currentUserId != null ? (
                 <MyResearchTasks
+                  currentUserId={currentUserId}
                   groupId={selectedGroup.id}
                   projectId={selectedGroup.projectId}
                 />
               ) : null}
               {isLeader ? (
-                <GroupReportsTab groupId={selectedGroup.id} />
+                <GroupReportsTab currentUserId={currentUserId} groupId={selectedGroup.id} />
               ) : null}
               <MilestoneList
                 key={`${labId}-${selectedGroup.projectId}`}

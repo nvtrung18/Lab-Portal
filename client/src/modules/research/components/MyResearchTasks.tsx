@@ -11,9 +11,10 @@ import { ReportUploadModal } from './ReportUploadModal';
 interface MyResearchTasksProps {
   groupId: number;
   projectId: number;
+  currentUserId?: number | null;
 }
 
-export function MyResearchTasks({ groupId, projectId }: MyResearchTasksProps) {
+export function MyResearchTasks({ groupId, projectId, currentUserId }: MyResearchTasksProps) {
   const { data: tasks = [], isLoading, isError, refetch } = useMyResearchTasks(groupId);
 
   return (
@@ -34,7 +35,13 @@ export function MyResearchTasks({ groupId, projectId }: MyResearchTasksProps) {
       ) : (
         <div className="mt-5 space-y-4">
           {tasks.map((task) => (
-            <MyTaskReportCard groupId={groupId} key={task.id} projectId={projectId} task={task} />
+            <MyTaskReportCard
+              currentUserId={currentUserId}
+              groupId={groupId}
+              key={task.id}
+              projectId={projectId}
+              task={task}
+            />
           ))}
         </div>
       )}
@@ -45,10 +52,12 @@ export function MyResearchTasks({ groupId, projectId }: MyResearchTasksProps) {
 function MyTaskReportCard({
   groupId,
   projectId,
+  currentUserId,
   task,
 }: {
   groupId: number;
   projectId: number;
+  currentUserId?: number | null;
   task: ResearchTask;
 }) {
   const [isUploadOpen, setIsUploadOpen] = useState(false);
@@ -81,7 +90,7 @@ function MyTaskReportCard({
         ) : null}
       </div>
 
-      <ReportList taskId={task.id} />
+      <ReportList currentUserId={currentUserId} taskId={task.id} />
 
       <ReportUploadModal
         groupId={groupId}

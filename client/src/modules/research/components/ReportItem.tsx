@@ -1,25 +1,20 @@
-import type { ResearchReport, ResearchReportStatus } from '../types';
+﻿import { useState } from 'react';
+
+import { Button } from '../../../shared/components';
 import type { TaskBoardRole } from '../taskBoardHelpers';
+import type { ResearchReport, ResearchReportStatus } from '../types';
 import { formatDate } from '../utils';
-import { ReportDiscussionPanel } from './ReportDiscussionPanel';
+import { ManagerReviewActions } from './ManagerReviewActions';
 import { ReportReviewActions } from './ReportReviewActions';
+import { ReviewPanel } from './ReviewPanel';
 
 const REPORT_STATUS_LABELS: Record<ResearchReportStatus, string> = {
   SUBMITTED: 'Đã nộp',
   LEADER_REVIEWED: 'Trưởng nhóm đã xem',
   NEEDS_REVISION: 'Cần chỉnh sửa',
-  APPROVED: 'Báo cáo đã được duyệt',
+  APPROVED: 'Đã duyệt',
   REJECTED: 'Từ chối',
 };
-
-function formatFileSize(size?: number | null) {
-  if (!size) {
-    return '';
-  }
-  return size >= 1024 * 1024
-    ? `${(size / (1024 * 1024)).toFixed(1)} MB`
-    : `${Math.ceil(size / 1024)} KB`;
-}
 
 interface ReportItemProps {
   report: ResearchReport;
@@ -29,9 +24,21 @@ interface ReportItemProps {
   projectId: number;
   groupId?: number | null;
   labId?: number | null;
+  currentUserId?: number | null;
 }
 
-export function ReportItem({ report, canComment, role, milestoneId, projectId, groupId, labId }: ReportItemProps) {
+export function ReportItem({
+  report,
+  canComment,
+  role,
+  milestoneId,
+  projectId,
+  groupId,
+  labId,
+  currentUserId,
+}: ReportItemProps) {
+  const [isReviewOpen, setIsReviewOpen] = useState(false);
+
   return (
     <article className="rounded-md border border-slate-200 bg-white p-4">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
@@ -45,6 +52,8 @@ export function ReportItem({ report, canComment, role, milestoneId, projectId, g
           {REPORT_STATUS_LABELS[report.status]}
         </span>
       </div>
+
+      <ReportStatusNotice status={report.status} />
 
       <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
         {report.submittedByName || report.submittedByEmail ? (
@@ -98,9 +107,45 @@ export function ReportItem({ report, canComment, role, milestoneId, projectId, g
         report={report}
         role={role}
       />
-      <ReportDiscussionPanel canComment={canComment} reportId={report.id} />
+      {role === 'LAB_MANAGER' ? <ManagerReviewActions labId={labId} report={report} /> : null}
+
+      {canComment ? (
+        <div className="mt-4">
+          <Button onClick={() => setIsReviewOpen((current) => !current)} size="sm" variant="outline">
+            {isReviewOpen ? 'Ẩn góp ý' : getReviewButtonLabel(report.commentCount)}
+          </Button>
+        </div>
+      ) : null}
+      {canComment && isReviewOpen ? (
+        <ReviewPanel canComment currentUserId={currentUserId} reportId={report.id} />
+      ) : null}
     </article>
   );
+}
+
+function getReviewButtonLabel(commentCount?: number | null) {
+  if (commentCount == null) {
+    return 'Xem góp ý';
+  }
+  return `Xem góp ý (${commentCount})`;
+}
+
+function ReportStatusNotice({ status }: { status: ResearchReportStatus }) {
+  if (status === 'NEEDS_REVISION') {
+    return (
+      <p className="mt-3 rounded-md border border-orange-200 bg-orange-50 px-3 py-2 text-sm font-semibold text-orange-800">
+        Báo cáo cần chỉnh sửa
+      </p>
+    );
+  }
+  if (status === 'APPROVED') {
+    return (
+      <p className="mt-3 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-800">
+        Báo cáo đã được duyệt
+      </p>
+    );
+  }
+  return null;
 }
 
 function ReportField({ label, value }: { label: string; value: string }) {
@@ -110,4 +155,13 @@ function ReportField({ label, value }: { label: string; value: string }) {
       <dd className="mt-1 whitespace-pre-wrap text-slate-600">{value}</dd>
     </div>
   );
+}
+
+function formatFileSize(size?: number | null) {
+  if (!size) {
+    return '';
+  }
+  return size >= 1024 * 1024
+    ? `${(size / (1024 * 1024)).toFixed(1)} MB`
+    : `${Math.ceil(size / 1024)} KB`;
 }

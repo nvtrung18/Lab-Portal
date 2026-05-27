@@ -481,7 +481,10 @@ class ReportServiceImplTest {
         assertEquals(ReportStatus.LEADER_REVIEWED, response.getStatus());
         assertNotNull(response.getLeaderReviewedAt());
         assertEquals(request.getNote(), response.getLeaderComment());
-        verify(commentRepository).save(any());
+        ArgumentCaptor<com.web.labportalbackend.research.entity.CommentEntity> commentCaptor =
+                ArgumentCaptor.forClass(com.web.labportalbackend.research.entity.CommentEntity.class);
+        verify(commentRepository).save(commentCaptor.capture());
+        assertEquals("Trưởng nhóm đã kiểm tra: " + request.getNote(), commentCaptor.getValue().getContent());
         verify(reportRepository).save(report);
     }
 
@@ -545,7 +548,10 @@ class ReportServiceImplTest {
         assertEquals(MilestoneStatus.COMPLETED, milestone.getStatus());
         assertEquals(100, milestone.getProgressPercent());
         verify(milestoneRepository).save(milestone);
-        verify(commentRepository).save(any());
+        ArgumentCaptor<com.web.labportalbackend.research.entity.CommentEntity> commentCaptor =
+                ArgumentCaptor.forClass(com.web.labportalbackend.research.entity.CommentEntity.class);
+        verify(commentRepository).save(commentCaptor.capture());
+        assertEquals("Quản lý PTN: " + request.getComment(), commentCaptor.getValue().getContent());
     }
 
     @Test
