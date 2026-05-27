@@ -30,6 +30,15 @@ public class TaskController {
         );
     }
 
+    @GetMapping("/groups/{id}/tasks")
+    @Operation(summary = "Get visible task board by research group")
+    @PreAuthorize("hasAnyRole('LAB_MANAGER', 'STUDENT')")
+    public ResponseEntity<Response<List<TaskResponse>>> getByGroup(@PathVariable Long id) {
+        return ResponseEntity.ok(
+                Response.ok("Tasks retrieved successfully", taskService.getByGroup(id))
+        );
+    }
+
     @PutMapping("/tasks/{id}/status")
     @Operation(summary = "Update task status from task board")
     @PreAuthorize("hasAnyRole('LAB_MANAGER', 'STUDENT')")

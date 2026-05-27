@@ -13,10 +13,13 @@ import com.web.labportalbackend.research.entity.MilestoneEntity;
 import com.web.labportalbackend.research.entity.ProjectEntity;
 import com.web.labportalbackend.research.enums.MilestoneStatus;
 import com.web.labportalbackend.research.enums.ProjectStatus;
+import com.web.labportalbackend.research.enums.GroupRole;
 import com.web.labportalbackend.research.mapper.MilestoneMapper;
 import com.web.labportalbackend.research.repository.MilestoneRepository;
 import com.web.labportalbackend.research.repository.GroupMemberRepository;
 import com.web.labportalbackend.research.repository.ProjectRepository;
+import com.web.labportalbackend.research.repository.ReportRepository;
+import com.web.labportalbackend.research.repository.TaskRepository;
 import com.web.labportalbackend.research.service.MilestoneService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
@@ -31,11 +34,16 @@ import java.util.List;
 @RequiredArgsConstructor
 public class MilestoneServiceImpl implements MilestoneService {
 
+    private static final String APPROVED_REPORT_REQUIRED =
+            "Cần có báo cáo được duyệt trước khi hoàn thành nhiệm vụ/mốc nghiên cứu.";
+
     private final MilestoneRepository milestoneRepository;
     private final ProjectRepository projectRepository;
     private final LaboratoryRepository laboratoryRepository;
     private final MembershipRepository membershipRepository;
     private final GroupMemberRepository groupMemberRepository;
+    private final TaskRepository taskRepository;
+    private final ReportRepository reportRepository;
     private final UserRepository userRepository;
 
     @Override
@@ -48,6 +56,9 @@ public class MilestoneServiceImpl implements MilestoneService {
         assertProjectAllowsMilestones(project);
         assertSupportedStatus(request.getStatus());
         validateProgress(request.getStatus(), request.getProgressPercent());
+        if (request.getStatus() == MilestoneStatus.COMPLETED) {
+            throw new IllegalArgumentException(APPROVED_REPORT_REQUIRED);
+        }
         if (request.getTitle().trim().length() < 3) {
             throw new IllegalArgumentException("Milestone title must contain at least 3 non-whitespace characters");
         }
@@ -74,10 +85,12 @@ public class MilestoneServiceImpl implements MilestoneService {
     public List<MilestoneResponse> getByProject(Long projectId) {
         ProjectEntity project = projectRepository.findByIdAndDeletedFalseAndActiveTrue(projectId)
                 .orElseThrow(() -> new ResourceNotFoundException("Project", projectId));
-        assertCanViewMilestones(getCurrentUser(), project);
+        User currentUser = getCurrentUser();
+        GroupRole groupRole = assertCanViewMilestones(currentUser, project);
 
         return milestoneRepository.findByProjectIdAndDeletedFalseAndActiveTrueOrderByDeadlineAscCreatedAtAsc(projectId)
                 .stream()
+                .filter(milestone -> groupRole != GroupRole.MEMBER || isMemberMilestone(milestone, currentUser.getId()))
                 .map(MilestoneMapper::toResponse)
                 .toList();
     }
@@ -87,7 +100,11 @@ public class MilestoneServiceImpl implements MilestoneService {
     public MilestoneResponse getDetail(Long milestoneId) {
         MilestoneEntity milestone = milestoneRepository.findByIdAndDeletedFalseAndActiveTrue(milestoneId)
                 .orElseThrow(() -> new ResourceNotFoundException("Milestone", milestoneId));
-        assertCanViewMilestones(getCurrentUser(), milestone.getProject());
+        User currentUser = getCurrentUser();
+        GroupRole groupRole = assertCanViewMilestones(currentUser, milestone.getProject());
+        if (groupRole == GroupRole.MEMBER && !isMemberMilestone(milestone, currentUser.getId())) {
+            throw new AccessDeniedException("Members may view only milestones assigned to them or containing their tasks");
+        }
         return MilestoneMapper.toResponse(milestone);
     }
 
@@ -101,6 +118,9 @@ public class MilestoneServiceImpl implements MilestoneService {
         assertManagerOwnsProject(currentUser, project);
         assertSupportedStatus(request.getStatus());
         validateProgress(request.getStatus(), request.getProgressPercent());
+        if (request.getStatus() == MilestoneStatus.COMPLETED) {
+            assertCanCompleteMilestone(milestoneId);
+        }
         if (request.getTitle().trim().length() < 3) {
             throw new IllegalArgumentException("Milestone title must contain at least 3 non-whitespace characters");
         }
@@ -136,6 +156,15 @@ public class MilestoneServiceImpl implements MilestoneService {
         }
     }
 
+    private void assertCanCompleteMilestone(Long milestoneId) {
+        if (!reportRepository.existsApprovedByMilestoneId(milestoneId)
+                || reportRepository.existsLatestUnapprovedByMilestoneId(milestoneId)
+                || taskRepository.existsIncompleteTaskByMilestoneId(milestoneId)
+                || taskRepository.existsTaskWithoutApprovedReportByMilestoneId(milestoneId)) {
+            throw new IllegalArgumentException(APPROVED_REPORT_REQUIRED);
+        }
+    }
+
     private User resolveAssignedStudent(Long assignedToStudentId, ProjectEntity project) {
         if (assignedToStudentId == null) {
             return null;
@@ -157,18 +186,23 @@ public class MilestoneServiceImpl implements MilestoneService {
         return student;
     }
 
-    private void assertCanViewMilestones(User currentUser, ProjectEntity project) {
+    private GroupRole assertCanViewMilestones(User currentUser, ProjectEntity project) {
         if (currentUser.hasRole("LAB_MANAGER")) {
             assertManagerOwnsProject(currentUser, project);
-            return;
+            return null;
         }
 
-        if (currentUser.hasRole("STUDENT") &&
-                groupMemberRepository.existsActiveMemberByProjectIdAndUserId(project.getId(), currentUser.getId())) {
-            return;
+        if (currentUser.hasRole("STUDENT")) {
+            return groupMemberRepository.findActiveRoleByProjectIdAndUserId(project.getId(), currentUser.getId())
+                    .orElseThrow(() -> new AccessDeniedException("Cannot access milestones for this project"));
         }
 
         throw new AccessDeniedException("Cannot access milestones for this project");
+    }
+
+    private boolean isMemberMilestone(MilestoneEntity milestone, Long userId) {
+        return (milestone.getAssignedToStudent() != null && userId.equals(milestone.getAssignedToStudent().getId()))
+                || taskRepository.existsByMilestoneIdAndAssigneeIdAndDeletedFalseAndActiveTrue(milestone.getId(), userId);
     }
 
     private void assertManagerOwnsProject(User currentUser, ProjectEntity project) {

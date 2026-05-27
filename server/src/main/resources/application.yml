@@ -82,6 +82,8 @@ app:
   mail:
     from: ${MAIL_FROM:}
   frontend-url: ${APP_FRONTEND_URL:http://localhost:5173}
+  research:
+    report-storage-path: ${REPORT_STORAGE_PATH:storage/reports}
 
 # -------------------- Server --------------------
 server:

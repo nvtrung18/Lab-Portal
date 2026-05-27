@@ -3,6 +3,7 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 
 import { useCurrentUser } from '../modules/user/hooks';
 import { clearAuthTokens, getStoredUser } from '../shared/api';
+import { Button } from '../shared/components';
 import { LAB_MANAGER, STUDENT } from '../shared/constants/roles';
 import { hasActiveMembership } from '../shared/utils/membership';
 
@@ -62,7 +63,7 @@ export function MainLayout() {
   const isManager = Boolean(user?.roles.includes(LAB_MANAGER));
   const isStudent = Boolean(user?.roles.includes(STUDENT));
   const portalTitle = isManager ? 'Cổng quản lý PTN' : 'Cổng sinh viên';
-  const roleLabel = isManager ? LAB_MANAGER : isStudent ? STUDENT : 'Chưa có vai trò';
+  const roleLabel = isManager ? 'Quản lý PTN' : isStudent ? 'Sinh viên' : 'Chưa có vai trò';
   const navItems = isManager
     ? managerNavItems
     : [
@@ -77,8 +78,8 @@ export function MainLayout() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-100 text-slate-900">
-      <aside className="fixed inset-y-0 left-0 hidden w-64 border-r border-slate-200 bg-white px-4 py-6 shadow-sm lg:block">
+    <div className="min-h-screen overflow-x-hidden bg-slate-100 text-slate-900">
+      <aside className="fixed inset-y-0 left-0 hidden w-64 overflow-y-auto border-r border-slate-200 bg-white px-4 py-6 shadow-sm lg:block">
         <div className="px-3 text-lg font-semibold tracking-tight text-slate-950">
           {portalTitle}
         </div>
@@ -106,39 +107,35 @@ export function MainLayout() {
         </nav>
       </aside>
 
-      <div className="lg:pl-64">
+      <div className="min-w-0 lg:pl-64">
         <header className="sticky top-0 z-10 border-b border-slate-200 bg-white/95 px-4 py-4 shadow-sm backdrop-blur lg:px-8">
-          <div className="flex items-center justify-between gap-4">
-            <div>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+            <div className="min-w-0">
               <p className="text-xs font-medium uppercase text-slate-500">
                 Không gian làm việc
               </p>
-              <h1 className="text-xl font-semibold text-slate-950">
+              <h1 className="truncate text-lg font-semibold text-slate-950 sm:text-xl">
                 Quản lý phòng thí nghiệm
               </h1>
             </div>
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-3 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 shadow-sm">
+            <div className="flex min-w-0 items-center justify-between gap-2 sm:justify-end sm:gap-3">
+              <div className="flex min-w-0 items-center gap-3 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 shadow-sm">
                 <span className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-200 text-xs font-semibold text-slate-600">
                   {(user?.fullName || user?.email || 'U').charAt(0).toUpperCase()}
                 </span>
-                <span className="hidden sm:block">
-                  <span className="block font-medium text-slate-800">
+                <span className="hidden min-w-0 sm:block">
+                  <span className="block max-w-44 truncate font-medium text-slate-800">
                     {user?.fullName || user?.email || 'Người dùng'}
                   </span>
                   <span className="block text-xs text-slate-500">{roleLabel}</span>
                 </span>
               </div>
-              <button
-                type="button"
-                className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50"
-                onClick={handleLogout}
-              >
+              <Button onClick={handleLogout} size="sm" variant="outline">
                 Đăng xuất
-              </button>
+              </Button>
             </div>
           </div>
-          <nav className="mt-4 flex gap-2 overflow-x-auto pb-1 lg:hidden">
+          <nav className="mt-4 flex max-w-full gap-2 overscroll-x-contain overflow-x-auto pb-1 lg:hidden">
             {navItems.map((item) => (
               <NavLink
                 key={item.path}
@@ -158,7 +155,7 @@ export function MainLayout() {
           </nav>
         </header>
 
-        <main className="px-4 py-6 lg:px-8">
+        <main className="min-w-0 max-w-full px-4 py-6 lg:px-8">
           <Outlet />
         </main>
       </div>

@@ -9,6 +9,7 @@ import {
   verifyForgotPasswordCodeAPI,
 } from '../api';
 import type { Response } from '../../../shared/types';
+import { Button } from '../../../shared/components';
 
 type ForgotPasswordStep = 'email' | 'otp' | 'password';
 
@@ -170,13 +171,15 @@ export function ForgotPasswordPage() {
             value={email}
             onChange={(event) => setEmail(event.target.value)}
           />
-          <button
-            className="w-full rounded-md bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white disabled:bg-slate-400"
-            disabled={isSubmitting}
+          <Button
+            className="w-full"
+            loading={isSubmitting}
+            loadingText="Đang gửi..."
+            size="lg"
             type="submit"
           >
-            {isSubmitting ? 'Đang gửi...' : 'Gửi mã xác nhận'}
-          </button>
+            Gửi mã xác nhận
+          </Button>
         </form>
       ) : null}
 
@@ -194,21 +197,24 @@ export function ForgotPasswordPage() {
             value={code}
             onChange={(event) => setCode(event.target.value.replace(/\D/g, ''))}
           />
-          <button
-            className="w-full rounded-md bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white disabled:bg-slate-400"
-            disabled={isSubmitting}
+          <Button
+            className="w-full"
+            loading={isSubmitting}
+            loadingText="Đang xác thực..."
+            size="lg"
             type="submit"
           >
-            {isSubmitting ? 'Đang xác thực...' : 'Xác thực mã'}
-          </button>
-          <button
-            className="w-full rounded-md border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700 disabled:text-slate-400"
+            Xác thực mã
+          </Button>
+          <Button
+            className="w-full"
             disabled={isSubmitting}
-            type="button"
             onClick={() => setStep('email')}
+            size="lg"
+            variant="outline"
           >
             Đổi email
-          </button>
+          </Button>
         </form>
       ) : null}
 
@@ -252,13 +258,15 @@ export function ForgotPasswordPage() {
               <PasswordVisibilityIcon visible={showConfirmPassword} />
             </button>
           </div>
-          <button
-            className="w-full rounded-md bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white disabled:bg-slate-400"
-            disabled={isSubmitting}
+          <Button
+            className="w-full"
+            loading={isSubmitting}
+            loadingText="Đang cập nhật..."
+            size="lg"
             type="submit"
           >
-            {isSubmitting ? 'Đang cập nhật...' : 'Đặt lại mật khẩu'}
-          </button>
+            Đặt lại mật khẩu
+          </Button>
         </form>
       ) : null}
 

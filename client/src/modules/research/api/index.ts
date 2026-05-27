@@ -17,6 +17,10 @@ import type {
   ResearchGroup,
   ResearchProject,
   ResearchTopic,
+  ResearchReport,
+  ResearchReportComment,
+  SubmitReportPayload,
+  ManagerReportDecision,
 } from '../types';
 import { normalizeTask } from '../taskBoardHelpers';
 
@@ -61,6 +65,101 @@ export async function getTasksByMilestone(milestoneId: number): Promise<Research
 export async function updateTaskStatus(taskId: number, status: TaskColumn): Promise<ResearchTask> {
   const response = await apiClient.put<Response<RawResearchTask>>(`/api/tasks/${taskId}/status`, { status });
   return normalizeTask(response.data.data);
+}
+
+export async function getReportsByMilestone(milestoneId: number): Promise<ResearchReport[]> {
+  const response = await apiClient.get<Response<ResearchReport[]>>(`/api/milestones/${milestoneId}/reports`);
+  return response.data.data;
+}
+
+export async function getMyReportsByMilestone(milestoneId: number): Promise<ResearchReport[]> {
+  const response = await apiClient.get<Response<ResearchReport[]>>(`/api/milestones/${milestoneId}/reports/me`);
+  return response.data.data;
+}
+
+export async function getReportsByTask(taskId: number): Promise<ResearchReport[]> {
+  const response = await apiClient.get<Response<ResearchReport[]>>(`/api/tasks/${taskId}/reports`);
+  return response.data.data;
+}
+
+export async function downloadReportFile(reportId: number): Promise<Blob> {
+  const response = await apiClient.get<Blob>(`/api/reports/${reportId}/file`, {
+    responseType: 'blob',
+  });
+  return response.data;
+}
+
+export async function getReportsByGroup(groupId: number): Promise<ResearchReport[]> {
+  const response = await apiClient.get<Response<ResearchReport[]>>(`/api/groups/${groupId}/reports`);
+  return response.data.data;
+}
+
+export async function getPendingManagerReports(labId: number): Promise<ResearchReport[]> {
+  const response = await apiClient.get<Response<ResearchReport[]>>(`/api/labs/${labId}/reports/pending-review`);
+  return response.data.data;
+}
+
+export async function getMyResearchTasksByGroup(groupId: number): Promise<ResearchTask[]> {
+  const response = await apiClient.get<Response<RawResearchTask[]>>(`/api/groups/${groupId}/tasks`);
+  return response.data.data.map(normalizeTask);
+}
+
+export async function submitReport(
+  payload: SubmitReportPayload,
+  onUploadProgress?: (percent: number) => void,
+): Promise<ResearchReport> {
+  const formData = new FormData();
+  formData.append('taskId', String(payload.taskId));
+  formData.append('title', payload.title);
+  formData.append('contentDone', payload.contentDone);
+  formData.append('result', payload.result);
+  formData.append('difficulty', payload.difficulty);
+  formData.append('nextPlan', payload.nextPlan);
+  formData.append('selfAssessment', payload.selfAssessment);
+  if (payload.evidenceLink) {
+    formData.append('evidenceLink', payload.evidenceLink);
+  }
+  formData.append('file', payload.file);
+
+  const response = await apiClient.post<Response<ResearchReport>>('/api/reports', formData, {
+    onUploadProgress: (event) => {
+      if (event.total) {
+        onUploadProgress?.(Math.min(100, Math.round((event.loaded * 100) / event.total)));
+      }
+    },
+  });
+  return response.data.data;
+}
+
+export async function getReportComments(reportId: number): Promise<ResearchReportComment[]> {
+  const response = await apiClient.get<Response<ResearchReportComment[]>>(`/api/reports/${reportId}/comments`);
+  return response.data.data;
+}
+
+export async function addReportComment(reportId: number, content: string): Promise<ResearchReportComment> {
+  const response = await apiClient.post<Response<ResearchReportComment>>(`/api/reports/${reportId}/comments`, {
+    content,
+  });
+  return response.data.data;
+}
+
+export async function leaderReviewReport(reportId: number, note: string): Promise<ResearchReport> {
+  const response = await apiClient.patch<Response<ResearchReport>>(`/api/reports/${reportId}/leader-review`, {
+    note,
+  });
+  return response.data.data;
+}
+
+export async function managerReviewReport(
+  reportId: number,
+  decision: ManagerReportDecision,
+  comment: string,
+): Promise<ResearchReport> {
+  const response = await apiClient.patch<Response<ResearchReport>>(`/api/reports/${reportId}/manager-review`, {
+    decision,
+    comment,
+  });
+  return response.data.data;
 }
 
 export async function createMilestone(payload: CreateMilestonePayload): Promise<ResearchMilestone> {

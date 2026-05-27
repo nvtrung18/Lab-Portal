@@ -19,6 +19,13 @@ export type ResearchTaskStatus =
 
 export type TaskColumn = 'TODO' | 'DOING' | 'WAITING_REVIEW' | 'NEEDS_REVISION' | 'DONE';
 
+export type ResearchReportStatus =
+  | 'SUBMITTED'
+  | 'LEADER_REVIEWED'
+  | 'NEEDS_REVISION'
+  | 'APPROVED'
+  | 'REJECTED';
+
 export interface ResearchTopic {
   id: number;
   labId: number;
@@ -51,6 +58,7 @@ export interface ResearchGroup {
   memberCount?: number | null;
   projectCount?: number | null;
   leaderId?: number | null;
+  myRole?: 'LEADER' | 'MEMBER' | null;
   createdByName?: string | null;
   createdAt?: string | null;
   members?: ResearchGroupMember[];
@@ -167,6 +175,66 @@ export interface ResearchTask {
   createdAt: string | null;
   updatedAt: string | null;
 }
+
+export interface ResearchReport {
+  id: number;
+  projectId: number;
+  groupId?: number | null;
+  milestoneId: number;
+  taskId?: number | null;
+  submittedById: number;
+  submittedByName?: string | null;
+  submittedByEmail?: string | null;
+  groupName?: string | null;
+  milestoneTitle?: string | null;
+  taskTitle?: string | null;
+  version: number;
+  title: string;
+  contentDone: string;
+  result: string;
+  difficulty: string;
+  nextPlan: string;
+  selfAssessment: string;
+  fileUrl: string;
+  fileName?: string | null;
+  fileType?: string | null;
+  fileSize?: number | null;
+  evidenceLink?: string | null;
+  status: ResearchReportStatus;
+  leaderReviewedAt?: string | null;
+  leaderComment?: string | null;
+  managerReviewedAt?: string | null;
+  managerComment?: string | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+}
+
+export interface ResearchReportComment {
+  id: number;
+  reportId: number;
+  authorId: number;
+  authorName: string | null;
+  authorEmail: string | null;
+  authorRole: 'LAB_MANAGER' | 'STUDENT';
+  groupRole: 'LEADER' | 'MEMBER' | null;
+  content: string;
+  createdAt: string;
+}
+
+export interface SubmitReportPayload {
+  milestoneId: number;
+  taskId: number;
+  title: string;
+  contentDone: string;
+  result: string;
+  difficulty: string;
+  nextPlan: string;
+  selfAssessment: string;
+  evidenceLink?: string;
+  file: File;
+}
+
+export type ManagerReportDecision = 'APPROVE' | 'REQUEST_REVISION' | 'REJECT';
 
 export interface CreateMilestonePayload {
   projectId: number;

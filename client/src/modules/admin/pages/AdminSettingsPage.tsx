@@ -1,8 +1,8 @@
 export function AdminSettingsPage() {
   return (
     <section className="rounded-lg border border-slate-800 bg-slate-900 p-6 shadow-sm">
-      <h2 className="text-xl font-semibold text-white">System Config</h2>
-      <p className="mt-2 text-sm text-slate-300">System configuration placeholder.</p>
+      <h2 className="text-xl font-semibold text-white">Cấu hình hệ thống</h2>
+      <p className="mt-2 text-sm text-slate-300">Khu vực cấu hình dành cho quản trị viên.</p>
     </section>
   );
 }

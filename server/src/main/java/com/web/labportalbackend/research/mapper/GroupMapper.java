@@ -4,6 +4,7 @@ import com.web.labportalbackend.research.dto.response.GroupMemberResponse;
 import com.web.labportalbackend.research.dto.response.GroupResponse;
 import com.web.labportalbackend.research.entity.GroupEntity;
 import com.web.labportalbackend.research.entity.GroupMemberEntity;
+import com.web.labportalbackend.research.enums.GroupRole;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
@@ -18,9 +19,18 @@ public final class GroupMapper {
     }
 
     public static GroupResponse toResponse(GroupEntity group, Long projectCount) {
+        return toResponse(group, projectCount, null);
+    }
+
+    public static GroupResponse toResponse(GroupEntity group, Long projectCount, Long currentUserId) {
         List<GroupMemberEntity> activeMembers = group.getMembers().stream()
                 .filter(member -> !Boolean.FALSE.equals(member.getActive()) && !Boolean.TRUE.equals(member.getDeleted()))
                 .toList();
+        GroupRole myRole = activeMembers.stream()
+                .filter(member -> currentUserId != null && currentUserId.equals(member.getUser().getId()))
+                .map(GroupMemberEntity::getRole)
+                .findFirst()
+                .orElse(null);
         return GroupResponse.builder()
                 .id(group.getId())
                 .labId(group.getLab().getId())
@@ -37,6 +47,7 @@ public final class GroupMapper {
                 .plan(group.getPlan())
                 .status(group.getStatus())
                 .leaderId(group.getLeader().getId())
+                .myRole(myRole)
                 .createdByName(toDisplayName(group.getLeader()))
                 .memberCount(activeMembers.size())
                 .projectCount(projectCount)

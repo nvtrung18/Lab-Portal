@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 
+import { Button, EmptyState, ErrorState, LoadingState } from '../../../shared/components';
 import {
   useCreateResearchProject,
   useResearchProjectsByLab,
@@ -39,29 +40,22 @@ export function ResearchProjectList({ labId, canCreate, mode = 'manager' }: Rese
           </p>
         </div>
         {canCreate ? (
-          <button
-            className="rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white"
-            type="button"
-            onClick={() => setIsCreateOpen(true)}
-          >
+          <Button onClick={() => setIsCreateOpen(true)}>
             Tạo đề tài nghiên cứu
-          </button>
+          </Button>
         ) : null}
       </div>
 
       {isLoading ? (
-        <p className="mt-5 text-sm text-slate-600">Đang tải danh sách đề tài nghiên cứu...</p>
+        <LoadingState className="mt-5">Đang tải danh sách đề tài nghiên cứu...</LoadingState>
       ) : isError ? (
-        <div className="mt-5 rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+        <ErrorState className="mt-5" onRetry={() => refetch()}>
           Không thể tải danh sách đề tài nghiên cứu.
-          <button className="ml-3 font-semibold underline" type="button" onClick={() => refetch()}>
-            Tải lại
-          </button>
-        </div>
+        </ErrorState>
       ) : !projects.length ? (
-        <div className="mt-5 rounded-md border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+        <EmptyState className="mt-5">
           {mode === 'student' ? 'PTN này chưa có đề tài nghiên cứu nào.' : 'Chưa có đề tài nghiên cứu nào.'}
-        </div>
+        </EmptyState>
       ) : (
         <div className="mt-5 grid gap-4 lg:grid-cols-2">
           {projects.map((project) => (
@@ -107,13 +101,9 @@ export function ResearchProjectList({ labId, canCreate, mode = 'manager' }: Rese
                   >
                     Xem chi tiết
                   </Link>
-                  <button
-                    className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100"
-                    onClick={() => setEditingProject(project)}
-                    type="button"
-                  >
+                  <Button onClick={() => setEditingProject(project)} size="sm" variant="outline">
                     Sửa đề tài
-                  </button>
+                  </Button>
                 </div>
               ) : null}
             </article>

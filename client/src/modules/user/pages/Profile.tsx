@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
-import { toast } from '../../../shared/components/toast';
+import { Button, toast } from '../../../shared/components';
 import type { Response } from '../../../shared/types';
 import type { UserMembershipResponse } from '../api';
 import { useCurrentUser, useUpdateProfile } from '../hooks';
@@ -39,7 +39,12 @@ function getApiErrorMessage(error: unknown, fallback: string) {
 }
 
 function getLabName(membership: UserMembershipResponse) {
-  return membership.labName ?? membership.lab?.name ?? membership.lab?.labName ?? `Lab #${membership.labId ?? membership.lab?.id ?? membership.id ?? ''}`;
+  return membership.labName ?? membership.lab?.name ?? membership.lab?.labName ?? `PTN #${membership.labId ?? membership.lab?.id ?? membership.id ?? ''}`;
+}
+
+function formatRole(role: string) {
+  const normalizedRole = role.replace(/^ROLE_/, '');
+  return normalizedRole === 'LAB_MANAGER' ? 'Quản lý PTN' : normalizedRole === 'STUDENT' ? 'Sinh viên' : normalizedRole;
 }
 
 export function ProfilePage() {
@@ -49,7 +54,7 @@ export function ProfilePage() {
   const [formMessage, setFormMessage] = useState<string | null>(null);
 
   const canEditAvatarUrl = profile ? Object.prototype.hasOwnProperty.call(profile, 'avatarUrl') : false;
-  const displayName = profile?.fullName || profile?.username || profile?.email || 'User';
+  const displayName = profile?.fullName || profile?.username || profile?.email || 'Người dùng';
   const activeMemberships = useMemo(
     () => profile?.memberships?.filter((membership) => membership.status?.toUpperCase() === 'ACTIVE') ?? [],
     [profile?.memberships],
@@ -140,21 +145,19 @@ export function ProfilePage() {
           <div>
             <h2 className="text-xl font-semibold text-slate-950">{displayName}</h2>
             <p className="mt-1 text-sm text-slate-600">{profile.email}</p>
-            <p className="mt-1 text-xs font-medium uppercase text-slate-500">{profile.roles.join(', ')}</p>
+            <p className="mt-1 text-xs font-medium uppercase text-slate-500">{profile.roles.map(formatRole).join(', ')}</p>
           </div>
         </div>
 
         {!isEditing ? (
-          <button
-            type="button"
-            className="rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
+          <Button
             onClick={() => {
               setFormMessage(null);
               setIsEditing(true);
             }}
           >
             Chỉnh sửa
-          </button>
+          </Button>
         ) : null}
       </div>
 
@@ -188,12 +191,12 @@ export function ProfilePage() {
             </div>
             <div>
               <dt className="text-sm font-medium text-slate-500">Vai trò</dt>
-              <dd className="mt-1 text-sm text-slate-950">{profile.roles.join(', ')}</dd>
+              <dd className="mt-1 text-sm text-slate-950">{profile.roles.map(formatRole).join(', ')}</dd>
             </div>
           </dl>
 
           <div>
-            <h3 className="text-sm font-semibold text-slate-950">Thông tin lab</h3>
+            <h3 className="text-sm font-semibold text-slate-950">Thông tin PTN</h3>
             {activeMemberships.length ? (
               <ul className="mt-3 divide-y divide-slate-200 rounded-md border border-slate-200">
                 {activeMemberships.map((membership, index) => (
@@ -203,13 +206,13 @@ export function ProfilePage() {
                   >
                     <span className="font-medium text-slate-950">{getLabName(membership)}</span>
                     <span className="rounded-full bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-700">
-                      ACTIVE
+                      Đang hoạt động
                     </span>
                   </li>
                 ))}
               </ul>
             ) : (
-              <p className="mt-2 text-sm text-slate-600">Chưa tham gia lab nào</p>
+              <p className="mt-2 text-sm text-slate-600">Chưa tham gia PTN nào</p>
             )}
           </div>
         </div>
@@ -259,17 +262,17 @@ export function ProfilePage() {
           ) : null}
 
           <div className="flex gap-3">
-            <button
-              type="submit"
+            <Button
               disabled={updateProfileMutation.isPending || !isDirty}
-              className="rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400"
+              loading={updateProfileMutation.isPending}
+              loadingText="Đang lưu..."
+              type="submit"
             >
-              {updateProfileMutation.isPending ? 'Đang lưu...' : 'Lưu'}
-            </button>
-            <button
-              type="button"
+              Lưu
+            </Button>
+            <Button
               disabled={updateProfileMutation.isPending}
-              className="rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:text-slate-400"
+              variant="outline"
               onClick={() => {
                 reset({
                   fullName: profile.fullName ?? '',
@@ -281,7 +284,7 @@ export function ProfilePage() {
               }}
             >
               Hủy
-            </button>
+            </Button>
           </div>
         </form>
       )}

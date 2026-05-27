@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 
+import { Button, Modal } from '../../../shared/components';
 import type { CreateResearchGroupPayload, ResearchEligibleStudent, ResearchProject } from '../types';
 import { GroupMemberSelector } from './GroupMemberSelector';
 
@@ -52,10 +53,8 @@ export function CreateResearchGroupModal({
     Boolean(form.leaderStudentId && form.memberIds.includes(form.leaderStudentId));
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 px-4">
-      <form
-        className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg bg-white p-6 shadow-xl"
-        onSubmit={(event) => {
+    <form
+      onSubmit={(event) => {
           event.preventDefault();
           setTouched(true);
           if (!canSubmit || !form.leaderStudentId) {
@@ -69,19 +68,30 @@ export function CreateResearchGroupModal({
             leaderStudentId: form.leaderStudentId,
             memberIds: form.memberIds,
           });
-        }}
+      }}
+    >
+      <Modal
+        footer={(
+          <>
+            <Button onClick={onClose} variant="outline">
+              Hủy
+            </Button>
+            <Button
+              disabled={isLoadingStudents}
+              loading={isSubmitting}
+              loadingText="Đang tạo..."
+              type="submit"
+            >
+              Tạo nhóm nghiên cứu
+            </Button>
+          </>
+        )}
+        onClose={onClose}
+        size="lg"
+        subtitle={<>Đề tài: {project.title}</>}
+        title="Tạo nhóm nghiên cứu"
       >
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h3 className="text-lg font-semibold text-slate-950">Tạo nhóm nghiên cứu</h3>
-            <p className="mt-1 text-sm text-slate-600">Đề tài: {project.title}</p>
-          </div>
-          <button className="text-sm font-semibold text-slate-500 hover:text-slate-900" type="button" onClick={onClose}>
-            Đóng
-          </button>
-        </div>
-
-        <div className="mt-5 space-y-4">
+        <div className="space-y-4">
           <label className="block text-sm font-medium text-slate-700">
             Tên nhóm
             <input
@@ -126,15 +136,7 @@ export function CreateResearchGroupModal({
           ) : null}
         </div>
 
-        <div className="mt-6 flex justify-end gap-2">
-          <button className="rounded-md border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700" type="button" onClick={onClose}>
-            Hủy
-          </button>
-          <button className="rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60" disabled={isSubmitting || isLoadingStudents} type="submit">
-            {isSubmitting ? 'Đang tạo...' : 'Tạo nhóm nghiên cứu'}
-          </button>
-        </div>
-      </form>
-    </div>
+      </Modal>
+    </form>
   );
 }

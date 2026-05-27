@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 
+import { Button, Modal } from '../../../shared/components';
 import type { CreateProjectPayload, ResearchGroup } from '../types';
 
 interface CreateProjectModalProps {
@@ -47,10 +48,8 @@ export function CreateProjectModal({ group, isOpen, isSubmitting, onClose, onSub
   const canSubmit = trimmedTitle.length >= 3 && !dateError;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 px-4">
-      <form
-        className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-lg bg-white p-6 shadow-xl"
-        onSubmit={(event) => {
+    <form
+      onSubmit={(event) => {
           event.preventDefault();
           setTouched(true);
           if (!canSubmit) {
@@ -69,19 +68,25 @@ export function CreateProjectModal({ group, isOpen, isSubmitting, onClose, onSub
             evaluationCriteria: form.evaluationCriteria.trim() || undefined,
             status: form.status,
           });
-        }}
+      }}
+    >
+      <Modal
+        footer={(
+          <>
+            <Button onClick={onClose} variant="outline">
+              Hủy
+            </Button>
+            <Button loading={isSubmitting} loadingText="Đang tạo..." type="submit">
+              Tạo đề tài nghiên cứu
+            </Button>
+          </>
+        )}
+        onClose={onClose}
+        size="xl"
+        subtitle={<>Nhóm thực hiện: {group.name}</>}
+        title="Tạo đề tài nghiên cứu"
       >
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h3 className="text-lg font-semibold text-slate-950">Tạo đề tài nghiên cứu</h3>
-            <p className="mt-1 text-sm text-slate-600">Nhóm thực hiện: {group.name}</p>
-          </div>
-          <button className="text-sm font-semibold text-slate-500 hover:text-slate-900" type="button" onClick={onClose}>
-            Đóng
-          </button>
-        </div>
-
-        <div className="mt-5 grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-4 sm:grid-cols-2">
           <label className="block text-sm font-medium text-slate-700">
             Mã đề tài
             <input className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10" value={form.code} onChange={(event) => setForm((current) => ({ ...current, code: event.target.value }))} />
@@ -134,15 +139,7 @@ export function CreateProjectModal({ group, isOpen, isSubmitting, onClose, onSub
           </label>
         </div>
 
-        <div className="mt-6 flex justify-end gap-2">
-          <button className="rounded-md border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700" type="button" onClick={onClose}>
-            Hủy
-          </button>
-          <button className="rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60" disabled={isSubmitting} type="submit">
-            {isSubmitting ? 'Đang tạo...' : 'Tạo đề tài nghiên cứu'}
-          </button>
-        </div>
-      </form>
-    </div>
+      </Modal>
+    </form>
   );
 }

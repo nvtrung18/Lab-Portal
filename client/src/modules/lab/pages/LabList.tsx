@@ -20,6 +20,14 @@ function statusClassName(status: LabResponse['status']) {
   return 'bg-slate-100 text-slate-600 ring-slate-200';
 }
 
+function formatLabStatus(status: LabResponse['status']) {
+  return status === 'AVAILABLE' || status === 'ACTIVE'
+    ? 'Đang hoạt động'
+    : status === 'MAINTENANCE'
+      ? 'Đang bảo trì'
+      : 'Ngừng hoạt động';
+}
+
 function getApplyState(lab: LabResponse, applicationStatus?: string) {
   const status = applicationStatus ?? lab.applicationStatus;
 
@@ -36,10 +44,10 @@ function getApplyState(lab: LabResponse, applicationStatus?: string) {
   }
 
   if (!isLabActive(lab)) {
-    return { disabled: true, label: 'Chưa mở apply' };
+    return { disabled: true, label: 'Chưa mở ứng tuyển' };
   }
 
-  return { disabled: false, label: 'Apply' };
+  return { disabled: false, label: 'Ứng tuyển' };
 }
 
 export function LabList() {
@@ -104,7 +112,7 @@ export function LabList() {
   if (isError) {
     return (
       <section className="rounded-lg border border-red-200 bg-white p-6 text-sm text-red-700 shadow-sm">
-        Không thể tải danh sách lab.
+        Không thể tải danh sách PTN.
       </section>
     );
   }
@@ -113,19 +121,19 @@ export function LabList() {
     <section>
       <div className="mb-5 flex items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-semibold text-slate-950">Labs</h2>
+          <h2 className="text-xl font-semibold text-slate-950">Phòng thí nghiệm</h2>
           <p className="mt-1 text-sm text-slate-600">
-            Danh sách lab bạn có thể apply. Lab đã tham gia được quản lý trong Other.
+            Danh sách PTN bạn có thể ứng tuyển. PTN đã tham gia được quản lý trong mục PTN của tôi.
           </p>
         </div>
         <span className="shrink-0 text-sm text-slate-500">
-          {labsForApply.length} lab
+          {labsForApply.length} PTN
         </span>
       </div>
 
       {labsForApply.length === 0 ? (
         <div className="rounded-lg border border-dashed border-slate-300 bg-white p-8 text-center text-sm text-slate-600">
-          Hiện không còn lab nào để apply.
+          Hiện không còn PTN nào để ứng tuyển.
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -152,17 +160,17 @@ export function LabList() {
                       statusClassName(lab.status),
                     ].join(' ')}
                   >
-                    {lab.status}
+                    {formatLabStatus(lab.status)}
                   </span>
                 </div>
 
                 <p className="mt-4 line-clamp-3 min-h-12 text-sm text-slate-600">
-                  {lab.description || 'Lab chưa có mô tả.'}
+                  {lab.description || 'PTN chưa có mô tả.'}
                 </p>
 
                 <dl className="mt-4 grid grid-cols-2 gap-3 text-sm">
                   <div>
-                    <dt className="text-slate-500">Manager</dt>
+                    <dt className="text-slate-500">Quản lý</dt>
                     <dd className="font-medium text-slate-950">
                       {lab.manager?.fullName || lab.manager?.email || 'Chưa phân công'}
                     </dd>
@@ -170,7 +178,7 @@ export function LabList() {
                   <div>
                     <dt className="text-slate-500">Sức chứa</dt>
                     <dd className="font-medium text-slate-950">
-                      {lab.capacity ?? 'N/A'}
+                      {lab.capacity ?? 'Chưa cập nhật'}
                     </dd>
                   </div>
                   <div className="col-span-2">

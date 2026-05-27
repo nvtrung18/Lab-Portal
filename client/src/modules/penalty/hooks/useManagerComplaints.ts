@@ -1,10 +1,9 @@
 import axios from 'axios';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+import { queryKeys } from '../../../shared/api';
 import { toast } from '../../../shared/components';
 import { getManagerComplaints, reviewComplaint, type ReviewComplaintPayload } from '../api';
-
-export const MANAGER_COMPLAINTS_QUERY_KEY = ['managerComplaints'] as const;
 
 function getErrorMessage(error: unknown, fallback: string) {
   if (axios.isAxiosError(error)) {
@@ -16,7 +15,7 @@ function getErrorMessage(error: unknown, fallback: string) {
 
 export function useManagerComplaints(labId?: number | null) {
   return useQuery({
-    queryKey: labId ? [...MANAGER_COMPLAINTS_QUERY_KEY, labId] : MANAGER_COMPLAINTS_QUERY_KEY,
+    queryKey: queryKeys.penalties.managerComplaints(labId as number),
     queryFn: () => getManagerComplaints(labId as number),
     enabled: Boolean(labId),
     refetchOnWindowFocus: true,
@@ -32,9 +31,9 @@ export function useReviewComplaint(labId?: number | null) {
     mutationFn: (payload: ReviewComplaintPayload) => reviewComplaint(payload),
     onSuccess: () => {
       if (labId) {
-        queryClient.invalidateQueries({ queryKey: [...MANAGER_COMPLAINTS_QUERY_KEY, labId] });
+        queryClient.invalidateQueries({ queryKey: queryKeys.penalties.managerComplaints(labId) });
       }
-      queryClient.invalidateQueries({ queryKey: ['penalties'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.penalties.mine });
       toast.success('Đã xử lý khiếu nại thành công.');
     },
     onError: (error) => {

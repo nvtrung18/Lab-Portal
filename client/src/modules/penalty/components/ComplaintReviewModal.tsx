@@ -1,5 +1,6 @@
 import { useState } from 'react';
 
+import { Button, Modal } from '../../../shared/components';
 import type { Complaint } from '../types';
 
 interface ComplaintReviewModalProps {
@@ -24,11 +25,26 @@ export function ComplaintReviewModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 px-4 py-6">
-      <div className="w-full max-w-xl rounded-lg bg-white p-6 shadow-xl">
-        <h3 className="text-lg font-semibold text-slate-950">
-          {decision === 'APPROVE' ? 'Chấp nhận khiếu nại' : 'Từ chối khiếu nại'}
-        </h3>
+    <Modal
+      footer={(
+        <>
+          <Button disabled={isSubmitting} onClick={onClose} variant="outline">
+            Hủy
+          </Button>
+          <Button
+            loading={isSubmitting}
+            loadingText="Đang xử lý..."
+            onClick={() => onSubmit(note.trim())}
+            variant={decision === 'REJECT' ? 'danger' : 'primary'}
+          >
+            Xác nhận
+          </Button>
+        </>
+      )}
+      onClose={onClose}
+      size="md"
+      title={decision === 'APPROVE' ? 'Chấp nhận khiếu nại' : 'Từ chối khiếu nại'}
+    >
         <p className="mt-2 text-sm text-slate-600">
           Sinh viên: {complaint.studentName || complaint.studentEmail || `#${complaint.userId}`}
         </p>
@@ -42,25 +58,6 @@ export function ComplaintReviewModal({
           value={note}
           onChange={(event) => setNote(event.target.value)}
         />
-        <div className="mt-6 flex justify-end gap-2">
-          <button
-            className="rounded-md border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700"
-            disabled={isSubmitting}
-            type="button"
-            onClick={onClose}
-          >
-            Hủy
-          </button>
-          <button
-            className="rounded-md bg-slate-900 px-3 py-2 text-sm font-semibold text-white disabled:opacity-60"
-            disabled={isSubmitting}
-            type="button"
-            onClick={() => onSubmit(note.trim())}
-          >
-            {isSubmitting ? 'Đang xử lý...' : 'Xác nhận'}
-          </button>
-        </div>
-      </div>
-    </div>
+    </Modal>
   );
 }

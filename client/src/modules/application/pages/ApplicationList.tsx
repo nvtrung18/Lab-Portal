@@ -18,9 +18,13 @@ function statusClassName(status: ApplicationStatus) {
   return 'bg-amber-50 text-amber-700 ring-amber-200';
 }
 
+function formatStatus(status: ApplicationStatus) {
+  return status === 'APPROVED' ? 'Đã duyệt' : status === 'REJECTED' ? 'Đã từ chối' : 'Chờ duyệt';
+}
+
 function formatDate(value: string) {
   if (!value) {
-    return 'N/A';
+    return 'Chưa cập nhật';
   }
 
   return new Intl.DateTimeFormat('vi-VN', {
@@ -34,7 +38,7 @@ export function ApplicationList() {
   const managedLabId = getManagedLabId(currentUser);
   const managedLabName = getManagedLabName(currentUser);
   const { data: applications = [], isLoading, isError } = useApplications(managedLabId);
-  const reviewMutation = useReviewApplication();
+  const reviewMutation = useReviewApplication(managedLabId);
   const [processingId, setProcessingId] = useState<number | null>(null);
 
   const handleReview = async (
@@ -43,8 +47,8 @@ export function ApplicationList() {
   ) => {
     const confirmed = window.confirm(
       status === 'APPROVED'
-        ? 'Bạn chắc chắn muốn approve đơn này?'
-        : 'Bạn chắc chắn muốn reject đơn này?',
+        ? 'Bạn chắc chắn muốn duyệt đơn này?'
+        : 'Bạn chắc chắn muốn từ chối đơn này?',
     );
 
     if (!confirmed) {
@@ -75,7 +79,7 @@ export function ApplicationList() {
   if (!managedLabId) {
     return (
       <section className="rounded-lg border border-amber-200 bg-white p-6 text-sm text-amber-700 shadow-sm">
-        Tài khoản manager hiện chưa được gán lab quản lý.
+        Tài khoản quản lý hiện chưa được phân công PTN.
       </section>
     );
   }
@@ -83,7 +87,7 @@ export function ApplicationList() {
   if (isError) {
     return (
       <section className="rounded-lg border border-red-200 bg-white p-6 text-sm text-red-700 shadow-sm">
-        Không thể tải danh sách application của lab đang quản lý.
+        Không thể tải danh sách đơn ứng tuyển của PTN đang quản lý.
       </section>
     );
   }
@@ -92,9 +96,9 @@ export function ApplicationList() {
     <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
       <div className="flex items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-semibold text-slate-950">Applications</h2>
+          <h2 className="text-xl font-semibold text-slate-950">Đơn ứng tuyển</h2>
           <p className="mt-1 text-sm text-slate-600">
-            Chỉ hiển thị đơn apply của {managedLabName ?? `lab #${managedLabId}`}.
+            Chỉ hiển thị đơn ứng tuyển của {managedLabName ?? `PTN #${managedLabId}`}.
           </p>
         </div>
         <span className="shrink-0 text-sm text-slate-500">
@@ -104,20 +108,20 @@ export function ApplicationList() {
 
       {applications.length === 0 ? (
         <div className="mt-6 rounded-md border border-dashed border-slate-300 p-8 text-center text-sm text-slate-600">
-          Hiện chưa có application nào.
+          Hiện chưa có đơn ứng tuyển nào.
         </div>
       ) : (
-        <div className="mt-6 overflow-x-auto">
-          <table className="min-w-full divide-y divide-slate-200 text-sm">
+        <div className="mt-6 max-w-full overscroll-x-contain overflow-x-auto">
+          <table className="w-full min-w-[760px] divide-y divide-slate-200 text-sm">
             <thead>
               <tr className="text-left text-xs font-semibold uppercase text-slate-500">
-                <th className="px-3 py-3">Applicant name</th>
+                <th className="px-3 py-3">Ứng viên</th>
                 <th className="px-3 py-3">Email</th>
-                <th className="px-3 py-3">Lab name</th>
+                <th className="px-3 py-3">PTN</th>
                 <th className="px-3 py-3">CV</th>
-                <th className="px-3 py-3">Status</th>
-                <th className="px-3 py-3">Created at</th>
-                <th className="px-3 py-3 text-right">Actions</th>
+                <th className="px-3 py-3">Trạng thái</th>
+                <th className="px-3 py-3">Ngày tạo</th>
+                <th className="px-3 py-3 text-right">Thao tác</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -130,7 +134,7 @@ export function ApplicationList() {
                   <tr key={application.id}>
                     <td className="px-3 py-4 text-slate-700">
                       <div className="font-medium text-slate-950">
-                        {application.applicantName || `User #${application.userId}`}
+                        {application.applicantName || `Người dùng #${application.userId}`}
                       </div>
                     </td>
                     <td className="px-3 py-4 text-slate-700">
@@ -158,7 +162,7 @@ export function ApplicationList() {
                               href={resolveApiAssetUrl(application.cvFileUrl)}
                               rel="noreferrer"
                               target="_blank"
-                              title={application.cvFileName ?? 'CV file'}
+                              title={application.cvFileName ?? 'Tệp CV'}
                             >
                               Tải file CV
                             </a>
@@ -175,7 +179,7 @@ export function ApplicationList() {
                           statusClassName(application.status),
                         ].join(' ')}
                       >
-                        {application.status}
+                        {formatStatus(application.status)}
                       </span>
                     </td>
                     <td className="px-3 py-4 text-slate-700">
@@ -190,7 +194,7 @@ export function ApplicationList() {
                             className="rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-emerald-300"
                             onClick={() => void handleReview(application.id, 'APPROVED')}
                           >
-                            {isProcessing ? 'Đang xử lý...' : 'Approve'}
+                            {isProcessing ? 'Đang xử lý...' : 'Duyệt'}
                           </button>
                           <button
                             type="button"
@@ -198,7 +202,7 @@ export function ApplicationList() {
                             className="rounded-md bg-red-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-red-300"
                             onClick={() => void handleReview(application.id, 'REJECTED')}
                           >
-                            Reject
+                            Từ chối
                           </button>
                         </div>
                       ) : (

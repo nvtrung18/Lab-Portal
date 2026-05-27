@@ -16,8 +16,11 @@ import com.web.labportalbackend.research.entity.MilestoneEntity;
 import com.web.labportalbackend.research.entity.ProjectEntity;
 import com.web.labportalbackend.research.entity.TaskEntity;
 import com.web.labportalbackend.research.enums.TaskStatus;
+import com.web.labportalbackend.research.enums.GroupRole;
 import com.web.labportalbackend.research.repository.GroupMemberRepository;
+import com.web.labportalbackend.research.repository.GroupRepository;
 import com.web.labportalbackend.research.repository.MilestoneRepository;
+import com.web.labportalbackend.research.repository.ReportRepository;
 import com.web.labportalbackend.research.repository.TaskRepository;
 import com.web.labportalbackend.research.service.impl.TaskServiceImpl;
 import org.junit.jupiter.api.Test;
@@ -48,6 +51,12 @@ class TaskServiceImplTest {
 
     @Mock
     private MilestoneRepository milestoneRepository;
+
+    @Mock
+    private ReportRepository reportRepository;
+
+    @Mock
+    private GroupRepository groupRepository;
 
     @Mock
     private GroupMemberRepository groupMemberRepository;
@@ -130,7 +139,7 @@ class TaskServiceImplTest {
     }
 
     @Test
-    void getByMilestone_returnsKanbanTasksForActiveStudentMember() {
+    void getByMilestone_returnsAllKanbanTasksForGroupLeader() {
         User currentStudent = authenticate("student", "STUDENT");
         MilestoneEntity milestone = milestone(10L, 100L);
         TaskEntity first = task(1L, 10L, 7L);
@@ -145,8 +154,8 @@ class TaskServiceImplTest {
         second.setCreatedAt(Instant.parse("2026-01-02T00:00:00Z"));
 
         when(milestoneRepository.findByIdAndDeletedFalseAndActiveTrue(10L)).thenReturn(Optional.of(milestone));
-        when(groupMemberRepository.existsActiveMemberByProjectIdAndUserId(50L, currentStudent.getId()))
-                .thenReturn(true);
+        when(groupMemberRepository.findActiveRoleByProjectIdAndUserId(50L, currentStudent.getId()))
+                .thenReturn(Optional.of(GroupRole.LEADER));
         when(taskRepository.findByMilestoneIdAndDeletedFalseAndActiveTrueOrderByDeadlineAscCreatedAtAsc(10L))
                 .thenReturn(List.of(first, second));
 
@@ -182,12 +191,71 @@ class TaskServiceImplTest {
     }
 
     @Test
+    void getByMilestone_returnsOnlyAssignedTasksForRegularMember() {
+        User currentStudent = authenticate("student", "STUDENT");
+        MilestoneEntity milestone = milestone(10L, 100L);
+        TaskEntity assigned = task(1L, 10L, currentStudent.getId());
+
+        when(milestoneRepository.findByIdAndDeletedFalseAndActiveTrue(10L)).thenReturn(Optional.of(milestone));
+        when(groupMemberRepository.findActiveRoleByProjectIdAndUserId(50L, currentStudent.getId()))
+                .thenReturn(Optional.of(GroupRole.MEMBER));
+        when(taskRepository.findByMilestoneIdAndAssigneeIdAndDeletedFalseAndActiveTrueOrderByDeadlineAscCreatedAtAsc(
+                10L,
+                currentStudent.getId()
+        )).thenReturn(List.of(assigned));
+
+        List<TaskResponse> responses = taskService.getByMilestone(10L);
+
+        assertEquals(1, responses.size());
+        assertEquals(currentStudent.getId(), responses.get(0).getAssignedToStudentId());
+        verify(taskRepository, never())
+                .findByMilestoneIdAndDeletedFalseAndActiveTrueOrderByDeadlineAscCreatedAtAsc(any());
+    }
+
+    @Test
+    void getByGroup_returnsAllProjectTasksForGroupLeader() {
+        User leader = authenticate("leader", "STUDENT");
+        GroupEntity group = group(100L, 50L);
+
+        when(groupRepository.findByIdAndDeletedFalseAndActiveTrue(100L)).thenReturn(Optional.of(group));
+        when(groupMemberRepository.findActiveRoleByProjectIdAndUserId(50L, leader.getId()))
+                .thenReturn(Optional.of(GroupRole.LEADER));
+        when(taskRepository.findBoardTasksByProjectId(50L)).thenReturn(List.of(task(1L, 10L, 7L)));
+
+        List<TaskResponse> responses = taskService.getByGroup(100L);
+
+        assertEquals(1, responses.size());
+        assertEquals(1L, responses.get(0).getId());
+        verify(taskRepository).findBoardTasksByProjectId(50L);
+        verify(taskRepository, never()).findAssignedBoardTasksByProjectId(any(), any());
+    }
+
+    @Test
+    void getByGroup_returnsOnlyAssignedProjectTasksForMember() {
+        User member = authenticate("student", "STUDENT");
+        GroupEntity group = group(100L, 50L);
+
+        when(groupRepository.findByIdAndDeletedFalseAndActiveTrue(100L)).thenReturn(Optional.of(group));
+        when(groupMemberRepository.findActiveRoleByProjectIdAndUserId(50L, member.getId()))
+                .thenReturn(Optional.of(GroupRole.MEMBER));
+        when(taskRepository.findAssignedBoardTasksByProjectId(50L, member.getId()))
+                .thenReturn(List.of(task(1L, 10L, member.getId())));
+
+        List<TaskResponse> responses = taskService.getByGroup(100L);
+
+        assertEquals(1, responses.size());
+        assertEquals(member.getId(), responses.get(0).getAssignedToStudentId());
+        verify(taskRepository).findAssignedBoardTasksByProjectId(50L, member.getId());
+        verify(taskRepository, never()).findBoardTasksByProjectId(any());
+    }
+
+    @Test
     void getByMilestone_deniesStudentOutsideProjectGroup() {
         User currentStudent = authenticate("student", "STUDENT");
         when(milestoneRepository.findByIdAndDeletedFalseAndActiveTrue(10L))
                 .thenReturn(Optional.of(milestone(10L, 100L)));
-        when(groupMemberRepository.existsActiveMemberByProjectIdAndUserId(50L, currentStudent.getId()))
-                .thenReturn(false);
+        when(groupMemberRepository.findActiveRoleByProjectIdAndUserId(50L, currentStudent.getId()))
+                .thenReturn(Optional.empty());
 
         assertThrows(AccessDeniedException.class, () -> taskService.getByMilestone(10L));
         verify(taskRepository, never())
@@ -221,8 +289,8 @@ class TaskServiceImplTest {
 
         when(taskRepository.findByIdForUpdate(20L)).thenReturn(Optional.of(task));
         when(milestoneRepository.findByIdAndDeletedFalseAndActiveTrue(10L)).thenReturn(Optional.of(milestone));
-        when(groupMemberRepository.existsActiveMemberByProjectIdAndUserId(50L, currentStudent.getId()))
-                .thenReturn(true);
+        when(groupMemberRepository.findActiveRoleByProjectIdAndUserId(50L, currentStudent.getId()))
+                .thenReturn(Optional.of(GroupRole.MEMBER));
         when(taskRepository.save(task)).thenReturn(task);
 
         TaskResponse response = taskService.updateStatus(20L, request);
@@ -241,8 +309,8 @@ class TaskServiceImplTest {
         when(taskRepository.findByIdForUpdate(20L)).thenReturn(Optional.of(task));
         when(milestoneRepository.findByIdAndDeletedFalseAndActiveTrue(10L))
                 .thenReturn(Optional.of(milestone(10L, 100L)));
-        when(groupMemberRepository.existsActiveMemberByProjectIdAndUserId(50L, currentStudent.getId()))
-                .thenReturn(true);
+        when(groupMemberRepository.findActiveRoleByProjectIdAndUserId(50L, currentStudent.getId()))
+                .thenReturn(Optional.of(GroupRole.MEMBER));
 
         assertThrows(IllegalArgumentException.class,
                 () -> taskService.updateStatus(20L, statusRequest(TaskStatus.DONE)));
@@ -259,8 +327,8 @@ class TaskServiceImplTest {
         when(taskRepository.findByIdForUpdate(20L)).thenReturn(Optional.of(task));
         when(milestoneRepository.findByIdAndDeletedFalseAndActiveTrue(10L))
                 .thenReturn(Optional.of(milestone(10L, 100L)));
-        when(groupMemberRepository.existsActiveMemberByProjectIdAndUserId(50L, currentStudent.getId()))
-                .thenReturn(true);
+        when(groupMemberRepository.findActiveRoleByProjectIdAndUserId(50L, currentStudent.getId()))
+                .thenReturn(Optional.of(GroupRole.MEMBER));
         when(taskRepository.save(task)).thenReturn(task);
 
         TaskResponse response = taskService.updateStatus(20L, statusRequest(TaskStatus.DOING));
@@ -280,8 +348,8 @@ class TaskServiceImplTest {
         when(taskRepository.findByIdForUpdate(20L)).thenReturn(Optional.of(task));
         when(milestoneRepository.findByIdAndDeletedFalseAndActiveTrue(10L))
                 .thenReturn(Optional.of(milestone(10L, 100L)));
-        when(groupMemberRepository.existsActiveMemberByProjectIdAndUserId(50L, currentStudent.getId()))
-                .thenReturn(true);
+        when(groupMemberRepository.findActiveRoleByProjectIdAndUserId(50L, currentStudent.getId()))
+                .thenReturn(Optional.of(GroupRole.MEMBER));
         when(taskRepository.save(task)).thenReturn(task);
 
         TaskResponse response = taskService.updateStatus(20L, statusRequest(TaskStatus.WAITING_REVIEW));
@@ -299,8 +367,8 @@ class TaskServiceImplTest {
         when(taskRepository.findByIdForUpdate(20L)).thenReturn(Optional.of(task));
         when(milestoneRepository.findByIdAndDeletedFalseAndActiveTrue(10L))
                 .thenReturn(Optional.of(milestone(10L, 100L)));
-        when(groupMemberRepository.existsActiveMemberByProjectIdAndUserId(50L, currentStudent.getId()))
-                .thenReturn(true);
+        when(groupMemberRepository.findActiveRoleByProjectIdAndUserId(50L, currentStudent.getId()))
+                .thenReturn(Optional.of(GroupRole.MEMBER));
 
         assertThrows(IllegalArgumentException.class,
                 () -> taskService.updateStatus(20L, statusRequest(TaskStatus.CANCELLED)));
@@ -315,8 +383,8 @@ class TaskServiceImplTest {
         when(taskRepository.findByIdForUpdate(20L)).thenReturn(Optional.of(task));
         when(milestoneRepository.findByIdAndDeletedFalseAndActiveTrue(10L))
                 .thenReturn(Optional.of(milestone(10L, 100L)));
-        when(groupMemberRepository.existsActiveMemberByProjectIdAndUserId(50L, currentStudent.getId()))
-                .thenReturn(true);
+        when(groupMemberRepository.findActiveRoleByProjectIdAndUserId(50L, currentStudent.getId()))
+                .thenReturn(Optional.of(GroupRole.MEMBER));
 
         assertThrows(AccessDeniedException.class,
                 () -> taskService.updateStatus(20L, statusRequest(TaskStatus.DOING)));
@@ -331,12 +399,30 @@ class TaskServiceImplTest {
         when(taskRepository.findByIdForUpdate(20L)).thenReturn(Optional.of(task));
         when(milestoneRepository.findByIdAndDeletedFalseAndActiveTrue(10L))
                 .thenReturn(Optional.of(milestone(10L, 100L)));
-        when(groupMemberRepository.existsActiveMemberByProjectIdAndUserId(50L, currentStudent.getId()))
-                .thenReturn(false);
+        when(groupMemberRepository.findActiveRoleByProjectIdAndUserId(50L, currentStudent.getId()))
+                .thenReturn(Optional.empty());
 
         assertThrows(AccessDeniedException.class,
                 () -> taskService.updateStatus(20L, statusRequest(TaskStatus.DOING)));
         verify(taskRepository, never()).save(any());
+    }
+
+    @Test
+    void updateStatus_groupLeaderMovesTaskAssignedToAnotherMember() {
+        User leader = authenticate("leader", "STUDENT");
+        TaskEntity task = task(20L, 10L, 7L);
+        MilestoneEntity milestone = milestone(10L, 100L);
+
+        when(taskRepository.findByIdForUpdate(20L)).thenReturn(Optional.of(task));
+        when(milestoneRepository.findByIdAndDeletedFalseAndActiveTrue(10L)).thenReturn(Optional.of(milestone));
+        when(groupMemberRepository.findActiveRoleByProjectIdAndUserId(50L, leader.getId()))
+                .thenReturn(Optional.of(GroupRole.LEADER));
+        when(taskRepository.save(task)).thenReturn(task);
+
+        TaskResponse response = taskService.updateStatus(20L, statusRequest(TaskStatus.DOING));
+
+        assertEquals(TaskStatus.DOING, response.getStatus());
+        verify(taskRepository).save(task);
     }
 
     @Test
@@ -352,6 +438,7 @@ class TaskServiceImplTest {
         when(taskRepository.findByIdForUpdate(20L)).thenReturn(Optional.of(task));
         when(milestoneRepository.findByIdAndDeletedFalseAndActiveTrue(10L)).thenReturn(Optional.of(milestone));
         when(laboratoryRepository.findFirstByManagerIdAndDeletedFalse(manager.getId())).thenReturn(Optional.of(lab));
+        when(reportRepository.existsLatestApprovedByTaskId(20L)).thenReturn(true);
         when(taskRepository.save(task)).thenReturn(task);
 
         TaskResponse response = taskService.updateStatus(20L, statusRequest(TaskStatus.DONE));
@@ -359,6 +446,28 @@ class TaskServiceImplTest {
         assertEquals(TaskStatus.DONE, response.getStatus());
         assertEquals(100, response.getProgressPercent());
         verify(taskRepository).save(task);
+    }
+
+    @Test
+    void updateStatus_managerCannotCompleteTaskWithoutApprovedReport() {
+        User manager = authenticate("manager", "LAB_MANAGER");
+        Laboratory lab = lab(1L);
+        MilestoneEntity milestone = milestone(10L, 100L);
+        milestone.getProject().setLab(lab);
+        TaskEntity task = task(20L, 10L, 7L);
+        task.setStatus(TaskStatus.WAITING_REVIEW);
+
+        when(taskRepository.findByIdForUpdate(20L)).thenReturn(Optional.of(task));
+        when(milestoneRepository.findByIdAndDeletedFalseAndActiveTrue(10L)).thenReturn(Optional.of(milestone));
+        when(laboratoryRepository.findFirstByManagerIdAndDeletedFalse(manager.getId())).thenReturn(Optional.of(lab));
+
+        IllegalArgumentException error = assertThrows(
+                IllegalArgumentException.class,
+                () -> taskService.updateStatus(20L, statusRequest(TaskStatus.DONE))
+        );
+
+        assertEquals("Cần có báo cáo được duyệt trước khi hoàn thành nhiệm vụ/mốc nghiên cứu.", error.getMessage());
+        verify(taskRepository, never()).save(any());
     }
 
     @Test
@@ -444,6 +553,16 @@ class TaskServiceImplTest {
         milestone.setId(id);
         milestone.setProject(project);
         return milestone;
+    }
+
+    private GroupEntity group(Long groupId, Long projectId) {
+        ProjectEntity project = new ProjectEntity();
+        project.setId(projectId);
+
+        GroupEntity group = new GroupEntity();
+        group.setId(groupId);
+        group.setProject(project);
+        return group;
     }
 
     private User authenticate(String username, String roleName) {

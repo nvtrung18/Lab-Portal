@@ -24,7 +24,7 @@ export function LabOverviewPage() {
   if (!managedLabId) {
     return (
       <section className="rounded-lg border border-amber-200 bg-white p-6 text-sm text-amber-700 shadow-sm">
-        Tài khoản manager hiện chưa được gán lab quản lý.
+        Tài khoản quản lý hiện chưa được phân công PTN.
       </section>
     );
   }
@@ -32,20 +32,27 @@ export function LabOverviewPage() {
   if (isError || !managedLab) {
     return (
       <section className="rounded-lg border border-red-200 bg-white p-6 text-sm text-red-700 shadow-sm">
-        Không thể tải thông tin lab đang quản lý.
+        Không thể tải thông tin PTN đang quản lý.
       </section>
     );
   }
+
+  const displayedStatus =
+    managedLab.status === 'AVAILABLE' || managedLab.status === 'ACTIVE'
+      ? 'Đang hoạt động'
+      : managedLab.status === 'MAINTENANCE'
+        ? 'Đang bảo trì'
+        : 'Ngừng hoạt động';
 
   return (
     <section className="space-y-6">
       <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
         <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-          Lab Manager
+          Quản lý PTN
         </p>
-        <h2 className="mt-1 text-xl font-semibold text-slate-950">Lab Overview</h2>
+        <h2 className="mt-1 text-xl font-semibold text-slate-950">Tổng quan PTN</h2>
         <p className="mt-2 text-sm text-slate-600">
-          Chỉ hiển thị thông tin lab mà manager hiện tại phụ trách.
+          Chỉ hiển thị thông tin PTN mà quản lý hiện tại phụ trách.
         </p>
       </div>
 
@@ -56,17 +63,17 @@ export function LabOverviewPage() {
               {managedLab.labName}
             </h3>
             <p className="mt-1 text-sm text-slate-600">
-              {managedLab.description || 'Lab chưa có mô tả.'}
+              {managedLab.description || 'PTN chưa có mô tả.'}
             </p>
           </div>
           <span className="inline-flex w-fit rounded-full bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-200">
-            {managedLab.status}
+            {displayedStatus}
           </span>
         </div>
 
         <dl className="mt-6 grid gap-5 md:grid-cols-2">
           <div>
-            <dt className="text-sm font-medium text-slate-500">Manager</dt>
+            <dt className="text-sm font-medium text-slate-500">Quản lý</dt>
             <dd className="mt-1 text-sm text-slate-950">
               {managedLab.manager?.fullName || managedLab.manager?.email || 'Chưa phân công'}
             </dd>
@@ -86,7 +93,7 @@ export function LabOverviewPage() {
           <div>
             <dt className="text-sm font-medium text-slate-500">Sức chứa</dt>
             <dd className="mt-1 text-sm text-slate-950">
-              {managedLab.capacity ?? 'N/A'}
+              {managedLab.capacity ?? 'Chưa cập nhật'}
             </dd>
           </div>
         </dl>

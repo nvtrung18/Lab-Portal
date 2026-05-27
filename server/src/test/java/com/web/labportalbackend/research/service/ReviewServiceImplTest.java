@@ -1,8 +1,14 @@
 package com.web.labportalbackend.research.service;
 
+import com.web.labportalbackend.auth.entity.Role;
+import com.web.labportalbackend.auth.entity.User;
+import com.web.labportalbackend.auth.repository.UserRepository;
 import com.web.labportalbackend.research.dto.request.CreateCommentRequest;
 import com.web.labportalbackend.research.dto.response.CommentResponse;
+import com.web.labportalbackend.research.dto.response.ReportResponse;
 import com.web.labportalbackend.research.entity.CommentEntity;
+import com.web.labportalbackend.research.entity.ReportEntity;
+import com.web.labportalbackend.research.enums.GroupRole;
 import com.web.labportalbackend.research.repository.CommentRepository;
 import com.web.labportalbackend.research.repository.GroupMemberRepository;
 import com.web.labportalbackend.research.repository.ReportRepository;
@@ -37,15 +43,26 @@ class ReviewServiceImplTest {
     @Mock
     private GroupMemberRepository groupMemberRepository;
 
+    @Mock
+    private ReportService reportService;
+
+    @Mock
+    private UserRepository userRepository;
+
     @InjectMocks
     private ReviewServiceImpl reviewService;
 
     @Test
-    void addComment_createsCommentWhenAuthorIsProjectMember() {
+    void addComment_createsCommentWhenAuthorIsGroupLeader() {
         CreateCommentRequest request = request("Looks good, please add the appendix.");
+        ReportEntity report = report(10L, 20L);
 
-        when(reportRepository.existsById(10L)).thenReturn(true);
-        when(groupMemberRepository.existsByReportIdAndUserId(10L, 7L)).thenReturn(true);
+        when(reportRepository.findById(10L)).thenReturn(java.util.Optional.of(report));
+        when(userRepository.findById(7L)).thenReturn(java.util.Optional.of(student(7L, "STUDENT")));
+        when(groupMemberRepository.existsLeaderByReportIdAndUserId(10L, 7L)).thenReturn(true);
+        when(groupMemberRepository.findActiveRoleByReportIdAndUserId(10L, 7L))
+                .thenReturn(java.util.Optional.of(GroupRole.LEADER));
+        when(reportService.getReportsByTask(20L)).thenReturn(List.of(visibleReport(10L)));
         when(commentRepository.save(any(CommentEntity.class))).thenAnswer(invocation -> {
             CommentEntity comment = invocation.getArgument(0);
             comment.setId(100L);
@@ -56,7 +73,12 @@ class ReviewServiceImplTest {
         CommentResponse response = reviewService.addComment(10L, 7L, request);
 
         assertEquals(100L, response.getId());
+        assertEquals(10L, response.getReportId());
         assertEquals(7L, response.getAuthorId());
+        assertEquals("User Seven", response.getAuthorName());
+        assertEquals("user7@labportal.com", response.getAuthorEmail());
+        assertEquals("STUDENT", response.getAuthorRole());
+        assertEquals(GroupRole.LEADER, response.getGroupRole());
         assertEquals("Looks good, please add the appendix.", response.getContent());
         assertEquals(Instant.parse("2026-05-14T01:00:00Z"), response.getCreatedAt());
 
@@ -65,14 +87,33 @@ class ReviewServiceImplTest {
         assertEquals(10L, captor.getValue().getReportId());
         assertEquals(7L, captor.getValue().getAuthorId());
         assertEquals("Looks good, please add the appendix.", captor.getValue().getContent());
+        verify(reportService).getReportsByTask(20L);
     }
 
     @Test
-    void addComment_rejectsWhenAuthorIsNotProjectMember() {
+    void addComment_allowsReportSubmitterToReply() {
+        CreateCommentRequest request = request("Tôi đã bổ sung nội dung.");
+        ReportEntity report = report(10L, 20L);
+        report.setSubmittedById(7L);
+
+        when(reportRepository.findById(10L)).thenReturn(java.util.Optional.of(report));
+        when(userRepository.findById(7L)).thenReturn(java.util.Optional.of(student(7L, "STUDENT")));
+        when(reportService.getReportsByTask(20L)).thenReturn(List.of(visibleReport(10L)));
+        when(commentRepository.save(any(CommentEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        reviewService.addComment(10L, 7L, request);
+
+        verify(reportService).getReportsByTask(20L);
+        verify(commentRepository).save(any(CommentEntity.class));
+    }
+
+    @Test
+    void addComment_rejectsStudentWhoIsNotSubmitterOrLeader() {
         CreateCommentRequest request = request("I should not be able to comment.");
 
-        when(reportRepository.existsById(10L)).thenReturn(true);
-        when(groupMemberRepository.existsByReportIdAndUserId(10L, 7L)).thenReturn(false);
+        when(reportRepository.findById(10L)).thenReturn(java.util.Optional.of(report(10L, 20L)));
+        when(userRepository.findById(7L)).thenReturn(java.util.Optional.of(student(7L, "STUDENT")));
+        when(groupMemberRepository.existsLeaderByReportIdAndUserId(10L, 7L)).thenReturn(false);
 
         assertThrows(AccessDeniedException.class, () -> reviewService.addComment(10L, 7L, request));
         verify(commentRepository, never()).save(any(CommentEntity.class));
@@ -82,16 +123,55 @@ class ReviewServiceImplTest {
     void getByReport_returnsCommentsInCreatedAtAscendingOrder() {
         CommentEntity older = comment(1L, 10L, 7L, "First", "2026-05-14T01:00:00Z");
         CommentEntity newer = comment(2L, 10L, 8L, "Second", "2026-05-14T02:00:00Z");
+        ReportEntity report = report(10L, 20L);
 
-        when(reportRepository.existsById(10L)).thenReturn(true);
+        when(reportRepository.findById(10L)).thenReturn(java.util.Optional.of(report));
         when(commentRepository.findByReportIdOrderByCreatedAtAsc(10L)).thenReturn(List.of(older, newer));
+        when(reportService.getReportsByTask(20L)).thenReturn(List.of(visibleReport(10L)));
+        when(userRepository.findById(7L)).thenReturn(java.util.Optional.of(student(7L, "STUDENT")));
+        when(userRepository.findById(8L)).thenReturn(java.util.Optional.of(student(8L, "STUDENT")));
+        when(groupMemberRepository.findActiveRoleByReportIdAndUserId(10L, 7L))
+                .thenReturn(java.util.Optional.of(GroupRole.LEADER));
+        when(groupMemberRepository.findActiveRoleByReportIdAndUserId(10L, 8L))
+                .thenReturn(java.util.Optional.of(GroupRole.MEMBER));
 
         List<CommentResponse> responses = reviewService.getByReport(10L);
 
         assertEquals(2, responses.size());
         assertEquals(Instant.parse("2026-05-14T01:00:00Z"), responses.get(0).getCreatedAt());
         assertEquals(Instant.parse("2026-05-14T02:00:00Z"), responses.get(1).getCreatedAt());
+        assertEquals(GroupRole.LEADER, responses.get(0).getGroupRole());
+        assertEquals(GroupRole.MEMBER, responses.get(1).getGroupRole());
+        verify(reportService).getReportsByTask(20L);
         verify(commentRepository).findByReportIdOrderByCreatedAtAsc(10L);
+    }
+
+    @Test
+    void addComment_allowsManagerAfterReportScopeCheck() {
+        CreateCommentRequest request = request("Đề nghị bổ sung số liệu.");
+        ReportEntity report = report(10L, null);
+        when(reportRepository.findById(10L)).thenReturn(java.util.Optional.of(report));
+        when(userRepository.findById(2L)).thenReturn(java.util.Optional.of(student(2L, "LAB_MANAGER")));
+        when(reportService.getReportsByMilestone(5L)).thenReturn(List.of(visibleReport(10L)));
+        when(commentRepository.save(any(CommentEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        CommentResponse response = reviewService.addComment(10L, 2L, request);
+
+        assertEquals("LAB_MANAGER", response.getAuthorRole());
+        assertEquals(null, response.getGroupRole());
+        verify(reportService).getReportsByMilestone(5L);
+        verify(commentRepository).save(any(CommentEntity.class));
+    }
+
+    @Test
+    void getByReport_rejectsReportNotIncludedInScopedReportList() {
+        ReportEntity report = report(10L, null);
+
+        when(reportRepository.findById(10L)).thenReturn(java.util.Optional.of(report));
+        when(reportService.getReportsByMilestone(5L)).thenReturn(List.of(visibleReport(11L)));
+
+        assertThrows(AccessDeniedException.class, () -> reviewService.getByReport(10L));
+        verify(commentRepository, never()).findByReportIdOrderByCreatedAtAsc(10L);
     }
 
     private CreateCommentRequest request(String content) {
@@ -109,5 +189,38 @@ class ReviewServiceImplTest {
         comment.setId(id);
         comment.setCreatedAt(Instant.parse(createdAt));
         return comment;
+    }
+
+    private ReportEntity report(Long id, Long taskId) {
+        ReportEntity report = ReportEntity.builder()
+                .milestoneId(5L)
+                .taskId(taskId)
+                .submittedById(3L)
+                .version(1)
+                .title("Report")
+                .contentDone("Completed work")
+                .result("Result")
+                .difficulty("None")
+                .nextPlan("Continue")
+                .selfAssessment("Good")
+                .fileUrl("report.pdf")
+                .fileName("report.pdf")
+                .submissionScope("M:5:T:" + (taskId == null ? "_" : taskId) + ":U:3")
+                .build();
+        report.setId(id);
+        return report;
+    }
+
+    private ReportResponse visibleReport(Long id) {
+        return ReportResponse.builder().id(id).build();
+    }
+
+    private User student(Long id, String role) {
+        User user = new User();
+        user.setId(id);
+        user.setFullName("User " + (id == 2L ? "Manager" : id == 7L ? "Seven" : "Eight"));
+        user.setEmail("user" + id + "@labportal.com");
+        user.addRole(new Role(role, role));
+        return user;
     }
 }

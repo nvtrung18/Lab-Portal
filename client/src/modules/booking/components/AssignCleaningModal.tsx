@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 
+import { Button, Modal } from '../../../shared/components';
 import type { CleaningTask } from '../api';
 import { useAssignCleaningTask, useEligibleCleaners } from '../hooks';
 import { formatDateTime } from '../../penalty/utils';
@@ -35,26 +36,40 @@ export function AssignCleaningModal({ labId, task, isOpen, onClose }: AssignClea
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 px-4 py-6">
-      <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg bg-white p-6 shadow-xl">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h3 className="text-lg font-semibold text-slate-950">Phân công vệ sinh</h3>
-            <p className="mt-1 text-sm text-slate-600">{task.labName ?? 'PTN'}</p>
-            <p className="mt-1 text-sm text-slate-600">
+    <Modal
+      footer={(
+        <>
+          <Button disabled={assignCleaning.isPending} onClick={onClose} variant="outline">
+            Hủy
+          </Button>
+          <Button
+            disabled={!selectedIds.length}
+            loading={assignCleaning.isPending}
+            loadingText="Đang phân công..."
+            onClick={() => {
+              assignCleaning.mutate(
+                { slotId: task.slotId, assigneeIds: selectedIds },
+                { onSuccess: onClose },
+              );
+            }}
+          >
+            Xác nhận phân công
+          </Button>
+        </>
+      )}
+      onClose={onClose}
+      size="lg"
+      subtitle={(
+        <>
+          <p>{task.labName ?? 'PTN'}</p>
+          <p className="mt-1">
               {formatDateTime(task.startTime)} - {formatDateTime(task.endTime)}
             </p>
-          </div>
-          <button
-            className="rounded-md border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700"
-            type="button"
-            onClick={onClose}
-          >
-            Đóng
-          </button>
-        </div>
-
-        <div className="mt-5 space-y-3">
+        </>
+      )}
+      title="Phân công vệ sinh"
+    >
+        <div className="space-y-3">
           {isLoading ? (
             <div className="h-20 animate-pulse rounded-md bg-slate-100" />
           ) : !cleaners.length ? (
@@ -79,7 +94,7 @@ export function AssignCleaningModal({ labId, task, isOpen, onClose }: AssignClea
                   </span>
                   <span className="block text-sm text-slate-600">{cleaner.email}</span>
                   <span className="mt-1 block text-xs font-medium text-slate-500">
-                    Booking: {cleaner.bookingStatus}
+                    Đăng ký: {cleaner.bookingStatus}
                     {cleaner.checkedIn ? ' - Đã check-in' : ''}
                   </span>
                 </span>
@@ -88,30 +103,6 @@ export function AssignCleaningModal({ labId, task, isOpen, onClose }: AssignClea
           )}
         </div>
 
-        <div className="mt-6 flex justify-end gap-2">
-          <button
-            className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700"
-            disabled={assignCleaning.isPending}
-            type="button"
-            onClick={onClose}
-          >
-            Hủy
-          </button>
-          <button
-            className="rounded-md bg-slate-900 px-3 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
-            disabled={!selectedIds.length || assignCleaning.isPending}
-            type="button"
-            onClick={() => {
-              assignCleaning.mutate(
-                { slotId: task.slotId, assigneeIds: selectedIds },
-                { onSuccess: onClose },
-              );
-            }}
-          >
-            {assignCleaning.isPending ? 'Đang phân công...' : 'Xác nhận phân công'}
-          </button>
-        </div>
-      </div>
-    </div>
+    </Modal>
   );
 }

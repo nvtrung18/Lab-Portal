@@ -244,6 +244,7 @@ class ProjectStatsIntegrationTest {
                 .build());
 
         ProjectEntity project = ProjectEntity.builder()
+                .lab(lab)
                 .group(group)
                 .title("Stats " + name + " Project " + sequence)
                 .description("Project stats integration test")
@@ -285,9 +286,18 @@ class ProjectStatsIntegrationTest {
 
     private void createReport(TaskEntity task, int version) {
         ReportEntity report = ReportEntity.builder()
+                .milestoneId(task.getMilestoneId())
                 .taskId(task.getId())
                 .version(version)
+                .title("Legacy report")
+                .contentDone("Completed work")
+                .result("Result")
+                .difficulty("None")
+                .nextPlan("Continue")
+                .selfAssessment("Good")
                 .fileUrl("https://files.local/task-" + task.getId() + "-v" + version + ".pdf")
+                .fileName("report.pdf")
+                .submissionScope("legacy-task-" + task.getId())
                 .build();
         reportRepository.saveAndFlush(report);
     }

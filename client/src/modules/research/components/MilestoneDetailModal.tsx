@@ -1,6 +1,8 @@
+import { ErrorState, LoadingState, Modal } from '../../../shared/components';
 import { useMilestone } from '../hooks';
 import type { TaskBoardRole } from '../taskBoardHelpers';
 import { formatDate, formatMilestoneStatus, getStatusClass, isMilestoneOverdue } from '../utils';
+import { ManagerReportsList } from './ManagerReportsList';
 import { TaskBoard } from './TaskBoard';
 
 interface MilestoneDetailModalProps {
@@ -9,6 +11,7 @@ interface MilestoneDetailModalProps {
   taskBoardReadonly?: boolean;
   taskBoardRole?: TaskBoardRole;
   taskBoardCurrentUserId?: number | null;
+  groupId?: number | null;
   onClose: () => void;
 }
 
@@ -18,6 +21,7 @@ export function MilestoneDetailModal({
   taskBoardReadonly = true,
   taskBoardRole,
   taskBoardCurrentUserId,
+  groupId,
   onClose,
 }: MilestoneDetailModalProps) {
   const { data: milestone, isError, isLoading, refetch } = useMilestone(milestoneId);
@@ -31,26 +35,15 @@ export function MilestoneDetailModal({
     : milestone?.status;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 px-4 py-6">
-      <section className="max-h-[90vh] w-full max-w-7xl overflow-y-auto rounded-lg bg-white p-6 shadow-xl">
-        <div className="flex items-start justify-between gap-4">
-          <h3 className="text-lg font-semibold text-slate-950">Chi tiết mốc nghiên cứu</h3>
-          <button className="text-sm font-semibold text-slate-500 hover:text-slate-900" type="button" onClick={onClose}>
-            Đóng
-          </button>
-        </div>
-
+    <Modal onClose={onClose} size="full" title="Chi tiết mốc nghiên cứu">
         {isLoading ? (
-          <p className="mt-5 text-sm text-slate-600">Đang tải chi tiết mốc nghiên cứu...</p>
+          <LoadingState>Đang tải chi tiết mốc nghiên cứu...</LoadingState>
         ) : isError || !milestone ? (
-          <div className="mt-5 rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+          <ErrorState onRetry={() => refetch()}>
             Không thể tải chi tiết mốc nghiên cứu.
-            <button className="ml-3 font-semibold underline" type="button" onClick={() => refetch()}>
-              Tải lại
-            </button>
-          </div>
+          </ErrorState>
         ) : (
-          <div className="mt-5 space-y-6">
+          <div className="space-y-6">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div>
                 <h4 className="text-base font-semibold text-slate-950">{milestone.title}</h4>
@@ -114,17 +107,24 @@ export function MilestoneDetailModal({
             </dl>
 
             {showTaskBoard ? (
-              <TaskBoard
-                milestoneId={milestone.id}
-                readonly={taskBoardReadonly}
-                role={taskBoardRole}
-                currentUserId={taskBoardCurrentUserId}
-              />
+              <>
+                <TaskBoard
+                  groupId={groupId}
+                  milestoneId={milestone.id}
+                  projectId={milestone.projectId}
+                  readonly={taskBoardReadonly}
+                  role={taskBoardRole}
+                  currentUserId={taskBoardCurrentUserId}
+                />
+              </>
+            ) : null}
+
+            {taskBoardRole === 'LAB_MANAGER' ? (
+              <ManagerReportsList milestoneId={milestone.id} />
             ) : null}
           </div>
         )}
-      </section>
-    </div>
+    </Modal>
   );
 }
 

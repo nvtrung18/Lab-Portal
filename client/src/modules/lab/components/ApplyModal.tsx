@@ -5,10 +5,12 @@ import { useEffect, useState, type ChangeEvent } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
+import { Button, Modal } from '../../../shared/components';
+import { queryKeys } from '../../../shared/api';
 import type { Response } from '../../../shared/types';
 import { getLabById, type LabResponse } from '../api';
 import { useApplyLab } from '../hooks';
-import { LAB_QUERY_KEY, LABS_QUERY_KEY } from '../hooks/useLabs';
+import { LABS_QUERY_KEY } from '../hooks/useLabs';
 import { isLabActive } from '../utils/labStatus';
 
 const applySchema = z.object({
@@ -28,7 +30,7 @@ interface ApplyModalProps {
   onClose: () => void;
 }
 
-const INACTIVE_LAB_MESSAGE = 'Lab này đã ngừng hoạt động, không thể nộp đơn.';
+const INACTIVE_LAB_MESSAGE = 'PTN này đã ngừng hoạt động, không thể nộp đơn.';
 const REQUIRED_CV_MESSAGE = 'Vui lòng nhập CV URL hoặc tải lên file CV.';
 const MAX_CV_FILE_SIZE = 10 * 1024 * 1024;
 const ALLOWED_CV_EXTENSIONS = ['pdf', 'doc', 'docx'];
@@ -58,11 +60,11 @@ function validateCvFile(file: File) {
   const extension = file.name.split('.').pop()?.toLowerCase() ?? '';
 
   if (!ALLOWED_CV_EXTENSIONS.includes(extension)) {
-    return 'CV file chỉ hỗ trợ định dạng PDF, DOC hoặc DOCX.';
+    return 'Tệp CV chỉ hỗ trợ định dạng PDF, DOC hoặc DOCX.';
   }
 
   if (file.size > MAX_CV_FILE_SIZE) {
-    return 'CV file không được vượt quá 10MB.';
+    return 'Tệp CV không được vượt quá 10MB.';
   }
 
   return null;
@@ -145,7 +147,7 @@ export function ApplyModal({ labId, labName, labStatus, onClose }: ApplyModalPro
       }
 
       const latestLab = await queryClient.fetchQuery({
-        queryKey: [...LAB_QUERY_KEY, labId],
+        queryKey: queryKeys.labs.detail(labId),
         queryFn: () => getLabById(labId),
         staleTime: 0,
       });
@@ -171,26 +173,29 @@ export function ApplyModal({ labId, labName, labStatus, onClose }: ApplyModalPro
   };
 
   return (
-    <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-950/40 px-4">
-      <div className="w-full max-w-lg rounded-lg bg-white p-6 shadow-xl">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h3 className="text-lg font-semibold text-slate-950">Apply vào lab</h3>
-            <p className="mt-1 text-sm text-slate-600">
-              {labName ? `Nộp CV ứng tuyển vào ${labName}` : 'Nộp CV ứng tuyển vào lab'}
-            </p>
-          </div>
-          <button
-            type="button"
-            className="rounded-md px-2 py-1 text-sm text-slate-500 hover:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-300"
-            disabled={applyMutation.isPending}
-            onClick={onClose}
-          >
-            Đóng
-          </button>
-        </div>
-
-        <form className="mt-6 space-y-5" onSubmit={handleSubmit(onSubmit)}>
+    <form onSubmit={handleSubmit(onSubmit)}>
+      <Modal
+        footer={(
+          <>
+            <Button disabled={applyMutation.isPending} onClick={onClose} variant="outline">
+              Hủy
+            </Button>
+            <Button
+              disabled={!hasCvPayload || Boolean(fileError)}
+              loading={applyMutation.isPending}
+              loadingText="Đang nộp..."
+              type="submit"
+            >
+              Nộp đơn
+            </Button>
+          </>
+        )}
+        onClose={onClose}
+        size="md"
+        subtitle={labName ? `Nộp CV ứng tuyển vào ${labName}` : 'Nộp CV ứng tuyển vào PTN'}
+        title="Ứng tuyển vào PTN"
+      >
+        <div className="space-y-5">
           <div>
             <label
               className="block text-sm font-medium text-slate-700"
@@ -215,7 +220,7 @@ export function ApplyModal({ labId, labName, labStatus, onClose }: ApplyModalPro
               className="block text-sm font-medium text-slate-700"
               htmlFor="cvFile"
             >
-              CV File
+              Tệp CV
             </label>
             <input
               key={fileInputKey}
@@ -248,25 +253,8 @@ export function ApplyModal({ labId, labName, labStatus, onClose }: ApplyModalPro
             </div>
           ) : null}
 
-          <div className="flex justify-end gap-3">
-            <button
-              type="button"
-              className="rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:text-slate-400"
-              disabled={applyMutation.isPending}
-              onClick={onClose}
-            >
-              Hủy
-            </button>
-            <button
-              type="submit"
-              className="rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400"
-              disabled={applyMutation.isPending || !hasCvPayload || Boolean(fileError)}
-            >
-              {applyMutation.isPending ? 'Đang nộp...' : 'Submit'}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+        </div>
+      </Modal>
+    </form>
   );
 }

@@ -155,8 +155,8 @@ export function SlotDetailPage() {
             </button>
           </div>
         ) : registrations.length ? (
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-slate-200 text-sm">
+          <div className="max-w-full overscroll-x-contain overflow-x-auto">
+            <table className="w-full min-w-[720px] divide-y divide-slate-200 text-sm">
               <thead className="bg-slate-50 text-left text-slate-500">
                 <tr>
                   <th className="px-5 py-3 font-semibold">Sinh viên</th>

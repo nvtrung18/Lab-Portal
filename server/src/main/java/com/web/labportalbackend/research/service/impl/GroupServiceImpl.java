@@ -303,7 +303,8 @@ public class GroupServiceImpl implements GroupService {
                 .map(GroupMemberEntity::getGroup)
                 .map(group -> GroupMapper.toResponse(
                         group,
-                        projectRepository.countByGroupIdAndDeletedFalseAndActiveTrue(group.getId())
+                        projectRepository.countByGroupIdAndDeletedFalseAndActiveTrue(group.getId()),
+                        currentUser.getId()
                 ))
                 .toList();
     }

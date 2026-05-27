@@ -1,6 +1,7 @@
 ﻿import axios from 'axios';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+import { queryKeys } from '../../../shared/api';
 import { toast } from '../../../shared/components';
 import {
   cancelBooking,
@@ -12,10 +13,7 @@ import {
   reviewBooking,
   type ReviewBookingPayload,
 } from '../api';
-import { LAB_SLOTS_QUERY_KEY } from './useLabSlots';
-
-export const MY_BOOKINGS_QUERY_KEY = ['myBookings'] as const;
-export const SLOT_REGISTRATIONS_QUERY_KEY = ['slotRegistrations'] as const;
+export const MY_BOOKINGS_QUERY_KEY = queryKeys.bookings.mine;
 
 function getErrorMessage(error: unknown, fallback: string) {
   if (axios.isAxiosError(error)) {
@@ -38,7 +36,7 @@ export function useMyBookings(enabled = true) {
 
 export function useSlotRegistrations(slotId?: number | null) {
   return useQuery({
-    queryKey: slotId ? [...SLOT_REGISTRATIONS_QUERY_KEY, slotId] : SLOT_REGISTRATIONS_QUERY_KEY,
+    queryKey: queryKeys.slots.bookings(slotId as number),
     queryFn: () => getSlotRegistrations(slotId as number),
     enabled: Boolean(slotId),
     staleTime: 15000,
@@ -54,10 +52,10 @@ export function useCreateBooking(labId?: number | null) {
     mutationFn: (slotId: number) => createBooking(slotId),
     onSuccess: (_booking, slotId) => {
       if (labId) {
-        queryClient.invalidateQueries({ queryKey: [...LAB_SLOTS_QUERY_KEY, labId] });
+        queryClient.invalidateQueries({ queryKey: queryKeys.slots.byLab(labId) });
       }
       queryClient.invalidateQueries({ queryKey: MY_BOOKINGS_QUERY_KEY });
-      queryClient.invalidateQueries({ queryKey: [...SLOT_REGISTRATIONS_QUERY_KEY, slotId] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.slots.bookings(slotId) });
       toast.success('Đã gửi đăng ký sử dụng PTN. Vui lòng chờ quản lý phê duyệt.');
     },
     onError: (error) => {
@@ -73,11 +71,11 @@ export function useCancelBooking(labId?: number | null) {
     mutationFn: (bookingId: number) => cancelBooking(bookingId),
     onSuccess: (booking) => {
       if (labId) {
-        queryClient.invalidateQueries({ queryKey: [...LAB_SLOTS_QUERY_KEY, labId] });
+        queryClient.invalidateQueries({ queryKey: queryKeys.slots.byLab(labId) });
       }
       queryClient.invalidateQueries({ queryKey: MY_BOOKINGS_QUERY_KEY });
       if (booking.slotId) {
-        queryClient.invalidateQueries({ queryKey: [...SLOT_REGISTRATIONS_QUERY_KEY, booking.slotId] });
+        queryClient.invalidateQueries({ queryKey: queryKeys.slots.bookings(booking.slotId) });
       }
       toast.success('Đã hủy đăng ký sử dụng khung giờ.');
     },
@@ -94,10 +92,10 @@ export function useReviewBooking(labId?: number | null, slotId?: number | null) 
     mutationFn: (payload: ReviewBookingPayload) => reviewBooking(payload),
     onSuccess: () => {
       if (slotId) {
-        queryClient.invalidateQueries({ queryKey: [...SLOT_REGISTRATIONS_QUERY_KEY, slotId] });
+        queryClient.invalidateQueries({ queryKey: queryKeys.slots.bookings(slotId) });
       }
       if (labId) {
-        queryClient.invalidateQueries({ queryKey: [...LAB_SLOTS_QUERY_KEY, labId] });
+        queryClient.invalidateQueries({ queryKey: queryKeys.slots.byLab(labId) });
       }
       toast.success('Đã cập nhật trạng thái đăng ký.');
     },
@@ -124,10 +122,10 @@ export function useConfirmCheckIn() {
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: MY_BOOKINGS_QUERY_KEY });
       if (result.booking.labId) {
-        queryClient.invalidateQueries({ queryKey: [...LAB_SLOTS_QUERY_KEY, result.booking.labId] });
+        queryClient.invalidateQueries({ queryKey: queryKeys.slots.byLab(result.booking.labId) });
       }
       if (result.booking.slotId) {
-        queryClient.invalidateQueries({ queryKey: [...SLOT_REGISTRATIONS_QUERY_KEY, result.booking.slotId] });
+        queryClient.invalidateQueries({ queryKey: queryKeys.slots.bookings(result.booking.slotId) });
       }
       toast.success('Xác nhận có mặt thành công.');
     },

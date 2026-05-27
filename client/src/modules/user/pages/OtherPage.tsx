@@ -11,6 +11,10 @@ import { useCurrentUser } from '../hooks';
 
 const ACTIVE_LAB_STORAGE_KEY = 'student.activeLabId';
 
+function formatMembershipRole(role?: string | null) {
+  return role === 'LEADER' ? 'Trưởng nhóm' : role === 'LAB_MANAGER' ? 'Quản lý PTN' : 'Sinh viên';
+}
+
 export function OtherPage() {
   const { data: currentUser, isLoading } = useCurrentUser();
   const activeMemberships = useMemo(
@@ -63,7 +67,7 @@ export function OtherPage() {
   if (!activeMemberships.length) {
     return (
       <section className="rounded-lg border border-slate-200 bg-white p-6 text-sm text-slate-600 shadow-sm">
-        Bạn chưa có membership ACTIVE để xem khu vực nội bộ của PTN.
+        Bạn chưa có tư cách thành viên đang hoạt động để xem khu vực nội bộ của PTN.
       </section>
     );
   }
@@ -73,7 +77,7 @@ export function OtherPage() {
       <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
         <h2 className="text-xl font-semibold text-slate-950">PTN của tôi</h2>
         <p className="mt-2 text-sm text-slate-600">
-          Khu vực dành cho các phòng thí nghiệm bạn đang là thành viên ACTIVE.
+          Khu vực dành cho các phòng thí nghiệm bạn đang là thành viên hoạt động.
         </p>
       </div>
 
@@ -128,7 +132,7 @@ export function OtherPage() {
           <div>
             <dt className="text-sm text-slate-500">Vai trò thành viên</dt>
             <dd className="mt-1 text-sm font-medium text-slate-950">
-              {activeMembership?.role || 'MEMBER'}
+              {formatMembershipRole(activeMembership?.role)}
             </dd>
           </div>
           <div>

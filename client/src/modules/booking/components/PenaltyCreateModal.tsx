@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 
+import { Button, Modal } from '../../../shared/components';
 import type { BookingResponse } from '../api';
 import type { LabSlot } from '../types';
 import { formatPenaltyType } from '../../penalty/utils';
@@ -112,16 +113,23 @@ export function PenaltyCreateModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 px-4">
-      <div className="w-full max-w-2xl rounded-lg bg-white shadow-xl">
-        <div className="border-b border-slate-200 px-6 py-4">
-          <h3 className="text-lg font-semibold text-slate-950">Ghi nhận vi phạm</h3>
-          <p className="mt-1 text-sm text-slate-600">
-            Ghi nhận vi phạm cho sinh viên trong ca sử dụng PTN.
-          </p>
-        </div>
-
-        <div className="space-y-5 px-6 py-5">
+    <Modal
+      footer={(
+        <>
+          <Button disabled={isSubmitting} onClick={onClose} variant="outline">
+            Hủy
+          </Button>
+          <Button disabled={!canSubmit} loading={isSubmitting} loadingText="Đang ghi nhận..." onClick={handleSubmit}>
+            Xác nhận ghi nhận
+          </Button>
+        </>
+      )}
+      onClose={onClose}
+      size="lg"
+      subtitle="Ghi nhận vi phạm cho sinh viên trong ca sử dụng PTN."
+      title="Ghi nhận vi phạm"
+    >
+        <div className="space-y-5">
           <dl className="grid gap-4 rounded-md bg-slate-50 p-4 text-sm sm:grid-cols-2">
             <div>
               <dt className="text-slate-500">Sinh viên</dt>
@@ -183,25 +191,6 @@ export function PenaltyCreateModal({
           {reasonError ? <p className="text-sm text-red-600">{reasonError}</p> : null}
         </div>
 
-        <div className="flex flex-col-reverse gap-2 border-t border-slate-200 px-6 py-4 sm:flex-row sm:justify-end">
-          <button
-            type="button"
-            className="rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700"
-            onClick={onClose}
-            disabled={isSubmitting}
-          >
-            Hủy
-          </button>
-          <button
-            type="button"
-            className="rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:bg-slate-400"
-            onClick={handleSubmit}
-            disabled={!canSubmit}
-          >
-            {isSubmitting ? 'Đang ghi nhận...' : 'Xác nhận ghi nhận'}
-          </button>
-        </div>
-      </div>
-    </div>
+    </Modal>
   );
 }

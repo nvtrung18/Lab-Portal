@@ -1,10 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 
+import { Button, EmptyState, ErrorState, LoadingState, ResponsiveTable } from '../../../shared/components';
 import { useMyResearchGroups } from '../hooks';
 import type { ResearchGroup, ResearchGroupMember } from '../types';
 import { formatDate, formatGroupRole, formatGroupStatus, getStatusClass } from '../utils';
 import { MilestoneList } from './MilestoneList';
+import { MyResearchTasks } from './MyResearchTasks';
+import { GroupReportsTab } from './GroupReportsTab';
 
 interface MyResearchGroupsProps {
   labId: number;
@@ -39,10 +42,13 @@ export function MyResearchGroups({ labId, currentUserId }: MyResearchGroupsProps
     return new Map(
       groups.map((group) => [
         group.id,
-        group.members?.find((member) => member.userId === currentUserId)?.role ?? null,
+        group.myRole ?? group.members?.find((member) => member.userId === currentUserId)?.role ?? null,
       ]),
     );
   }, [currentUserId, groups]);
+  const selectedGroupRole = selectedGroup ? myRoleByGroupId.get(selectedGroup.id) : null;
+  const isLeader = selectedGroupRole === 'LEADER';
+  const currentMembership = selectedGroup?.members?.find((member) => member.userId === currentUserId) ?? null;
 
   return (
     <section className="space-y-6">
@@ -53,21 +59,18 @@ export function MyResearchGroups({ labId, currentUserId }: MyResearchGroupsProps
 
       <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
         {isLoading ? (
-          <p className="text-sm text-slate-600">Đang tải danh sách nhóm nghiên cứu...</p>
+          <LoadingState>Đang tải danh sách nhóm nghiên cứu...</LoadingState>
         ) : isError ? (
-          <div className="rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+          <ErrorState onRetry={() => refetch()}>
             Không thể tải danh sách nhóm nghiên cứu.
-            <button className="ml-3 font-semibold underline" type="button" onClick={() => refetch()}>
-              Tải lại
-            </button>
-          </div>
+          </ErrorState>
         ) : !groups.length ? (
-          <div className="rounded-md border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+          <EmptyState>
             Bạn chưa được phân vào nhóm nghiên cứu nào trong PTN này.
-          </div>
+          </EmptyState>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-slate-200 text-sm">
+          <ResponsiveTable>
+            <table className="w-full min-w-[760px] divide-y divide-slate-200 text-sm">
               <thead>
                 <tr className="text-left text-xs font-semibold uppercase text-slate-500">
                   <th className="px-3 py-3">Tên nhóm</th>
@@ -95,19 +98,15 @@ export function MyResearchGroups({ labId, currentUserId }: MyResearchGroupsProps
                       </span>
                     </td>
                     <td className="px-3 py-3 text-right">
-                      <button
-                        className="rounded-md border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100"
-                        type="button"
-                        onClick={() => setSelectedGroupId(group.id)}
-                      >
+                      <Button onClick={() => setSelectedGroupId(group.id)} size="sm" variant="outline">
                         Xem chi tiết
-                      </button>
+                      </Button>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
-          </div>
+          </ResponsiveTable>
         )}
       </section>
 
@@ -130,9 +129,9 @@ export function MyResearchGroups({ labId, currentUserId }: MyResearchGroupsProps
               </DetailPanel>
             </div>
 
-            <DetailPanel title="Thành viên nhóm">
+            <DetailPanel title={isLeader ? 'Thành viên nhóm' : 'Vai trò của tôi'}>
               <div className="space-y-3">
-                {(selectedGroup.members ?? []).map((member) => (
+                {(isLeader ? selectedGroup.members ?? [] : currentMembership ? [currentMembership] : []).map((member) => (
                   <div key={member.id} className="flex items-start justify-between gap-3 rounded-md border border-slate-200 p-3">
                     <div>
                       <p className="font-semibold text-slate-950">{getMemberName(member)}</p>
@@ -148,15 +147,33 @@ export function MyResearchGroups({ labId, currentUserId }: MyResearchGroupsProps
           </div>
 
           {selectedGroup.projectId ? (
-            <MilestoneList
-              key={`${labId}-${selectedGroup.projectId}`}
-              projectId={selectedGroup.projectId}
-              canCreate={false}
-              showTaskBoard
-              taskBoardRole={currentUserId != null ? 'STUDENT' : undefined}
-              taskBoardCurrentUserId={currentUserId}
-              emptyMessage="Đề tài này chưa có mốc nghiên cứu nào."
-            />
+            <>
+              {!isLeader && currentUserId != null ? (
+                <MyResearchTasks
+                  groupId={selectedGroup.id}
+                  projectId={selectedGroup.projectId}
+                />
+              ) : null}
+              {isLeader ? (
+                <GroupReportsTab groupId={selectedGroup.id} />
+              ) : null}
+              <MilestoneList
+                key={`${labId}-${selectedGroup.projectId}`}
+                projectId={selectedGroup.projectId}
+                groupId={selectedGroup.id}
+                canCreate={false}
+                showTaskBoard
+                taskBoardRole={currentUserId != null ? (isLeader ? 'GROUP_LEADER' : 'STUDENT_MEMBER') : undefined}
+                taskBoardCurrentUserId={currentUserId}
+                title={isLeader ? 'Bảng tiến độ nhóm' : 'Mốc của tôi'}
+                description={isLeader
+                  ? 'Theo dõi toàn bộ mốc và nhiệm vụ của nhóm nghiên cứu.'
+                  : 'Chỉ hiển thị các mốc có nhiệm vụ được giao cho bạn.'}
+                emptyMessage={isLeader
+                  ? 'Đề tài này chưa có mốc nghiên cứu nào.'
+                  : 'Bạn chưa có mốc hoặc nhiệm vụ nào được giao trong đề tài này.'}
+              />
+            </>
           ) : null}
         </section>
       ) : null}

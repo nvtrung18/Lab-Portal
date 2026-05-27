@@ -1,0 +1,61 @@
+export const queryKeys = {
+  auth: {
+    userMe: ['userMe'] as const,
+  },
+  labs: {
+    all: ['labs'] as const,
+    student: ['studentLabs'] as const,
+    detail: (labId: number) => ['lab', labId] as const,
+    members: (labId: number) => ['labMembers', labId] as const,
+  },
+  applications: {
+    all: ['applications'] as const,
+    manager: (labId: number) => ['managerApplications', labId] as const,
+    user: (userId: number) => ['applications', 'user', userId] as const,
+  },
+  slots: {
+    byLab: (labId: number) => ['labSlots', labId] as const,
+    detail: (slotId: number) => ['slotDetail', slotId] as const,
+    bookings: (slotId: number) => ['slotBookings', slotId] as const,
+  },
+  bookings: {
+    mine: ['myBookings'] as const,
+  },
+  cleaning: {
+    overview: (labId: number) => ['cleaningOverview', labId] as const,
+    eligible: (slotId: number) => ['eligibleCleaners', slotId] as const,
+    mine: ['myCleaningTasks'] as const,
+  },
+  penalties: {
+    mine: ['penalties', 'me'] as const,
+    bySlot: (slotId: number) => ['slotPenalties', slotId] as const,
+    managerComplaints: (labId: number) => ['managerComplaints', labId] as const,
+  },
+  research: {
+    topics: (labId: number) => ['researchTopics', labId] as const,
+    topicGroups: (labId: number, topicId: number) => ['topicResearchGroups', labId, topicId] as const,
+    groupProjects: (groupId: number) => ['researchGroupProjects', groupId] as const,
+    projects: (labId: number) => ['researchProjects', labId] as const,
+    studentProjects: (labId: number) => ['studentResearchProjects', labId] as const,
+    project: (projectId: number) => ['researchProject', projectId] as const,
+    groups: (projectId: number) => ['researchGroups', projectId] as const,
+    group: (groupId: number) => ['researchGroup', groupId] as const,
+    eligibleStudents: (labId: number) => ['researchEligibleStudents', labId] as const,
+    myGroups: (labId: number) => ['myResearchGroups', labId] as const,
+    milestones: (projectId: number) => ['milestones', projectId] as const,
+    milestone: (milestoneId: number) => ['milestone', milestoneId] as const,
+    tasks: (milestoneId: number) => ['tasks', milestoneId] as const,
+    reports: (milestoneId: number) => ['reports', 'milestone', milestoneId] as const,
+    myTasks: (groupId: number) => ['myResearchTasks', groupId] as const,
+    taskReports: (taskId: number) => ['reports', 'task', taskId] as const,
+    groupReports: (groupId: number) => ['groupReports', groupId] as const,
+    managerReports: (labId: number) => ['managerReports', labId] as const,
+    myMilestoneReports: (milestoneId: number) => ['reports', 'milestone', milestoneId, 'me'] as const,
+    reportComments: (reportId: number) => ['reportComments', reportId] as const,
+  },
+  admin: {
+    users: ['adminUsers'] as const,
+    labs: ['adminLabs'] as const,
+    availableManagers: ['availableManagers'] as const,
+  },
+} as const;

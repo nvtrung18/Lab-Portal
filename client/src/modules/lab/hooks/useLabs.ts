@@ -1,10 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
 
+import { queryKeys } from '../../../shared/api';
 import { getLabById, getLabs } from '../api';
 
-export const LABS_QUERY_KEY = ['labs'] as const;
-export const STUDENT_LABS_QUERY_KEY = ['studentLabs'] as const;
-export const LAB_QUERY_KEY = ['lab'] as const;
+export const LABS_QUERY_KEY = queryKeys.labs.all;
+export const STUDENT_LABS_QUERY_KEY = queryKeys.labs.student;
 
 export function useLabs() {
   return useQuery({
@@ -18,7 +18,7 @@ export function useLabs() {
 
 export function useLab(labId?: number | null) {
   return useQuery({
-    queryKey: labId ? [...LAB_QUERY_KEY, labId] : LAB_QUERY_KEY,
+    queryKey: queryKeys.labs.detail(labId as number),
     queryFn: () => getLabById(labId as number),
     enabled: Boolean(labId),
     staleTime: 5 * 60 * 1000,

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 
+import { Button, EmptyState, ErrorState, LoadingState } from '../../../shared/components';
 import {
   useCreateResearchGroup,
   useResearchEligibleStudents,
@@ -36,29 +37,22 @@ export function ResearchGroupList({ project, canCreate }: ResearchGroupListProps
           <p className="mt-1 text-sm text-slate-600">Danh sách nhóm thuộc đề tài đang chọn.</p>
         </div>
         {canCreate ? (
-          <button
-            className="rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white"
-            type="button"
-            onClick={() => setIsCreateOpen(true)}
-          >
+          <Button onClick={() => setIsCreateOpen(true)}>
             Tạo nhóm nghiên cứu
-          </button>
+          </Button>
         ) : null}
       </div>
 
       {isLoading ? (
-        <p className="mt-5 text-sm text-slate-600">Đang tải danh sách nhóm nghiên cứu...</p>
+        <LoadingState className="mt-5">Đang tải danh sách nhóm nghiên cứu...</LoadingState>
       ) : isError ? (
-        <div className="mt-5 rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+        <ErrorState className="mt-5" onRetry={() => refetch()}>
           Không thể tải danh sách nhóm nghiên cứu.
-          <button className="ml-3 font-semibold underline" type="button" onClick={() => refetch()}>
-            Tải lại
-          </button>
-        </div>
+        </ErrorState>
       ) : !groups.length ? (
-        <div className="mt-5 rounded-md border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+        <EmptyState className="mt-5">
           Đề tài này chưa có nhóm nghiên cứu nào.
-        </div>
+        </EmptyState>
       ) : (
         <div className="mt-5 grid gap-4 lg:grid-cols-2">
           {groups.map((group) => (
@@ -88,21 +82,13 @@ export function ResearchGroupList({ project, canCreate }: ResearchGroupListProps
                 </div>
               </dl>
               <div className="mt-4 flex flex-wrap gap-2">
-                <button
-                  className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100"
-                  type="button"
-                  onClick={() => setDetailGroupId(group.id)}
-                >
+                <Button onClick={() => setDetailGroupId(group.id)} size="sm" variant="outline">
                   Xem chi tiết
-                </button>
+                </Button>
                 {canCreate ? (
-                  <button
-                    className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100"
-                    onClick={() => setEditingGroup(group)}
-                    type="button"
-                  >
+                  <Button onClick={() => setEditingGroup(group)} size="sm" variant="outline">
                     Sửa thông tin
-                  </button>
+                  </Button>
                 ) : null}
               </div>
             </article>

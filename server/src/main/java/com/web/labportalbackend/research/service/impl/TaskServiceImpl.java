@@ -11,11 +11,15 @@ import com.web.labportalbackend.research.dto.request.CreateTaskRequest;
 import com.web.labportalbackend.research.dto.request.UpdateTaskStatusRequest;
 import com.web.labportalbackend.research.dto.response.TaskResponse;
 import com.web.labportalbackend.research.entity.MilestoneEntity;
+import com.web.labportalbackend.research.entity.GroupEntity;
 import com.web.labportalbackend.research.entity.TaskEntity;
+import com.web.labportalbackend.research.enums.GroupRole;
 import com.web.labportalbackend.research.enums.TaskStatus;
 import com.web.labportalbackend.research.mapper.TaskMapper;
 import com.web.labportalbackend.research.repository.GroupMemberRepository;
+import com.web.labportalbackend.research.repository.GroupRepository;
 import com.web.labportalbackend.research.repository.MilestoneRepository;
+import com.web.labportalbackend.research.repository.ReportRepository;
 import com.web.labportalbackend.research.repository.TaskRepository;
 import com.web.labportalbackend.research.service.TaskService;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +37,8 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class TaskServiceImpl implements TaskService {
 
+    private static final String APPROVED_REPORT_REQUIRED =
+            "Cần có báo cáo được duyệt trước khi hoàn thành nhiệm vụ/mốc nghiên cứu.";
     private static final Map<TaskStatus, Set<TaskStatus>> MANAGER_STATUS_TRANSITIONS = Map.of(
             TaskStatus.TODO, Set.of(TaskStatus.DOING, TaskStatus.CANCELLED),
             TaskStatus.DOING, Set.of(TaskStatus.WAITING_REVIEW, TaskStatus.CANCELLED),
@@ -49,6 +55,8 @@ public class TaskServiceImpl implements TaskService {
 
     private final TaskRepository taskRepository;
     private final MilestoneRepository milestoneRepository;
+    private final ReportRepository reportRepository;
+    private final GroupRepository groupRepository;
     private final GroupMemberRepository groupMemberRepository;
     private final LaboratoryRepository laboratoryRepository;
     private final UserRepository userRepository;
@@ -92,11 +100,47 @@ public class TaskServiceImpl implements TaskService {
     public List<TaskResponse> getByMilestone(Long milestoneId) {
         MilestoneEntity milestone = milestoneRepository.findByIdAndDeletedFalseAndActiveTrue(milestoneId)
                 .orElseThrow(() -> new ResourceNotFoundException("Milestone", milestoneId));
-        assertCanViewTasks(getCurrentUser(), milestone);
+        User currentUser = getCurrentUser();
+        assertCanViewTasks(currentUser, milestone);
 
-        return taskRepository.findByMilestoneIdAndDeletedFalseAndActiveTrueOrderByDeadlineAscCreatedAtAsc(milestoneId)
+        List<TaskEntity> visibleTasks = currentUser.hasRole("STUDENT")
+                && resolveStudentProjectRole(currentUser, milestone.getProject().getId()) == GroupRole.MEMBER
+                ? taskRepository.findByMilestoneIdAndAssigneeIdAndDeletedFalseAndActiveTrueOrderByDeadlineAscCreatedAtAsc(
+                        milestoneId,
+                        currentUser.getId()
+                )
+                : taskRepository.findByMilestoneIdAndDeletedFalseAndActiveTrueOrderByDeadlineAscCreatedAtAsc(milestoneId);
+
+        return visibleTasks
                 .stream()
                 .map(task -> TaskMapper.toResponse(task, milestone.getProject().getId()))
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<TaskResponse> getByGroup(Long groupId) {
+        GroupEntity group = groupRepository.findByIdAndDeletedFalseAndActiveTrue(groupId)
+                .orElseThrow(() -> new ResourceNotFoundException("Research group", groupId));
+        if (group.getProject() == null) {
+            throw new AccessDeniedException("Research group is not assigned to a project");
+        }
+
+        User currentUser = getCurrentUser();
+        Long projectId = group.getProject().getId();
+        if (currentUser.hasRole("LAB_MANAGER")) {
+            assertManagerCanAccessProject(currentUser, group.getProject());
+            return taskRepository.findBoardTasksByProjectId(projectId).stream()
+                    .map(task -> TaskMapper.toResponse(task, projectId))
+                    .toList();
+        }
+
+        GroupRole groupRole = resolveStudentProjectRole(currentUser, projectId);
+        List<TaskEntity> visibleTasks = groupRole == GroupRole.LEADER
+                ? taskRepository.findBoardTasksByProjectId(projectId)
+                : taskRepository.findAssignedBoardTasksByProjectId(projectId, currentUser.getId());
+        return visibleTasks.stream()
+                .map(task -> TaskMapper.toResponse(task, projectId))
                 .toList();
     }
 
@@ -127,6 +171,9 @@ public class TaskServiceImpl implements TaskService {
             throw new IllegalArgumentException(
                     "Status transition from " + currentStatus + " to " + requestedStatus + " is not allowed");
         }
+        if (requestedStatus == TaskStatus.DONE) {
+            assertApprovedReportForCompletion(task);
+        }
 
         task.setStatus(requestedStatus);
         applyStatusProgress(task, requestedStatus);
@@ -138,12 +185,16 @@ public class TaskServiceImpl implements TaskService {
             return;
         }
 
-        if (currentUser.hasRole("STUDENT")
-                && currentUser.getId().equals(task.getAssigneeId())) {
-            return;
+        if (currentUser.hasRole("STUDENT")) {
+            MilestoneEntity milestone = milestoneRepository.findByIdAndDeletedFalseAndActiveTrue(task.getMilestoneId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Milestone", task.getMilestoneId()));
+            GroupRole role = resolveStudentProjectRole(currentUser, milestone.getProject().getId());
+            if (role == GroupRole.LEADER || currentUser.getId().equals(task.getAssigneeId())) {
+                return;
+            }
         }
 
-        throw new AccessDeniedException("Students may update only their assigned tasks");
+        throw new AccessDeniedException("Members may update only their assigned tasks");
     }
 
     private void validateStatusTarget(TaskStatus status) {
@@ -175,24 +226,40 @@ public class TaskServiceImpl implements TaskService {
         }
     }
 
+    private void assertApprovedReportForCompletion(TaskEntity task) {
+        if (!reportRepository.existsLatestApprovedByTaskId(task.getId())) {
+            throw new IllegalArgumentException(APPROVED_REPORT_REQUIRED);
+        }
+    }
+
     private void assertCanViewTasks(User currentUser, MilestoneEntity milestone) {
         if (currentUser.hasRole("LAB_MANAGER")) {
-            Laboratory managedLab = laboratoryRepository.findFirstByManagerIdAndDeletedFalse(currentUser.getId())
-                    .orElseThrow(() -> new AccessDeniedException("Lab manager is not assigned to any lab"));
-            if (milestone.getProject().getLab() != null
-                    && managedLab.getId().equals(milestone.getProject().getLab().getId())) {
-                return;
-            }
-            throw new AccessDeniedException("Cannot access tasks from another lab");
+            assertManagerCanAccessProject(currentUser, milestone.getProject());
+            return;
         }
 
-        if (currentUser.hasRole("STUDENT")
-                && groupMemberRepository.existsActiveMemberByProjectIdAndUserId(
-                        milestone.getProject().getId(), currentUser.getId())) {
+        if (currentUser.hasRole("STUDENT")) {
+            resolveStudentProjectRole(currentUser, milestone.getProject().getId());
             return;
         }
 
         throw new AccessDeniedException("Cannot access tasks for this milestone");
+    }
+
+    private void assertManagerCanAccessProject(User currentUser, com.web.labportalbackend.research.entity.ProjectEntity project) {
+        Laboratory managedLab = laboratoryRepository.findFirstByManagerIdAndDeletedFalse(currentUser.getId())
+                .orElseThrow(() -> new AccessDeniedException("Lab manager is not assigned to any lab"));
+        if (project.getLab() == null || !managedLab.getId().equals(project.getLab().getId())) {
+            throw new AccessDeniedException("Cannot access tasks from another lab");
+        }
+    }
+
+    private GroupRole resolveStudentProjectRole(User currentUser, Long projectId) {
+        if (!currentUser.hasRole("STUDENT")) {
+            throw new AccessDeniedException("Only students have research group roles");
+        }
+        return groupMemberRepository.findActiveRoleByProjectIdAndUserId(projectId, currentUser.getId())
+                .orElseThrow(() -> new AccessDeniedException("Cannot access tasks for this project"));
     }
 
     private User getCurrentUser() {

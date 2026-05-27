@@ -1,9 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+import { queryKeys } from '../../../shared/api';
 import { toast } from '../../../shared/components';
 import { banUser, getAdminUsers, unbanUser, updateUserRoles } from '../api';
 
-export const ADMIN_USERS_QUERY_KEY = ['adminUsers'] as const;
+export const ADMIN_USERS_QUERY_KEY = queryKeys.admin.users;
 
 export function useAdminUsers() {
   return useQuery({

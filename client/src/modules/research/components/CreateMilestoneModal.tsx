@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 
+import { Button, Modal } from '../../../shared/components';
 import type { CreateMilestonePayload, MilestoneStatus, ResearchEligibleStudent } from '../types';
 
 interface CreateMilestoneModalProps {
@@ -58,10 +59,8 @@ export function CreateMilestoneModal({
   const canSubmit = trimmedTitle.length >= 3 && progressIsValid && completedProgressIsValid;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 px-4 py-6">
-      <form
-        className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg bg-white p-6 shadow-xl"
-        onSubmit={(event) => {
+    <form
+      onSubmit={(event) => {
           event.preventDefault();
           setTouched(true);
           if (!canSubmit) {
@@ -78,16 +77,29 @@ export function CreateMilestoneModal({
             evidenceUrl: form.evidenceUrl.trim() || undefined,
             managerComment: form.managerComment.trim() || undefined,
           });
-        }}
+      }}
+    >
+      <Modal
+        footer={(
+          <>
+            <Button onClick={onClose} variant="outline">
+              Hủy
+            </Button>
+            <Button
+              disabled={isLoadingStudents}
+              loading={isSubmitting}
+              loadingText="Đang tạo..."
+              type="submit"
+            >
+              Tạo mốc nghiên cứu
+            </Button>
+          </>
+        )}
+        onClose={onClose}
+        size="lg"
+        title="Tạo mốc nghiên cứu"
       >
-        <div className="flex items-start justify-between gap-4">
-          <h3 className="text-lg font-semibold text-slate-950">Tạo mốc nghiên cứu</h3>
-          <button className="text-sm font-semibold text-slate-500 hover:text-slate-900" type="button" onClick={onClose}>
-            Đóng
-          </button>
-        </div>
-
-        <div className="mt-5 space-y-4">
+        <div className="space-y-4">
           <label className="block text-sm font-medium text-slate-700">
             Tên mốc nghiên cứu
             <input
@@ -197,19 +209,7 @@ export function CreateMilestoneModal({
           </label>
         </div>
 
-        <div className="mt-6 flex justify-end gap-2">
-          <button className="rounded-md border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700" type="button" onClick={onClose}>
-            Hủy
-          </button>
-          <button
-            className="rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
-            disabled={isSubmitting || isLoadingStudents}
-            type="submit"
-          >
-            {isSubmitting ? 'Đang tạo...' : 'Tạo mốc nghiên cứu'}
-          </button>
-        </div>
-      </form>
-    </div>
+      </Modal>
+    </form>
   );
 }

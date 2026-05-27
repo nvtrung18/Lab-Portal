@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 
+import { Button, Modal } from '../../../shared/components';
 import type { CreateResearchProjectPayload, ProjectStatus, ResearchPriority, ResearchProject } from '../types';
 
 interface CreateResearchProjectModalProps {
@@ -76,10 +77,8 @@ export function CreateResearchProjectModal({
   const isEditing = Boolean(project);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 px-4 py-6">
-      <form
-        className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-lg bg-white p-6 shadow-xl"
-        onSubmit={(event) => {
+    <form
+      onSubmit={(event) => {
           event.preventDefault();
           setTouched(true);
           if (!canSubmit) {
@@ -100,23 +99,29 @@ export function CreateResearchProjectModal({
             evaluationCriteria: form.evaluationCriteria.trim() || undefined,
             status: form.status,
           });
-        }}
+      }}
+    >
+      <Modal
+        footer={(
+          <>
+            <Button onClick={onClose} variant="outline">
+              Hủy
+            </Button>
+            <Button
+              loading={isSubmitting}
+              loadingText={isEditing ? 'Đang lưu...' : 'Đang tạo...'}
+              type="submit"
+            >
+              {isEditing ? 'Lưu thay đổi' : 'Tạo đề tài nghiên cứu'}
+            </Button>
+          </>
+        )}
+        onClose={onClose}
+        size="xl"
+        subtitle={isEditing ? 'Cập nhật thông tin đề tài trong PTN đang quản lý.' : 'Đề tài được tạo trong PTN đang quản lý.'}
+        title={isEditing ? 'Sửa đề tài nghiên cứu' : 'Tạo đề tài nghiên cứu'}
       >
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h3 className="text-lg font-semibold text-slate-950">
-              {isEditing ? 'Sửa đề tài nghiên cứu' : 'Tạo đề tài nghiên cứu'}
-            </h3>
-            <p className="mt-1 text-sm text-slate-600">
-              {isEditing ? 'Cập nhật thông tin đề tài trong PTN đang quản lý.' : 'Đề tài được tạo trong PTN đang quản lý.'}
-            </p>
-          </div>
-          <button className="text-sm font-semibold text-slate-500 hover:text-slate-900" type="button" onClick={onClose}>
-            Đóng
-          </button>
-        </div>
-
-        <div className="mt-5 grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-4 sm:grid-cols-2">
           <label className="block text-sm font-medium text-slate-700">
             Mã đề tài
             <input
@@ -234,15 +239,7 @@ export function CreateResearchProjectModal({
           </label>
         </div>
 
-        <div className="mt-6 flex justify-end gap-2">
-          <button className="rounded-md border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700" type="button" onClick={onClose}>
-            Hủy
-          </button>
-          <button className="rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60" disabled={isSubmitting} type="submit">
-            {isSubmitting ? (isEditing ? 'Đang lưu...' : 'Đang tạo...') : (isEditing ? 'Lưu thay đổi' : 'Tạo đề tài nghiên cứu')}
-          </button>
-        </div>
-      </form>
-    </div>
+      </Modal>
+    </form>
   );
 }

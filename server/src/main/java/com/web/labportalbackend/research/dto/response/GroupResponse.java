@@ -1,6 +1,7 @@
 package com.web.labportalbackend.research.dto.response;
 
 import com.web.labportalbackend.research.enums.GroupStatus;
+import com.web.labportalbackend.research.enums.GroupRole;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -25,6 +26,7 @@ public class GroupResponse {
     private String plan;
     private GroupStatus status;
     private Long leaderId;
+    private GroupRole myRole;
     private String createdByName;
     private Integer memberCount;
     private Long projectCount;

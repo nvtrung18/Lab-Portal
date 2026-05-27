@@ -5,6 +5,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { PasswordVisibilityIcon } from '../components';
 import { registerAPI, sendRegisterCodeAPI, verifyRegisterCodeAPI } from '../api';
 import type { Response } from '../../../shared/types';
+import { Button } from '../../../shared/components';
 
 type RegisterStep = 'email' | 'otp' | 'profile';
 
@@ -168,13 +169,15 @@ export function RegisterPage() {
             value={email}
             onChange={(event) => setEmail(event.target.value)}
           />
-          <button
-            className="w-full rounded-md bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white disabled:bg-slate-400"
-            disabled={isSubmitting}
+          <Button
+            className="w-full"
+            loading={isSubmitting}
+            loadingText="Đang gửi..."
+            size="lg"
             type="submit"
           >
-            {isSubmitting ? 'Đang gửi...' : 'Gửi mã xác nhận'}
-          </button>
+            Gửi mã xác nhận
+          </Button>
         </form>
       ) : null}
 
@@ -192,21 +195,24 @@ export function RegisterPage() {
             value={code}
             onChange={(event) => setCode(event.target.value.replace(/\D/g, ''))}
           />
-          <button
-            className="w-full rounded-md bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white disabled:bg-slate-400"
-            disabled={isSubmitting}
+          <Button
+            className="w-full"
+            loading={isSubmitting}
+            loadingText="Đang xác thực..."
+            size="lg"
             type="submit"
           >
-            {isSubmitting ? 'Đang xác thực...' : 'Xác thực email'}
-          </button>
-          <button
-            className="w-full rounded-md border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700 disabled:text-slate-400"
+            Xác thực email
+          </Button>
+          <Button
+            className="w-full"
             disabled={isSubmitting}
-            type="button"
             onClick={() => setStep('email')}
+            size="lg"
+            variant="outline"
           >
             Đổi email
-          </button>
+          </Button>
         </form>
       ) : null}
 
@@ -256,13 +262,15 @@ export function RegisterPage() {
               <PasswordVisibilityIcon visible={showConfirmPassword} />
             </button>
           </div>
-          <button
-            className="w-full rounded-md bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white disabled:bg-slate-400"
-            disabled={isSubmitting}
+          <Button
+            className="w-full"
+            loading={isSubmitting}
+            loadingText="Đang đăng ký..."
+            size="lg"
             type="submit"
           >
-            {isSubmitting ? 'Đang đăng ký...' : 'Đăng ký'}
-          </button>
+            Đăng ký
+          </Button>
         </form>
       ) : null}
 

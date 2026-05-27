@@ -12,6 +12,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -31,6 +32,7 @@ public class ReviewController {
 
     @PostMapping("/reports/{id}/comments")
     @Operation(summary = "Add comment to report")
+    @PreAuthorize("hasAnyRole('LAB_MANAGER', 'STUDENT')")
     public ResponseEntity<Response<CommentResponse>> addComment(
             @PathVariable Long id,
             @Valid @RequestBody CreateCommentRequest request,
@@ -44,6 +46,7 @@ public class ReviewController {
 
     @GetMapping("/reports/{id}/comments")
     @Operation(summary = "Get comments by report")
+    @PreAuthorize("hasAnyRole('LAB_MANAGER', 'STUDENT')")
     public ResponseEntity<Response<List<CommentResponse>>> getCommentsByReport(@PathVariable Long id) {
         return ResponseEntity.ok(
                 Response.ok("Comments retrieved successfully", reviewService.getByReport(id))

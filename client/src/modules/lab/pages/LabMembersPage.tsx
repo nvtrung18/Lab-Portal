@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 
+import { Button, EmptyState, ResponsiveTable } from '../../../shared/components';
 import { getManagedLabId, getManagedLabName } from '../../../shared/utils/membership';
 import { useCurrentUser } from '../../user/hooks';
 import { useLabMembers, useRemoveLabMember } from '../hooks';
@@ -13,7 +14,15 @@ function statusClassName(status: string) {
 }
 
 function formatDate(value?: string) {
-  return value ? new Intl.DateTimeFormat('vi-VN', { dateStyle: 'short' }).format(new Date(value)) : 'N/A';
+  return value ? new Intl.DateTimeFormat('vi-VN', { dateStyle: 'short' }).format(new Date(value)) : 'Chưa cập nhật';
+}
+
+function formatRole(role?: string) {
+  return role === 'LAB_MANAGER' ? 'Quản lý PTN' : role === 'STUDENT' || role === 'MEMBER' ? 'Sinh viên' : 'Thành viên';
+}
+
+function formatStatus(status: string) {
+  return status.toUpperCase() === 'ACTIVE' ? 'Đang hoạt động' : 'Không hoạt động';
 }
 
 export function LabMembersPage() {
@@ -30,7 +39,7 @@ export function LabMembersPage() {
     }
 
     const confirmed = window.confirm(
-      'Bạn có chắc muốn xóa thành viên này khỏi lab không? Tài khoản của user vẫn được giữ lại, chỉ xóa tư cách thành viên trong lab.',
+      'Bạn có chắc muốn gỡ thành viên này khỏi PTN không? Tài khoản vẫn được giữ lại, chỉ gỡ tư cách thành viên trong PTN.',
     );
 
     if (!confirmed) {
@@ -68,7 +77,7 @@ export function LabMembersPage() {
   if (!managedLabId) {
     return (
       <section className="rounded-lg border border-amber-200 bg-white p-6 text-sm text-amber-700 shadow-sm">
-        Bạn chưa được gán quản lý lab nào.
+        Bạn chưa được phân công quản lý PTN nào.
       </section>
     );
   }
@@ -76,7 +85,7 @@ export function LabMembersPage() {
   if (isError) {
     return (
       <section className="rounded-lg border border-red-200 bg-white p-6 text-sm text-red-700 shadow-sm">
-        Không thể tải danh sách thành viên lab.
+        Không thể tải danh sách thành viên PTN.
       </section>
     );
   }
@@ -85,45 +94,43 @@ export function LabMembersPage() {
     <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-xl font-semibold text-slate-950">Lab Members</h2>
+          <h2 className="text-xl font-semibold text-slate-950">Thành viên PTN</h2>
           <p className="mt-1 text-sm text-slate-600">
-            Danh sách thành viên thuộc lab bạn quản lý
+            Danh sách thành viên thuộc PTN bạn quản lý
             {managedLabName ? `: ${managedLabName}` : ''}.
           </p>
         </div>
         <input
           className="rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
-          placeholder="Search name/email"
+          placeholder="Tìm theo tên hoặc email"
           value={search}
           onChange={(event) => setSearch(event.target.value)}
         />
       </div>
 
       {filteredMembers.length === 0 ? (
-        <div className="mt-6 rounded-md border border-dashed border-slate-300 p-8 text-center text-sm text-slate-600">
-          Chưa có thành viên ACTIVE trong lab này.
-        </div>
+        <EmptyState className="mt-6">Chưa có thành viên đang hoạt động trong PTN này.</EmptyState>
       ) : (
-        <div className="mt-6 overflow-x-auto">
-          <table className="min-w-full divide-y divide-slate-200 text-sm">
+        <ResponsiveTable className="mt-6">
+          <table className="w-full min-w-[680px] divide-y divide-slate-200 text-sm">
             <thead>
               <tr className="text-left text-xs font-semibold uppercase text-slate-500">
-                <th className="px-3 py-3">Full name</th>
+                <th className="px-3 py-3">Họ tên</th>
                 <th className="px-3 py-3">Email</th>
-                <th className="px-3 py-3">Role</th>
-                <th className="px-3 py-3">Status</th>
-                <th className="px-3 py-3">Joined at</th>
-                <th className="px-3 py-3 text-right">Actions</th>
+                <th className="px-3 py-3">Vai trò</th>
+                <th className="px-3 py-3">Trạng thái</th>
+                <th className="px-3 py-3">Ngày tham gia</th>
+                <th className="px-3 py-3 text-right">Thao tác</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filteredMembers.map((member) => (
                 <tr key={member.id}>
                   <td className="px-3 py-4 font-medium text-slate-950">
-                    {member.fullName || 'N/A'}
+                    {member.fullName || 'Chưa cập nhật'}
                   </td>
                   <td className="px-3 py-4 text-slate-700">{member.email}</td>
-                  <td className="px-3 py-4 text-slate-700">{member.role || 'MEMBER'}</td>
+                  <td className="px-3 py-4 text-slate-700">{formatRole(member.role)}</td>
                   <td className="px-3 py-4">
                     <span
                       className={[
@@ -131,34 +138,35 @@ export function LabMembersPage() {
                         statusClassName(member.status),
                       ].join(' ')}
                     >
-                      {member.status}
+                      {formatStatus(member.status)}
                     </span>
                   </td>
                   <td className="px-3 py-4 text-slate-700">{formatDate(member.joinedAt)}</td>
                   <td className="px-3 py-4 text-right">
                     <div className="flex justify-end gap-2">
-                    <button
-                      type="button"
-                      className="rounded-md border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
+                    <Button
+                      size="sm"
+                      variant="outline"
                       onClick={() => window.alert(`${member.fullName || member.email}\n${member.email}`)}
                     >
-                      View detail
-                    </button>
-                    <button
-                      type="button"
-                      className="rounded-md border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:border-slate-200 disabled:text-slate-400"
-                      disabled={removeMemberMutation.isPending}
+                      Xem chi tiết
+                    </Button>
+                    <Button
+                      loading={removeMemberMutation.isPending}
+                      loadingText="Đang gỡ..."
+                      size="sm"
+                      variant="danger"
                       onClick={() => handleRemoveMember(member)}
                     >
-                      {removeMemberMutation.isPending ? 'Removing...' : 'Remove'}
-                    </button>
+                      Gỡ thành viên
+                    </Button>
                     </div>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-        </div>
+        </ResponsiveTable>
       )}
     </section>
   );

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 
+import { Button, Modal } from '../../../shared/components';
 import { useCancelSlot } from '../hooks';
 
 interface CancelSlotModalProps {
@@ -38,13 +39,28 @@ export function CancelSlotModal({ labId, slotId, isOpen, onClose }: CancelSlotMo
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 px-4 py-6">
-      <div className="w-full max-w-lg rounded-lg bg-white shadow-xl">
-        <div className="border-b border-slate-200 px-5 py-4">
-          <h2 className="text-lg font-semibold text-slate-950">Hủy khung giờ sử dụng</h2>
-          <p className="mt-1 text-sm text-slate-600">Nhập lý do hủy để thông báo cho sinh viên.</p>
-        </div>
-        <div className="space-y-4 px-5 py-5">
+    <Modal
+      footer={(
+        <>
+          <Button disabled={cancelSlot.isPending} onClick={onClose} variant="outline">
+            Đóng
+          </Button>
+          <Button
+            loading={cancelSlot.isPending}
+            loadingText="Đang hủy..."
+            onClick={handleSubmit}
+            variant="danger"
+          >
+            Hủy khung giờ
+          </Button>
+        </>
+      )}
+      onClose={onClose}
+      size="md"
+      subtitle="Nhập lý do hủy để thông báo cho sinh viên."
+      title="Hủy khung giờ sử dụng"
+    >
+        <div className="space-y-4">
           <div>
             <label className="text-sm font-medium text-slate-700" htmlFor="cancel-reason">
               Lý do hủy
@@ -65,25 +81,6 @@ export function CancelSlotModal({ labId, slotId, isOpen, onClose }: CancelSlotMo
             Gửi thông báo qua email cho sinh viên đã đăng ký
           </label>
         </div>
-        <div className="flex justify-end gap-3 border-t border-slate-200 px-5 py-4">
-          <button
-            type="button"
-            className="rounded-md border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700"
-            disabled={cancelSlot.isPending}
-            onClick={onClose}
-          >
-            Đóng
-          </button>
-          <button
-            type="button"
-            className="rounded-md bg-red-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
-            disabled={cancelSlot.isPending}
-            onClick={handleSubmit}
-          >
-            {cancelSlot.isPending ? 'Đang hủy...' : 'Hủy khung giờ'}
-          </button>
-        </div>
-      </div>
-    </div>
+    </Modal>
   );
 }

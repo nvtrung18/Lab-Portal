@@ -1,3 +1,4 @@
+import { ErrorState, LoadingState, Modal, ResponsiveTable } from '../../../shared/components';
 import { useResearchGroup } from '../hooks';
 import { formatDate, formatGroupRole, formatGroupStatus, getStatusClass } from '../utils';
 
@@ -20,26 +21,15 @@ export function ResearchGroupDetailModal({ groupId, onClose }: ResearchGroupDeta
     : 'Chưa cập nhật';
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 px-4 py-6">
-      <section className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-lg bg-white p-6 shadow-xl">
-        <div className="flex items-start justify-between gap-4">
-          <h3 className="text-lg font-semibold text-slate-950">Chi tiết nhóm nghiên cứu</h3>
-          <button className="text-sm font-semibold text-slate-500 hover:text-slate-900" type="button" onClick={onClose}>
-            Đóng
-          </button>
-        </div>
-
+    <Modal onClose={onClose} size="xl" title="Chi tiết nhóm nghiên cứu">
         {isLoading ? (
-          <p className="mt-5 text-sm text-slate-600">Đang tải chi tiết nhóm nghiên cứu...</p>
+          <LoadingState>Đang tải chi tiết nhóm nghiên cứu...</LoadingState>
         ) : isError || !group ? (
-          <div className="mt-5 rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+          <ErrorState onRetry={() => refetch()}>
             Không thể tải chi tiết nhóm nghiên cứu.
-            <button className="ml-3 font-semibold underline" type="button" onClick={() => refetch()}>
-              Tải lại
-            </button>
-          </div>
+          </ErrorState>
         ) : (
-          <div className="mt-5 space-y-6">
+          <div className="space-y-6">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div>
                 <h4 className="text-base font-semibold text-slate-950">{group.name}</h4>
@@ -66,8 +56,8 @@ export function ResearchGroupDetailModal({ groupId, onClose }: ResearchGroupDeta
                   Chưa có thành viên nhóm.
                 </p>
               ) : (
-                <div className="mt-3 overflow-x-auto rounded-md border border-slate-200">
-                  <table className="min-w-full divide-y divide-slate-200 text-sm">
+                <ResponsiveTable className="mt-3">
+                  <table className="w-full min-w-[520px] divide-y divide-slate-200 text-sm">
                     <thead className="bg-slate-50">
                       <tr className="text-left font-semibold text-slate-700">
                         <th className="px-3 py-3">Thành viên</th>
@@ -88,13 +78,12 @@ export function ResearchGroupDetailModal({ groupId, onClose }: ResearchGroupDeta
                       ))}
                     </tbody>
                   </table>
-                </div>
+                </ResponsiveTable>
               )}
             </div>
           </div>
         )}
-      </section>
-    </div>
+    </Modal>
   );
 }
 

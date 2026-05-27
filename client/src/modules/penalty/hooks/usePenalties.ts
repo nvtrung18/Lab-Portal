@@ -1,14 +1,12 @@
 import axios from 'axios';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+import { queryKeys } from '../../../shared/api';
 import { toast } from '../../../shared/components';
-import { SLOT_REGISTRATIONS_QUERY_KEY } from '../../booking/hooks';
-import { SLOT_QUERY_KEY } from '../../booking/hooks/useLabSlots';
 import { createPenalty, getMyPenalties, getSlotPenalties, submitComplaint } from '../api';
 import type { CreateComplaintPayload, CreatePenaltyPayload } from '../types';
 
-export const PENALTIES_QUERY_KEY = ['penalties', 'me'] as const;
-export const SLOT_PENALTIES_QUERY_KEY = ['slotPenalties'] as const;
+export const PENALTIES_QUERY_KEY = queryKeys.penalties.mine;
 
 function getErrorMessage(error: unknown, fallback: string) {
   if (axios.isAxiosError(error)) {
@@ -45,7 +43,7 @@ export function useSubmitComplaint() {
 
 export function useSlotPenalties(slotId?: number | null) {
   return useQuery({
-    queryKey: slotId ? [...SLOT_PENALTIES_QUERY_KEY, slotId] : SLOT_PENALTIES_QUERY_KEY,
+    queryKey: queryKeys.penalties.bySlot(slotId as number),
     queryFn: () => getSlotPenalties(slotId as number),
     enabled: Boolean(slotId),
     staleTime: 15000,
@@ -62,11 +60,10 @@ export function useCreatePenalty(slotId?: number | null) {
     onSuccess: async (_penalty, payload) => {
       const effectiveSlotId = slotId ?? payload.slotId;
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: [...SLOT_REGISTRATIONS_QUERY_KEY, effectiveSlotId] }),
-        queryClient.invalidateQueries({ queryKey: [...SLOT_QUERY_KEY, effectiveSlotId] }),
-        queryClient.invalidateQueries({ queryKey: [...SLOT_PENALTIES_QUERY_KEY, effectiveSlotId] }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.slots.bookings(effectiveSlotId) }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.slots.detail(effectiveSlotId) }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.penalties.bySlot(effectiveSlotId) }),
         queryClient.invalidateQueries({ queryKey: PENALTIES_QUERY_KEY }),
-        queryClient.invalidateQueries({ queryKey: ['penalties', payload.userId] }),
       ]);
       toast.success('Đã ghi nhận vi phạm.');
     },

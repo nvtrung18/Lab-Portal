@@ -1,13 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+import { queryKeys } from '../../../shared/api';
 import { toast } from '../../../shared/components';
 import { LABS_QUERY_KEY, STUDENT_LABS_QUERY_KEY } from '../../lab/hooks';
 import { USER_ME_QUERY_KEY } from '../../user/hooks';
 import { assignLabManager, createLab, getAdminLabs, updateLabStatus, type CreateLabRequest } from '../api';
 import { ADMIN_USERS_QUERY_KEY } from './useAdminUsers';
 
-export const ADMIN_LABS_QUERY_KEY = ['adminLabs'] as const;
-export const AVAILABLE_MANAGERS_QUERY_KEY = ['availableManagers'] as const;
+export const ADMIN_LABS_QUERY_KEY = queryKeys.admin.labs;
+export const AVAILABLE_MANAGERS_QUERY_KEY = queryKeys.admin.availableManagers;
 
 export function useAdminLabs() {
   return useQuery({

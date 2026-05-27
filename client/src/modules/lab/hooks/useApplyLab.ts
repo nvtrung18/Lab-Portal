@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
+import { queryKeys } from '../../../shared/api';
 import { toast } from '../../../shared/components';
 import { APPLICATIONS_QUERY_KEY } from '../../application/hooks';
 import { USER_ME_QUERY_KEY } from '../../user/hooks';
@@ -18,11 +19,12 @@ export function useApplyLab() {
   return useMutation({
     mutationFn: ({ labId, cvUrl, cvFile }: ApplyLabVariables) =>
       applyForLab(labId, { cvUrl, cvFile }),
-    onSuccess: () => {
+    onSuccess: (_application, variables) => {
       toast.success('Nộp đơn ứng tuyển thành công.');
       void queryClient.invalidateQueries({ queryKey: LABS_QUERY_KEY });
       void queryClient.invalidateQueries({ queryKey: STUDENT_LABS_QUERY_KEY });
       void queryClient.invalidateQueries({ queryKey: APPLICATIONS_QUERY_KEY });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.applications.manager(variables.labId) });
       void queryClient.invalidateQueries({ queryKey: USER_ME_QUERY_KEY });
     },
     onError: () => {

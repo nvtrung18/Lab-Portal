@@ -1,8 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
 
+import { queryKeys } from '../../../shared/api';
 import { getProfile } from '../api';
 
-export const USER_ME_QUERY_KEY = ['userMe'] as const;
+export const USER_ME_QUERY_KEY = queryKeys.auth.userMe;
 
 export function useCurrentUser() {
   return useQuery({

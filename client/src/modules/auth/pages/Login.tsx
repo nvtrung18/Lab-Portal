@@ -11,6 +11,7 @@ import { PasswordVisibilityIcon } from '../components/PasswordVisibilityIcon';
 import { getPrimaryRedirectPath, useAuth } from '../hooks';
 import { USER_ME_QUERY_KEY } from '../../user/hooks';
 import type { Response } from '../../../shared/types';
+import { Button } from '../../../shared/components';
 
 const loginSchema = z.object({
   email: z
@@ -152,13 +153,15 @@ export function LoginPage() {
           </div>
         ) : null}
 
-        <button
+        <Button
+          className="w-full"
+          loading={isSubmitting}
+          loadingText="Đang đăng nhập..."
+          size="lg"
           type="submit"
-          disabled={isSubmitting}
-          className="flex w-full items-center justify-center rounded-md bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400"
         >
-          {isSubmitting ? 'Đang đăng nhập...' : 'Đăng nhập'}
-        </button>
+          Đăng nhập
+        </Button>
       </form>
 
       <div className="mt-6 text-center text-sm text-slate-600">

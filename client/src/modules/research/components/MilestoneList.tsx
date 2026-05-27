@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 
+import { Button, EmptyState, ErrorState, LoadingState } from '../../../shared/components';
 import { useCreateMilestone, useMilestonesByProject, useResearchEligibleStudents, useUpdateMilestone } from '../hooks';
 import type { ResearchMilestone } from '../types';
 import type { TaskBoardRole } from '../taskBoardHelpers';
@@ -15,7 +16,10 @@ interface MilestoneListProps {
   showTaskBoard?: boolean;
   taskBoardRole?: TaskBoardRole;
   taskBoardCurrentUserId?: number | null;
+  groupId?: number | null;
   emptyMessage?: string;
+  title?: string;
+  description?: string;
 }
 
 export function MilestoneList({
@@ -25,7 +29,10 @@ export function MilestoneList({
   showTaskBoard = canCreate,
   taskBoardRole = canCreate ? 'LAB_MANAGER' : undefined,
   taskBoardCurrentUserId,
+  groupId,
   emptyMessage = 'Chưa có mốc nghiên cứu nào.',
+  title = 'Mốc nghiên cứu',
+  description = 'Các giai đoạn chính cần hoàn thành trong đề tài.',
 }: MilestoneListProps) {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [detailMilestoneId, setDetailMilestoneId] = useState<number | null>(null);
@@ -57,33 +64,26 @@ export function MilestoneList({
     <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h3 className="text-lg font-semibold text-slate-950">Mốc nghiên cứu</h3>
-          <p className="mt-1 text-sm text-slate-600">Các giai đoạn chính cần hoàn thành trong đề tài.</p>
+          <h3 className="text-lg font-semibold text-slate-950">{title}</h3>
+          <p className="mt-1 text-sm text-slate-600">{description}</p>
         </div>
         {canCreate ? (
-          <button
-            className="rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white"
-            type="button"
-            onClick={() => setIsCreateOpen(true)}
-          >
+          <Button onClick={() => setIsCreateOpen(true)}>
             Tạo mốc nghiên cứu
-          </button>
+          </Button>
         ) : null}
       </div>
 
       {isLoading ? (
-        <p className="mt-5 text-sm text-slate-600">Đang tải danh sách mốc nghiên cứu...</p>
+        <LoadingState className="mt-5">Đang tải danh sách mốc nghiên cứu...</LoadingState>
       ) : isError ? (
-        <div className="mt-5 rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+        <ErrorState className="mt-5" onRetry={() => refetch()}>
           Không thể tải danh sách mốc nghiên cứu.
-          <button className="ml-3 font-semibold underline" type="button" onClick={() => refetch()}>
-            Tải lại
-          </button>
-        </div>
+        </ErrorState>
       ) : !milestones.length ? (
-        <div className="mt-5 rounded-md border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+        <EmptyState className="mt-5">
           {emptyMessage}
-        </div>
+        </EmptyState>
       ) : (
         <ol className="mt-5 space-y-3">
           {sortedMilestones.map((milestone) => {
@@ -128,21 +128,13 @@ export function MilestoneList({
                       </div>
                     </div>
                     <div className="mt-4 flex flex-wrap gap-2">
-                      <button
-                        className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-                        type="button"
-                        onClick={() => setDetailMilestoneId(milestone.id)}
-                      >
+                      <Button onClick={() => setDetailMilestoneId(milestone.id)} size="sm" variant="outline">
                         Xem chi tiết
-                      </button>
+                      </Button>
                       {canCreate ? (
-                        <button
-                          className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-                          type="button"
-                          onClick={() => setEditingMilestone(milestone)}
-                        >
+                        <Button onClick={() => setEditingMilestone(milestone)} size="sm" variant="outline">
                           Sửa mốc
-                        </button>
+                        </Button>
                       ) : null}
                     </div>
                   </div>
@@ -192,6 +184,7 @@ export function MilestoneList({
         taskBoardReadonly={!taskBoardRole}
         taskBoardRole={taskBoardRole}
         taskBoardCurrentUserId={taskBoardCurrentUserId}
+        groupId={groupId}
         onClose={() => setDetailMilestoneId(null)}
       />
     </section>

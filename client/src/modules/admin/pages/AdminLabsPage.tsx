@@ -18,6 +18,18 @@ function statusClassName(status: string) {
   return 'bg-slate-800 text-slate-200 ring-slate-700';
 }
 
+function formatLabStatus(status: string) {
+  const labels: Record<string, string> = {
+    AVAILABLE: 'Đang hoạt động',
+    ACTIVE: 'Đang hoạt động',
+    MAINTENANCE: 'Đang bảo trì',
+    INACTIVE: 'Ngừng hoạt động',
+    ARCHIVED: 'Đã lưu trữ',
+    CLOSED: 'Đã đóng',
+  };
+  return labels[status] ?? status;
+}
+
 function getAssignedManagerIds(labs: LabResponse[]) {
   return new Set(
     labs
@@ -67,14 +79,14 @@ function AssignManagerModal({ lab, onClose }: AssignManagerModalProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-950/70 px-4">
-      <div className="w-full max-w-lg rounded-lg border border-slate-800 bg-slate-900 p-6 shadow-xl">
+    <div className="fixed inset-0 z-40 flex items-center justify-center overflow-hidden bg-slate-950/70 p-2 sm:p-4">
+      <div className="max-h-[calc(100dvh-1rem)] w-full max-w-lg overflow-y-auto rounded-lg border border-slate-800 bg-slate-900 p-4 shadow-xl sm:p-6">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h3 className="text-lg font-semibold text-white">Assign Manager</h3>
+            <h3 className="text-lg font-semibold text-white">Phân công quản lý PTN</h3>
             <p className="mt-1 text-sm text-slate-400">{lab.labName}</p>
             <p className="mt-1 text-xs text-slate-500">
-              Manager hiện tại: {lab.manager?.fullName || lab.manager?.email || 'Chưa gán'}
+              Quản lý hiện tại: {lab.manager?.fullName || lab.manager?.email || 'Chưa gán'}
             </p>
           </div>
           <button
@@ -89,11 +101,11 @@ function AssignManagerModal({ lab, onClose }: AssignManagerModalProps) {
 
         <div className="mt-6">
           <label className="block text-sm font-medium text-slate-300" htmlFor="managerId">
-            LAB_MANAGER khả dụng
+            Quản lý PTN khả dụng
           </label>
           {managerOptions.length === 0 ? (
             <div className="mt-2 rounded-md border border-dashed border-slate-700 p-4 text-sm text-slate-400">
-              Không có manager khả dụng.
+              Không có quản lý PTN khả dụng.
             </div>
           ) : (
             <select
@@ -103,7 +115,7 @@ function AssignManagerModal({ lab, onClose }: AssignManagerModalProps) {
               disabled={assignMutation.isPending}
               onChange={(event) => setManagerId(event.target.value)}
             >
-              <option value="">Chọn manager</option>
+              <option value="">Chọn quản lý PTN</option>
               {managerOptions.map((user) => (
                 <option key={user.id} value={user.id}>
                   {user.fullName || user.email}
@@ -120,7 +132,7 @@ function AssignManagerModal({ lab, onClose }: AssignManagerModalProps) {
             disabled={assignMutation.isPending}
             onClick={onClose}
           >
-            Cancel
+            Hủy
           </button>
           <button
             type="button"
@@ -128,7 +140,7 @@ function AssignManagerModal({ lab, onClose }: AssignManagerModalProps) {
             disabled={assignMutation.isPending || !managerId}
             onClick={() => void handleSubmit()}
           >
-            {assignMutation.isPending ? 'Đang gán...' : 'Confirm'}
+            {assignMutation.isPending ? 'Đang gán...' : 'Xác nhận'}
           </button>
         </div>
       </div>
@@ -187,12 +199,12 @@ function AddLabModal({ open, onClose }: AddLabModalProps) {
     Number(form.capacity) >= 1;
 
   return (
-    <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-950/70 px-4">
-      <div className="w-full max-w-2xl rounded-lg border border-slate-800 bg-slate-900 p-6 shadow-xl">
+    <div className="fixed inset-0 z-40 flex items-center justify-center overflow-hidden bg-slate-950/70 p-2 sm:p-4">
+      <div className="max-h-[calc(100dvh-1rem)] w-full max-w-2xl overflow-y-auto rounded-lg border border-slate-800 bg-slate-900 p-4 shadow-xl sm:p-6">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h3 className="text-lg font-semibold text-white">Add Lab</h3>
-            <p className="mt-1 text-sm text-slate-400">Tạo lab mới và gán manager nếu cần.</p>
+            <h3 className="text-lg font-semibold text-white">Thêm phòng thí nghiệm</h3>
+            <p className="mt-1 text-sm text-slate-400">Tạo PTN mới và phân công quản lý nếu cần.</p>
           </div>
           <button
             type="button"
@@ -206,7 +218,7 @@ function AddLabModal({ open, onClose }: AddLabModalProps) {
 
         <div className="mt-6 grid gap-4 sm:grid-cols-2">
           <label className="space-y-2">
-            <span className="text-sm font-medium text-slate-300">Lab name</span>
+            <span className="text-sm font-medium text-slate-300">Tên PTN</span>
             <input
               className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none focus:border-white"
               value={form.labName}
@@ -214,7 +226,7 @@ function AddLabModal({ open, onClose }: AddLabModalProps) {
             />
           </label>
           <label className="space-y-2">
-            <span className="text-sm font-medium text-slate-300">Department</span>
+            <span className="text-sm font-medium text-slate-300">Khoa/Bộ môn</span>
             <input
               className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none focus:border-white"
               value={form.department}
@@ -222,7 +234,7 @@ function AddLabModal({ open, onClose }: AddLabModalProps) {
             />
           </label>
           <label className="space-y-2">
-            <span className="text-sm font-medium text-slate-300">Capacity</span>
+            <span className="text-sm font-medium text-slate-300">Sức chứa</span>
             <input
               className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none focus:border-white"
               min={1}
@@ -232,7 +244,7 @@ function AddLabModal({ open, onClose }: AddLabModalProps) {
             />
           </label>
           <label className="space-y-2">
-            <span className="text-sm font-medium text-slate-300">Location</span>
+            <span className="text-sm font-medium text-slate-300">Vị trí</span>
             <input
               className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none focus:border-white"
               value={form.location}
@@ -240,7 +252,7 @@ function AddLabModal({ open, onClose }: AddLabModalProps) {
             />
           </label>
           <label className="space-y-2 sm:col-span-2">
-            <span className="text-sm font-medium text-slate-300">Description</span>
+            <span className="text-sm font-medium text-slate-300">Mô tả</span>
             <textarea
               className="min-h-24 w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none focus:border-white"
               value={form.description}
@@ -248,10 +260,10 @@ function AddLabModal({ open, onClose }: AddLabModalProps) {
             />
           </label>
           <label className="space-y-2 sm:col-span-2">
-            <span className="text-sm font-medium text-slate-300">Manager (optional)</span>
+            <span className="text-sm font-medium text-slate-300">Quản lý PTN (không bắt buộc)</span>
             {managerOptions.length === 0 ? (
               <div className="rounded-md border border-dashed border-slate-700 p-4 text-sm text-slate-400">
-                Không có manager khả dụng.
+                Không có quản lý PTN khả dụng.
               </div>
             ) : (
               <select
@@ -259,7 +271,7 @@ function AddLabModal({ open, onClose }: AddLabModalProps) {
                 value={form.managerId}
                 onChange={(event) => updateField('managerId', event.target.value)}
               >
-                <option value="">Không gán manager</option>
+                <option value="">Chưa phân công quản lý</option>
                 {managerOptions.map((user) => (
                   <option key={user.id} value={user.id}>
                     {user.fullName || user.email}
@@ -270,14 +282,14 @@ function AddLabModal({ open, onClose }: AddLabModalProps) {
           </label>
         </div>
 
-        <div className="mt-6 flex justify-end gap-3">
+        <div className="sticky -bottom-4 -mx-4 mt-6 flex flex-col-reverse justify-end gap-3 border-t border-slate-800 bg-slate-900 px-4 pb-4 pt-4 sm:-bottom-6 sm:-mx-6 sm:flex-row sm:px-6 sm:pb-6">
           <button
             type="button"
             className="rounded-md border border-slate-700 px-4 py-2 text-sm font-semibold text-slate-200 transition hover:bg-slate-800"
             disabled={createMutation.isPending}
             onClick={onClose}
           >
-            Cancel
+            Hủy
           </button>
           <button
             type="button"
@@ -285,7 +297,7 @@ function AddLabModal({ open, onClose }: AddLabModalProps) {
             disabled={createMutation.isPending || !canSubmit}
             onClick={() => void handleSubmit()}
           >
-            {createMutation.isPending ? 'Đang tạo...' : 'Create Lab'}
+            {createMutation.isPending ? 'Đang tạo...' : 'Tạo PTN'}
           </button>
         </div>
       </div>
@@ -307,7 +319,7 @@ export function AdminLabsPage() {
 
   const handleDeactivate = (lab: LabResponse) => {
     const confirmed = window.confirm(
-      'Bạn có chắc muốn ngừng hoạt động lab này không? Lab sẽ không còn hiển thị cho student apply và không thể tạo booking mới, nhưng dữ liệu lịch sử vẫn được giữ lại.',
+      'Bạn có chắc muốn ngừng hoạt động PTN này không? PTN sẽ không còn hiển thị cho sinh viên ứng tuyển và không thể tạo lịch sử dụng mới, nhưng dữ liệu lịch sử vẫn được giữ lại.',
     );
 
     if (!confirmed) {
@@ -318,7 +330,7 @@ export function AdminLabsPage() {
   };
 
   const handleRestore = (lab: LabResponse) => {
-    const confirmed = window.confirm('Bạn có chắc muốn khôi phục hoạt động lab này không?');
+    const confirmed = window.confirm('Bạn có chắc muốn khôi phục hoạt động PTN này không?');
 
     if (!confirmed) {
       return;
@@ -343,7 +355,7 @@ export function AdminLabsPage() {
   if (isError) {
     return (
       <section className="rounded-lg border border-red-900 bg-slate-900 p-6 text-sm text-red-300 shadow-sm">
-        Không thể tải danh sách lab.
+        Không thể tải danh sách PTN.
       </section>
     );
   }
@@ -352,13 +364,13 @@ export function AdminLabsPage() {
     <section className="rounded-lg border border-slate-800 bg-slate-900 p-6 shadow-sm">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-xl font-semibold text-white">Labs</h2>
-          <p className="mt-1 text-sm text-slate-400">Quản lý toàn bộ lab và gán LAB_MANAGER.</p>
+          <h2 className="text-xl font-semibold text-white">Phòng thí nghiệm</h2>
+          <p className="mt-1 text-sm text-slate-400">Quản lý toàn bộ PTN và phân công quản lý.</p>
         </div>
         <div className="flex gap-3">
           <input
             className="rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none placeholder:text-slate-500 focus:border-white"
-            placeholder="Search lab name"
+            placeholder="Tìm theo tên PTN"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
           />
@@ -367,39 +379,39 @@ export function AdminLabsPage() {
             className="rounded-md bg-white px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-slate-200"
             onClick={() => setIsAddModalOpen(true)}
           >
-            Add Lab
+            Thêm PTN
           </button>
         </div>
       </div>
 
       {filteredLabs.length === 0 ? (
         <div className="mt-6 rounded-md border border-dashed border-slate-700 p-8 text-center text-sm text-slate-400">
-          Không có lab phù hợp.
+          Không có PTN phù hợp.
         </div>
       ) : (
-        <div className="mt-6 overflow-x-auto">
-          <table className="min-w-full divide-y divide-slate-800 text-sm">
+        <div className="mt-6 max-w-full overscroll-x-contain overflow-x-auto">
+          <table className="w-full min-w-[760px] divide-y divide-slate-800 text-sm">
             <thead>
               <tr className="text-left text-xs font-semibold uppercase text-slate-400">
-                <th className="px-3 py-3">Lab name</th>
-                <th className="px-3 py-3">Department</th>
-                <th className="px-3 py-3">Manager</th>
-                <th className="px-3 py-3">Capacity</th>
-                <th className="px-3 py-3">Location</th>
-                <th className="px-3 py-3">Status</th>
-                <th className="px-3 py-3 text-right">Actions</th>
+                <th className="px-3 py-3">Tên PTN</th>
+                <th className="px-3 py-3">Khoa/Bộ môn</th>
+                <th className="px-3 py-3">Quản lý</th>
+                <th className="px-3 py-3">Sức chứa</th>
+                <th className="px-3 py-3">Vị trí</th>
+                <th className="px-3 py-3">Trạng thái</th>
+                <th className="px-3 py-3 text-right">Thao tác</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800">
               {filteredLabs.map((lab) => (
                 <tr key={lab.id}>
                   <td className="px-3 py-4 font-medium text-slate-100">{lab.labName}</td>
-                  <td className="px-3 py-4 text-slate-300">{lab.department || 'N/A'}</td>
+                  <td className="px-3 py-4 text-slate-300">{lab.department || 'Chưa cập nhật'}</td>
                   <td className="px-3 py-4 text-slate-300">
                     {lab.manager?.fullName || lab.manager?.email || 'Chưa gán'}
                   </td>
-                  <td className="px-3 py-4 text-slate-300">{lab.capacity ?? 'N/A'}</td>
-                  <td className="px-3 py-4 text-slate-300">{lab.location || 'N/A'}</td>
+                  <td className="px-3 py-4 text-slate-300">{lab.capacity ?? 'Chưa cập nhật'}</td>
+                  <td className="px-3 py-4 text-slate-300">{lab.location || 'Chưa cập nhật'}</td>
                   <td className="px-3 py-4">
                     <span
                       className={[
@@ -407,7 +419,7 @@ export function AdminLabsPage() {
                         statusClassName(lab.status),
                       ].join(' ')}
                     >
-                      {lab.status}
+                      {formatLabStatus(lab.status)}
                     </span>
                   </td>
                   <td className="px-3 py-4">
@@ -415,16 +427,16 @@ export function AdminLabsPage() {
                       <button
                         type="button"
                         className="rounded-md border border-slate-700 px-3 py-1.5 text-xs font-semibold text-slate-100 transition hover:bg-slate-800"
-                        onClick={() => window.alert(`${lab.labName}\n${lab.description || 'No description'}`)}
+                        onClick={() => window.alert(`${lab.labName}\n${lab.description || 'Chưa có mô tả'}`)}
                       >
-                        View detail
+                        Xem chi tiết
                       </button>
                       <button
                         type="button"
                         className="rounded-md bg-white px-3 py-1.5 text-xs font-semibold text-slate-950 transition hover:bg-slate-200"
                         onClick={() => setSelectedLab(lab)}
                       >
-                        Assign Manager
+                        Phân công quản lý
                       </button>
                       {isLabInactive(lab) ? (
                         <button
@@ -433,7 +445,7 @@ export function AdminLabsPage() {
                           disabled={updateStatusMutation.isPending}
                           onClick={() => handleRestore(lab)}
                         >
-                          Restore
+                          Khôi phục
                         </button>
                       ) : null}
                       {isLabActive(lab) || lab.status === 'MAINTENANCE' ? (
@@ -443,7 +455,7 @@ export function AdminLabsPage() {
                           disabled={updateStatusMutation.isPending}
                           onClick={() => handleDeactivate(lab)}
                         >
-                          Deactivate
+                          Ngừng hoạt động
                         </button>
                       ) : null}
                     </div>

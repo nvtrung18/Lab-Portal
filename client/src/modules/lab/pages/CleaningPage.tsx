@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 
+import { Button, EmptyState, ErrorState } from '../../../shared/components';
 import { getManagedLabId, getManagedLabName } from '../../../shared/utils/membership';
 import type { CleaningTask } from '../../booking/api';
 import { AssignCleaningModal } from '../../booking/components';
@@ -84,35 +85,27 @@ export function CleaningPage() {
         </p>
       </div>
 
-      <div className="flex gap-2 overflow-x-auto">
+      <div className="flex max-w-full gap-2 overscroll-x-contain overflow-x-auto pb-1">
         {FILTERS.map((filter) => (
-          <button
+          <Button
             key={filter.value}
-            className={[
-              'whitespace-nowrap rounded-md px-3 py-2 text-sm font-semibold transition',
-              statusFilter === filter.value
-                ? 'bg-slate-900 text-white'
-                : 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-100',
-            ].join(' ')}
-            type="button"
+            size="sm"
+            variant={statusFilter === filter.value ? 'primary' : 'outline'}
             onClick={() => setStatusFilter(filter.value)}
           >
             {filter.label}
-          </button>
+          </Button>
         ))}
       </div>
 
       {isError ? (
-        <div className="rounded-lg border border-red-200 bg-white p-6 text-sm text-red-700 shadow-sm">
+        <ErrorState onRetry={() => refetch()}>
           Không thể tải danh sách nhiệm vụ vệ sinh.
-          <button className="ml-3 font-semibold underline" type="button" onClick={() => refetch()}>
-            Tải lại
-          </button>
-        </div>
+        </ErrorState>
       ) : !filteredTasks.length ? (
-        <div className="rounded-lg border border-slate-200 bg-white p-6 text-sm text-slate-600 shadow-sm">
+        <EmptyState>
           Hiện chưa có ca sử dụng nào cần phân công vệ sinh.
-        </div>
+        </EmptyState>
       ) : (
         <div className="grid gap-4 lg:grid-cols-2">
           {filteredTasks.map((task) => (
@@ -149,19 +142,17 @@ export function CleaningPage() {
 
               <div className="mt-5 flex flex-wrap gap-2">
                 {canAssign(task) ? (
-                  <button
-                    className="rounded-md bg-slate-900 px-3 py-2 text-sm font-semibold text-white"
-                    type="button"
-                    onClick={() => setAssignTask(task)}
-                  >
+                  <Button onClick={() => setAssignTask(task)} size="sm">
                     Phân công vệ sinh
-                  </button>
+                  </Button>
                 ) : null}
                 {canCancel(task) ? (
-                  <button
-                    className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-700 disabled:opacity-60"
+                  <Button
                     disabled={cancelTask.isPending}
-                    type="button"
+                    loading={cancelTask.isPending}
+                    loadingText="Đang hủy..."
+                    size="sm"
+                    variant="danger"
                     onClick={() => {
                       if (task.id) {
                         cancelTask.mutate(task.id);
@@ -169,7 +160,7 @@ export function CleaningPage() {
                     }}
                   >
                     Hủy nhiệm vụ
-                  </button>
+                  </Button>
                 ) : null}
               </div>
             </article>

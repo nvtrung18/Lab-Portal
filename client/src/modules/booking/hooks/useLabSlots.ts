@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+import { queryKeys } from '../../../shared/api';
 import { toast } from '../../../shared/components';
 import {
   cancelSlot,
@@ -11,14 +12,10 @@ import {
   type CreateSlotPayload,
 } from '../api';
 import { isUsableSlot, normalizeSlot } from '../utils';
-import { CLEANING_TASKS_QUERY_KEY } from './useCleaningTasks';
-
-export const LAB_SLOTS_QUERY_KEY = ['labSlots'] as const;
-export const SLOT_QUERY_KEY = ['slot'] as const;
 
 export function useLabSlots(labId?: number | null) {
   return useQuery({
-    queryKey: labId ? [...LAB_SLOTS_QUERY_KEY, labId] : LAB_SLOTS_QUERY_KEY,
+    queryKey: queryKeys.slots.byLab(labId as number),
     queryFn: async () => {
       const slots = await getLabSlots(labId as number);
       return slots.map(normalizeSlot).filter(isUsableSlot);
@@ -33,7 +30,7 @@ export function useLabSlots(labId?: number | null) {
 
 export function useSlot(slotId?: number | null) {
   return useQuery({
-    queryKey: slotId ? [...SLOT_QUERY_KEY, slotId] : SLOT_QUERY_KEY,
+    queryKey: queryKeys.slots.detail(slotId as number),
     queryFn: async () => normalizeSlot(await getSlot(slotId as number)),
     enabled: Boolean(slotId),
     staleTime: 30000,
@@ -55,8 +52,8 @@ export function useCreateSlot() {
   return useMutation({
     mutationFn: (payload: CreateSlotPayload) => createSlot(payload),
     onSuccess: (_slot, payload) => {
-      queryClient.invalidateQueries({ queryKey: [...LAB_SLOTS_QUERY_KEY, payload.labId] });
-      queryClient.invalidateQueries({ queryKey: [...CLEANING_TASKS_QUERY_KEY, payload.labId] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.slots.byLab(payload.labId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.cleaning.overview(payload.labId) });
       toast.success('Đã tạo khung giờ sử dụng thành công.');
     },
     onError: (error) => {
@@ -72,12 +69,12 @@ export function useCancelSlot(labId?: number | null, slotId?: number | null) {
     mutationFn: (payload: CancelSlotPayload) => cancelSlot(payload),
     onSuccess: (_slot, payload) => {
       if (labId) {
-        queryClient.invalidateQueries({ queryKey: [...LAB_SLOTS_QUERY_KEY, labId] });
-        queryClient.invalidateQueries({ queryKey: [...CLEANING_TASKS_QUERY_KEY, labId] });
+        queryClient.invalidateQueries({ queryKey: queryKeys.slots.byLab(labId) });
+        queryClient.invalidateQueries({ queryKey: queryKeys.cleaning.overview(labId) });
       }
-      queryClient.invalidateQueries({ queryKey: [...SLOT_QUERY_KEY, slotId ?? payload.slotId] });
-      queryClient.invalidateQueries({ queryKey: ['slotRegistrations', slotId ?? payload.slotId] });
-      queryClient.invalidateQueries({ queryKey: ['myBookings'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.slots.detail(slotId ?? payload.slotId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.slots.bookings(slotId ?? payload.slotId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.bookings.mine });
       toast.success('Đã hủy khung giờ sử dụng.');
     },
     onError: (error) => {

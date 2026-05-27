@@ -1,4 +1,4 @@
-# === Cấu hình cho Thư mục gốc (IDE & OS) ===
+# Root / IDE / OS
 .idea/
 *.iml
 *.iws
@@ -8,8 +8,10 @@
 Thumbs.db
 *.log
 
+# Do not commit QA working files
+qa/
 
-# === BACKEND (Thư mục server) ===
+# Backend
 server/HELP.md
 server/target/
 server/.mvn/wrapper/maven-wrapper.jar
@@ -17,15 +19,15 @@ server/.apt_generated
 server/.classpath
 server/.factorypath
 server/.project
-server/.settings
+server/.settings/
 server/.springBeans
-server/.sts4-cache
-# Giữ lại các file target quan trọng nếu có (theo quy tắc bạn gửi)
+server/.sts4-cache/
+
+# Keep target folders inside source trees if needed
 !server/**/src/main/**/target/
 !server/**/src/test/**/target/
 
-
-# === FRONTEND (Thư mục client) ===
+# Frontend
 client/node_modules/
 client/.pnp
 client/.pnp.js
@@ -40,7 +42,7 @@ client/npm-debug.log*
 client/yarn-debug.log*
 client/yarn-error.log*
 
-# === Cấu hình Build chung ===
+# Shared build outputs
 bin/
 build/
 out/

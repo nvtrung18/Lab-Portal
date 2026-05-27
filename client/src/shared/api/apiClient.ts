@@ -1,5 +1,8 @@
 import axios from 'axios';
 
+import { toast, TOAST_MESSAGES } from '../components/toast';
+import { queryClient } from './queryClient';
+
 export const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8080';
 export const AUTH_TOKEN_KEY = 'access_token';
 export const REFRESH_TOKEN_KEY = 'refreshToken';
@@ -109,9 +112,6 @@ export function getStoredUser(): StoredUser | null {
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
   withCredentials: true,
 });
 
@@ -122,26 +122,39 @@ apiClient.interceptors.request.use((config) => {
     config.headers.Authorization = `Bearer ${token}`;
   }
 
-  console.log('[API Request]', config.method?.toUpperCase(), config.url, {
-    hasToken: Boolean(token),
-  });
   return config;
 });
 
-apiClient.interceptors.response.use(
-  (response) => {
-    console.log('[API Response]', response.status, response.config.url);
-    return response;
-  },
-  (error) => {
-    console.error('[API Error]', error);
+function getApiErrorMessage(error: unknown) {
+  if (!axios.isAxiosError(error)) {
+    return null;
+  }
 
-    if (error.response?.status === 401) {
+  const data = error.response?.data as { message?: string; errors?: string[] } | undefined;
+  return data?.message ?? data?.errors?.[0] ?? null;
+}
+
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const status = error.response?.status;
+
+    if (status === 401 && (getAuthToken() || getStoredUser())) {
       clearAuthTokens();
+      queryClient.clear();
+      toast.warning('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
 
       if (window.location.pathname !== '/login') {
         window.location.href = '/login';
       }
+    } else if (status === 403) {
+      toast.error(TOAST_MESSAGES.permission);
+    } else if (status === 400) {
+      toast.error(getApiErrorMessage(error) ?? 'Dữ liệu yêu cầu không hợp lệ.');
+    } else if (!error.response) {
+      toast.error(TOAST_MESSAGES.network);
+    } else if (status !== undefined && status >= 500) {
+      toast.error(TOAST_MESSAGES.error);
     }
 
     return Promise.reject(error);

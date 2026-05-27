@@ -1,3 +1,4 @@
+import { Button } from '../../../shared/components';
 import { useCompleteCleaningTask } from '../hooks';
 
 interface ConfirmCleaningButtonProps {
@@ -29,17 +30,17 @@ export function ConfirmCleaningButton({ taskId, status }: ConfirmCleaningButtonP
   }
 
   return (
-    <button
-      className="rounded-md bg-slate-900 px-3 py-2 text-sm font-semibold text-white disabled:opacity-60"
-      disabled={completeTask.isPending}
-      type="button"
+    <Button
+      loading={completeTask.isPending}
+      loadingText="Đang xác nhận..."
+      size="sm"
       onClick={() => {
         if (window.confirm('Bạn có chắc muốn xác nhận đã hoàn thành nhiệm vụ vệ sinh này không?')) {
           completeTask.mutate(taskId);
         }
       }}
     >
-      {completeTask.isPending ? 'Đang xác nhận...' : 'Xác nhận hoàn thành'}
-    </button>
+      Xác nhận hoàn thành
+    </Button>
   );
 }

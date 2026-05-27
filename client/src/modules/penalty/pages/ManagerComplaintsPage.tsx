@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 
+import { Button, EmptyState, ErrorState } from '../../../shared/components';
 import { getManagedLabId, getManagedLabName } from '../../../shared/utils/membership';
 import { ComplaintReviewModal } from '../components';
 import { useManagerComplaints, useReviewComplaint } from '../hooks';
@@ -75,21 +76,16 @@ export function ManagerComplaintsPage() {
       </div>
 
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex gap-2 overflow-x-auto">
+        <div className="flex max-w-full gap-2 overscroll-x-contain overflow-x-auto pb-1">
           {FILTERS.map((filter) => (
-            <button
+            <Button
               key={filter.value}
-              className={[
-                'whitespace-nowrap rounded-md px-3 py-2 text-sm font-semibold transition',
-                statusFilter === filter.value
-                  ? 'bg-slate-900 text-white'
-                  : 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-100',
-              ].join(' ')}
-              type="button"
+              size="sm"
+              variant={statusFilter === filter.value ? 'primary' : 'outline'}
               onClick={() => setStatusFilter(filter.value)}
             >
               {filter.label}
-            </button>
+            </Button>
           ))}
         </div>
         <input
@@ -101,16 +97,13 @@ export function ManagerComplaintsPage() {
       </div>
 
       {isError ? (
-        <div className="rounded-lg border border-red-200 bg-white p-6 text-sm text-red-700 shadow-sm">
+        <ErrorState onRetry={() => refetch()}>
           Không thể tải danh sách khiếu nại.
-          <button className="ml-3 font-semibold underline" type="button" onClick={() => refetch()}>
-            Tải lại
-          </button>
-        </div>
+        </ErrorState>
       ) : !filteredComplaints.length ? (
-        <div className="rounded-lg border border-slate-200 bg-white p-6 text-sm text-slate-600 shadow-sm">
+        <EmptyState>
           Chưa có khiếu nại vi phạm phù hợp với bộ lọc hiện tại.
-        </div>
+        </EmptyState>
       ) : (
         <div className="space-y-4">
           {filteredComplaints.map((complaint) => (
@@ -159,20 +152,12 @@ export function ManagerComplaintsPage() {
 
               {complaint.status === 'PENDING' ? (
                 <div className="mt-5 flex flex-wrap gap-2">
-                  <button
-                    className="rounded-md bg-emerald-700 px-3 py-2 text-sm font-semibold text-white"
-                    type="button"
-                    onClick={() => setReviewState({ complaint, decision: 'APPROVE' })}
-                  >
+                  <Button onClick={() => setReviewState({ complaint, decision: 'APPROVE' })} size="sm">
                     Chấp nhận
-                  </button>
-                  <button
-                    className="rounded-md bg-red-700 px-3 py-2 text-sm font-semibold text-white"
-                    type="button"
-                    onClick={() => setReviewState({ complaint, decision: 'REJECT' })}
-                  >
+                  </Button>
+                  <Button onClick={() => setReviewState({ complaint, decision: 'REJECT' })} size="sm" variant="danger">
                     Từ chối
-                  </button>
+                  </Button>
                 </div>
               ) : null}
             </article>

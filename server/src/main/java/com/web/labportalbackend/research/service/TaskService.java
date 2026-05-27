@@ -14,5 +14,7 @@ public interface TaskService {
 
     List<TaskResponse> getByMilestone(Long milestoneId);
 
+    List<TaskResponse> getByGroup(Long groupId);
+
     TaskResponse updateStatus(Long taskId, UpdateTaskStatusRequest request);
 }
