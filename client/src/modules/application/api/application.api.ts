@@ -10,7 +10,11 @@ export interface ApplicationResponse {
   applicantEmail: string;
   labId: number;
   labName: string;
-  cvUrl: string;
+  cvUrl?: string | null;
+  cvFileUrl?: string | null;
+  cvFileName?: string | null;
+  cvContentType?: string | null;
+  cvSize?: number | null;
   status: ApplicationStatus;
   createdAt: string;
   updatedAt: string;
@@ -28,6 +32,30 @@ export async function getApplications(): Promise<ApplicationResponse[]> {
   const response =
     await apiClient.get<Response<PageResponse<ApplicationResponse>>>(
       '/api/applications',
+    );
+
+  return response.data.data.content;
+}
+
+export async function getApplicationsByLab(
+  labId: number,
+): Promise<ApplicationResponse[]> {
+  // UI scoping for LAB_MANAGER. Backend must still enforce that the caller
+  // is allowed to read only applications from their managed lab.
+  const response =
+    await apiClient.get<Response<PageResponse<ApplicationResponse>>>(
+      `/api/applications/labs/${labId}`,
+    );
+
+  return response.data.data.content;
+}
+
+export async function getApplicationsByUser(
+  userId: number,
+): Promise<ApplicationResponse[]> {
+  const response =
+    await apiClient.get<Response<PageResponse<ApplicationResponse>>>(
+      `/api/applications/users/${userId}`,
     );
 
   return response.data.data.content;

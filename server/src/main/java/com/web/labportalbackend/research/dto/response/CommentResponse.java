@@ -1,6 +1,6 @@
 package com.web.labportalbackend.research.dto.response;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.web.labportalbackend.research.enums.GroupRole;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -10,12 +10,12 @@ import java.time.Instant;
 @Builder
 public class CommentResponse {
     private Long id;
-
-    @JsonProperty("author_id")
+    private Long reportId;
     private Long authorId;
-
+    private String authorName;
+    private String authorEmail;
+    private String authorRole;
+    private GroupRole groupRole;
     private String content;
-
-    @JsonProperty("created_at")
     private Instant createdAt;
 }

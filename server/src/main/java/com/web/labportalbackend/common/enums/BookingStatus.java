@@ -11,6 +11,11 @@ package com.web.labportalbackend.common.enums;
  * PENDING → WAITLISTED (when slot is full during high concurrency)
  */
 public enum BookingStatus {
+    PENDING_APPROVAL,
+    APPROVED,
+    REJECTED,
+    CANCELLED_BY_STUDENT,
+    CANCELLED_BY_MANAGER,
     PENDING,
     CONFIRMED,
     CHECKED_IN,

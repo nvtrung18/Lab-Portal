@@ -5,6 +5,7 @@ package com.web.labportalbackend.common.enums;
  */
 public enum UserStatus {
     ACTIVE,
+    PENDING_VERIFICATION,
     INACTIVE,
     SUSPENDED
 }

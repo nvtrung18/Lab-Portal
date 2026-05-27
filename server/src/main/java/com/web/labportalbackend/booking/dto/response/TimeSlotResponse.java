@@ -18,11 +18,16 @@ import java.time.Instant;
 @AllArgsConstructor
 public class TimeSlotResponse {
     @JsonProperty("id") private Long id;
-    @JsonProperty("lab_id") private Long labId;
-    @JsonProperty("start_time") private Instant startTime;
-    @JsonProperty("end_time") private Instant endTime;
+    @JsonProperty("labId") private Long labId;
+    @JsonProperty("startTime") private Instant startTime;
+    @JsonProperty("endTime") private Instant endTime;
     @JsonProperty("capacity") private Integer capacity;
+    @JsonProperty("bookedCount") private Long bookedCount;
+    @JsonProperty("approvedCount") private Long approvedCount;
+    @JsonProperty("checkedInCount") private Long checkedInCount;
+    @JsonProperty("pendingCount") private Long pendingCount;
+    @JsonProperty("remainingCapacity") private Long remainingCapacity;
     @JsonProperty("status") private TimeSlotStatus status;
-    @JsonProperty("created_at") private Instant createdAt;
-    @JsonProperty("updated_at") private Instant updatedAt;
+    @JsonProperty("createdAt") private Instant createdAt;
+    @JsonProperty("updatedAt") private Instant updatedAt;
 }

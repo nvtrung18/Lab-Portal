@@ -13,6 +13,8 @@ public interface LaboratoryRepository extends JpaRepository<Laboratory, Long> {
 
     Optional<Laboratory> findByLabName(String labName);
 
+    Optional<Laboratory> findFirstByManagerIdAndDeletedFalse(Long managerId);
+
     List<Laboratory> findByDepartment(String department);
 
     List<Laboratory> findByStatus(LabStatus status);

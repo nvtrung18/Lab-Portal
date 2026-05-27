@@ -71,7 +71,17 @@ public class User extends BaseEntity {
     }
 
     public boolean hasRole(String roleName) {
+        String normalizedRoleName = normalizeRoleName(roleName);
         return this.roles.stream()
-                .anyMatch(r -> r.getName().equalsIgnoreCase(roleName));
+                .map(Role::getName)
+                .map(User::normalizeRoleName)
+                .anyMatch(normalizedRoleName::equalsIgnoreCase);
+    }
+
+    private static String normalizeRoleName(String roleName) {
+        if (roleName == null) {
+            return "";
+        }
+        return roleName.startsWith("ROLE_") ? roleName.substring("ROLE_".length()) : roleName;
     }
 }

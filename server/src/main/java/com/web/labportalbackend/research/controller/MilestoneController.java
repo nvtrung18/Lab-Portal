@@ -2,6 +2,7 @@ package com.web.labportalbackend.research.controller;
 
 import com.web.labportalbackend.common.dto.Response;
 import com.web.labportalbackend.research.dto.request.CreateMilestoneRequest;
+import com.web.labportalbackend.research.dto.request.UpdateMilestoneRequest;
 import com.web.labportalbackend.research.dto.response.MilestoneResponse;
 import com.web.labportalbackend.research.service.MilestoneService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -10,6 +11,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,6 +25,7 @@ public class MilestoneController {
 
     @PostMapping("/milestones")
     @Operation(summary = "Create milestone")
+    @PreAuthorize("hasRole('LAB_MANAGER')")
     public ResponseEntity<Response<MilestoneResponse>> createMilestone(
             @Valid @RequestBody CreateMilestoneRequest request
     ) {
@@ -32,9 +35,31 @@ public class MilestoneController {
 
     @GetMapping("/projects/{id}/milestones")
     @Operation(summary = "Get milestones by project")
+    @PreAuthorize("hasAnyRole('LAB_MANAGER', 'STUDENT')")
     public ResponseEntity<Response<List<MilestoneResponse>>> getByProject(@PathVariable Long id) {
         return ResponseEntity.ok(
                 Response.ok("Milestones retrieved successfully", milestoneService.getByProject(id))
+        );
+    }
+
+    @GetMapping("/milestones/{id}")
+    @Operation(summary = "Get milestone detail")
+    @PreAuthorize("hasAnyRole('LAB_MANAGER', 'STUDENT')")
+    public ResponseEntity<Response<MilestoneResponse>> getDetail(@PathVariable Long id) {
+        return ResponseEntity.ok(
+                Response.ok("Milestone retrieved successfully", milestoneService.getDetail(id))
+        );
+    }
+
+    @PutMapping("/milestones/{id}")
+    @Operation(summary = "Update milestone")
+    @PreAuthorize("hasRole('LAB_MANAGER')")
+    public ResponseEntity<Response<MilestoneResponse>> updateMilestone(
+            @PathVariable Long id,
+            @Valid @RequestBody UpdateMilestoneRequest request
+    ) {
+        return ResponseEntity.ok(
+                Response.ok("Milestone updated successfully", milestoneService.updateMilestone(id, request))
         );
     }
 }

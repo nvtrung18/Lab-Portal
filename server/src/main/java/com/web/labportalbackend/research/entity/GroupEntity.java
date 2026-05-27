@@ -3,6 +3,7 @@ package com.web.labportalbackend.research.entity;
 import com.web.labportalbackend.auth.entity.User;
 import com.web.labportalbackend.common.entity.BaseEntity;
 import com.web.labportalbackend.lab.entity.Laboratory;
+import com.web.labportalbackend.research.enums.GroupStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -25,8 +26,30 @@ public class GroupEntity extends BaseEntity {
     @JoinColumn(name = "lab_id", nullable = false)
     private Laboratory lab;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "topic_id")
+    private ResearchTopicEntity topic;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "project_id")
+    private ProjectEntity project;
+
     @Column(nullable = false, length = 150)
     private String name;
+
+    @Column(columnDefinition = "TEXT")
+    private String description;
+
+    @Column(columnDefinition = "TEXT")
+    private String objective;
+
+    @Column(columnDefinition = "TEXT")
+    private String plan;
+
+    @Builder.Default
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private GroupStatus status = GroupStatus.ACTIVE;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "leader_id", nullable = false)

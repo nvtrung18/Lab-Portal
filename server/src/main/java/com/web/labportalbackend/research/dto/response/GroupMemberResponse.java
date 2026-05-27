@@ -12,6 +12,8 @@ public class GroupMemberResponse {
     private Long id;
     private Long groupId;
     private Long userId;
+    private String fullName;
+    private String email;
     private GroupRole role;
     private Instant joinedAt;
 }

@@ -8,6 +8,13 @@ export interface LoginRequest {
   password: string;
 }
 
+export interface RegisterRequest {
+  fullName: string;
+  email: string;
+  password: string;
+  verificationToken: string;
+}
+
 export interface LoginResponse {
   token?: string;
   accessToken?: string;
@@ -19,6 +26,43 @@ export interface LoginResponse {
   email?: string;
   role?: string;
   roles?: string[];
+}
+
+export interface AuthEmailResponse {
+  email: string;
+  message: string;
+}
+
+export type RegisterResponse = AuthEmailResponse;
+
+export interface RegisterVerifyCodeResponse {
+  email: string;
+  verificationToken: string;
+  message: string;
+}
+
+export interface PasswordResetVerifyResponse {
+  resetToken: string;
+  message: string;
+}
+
+export interface VerifyRegisterRequest {
+  email: string;
+  code: string;
+}
+
+export interface ForgotPasswordRequest {
+  email: string;
+}
+
+export interface ResetPasswordRequest {
+  email: string;
+  resetToken: string;
+  newPassword: string;
+}
+
+export interface ResendCodeRequest {
+  email: string;
 }
 
 interface JwtPayload {
@@ -114,4 +158,45 @@ export async function loginAPI(data: LoginRequest): Promise<LoginResult> {
     raw: auth,
     roleSource: 'jwt',
   };
+}
+
+export async function sendRegisterCodeAPI(data: ResendCodeRequest): Promise<AuthEmailResponse> {
+  const response = await apiClient.post<Response<AuthEmailResponse>>(
+    '/api/auth/register/send-code',
+    data,
+  );
+  return response.data.data;
+}
+
+export async function verifyRegisterCodeAPI(data: VerifyRegisterRequest): Promise<RegisterVerifyCodeResponse> {
+  const response = await apiClient.post<Response<RegisterVerifyCodeResponse>>(
+    '/api/auth/register/verify-code',
+    data,
+  );
+  return response.data.data;
+}
+
+export async function registerAPI(data: RegisterRequest): Promise<AuthEmailResponse> {
+  const response = await apiClient.post<Response<AuthEmailResponse>>(
+    '/api/auth/register',
+    data,
+  );
+  return response.data.data;
+}
+
+export async function sendForgotPasswordCodeAPI(data: ForgotPasswordRequest): Promise<AuthEmailResponse> {
+  const response = await apiClient.post<Response<AuthEmailResponse>>('/api/auth/forgot-password/send-code', data);
+  return response.data.data;
+}
+
+export async function verifyForgotPasswordCodeAPI(data: VerifyRegisterRequest): Promise<PasswordResetVerifyResponse> {
+  const response = await apiClient.post<Response<PasswordResetVerifyResponse>>(
+    '/api/auth/forgot-password/verify-code',
+    data,
+  );
+  return response.data.data;
+}
+
+export async function resetPasswordAPI(data: ResetPasswordRequest): Promise<void> {
+  await apiClient.post<Response<void>>('/api/auth/reset-password', data);
 }

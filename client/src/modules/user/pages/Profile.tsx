@@ -4,42 +4,61 @@ import { useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
-import { useProfile, useUpdateProfile } from '../hooks';
+import { Button, toast } from '../../../shared/components';
 import type { Response } from '../../../shared/types';
+import type { UserMembershipResponse } from '../api';
+import { useCurrentUser, useUpdateProfile } from '../hooks';
 
 const profileSchema = z.object({
-  fullName: z
-    .string()
-    .trim()
-    .min(2, 'Họ tên phải có ít nhất 2 ký tự')
-    .max(100, 'Họ tên tối đa 100 ký tự'),
+  fullName: z.string().trim().min(1, 'Vui lòng nhập họ tên').max(100, 'Họ tên tối đa 100 ký tự'),
   phone: z
     .string()
     .trim()
-    .regex(/^[+]?[0-9]{10,15}$/, 'Số điện thoại phải có 10-15 chữ số')
+    .regex(/^[+]?[0-9]{10,15}$/, 'Số điện thoại phải có 10-15 chữ số, có thể bắt đầu bằng +')
+    .or(z.literal('')),
+  avatarUrl: z
+    .string()
+    .trim()
+    .url('Avatar URL không hợp lệ')
     .or(z.literal('')),
 });
 
 type ProfileFormValues = z.infer<typeof profileSchema>;
 
-function getMutationErrorMessage(error: unknown) {
+function getApiErrorMessage(error: unknown, fallback: string) {
   if (axios.isAxiosError(error)) {
     const response = error.response?.data as Partial<Response<unknown>> | undefined;
-    return response?.message ?? 'Không thể cập nhật hồ sơ.';
+    return response?.message ?? fallback;
   }
 
-  return 'Không thể cập nhật hồ sơ. Vui lòng thử lại.';
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  return fallback;
+}
+
+function getLabName(membership: UserMembershipResponse) {
+  return membership.labName ?? membership.lab?.name ?? membership.lab?.labName ?? `PTN #${membership.labId ?? membership.lab?.id ?? membership.id ?? ''}`;
+}
+
+function formatRole(role: string) {
+  const normalizedRole = role.replace(/^ROLE_/, '');
+  return normalizedRole === 'LAB_MANAGER' ? 'Quản lý PTN' : normalizedRole === 'STUDENT' ? 'Sinh viên' : normalizedRole;
 }
 
 export function ProfilePage() {
-  const { data: profile, isLoading, isError, error } = useProfile();
+  const { data: profile, isLoading, isError, error } = useCurrentUser();
   const updateProfileMutation = useUpdateProfile();
   const [isEditing, setIsEditing] = useState(false);
-  const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [formMessage, setFormMessage] = useState<string | null>(null);
 
-  const fallbackName = useMemo(() => {
-    return profile?.fullName || profile?.username || profile?.email || 'User';
-  }, [profile]);
+  const canEditAvatarUrl = profile ? Object.prototype.hasOwnProperty.call(profile, 'avatarUrl') : false;
+  const displayName = profile?.fullName || profile?.username || profile?.email || 'Người dùng';
+  const activeMemberships = useMemo(
+    () => profile?.memberships?.filter((membership) => membership.status?.toUpperCase() === 'ACTIVE') ?? [],
+    [profile?.memberships],
+  );
 
   const {
     register,
@@ -51,30 +70,38 @@ export function ProfilePage() {
     defaultValues: {
       fullName: '',
       phone: '',
+      avatarUrl: '',
     },
   });
 
   useEffect(() => {
-    if (profile) {
-      reset({
-        fullName: profile.fullName ?? '',
-        phone: profile.phone ?? '',
-      });
+    if (!profile) {
+      return;
     }
+
+    reset({
+      fullName: profile.fullName ?? '',
+      phone: profile.phone ?? '',
+      avatarUrl: profile.avatarUrl ?? '',
+    });
   }, [profile, reset]);
 
   const onSubmit = async (values: ProfileFormValues) => {
-    setStatusMessage(null);
+    setFormMessage(null);
 
     try {
       await updateProfileMutation.mutateAsync({
-        fullName: values.fullName,
-        phone: values.phone || null,
+        fullName: values.fullName.trim(),
+        phone: values.phone.trim() || null,
+        ...(canEditAvatarUrl ? { avatarUrl: values.avatarUrl.trim() || null } : {}),
       });
-      setStatusMessage('Cập nhật hồ sơ thành công.');
       setIsEditing(false);
+      setFormMessage('Cập nhật hồ sơ thành công.');
+      toast.success('Cập nhật hồ sơ thành công.');
     } catch (mutationError) {
-      setStatusMessage(getMutationErrorMessage(mutationError));
+      const message = getApiErrorMessage(mutationError, 'Không thể cập nhật hồ sơ.');
+      setFormMessage(message);
+      toast.error(message);
     }
   };
 
@@ -82,10 +109,11 @@ export function ProfilePage() {
     return (
       <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
         <div className="h-6 w-40 animate-pulse rounded bg-slate-200" />
-        <div className="mt-6 space-y-3">
-          <div className="h-4 w-72 animate-pulse rounded bg-slate-200" />
-          <div className="h-4 w-56 animate-pulse rounded bg-slate-200" />
-          <div className="h-4 w-64 animate-pulse rounded bg-slate-200" />
+        <div className="mt-6 grid gap-4 sm:grid-cols-2">
+          <div className="h-16 animate-pulse rounded bg-slate-100" />
+          <div className="h-16 animate-pulse rounded bg-slate-100" />
+          <div className="h-16 animate-pulse rounded bg-slate-100" />
+          <div className="h-16 animate-pulse rounded bg-slate-100" />
         </div>
       </section>
     );
@@ -93,9 +121,8 @@ export function ProfilePage() {
 
   if (isError || !profile) {
     return (
-      <section className="rounded-lg border border-red-200 bg-white p-6 text-red-700 shadow-sm">
-        Không thể tải hồ sơ người dùng.
-        {error instanceof Error ? ` ${error.message}` : null}
+      <section className="rounded-lg border border-red-200 bg-white p-6 text-sm text-red-700 shadow-sm">
+        Không thể tải hồ sơ. {getApiErrorMessage(error, '')}
       </section>
     );
   }
@@ -104,32 +131,37 @@ export function ProfilePage() {
     <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
       <div className="flex flex-col gap-4 border-b border-slate-200 pb-6 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-4">
-          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-slate-900 text-lg font-semibold text-white">
-            {fallbackName.charAt(0).toUpperCase()}
-          </div>
+          {profile.avatarUrl ? (
+            <img
+              alt={displayName}
+              className="h-16 w-16 rounded-full border border-slate-200 object-cover"
+              src={profile.avatarUrl}
+            />
+          ) : (
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-slate-900 text-xl font-semibold text-white">
+              {displayName.charAt(0).toUpperCase()}
+            </div>
+          )}
           <div>
-            <h2 className="text-xl font-semibold text-slate-950">
-              {fallbackName}
-            </h2>
+            <h2 className="text-xl font-semibold text-slate-950">{displayName}</h2>
             <p className="mt-1 text-sm text-slate-600">{profile.email}</p>
+            <p className="mt-1 text-xs font-medium uppercase text-slate-500">{profile.roles.map(formatRole).join(', ')}</p>
           </div>
         </div>
 
         {!isEditing ? (
-          <button
-            type="button"
-            className="rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
+          <Button
             onClick={() => {
-              setStatusMessage(null);
+              setFormMessage(null);
               setIsEditing(true);
             }}
           >
             Chỉnh sửa
-          </button>
+          </Button>
         ) : null}
       </div>
 
-      {statusMessage ? (
+      {formMessage ? (
         <div
           className={[
             'mt-5 rounded-md border px-3 py-2 text-sm',
@@ -138,44 +170,56 @@ export function ProfilePage() {
               : 'border-emerald-200 bg-emerald-50 text-emerald-700',
           ].join(' ')}
         >
-          {statusMessage}
+          {formMessage}
         </div>
       ) : null}
 
       {!isEditing ? (
-        <dl className="mt-6 grid gap-5 sm:grid-cols-2">
+        <div className="mt-6 space-y-8">
+          <dl className="grid gap-5 sm:grid-cols-2">
+            <div>
+              <dt className="text-sm font-medium text-slate-500">Họ tên</dt>
+              <dd className="mt-1 text-sm text-slate-950">{profile.fullName}</dd>
+            </div>
+            <div>
+              <dt className="text-sm font-medium text-slate-500">Email</dt>
+              <dd className="mt-1 text-sm text-slate-950">{profile.email}</dd>
+            </div>
+            <div>
+              <dt className="text-sm font-medium text-slate-500">Số điện thoại</dt>
+              <dd className="mt-1 text-sm text-slate-950">{profile.phone || 'Chưa cập nhật'}</dd>
+            </div>
+            <div>
+              <dt className="text-sm font-medium text-slate-500">Vai trò</dt>
+              <dd className="mt-1 text-sm text-slate-950">{profile.roles.map(formatRole).join(', ')}</dd>
+            </div>
+          </dl>
+
           <div>
-            <dt className="text-sm font-medium text-slate-500">Họ tên</dt>
-            <dd className="mt-1 text-sm text-slate-950">{profile.fullName}</dd>
+            <h3 className="text-sm font-semibold text-slate-950">Thông tin PTN</h3>
+            {activeMemberships.length ? (
+              <ul className="mt-3 divide-y divide-slate-200 rounded-md border border-slate-200">
+                {activeMemberships.map((membership, index) => (
+                  <li
+                    className="flex items-center justify-between gap-3 px-4 py-3 text-sm"
+                    key={`${membership.labId ?? membership.lab?.id ?? membership.id ?? index}-${membership.status}`}
+                  >
+                    <span className="font-medium text-slate-950">{getLabName(membership)}</span>
+                    <span className="rounded-full bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-700">
+                      Đang hoạt động
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="mt-2 text-sm text-slate-600">Chưa tham gia PTN nào</p>
+            )}
           </div>
-          <div>
-            <dt className="text-sm font-medium text-slate-500">Username</dt>
-            <dd className="mt-1 text-sm text-slate-950">{profile.username}</dd>
-          </div>
-          <div>
-            <dt className="text-sm font-medium text-slate-500">Số điện thoại</dt>
-            <dd className="mt-1 text-sm text-slate-950">
-              {profile.phone || 'Chưa cập nhật'}
-            </dd>
-          </div>
-          <div>
-            <dt className="text-sm font-medium text-slate-500">Vai trò</dt>
-            <dd className="mt-1 text-sm text-slate-950">
-              {profile.roles.join(', ')}
-            </dd>
-          </div>
-          <div>
-            <dt className="text-sm font-medium text-slate-500">Trạng thái</dt>
-            <dd className="mt-1 text-sm text-slate-950">{profile.status}</dd>
-          </div>
-        </dl>
+        </div>
       ) : (
         <form className="mt-6 max-w-xl space-y-5" onSubmit={handleSubmit(onSubmit)}>
           <div>
-            <label
-              className="block text-sm font-medium text-slate-700"
-              htmlFor="fullName"
-            >
+            <label className="block text-sm font-medium text-slate-700" htmlFor="fullName">
               Họ tên
             </label>
             <input
@@ -184,18 +228,11 @@ export function ProfilePage() {
               disabled={updateProfileMutation.isPending}
               {...register('fullName')}
             />
-            {errors.fullName ? (
-              <p className="mt-2 text-sm text-red-600">
-                {errors.fullName.message}
-              </p>
-            ) : null}
+            {errors.fullName ? <p className="mt-2 text-sm text-red-600">{errors.fullName.message}</p> : null}
           </div>
 
           <div>
-            <label
-              className="block text-sm font-medium text-slate-700"
-              htmlFor="phone"
-            >
+            <label className="block text-sm font-medium text-slate-700" htmlFor="phone">
               Số điện thoại
             </label>
             <input
@@ -205,36 +242,49 @@ export function ProfilePage() {
               placeholder="+84901234567"
               {...register('phone')}
             />
-            {errors.phone ? (
-              <p className="mt-2 text-sm text-red-600">
-                {errors.phone.message}
-              </p>
-            ) : null}
+            {errors.phone ? <p className="mt-2 text-sm text-red-600">{errors.phone.message}</p> : null}
           </div>
 
+          {canEditAvatarUrl ? (
+            <div>
+              <label className="block text-sm font-medium text-slate-700" htmlFor="avatarUrl">
+                Avatar URL
+              </label>
+              <input
+                id="avatarUrl"
+                className="mt-2 block w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-950 shadow-sm outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
+                disabled={updateProfileMutation.isPending}
+                placeholder="https://example.com/avatar.jpg"
+                {...register('avatarUrl')}
+              />
+              {errors.avatarUrl ? <p className="mt-2 text-sm text-red-600">{errors.avatarUrl.message}</p> : null}
+            </div>
+          ) : null}
+
           <div className="flex gap-3">
-            <button
-              type="submit"
+            <Button
               disabled={updateProfileMutation.isPending || !isDirty}
-              className="rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400"
+              loading={updateProfileMutation.isPending}
+              loadingText="Đang lưu..."
+              type="submit"
             >
-              {updateProfileMutation.isPending ? 'Đang lưu...' : 'Lưu'}
-            </button>
-            <button
-              type="button"
+              Lưu
+            </Button>
+            <Button
               disabled={updateProfileMutation.isPending}
-              className="rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:text-slate-400"
+              variant="outline"
               onClick={() => {
                 reset({
                   fullName: profile.fullName ?? '',
                   phone: profile.phone ?? '',
+                  avatarUrl: profile.avatarUrl ?? '',
                 });
-                setStatusMessage(null);
+                setFormMessage(null);
                 setIsEditing(false);
               }}
             >
               Hủy
-            </button>
+            </Button>
           </div>
         </form>
       )}

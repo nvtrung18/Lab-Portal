@@ -17,12 +17,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-/**
- * Authentication & user management endpoints.
- * <p>
- * Thin controller — delegates all logic to service layer.
- * NEVER accesses Repository directly.
- */
 @RestController
 @RequestMapping("/auth")
 @RequiredArgsConstructor
@@ -32,8 +26,6 @@ public class AuthController {
     private final AuthService authService;
     private final UserService userService;
 
-    // ===================== Public Auth Endpoints =====================
-
     @PostMapping("/login")
     @Operation(summary = "User login", description = "Authenticate with email/username and password, returns JWT tokens")
     public ResponseEntity<Response<AuthResponse>> login(@Valid @RequestBody LoginRequest request) {
@@ -41,12 +33,46 @@ public class AuthController {
         return ResponseEntity.ok(Response.ok("Login successful", authResponse));
     }
 
+    @PostMapping("/register/send-code")
+    @Operation(summary = "Send registration code", description = "Send registration OTP to email without creating a user")
+    public ResponseEntity<Response<AuthEmailResponse>> sendRegistrationCode(@Valid @RequestBody RegisterSendCodeRequest request) {
+        AuthEmailResponse result = authService.sendRegistrationCode(request);
+        return ResponseEntity.ok(Response.ok(result.getMessage(), result));
+    }
+
+    @PostMapping("/register/verify-code")
+    @Operation(summary = "Verify registration code", description = "Verify registration OTP and issue a temporary token")
+    public ResponseEntity<Response<RegisterVerifyCodeResponse>> verifyRegistrationCode(@Valid @RequestBody VerifyRegisterRequest request) {
+        RegisterVerifyCodeResponse result = authService.verifyRegistrationCode(request);
+        return ResponseEntity.ok(Response.ok(result.getMessage(), result));
+    }
+
     @PostMapping("/register")
-    @Operation(summary = "User registration", description = "Register a new user account with STUDENT role")
-    public ResponseEntity<Response<AuthResponse>> register(@Valid @RequestBody RegisterRequest request) {
-        AuthResponse authResponse = authService.register(request);
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(Response.ok("Registration successful", authResponse));
+    @Operation(summary = "Complete user registration", description = "Create a STUDENT account after email verification")
+    public ResponseEntity<Response<AuthEmailResponse>> register(@Valid @RequestBody RegisterRequest request) {
+        AuthEmailResponse result = authService.register(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(Response.ok(result.getMessage(), result));
+    }
+
+    @PostMapping("/forgot-password/send-code")
+    @Operation(summary = "Forgot password", description = "Send password reset code if email exists")
+    public ResponseEntity<Response<AuthEmailResponse>> sendPasswordResetCode(@Valid @RequestBody ForgotPasswordRequest request) {
+        AuthEmailResponse result = authService.sendPasswordResetCode(request);
+        return ResponseEntity.ok(Response.ok(result.getMessage(), result));
+    }
+
+    @PostMapping("/forgot-password/verify-code")
+    @Operation(summary = "Verify password reset code", description = "Verify password reset OTP and issue a temporary reset token")
+    public ResponseEntity<Response<PasswordResetVerifyResponse>> verifyPasswordResetCode(@Valid @RequestBody VerifyRegisterRequest request) {
+        PasswordResetVerifyResponse result = authService.verifyPasswordResetCode(request);
+        return ResponseEntity.ok(Response.ok(result.getMessage(), result));
+    }
+
+    @PostMapping("/reset-password")
+    @Operation(summary = "Reset password", description = "Reset password using a temporary reset token")
+    public ResponseEntity<Response<Void>> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        authService.resetPassword(request);
+        return ResponseEntity.ok(Response.ok("Đặt lại mật khẩu thành công."));
     }
 
     @PostMapping("/refresh-token")
@@ -61,8 +87,6 @@ public class AuthController {
     public ResponseEntity<Response<String>> health() {
         return ResponseEntity.ok(Response.ok("Auth service is healthy", "UP"));
     }
-
-    // ===================== Protected Endpoints =====================
 
     @GetMapping("/me")
     @Operation(summary = "Get current user profile", security = @SecurityRequirement(name = "bearerAuth"))

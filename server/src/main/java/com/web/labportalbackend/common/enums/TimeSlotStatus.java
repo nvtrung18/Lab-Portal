@@ -14,8 +14,10 @@ public enum TimeSlotStatus {
      */
     FULL,
 
-    /**
-     * Slot is cancelled and unavailable for booking
-     */
-    CANCELLED
+    CLOSED,
+    INACTIVE,
+    MAINTENANCE,
+    EXPIRED,
+    CANCELLED,
+    ARCHIVED
 }

@@ -1,7 +1,10 @@
 import { useState } from 'react';
 
-import { useApplications, useReviewApplication } from '../hooks';
+import { resolveApiAssetUrl } from '../../../shared/api';
+import { getManagedLabId, getManagedLabName } from '../../../shared/utils/membership';
+import { useCurrentUser } from '../../user/hooks';
 import type { ApplicationStatus } from '../api';
+import { useApplications, useReviewApplication } from '../hooks';
 
 function statusClassName(status: ApplicationStatus) {
   if (status === 'APPROVED') {
@@ -15,15 +18,43 @@ function statusClassName(status: ApplicationStatus) {
   return 'bg-amber-50 text-amber-700 ring-amber-200';
 }
 
+function formatStatus(status: ApplicationStatus) {
+  return status === 'APPROVED' ? 'Đã duyệt' : status === 'REJECTED' ? 'Đã từ chối' : 'Chờ duyệt';
+}
+
+function formatDate(value: string) {
+  if (!value) {
+    return 'Chưa cập nhật';
+  }
+
+  return new Intl.DateTimeFormat('vi-VN', {
+    dateStyle: 'short',
+    timeStyle: 'short',
+  }).format(new Date(value));
+}
+
 export function ApplicationList() {
-  const { data: applications = [], isLoading, isError } = useApplications();
-  const reviewMutation = useReviewApplication();
+  const { data: currentUser, isLoading: isLoadingUser } = useCurrentUser();
+  const managedLabId = getManagedLabId(currentUser);
+  const managedLabName = getManagedLabName(currentUser);
+  const { data: applications = [], isLoading, isError } = useApplications(managedLabId);
+  const reviewMutation = useReviewApplication(managedLabId);
   const [processingId, setProcessingId] = useState<number | null>(null);
 
   const handleReview = async (
     appId: number,
     status: Extract<ApplicationStatus, 'APPROVED' | 'REJECTED'>,
   ) => {
+    const confirmed = window.confirm(
+      status === 'APPROVED'
+        ? 'Bạn chắc chắn muốn duyệt đơn này?'
+        : 'Bạn chắc chắn muốn từ chối đơn này?',
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
     setProcessingId(appId);
     try {
       await reviewMutation.mutateAsync({ appId, status });
@@ -32,7 +63,7 @@ export function ApplicationList() {
     }
   };
 
-  if (isLoading) {
+  if (isLoadingUser || isLoading) {
     return (
       <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
         <div className="h-6 w-48 animate-pulse rounded bg-slate-200" />
@@ -45,19 +76,34 @@ export function ApplicationList() {
     );
   }
 
+  if (!managedLabId) {
+    return (
+      <section className="rounded-lg border border-amber-200 bg-white p-6 text-sm text-amber-700 shadow-sm">
+        Tài khoản quản lý hiện chưa được phân công PTN.
+      </section>
+    );
+  }
+
   if (isError) {
     return (
       <section className="rounded-lg border border-red-200 bg-white p-6 text-sm text-red-700 shadow-sm">
-        Không thể tải danh sách đơn ứng tuyển.
+        Không thể tải danh sách đơn ứng tuyển của PTN đang quản lý.
       </section>
     );
   }
 
   return (
     <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold text-slate-950">Đơn ứng tuyển</h2>
-        <span className="text-sm text-slate-500">{applications.length} đơn</span>
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <h2 className="text-xl font-semibold text-slate-950">Đơn ứng tuyển</h2>
+          <p className="mt-1 text-sm text-slate-600">
+            Chỉ hiển thị đơn ứng tuyển của {managedLabName ?? `PTN #${managedLabId}`}.
+          </p>
+        </div>
+        <span className="shrink-0 text-sm text-slate-500">
+          {applications.length} đơn
+        </span>
       </div>
 
       {applications.length === 0 ? (
@@ -65,77 +111,107 @@ export function ApplicationList() {
           Hiện chưa có đơn ứng tuyển nào.
         </div>
       ) : (
-        <div className="mt-6 overflow-x-auto">
-          <table className="min-w-full divide-y divide-slate-200 text-sm">
+        <div className="mt-6 max-w-full overscroll-x-contain overflow-x-auto">
+          <table className="w-full min-w-[760px] divide-y divide-slate-200 text-sm">
             <thead>
               <tr className="text-left text-xs font-semibold uppercase text-slate-500">
-                <th className="px-3 py-3">Người ứng tuyển</th>
-                <th className="px-3 py-3">Lab</th>
+                <th className="px-3 py-3">Ứng viên</th>
+                <th className="px-3 py-3">Email</th>
+                <th className="px-3 py-3">PTN</th>
                 <th className="px-3 py-3">CV</th>
                 <th className="px-3 py-3">Trạng thái</th>
+                <th className="px-3 py-3">Ngày tạo</th>
                 <th className="px-3 py-3 text-right">Thao tác</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {applications.map((application) => (
-                <tr key={application.id}>
-                  <td className="px-3 py-4 text-slate-700">
-                    <div className="font-medium text-slate-950">
-                      {application.applicantName || `User #${application.userId}`}
-                    </div>
-                    <div className="mt-1 text-xs text-slate-500">
-                      {application.applicantEmail}
-                    </div>
-                  </td>
-                  <td className="px-3 py-4 text-slate-700">
-                    {application.labName}
-                  </td>
-                  <td className="px-3 py-4">
-                    <a
-                      className="font-medium text-slate-950 underline-offset-2 hover:underline"
-                      href={application.cvUrl}
-                      rel="noreferrer"
-                      target="_blank"
-                    >
-                      Xem CV
-                    </a>
-                  </td>
-                  <td className="px-3 py-4">
-                    <span
-                      className={[
-                        'inline-flex rounded-full px-2 py-1 text-xs font-semibold ring-1',
-                        statusClassName(application.status),
-                      ].join(' ')}
-                    >
-                      {application.status}
-                    </span>
-                  </td>
-                  <td className="px-3 py-4 text-right">
-                    {application.status === 'PENDING' ? (
-                      <div className="flex justify-end gap-2">
-                        <button
-                          type="button"
-                          disabled={processingId === application.id}
-                          className="rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-emerald-300"
-                          onClick={() => void handleReview(application.id, 'APPROVED')}
-                        >
-                          Approve
-                        </button>
-                        <button
-                          type="button"
-                          disabled={processingId === application.id}
-                          className="rounded-md bg-red-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-red-300"
-                          onClick={() => void handleReview(application.id, 'REJECTED')}
-                        >
-                          Reject
-                        </button>
+              {applications.map((application) => {
+                const isProcessing =
+                  reviewMutation.isPending && processingId === application.id;
+                const disableActions = reviewMutation.isPending;
+
+                return (
+                  <tr key={application.id}>
+                    <td className="px-3 py-4 text-slate-700">
+                      <div className="font-medium text-slate-950">
+                        {application.applicantName || `Người dùng #${application.userId}`}
                       </div>
-                    ) : (
-                      <span className="text-xs text-slate-400">Đã xử lý</span>
-                    )}
-                  </td>
-                </tr>
-              ))}
+                    </td>
+                    <td className="px-3 py-4 text-slate-700">
+                      {application.applicantEmail}
+                    </td>
+                    <td className="px-3 py-4 text-slate-700">
+                      {application.labName}
+                    </td>
+                    <td className="px-3 py-4">
+                      {application.cvUrl || application.cvFileUrl ? (
+                        <div className="flex flex-col gap-1">
+                          {application.cvUrl ? (
+                            <a
+                              className="whitespace-nowrap font-medium text-slate-950 underline-offset-2 hover:underline"
+                              href={application.cvUrl}
+                              rel="noreferrer"
+                              target="_blank"
+                            >
+                              Xem CV URL
+                            </a>
+                          ) : null}
+                          {application.cvFileUrl ? (
+                            <a
+                              className="whitespace-nowrap font-medium text-slate-950 underline-offset-2 hover:underline"
+                              href={resolveApiAssetUrl(application.cvFileUrl)}
+                              rel="noreferrer"
+                              target="_blank"
+                              title={application.cvFileName ?? 'Tệp CV'}
+                            >
+                              Tải file CV
+                            </a>
+                          ) : null}
+                        </div>
+                      ) : (
+                        <span className="text-slate-400">-</span>
+                      )}
+                    </td>
+                    <td className="px-3 py-4">
+                      <span
+                        className={[
+                          'inline-flex rounded-full px-2 py-1 text-xs font-semibold ring-1',
+                          statusClassName(application.status),
+                        ].join(' ')}
+                      >
+                        {formatStatus(application.status)}
+                      </span>
+                    </td>
+                    <td className="px-3 py-4 text-slate-700">
+                      {formatDate(application.createdAt)}
+                    </td>
+                    <td className="px-3 py-4 text-right">
+                      {application.status === 'PENDING' ? (
+                        <div className="flex justify-end gap-2">
+                          <button
+                            type="button"
+                            disabled={disableActions}
+                            className="rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-emerald-300"
+                            onClick={() => void handleReview(application.id, 'APPROVED')}
+                          >
+                            {isProcessing ? 'Đang xử lý...' : 'Duyệt'}
+                          </button>
+                          <button
+                            type="button"
+                            disabled={disableActions}
+                            className="rounded-md bg-red-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-red-300"
+                            onClick={() => void handleReview(application.id, 'REJECTED')}
+                          >
+                            Từ chối
+                          </button>
+                        </div>
+                      ) : (
+                        <span className="text-xs text-slate-400">Đã xử lý</span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

@@ -20,9 +20,22 @@ public interface ApplicationRepository extends JpaRepository<Application, Long> 
     Optional<Application> findByUserIdAndLaboratoryIdAndDeletedFalse(Long userId, Long labId);
 
     /**
+     * Find the latest application for a user and laboratory.
+     */
+    Optional<Application> findTopByUserIdAndLaboratoryIdAndDeletedFalseOrderByCreatedAtDesc(Long userId, Long labId);
+
+    /**
      * Check if user has existing (non-deleted) application for a lab.
      */
     boolean existsByUserIdAndLaboratoryIdAndDeletedFalse(Long userId, Long labId);
+
+    /**
+     * Check if user has an application with a specific status for a lab.
+     */
+    boolean existsByUserIdAndLaboratoryIdAndStatusAndDeletedFalse(
+            Long userId,
+            Long labId,
+            ApplicationStatus status);
 
     /**
      * Find all applications for a specific laboratory.

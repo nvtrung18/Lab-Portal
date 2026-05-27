@@ -2,6 +2,7 @@ export interface Response<T> {
   code: number;
   message: string;
   data: T;
+  errors?: string[];
 }
 
 export type ApiResponse<T> = Response<T>;

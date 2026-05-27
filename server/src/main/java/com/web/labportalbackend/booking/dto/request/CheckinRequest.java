@@ -1,22 +1,12 @@
 package com.web.labportalbackend.booking.dto.request;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
+import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-/**
- * Request DTO for check-in operation.
- */
 @Getter
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
+@Setter
 public class CheckinRequest {
-
-    @NotNull(message = "booking_id is required")
-    @JsonProperty("booking_id")
-    private Long bookingId;
+    @NotBlank(message = "Vui lòng cung cấp token check-in.")
+    private String token;
 }

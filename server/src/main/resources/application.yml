@@ -4,15 +4,18 @@
 # ========================================================
 
 spring:
+  config:
+    import: optional:file:.env.properties
+
   application:
     name: lab-portal-backend
 
   # -------------------- DataSource --------------------
   datasource:
-    url: jdbc:mysql://localhost:3306/lab_portal?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:lab_portal}?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Ho_Chi_Minh&useSSL=false&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true
     driver-class-name: com.mysql.cj.jdbc.Driver
-    username: root
-    password: 190305
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:}
     hikari:
       maximum-pool-size: 10
       minimum-idle: 5
@@ -20,6 +23,11 @@ spring:
       idle-timeout: 300000
       max-lifetime: 1200000
       pool-name: LabPortalHikariPool
+
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 12MB
 
   # -------------------- JPA / Hibernate --------------------
   jpa:
@@ -52,6 +60,31 @@ spring:
     serialization:
       write-dates-as-timestamps: false
 
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: ${MAIL_SMTP_AUTH:true}
+          starttls:
+            enable: ${MAIL_SMTP_STARTTLS_ENABLE:true}
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+
+app:
+  mail:
+    from: ${MAIL_FROM:}
+  frontend-url: ${APP_FRONTEND_URL:http://localhost:5173}
+  research:
+    report-storage-path: ${REPORT_STORAGE_PATH:storage/reports}
+
 # -------------------- Server --------------------
 server:
   port: 8080
@@ -82,9 +115,9 @@ springdoc:
 
 # -------------------- JWT --------------------
 jwt:
-  secret: dGhpc0lzQVN1cGVyU2VjcmV0S2V5Rm9yTGFiUG9ydGFsQXBwbGljYXRpb24yMDI2IQ==
-  access-token-expiration: 86400000    # 24 hours in ms
-  refresh-token-expiration: 604800000  # 7 days in ms
+  secret: ${JWT_SECRET:}
+  access-token-expiration: ${JWT_EXPIRATION:86400000}    # 24 hours in ms
+  refresh-token-expiration: ${JWT_REFRESH_EXPIRATION:604800000}  # 7 days in ms
 
 # -------------------- Booking automation --------------------
 # Local testing: keep "0 * * * * *" to scan once per minute.
@@ -92,6 +125,7 @@ jwt:
 booking:
   task:
     cron: "0 * * * * *"
+    auto-no-show-enabled: false
     no-show-grace-minutes: 15
   penalty:
     default-amount: 0

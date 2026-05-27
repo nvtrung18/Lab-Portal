@@ -4,25 +4,69 @@ import type { Response } from '../../../shared/types';
 export interface UserProfileResponse {
   id: number;
   email: string;
-  username: string;
+  username?: string;
   fullName: string;
   phone: string | null;
-  status: string;
+  avatarUrl?: string | null;
+  status?: string;
   roles: string[];
   memberships?: UserMembershipResponse[];
-  createdAt: string;
-  updatedAt: string;
+  researchGroupMemberships?: UserResearchGroupMembershipResponse[];
+  groupMemberships?: UserResearchGroupMembershipResponse[];
+  researchGroups?: UserResearchGroupMembershipResponse[];
+  managedLab?: {
+    id?: number;
+    name?: string;
+    labName?: string;
+  } | null;
+  managedLabId?: number | null;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface UserMembershipResponse {
-  labId: number;
-  labName: string;
+  id?: number;
+  labId?: number;
+  labName?: string;
+  lab?: {
+    id?: number;
+    name?: string;
+    labName?: string;
+  };
+  role?: string;
   status: string;
+  joinedAt?: string;
+  createdAt?: string;
+}
+
+export interface UserResearchGroupMembershipResponse {
+  labId?: number;
+  labName?: string;
+  status?: string;
+  group?: {
+    labId?: number;
+    labName?: string;
+    lab?: {
+      id?: number;
+      name?: string;
+      labName?: string;
+    };
+  };
+  researchGroup?: {
+    labId?: number;
+    labName?: string;
+    lab?: {
+      id?: number;
+      name?: string;
+      labName?: string;
+    };
+  };
 }
 
 export interface UpdateProfileRequest {
   fullName: string;
   phone?: string | null;
+  avatarUrl?: string | null;
 }
 
 export async function getProfile(): Promise<UserProfileResponse> {

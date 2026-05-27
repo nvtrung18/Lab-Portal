@@ -60,6 +60,31 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     @Query("SELECT b FROM Booking b WHERE b.timeSlot.id = :slotId AND b.deleted = false AND b.active = true")
     List<Booking> findBySlotId(@Param("slotId") Long slotId);
 
+    @Query("SELECT b FROM Booking b WHERE b.user.id = :userId AND b.deleted = false AND b.active = true ORDER BY b.startTime DESC")
+    List<Booking> findActiveByUserId(@Param("userId") Long userId);
+
+    @Query("SELECT b FROM Booking b WHERE b.timeSlot.id = :slotId AND b.status IN :statuses AND b.deleted = false AND b.active = true")
+    List<Booking> findBySlotIdAndStatusIn(
+            @Param("slotId") Long slotId,
+            @Param("statuses") List<BookingStatus> statuses
+    );
+
+    @Query("SELECT COUNT(b) > 0 FROM Booking b WHERE b.timeSlot.id = :slotId AND b.user.id = :userId AND b.status IN :statuses AND b.deleted = false AND b.active = true")
+    boolean existsBySlotIdAndUserIdAndStatusIn(
+            @Param("slotId") Long slotId,
+            @Param("userId") Long userId,
+            @Param("statuses") List<BookingStatus> statuses
+    );
+
+    @Query("SELECT COUNT(b) FROM Booking b WHERE b.timeSlot.id = :slotId AND b.status = :status AND b.deleted = false AND b.active = true")
+    long countActiveByTimeSlotIdAndStatus(@Param("slotId") Long slotId, @Param("status") BookingStatus status);
+
+    @Query("SELECT COUNT(b) FROM Booking b WHERE b.timeSlot.id = :slotId AND b.status IN :statuses AND b.deleted = false AND b.active = true")
+    long countActiveByTimeSlotIdAndStatusIn(
+            @Param("slotId") Long slotId,
+            @Param("statuses") List<BookingStatus> statuses
+    );
+
     /**
      * Check if a user has an existing (non-cancelled) booking for a slot.
      * Used for duplicate booking prevention.
@@ -69,7 +94,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
      * @return true if user already has a booking for this slot
      */
     @Query("SELECT COUNT(b) > 0 FROM Booking b WHERE b.user.id = :userId AND b.timeSlot.id = :slotId " +
-           "AND b.status <> 'CANCELLED' AND b.deleted = false AND b.active = true")
+           "AND b.status NOT IN ('CANCELLED', 'CANCELLED_BY_STUDENT', 'CANCELLED_BY_MANAGER', 'REJECTED') AND b.deleted = false AND b.active = true")
     boolean existsActiveBookingByUserAndSlot(@Param("userId") Long userId, @Param("slotId") Long slotId);
 
     @Query("SELECT b FROM Booking b WHERE b.status = :status " +
@@ -79,4 +104,5 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
             @Param("status") BookingStatus status,
             @Param("cutoff") Instant cutoff
     );
+
 }

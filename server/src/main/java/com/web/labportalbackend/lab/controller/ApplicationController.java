@@ -3,8 +3,9 @@ package com.web.labportalbackend.lab.controller;
 import com.web.labportalbackend.auth.entity.User;
 import com.web.labportalbackend.auth.repository.UserRepository;
 import com.web.labportalbackend.lab.service.ApplicationService;
+import com.web.labportalbackend.lab.entity.Laboratory;
+import com.web.labportalbackend.lab.repository.LaboratoryRepository;
 import com.web.labportalbackend.lab.dto.response.ApplicationResponseDTO;
-import com.web.labportalbackend.lab.dto.request.ApplyRequestDTO;
 import com.web.labportalbackend.common.dto.Response;
 import com.web.labportalbackend.lab.dto.request.ReviewApplicationDTO;
 import io.swagger.v3.oas.annotations.Operation;
@@ -18,9 +19,12 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * Application (CV submission) management endpoints.
@@ -34,6 +38,7 @@ public class ApplicationController {
 
     private final ApplicationService applicationService;
     private final UserRepository userRepository;
+    private final LaboratoryRepository laboratoryRepository;
 
     /**
      * Submit a new CV application to a laboratory.
@@ -42,16 +47,17 @@ public class ApplicationController {
      * @param request the application request containing userId and cvUrl
      * @return the created application response
      */
-    @PostMapping("/labs/{labId}/apply")
+    @PostMapping(value = "/labs/{labId}/apply", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "Apply to a laboratory", description = "Submit a CV application to a laboratory")
     @SecurityRequirement(name = "Bearer Authentication")
     public ResponseEntity<Response<ApplicationResponseDTO>> apply(
             @PathVariable Long labId,
-            @Valid @RequestBody ApplyRequestDTO request,
+            @RequestParam(value = "cvUrl", required = false) String cvUrl,
+            @RequestPart(value = "cvFile", required = false) MultipartFile cvFile,
             Authentication authentication) {
         User currentUser = userRepository.findByUsername(authentication.getName())
                 .orElseThrow(() -> new EntityNotFoundException("Current user not found"));
-        ApplicationResponseDTO application = applicationService.apply(labId, currentUser.getId(), request.getCvUrl());
+        ApplicationResponseDTO application = applicationService.apply(labId, currentUser.getId(), cvUrl, cvFile);
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(Response.ok("Application submitted successfully", application));
@@ -69,7 +75,10 @@ public class ApplicationController {
     @SecurityRequirement(name = "Bearer Authentication")
     public ResponseEntity<Response<ApplicationResponseDTO>> review(
             @PathVariable Long applicationId,
-            @Valid @RequestBody ReviewApplicationDTO request) {
+            @Valid @RequestBody ReviewApplicationDTO request,
+            Authentication authentication) {
+        ApplicationResponseDTO existingApplication = applicationService.getApplicationById(applicationId);
+        assertCanManageLab(authentication, existingApplication.getLabId());
         ApplicationResponseDTO application = applicationService.review(applicationId, request.getStatus());
         return ResponseEntity
                 .status(HttpStatus.OK)
@@ -87,8 +96,20 @@ public class ApplicationController {
     @SecurityRequirement(name = "Bearer Authentication")
     public ResponseEntity<Response<Page<ApplicationResponseDTO>>> getApplications(
             @PageableDefault(size = 20, page = 0, sort = "createdAt", direction = Sort.Direction.DESC)
-            Pageable pageable) {
-        Page<ApplicationResponseDTO> applications = applicationService.getApplications(pageable);
+            Pageable pageable,
+            Authentication authentication) {
+        User currentUser = getCurrentUser(authentication);
+        Page<ApplicationResponseDTO> applications;
+
+        if (currentUser.hasRole("ADMIN")) {
+            applications = applicationService.getApplications(pageable);
+        } else if (currentUser.hasRole("LAB_MANAGER")) {
+            Laboratory managedLab = getManagedLab(currentUser);
+            applications = applicationService.getApplicationsByLabId(managedLab.getId(), pageable);
+        } else {
+            throw new AccessDeniedException("Only ADMIN or LAB_MANAGER can view applications");
+        }
+
         return ResponseEntity.ok(Response.ok("Applications retrieved successfully", applications));
     }
 
@@ -137,8 +158,37 @@ public class ApplicationController {
     public ResponseEntity<Response<Page<ApplicationResponseDTO>>> getApplicationsByLabId(
             @PathVariable Long labId,
             @PageableDefault(size = 20, page = 0, sort = "createdAt", direction = Sort.Direction.DESC)
-            Pageable pageable) {
+            Pageable pageable,
+            Authentication authentication) {
+        assertCanManageLab(authentication, labId);
         Page<ApplicationResponseDTO> applications = applicationService.getApplicationsByLabId(labId, pageable);
         return ResponseEntity.ok(Response.ok("Applications retrieved successfully", applications));
+    }
+
+    private User getCurrentUser(Authentication authentication) {
+        return userRepository.findByUsername(authentication.getName())
+                .orElseThrow(() -> new EntityNotFoundException("Current user not found"));
+    }
+
+    private Laboratory getManagedLab(User currentUser) {
+        return laboratoryRepository.findFirstByManagerIdAndDeletedFalse(currentUser.getId())
+                .orElseThrow(() -> new AccessDeniedException("Lab manager is not assigned to any lab"));
+    }
+
+    private void assertCanManageLab(Authentication authentication, Long labId) {
+        User currentUser = getCurrentUser(authentication);
+
+        if (currentUser.hasRole("ADMIN")) {
+            return;
+        }
+
+        if (!currentUser.hasRole("LAB_MANAGER")) {
+            throw new AccessDeniedException("Only ADMIN or LAB_MANAGER can manage applications");
+        }
+
+        Laboratory managedLab = getManagedLab(currentUser);
+        if (!managedLab.getId().equals(labId)) {
+            throw new AccessDeniedException("Cannot access applications from another lab");
+        }
     }
 }

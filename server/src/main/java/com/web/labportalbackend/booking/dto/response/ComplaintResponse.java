@@ -11,7 +11,17 @@ import java.time.Instant;
 public class ComplaintResponse {
     private Long id;
     private Long userId;
+    private String studentName;
+    private String studentEmail;
+    private Long penaltyId;
+    private Long labId;
+    private String labName;
+    private Long bookingId;
+    private String penaltyReason;
+    private PenaltyResponse penalty;
     private String content;
     private ComplaintStatus status;
+    private String resolutionNote;
+    private Instant resolvedAt;
     private Instant createdAt;
 }

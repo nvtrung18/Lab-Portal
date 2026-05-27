@@ -4,6 +4,7 @@ import com.web.labportalbackend.research.enums.MilestoneStatus;
 import lombok.Builder;
 import lombok.Getter;
 
+import java.time.Instant;
 import java.time.LocalDate;
 
 @Getter
@@ -11,8 +12,18 @@ import java.time.LocalDate;
 public class MilestoneResponse {
     private Long id;
     private Long projectId;
-    private String name;
-    private LocalDate startDate;
-    private LocalDate endDate;
+    private String projectTitle;
+    private String title;
+    private String description;
+    private Long assignedToStudentId;
+    private String assignedToStudentName;
+    private LocalDate deadline;
     private MilestoneStatus status;
+    private Integer progressPercent;
+    private String evidenceUrl;
+    private String managerComment;
+    private Long createdById;
+    private String createdByName;
+    private Instant createdAt;
+    private Instant updatedAt;
 }

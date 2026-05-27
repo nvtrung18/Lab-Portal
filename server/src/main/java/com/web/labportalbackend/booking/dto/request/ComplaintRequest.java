@@ -10,10 +10,10 @@ import lombok.Setter;
 @Setter
 public class ComplaintRequest {
 
-    @NotNull(message = "User ID is required")
-    private Long userId;
+    @NotNull(message = "Penalty ID is required")
+    private Long penaltyId;
 
     @NotBlank(message = "Content is required")
-    @Size(max = 4000, message = "Content must not exceed 4000 characters")
+    @Size(min = 10, max = 1000, message = "Content must be between 10 and 1000 characters")
     private String content;
 }

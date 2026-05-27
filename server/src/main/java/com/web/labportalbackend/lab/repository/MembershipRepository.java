@@ -22,6 +22,11 @@ public interface MembershipRepository extends JpaRepository<Membership, Long> {
     boolean existsByUserIdAndLaboratoryIdAndDeletedFalse(Long userId, Long labId);
 
     /**
+     * Check if a user is an active member of a laboratory.
+     */
+    boolean existsByUserIdAndLaboratoryIdAndActiveTrueAndDeletedFalse(Long userId, Long labId);
+
+    /**
      * Find all members of a laboratory.
      */
     List<Membership> findByLaboratoryIdAndDeletedFalse(Long labId);

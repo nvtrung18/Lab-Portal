@@ -12,6 +12,7 @@ import com.web.labportalbackend.booking.service.CleaningService;
 import com.web.labportalbackend.booking.service.PenaltyService;
 import com.web.labportalbackend.common.enums.BookingStatus;
 import com.web.labportalbackend.common.enums.PenaltyStatus;
+import com.web.labportalbackend.common.enums.PenaltyType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -40,21 +41,36 @@ public class BookingTaskServiceImpl implements BookingTaskService {
     @Value("${booking.task.no-show-grace-minutes:15}")
     private long noShowGraceMinutes;
 
+    @Value("${booking.task.auto-no-show-enabled:false}")
+    private boolean autoNoShowEnabled;
+
     @Override
     @Scheduled(cron = "${booking.task.cron:0 * * * * *}")
     @Transactional
     public int processNoShows() {
+        if (!autoNoShowEnabled) {
+            return 0;
+        }
+
         Instant cutoff = Instant.now().minus(noShowGraceMinutes, ChronoUnit.MINUTES);
-        List<Booking> candidates = bookingRepository.findNoShowCandidates(BookingStatus.CONFIRMED, cutoff);
+        List<Booking> candidates = bookingRepository.findNoShowCandidates(BookingStatus.APPROVED, cutoff);
 
         for (Booking booking : candidates) {
             booking.setStatus(BookingStatus.NO_SHOW);
             bookingRepository.save(booking);
 
-            if (!penaltyRepository.existsByBookingId(booking.getId())) {
+            if (!penaltyRepository.existsByBookingIdAndTypeAndStatus(
+                    booking.getId(),
+                    PenaltyType.NO_SHOW,
+                    PenaltyStatus.ACTIVE
+            )) {
                 PenaltyEntity penalty = PenaltyEntity.builder()
                         .user(booking.getUser())
+                        .lab(booking.getLab())
+                        .slot(booking.getTimeSlot())
                         .booking(booking)
+                        .type(PenaltyType.NO_SHOW)
+                        .point(1)
                         .reason(NO_SHOW_REASON)
                         .amount(penaltyService.getCurrentPenaltyAmount())
                         .status(PenaltyStatus.ACTIVE)

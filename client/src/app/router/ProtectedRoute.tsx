@@ -7,6 +7,10 @@ interface ProtectedRouteProps {
   allowedRoles?: Role[];
 }
 
+function normalizeRole(role: string): string {
+  return role.replace(/^ROLE_/, '');
+}
+
 export function ProtectedRoute({ allowedRoles }: ProtectedRouteProps) {
   const token = getAuthToken();
   const user = getStoredUser();
@@ -20,7 +24,10 @@ export function ProtectedRoute({ allowedRoles }: ProtectedRouteProps) {
   }
 
   if (allowedRoles?.length) {
-    const hasRole = user.roles.some((role) => allowedRoles.includes(role as Role));
+    const normalizedAllowedRoles = allowedRoles.map(normalizeRole);
+    const hasRole = user.roles
+      .map(normalizeRole)
+      .some((role) => normalizedAllowedRoles.includes(role));
 
     if (!hasRole) {
       return <Navigate to="/403" replace />;

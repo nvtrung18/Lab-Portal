@@ -15,7 +15,11 @@ public class ApplicationResponseDTO {
     @Schema(description = "Applicant email", example = "student@labportal.com") private String applicantEmail;
     @Schema(description = "Target laboratory ID", example = "2") private Long labId;
     @Schema(description = "Laboratory name", example = "Physics Lab A") private String labName;
-    @Schema(description = "CV file URL") private String cvUrl;
+    @Schema(description = "CV URL submitted by the applicant") private String cvUrl;
+    @Schema(description = "Uploaded CV file URL") private String cvFileUrl;
+    @Schema(description = "Uploaded CV original file name") private String cvFileName;
+    @Schema(description = "Uploaded CV content type") private String cvContentType;
+    @Schema(description = "Uploaded CV file size in bytes") private Long cvSize;
     @Schema(description = "Application status", example = "PENDING") private ApplicationStatus status;
     @Schema(description = "Submission timestamp") private Instant createdAt;
     @Schema(description = "Last update timestamp") private Instant updatedAt;

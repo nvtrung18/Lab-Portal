@@ -5,7 +5,7 @@ export function LabInfoPage() {
         <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
           Lab Manager
         </p>
-        <h2 className="mt-1 text-xl font-semibold text-slate-950">Thong tin Lab</h2>
+        <h2 className="mt-1 text-xl font-semibold text-slate-950">Thông tin PTN</h2>
         <p className="mt-2 text-sm text-slate-600">
           Khu vuc nay danh cho LAB_MANAGER dang va cap nhat thong tin lab. Phan API
           tao/cap nhat lab se duoc noi vao o task tiep theo.
@@ -18,7 +18,7 @@ export function LabInfoPage() {
             <span className="text-sm font-medium text-slate-700">Ten lab</span>
             <input
               className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
-              placeholder="VD: AI Research Lab"
+              placeholder="Ví dụ: Phòng nghiên cứu AI"
               type="text"
             />
           </label>
@@ -27,7 +27,7 @@ export function LabInfoPage() {
             <span className="text-sm font-medium text-slate-700">Dia diem</span>
             <input
               className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
-              placeholder="VD: Toa A, phong 501"
+              placeholder="Ví dụ: Tòa A, phòng 501"
               type="text"
             />
           </label>
@@ -36,7 +36,7 @@ export function LabInfoPage() {
             <span className="text-sm font-medium text-slate-700">Khoa / don vi</span>
             <input
               className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
-              placeholder="VD: Computer Science"
+              placeholder="Ví dụ: Khoa Công nghệ thông tin"
               type="text"
             />
           </label>
@@ -46,17 +46,17 @@ export function LabInfoPage() {
             <input
               className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
               min={1}
-              placeholder="VD: 30"
+              placeholder="Ví dụ: 30"
               type="number"
             />
           </label>
         </div>
 
         <label className="mt-5 block space-y-2">
-          <span className="text-sm font-medium text-slate-700">Mo ta lab</span>
+          <span className="text-sm font-medium text-slate-700">Mô tả PTN</span>
           <textarea
             className="min-h-32 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
-            placeholder="Mo ta linh vuc nghien cuu, thiet bi, dieu kien tham gia..."
+            placeholder="Mô tả lĩnh vực nghiên cứu, thiết bị, điều kiện tham gia..."
           />
         </label>
 

@@ -2,6 +2,8 @@ package com.web.labportalbackend.research.dto.request;
 
 import com.web.labportalbackend.research.enums.MilestoneStatus;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
@@ -16,15 +18,26 @@ public class CreateMilestoneRequest {
     @NotNull(message = "Project ID is required")
     private Long projectId;
 
-    @NotBlank(message = "Milestone name is required")
-    @Size(max = 200, message = "Milestone name must not exceed 200 characters")
-    private String name;
+    @NotBlank(message = "Milestone title is required")
+    @Size(min = 3, max = 200, message = "Milestone title must be between 3 and 200 characters")
+    private String title;
 
-    @NotNull(message = "Start date is required")
-    private LocalDate startDate;
+    @Size(max = 4000, message = "Milestone description must not exceed 4000 characters")
+    private String description;
 
-    @NotNull(message = "End date is required")
-    private LocalDate endDate;
+    private Long assignedToStudentId;
 
-    private MilestoneStatus status = MilestoneStatus.PLANNED;
+    private LocalDate deadline;
+
+    private MilestoneStatus status = MilestoneStatus.NOT_STARTED;
+
+    @Min(value = 0, message = "Progress percent must be at least 0")
+    @Max(value = 100, message = "Progress percent must not exceed 100")
+    private Integer progressPercent = 0;
+
+    @Size(max = 1000, message = "Evidence URL must not exceed 1000 characters")
+    private String evidenceUrl;
+
+    @Size(max = 4000, message = "Manager comment must not exceed 4000 characters")
+    private String managerComment;
 }

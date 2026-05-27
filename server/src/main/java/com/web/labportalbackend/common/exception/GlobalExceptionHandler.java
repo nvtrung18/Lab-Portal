@@ -6,9 +6,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
@@ -34,6 +36,20 @@ public class GlobalExceptionHandler {
         log.warn("Validation failed: {}", fieldErrors);
         return ResponseEntity.badRequest()
                 .body(Response.badRequest("Validation failed", fieldErrors));
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<Response<Void>> handleUnreadableRequest(HttpMessageNotReadableException ex) {
+        log.warn("Request body cannot be parsed: {}", ex.getMessage());
+        return ResponseEntity.badRequest()
+                .body(Response.badRequest("Request body contains an invalid value"));
+    }
+
+    @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
+    public ResponseEntity<Response<Void>> handleUnsupportedMediaType(HttpMediaTypeNotSupportedException ex) {
+        log.warn("Unsupported request media type: {}", ex.getContentType());
+        return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE)
+                .body(Response.error("Content-Type không được hỗ trợ. Vui lòng gửi multipart/form-data khi tải file."));
     }
 
     // ---- Not Found ----

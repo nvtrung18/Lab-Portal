@@ -8,9 +8,17 @@ import java.util.List;
  */
 public interface AuthService {
     AuthResponse login(LoginRequest request);
-    AuthResponse register(RegisterRequest request);
+    AuthEmailResponse sendRegistrationCode(RegisterSendCodeRequest request);
+    RegisterVerifyCodeResponse verifyRegistrationCode(VerifyRegisterRequest request);
+    AuthEmailResponse register(RegisterRequest request);
+    AuthEmailResponse sendPasswordResetCode(ForgotPasswordRequest request);
+    PasswordResetVerifyResponse verifyPasswordResetCode(VerifyRegisterRequest request);
+    void resetPassword(ResetPasswordRequest request);
     AuthResponse refreshToken(String refreshToken);
     List<RoleResponse> getAllRoles();
     List<UserResponse> getAllUsers();
     UserResponse getUserById(Long id);
+    UserResponse updateUserRoles(Long id, java.util.Set<String> roles);
+    UserResponse banUser(Long id);
+    UserResponse unbanUser(Long id);
 }

@@ -6,6 +6,8 @@ import com.web.labportalbackend.common.enums.ComplaintStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.Instant;
+
 @Entity
 @Table(name = "complaints", indexes = {
         @Index(name = "idx_complaint_user", columnList = "user_id"),
@@ -22,6 +24,10 @@ public class ComplaintEntity extends BaseEntity {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "penalty_id")
+    private PenaltyEntity penalty;
+
     @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
 
@@ -29,4 +35,10 @@ public class ComplaintEntity extends BaseEntity {
     @Column(nullable = false, length = 20)
     @Builder.Default
     private ComplaintStatus status = ComplaintStatus.PENDING;
+
+    @Column(name = "resolved_at")
+    private Instant resolvedAt;
+
+    @Column(name = "resolution_note", columnDefinition = "TEXT")
+    private String resolutionNote;
 }

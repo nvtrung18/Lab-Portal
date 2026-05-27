@@ -12,5 +12,15 @@ public interface GroupService {
 
     GroupMemberResponse addMember(Long groupId, AddMemberRequest request);
 
+    GroupResponse updateResearchGroup(Long groupId, CreateGroupRequest request);
+
     List<GroupResponse> getByLab(Long labId);
+
+    List<GroupResponse> getByTopic(Long topicId);
+
+    List<GroupResponse> getByProject(Long projectId);
+
+    List<GroupResponse> getMyGroupsByLab(Long labId);
+
+    GroupResponse getDetail(Long groupId);
 }

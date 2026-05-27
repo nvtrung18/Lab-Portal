@@ -1,5 +1,6 @@
 package com.web.labportalbackend.booking.service;
 
+import com.web.labportalbackend.booking.dto.request.CreatePenaltyRequest;
 import com.web.labportalbackend.booking.dto.request.PenaltyConfigRequest;
 import com.web.labportalbackend.booking.dto.response.PenaltyConfigResponse;
 import com.web.labportalbackend.booking.dto.response.PenaltyResponse;
@@ -13,4 +14,10 @@ public interface PenaltyService {
     BigDecimal getCurrentPenaltyAmount();
 
     List<PenaltyResponse> getUserPenalties(Long userId);
+
+    List<PenaltyResponse> getMyPenalties();
+
+    PenaltyResponse createPenalty(CreatePenaltyRequest request);
+
+    List<PenaltyResponse> getSlotPenalties(Long slotId);
 }
