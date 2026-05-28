@@ -6,6 +6,7 @@ import com.web.labportalbackend.auth.repository.UserRepository;
 import com.web.labportalbackend.lab.repository.LaboratoryRepository;
 import com.web.labportalbackend.research.dto.request.SubmitProductRequest;
 import com.web.labportalbackend.research.dto.response.ProductResponse;
+import com.web.labportalbackend.research.entity.GroupEntity;
 import com.web.labportalbackend.research.entity.ProductEntity;
 import com.web.labportalbackend.research.entity.ProjectEntity;
 import com.web.labportalbackend.research.enums.GroupRole;
@@ -25,6 +26,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -36,8 +38,10 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -138,5 +142,39 @@ class ProductServiceImplTest {
         assertEquals("final.zip", captor.getValue().getFileName());
         verify(logService).logAction(10L, 5L, "SUBMIT_PRODUCT",
                 "Submitted product: Source code demo nhận diện khuôn mặt v2");
+    }
+
+    @Test
+    void submitProduct_rejectsMemberSubmittingGroupProduct() {
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken("member", null, List.of())
+        );
+        User member = new User();
+        member.setId(6L);
+        member.setUsername("member");
+        member.addRole(new Role("STUDENT", "Student"));
+
+        SubmitProductRequest request = new SubmitProductRequest();
+        request.setProjectId(10L);
+        request.setGroupId(20L);
+        request.setProductType(ProductType.PAPER);
+        request.setTitle("Paper");
+        request.setExternalLink("https://example.com/paper");
+
+        ProjectEntity project = ProjectEntity.builder().title("Project").build();
+        project.setId(10L);
+        GroupEntity group = GroupEntity.builder().project(project).name("Group").leader(member).build();
+        group.setId(20L);
+
+        when(userRepository.findByUsername("member")).thenReturn(Optional.of(member));
+        when(projectRepository.findByIdAndDeletedFalseAndActiveTrue(10L))
+                .thenReturn(Optional.of(project));
+        when(groupRepository.findByIdAndDeletedFalseAndActiveTrue(20L))
+                .thenReturn(Optional.of(group));
+        when(groupMemberRepository.findActiveRoleByGroupIdAndUserId(20L, 6L))
+                .thenReturn(Optional.of(GroupRole.MEMBER));
+
+        assertThrows(AccessDeniedException.class, () -> productService.submitProduct(request, null));
+        verify(productRepository, never()).save(any(ProductEntity.class));
     }
 }

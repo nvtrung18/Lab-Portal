@@ -1,11 +1,10 @@
 import { useState } from 'react';
 import { Link, Navigate, useParams } from 'react-router-dom';
 
-import { EmptyState } from '../../../shared/components';
 import { LAB_MANAGER, STUDENT } from '../../../shared/constants/roles';
 import { getManagedLabId } from '../../../shared/utils/membership';
 import { useCurrentUser } from '../../user/hooks';
-import { MilestoneList, ProductPage, ResearchGroupList } from '../components';
+import { EvaluationPage, MilestoneList, ProductPage, ResearchGroupList } from '../components';
 import { useResearchProject } from '../hooks';
 import { formatDate, formatPriority, formatProjectStatus, getStatusClass } from '../utils';
 
@@ -121,10 +120,11 @@ export function ResearchProjectDetailPage() {
         ))}
       </div>
 
-      {activeTab === 'groups' ? <ResearchGroupList project={project} canCreate={isManager} /> : null}
+      {activeTab === 'groups' ? <ResearchGroupList key={`groups-${project.id}`} project={project} canCreate={isManager} /> : null}
 
       {activeTab === 'milestones' ? (
         <MilestoneList
+          key={`milestones-${project.id}`}
           projectId={project.id}
           labId={project.labId}
           canCreate={isManager}
@@ -133,11 +133,22 @@ export function ResearchProjectDetailPage() {
       ) : null}
 
       {activeTab === 'products' ? (
-        <ProductPage projectId={project.id} groupId={project.groupId} role={isManager ? LAB_MANAGER : STUDENT} />
+        <ProductPage
+          key={`products-${project.id}`}
+          currentUserId={currentUser?.id}
+          projectId={project.id}
+          groupId={project.groupId}
+          role={isManager ? LAB_MANAGER : STUDENT}
+        />
       ) : null}
 
       {activeTab === 'evaluation' ? (
-        <EmptyState>Chức năng đánh giá sản phẩm không nằm trong phạm vi UC17.</EmptyState>
+        <EvaluationPage
+          key={`evaluation-${project.id}`}
+          currentUserId={currentUser?.id}
+          projectId={project.id}
+          role={isManager ? LAB_MANAGER : STUDENT}
+        />
       ) : null}
     </section>
   );

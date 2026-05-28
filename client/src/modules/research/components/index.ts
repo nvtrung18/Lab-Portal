@@ -7,6 +7,7 @@ export * from './CreateResearchProjectModal';
 export * from './CreateTopicModal';
 export * from './EditResearchGroupModal';
 export * from './EditMilestoneModal';
+export * from './EvaluationPage';
 export * from './GroupMemberSelector';
 export * from './GroupPage';
 export * from './MilestoneDetailModal';

@@ -36,11 +36,12 @@ interface ProductPageProps {
   groupId?: number | null;
   role: typeof LAB_MANAGER | typeof STUDENT | string;
   groupRole?: 'LEADER' | 'MEMBER' | null;
+  currentUserId?: number | null;
 }
 
 type UploadScope = 'group' | 'personal';
 
-export function ProductPage({ projectId, groupId, role, groupRole }: ProductPageProps) {
+export function ProductPage({ projectId, groupId, role, groupRole, currentUserId }: ProductPageProps) {
   const [uploadScope, setUploadScope] = useState<UploadScope | null>(null);
   const [productType, setProductType] = useState<ResearchProductType>('FINAL_REPORT');
   const [title, setTitle] = useState('');
@@ -63,9 +64,11 @@ export function ProductPage({ projectId, groupId, role, groupRole }: ProductPage
   }, [groupId, groups]);
 
   const resolvedGroupId = groupId ?? currentGroup?.id ?? null;
-  const resolvedGroupRole = groupRole ?? currentGroup?.myRole ?? null;
-  const canUploadGroup = role === STUDENT && resolvedGroupRole === 'LEADER' && Boolean(resolvedGroupId);
-  const canUploadPersonal = role === STUDENT && resolvedGroupRole !== 'LEADER';
+  const memberRole = currentGroup?.members?.find((member) => member.userId === currentUserId)?.role ?? null;
+  const resolvedGroupRole = groupRole ?? currentGroup?.myRole ?? memberRole;
+  const hasGroupContext = Boolean(resolvedGroupId);
+  const canUploadGroup = role === STUDENT && resolvedGroupRole === 'LEADER' && hasGroupContext;
+  const canUploadPersonal = role === STUDENT && resolvedGroupRole === 'MEMBER' && hasGroupContext;
   const canUpload = canUploadGroup || canUploadPersonal;
   const submitLabel = uploadScope === 'group' ? 'Nộp sản phẩm nhóm' : 'Nộp sản phẩm cá nhân';
 

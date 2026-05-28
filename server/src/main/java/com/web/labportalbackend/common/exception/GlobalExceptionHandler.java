@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.multipart.MultipartException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.util.List;
@@ -50,6 +52,20 @@ public class GlobalExceptionHandler {
         log.warn("Unsupported request media type: {}", ex.getContentType());
         return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE)
                 .body(Response.error("Content-Type không được hỗ trợ. Vui lòng gửi multipart/form-data khi tải file."));
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<Response<Void>> handleMaxUploadSize(MaxUploadSizeExceededException ex) {
+        log.warn("Uploaded file exceeds configured size limit: {}", ex.getMessage());
+        return ResponseEntity.badRequest()
+                .body(Response.badRequest("File quá lớn. Vui lòng chọn file nhỏ hơn giới hạn cho phép."));
+    }
+
+    @ExceptionHandler(MultipartException.class)
+    public ResponseEntity<Response<Void>> handleMultipart(MultipartException ex) {
+        log.warn("Multipart request cannot be processed: {}", ex.getMessage());
+        return ResponseEntity.badRequest()
+                .body(Response.badRequest("Không thể xử lý file tải lên. Vui lòng kiểm tra lại file."));
     }
 
     // ---- Not Found ----

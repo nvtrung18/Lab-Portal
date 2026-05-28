@@ -16,12 +16,15 @@ import type {
   ResearchEligibleStudent,
   ResearchGroup,
   ResearchProject,
+  ResearchEvaluation,
+  RawResearchEvaluation,
   ResearchProduct,
   RawResearchProduct,
   ResearchTopic,
   ResearchReport,
   ResearchReportComment,
   SubmitProductPayload,
+  SubmitEvaluationPayload,
   SubmitReportPayload,
   ManagerReportDecision,
 } from '../types';
@@ -48,6 +51,38 @@ export async function updateResearchProject(
 export async function getResearchProject(projectId: number): Promise<ResearchProject> {
   const response = await apiClient.get<Response<ResearchProject>>(`/api/research-projects/${projectId}`);
   return response.data.data;
+}
+
+export async function getEvaluationsByProject(projectId: number): Promise<ResearchEvaluation[]> {
+  const response = await apiClient.get<Response<RawResearchEvaluation[]>>(`/api/projects/${projectId}/evaluations`);
+  return response.data.data.map(normalizeEvaluation);
+}
+
+export async function submitEvaluation(payload: SubmitEvaluationPayload): Promise<ResearchEvaluation> {
+  const response = await apiClient.post<Response<RawResearchEvaluation>>('/api/evaluations', payload);
+  return normalizeEvaluation(response.data.data);
+}
+
+function normalizeEvaluation(evaluation: RawResearchEvaluation): ResearchEvaluation {
+  return {
+    id: evaluation.id,
+    projectId: evaluation.projectId ?? evaluation.project_id ?? 0,
+    groupId: evaluation.groupId ?? evaluation.group_id ?? null,
+    groupName: evaluation.groupName ?? evaluation.group_name ?? null,
+    studentId: evaluation.studentId ?? evaluation.student_id ?? 0,
+    studentName: evaluation.studentName ?? evaluation.student_name ?? null,
+    evaluatorId: evaluation.evaluatorId ?? evaluation.evaluator_id ?? null,
+    evaluatorName: evaluation.evaluatorName ?? evaluation.evaluator_name ?? null,
+    attendanceScore: evaluation.attendanceScore ?? evaluation.attendance_score ?? 0,
+    taskScore: evaluation.taskScore ?? evaluation.task_score ?? 0,
+    reportScore: evaluation.reportScore ?? evaluation.report_score ?? 0,
+    productScore: evaluation.productScore ?? evaluation.product_score ?? 0,
+    attitudeScore: evaluation.attitudeScore ?? evaluation.attitude_score ?? 0,
+    totalScore: evaluation.totalScore ?? evaluation.total_score ?? 0,
+    lecturerComment: evaluation.lecturerComment ?? evaluation.lecturer_comment ?? null,
+    createdAt: evaluation.createdAt ?? evaluation.created_at ?? null,
+    updatedAt: evaluation.updatedAt ?? evaluation.updated_at ?? null,
+  };
 }
 
 export async function getProductsByProject(projectId: number): Promise<ResearchProduct[]> {

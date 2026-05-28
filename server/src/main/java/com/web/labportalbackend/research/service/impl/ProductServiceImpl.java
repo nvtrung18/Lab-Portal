@@ -154,8 +154,11 @@ public class ProductServiceImpl implements ProductService {
             if (!belongsToProject(group, project)) {
                 throw new AccessDeniedException("Cannot submit products to a group outside this project");
             }
-            groupMemberRepository.findActiveRoleByGroupIdAndUserId(group.getId(), currentUser.getId())
+            GroupRole role = groupMemberRepository.findActiveRoleByGroupIdAndUserId(group.getId(), currentUser.getId())
                     .orElseThrow(() -> new AccessDeniedException("Cannot submit products for this group"));
+            if (role != GroupRole.LEADER) {
+                throw new AccessDeniedException("Only group leaders may submit group products");
+            }
             return group.getId();
         }
 

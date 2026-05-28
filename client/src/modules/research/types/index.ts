@@ -38,6 +38,73 @@ export type ResearchProductType =
 
 export type ResearchProductStatus = 'SUBMITTED' | 'ACCEPTED' | 'NEEDS_REVISION' | 'REJECTED';
 
+export interface ResearchEvaluation {
+  id: number;
+  projectId: number;
+  groupId?: number | null;
+  groupName?: string | null;
+  studentId: number;
+  studentName?: string | null;
+  evaluatorId?: number | null;
+  evaluatorName?: string | null;
+  attendanceScore: number;
+  taskScore: number;
+  reportScore: number;
+  productScore: number;
+  attitudeScore: number;
+  totalScore: number;
+  lecturerComment?: string | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+}
+
+export interface RawResearchEvaluation {
+  id: number;
+  projectId?: number;
+  project_id?: number;
+  groupId?: number | null;
+  group_id?: number | null;
+  groupName?: string | null;
+  group_name?: string | null;
+  studentId?: number;
+  student_id?: number;
+  studentName?: string | null;
+  student_name?: string | null;
+  evaluatorId?: number | null;
+  evaluator_id?: number | null;
+  evaluatorName?: string | null;
+  evaluator_name?: string | null;
+  attendanceScore?: number;
+  attendance_score?: number;
+  taskScore?: number;
+  task_score?: number;
+  reportScore?: number;
+  report_score?: number;
+  productScore?: number;
+  product_score?: number;
+  attitudeScore?: number;
+  attitude_score?: number;
+  totalScore?: number;
+  total_score?: number;
+  lecturerComment?: string | null;
+  lecturer_comment?: string | null;
+  createdAt?: string | null;
+  created_at?: string | null;
+  updatedAt?: string | null;
+  updated_at?: string | null;
+}
+
+export interface SubmitEvaluationPayload {
+  projectId: number;
+  studentId: number;
+  attendanceScore: number;
+  taskScore: number;
+  reportScore: number;
+  productScore: number;
+  attitudeScore: number;
+  lecturerComment?: string;
+}
+
 export interface ResearchTopic {
   id: number;
   labId: number;

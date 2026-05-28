@@ -5,6 +5,6 @@ import java.math.BigDecimal;
 public class InvalidEvaluationScoreException extends RuntimeException {
 
     public InvalidEvaluationScoreException(BigDecimal score) {
-        super("Evaluation score must be between 0.0 and 100.0: " + score);
+        super("Evaluation score must be between 0.0 and 10.0: " + score);
     }
 }

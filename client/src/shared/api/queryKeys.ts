@@ -45,6 +45,7 @@ export const queryKeys = {
     milestones: (projectId: number) => ['milestones', projectId] as const,
     milestone: (milestoneId: number) => ['milestone', milestoneId] as const,
     products: (projectId: number) => ['products', projectId] as const,
+    evaluations: (projectId: number) => ['evaluations', projectId] as const,
     tasks: (milestoneId: number) => ['tasks', milestoneId] as const,
     reports: (milestoneId: number) => ['reports', 'milestone', milestoneId] as const,
     myTasks: (groupId: number) => ['myResearchTasks', groupId] as const,

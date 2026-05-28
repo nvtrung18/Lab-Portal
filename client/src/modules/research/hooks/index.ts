@@ -31,6 +31,8 @@ import {
   managerReviewReport,
   updateTaskStatus,
   getResearchProject,
+  getEvaluationsByProject,
+  submitEvaluation,
   getProductsByProject,
   submitProduct,
   getResearchProjectsByLab,
@@ -49,6 +51,7 @@ import type {
   UpdateMilestonePayload,
   CreateTopicPayload,
   SubmitProductPayload,
+  SubmitEvaluationPayload,
   ResearchTask,
   TaskColumn,
   ManagerReportDecision,
@@ -161,6 +164,35 @@ export function useResearchProject(projectId?: number | null) {
     staleTime: 30000,
     refetchOnReconnect: true,
     refetchOnWindowFocus: true,
+  });
+}
+
+export function useEvaluationsByProject(projectId?: number | null) {
+  return useQuery({
+    queryKey: queryKeys.research.evaluations(projectId as number),
+    queryFn: () => getEvaluationsByProject(projectId as number),
+    enabled: Boolean(projectId),
+    staleTime: 30000,
+    refetchOnWindowFocus: true,
+  });
+}
+
+export function useSubmitEvaluation(projectId?: number | null) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: SubmitEvaluationPayload) => submitEvaluation(payload),
+    onSuccess: async (_evaluation, payload) => {
+      const targetProjectId = projectId ?? payload.projectId;
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: queryKeys.research.evaluations(targetProjectId) }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.research.project(targetProjectId) }),
+      ]);
+      toast.success('Đã lưu đánh giá kết quả nghiên cứu.');
+    },
+    onError: (error) => {
+      toast.error(getErrorMessage(error, 'Không thể lưu đánh giá kết quả nghiên cứu.'));
+    },
   });
 }
 

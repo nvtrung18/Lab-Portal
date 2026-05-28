@@ -1,6 +1,6 @@
 package com.web.labportalbackend.research.dto.request;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonAlias;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
@@ -13,26 +13,51 @@ import java.math.BigDecimal;
 
 @Getter
 @Setter
-@Schema(description = "Request body for evaluating a research project")
+@Schema(description = "Request body for evaluating a student's research result")
 public class EvaluationRequest {
 
     @NotNull(message = "Project ID is required")
-    @JsonProperty("project_id")
-    @Schema(description = "Research project ID", example = "1")
+    @JsonAlias("project_id")
+    @Schema(description = "Research project ID", example = "10")
     private Long projectId;
 
-    @NotNull(message = "Reviewer ID is required")
-    @JsonProperty("reviewer_id")
-    @Schema(description = "Reviewer user ID", example = "5")
-    private Long reviewerId;
+    @NotNull(message = "Student ID is required")
+    @JsonAlias("student_id")
+    @Schema(description = "Evaluated student user ID", example = "12")
+    private Long studentId;
 
-    @NotNull(message = "Score is required")
-    @DecimalMin(value = "0.0", message = "Score must be at least 0.0")
-    @DecimalMax(value = "100.0", message = "Score must not exceed 100.0")
-    @Schema(description = "Evaluation score from 0.0 to 100.0", example = "85.5", minimum = "0.0", maximum = "100.0")
-    private BigDecimal score;
+    @NotNull(message = "Attendance score is required")
+    @DecimalMin(value = "0.0", message = "Attendance score must be at least 0.0")
+    @DecimalMax(value = "10.0", message = "Attendance score must not exceed 10.0")
+    @JsonAlias("attendance_score")
+    private BigDecimal attendanceScore;
 
-    @Size(max = 5000, message = "Comments must not exceed 5000 characters")
-    @Schema(description = "Reviewer comments", example = "Strong implementation and clear final report.")
-    private String comments;
+    @NotNull(message = "Task score is required")
+    @DecimalMin(value = "0.0", message = "Task score must be at least 0.0")
+    @DecimalMax(value = "10.0", message = "Task score must not exceed 10.0")
+    @JsonAlias("task_score")
+    private BigDecimal taskScore;
+
+    @NotNull(message = "Report score is required")
+    @DecimalMin(value = "0.0", message = "Report score must be at least 0.0")
+    @DecimalMax(value = "10.0", message = "Report score must not exceed 10.0")
+    @JsonAlias("report_score")
+    private BigDecimal reportScore;
+
+    @NotNull(message = "Product score is required")
+    @DecimalMin(value = "0.0", message = "Product score must be at least 0.0")
+    @DecimalMax(value = "10.0", message = "Product score must not exceed 10.0")
+    @JsonAlias("product_score")
+    private BigDecimal productScore;
+
+    @NotNull(message = "Attitude score is required")
+    @DecimalMin(value = "0.0", message = "Attitude score must be at least 0.0")
+    @DecimalMax(value = "10.0", message = "Attitude score must not exceed 10.0")
+    @JsonAlias("attitude_score")
+    private BigDecimal attitudeScore;
+
+    @Size(max = 5000, message = "Lecturer comment must not exceed 5000 characters")
+    @JsonAlias({"lecturer_comment", "comments"})
+    @Schema(description = "Lecturer comment", example = "Sinh viên hoàn thành tốt nhiệm vụ.")
+    private String lecturerComment;
 }
