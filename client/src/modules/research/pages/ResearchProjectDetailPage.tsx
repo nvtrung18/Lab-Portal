@@ -4,21 +4,23 @@ import { Link, Navigate, useParams } from 'react-router-dom';
 import { LAB_MANAGER, STUDENT } from '../../../shared/constants/roles';
 import { getManagedLabId } from '../../../shared/utils/membership';
 import { useCurrentUser } from '../../user/hooks';
-import { EvaluationPage, MilestoneList, ProductPage, ResearchGroupList } from '../components';
+import { DashboardPage, EvaluationPage, LogPage, MilestoneList, ProductPage, ResearchGroupList } from '../components';
 import { useResearchProject } from '../hooks';
 import { formatDate, formatPriority, formatProjectStatus, getStatusClass } from '../utils';
 
-type ProjectDetailTab = 'groups' | 'milestones' | 'products' | 'evaluation';
+type ProjectDetailTab = 'dashboard' | 'groups' | 'milestones' | 'products' | 'evaluation' | 'logs';
 
 const DETAIL_TABS: Array<{ value: ProjectDetailTab; label: string }> = [
+  { value: 'dashboard', label: 'Tổng quan NCKH' },
   { value: 'groups', label: 'Nhóm nghiên cứu' },
   { value: 'milestones', label: 'Mốc nghiên cứu' },
   { value: 'products', label: 'Sản phẩm nghiên cứu' },
   { value: 'evaluation', label: 'Đánh giá' },
+  { value: 'logs', label: 'Nhật ký nghiên cứu' },
 ];
 
 export function ResearchProjectDetailPage() {
-  const [activeTab, setActiveTab] = useState<ProjectDetailTab>('groups');
+  const [activeTab, setActiveTab] = useState<ProjectDetailTab>('dashboard');
   const { projectId } = useParams();
   const numericProjectId = Number(projectId);
   const { data: currentUser, isLoading: isLoadingUser } = useCurrentUser();
@@ -120,6 +122,16 @@ export function ResearchProjectDetailPage() {
         ))}
       </div>
 
+      {activeTab === 'dashboard' ? (
+        <DashboardPage
+          key={`dashboard-${project.id}`}
+          currentUser={currentUser}
+          projectId={project.id}
+          role={isManager ? LAB_MANAGER : STUDENT}
+          groupRole={null}
+        />
+      ) : null}
+
       {activeTab === 'groups' ? <ResearchGroupList key={`groups-${project.id}`} project={project} canCreate={isManager} /> : null}
 
       {activeTab === 'milestones' ? (
@@ -147,6 +159,16 @@ export function ResearchProjectDetailPage() {
           key={`evaluation-${project.id}`}
           currentUserId={currentUser?.id}
           projectId={project.id}
+          role={isManager ? LAB_MANAGER : STUDENT}
+        />
+      ) : null}
+
+      {activeTab === 'logs' ? (
+        <LogPage
+          key={`logs-${project.id}`}
+          currentUser={currentUser}
+          projectId={project.id}
+          groupId={project.groupId}
           role={isManager ? LAB_MANAGER : STUDENT}
         />
       ) : null}

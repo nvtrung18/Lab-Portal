@@ -1,8 +1,10 @@
 import { apiClient } from '../../../shared/api';
 import type { Response } from '../../../shared/types';
+export { getProjectDashboardStats } from './dashboardApi';
 import type {
   CreateGroupPayload,
   CreateProjectPayload,
+  CreateResearchLogPayload,
   CreateResearchGroupPayload,
   UpdateResearchGroupPayload,
   CreateResearchProjectPayload,
@@ -18,6 +20,9 @@ import type {
   ResearchProject,
   ResearchEvaluation,
   RawResearchEvaluation,
+  ResearchLog,
+  ResearchLogFilters,
+  RawResearchLog,
   ResearchProduct,
   RawResearchProduct,
   ResearchTopic,
@@ -51,6 +56,59 @@ export async function updateResearchProject(
 export async function getResearchProject(projectId: number): Promise<ResearchProject> {
   const response = await apiClient.get<Response<ResearchProject>>(`/api/research-projects/${projectId}`);
   return response.data.data;
+}
+
+export async function getResearchLogs(
+  projectId: number,
+  filters: ResearchLogFilters = {},
+  page = 0,
+  size = 20,
+): Promise<ResearchLog[]> {
+  const response = await apiClient.get<Response<RawResearchLog[]>>(`/api/projects/${projectId}/logs`, {
+    params: {
+      groupId: filters.groupId || undefined,
+      milestoneId: filters.milestoneId || undefined,
+      taskId: filters.taskId || undefined,
+      authorId: filters.authorId || undefined,
+      logType: filters.logType || undefined,
+      page,
+      size,
+    },
+  });
+  return response.data.data.map(normalizeResearchLog);
+}
+
+export async function createResearchLog(payload: CreateResearchLogPayload): Promise<ResearchLog> {
+  const response = await apiClient.post<Response<RawResearchLog>>('/api/logs', payload);
+  return normalizeResearchLog(response.data.data);
+}
+
+function normalizeResearchLog(log: RawResearchLog): ResearchLog {
+  return {
+    id: log.id,
+    projectId: log.projectId ?? log.project_id ?? 0,
+    groupId: log.groupId ?? log.group_id ?? null,
+    groupName: log.groupName ?? log.group_name ?? null,
+    milestoneId: log.milestoneId ?? log.milestone_id ?? null,
+    milestoneTitle: log.milestoneTitle ?? log.milestone_title ?? null,
+    taskId: log.taskId ?? log.task_id ?? null,
+    taskTitle: log.taskTitle ?? log.task_title ?? null,
+    authorId: log.authorId ?? log.author_id ?? 0,
+    authorName: log.authorName ?? log.author_name ?? null,
+    authorRole: log.authorRole ?? log.author_role ?? null,
+    groupRole: log.groupRole ?? log.group_role ?? null,
+    logType: log.logType ?? log.log_type ?? 'MANUAL',
+    workDate: log.workDate ?? log.work_date ?? '',
+    durationMinutes: log.durationMinutes ?? log.duration_minutes ?? 0,
+    content: log.content ?? '',
+    result: log.result ?? null,
+    problem: log.problem ?? null,
+    nextPlan: log.nextPlan ?? log.next_plan ?? null,
+    evidenceLink: log.evidenceLink ?? log.evidence_link ?? null,
+    visibility: log.visibility ?? 'GROUP',
+    createdAt: log.createdAt ?? log.created_at ?? null,
+    updatedAt: log.updatedAt ?? log.updated_at ?? null,
+  };
 }
 
 export async function getEvaluationsByProject(projectId: number): Promise<ResearchEvaluation[]> {

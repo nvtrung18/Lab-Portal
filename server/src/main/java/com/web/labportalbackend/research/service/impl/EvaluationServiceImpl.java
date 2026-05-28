@@ -11,6 +11,7 @@ import com.web.labportalbackend.research.dto.response.EvaluationResponse;
 import com.web.labportalbackend.research.entity.EvaluationEntity;
 import com.web.labportalbackend.research.entity.GroupEntity;
 import com.web.labportalbackend.research.entity.ProjectEntity;
+import com.web.labportalbackend.research.enums.ResearchLogVisibility;
 import com.web.labportalbackend.research.mapper.EvaluationMapper;
 import com.web.labportalbackend.research.repository.EvaluationRepository;
 import com.web.labportalbackend.research.repository.GroupMemberRepository;
@@ -18,6 +19,7 @@ import com.web.labportalbackend.research.repository.GroupRepository;
 import com.web.labportalbackend.research.repository.ProjectRepository;
 import com.web.labportalbackend.research.service.EvaluationService;
 import com.web.labportalbackend.research.service.LogService;
+import com.web.labportalbackend.research.service.ResearchLogService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
@@ -45,6 +47,7 @@ public class EvaluationServiceImpl implements EvaluationService {
     private final LaboratoryRepository laboratoryRepository;
     private final UserRepository userRepository;
     private final LogService logService;
+    private final ResearchLogService researchLogService;
 
     @Override
     @Transactional
@@ -77,6 +80,16 @@ public class EvaluationServiceImpl implements EvaluationService {
         EvaluationEntity saved = evaluationRepository.save(evaluation);
         logService.logAction(project.getId(), currentUser.getId(), "EVALUATE_STUDENT",
                 "Evaluated student " + student.getId() + " with total score: " + totalScore);
+        createSystemLogSafely(
+                project.getId(),
+                groupId,
+                null,
+                null,
+                currentUser.getId(),
+                displayName(currentUser) + " đã tạo đánh giá cho " + displayName(student) + ".",
+                "Điểm tổng: " + totalScore,
+                ResearchLogVisibility.PROJECT
+        );
         return toDetailedResponse(saved, student, currentUser);
     }
 
@@ -173,6 +186,25 @@ public class EvaluationServiceImpl implements EvaluationService {
 
     private String trimToNull(String value) {
         return StringUtils.hasText(value) ? value.trim() : null;
+    }
+
+    private String displayName(User user) {
+        return StringUtils.hasText(user.getFullName()) ? user.getFullName() : user.getUsername();
+    }
+
+    private void createSystemLogSafely(
+            Long projectId,
+            Long groupId,
+            Long milestoneId,
+            Long taskId,
+            Long authorId,
+            String content,
+            String result,
+            ResearchLogVisibility visibility
+    ) {
+        if (researchLogService != null) {
+            researchLogService.createSystemLog(projectId, groupId, milestoneId, taskId, authorId, content, result, visibility);
+        }
     }
 
     private User getCurrentUser() {

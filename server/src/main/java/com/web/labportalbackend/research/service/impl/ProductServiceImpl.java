@@ -13,6 +13,7 @@ import com.web.labportalbackend.research.entity.ProjectEntity;
 import com.web.labportalbackend.research.enums.GroupRole;
 import com.web.labportalbackend.research.enums.ProductStatus;
 import com.web.labportalbackend.research.enums.ProductType;
+import com.web.labportalbackend.research.enums.ResearchLogVisibility;
 import com.web.labportalbackend.research.mapper.ProductMapper;
 import com.web.labportalbackend.research.repository.GroupMemberRepository;
 import com.web.labportalbackend.research.repository.GroupRepository;
@@ -20,6 +21,7 @@ import com.web.labportalbackend.research.repository.ProductRepository;
 import com.web.labportalbackend.research.repository.ProjectRepository;
 import com.web.labportalbackend.research.service.LogService;
 import com.web.labportalbackend.research.service.ProductService;
+import com.web.labportalbackend.research.service.ResearchLogService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.access.AccessDeniedException;
@@ -64,6 +66,7 @@ public class ProductServiceImpl implements ProductService {
     private final LaboratoryRepository laboratoryRepository;
     private final UserRepository userRepository;
     private final LogService logService;
+    private final ResearchLogService researchLogService;
 
     @Value("${app.research.product-storage-path:storage/products}")
     private String productStoragePath;
@@ -105,6 +108,17 @@ public class ProductServiceImpl implements ProductService {
         ProductEntity saved = productRepository.save(product);
         logService.logAction(project.getId(), currentUser.getId(), "SUBMIT_PRODUCT",
                 "Submitted product: " + saved.getTitle() + " v" + saved.getVersion());
+        createSystemLogSafely(
+                project.getId(),
+                groupId,
+                null,
+                null,
+                currentUser.getId(),
+                displayName(currentUser) + " đã nộp sản phẩm " + saved.getTitle()
+                        + " v" + saved.getVersion() + ".",
+                saved.getDescription(),
+                groupId == null ? ResearchLogVisibility.PROJECT : ResearchLogVisibility.GROUP
+        );
         return ProductMapper.toResponse(saved);
     }
 
@@ -300,6 +314,25 @@ public class ProductServiceImpl implements ProductService {
 
     private String trimToNull(String value) {
         return StringUtils.hasText(value) ? value.trim() : null;
+    }
+
+    private String displayName(User user) {
+        return StringUtils.hasText(user.getFullName()) ? user.getFullName() : user.getUsername();
+    }
+
+    private void createSystemLogSafely(
+            Long projectId,
+            Long groupId,
+            Long milestoneId,
+            Long taskId,
+            Long authorId,
+            String content,
+            String result,
+            ResearchLogVisibility visibility
+    ) {
+        if (researchLogService != null) {
+            researchLogService.createSystemLog(projectId, groupId, milestoneId, taskId, authorId, content, result, visibility);
+        }
     }
 
     private User getCurrentUser() {

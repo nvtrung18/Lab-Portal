@@ -20,6 +20,7 @@ import com.web.labportalbackend.research.enums.GroupRole;
 import com.web.labportalbackend.research.enums.ManagerReportDecision;
 import com.web.labportalbackend.research.enums.MilestoneStatus;
 import com.web.labportalbackend.research.enums.ReportStatus;
+import com.web.labportalbackend.research.enums.ResearchLogVisibility;
 import com.web.labportalbackend.research.enums.TaskStatus;
 import com.web.labportalbackend.research.mapper.ReportMapper;
 import com.web.labportalbackend.research.repository.GroupMemberRepository;
@@ -29,6 +30,7 @@ import com.web.labportalbackend.research.repository.MilestoneRepository;
 import com.web.labportalbackend.research.repository.ReportRepository;
 import com.web.labportalbackend.research.repository.TaskRepository;
 import com.web.labportalbackend.research.service.ReportService;
+import com.web.labportalbackend.research.service.ResearchLogService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -74,6 +76,7 @@ public class ReportServiceImpl implements ReportService {
     private final CommentRepository commentRepository;
     private final LaboratoryRepository laboratoryRepository;
     private final UserRepository userRepository;
+    private final ResearchLogService researchLogService;
 
     @Value("${app.research.report-storage-path:storage/reports}")
     private String reportStoragePath;
@@ -124,7 +127,19 @@ public class ReportServiceImpl implements ReportService {
                 .build();
 
         try {
-            return ReportMapper.toResponse(reportRepository.saveAndFlush(report), currentUser);
+            ReportEntity saved = reportRepository.saveAndFlush(report);
+            createSystemLogSafely(
+                    projectId,
+                    groupId,
+                    milestone.getId(),
+                    task.getId(),
+                    currentUser.getId(),
+                    displayName(currentUser) + " đã nộp báo cáo v" + saved.getVersion()
+                            + " cho nhiệm vụ " + task.getTitle() + ".",
+                    saved.getResult(),
+                    ResearchLogVisibility.GROUP
+            );
+            return ReportMapper.toResponse(saved, currentUser);
         } catch (DataIntegrityViolationException ex) {
             deleteStoredFile(storedFile.path());
             throw new ReportVersionConflictException(task.getId());
@@ -303,7 +318,18 @@ public class ReportServiceImpl implements ReportService {
         report.setLeaderReviewedAt(Instant.now());
         report.setLeaderComment(note);
         saveReviewComment(reportId, currentUser.getId(), "Trưởng nhóm đã kiểm tra: " + note);
-        return ReportMapper.toResponse(reportRepository.save(report));
+        ReportEntity saved = reportRepository.save(report);
+        createSystemLogSafely(
+                saved.getProjectId(),
+                saved.getGroupId(),
+                saved.getMilestoneId(),
+                saved.getTaskId(),
+                currentUser.getId(),
+                displayName(currentUser) + " đã kiểm tra báo cáo v" + saved.getVersion() + ".",
+                note,
+                ResearchLogVisibility.GROUP
+        );
+        return ReportMapper.toResponse(saved);
     }
 
     @Override
@@ -340,6 +366,18 @@ public class ReportServiceImpl implements ReportService {
         reportRepository.saveAndFlush(report);
         recalculateMilestoneProgress(milestone, report);
         milestoneRepository.save(milestone);
+        User submitter = findSubmitter(report);
+        createSystemLogSafely(
+                report.getProjectId(),
+                report.getGroupId(),
+                report.getMilestoneId(),
+                report.getTaskId(),
+                currentUser.getId(),
+                displayName(currentUser) + " đã " + managerDecisionLabel(decision)
+                        + " báo cáo của " + displayName(submitter) + ".",
+                comment,
+                ResearchLogVisibility.PROJECT
+        );
         return ReportMapper.toResponse(report);
     }
 
@@ -351,6 +389,35 @@ public class ReportServiceImpl implements ReportService {
     private User findSubmitter(ReportEntity report) {
         return userRepository.findById(report.getSubmittedById())
                 .orElseThrow(() -> new ResourceNotFoundException("User", report.getSubmittedById()));
+    }
+
+    private String displayName(User user) {
+        return StringUtils.hasText(user.getFullName()) ? user.getFullName() : user.getUsername();
+    }
+
+    private String managerDecisionLabel(ManagerReportDecision decision) {
+        if (decision == ManagerReportDecision.APPROVE) {
+            return "duyệt";
+        }
+        if (decision == ManagerReportDecision.REQUEST_REVISION) {
+            return "yêu cầu chỉnh sửa";
+        }
+        return "từ chối";
+    }
+
+    private void createSystemLogSafely(
+            Long projectId,
+            Long groupId,
+            Long milestoneId,
+            Long taskId,
+            Long authorId,
+            String content,
+            String result,
+            ResearchLogVisibility visibility
+    ) {
+        if (researchLogService != null) {
+            researchLogService.createSystemLog(projectId, groupId, milestoneId, taskId, authorId, content, result, visibility);
+        }
     }
 
     private void saveReviewComment(Long reportId, Long authorId, String content) {

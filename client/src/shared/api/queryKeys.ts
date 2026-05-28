@@ -38,6 +38,7 @@ export const queryKeys = {
     projects: (labId: number) => ['researchProjects', labId] as const,
     studentProjects: (labId: number) => ['studentResearchProjects', labId] as const,
     project: (projectId: number) => ['researchProject', projectId] as const,
+    projectStats: (projectId: number) => ['projectStats', projectId, 'overview'] as const,
     groups: (projectId: number) => ['researchGroups', projectId] as const,
     group: (groupId: number) => ['researchGroup', groupId] as const,
     eligibleStudents: (labId: number) => ['researchEligibleStudents', labId] as const,
@@ -46,6 +47,12 @@ export const queryKeys = {
     milestone: (milestoneId: number) => ['milestone', milestoneId] as const,
     products: (projectId: number) => ['products', projectId] as const,
     evaluations: (projectId: number) => ['evaluations', projectId] as const,
+    logs: (projectId: number, filters?: object) => {
+      if (filters) {
+        return ['researchLogs', projectId, filters] as const;
+      }
+      return ['researchLogs', projectId] as const;
+    },
     tasks: (milestoneId: number) => ['tasks', milestoneId] as const,
     reports: (milestoneId: number) => ['reports', 'milestone', milestoneId] as const,
     myTasks: (groupId: number) => ['myResearchTasks', groupId] as const,

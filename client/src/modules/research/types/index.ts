@@ -1,3 +1,11 @@
+export type {
+  DashboardStats,
+  RawGroupProgress,
+  RawMilestoneProgress,
+  RawProjectDashboardStats,
+  RawStudentAttendance,
+} from './dashboard';
+
 export type TopicStatus = 'RECRUITING' | 'ONGOING' | 'PAUSED' | 'COMPLETED';
 
 export type GroupStatus = 'ACTIVE' | 'PAUSED' | 'COMPLETED' | 'ARCHIVED';
@@ -37,6 +45,105 @@ export type ResearchProductType =
   | 'OTHER';
 
 export type ResearchProductStatus = 'SUBMITTED' | 'ACCEPTED' | 'NEEDS_REVISION' | 'REJECTED';
+
+export type ResearchLogType = 'MANUAL' | 'SYSTEM';
+
+export type ResearchLogVisibility = 'PRIVATE' | 'GROUP' | 'PROJECT';
+
+export type ResearchGroupRole = 'LEADER' | 'MEMBER';
+
+export interface ResearchLog {
+  id: number;
+  projectId: number;
+  groupId?: number | null;
+  groupName?: string | null;
+  milestoneId?: number | null;
+  milestoneTitle?: string | null;
+  taskId?: number | null;
+  taskTitle?: string | null;
+  authorId: number;
+  authorName?: string | null;
+  authorRole?: string | null;
+  groupRole?: ResearchGroupRole | null;
+  logType: ResearchLogType;
+  workDate: string;
+  durationMinutes: number;
+  content: string;
+  result?: string | null;
+  problem?: string | null;
+  nextPlan?: string | null;
+  evidenceLink?: string | null;
+  visibility: ResearchLogVisibility;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+}
+
+export interface RawResearchLog {
+  id: number;
+  projectId?: number;
+  project_id?: number;
+  groupId?: number | null;
+  group_id?: number | null;
+  groupName?: string | null;
+  group_name?: string | null;
+  milestoneId?: number | null;
+  milestone_id?: number | null;
+  milestoneTitle?: string | null;
+  milestone_title?: string | null;
+  taskId?: number | null;
+  task_id?: number | null;
+  taskTitle?: string | null;
+  task_title?: string | null;
+  authorId?: number;
+  author_id?: number;
+  authorName?: string | null;
+  author_name?: string | null;
+  authorRole?: string | null;
+  author_role?: string | null;
+  groupRole?: ResearchGroupRole | null;
+  group_role?: ResearchGroupRole | null;
+  logType?: ResearchLogType;
+  log_type?: ResearchLogType;
+  workDate?: string;
+  work_date?: string;
+  durationMinutes?: number;
+  duration_minutes?: number;
+  content?: string;
+  result?: string | null;
+  problem?: string | null;
+  nextPlan?: string | null;
+  next_plan?: string | null;
+  evidenceLink?: string | null;
+  evidence_link?: string | null;
+  visibility?: ResearchLogVisibility;
+  createdAt?: string | null;
+  created_at?: string | null;
+  updatedAt?: string | null;
+  updated_at?: string | null;
+}
+
+export interface CreateResearchLogPayload {
+  projectId: number;
+  groupId?: number | null;
+  milestoneId?: number | null;
+  taskId?: number | null;
+  workDate: string;
+  durationMinutes: number;
+  content: string;
+  result?: string;
+  problem?: string;
+  nextPlan?: string;
+  evidenceLink?: string;
+  visibility: ResearchLogVisibility;
+}
+
+export interface ResearchLogFilters {
+  groupId?: number | null;
+  milestoneId?: number | null;
+  taskId?: number | null;
+  authorId?: number | null;
+  logType?: ResearchLogType | null;
+}
 
 export interface ResearchEvaluation {
   id: number;

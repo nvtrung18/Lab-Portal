@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { queryKeys } from '../../../shared/api';
 import { toast } from '../../../shared/components';
@@ -12,6 +12,7 @@ import {
   updateResearchGroup,
   createResearchProject,
   updateResearchProject,
+  createResearchLog,
   getResearchEligibleStudents,
   getResearchGroup,
   getResearchGroupsByProject,
@@ -31,6 +32,8 @@ import {
   managerReviewReport,
   updateTaskStatus,
   getResearchProject,
+  getProjectDashboardStats,
+  getResearchLogs,
   getEvaluationsByProject,
   submitEvaluation,
   getProductsByProject,
@@ -47,6 +50,7 @@ import type {
   CreateResearchGroupPayload,
   UpdateResearchGroupPayload,
   CreateResearchProjectPayload,
+  CreateResearchLogPayload,
   CreateMilestonePayload,
   UpdateMilestonePayload,
   CreateTopicPayload,
@@ -55,6 +59,7 @@ import type {
   ResearchTask,
   TaskColumn,
   ManagerReportDecision,
+  ResearchLogFilters,
 } from '../types';
 import { updateTaskStatusInCache } from '../taskBoardHelpers';
 
@@ -164,6 +169,61 @@ export function useResearchProject(projectId?: number | null) {
     staleTime: 30000,
     refetchOnReconnect: true,
     refetchOnWindowFocus: true,
+  });
+}
+
+export function useProjectDashboardStats(projectId?: number | null) {
+  return useQuery({
+    queryKey: queryKeys.research.projectStats(projectId as number),
+    queryFn: () => getProjectDashboardStats(projectId as number),
+    enabled: Boolean(projectId),
+    retry: (failureCount, error) => {
+      if (axios.isAxiosError(error)) {
+        const status = error.response?.status;
+        if (status === 403) {
+          return false;
+        }
+        if (!status || status >= 500) {
+          return failureCount < 1;
+        }
+        return false;
+      }
+      return failureCount < 1;
+    },
+    staleTime: 60000,
+    refetchOnReconnect: true,
+    refetchOnWindowFocus: true,
+  });
+}
+
+const RESEARCH_LOG_PAGE_SIZE = 20;
+
+export function useResearchLogs(projectId?: number | null, filters: ResearchLogFilters = {}) {
+  return useInfiniteQuery({
+    queryKey: queryKeys.research.logs(projectId as number, filters),
+    queryFn: ({ pageParam }) => getResearchLogs(projectId as number, filters, pageParam, RESEARCH_LOG_PAGE_SIZE),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage, allPages) =>
+      lastPage.length === RESEARCH_LOG_PAGE_SIZE ? allPages.length : undefined,
+    enabled: Boolean(projectId),
+    staleTime: 30000,
+    refetchOnWindowFocus: true,
+  });
+}
+
+export function useCreateResearchLog(projectId?: number | null) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: CreateResearchLogPayload) => createResearchLog(payload),
+    onSuccess: async (_log, payload) => {
+      const targetProjectId = projectId ?? payload.projectId;
+      await queryClient.invalidateQueries({ queryKey: queryKeys.research.logs(targetProjectId) });
+      toast.success('Đã tạo nhật ký nghiên cứu.');
+    },
+    onError: (error) => {
+      toast.error(getErrorMessage(error, 'Không thể tạo nhật ký nghiên cứu.'));
+    },
   });
 }
 

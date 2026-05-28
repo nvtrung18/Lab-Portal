@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -20,15 +21,16 @@ public class StatsController {
 
     private final StatsService statsService;
 
-    @GetMapping(value = "/projects/{id}/stats", params = "type=overview")
+    @GetMapping(value = "/projects/{projectId}/stats", params = "type=overview")
+    @PreAuthorize("hasAnyRole('LAB_MANAGER', 'STUDENT')")
     @Operation(summary = "Get project stats overview")
     public ResponseEntity<Response<ProjectStatsOverviewResponse>> getProjectStats(
-            @PathVariable Long id,
+            @PathVariable Long projectId,
             @Parameter(description = "Stats view type. Currently only overview is supported.")
             @RequestParam(defaultValue = "overview") String type
     ) {
         return ResponseEntity.ok(
-                Response.ok("Project stats retrieved successfully", statsService.getProjectStats(id))
+                Response.ok("Project stats retrieved successfully", statsService.getProjectStats(projectId))
         );
     }
 }
