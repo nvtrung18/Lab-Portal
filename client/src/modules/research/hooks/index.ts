@@ -71,6 +71,7 @@ import type {
   ResearchTask,
   TaskColumn,
   ManagerReportDecision,
+  LeaderReportDecision,
   ResearchLogFilters,
 } from '../types';
 import { updateTaskStatusInCache } from '../taskBoardHelpers';
@@ -581,6 +582,12 @@ function invalidateReviewedReport(
   ];
   if (groupId) {
     invalidations.push(queryClient.invalidateQueries({ queryKey: queryKeys.research.groupReports(groupId) }));
+    invalidations.push(queryClient.invalidateQueries({ queryKey: queryKeys.research.myGroupReports(groupId) }));
+    invalidations.push(queryClient.invalidateQueries({ queryKey: queryKeys.research.groupMilestones(groupId) }));
+    invalidations.push(queryClient.invalidateQueries({ queryKey: queryKeys.research.myGroupMilestones(groupId) }));
+    invalidations.push(queryClient.invalidateQueries({ queryKey: queryKeys.research.groupTasks(groupId) }));
+    invalidations.push(queryClient.invalidateQueries({ queryKey: queryKeys.research.myTasks(groupId) }));
+    invalidations.push(queryClient.invalidateQueries({ queryKey: queryKeys.research.groupEvaluations(groupId) }));
   }
   if (taskId) {
     invalidations.push(queryClient.invalidateQueries({ queryKey: queryKeys.research.taskReports(taskId) }));
@@ -598,10 +605,17 @@ export function useLeaderReviewReport(
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (note: string) => leaderReviewReport(reportId, note),
-    onSuccess: async () => {
+    mutationFn: ({ decision, comment }: { decision: LeaderReportDecision; comment: string }) =>
+      leaderReviewReport(reportId, decision, comment),
+    onSuccess: async (_report, variables) => {
       await invalidateReviewedReport(queryClient, reportId, milestoneId, projectId, groupId, taskId);
-      toast.success('Đã đánh dấu báo cáo đã kiểm tra.');
+      toast.success(
+        variables.decision === 'ACCEPT'
+          ? 'Đã duyệt báo cáo.'
+          : variables.decision === 'REQUEST_REVISION'
+            ? 'Đã yêu cầu chỉnh sửa báo cáo.'
+            : 'Đã từ chối báo cáo.',
+      );
     },
     onError: (error) => {
       toast.error(getErrorMessage(error, 'Không thể kiểm tra báo cáo.'));

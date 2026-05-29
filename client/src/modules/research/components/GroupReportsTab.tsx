@@ -4,7 +4,7 @@ import { Button, EmptyState, ErrorState, LoadingState, toast } from '../../../sh
 import { downloadReportFile } from '../api';
 import { useGroupReports, useMyGroupReports, useMyResearchTasks } from '../hooks';
 import type { ResearchReport } from '../types';
-import { formatDate, getApiErrorMessage } from '../utils';
+import { formatDate, getApiErrorMessage, formatReportSubmitterName } from '../utils';
 import { ReportStatusBadge } from './ReportStatusBadge';
 import { LeaderReviewButton } from './LeaderReviewButton';
 import { ManagerReviewActions } from './ManagerReviewActions';
@@ -86,14 +86,15 @@ export function GroupReportsTab({
     report: ResearchReport;
   } | null>(null);
 
-  // Filter and keep only the latest report version per task
+  // Filter and keep only the latest report version per task per student
   const latestReports = useMemo(() => {
-    const map = new Map<number, ResearchReport>();
+    const map = new Map<string, ResearchReport>();
     reports.forEach((r) => {
       if (!r.taskId) return;
-      const existing = map.get(r.taskId);
+      const key = `${r.taskId}_${r.submittedById}`;
+      const existing = map.get(key);
       if (!existing || r.version > existing.version) {
-        map.set(r.taskId, r);
+        map.set(key, r);
       }
     });
     return Array.from(map.values()).sort((a, b) => {
@@ -122,10 +123,7 @@ export function GroupReportsTab({
     if (report.submittedById === currentUserId) {
       return 'Báo cáo của tôi';
     }
-    if (report.submittedByName && report.submittedByEmail) {
-      return `${report.submittedByName} (${report.submittedByEmail})`;
-    }
-    return report.submittedByName ?? report.submittedByEmail ?? `#${report.submittedById}`;
+    return formatReportSubmitterName(report);
   }
 
   // Resolve custom titles/subtitles
@@ -300,17 +298,7 @@ export function GroupReportsTab({
                   </div>
                   
                   <div>
-                    {report.status === 'NEEDS_REVISION' ? (
-                      <span className="inline-flex rounded-full bg-red-50 px-3 py-1 text-xs font-bold text-red-700 ring-1 ring-red-100">
-                        ⚠️ Cần nộp lại báo cáo
-                      </span>
-                    ) : report.status === 'APPROVED' ? (
-                      <span className="inline-flex rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700 ring-1 ring-emerald-100">
-                        ✓ Báo cáo đã được duyệt
-                      </span>
-                    ) : (
-                      <ReportStatusBadge status={report.status} />
-                    )}
+                    <ReportStatusBadge status={report.status} submittedByGroupRole={report.submittedByGroupRole} />
                   </div>
                 </div>
 
@@ -385,8 +373,8 @@ export function GroupReportsTab({
                       Xem góp ý ({report.commentCount ?? 0})
                     </Button>
 
-                    {/* Submit Report Button */}
-                    {isMyReport && (
+                    {/* Submit / Resubmit Report Button — only when status allows */}
+                    {isMyReport && (report.status === 'NEEDS_REVISION' || report.status === 'LEADER_REJECTED' || report.status === 'MANAGER_REJECTED') && (
                       <Button
                         size="sm"
                         onClick={() => setUploadModalConfig({ isOpen: true, report })}
@@ -402,11 +390,18 @@ export function GroupReportsTab({
                   <div className="flex items-center gap-3">
                     {/* Leader inline check button - visible only on all group reports view */}
                     {role === 'GROUP_LEADER' && subTab === 'group' && (
-                      <LeaderReviewButton
-                        currentUserId={currentUserId}
-                        groupId={groupId}
-                        report={report}
-                      />
+                      <>
+                        <LeaderReviewButton
+                          currentUserId={currentUserId}
+                          groupId={groupId}
+                          report={report}
+                        />
+                        {Number(report.submittedById) === Number(currentUserId) && report.status === 'SUBMITTED' && (
+                          <span className="text-xs italic text-slate-500 bg-slate-100 px-2.5 py-1.5 rounded-md border border-slate-200">
+                            Báo cáo của bạn sẽ được quản lý PTN duyệt trực tiếp.
+                          </span>
+                        )}
+                      </>
                     )}
                     {/* Manager inline review actions */}
                     {role === 'LAB_MANAGER' && (

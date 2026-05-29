@@ -143,3 +143,8 @@ export function formatDate(value?: string | null) {
   }
   return new Intl.DateTimeFormat('vi-VN').format(new Date(value));
 }
+
+export function formatReportSubmitterName(report: { submittedByName?: string | null }) {
+  return report.submittedByName || 'Không rõ người nộp';
+}
+

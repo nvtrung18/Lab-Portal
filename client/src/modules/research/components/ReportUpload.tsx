@@ -6,14 +6,17 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '../../../shared/api';
 import { Button, toast } from '../../../shared/components';
 import { VALIDATION_MESSAGES } from '../../../shared/utils';
-import { submitReport } from '../api';
-import type { ResearchReport, SubmitReportPayload } from '../types';
+import { submitReport, replaceReport } from '../api';
+import type { ResearchReport, SubmitReportPayload, ReplaceReportPayload } from '../types';
 
 interface ReportUploadProps {
   taskId: number;
   milestoneId: number;
   projectId?: number | null;
   groupId?: number | null;
+  mode?: 'create' | 'replace' | 'resubmit';
+  reportId?: number | null;
+  initialValues?: ResearchReport | null;
   onSuccess?: (report: ResearchReport) => void;
 }
 
@@ -34,23 +37,54 @@ const EMPTY_FORM = {
   evidenceLink: '',
 };
 
-export function ReportUpload({ taskId, milestoneId, projectId, groupId, onSuccess }: ReportUploadProps) {
+export function ReportUpload({
+  taskId,
+  milestoneId,
+  projectId,
+  groupId,
+  mode = 'create',
+  reportId,
+  initialValues,
+  onSuccess,
+}: ReportUploadProps) {
   const queryClient = useQueryClient();
-  const [form, setForm] = useState(EMPTY_FORM);
+  const [form, setForm] = useState(() => {
+    if (mode === 'replace' && initialValues) {
+      return {
+        title: initialValues.title ?? '',
+        contentDone: initialValues.contentDone ?? '',
+        result: initialValues.result ?? '',
+        difficulty: initialValues.difficulty ?? '',
+        nextPlan: initialValues.nextPlan ?? '',
+        selfAssessment: initialValues.selfAssessment ?? '',
+        evidenceLink: initialValues.evidenceLink ?? '',
+      };
+    }
+    return EMPTY_FORM;
+  });
   const [file, setFile] = useState<File | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
   const [uploadPercent, setUploadPercent] = useState(0);
   const [feedback, setFeedback] = useState<{ kind: 'success' | 'error'; text: string } | null>(null);
 
   const upload = useMutation({
-    mutationFn: (payload: SubmitReportPayload) => submitReport(payload, setUploadPercent),
+    mutationFn: (payload: SubmitReportPayload | { reportId: number; payload: ReplaceReportPayload }) => {
+      if (mode === 'replace') {
+        const p = payload as { reportId: number; payload: ReplaceReportPayload };
+        return replaceReport(p.reportId, p.payload, setUploadPercent);
+      } else {
+        return submitReport(payload as SubmitReportPayload, setUploadPercent);
+      }
+    },
     onMutate: () => {
       setUploadPercent(0);
       setFeedback(null);
     },
     onSuccess: async (report) => {
       setUploadPercent(100);
-      setFeedback({ kind: 'success', text: 'Đã nộp báo cáo.' });
+      const isReplace = mode === 'replace';
+      const successText = isReplace ? 'Đã cập nhật báo cáo.' : mode === 'resubmit' ? 'Đã nộp lại báo cáo.' : 'Đã nộp báo cáo.';
+      setFeedback({ kind: 'success', text: successText });
       const invalidations = [
         queryClient.invalidateQueries({ queryKey: queryKeys.research.taskReports(taskId) }),
         queryClient.invalidateQueries({ queryKey: queryKeys.research.tasks(milestoneId) }),
@@ -66,9 +100,10 @@ export function ReportUpload({ taskId, milestoneId, projectId, groupId, onSucces
         invalidations.push(queryClient.invalidateQueries({ queryKey: queryKeys.research.groupReports(groupId) }));
         invalidations.push(queryClient.invalidateQueries({ queryKey: queryKeys.research.myGroupReports(groupId) }));
         invalidations.push(queryClient.invalidateQueries({ queryKey: queryKeys.research.myGroupMilestones(groupId) }));
+        invalidations.push(queryClient.invalidateQueries({ queryKey: queryKeys.research.groupTasks(groupId) }));
       }
       await Promise.all(invalidations);
-      toast.success('Đã nộp báo cáo.');
+      toast.success(successText);
       onSuccess?.(report);
     },
     onError: (error) => {
@@ -92,22 +127,38 @@ export function ReportUpload({ taskId, milestoneId, projectId, groupId, onSucces
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!file) {
+    if (mode !== 'replace' && !file) {
       setFileError(VALIDATION_MESSAGES.required);
       return;
     }
-    upload.mutate({
-      milestoneId,
-      taskId,
-      title: form.title.trim(),
-      contentDone: form.contentDone.trim(),
-      result: form.result.trim(),
-      difficulty: form.difficulty.trim(),
-      nextPlan: form.nextPlan.trim(),
-      selfAssessment: form.selfAssessment.trim(),
-      evidenceLink: form.evidenceLink.trim() || undefined,
-      file,
-    });
+    if (mode === 'replace') {
+      upload.mutate({
+        reportId: reportId!,
+        payload: {
+          title: form.title.trim(),
+          contentDone: form.contentDone.trim(),
+          result: form.result.trim(),
+          difficulty: form.difficulty.trim(),
+          nextPlan: form.nextPlan.trim(),
+          selfAssessment: form.selfAssessment.trim(),
+          evidenceLink: form.evidenceLink.trim() || undefined,
+          file,
+        },
+      });
+    } else {
+      upload.mutate({
+        milestoneId,
+        taskId,
+        title: form.title.trim(),
+        contentDone: form.contentDone.trim(),
+        result: form.result.trim(),
+        difficulty: form.difficulty.trim(),
+        nextPlan: form.nextPlan.trim(),
+        selfAssessment: form.selfAssessment.trim(),
+        evidenceLink: form.evidenceLink.trim() || undefined,
+        file: file!,
+      });
+    }
   }
 
   return (
@@ -124,7 +175,7 @@ export function ReportUpload({ taskId, milestoneId, projectId, groupId, onSucces
           accept=".pdf,.doc,.docx"
           className="block w-full text-sm text-slate-700"
           disabled={upload.isPending}
-          required
+          required={mode !== 'replace'}
           type="file"
           onChange={handleFileChange}
         />
@@ -150,7 +201,7 @@ export function ReportUpload({ taskId, milestoneId, projectId, groupId, onSucces
       ) : null}
       <div className="flex justify-end">
         <Button loading={upload.isPending} loadingText="Đang tải lên..." type="submit">
-          Nộp báo cáo
+          {mode === 'replace' ? 'Cập nhật báo cáo' : mode === 'resubmit' ? 'Nộp lại báo cáo' : 'Nộp báo cáo'}
         </Button>
       </div>
     </form>

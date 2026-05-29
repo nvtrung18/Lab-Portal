@@ -32,7 +32,9 @@ import type {
   SubmitProductPayload,
   SubmitEvaluationPayload,
   SubmitReportPayload,
+  ReplaceReportPayload,
   ManagerReportDecision,
+  LeaderReportDecision,
 } from '../types';
 import { normalizeTask } from '../taskBoardHelpers';
 
@@ -334,6 +336,35 @@ export async function submitReport(
   return unwrapObject<ResearchReport>(response.data);
 }
 
+export async function replaceReport(
+  reportId: number,
+  payload: ReplaceReportPayload,
+  onUploadProgress?: (percent: number) => void,
+): Promise<ResearchReport> {
+  const formData = new FormData();
+  formData.append('title', payload.title);
+  formData.append('contentDone', payload.contentDone);
+  formData.append('result', payload.result);
+  formData.append('difficulty', payload.difficulty);
+  formData.append('nextPlan', payload.nextPlan);
+  formData.append('selfAssessment', payload.selfAssessment);
+  if (payload.evidenceLink) {
+    formData.append('evidenceLink', payload.evidenceLink);
+  }
+  if (payload.file) {
+    formData.append('file', payload.file);
+  }
+
+  const response = await apiClient.patch<Response<ResearchReport>>(`/api/reports/${reportId}/replace`, formData, {
+    onUploadProgress: (event) => {
+      if (event.total) {
+        onUploadProgress?.(Math.min(100, Math.round((event.loaded * 100) / event.total)));
+      }
+    },
+  });
+  return unwrapObject<ResearchReport>(response.data);
+}
+
 export async function getReportComments(reportId: number): Promise<ResearchReportComment[]> {
   const response = await apiClient.get<Response<ResearchReportComment[]>>(`/api/reports/${reportId}/comments`);
   return unwrapArray<ResearchReportComment>(response.data);
@@ -346,11 +377,16 @@ export async function addReportComment(reportId: number, content: string): Promi
   return unwrapObject<ResearchReportComment>(response.data);
 }
 
-export async function leaderReviewReport(reportId: number, note: string): Promise<ResearchReport> {
-  const response = await apiClient.patch<Response<ResearchReport>>(`/api/reports/${reportId}/leader-review`, {
-    note,
+export async function leaderReviewReport(
+  reportId: number,
+  decision: LeaderReportDecision,
+  comment: string,
+): Promise<{ id: number; status: string; version: number }> {
+  const response = await apiClient.patch<{ message: string; report: { id: number; status: string; version: number } }>(`/api/reports/${reportId}/leader-review`, {
+    decision,
+    comment,
   });
-  return unwrapObject<ResearchReport>(response.data);
+  return response.data.report;
 }
 
 export async function managerReviewReport(

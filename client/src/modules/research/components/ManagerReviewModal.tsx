@@ -11,8 +11,8 @@ interface ManagerReviewModalProps {
 }
 
 const DECISION_LABELS: Record<ManagerReportDecision, string> = {
-  APPROVE: 'Duyệt báo cáo',
-  REQUEST_REVISION: 'Yêu cầu chỉnh sửa',
+  APPROVE: 'Chấp nhận báo cáo',
+  REQUEST_REVISION: 'Yêu cầu nộp lại',
   REJECT: 'Từ chối',
 };
 
@@ -27,8 +27,11 @@ export function ManagerReviewModal({ decision, isSubmitting, onClose, onSubmit }
   const trimmedComment = comment.trim();
   const isOpen = decision != null;
 
+  const isCommentRequired = decision === 'REQUEST_REVISION' || decision === 'REJECT';
+  const isSubmitDisabled = isCommentRequired && !trimmedComment;
+
   function handleSubmit() {
-    if (!decision || !trimmedComment) {
+    if (!decision || isSubmitDisabled) {
       return;
     }
     onSubmit(decision, trimmedComment);
@@ -42,7 +45,7 @@ export function ManagerReviewModal({ decision, isSubmitting, onClose, onSubmit }
             Đóng
           </Button>
           <Button
-            disabled={!trimmedComment}
+            disabled={isSubmitDisabled}
             loading={isSubmitting}
             loadingText="Đang xử lý..."
             onClick={handleSubmit}
@@ -56,7 +59,7 @@ export function ManagerReviewModal({ decision, isSubmitting, onClose, onSubmit }
       isOpen={isOpen}
       onClose={onClose}
       size="md"
-      title="Nhận xét của quản lý"
+      title="Duyệt báo cáo"
     >
       {decision ? (
         <>

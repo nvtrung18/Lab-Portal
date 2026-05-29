@@ -1,19 +1,20 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 
 import { Button } from '../../../shared/components';
 import type { TaskBoardRole } from '../taskBoardHelpers';
 import type { ResearchReport, ResearchReportStatus } from '../types';
-import { formatDate } from '../utils';
+import { formatDate, formatReportSubmitterName } from '../utils';
 import { ManagerReviewActions } from './ManagerReviewActions';
 import { ReportReviewActions } from './ReportReviewActions';
 import { ReviewPanel } from './ReviewPanel';
 
 const REPORT_STATUS_LABELS: Record<ResearchReportStatus, string> = {
-  SUBMITTED: 'Đã nộp',
-  LEADER_REVIEWED: 'Trưởng nhóm đã xem',
-  NEEDS_REVISION: 'Cần chỉnh sửa',
-  APPROVED: 'Đã duyệt',
-  REJECTED: 'Từ chối',
+  SUBMITTED: 'Chờ trưởng nhóm kiểm tra',
+  LEADER_REVIEWED: 'Chờ quản lý duyệt',
+  NEEDS_REVISION: 'Cần nộp lại',
+  LEADER_REJECTED: 'Trưởng nhóm đã từ chối',
+  APPROVED: 'Đã chấp nhận',
+  MANAGER_REJECTED: 'Quản lý đã từ chối',
 };
 
 interface ReportItemProps {
@@ -56,14 +57,10 @@ export function ReportItem({
       <ReportStatusNotice status={report.status} />
 
       <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
-        {report.submittedByName || report.submittedByEmail ? (
-          <ReportField
-            label="Người nộp"
-            value={report.submittedByName
-              ? `${report.submittedByName}${report.submittedByEmail ? ` (${report.submittedByEmail})` : ''}`
-              : report.submittedByEmail ?? ''}
-          />
-        ) : null}
+        <ReportField
+          label="Người nộp"
+          value={formatReportSubmitterName(report)}
+        />
         {report.groupName ? <ReportField label="Nhóm" value={report.groupName} /> : null}
         {report.milestoneTitle ? <ReportField label="Mốc nghiên cứu" value={report.milestoneTitle} /> : null}
         {report.taskTitle ? <ReportField label="Nhiệm vụ" value={report.taskTitle} /> : null}
@@ -142,6 +139,20 @@ function ReportStatusNotice({ status }: { status: ResearchReportStatus }) {
     return (
       <p className="mt-3 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-800">
         Báo cáo đã được duyệt
+      </p>
+    );
+  }
+  if (status === 'LEADER_REJECTED') {
+    return (
+      <p className="mt-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-800">
+        Trưởng nhóm từ chối báo cáo
+      </p>
+    );
+  }
+  if (status === 'MANAGER_REJECTED') {
+    return (
+      <p className="mt-3 rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-semibold text-rose-800">
+        Quản lý đã từ chối báo cáo
       </p>
     );
   }

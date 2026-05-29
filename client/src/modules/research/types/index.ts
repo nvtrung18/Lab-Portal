@@ -31,8 +31,11 @@ export type ResearchReportStatus =
   | 'SUBMITTED'
   | 'LEADER_REVIEWED'
   | 'NEEDS_REVISION'
+  | 'LEADER_REJECTED'
   | 'APPROVED'
-  | 'REJECTED';
+  | 'MANAGER_REJECTED';
+
+export type LeaderReportDecision = 'ACCEPT' | 'REQUEST_REVISION' | 'REJECT';
 
 export type ResearchProductType =
   | 'FINAL_REPORT'
@@ -406,6 +409,8 @@ export interface ResearchReport {
   commentCount?: number | null;
   createdAt?: string | null;
   updatedAt?: string | null;
+  submittedByGroupRole?: string | null;
+  isLatestVersion?: boolean | null;
 }
 
 export interface ResearchReportComment {
@@ -499,6 +504,17 @@ export interface SubmitReportPayload {
   selfAssessment: string;
   evidenceLink?: string;
   file: File;
+}
+
+export interface ReplaceReportPayload {
+  title: string;
+  contentDone: string;
+  result: string;
+  difficulty: string;
+  nextPlan: string;
+  selfAssessment: string;
+  evidenceLink?: string;
+  file?: File | null;
 }
 
 export type ManagerReportDecision = 'APPROVE' | 'REQUEST_REVISION' | 'REJECT';

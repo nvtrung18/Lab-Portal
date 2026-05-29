@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { Button, toast } from '../../../shared/components';
 import { downloadReportFile } from '../api';
 import type { ResearchReport } from '../types';
-import { formatDate } from '../utils';
+import { formatDate, formatReportSubmitterName } from '../utils';
 import type { TaskBoardRole } from '../taskBoardHelpers';
 import { LeaderReviewButton } from './LeaderReviewButton';
 import { ManagerReviewActions } from './ManagerReviewActions';
@@ -72,7 +72,7 @@ export function ReportVersionItem({
           </div>
           <h6 className="mt-1 font-semibold text-slate-900">{report.title}</h6>
         </div>
-        <ReportStatusBadge status={report.status} />
+        <ReportStatusBadge status={report.status} submittedByGroupRole={report.submittedByGroupRole} />
       </div>
 
       <ReportStatusNotice status={report.status} />
@@ -101,7 +101,7 @@ export function ReportVersionItem({
             {isReviewOpen ? 'Ẩn góp ý' : getReviewButtonLabel(report.commentCount)}
           </Button>
         ) : null}
-        {role === 'GROUP_LEADER' ? (
+        {role === 'GROUP_LEADER' && isLatest ? (
           <LeaderReviewButton currentUserId={currentUserId} groupId={groupId} report={report} />
         ) : null}
         {report.evidenceLink ? (
@@ -116,7 +116,7 @@ export function ReportVersionItem({
         ) : null}
       </div>
 
-      {role === 'LAB_MANAGER' ? <ManagerReviewActions labId={labId} report={report} /> : null}
+      {role === 'LAB_MANAGER' && isLatest ? <ManagerReviewActions labId={labId} report={report} /> : null}
 
       {canComment && isReviewOpen ? (
         <ReviewPanel canComment currentUserId={currentUserId} reportId={report.id} />
@@ -147,6 +147,20 @@ function ReportStatusNotice({ status }: { status: ResearchReport['status'] }) {
       </p>
     );
   }
+  if (status === 'LEADER_REJECTED') {
+    return (
+      <p className="mt-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-800">
+        Trưởng nhóm từ chối báo cáo
+      </p>
+    );
+  }
+  if (status === 'MANAGER_REJECTED') {
+    return (
+      <p className="mt-3 rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-semibold text-rose-800">
+        Quản lý đã từ chối báo cáo
+      </p>
+    );
+  }
   return null;
 }
 
@@ -160,10 +174,7 @@ function ReportField({ label, value }: { label: string; value: string }) {
 }
 
 function getSubmitterLabel(report: ResearchReport) {
-  if (report.submittedByName && report.submittedByEmail) {
-    return `${report.submittedByName} (${report.submittedByEmail})`;
-  }
-  return report.submittedByName ?? report.submittedByEmail ?? `#${report.submittedById}`;
+  return formatReportSubmitterName(report);
 }
 
 function formatFileSize(size?: number | null) {

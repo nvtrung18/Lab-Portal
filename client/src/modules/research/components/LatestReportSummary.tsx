@@ -2,11 +2,12 @@ import { useMemo } from 'react';
 import type { ResearchReport, ResearchReportStatus } from '../types';
 
 const REPORT_STATUS_LABELS: Record<ResearchReportStatus, string> = {
-  SUBMITTED: 'Đã nộp, chờ kiểm tra',
-  LEADER_REVIEWED: 'Trưởng nhóm đã kiểm tra',
-  NEEDS_REVISION: 'Cần chỉnh sửa',
-  APPROVED: 'Báo cáo đã được duyệt',
-  REJECTED: 'Báo cáo bị từ chối',
+  SUBMITTED: 'Chờ trưởng nhóm kiểm tra',
+  LEADER_REVIEWED: 'Chờ quản lý duyệt',
+  NEEDS_REVISION: 'Cần nộp lại',
+  LEADER_REJECTED: 'Trưởng nhóm đã từ chối',
+  APPROVED: 'Đã chấp nhận',
+  MANAGER_REJECTED: 'Quản lý đã từ chối',
 };
 
 interface LatestReportSummaryProps {

@@ -117,7 +117,7 @@ VALUES
     (@ai_lab_id, 'D35-AI-FACE', 'Hệ thống điểm danh sinh viên bằng khuôn mặt', 'Thị giác máy tính', 
      '[D35] Đề tài chính phục vụ kiểm thử giao diện NCKH, có bảng tiến độ Kanban và dữ liệu lớn.', 
      'Xây dựng luồng nhận dạng khuôn mặt qua webcam và tích hợp API check-in tự động.', 'ONGOING', 
-     '2026-05-01', '2026-08-31', 'HIGH', 'Prototype nhận diện qua camera; API gateway check-in', 
+     '2026-07-02', '2026-07-02', 'HIGH', 'Prototype nhận diện qua camera; API gateway check-in', 
      'Tỷ lệ chính xác của mô hình (accuracy); thời gian phản hồi (latency); độ mượt mà của giao diện.', 
      @manager01_id, @manager01_id, TRUE, FALSE, NOW(6), NOW(6));
 
@@ -129,7 +129,7 @@ VALUES
     (@robotics_lab_id, 'D35-ROBOT', 'Robot hỗ trợ vận chuyển trong phòng thí nghiệm', 'Robotics', 
      '[D35] Dự án robot tự hành hỗ trợ vận chuyển vật tư và thiết bị kiểm thử.', 
      'Phát triển hệ thống tự hành điều hướng và tránh vật cản.', 'ONGOING', 
-     '2026-05-15', '2026-10-31', 'MEDIUM', 'Mô hình robot tự hành thực tế; thuật toán tránh vật cản', 
+     '2026-07-02', '2026-07-02', 'MEDIUM', 'Mô hình robot tự hành thực tế; thuật toán tránh vật cản', 
      'Độ ổn định khi di chuyển; tốc độ xử lý vật cản.', 
      @manager02_id, @manager02_id, TRUE, FALSE, NOW(6), NOW(6));
 
@@ -141,7 +141,7 @@ VALUES
     (@datascience_lab_id, 'D35-DS-ANALYTICS', 'Phân tích dữ liệu sử dụng phòng thí nghiệm', 'Khoa học dữ liệu', 
      '[D35] Đề tài phân tích hành vi và tần suất sử dụng thiết bị phòng Lab của sinh viên.', 
      'Xây dựng mô hình dự báo tần suất và lập kế hoạch bảo trì thiết bị.', 'PLANNED', 
-     '2026-06-01', '2026-09-30', 'MEDIUM', 'Mô hình dự đoán nhu cầu; Dashboard báo cáo trực quan', 
+     '2026-07-02', '2026-07-02', 'MEDIUM', 'Mô hình dự đoán nhu cầu; Dashboard báo cáo trực quan', 
      'Độ tin cậy của thuật toán dự báo; tính khả dụng của Dashboard.', 
      @manager03_id, @manager03_id, TRUE, FALSE, NOW(6), NOW(6));
 
@@ -153,7 +153,7 @@ VALUES
     (@cybersecurity_lab_id, 'D35-CYBER-IDS', 'Hệ thống phát hiện truy cập bất thường', 'An toàn thông tin', 
      '[D35] Đề tài giám sát và phân tích gói tin mạng để phát hiện xâm nhập trái phép nội bộ.', 
      'Xây dựng hệ thống phát hiện hành vi truy cập mạng bất thường theo thời gian thực.', 'ONGOING', 
-     '2026-05-01', '2026-11-30', 'HIGH', 'Module IDS nhận diện gói tin xấu; Tài liệu báo cáo phân tích mạng', 
+     '2026-07-02', '2026-07-02', 'HIGH', 'Module IDS nhận diện gói tin xấu; Tài liệu báo cáo phân tích mạng', 
      'Tỷ lệ phát hiện xâm nhập; số lượng cảnh báo giả.', 
      @manager04_id, @manager04_id, TRUE, FALSE, NOW(6), NOW(6));
 
@@ -165,7 +165,7 @@ VALUES
     (@iot_lab_id, 'D35-IoT-ENV', 'Giám sát môi trường phòng thí nghiệm bằng IoT', 'Mạng cảm biến', 
      '[D35] Dự án đo đạc nhiệt độ, độ ẩm và các chỉ số không khí bảo vệ thiết bị phòng máy.', 
      'Phát triển trạm đo tích hợp cảm biến thông minh gửi dữ liệu qua giao thức MQTT.', 'ONGOING', 
-     '2026-05-15', '2026-08-31', 'LOW', 'Mạch cảm biến IoT; Dashboard Web giám sát môi trường', 
+     '2026-07-02', '2026-07-02', 'LOW', 'Mạch cảm biến IoT; Dashboard Web giám sát môi trường', 
      'Độ chính xác đo đạc; tính ổn định khi truyền dữ liệu không dây.', 
      @manager05_id, @manager05_id, TRUE, FALSE, NOW(6), NOW(6));
 
@@ -305,23 +305,23 @@ INSERT INTO milestones
 VALUES
     (@face_project_id, @face_group_id, 'Khảo sát mô hình nhận diện', 
      'Khảo sát mô hình nhận diện', 'Nghiên cứu cấu trúc triplet loss của FaceNet và ArcFace, so sánh metrics.', 
-     '2026-05-01', '2026-05-15', '2026-05-15', 'IN_PROGRESS', 60.00, @manager01_id, @student07_id, TRUE, FALSE, NOW(6), NOW(6)),
+     '2026-07-02', '2026-07-02', '2026-07-02', 'IN_PROGRESS', 60.00, @manager01_id, @student07_id, TRUE, FALSE, NOW(6), NOW(6)),
      
     (@face_project_id, @face_group_id, 'Xây dựng tập dữ liệu thử nghiệm', 
      'Xây dựng tập dữ liệu thử nghiệm', 'Chụp ảnh mẫu học viên thực tế tại Lab và tiền xử lý, chuẩn hóa kích thước.', 
-     '2026-05-16', '2026-05-25', '2026-05-25', 'IN_PROGRESS', 40.00, @manager01_id, @student09_id, TRUE, FALSE, NOW(6), NOW(6)),
+     '2026-07-02', '2026-07-02', '2026-07-02', 'IN_PROGRESS', 40.00, @manager01_id, @student09_id, TRUE, FALSE, NOW(6), NOW(6)),
      
     (@face_project_id, @face_group_id, 'Phát triển API nhận diện khuôn mặt', 
      'Phát triển API nhận diện khuôn mặt', 'Thiết kế cơ sở dữ liệu lưu trữ vector đặc trưng và viết API đối khớp base64.', 
-     '2026-05-26', '2026-06-02', '2026-06-02', 'IN_PROGRESS', 50.00, @manager01_id, @student06_id, TRUE, FALSE, NOW(6), NOW(6)),
+     '2026-07-02', '2026-07-02', '2026-07-02', 'IN_PROGRESS', 50.00, @manager01_id, @student06_id, TRUE, FALSE, NOW(6), NOW(6)),
      
     (@face_project_id, @face_group_id, 'Tích hợp giao diện check-in', 
      'Tích hợp giao diện check-in', 'Lấy luồng camera từ React UI, chụp và gửi ảnh định kỳ lên API gateway.', 
-     '2026-06-03', '2026-06-10', '2026-06-10', 'NOT_STARTED', 0.00, @manager01_id, @student10_id, TRUE, FALSE, NOW(6), NOW(6)),
+     '2026-07-02', '2026-07-02', '2026-07-02', 'NOT_STARTED', 0.00, @manager01_id, @student10_id, TRUE, FALSE, NOW(6), NOW(6)),
 
     (@face_project_id, @face_group_id, 'Kiểm thử và hoàn thiện báo cáo', 
      'Kiểm thử và hoàn thiện báo cáo', 'Tiến hành kiểm thử hệ thống tích hợp, đánh giá độ chính xác và viết báo cáo nghiệm thu.', 
-     '2026-06-11', '2026-06-18', '2026-06-18', 'NOT_STARTED', 0.00, @manager01_id, @student08_id, TRUE, FALSE, NOW(6), NOW(6));
+     '2026-07-02', '2026-07-02', '2026-07-02', 'NOT_STARTED', 0.00, @manager01_id, @student08_id, TRUE, FALSE, NOW(6), NOW(6));
 
 -- Retrieve Milestone IDs
 SET @ms1_id := (SELECT id FROM milestones WHERE project_id = @face_project_id AND name = 'Khảo sát mô hình nhận diện' LIMIT 1);
@@ -337,26 +337,26 @@ INSERT INTO tasks
     (milestone_id, assignee_id, title, description, deadline, status, progress_percent, active, deleted, created_at, updated_at)
 VALUES
     -- Mốc 1: Khảo sát mô hình nhận diện
-    (@ms1_id, @student07_id, 'Tìm hiểu FaceNet', 'Đọc tài liệu về FaceNet, hiểu cấu trúc triplet loss.', '2026-05-10', 'DONE', 100, TRUE, FALSE, NOW(6), NOW(6)),
-    (@ms1_id, @student08_id, 'So sánh FaceNet và ArcFace', 'Chạy thử nghiệm so sánh hiệu năng và độ chính xác của FaceNet và ArcFace trên LFW.', '2026-05-14', 'WAITING_REVIEW', 90, TRUE, FALSE, NOW(6), NOW(6)),
-    (@ms1_id, @student06_id, 'Tổng hợp tài liệu nhận diện khuôn mặt', 'Tập hợp các tài liệu khảo sát và viết báo cáo tổng quan.', '2026-05-15', 'DOING', 50, TRUE, FALSE, NOW(6), NOW(6)),
+    (@ms1_id, @student07_id, 'Tìm hiểu FaceNet', 'Đọc tài liệu về FaceNet, hiểu cấu trúc triplet loss.', '2026-07-02', 'DONE', 100, TRUE, FALSE, NOW(6), NOW(6)),
+    (@ms1_id, @student08_id, 'So sánh FaceNet và ArcFace', 'Chạy thử nghiệm so sánh hiệu năng và độ chính xác của FaceNet và ArcFace trên LFW.', '2026-07-02', 'WAITING_REVIEW', 90, TRUE, FALSE, NOW(6), NOW(6)),
+    (@ms1_id, @student06_id, 'Tổng hợp tài liệu nhận diện khuôn mặt', 'Tập hợp các tài liệu khảo sát và viết báo cáo tổng quan.', '2026-07-02', 'WAITING_REVIEW', 90, TRUE, FALSE, NOW(6), NOW(6)),
     
     -- Mốc 2: Xây dựng tập dữ liệu thử nghiệm
-    (@ms2_id, @student09_id, 'Thu thập ảnh mẫu', 'Chụp ảnh chân dung của các thành viên Lab ở nhiều góc độ và điều kiện ánh sáng.', '2026-05-22', 'DOING', 40, TRUE, FALSE, NOW(6), NOW(6)),
-    (@ms2_id, @student10_id, 'Chuẩn hóa ảnh đầu vào', 'Viết code tiền xử lý, căn chỉnh (align) và crop khuôn mặt về kích thước 160x160.', '2026-05-24', 'TODO', 0, TRUE, FALSE, NOW(6), NOW(6)),
-    (@ms2_id, @student09_id, 'Gắn nhãn dữ liệu thử nghiệm', 'Gắn nhãn ID tương ứng cho từng tập ảnh chân dung đã chụp.', '2026-05-25', 'NEEDS_REVISION', 80, TRUE, FALSE, NOW(6), NOW(6)),
+    (@ms2_id, @student09_id, 'Thu thập ảnh mẫu', 'Chụp ảnh chân dung của các thành viên Lab ở nhiều góc độ và điều kiện ánh sáng.', '2026-07-02', 'DOING', 40, TRUE, FALSE, NOW(6), NOW(6)),
+    (@ms2_id, @student10_id, 'Chuẩn hóa ảnh đầu vào', 'Viết code tiền xử lý, căn chỉnh (align) và crop khuôn mặt về kích thước 160x160.', '2026-07-02', 'TODO', 0, TRUE, FALSE, NOW(6), NOW(6)),
+    (@ms2_id, @student09_id, 'Gắn nhãn dữ liệu thử nghiệm', 'Gắn nhãn ID tương ứng cho từng tập ảnh chân dung đã chụp.', '2026-07-02', 'NEEDS_REVISION', 80, TRUE, FALSE, NOW(6), NOW(6)),
     
     -- Mốc 3: Phát triển API nhận diện khuôn mặt
-    (@ms3_id, @student06_id, 'Thiết kế API nhận diện', 'Thiết kế các endpoint nhận diện và cấu trúc DB lưu trữ vector đặc trưng.', '2026-06-01', 'DOING', 30, TRUE, FALSE, NOW(6), NOW(6)),
-    (@ms3_id, @student07_id, 'Tích hợp model vào backend', 'Triển khai inference model FaceNet/ArcFace trên backend Spring Boot.', '2026-06-02', 'WAITING_REVIEW', 90, TRUE, FALSE, NOW(6), NOW(6)),
+    (@ms3_id, @student06_id, 'Thiết kế API nhận diện', 'Thiết kế các endpoint nhận diện và cấu trúc DB lưu trữ vector đặc trưng.', '2026-07-02', 'DOING', 30, TRUE, FALSE, NOW(6), NOW(6)),
+    (@ms3_id, @student07_id, 'Tích hợp model vào backend', 'Triển khai inference model FaceNet/ArcFace trên backend Spring Boot.', '2026-07-02', 'WAITING_REVIEW', 90, TRUE, FALSE, NOW(6), NOW(6)),
     
     -- Mốc 4: Tích hợp giao diện check-in
-    (@ms4_id, @student10_id, 'Thiết kế màn hình check-in', 'Thiết kế giao diện check-in bằng camera trên React.', '2026-06-07', 'TODO', 0, TRUE, FALSE, NOW(6), NOW(6)),
-    (@ms4_id, @student08_id, 'Hiển thị kết quả nhận diện', 'Xử lý hiển thị thông báo check-in thành công/thất bại dựa trên kết quả API.', '2026-06-09', 'TODO', 0, TRUE, FALSE, NOW(6), NOW(6)),
+    (@ms4_id, @student10_id, 'Thiết kế màn hình check-in', 'Thiết kế giao diện check-in bằng camera trên React.', '2026-07-02', 'TODO', 0, TRUE, FALSE, NOW(6), NOW(6)),
+    (@ms4_id, @student08_id, 'Hiển thị kết quả nhận diện', 'Xử lý hiển thị thông báo check-in thành công/thất bại dựa trên kết quả API.', '2026-07-02', 'TODO', 0, TRUE, FALSE, NOW(6), NOW(6)),
     
     -- Mốc 5: Kiểm thử và hoàn thiện báo cáo
-    (@ms5_id, @student08_id, 'Viết báo cáo tổng kết', 'Tổng kết lại toàn bộ số liệu thử nghiệm và viết báo cáo khoa học.', '2026-06-15', 'TODO', 0, TRUE, FALSE, NOW(6), NOW(6)),
-    (@ms5_id, @student06_id, 'Chuẩn bị slide demo', 'Chuẩn bị slide và video quay lại quá trình hoạt động thực tế để thuyết trình.', '2026-06-17', 'TODO', 0, TRUE, FALSE, NOW(6), NOW(6));
+    (@ms5_id, @student08_id, 'Viết báo cáo tổng kết', 'Tổng kết lại toàn bộ số liệu thử nghiệm và viết báo cáo khoa học.', '2026-07-02', 'TODO', 0, TRUE, FALSE, NOW(6), NOW(6)),
+    (@ms5_id, @student06_id, 'Chuẩn bị slide demo', 'Chuẩn bị slide và video quay lại quá trình hoạt động thực tế để thuyết trình.', '2026-07-02', 'TODO', 0, TRUE, FALSE, NOW(6), NOW(6));
 
 -- Retrieve Task IDs
 SET @task_facenet_id := (SELECT id FROM tasks WHERE milestone_id = @ms1_id AND title = 'Tìm hiểu FaceNet' LIMIT 1);
@@ -430,7 +430,7 @@ VALUES
      'Bổ sung ngưỡng lọc sáng trước khi xử lý.', 
      'Hoàn thành 80% công việc.', 
      '/storage/reports/task-chuanhoa/v1.pdf', 'chuan-hoa-anh-v1.pdf', 'application/pdf', 980000, 
-     'https://github.com/lab-portal/face-attendance-demo', 'REJECTED', CONCAT('M:', @ms2_id, ':T:', @task_chuanhoa_id, ':U:', @student10_id), NOW(6), 'Cần bổ sung ảnh minh chứng và mô tả quy trình tiền xử lý.', NULL, NULL, TRUE, FALSE, NOW(6), NOW(6)),
+     'https://github.com/lab-portal/face-attendance-demo', 'LEADER_REJECTED', CONCAT('M:', @ms2_id, ':T:', @task_chuanhoa_id, ':U:', @student10_id), NOW(6), 'Cần bổ sung ảnh minh chứng và mô tả quy trình tiền xử lý.', NULL, NULL, TRUE, FALSE, NOW(6), NOW(6)),
 
     -- Student 10: Chuẩn hóa ảnh đầu vào v2
     (@face_project_id, @face_group_id, @ms2_id, @task_chuanhoa_id, @student10_id, 2, 'Báo cáo chuẩn hóa ảnh đầu vào v2', 
@@ -613,20 +613,20 @@ INSERT INTO milestones
      created_by, assigned_to_student_id, active, deleted, created_at, updated_at)
 VALUES
     -- Robotics Lab
-    (@robot_project_id, @robot_group_id, 'Khảo sát thuật toán điều hướng', 'Khảo sát thuật toán điều hướng', 'Tìm hiểu lý thuyết các thuật toán A* và Dijkstra.', '2026-05-15', '2026-05-30', '2026-05-30', 'COMPLETED', 100.00, @manager02_id, @student16_id, TRUE, FALSE, NOW(6), NOW(6)),
-    (@robot_project_id, @robot_group_id, 'Thử nghiệm tránh vật cản Lidar', 'Thử nghiệm tránh vật cản Lidar', 'Chạy thử nghiệm điều hướng tránh vật cản trên robot mô hình.', '2026-06-01', '2026-06-15', '2026-06-15', 'IN_PROGRESS', 50.00, @manager02_id, @student17_id, TRUE, FALSE, NOW(6), NOW(6)),
+    (@robot_project_id, @robot_group_id, 'Khảo sát thuật toán điều hướng', 'Khảo sát thuật toán điều hướng', 'Tìm hiểu lý thuyết các thuật toán A* và Dijkstra.', '2026-07-02', '2026-07-02', '2026-07-02', 'COMPLETED', 100.00, @manager02_id, @student16_id, TRUE, FALSE, NOW(6), NOW(6)),
+    (@robot_project_id, @robot_group_id, 'Thử nghiệm tránh vật cản Lidar', 'Thử nghiệm tránh vật cản Lidar', 'Chạy thử nghiệm điều hướng tránh vật cản trên robot mô hình.', '2026-07-02', '2026-07-02', '2026-07-02', 'IN_PROGRESS', 50.00, @manager02_id, @student17_id, TRUE, FALSE, NOW(6), NOW(6)),
 
     -- Data Science Lab
-    (@ds_project_id, @ds_group_id, 'Thu thập và làm sạch log hệ thống', 'Thu thập và làm sạch log hệ thống', 'Khai thác dữ liệu log máy tính thô và tiền xử lý làm sạch.', '2026-06-01', '2026-06-15', '2026-06-15', 'IN_PROGRESS', 50.00, @manager03_id, @student03_id, TRUE, FALSE, NOW(6), NOW(6)),
-    (@ds_project_id, @ds_group_id, 'Xây dựng mô hình phân tích hành vi', 'Xây dựng mô hình phân tích hành vi', 'Sử dụng mô hình phân cụm K-Means phân tích tần suất hành vi sinh viên.', '2026-06-16', '2026-06-30', '2026-06-30', 'NOT_STARTED', 0.00, @manager03_id, @student05_id, TRUE, FALSE, NOW(6), NOW(6)),
+    (@ds_project_id, @ds_group_id, 'Thu thập và làm sạch log hệ thống', 'Thu thập và làm sạch log hệ thống', 'Khai thác dữ liệu log máy tính thô và tiền xử lý làm sạch.', '2026-07-02', '2026-07-02', '2026-07-02', 'IN_PROGRESS', 50.00, @manager03_id, @student03_id, TRUE, FALSE, NOW(6), NOW(6)),
+    (@ds_project_id, @ds_group_id, 'Xây dựng mô hình phân tích hành vi', 'Xây dựng mô hình phân tích hành vi', 'Sử dụng mô hình phân cụm K-Means phân tích tần suất hành vi sinh viên.', '2026-07-02', '2026-07-02', '2026-07-02', 'NOT_STARTED', 0.00, @manager03_id, @student05_id, TRUE, FALSE, NOW(6), NOW(6)),
 
     -- Cybersecurity Lab
-    (@cyber_project_id, @cyber_group_id, 'Thiết lập môi trường giả lập tấn công', 'Thiết lập môi trường giả lập tấn công', 'Cấu hình Snort IDS và môi trường mạng ảo tấn công thử nghiệm.', '2026-05-01', '2026-05-15', '2026-05-15', 'COMPLETED', 100.00, @manager04_id, @student04_id, TRUE, FALSE, NOW(6), NOW(6)),
-    (@cyber_project_id, @cyber_group_id, 'Phát hiện xâm nhập cổng mạng', 'Phát hiện xâm nhập cổng mạng', 'Viết luật Snort phát hiện hành vi port scan trên gateway mạng.', '2026-05-16', '2026-05-30', '2026-05-30', 'IN_PROGRESS', 50.00, @manager04_id, @student06_id, TRUE, FALSE, NOW(6), NOW(6)),
+    (@cyber_project_id, @cyber_group_id, 'Thiết lập môi trường giả lập tấn công', 'Thiết lập môi trường giả lập tấn công', 'Cấu hình Snort IDS và môi trường mạng ảo tấn công thử nghiệm.', '2026-07-02', '2026-07-02', '2026-07-02', 'COMPLETED', 100.00, @manager04_id, @student04_id, TRUE, FALSE, NOW(6), NOW(6)),
+    (@cyber_project_id, @cyber_group_id, 'Phát hiện xâm nhập cổng mạng', 'Phát hiện xâm nhập cổng mạng', 'Viết luật Snort phát hiện hành vi port scan trên gateway mạng.', '2026-07-02', '2026-07-02', '2026-07-02', 'IN_PROGRESS', 50.00, @manager04_id, @student06_id, TRUE, FALSE, NOW(6), NOW(6)),
 
     -- IoT Innovation Lab
-    (@iot_project_id, @iot_group_id, 'Thiết kế phần cứng cảm biến', 'Thiết kế phần cứng cảm biến', 'Thiết kế sơ đồ nguyên lý mạch cảm biến ESP32 đọc DHT22.', '2026-05-15', '2026-05-30', '2026-05-30', 'COMPLETED', 100.00, @manager05_id, @student05_id, TRUE, FALSE, NOW(6), NOW(6)),
-    (@iot_project_id, @iot_group_id, 'Kết nối MQTT gửi dữ liệu lên Broker', 'Kết nối MQTT gửi dữ liệu lên Broker', 'Lập trình ESP32 kết nối Wifi và gửi dữ liệu cảm biến qua MQTT.', '2026-06-01', '2026-06-15', '2026-06-15', 'IN_PROGRESS', 30.00, @manager05_id, @student07_id, TRUE, FALSE, NOW(6), NOW(6));
+    (@iot_project_id, @iot_group_id, 'Thiết kế phần cứng cảm biến', 'Thiết kế phần cứng cảm biến', 'Thiết kế sơ đồ nguyên lý mạch cảm biến ESP32 đọc DHT22.', '2026-07-02', '2026-07-02', '2026-07-02', 'COMPLETED', 100.00, @manager05_id, @student05_id, TRUE, FALSE, NOW(6), NOW(6)),
+    (@iot_project_id, @iot_group_id, 'Kết nối MQTT gửi dữ liệu lên Broker', 'Kết nối MQTT gửi dữ liệu lên Broker', 'Lập trình ESP32 kết nối Wifi và gửi dữ liệu cảm biến qua MQTT.', '2026-07-02', '2026-07-02', '2026-07-02', 'IN_PROGRESS', 30.00, @manager05_id, @student07_id, TRUE, FALSE, NOW(6), NOW(6));
 
 -- Retrieve Milestone IDs for other labs
 SET @robot_ms1_id := (SELECT id FROM milestones WHERE project_id = @robot_project_id AND name = 'Khảo sát thuật toán điều hướng' LIMIT 1);
@@ -648,24 +648,24 @@ INSERT INTO tasks
     (milestone_id, assignee_id, title, description, deadline, status, progress_percent, active, deleted, created_at, updated_at)
 VALUES
     -- Robotics Lab Tasks
-    (@robot_ms1_id, @student16_id, 'Tìm hiểu thuật toán A*', 'Nghiên cứu cấu trúc và nguyên lý thuật toán A* trên đồ thị.', '2026-05-25', 'DONE', 100, TRUE, FALSE, NOW(6), NOW(6)),
-    (@robot_ms2_id, @student17_id, 'Thu thập dữ liệu cảm biến Lidar', 'Kết nối cảm biến Lidar và đo đạc khoảng cách vật cản.', '2026-06-10', 'DOING', 50, TRUE, FALSE, NOW(6), NOW(6)),
-    (@robot_ms2_id, @student18_id, 'Lập trình thuật toán tránh vật cản', 'Viết hàm điều khiển hướng robot dựa trên khoảng cách Lidar.', '2026-06-14', 'TODO', 0, TRUE, FALSE, NOW(6), NOW(6)),
+    (@robot_ms1_id, @student16_id, 'Tìm hiểu thuật toán A*', 'Nghiên cứu cấu trúc và nguyên lý thuật toán A* trên đồ thị.', '2026-07-02', 'DONE', 100, TRUE, FALSE, NOW(6), NOW(6)),
+    (@robot_ms2_id, @student17_id, 'Thu thập dữ liệu cảm biến Lidar', 'Kết nối cảm biến Lidar và đo đạc khoảng cách vật cản.', '2026-07-02', 'DOING', 50, TRUE, FALSE, NOW(6), NOW(6)),
+    (@robot_ms2_id, @student18_id, 'Lập trình thuật toán tránh vật cản', 'Viết hàm điều khiển hướng robot dựa trên khoảng cách Lidar.', '2026-07-02', 'TODO', 0, TRUE, FALSE, NOW(6), NOW(6)),
 
     -- Data Science Lab Tasks
-    (@ds_ms1_id, @student03_id, 'Trích xuất log sử dụng máy tính', 'Viết script trích xuất lịch sử log sử dụng máy tính phòng lab.', '2026-06-08', 'DONE', 100, TRUE, FALSE, NOW(6), NOW(6)),
-    (@ds_ms1_id, @student04_id, 'Làm sạch dữ liệu thô', 'Lọc bỏ dữ liệu null, chuẩn hóa các trường thông tin đăng nhập.', '2026-06-12', 'DOING', 40, TRUE, FALSE, NOW(6), NOW(6)),
-    (@ds_ms2_id, @student05_id, 'Huấn luyện mô hình phân cụm K-Means', 'Xây dựng mô hình phân cụm tìm ra nhóm người dùng tích cực.', '2026-06-25', 'TODO', 0, TRUE, FALSE, NOW(6), NOW(6)),
+    (@ds_ms1_id, @student03_id, 'Trích xuất log sử dụng máy tính', 'Viết script trích xuất lịch sử log sử dụng máy tính phòng lab.', '2026-07-02', 'DONE', 100, TRUE, FALSE, NOW(6), NOW(6)),
+    (@ds_ms1_id, @student04_id, 'Làm sạch dữ liệu thô', 'Lọc bỏ dữ liệu null, chuẩn hóa các trường thông tin đăng nhập.', '2026-07-02', 'DOING', 40, TRUE, FALSE, NOW(6), NOW(6)),
+    (@ds_ms2_id, @student05_id, 'Huấn luyện mô hình phân cụm K-Means', 'Xây dựng mô hình phân cụm tìm ra nhóm người dùng tích cực.', '2026-07-02', 'TODO', 0, TRUE, FALSE, NOW(6), NOW(6)),
 
     -- Cybersecurity Lab Tasks
-    (@cyber_ms1_id, @student04_id, 'Cấu hình Snort IDS trên Gateway', 'Cài đặt và cấu hình Snort IDS lắng nghe trên cổng mạng gateway.', '2026-05-10', 'DONE', 100, TRUE, FALSE, NOW(6), NOW(6)),
-    (@cyber_ms1_id, @student05_id, 'Giả lập tấn công Port Scan', 'Sử dụng Nmap để quét cổng và tạo lưu lượng traffic tấn công.', '2026-05-14', 'DOING', 60, TRUE, FALSE, NOW(6), NOW(6)),
-    (@cyber_ms2_id, @student06_id, 'Viết luật phát hiện Port Scan', 'Định nghĩa rule Snort cảnh báo khi có nhiều kết nối TCP SYN trong 1s.', '2026-05-25', 'TODO', 0, TRUE, FALSE, NOW(6), NOW(6)),
+    (@cyber_ms1_id, @student04_id, 'Cấu hình Snort IDS trên Gateway', 'Cài đặt và cấu hình Snort IDS lắng nghe trên cổng mạng gateway.', '2026-07-02', 'DONE', 100, TRUE, FALSE, NOW(6), NOW(6)),
+    (@cyber_ms1_id, @student05_id, 'Giả lập tấn công Port Scan', 'Sử dụng Nmap để quét cổng và tạo lưu lượng traffic tấn công.', '2026-07-02', 'DOING', 60, TRUE, FALSE, NOW(6), NOW(6)),
+    (@cyber_ms2_id, @student06_id, 'Viết luật phát hiện Port Scan', 'Định nghĩa rule Snort cảnh báo khi có nhiều kết nối TCP SYN trong 1s.', '2026-07-02', 'TODO', 0, TRUE, FALSE, NOW(6), NOW(6)),
 
     -- IoT Innovation Lab Tasks
-    (@iot_ms1_id, @student05_id, 'Sơ đồ nguyên lý ESP32 và DHT22', 'Vẽ sơ đồ nguyên lý kết nối vi điều khiển ESP32 và cảm biến DHT22.', '2026-05-20', 'DONE', 100, TRUE, FALSE, NOW(6), NOW(6)),
-    (@iot_ms1_id, @student06_id, 'Lập trình đọc dữ liệu cảm biến', 'Viết code đọc nhiệt độ và độ ẩm từ DHT22 gửi qua cổng Serial.', '2026-05-28', 'DOING', 50, TRUE, FALSE, NOW(6), NOW(6)),
-    (@iot_ms2_id, @student07_id, 'Cấu hình MQTT Broker và Publish', 'Lập trình gửi dữ liệu nhiệt độ độ ẩm lên MQTT broker công cộng.', '2026-06-10', 'TODO', 0, TRUE, FALSE, NOW(6), NOW(6));
+    (@iot_ms1_id, @student05_id, 'Sơ đồ nguyên lý ESP32 và DHT22', 'Vẽ sơ đồ nguyên lý kết nối vi điều khiển ESP32 và cảm biến DHT22.', '2026-07-02', 'DONE', 100, TRUE, FALSE, NOW(6), NOW(6)),
+    (@iot_ms1_id, @student06_id, 'Lập trình đọc dữ liệu cảm biến', 'Viết code đọc nhiệt độ và độ ẩm từ DHT22 gửi qua cổng Serial.', '2026-07-02', 'DOING', 50, TRUE, FALSE, NOW(6), NOW(6)),
+    (@iot_ms2_id, @student07_id, 'Cấu hình MQTT Broker và Publish', 'Lập trình gửi dữ liệu nhiệt độ độ ẩm lên MQTT broker công cộng.', '2026-07-02', 'TODO', 0, TRUE, FALSE, NOW(6), NOW(6));
 
 -- Retrieve Task IDs for other labs
 SET @robot_task1_id := (SELECT id FROM tasks WHERE milestone_id = @robot_ms1_id AND title = 'Tìm hiểu thuật toán A*' LIMIT 1);
@@ -931,3 +931,4 @@ UNION ALL SELECT 'D35 comments', COUNT(*) FROM comments WHERE report_id IN (SELE
 UNION ALL SELECT 'D35 products', COUNT(*) FROM products WHERE project_id IN (@face_project_id, @robot_project_id, @ds_project_id, @cyber_project_id, @iot_project_id) AND deleted = FALSE
 UNION ALL SELECT 'D35 evaluations', COUNT(*) FROM evaluations WHERE project_id IN (@face_project_id, @robot_project_id, @ds_project_id, @cyber_project_id, @iot_project_id) AND deleted = FALSE
 UNION ALL SELECT 'D35 research_logs', COUNT(*) FROM research_logs WHERE project_id IN (@face_project_id, @robot_project_id, @ds_project_id, @cyber_project_id, @iot_project_id) AND deleted = FALSE;
+

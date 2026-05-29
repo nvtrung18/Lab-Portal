@@ -12,6 +12,7 @@ import com.web.labportalbackend.common.exception.ResourceNotFoundException;
 import com.web.labportalbackend.lab.entity.Laboratory;
 import com.web.labportalbackend.lab.repository.LaboratoryRepository;
 import com.web.labportalbackend.research.dto.request.SubmitReportRequest;
+import com.web.labportalbackend.research.dto.request.ReplaceReportRequest;
 import com.web.labportalbackend.research.dto.request.LeaderReviewReportRequest;
 import com.web.labportalbackend.research.dto.request.ManagerReviewReportRequest;
 import com.web.labportalbackend.research.dto.response.ReportResponse;
@@ -23,6 +24,7 @@ import com.web.labportalbackend.research.entity.ProjectEntity;
 import com.web.labportalbackend.research.entity.ReportEntity;
 import com.web.labportalbackend.research.entity.TaskEntity;
 import com.web.labportalbackend.research.enums.GroupRole;
+import com.web.labportalbackend.research.enums.LeaderReportDecision;
 import com.web.labportalbackend.research.enums.ManagerReportDecision;
 import com.web.labportalbackend.research.enums.MilestoneStatus;
 import com.web.labportalbackend.research.enums.ReportStatus;
@@ -109,6 +111,7 @@ public class ReportServiceImpl implements ReportService {
         if (groupId != null && !isMemberOfGroup(currentUser.getId(), groupId)) {
             throw new AccessDeniedException("Cannot submit reports for this group");
         }
+        validateTaskReportSubmissionState(task, currentUser.getId());
         String scope = buildSubmissionScope(milestone.getId(), task.getId(), currentUser.getId());
         Integer version = reportRepository
                 .findMaxVersionByTaskIdAndSubmittedById(task.getId(), currentUser.getId())
@@ -137,6 +140,12 @@ public class ReportServiceImpl implements ReportService {
                 .submissionScope(scope)
                 .build();
 
+        if (task.getStatus() != TaskStatus.DONE && task.getStatus() != TaskStatus.CANCELLED) {
+            task.setStatus(TaskStatus.WAITING_REVIEW);
+            task.setProgressPercent(90);
+            taskRepository.save(task);
+        }
+
         try {
             ReportEntity saved = reportRepository.saveAndFlush(report);
             createSystemLogSafely(
@@ -158,7 +167,7 @@ public class ReportServiceImpl implements ReportService {
                     saved.getId(),
                     displayName(currentUser) + " đã nộp báo cáo cho nhiệm vụ " + task.getTitle() + "."
             );
-            return ReportMapper.toResponse(saved, currentUser);
+            return enrich(ReportMapper.toResponse(saved, currentUser));
         } catch (DataIntegrityViolationException ex) {
             deleteStoredFile(storedFile.path());
             throw new ReportVersionConflictException(task.getId());
@@ -180,7 +189,7 @@ public class ReportServiceImpl implements ReportService {
         }
         return reportRepository.findByTaskIdOrderByVersionDesc(taskId).stream()
                 .filter(report -> role != GroupRole.MEMBER || currentUser.getId().equals(report.getSubmittedById()))
-                .map(report -> ReportMapper.toResponse(report, findSubmitter(report)))
+                .map(report -> enrich(ReportMapper.toResponse(report, findSubmitter(report))))
                 .toList();
     }
 
@@ -226,7 +235,7 @@ public class ReportServiceImpl implements ReportService {
                 )
                 : reportRepository.findByMilestoneIdOrderByCreatedAtDescVersionDesc(milestoneId);
         return reports.stream()
-                .map(report -> toDetailedResponse(report, milestone))
+                .map(report -> enrich(toDetailedResponse(report, milestone)))
                 .toList();
     }
 
@@ -253,7 +262,7 @@ public class ReportServiceImpl implements ReportService {
                         currentUser.getId()
                 )
                 .stream()
-                .map(ReportMapper::toResponse)
+                .map(report -> enrich(ReportMapper.toResponse(report)))
                 .toList();
     }
 
@@ -286,7 +295,7 @@ public class ReportServiceImpl implements ReportService {
                     TaskEntity task = report.getTaskId() == null
                             ? null
                             : taskRepository.findById(report.getTaskId()).orElse(null);
-                    return ReportMapper.toResponse(report, findSubmitter(report), group, milestone, task);
+                    return enrich(ReportMapper.toResponse(report, findSubmitter(report), group, milestone, task));
                 })
                 .toList();
     }
@@ -315,7 +324,7 @@ public class ReportServiceImpl implements ReportService {
                     TaskEntity task = report.getTaskId() == null
                             ? null
                             : taskRepository.findById(report.getTaskId()).orElse(null);
-                    return ReportMapper.toResponse(report, currentUser, group, milestone, task);
+                    return enrich(ReportMapper.toResponse(report, currentUser, group, milestone, task));
                 })
                 .toList();
     }
@@ -325,7 +334,8 @@ public class ReportServiceImpl implements ReportService {
     public List<ReportResponse> getPendingManagerReviewByLab(Long labId) {
         User currentUser = getCurrentUser();
         Laboratory managedLab = assertManagerOwnsLab(currentUser, labId);
-        return reportRepository.findPendingManagerReviewByLabId(managedLab.getId()).stream()
+        boolean requireLeaderReview = systemConfig().research().requireLeaderReviewBeforeManagerReview();
+        return reportRepository.findPendingManagerReviewByLabId(managedLab.getId(), requireLeaderReview).stream()
                 .map(report -> {
                     MilestoneEntity milestone = findMilestone(report.getMilestoneId());
                     GroupEntity group = report.getGroupId() == null
@@ -334,7 +344,7 @@ public class ReportServiceImpl implements ReportService {
                     TaskEntity task = report.getTaskId() == null
                             ? null
                             : taskRepository.findById(report.getTaskId()).orElse(null);
-                    return ReportMapper.toResponse(report, findSubmitter(report), group, milestone, task);
+                    return enrich(ReportMapper.toResponse(report, findSubmitter(report), group, milestone, task));
                 })
                 .toList();
     }
@@ -354,24 +364,60 @@ public class ReportServiceImpl implements ReportService {
     public ReportResponse leaderReview(Long reportId, LeaderReviewReportRequest request) {
         ReportEntity report = findReport(reportId);
         User currentUser = getCurrentUser();
-        String note = request.getNote().trim();
-        Long groupId = resolveReportGroupId(report);
+        String comment = request.getComment().trim();
+        Long groupId = report.getGroupId();
+
         if (!currentUser.hasRole("STUDENT") || groupId == null || !isLeaderOfGroup(currentUser.getId(), groupId)) {
-            throw new AccessDeniedException("Không thể kiểm tra báo cáo này");
+            throw new AccessDeniedException("Bạn không có quyền xử lý báo cáo này.");
         }
         if (currentUser.getId().equals(report.getSubmittedById())) {
-            throw new AccessDeniedException("Không thể kiểm tra báo cáo này");
-        }
-        assertCanViewReports(currentUser, findMilestone(report.getMilestoneId()));
-        assertLatestSubmissionVersion(report);
-        if (report.getStatus() != ReportStatus.SUBMITTED && report.getStatus() != ReportStatus.NEEDS_REVISION) {
-            throw new IllegalArgumentException("Không thể kiểm tra báo cáo này");
+            throw new AccessDeniedException("Bạn không thể tự xử lý báo cáo của chính mình. Báo cáo này sẽ do quản lý PTN duyệt.");
         }
 
-        report.setStatus(ReportStatus.LEADER_REVIEWED);
+        assertCanViewReports(currentUser, findMilestone(report.getMilestoneId()));
+        assertLatestSubmissionVersion(report);
+
+        if (report.getStatus() != ReportStatus.SUBMITTED) {
+            throw new IllegalArgumentException("Chỉ có thể xử lý báo cáo đang chờ trưởng nhóm kiểm tra.");
+        }
+
+        LeaderReportDecision decision = request.getDecision();
+        if (decision == LeaderReportDecision.ACCEPT) {
+            report.setStatus(ReportStatus.LEADER_REVIEWED);
+        } else if (decision == LeaderReportDecision.REQUEST_REVISION) {
+            report.setStatus(ReportStatus.NEEDS_REVISION);
+            if (report.getTaskId() != null) {
+                TaskEntity task = taskRepository.findById(report.getTaskId())
+                        .orElseThrow(() -> new ResourceNotFoundException("Task", report.getTaskId()));
+                if (task.getStatus() == TaskStatus.WAITING_REVIEW || task.getStatus() == TaskStatus.DOING) {
+                    task.setStatus(TaskStatus.NEEDS_REVISION);
+                    taskRepository.save(task);
+                }
+            }
+        } else {
+            report.setStatus(ReportStatus.LEADER_REJECTED);
+            if (report.getTaskId() != null) {
+                TaskEntity task = taskRepository.findById(report.getTaskId())
+                        .orElseThrow(() -> new ResourceNotFoundException("Task", report.getTaskId()));
+                task.setStatus(TaskStatus.NEEDS_REVISION);
+                taskRepository.save(task);
+            }
+        }
+
         report.setLeaderReviewedAt(Instant.now());
-        report.setLeaderComment(note);
-        saveReviewComment(reportId, currentUser.getId(), "Trưởng nhóm đã kiểm tra: " + note);
+        report.setLeaderReviewerId(currentUser.getId());
+        report.setLeaderComment(comment);
+
+        String commentPrefix;
+        if (decision == LeaderReportDecision.ACCEPT) {
+            commentPrefix = "Trưởng nhóm đã chấp nhận báo cáo: ";
+        } else if (decision == LeaderReportDecision.REQUEST_REVISION) {
+            commentPrefix = "Trưởng nhóm yêu cầu nộp lại báo cáo: ";
+        } else {
+            commentPrefix = "Trưởng nhóm từ chối báo cáo: ";
+        }
+        saveReviewComment(reportId, currentUser.getId(), commentPrefix + comment);
+
         ReportEntity saved = reportRepository.save(report);
         createSystemLogSafely(
                 saved.getProjectId(),
@@ -380,7 +426,7 @@ public class ReportServiceImpl implements ReportService {
                 saved.getTaskId(),
                 currentUser.getId(),
                 displayName(currentUser) + " đã kiểm tra báo cáo v" + saved.getVersion() + ".",
-                note,
+                comment,
                 ResearchLogVisibility.GROUP
         );
         auditLogService.log(
@@ -391,7 +437,7 @@ public class ReportServiceImpl implements ReportService {
                 saved.getId(),
                 displayName(currentUser) + " đã kiểm tra báo cáo v" + saved.getVersion() + "."
         );
-        return ReportMapper.toResponse(saved);
+        return enrich(ReportMapper.toResponse(saved));
     }
 
     @Override
@@ -400,20 +446,34 @@ public class ReportServiceImpl implements ReportService {
         ReportEntity report = findReport(reportId);
         User currentUser = getCurrentUser();
         MilestoneEntity milestone = findMilestone(report.getMilestoneId());
+
         if (!currentUser.hasRole("LAB_MANAGER")) {
-            throw new AccessDeniedException("Only laboratory managers may make the final report decision");
+            throw new AccessDeniedException("Bạn không có quyền duyệt báo cáo này.");
         }
-        assertCanViewReports(currentUser, milestone);
+
+        Laboratory managedLab = laboratoryRepository.findFirstByManagerIdAndDeletedFalse(currentUser.getId())
+                .orElse(null);
+        if (managedLab == null || milestone.getProject().getLab() == null
+                || !managedLab.getId().equals(milestone.getProject().getLab().getId())) {
+            throw new AccessDeniedException("Bạn không có quyền duyệt báo cáo này.");
+        }
+
         assertLatestSubmissionVersion(report);
+
         boolean requireLeaderReview = systemConfig().research().requireLeaderReviewBeforeManagerReview();
-        if (requireLeaderReview && report.getStatus() != ReportStatus.LEADER_REVIEWED) {
-            throw new IllegalArgumentException("The report must be reviewed by the group leader first");
+        boolean isSubmittedByLeader = false;
+        if (report.getGroupId() != null) {
+            isSubmittedByLeader = isLeaderOfGroup(report.getSubmittedById(), report.getGroupId());
         }
-        if (!requireLeaderReview
-                && report.getStatus() != ReportStatus.LEADER_REVIEWED
-                && report.getStatus() != ReportStatus.SUBMITTED
-                && report.getStatus() != ReportStatus.NEEDS_REVISION) {
-            throw new IllegalArgumentException("The report cannot be reviewed in current status");
+
+        if (requireLeaderReview && !isSubmittedByLeader) {
+            if (report.getStatus() != ReportStatus.LEADER_REVIEWED) {
+                throw new IllegalArgumentException("Báo cáo cần được trưởng nhóm kiểm tra trước.");
+            }
+        } else {
+            if (report.getStatus() != ReportStatus.SUBMITTED && report.getStatus() != ReportStatus.LEADER_REVIEWED) {
+                throw new IllegalArgumentException("Báo cáo phải ở trạng thái chờ duyệt hoặc đã được trưởng nhóm kiểm tra.");
+            }
         }
 
         ManagerReportDecision decision = request.getDecision();
@@ -425,13 +485,24 @@ public class ReportServiceImpl implements ReportService {
             report.setStatus(ReportStatus.NEEDS_REVISION);
             requestRevisionForSubmittedTask(report);
         } else {
-            report.setStatus(ReportStatus.REJECTED);
+            report.setStatus(ReportStatus.MANAGER_REJECTED);
+            requestRevisionForSubmittedTask(report);
         }
+
         report.setManagerReviewedAt(Instant.now());
+        report.setManagerReviewerId(currentUser.getId());
         report.setManagerComment(comment);
         milestone.setManagerComment(comment);
 
-        saveReviewComment(reportId, currentUser.getId(), "Quản lý PTN: " + comment);
+        String commentPrefix;
+        if (decision == ManagerReportDecision.APPROVE) {
+            commentPrefix = "Quản lý PTN đã chấp nhận báo cáo: ";
+        } else if (decision == ManagerReportDecision.REQUEST_REVISION) {
+            commentPrefix = "Quản lý PTN yêu cầu nộp lại báo cáo: ";
+        } else {
+            commentPrefix = "Quản lý PTN từ chối báo cáo: ";
+        }
+        saveReviewComment(reportId, currentUser.getId(), commentPrefix + comment);
         reportRepository.saveAndFlush(report);
         recalculateMilestoneProgress(milestone, report);
         milestoneRepository.save(milestone);
@@ -456,7 +527,7 @@ public class ReportServiceImpl implements ReportService {
                 displayName(currentUser) + " đã " + managerDecisionLabel(decision)
                         + " báo cáo của " + displayName(submitter) + "."
         );
-        return ReportMapper.toResponse(report);
+        return enrich(ReportMapper.toResponse(report));
     }
 
     private ReportEntity findReport(Long reportId) {
@@ -508,7 +579,7 @@ public class ReportServiceImpl implements ReportService {
 
     private void assertLatestSubmissionVersion(ReportEntity report) {
         if (reportRepository.existsBySubmissionScopeAndVersionGreaterThan(report.getSubmissionScope(), report.getVersion())) {
-            throw new IllegalArgumentException("Only the latest report version can be reviewed");
+            throw new IllegalArgumentException("Chỉ có thể xử lý phiên bản báo cáo mới nhất.");
         }
     }
 
@@ -582,8 +653,57 @@ public class ReportServiceImpl implements ReportService {
             throw new AccessDeniedException("Cannot submit reports for this group");
         }
         if (!currentUser.getId().equals(task.getAssigneeId())) {
-            throw new AccessDeniedException("Students may submit reports only for tasks assigned to them");
+            throw new AccessDeniedException("Bạn không có quyền nộp báo cáo cho nhiệm vụ này.");
         }
+    }
+
+    private void validateTaskReportSubmissionState(TaskEntity task, Long currentUserId) {
+        TaskStatus taskStatus = toWorkflowTaskStatus(task.getStatus());
+        if (taskStatus == TaskStatus.TODO) {
+            throw new IllegalArgumentException("Bạn cần bắt đầu thực hiện nhiệm vụ trước khi nộp báo cáo.");
+        }
+
+        ReportStatus latestStatus = reportRepository
+                .findTopByTaskIdAndSubmittedByIdAndDeletedFalseAndActiveTrueOrderByVersionDescCreatedAtDesc(
+                        task.getId(),
+                        currentUserId
+                )
+                .map(ReportEntity::getStatus)
+                .orElse(null);
+
+        if (latestStatus == null) {
+            if (taskStatus == TaskStatus.DOING || taskStatus == TaskStatus.NEEDS_REVISION) {
+                return;
+            }
+            throw new IllegalArgumentException("Bạn cần bắt đầu thực hiện nhiệm vụ trước khi nộp báo cáo.");
+        }
+
+        if (latestStatus == ReportStatus.SUBMITTED) {
+            throw new IllegalArgumentException("Báo cáo đang chờ trưởng nhóm kiểm tra, chưa thể nộp lại.");
+        }
+        if (latestStatus == ReportStatus.LEADER_REVIEWED) {
+            throw new IllegalArgumentException("Báo cáo đang chờ quản lý duyệt, chưa thể nộp lại.");
+        }
+        if (latestStatus == ReportStatus.APPROVED) {
+            throw new IllegalArgumentException("Báo cáo đã được duyệt, không thể nộp lại.");
+        }
+        if (latestStatus == ReportStatus.NEEDS_REVISION
+                || latestStatus == ReportStatus.LEADER_REJECTED
+                || latestStatus == ReportStatus.MANAGER_REJECTED) {
+            return;
+        }
+
+        throw new IllegalArgumentException("Trạng thái báo cáo hiện tại không cho phép nộp lại.");
+    }
+
+    private TaskStatus toWorkflowTaskStatus(TaskStatus status) {
+        if (status == TaskStatus.IN_PROGRESS) {
+            return TaskStatus.DOING;
+        }
+        if (status == TaskStatus.REVIEW) {
+            return TaskStatus.WAITING_REVIEW;
+        }
+        return status == null ? TaskStatus.TODO : status;
     }
 
     private GroupRole assertCanViewReports(User currentUser, MilestoneEntity milestone) {
@@ -751,6 +871,87 @@ public class ReportServiceImpl implements ReportService {
             return "";
         }
         return filename.substring(filename.lastIndexOf('.') + 1).toLowerCase(Locale.ROOT);
+    }
+
+    private ReportResponse enrich(ReportResponse response) {
+        if (response == null) return null;
+        boolean hasNewer = reportRepository.existsBySubmissionScopeAndVersionGreaterThan(
+                buildSubmissionScope(response.getMilestoneId(), response.getTaskId(), response.getSubmittedById()),
+                response.getVersion()
+        );
+        response.setIsLatestVersion(!hasNewer);
+
+        if (response.getGroupId() != null) {
+            boolean isLeader = isLeaderOfGroup(response.getSubmittedById(), response.getGroupId());
+            response.setSubmittedByGroupRole(isLeader ? "LEADER" : "MEMBER");
+        } else {
+            response.setSubmittedByGroupRole("MEMBER");
+        }
+        return response;
+    }
+
+    @Override
+    @Transactional
+    public ReportResponse replaceReport(Long reportId, ReplaceReportRequest request, MultipartFile file) {
+        ReportEntity report = findReport(reportId);
+        User currentUser = getCurrentUser();
+
+        if (!currentUser.getId().equals(report.getSubmittedById())) {
+            throw new AccessDeniedException("Bạn không có quyền cập nhật báo cáo này.");
+        }
+
+        if (report.getStatus() != ReportStatus.SUBMITTED) {
+            throw new IllegalArgumentException("Báo cáo đã được xử lý, không thể cập nhật phiên bản này.");
+        }
+
+        assertLatestSubmissionVersion(report);
+
+        report.setTitle(request.getTitle().trim());
+        report.setContentDone(request.getContentDone().trim());
+        report.setResult(request.getResult().trim());
+        report.setDifficulty(request.getDifficulty().trim());
+        report.setNextPlan(request.getNextPlan().trim());
+        report.setSelfAssessment(request.getSelfAssessment().trim());
+        report.setEvidenceLink(normalizeEvidenceLink(request.getEvidenceLink()));
+
+        if (file != null && !file.isEmpty()) {
+            Path oldPath = getReportStorageDirectory()
+                    .resolve(String.valueOf(report.getTaskId()))
+                    .resolve(report.getVersion() + "." + getExtension(report.getFileName()))
+                    .normalize();
+            deleteStoredFile(oldPath);
+
+            StoredReportFile storedFile = storeReportFile(file, report.getTaskId(), report.getVersion());
+            report.setFileUrl(storedFile.url());
+            report.setFileName(storedFile.originalFileName());
+            report.setFileType(storedFile.contentType());
+            report.setFileSize(storedFile.size());
+        }
+
+        report.setUpdatedAt(Instant.now());
+        ReportEntity saved = reportRepository.save(report);
+
+        createSystemLogSafely(
+                saved.getProjectId(),
+                saved.getGroupId(),
+                saved.getMilestoneId(),
+                saved.getTaskId(),
+                currentUser.getId(),
+                displayName(currentUser) + " đã cập nhật báo cáo v" + saved.getVersion() + ".",
+                saved.getResult(),
+                ResearchLogVisibility.GROUP
+        );
+
+        auditLogService.log(
+                currentUser,
+                AuditAction.STUDENT_UPLOAD_REPORT,
+                AuditModule.REPORT,
+                "REPORT",
+                saved.getId(),
+                displayName(currentUser) + " đã cập nhật báo cáo v" + saved.getVersion() + "."
+        );
+
+        return enrich(ReportMapper.toResponse(saved, currentUser));
     }
 
     private User getCurrentUser() {

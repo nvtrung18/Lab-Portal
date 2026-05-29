@@ -28,6 +28,11 @@ public interface ReportRepository extends JpaRepository<ReportEntity, Long> {
 
     List<ReportEntity> findByTaskIdOrderByVersionDesc(Long taskId);
 
+    Optional<ReportEntity> findTopByTaskIdAndSubmittedByIdAndDeletedFalseAndActiveTrueOrderByVersionDescCreatedAtDesc(
+            Long taskId,
+            Long submittedById
+    );
+
     List<ReportEntity> findByMilestoneIdOrderByCreatedAtDescVersionDesc(Long milestoneId);
 
     List<ReportEntity> findByMilestoneIdAndSubmittedByIdOrderByCreatedAtDescVersionDesc(
@@ -92,12 +97,16 @@ public interface ReportRepository extends JpaRepository<ReportEntity, Long> {
             FROM ReportEntity r
             JOIN MilestoneEntity m ON m.id = r.milestoneId
             WHERE m.project.lab.id = :labId
-              AND r.status = com.web.labportalbackend.research.enums.ReportStatus.LEADER_REVIEWED
+              AND (r.status = com.web.labportalbackend.research.enums.ReportStatus.LEADER_REVIEWED
+                   OR (:requireLeaderReview = false AND r.status = com.web.labportalbackend.research.enums.ReportStatus.SUBMITTED))
               AND r.deleted = false
               AND r.active = true
             ORDER BY r.createdAt ASC
             """)
-    List<ReportEntity> findPendingManagerReviewByLabId(@Param("labId") Long labId);
+    List<ReportEntity> findPendingManagerReviewByLabId(
+            @Param("labId") Long labId,
+            @Param("requireLeaderReview") boolean requireLeaderReview
+    );
 
     boolean existsBySubmissionScopeAndVersionGreaterThan(String submissionScope, Integer version);
 

@@ -2,10 +2,13 @@ package com.web.labportalbackend.research.controller;
 
 import com.web.labportalbackend.common.dto.Response;
 import com.web.labportalbackend.research.dto.request.SubmitReportRequest;
+import com.web.labportalbackend.research.dto.request.ReplaceReportRequest;
 import com.web.labportalbackend.research.dto.request.LeaderReviewReportRequest;
 import com.web.labportalbackend.research.dto.request.ManagerReviewReportRequest;
 import com.web.labportalbackend.research.dto.response.ReportResponse;
 import com.web.labportalbackend.research.dto.response.ReportFileDownload;
+import com.web.labportalbackend.research.dto.response.LeaderReviewResponse;
+import com.web.labportalbackend.research.dto.response.ManagerReviewResponse;
 import com.web.labportalbackend.research.service.ReportService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -117,24 +120,51 @@ public class ReportController {
     @PatchMapping("/reports/{id}/leader-review")
     @Operation(summary = "Mark report as reviewed by group leader")
     @PreAuthorize("hasRole('STUDENT')")
-    public ResponseEntity<Response<ReportResponse>> leaderReview(
+    public ResponseEntity<LeaderReviewResponse> leaderReview(
             @PathVariable Long id,
             @Valid @RequestBody LeaderReviewReportRequest request
     ) {
-        return ResponseEntity.ok(
-                Response.ok("Report reviewed by group leader", reportService.leaderReview(id, request))
-        );
+        ReportResponse reportResponse = reportService.leaderReview(id, request);
+        LeaderReviewResponse response = LeaderReviewResponse.builder()
+                .message("Đã xử lý báo cáo.")
+                .report(LeaderReviewResponse.ReportSummary.builder()
+                        .id(reportResponse.getId())
+                        .status(reportResponse.getStatus().name())
+                        .version(reportResponse.getVersion())
+                        .build())
+                .build();
+        return ResponseEntity.ok(response);
     }
 
     @PatchMapping("/reports/{id}/manager-review")
     @Operation(summary = "Make final manager decision for a reviewed report")
     @PreAuthorize("hasRole('LAB_MANAGER')")
-    public ResponseEntity<Response<ReportResponse>> managerReview(
+    public ResponseEntity<ManagerReviewResponse> managerReview(
             @PathVariable Long id,
             @Valid @RequestBody ManagerReviewReportRequest request
     ) {
+        ReportResponse reportResponse = reportService.managerReview(id, request);
+        ManagerReviewResponse response = ManagerReviewResponse.builder()
+                .message("Đã duyệt báo cáo.")
+                .report(ManagerReviewResponse.ReportSummary.builder()
+                        .id(reportResponse.getId())
+                        .status(reportResponse.getStatus().name())
+                        .version(reportResponse.getVersion())
+                        .build())
+                .build();
+        return ResponseEntity.ok(response);
+    }
+
+    @PatchMapping(value = "/reports/{id}/replace", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "Replace/update an awaiting review report version")
+    @PreAuthorize("hasRole('STUDENT')")
+    public ResponseEntity<Response<ReportResponse>> replaceReport(
+            @PathVariable Long id,
+            @Valid @ModelAttribute ReplaceReportRequest request,
+            @RequestParam(value = "file", required = false) MultipartFile file
+    ) {
         return ResponseEntity.ok(
-                Response.ok("Manager review completed", reportService.managerReview(id, request))
+                Response.ok("Đã cập nhật báo cáo.", reportService.replaceReport(id, request, file))
         );
     }
 }

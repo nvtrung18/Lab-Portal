@@ -4,7 +4,7 @@ import { Button, EmptyState, ErrorState, LoadingState, toast } from '../../../sh
 import { downloadReportFile } from '../api';
 import { useReportsByTask } from '../hooks';
 import type { ResearchReport } from '../types';
-import { formatDate } from '../utils';
+import { formatDate, formatReportSubmitterName } from '../utils';
 import type { TaskBoardRole } from '../taskBoardHelpers';
 import { LeaderReviewButton } from './LeaderReviewButton';
 import { ManagerReviewActions } from './ManagerReviewActions';
@@ -100,7 +100,7 @@ export function ReportReadOnlyItem({
           </div>
           <h6 className="mt-1 font-semibold text-slate-900">{report.title}</h6>
         </div>
-        <ReportStatusBadge status={report.status} />
+        <ReportStatusBadge status={report.status} submittedByGroupRole={report.submittedByGroupRole} />
       </div>
 
       <ReportStatusNotice status={report.status} />
@@ -129,7 +129,7 @@ export function ReportReadOnlyItem({
             {isReviewOpen ? 'Ẩn góp ý' : getReviewButtonLabel(report.commentCount)}
           </Button>
         ) : null}
-        {role === 'GROUP_LEADER' ? (
+        {role === 'GROUP_LEADER' && isLatest ? (
           <LeaderReviewButton currentUserId={currentUserId} groupId={groupId} report={report} />
         ) : null}
         {report.evidenceLink ? (
@@ -144,7 +144,7 @@ export function ReportReadOnlyItem({
         ) : null}
       </div>
 
-      {role === 'LAB_MANAGER' ? <ManagerReviewActions labId={labId} report={report} /> : null}
+      {role === 'LAB_MANAGER' && isLatest ? <ManagerReviewActions labId={labId} report={report} /> : null}
 
       {canComment && isReviewOpen ? (
         <ReviewPanel canComment currentUserId={currentUserId} reportId={report.id} />
@@ -188,10 +188,7 @@ function ReportField({ label, value }: { label: string; value: string }) {
 }
 
 function getSubmitterLabel(report: ResearchReport) {
-  if (report.submittedByName && report.submittedByEmail) {
-    return `${report.submittedByName} (${report.submittedByEmail})`;
-  }
-  return report.submittedByName ?? report.submittedByEmail ?? `#${report.submittedById}`;
+  return formatReportSubmitterName(report);
 }
 
 function formatFileSize(size?: number | null) {

@@ -22,8 +22,9 @@ export function LeaderReviewButton({ report, groupId, currentUserId }: LeaderRev
   );
 
   const canReview = currentUserId != null
-    && report.submittedById !== currentUserId
-    && (report.status === 'SUBMITTED' || report.status === 'NEEDS_REVISION');
+    && Number(report.submittedById) !== Number(currentUserId)
+    && report.status === 'SUBMITTED'
+    && report.isLatestVersion === true;
 
   if (!canReview) {
     return null;
@@ -32,13 +33,16 @@ export function LeaderReviewButton({ report, groupId, currentUserId }: LeaderRev
   return (
     <>
       <Button onClick={() => setIsOpen(true)} size="sm">
-        Đánh dấu đã kiểm tra
+        Đánh giá báo cáo
       </Button>
       <LeaderReviewModal
+        decision={null}
         isOpen={isOpen}
         isSubmitting={leaderReview.isPending}
         onClose={() => setIsOpen(false)}
-        onSubmit={(note) => leaderReview.mutate(note, { onSuccess: () => setIsOpen(false) })}
+        onSubmit={(decision, comment) =>
+          leaderReview.mutate({ decision, comment }, { onSuccess: () => setIsOpen(false) })
+        }
       />
     </>
   );

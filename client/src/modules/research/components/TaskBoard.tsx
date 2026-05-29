@@ -209,11 +209,12 @@ export function TaskBoard({ milestoneId, readonly = true, role, currentUserId, p
                           : undefined}
                         isUpdating={updateStatus.isPending && updateStatus.variables?.taskId === task.id}
                         reportActionLabel={memberView && task.assignedToStudentId === currentUserId
-                          ? latestReportByTaskId.get(task.id)?.status === 'NEEDS_REVISION'
-                            ? 'Nộp lại báo cáo'
-                            : task.status === 'DOING'
-                              ? 'Nộp báo cáo'
-                              : null
+                          ? (() => {
+                              const latestStatus = latestReportByTaskId.get(task.id)?.status;
+                              if (latestStatus === 'NEEDS_REVISION' || latestStatus === 'LEADER_REJECTED' || latestStatus === 'MANAGER_REJECTED') return 'Nộp lại báo cáo';
+                              if (!latestStatus && task.status === 'DOING') return 'Nộp báo cáo';
+                              return null;
+                            })()
                           : null}
                         onReportAction={setReportTask}
                         onDragEnd={handleDragEnd}
@@ -244,9 +245,12 @@ export function TaskBoard({ milestoneId, readonly = true, role, currentUserId, p
           milestoneId={milestoneId}
           projectId={projectId}
           tasks={[reportTask]}
-          title={latestReportByTaskId.get(reportTask.id)?.status === 'NEEDS_REVISION'
-            ? 'Nộp lại báo cáo tiến độ'
-            : 'Nộp báo cáo tiến độ'}
+          title={(() => {
+            const latestStatus = latestReportByTaskId.get(reportTask.id)?.status;
+            return latestStatus === 'NEEDS_REVISION' || latestStatus === 'LEADER_REJECTED' || latestStatus === 'MANAGER_REJECTED'
+              ? 'Nộp lại báo cáo tiến độ'
+              : 'Nộp báo cáo tiến độ';
+          })()}
           onClose={() => setReportTask(null)}
         />
       ) : null}
