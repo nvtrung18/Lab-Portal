@@ -14,7 +14,7 @@ import {
   ResetPasswordPage,
   VerifyRegisterPage,
 } from '../../modules/auth/pages';
-import { BookingPage, CheckInPage, LabSlotsPage, MyBookingsPage, SlotDetailPage } from '../../modules/booking/pages';
+import { CheckInPage, LabSlotsPage, MyBookingsPage, SlotDetailPage } from '../../modules/booking/pages';
 import {
   ApplicationListPage,
   CleaningPage,
@@ -94,7 +94,8 @@ export function AppRouter() {
           <Route path="lab-info" element={<Navigate to="/app/lab-overview" replace />} />
           <Route path="lab-slots" element={<LabSlotsPage />} />
           <Route path="lab-slots/:slotId" element={<SlotDetailPage />} />
-          <Route path="lab-bookings" element={<BookingPage />} />
+          <Route path="lab-bookings" element={<Navigate to="/app/lab-slots" replace />} />
+          <Route path="lab-bokings" element={<Navigate to="/app/lab-slots" replace />} />
           <Route path="checkin-scan" element={<CheckInPage />} />
           <Route path="lab-members" element={<LabMembersPage />} />
           <Route path="cleaning" element={<CleaningPage />} />
