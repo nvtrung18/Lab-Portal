@@ -47,6 +47,24 @@ public class ResearchLogController {
         ));
     }
 
+    @GetMapping("/research-groups/{groupId}/logs")
+    @Operation(summary = "Get research logs by group")
+    @PreAuthorize("hasAnyRole('LAB_MANAGER', 'STUDENT')")
+    public ResponseEntity<Response<List<ResearchLogResponse>>> getGroupLogs(
+            @PathVariable Long groupId,
+            @RequestParam(required = false) Long milestoneId,
+            @RequestParam(required = false) Long taskId,
+            @RequestParam(required = false) Long authorId,
+            @RequestParam(required = false) ResearchLogType logType,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size
+    ) {
+        return ResponseEntity.ok(Response.ok(
+                "Research logs retrieved successfully",
+                researchLogService.getGroupLogs(groupId, milestoneId, taskId, authorId, logType, page, size)
+        ));
+    }
+
     @PostMapping("/logs")
     @Operation(summary = "Create a manual research log")
     @PreAuthorize("hasAnyRole('LAB_MANAGER', 'STUDENT')")

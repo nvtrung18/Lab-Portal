@@ -48,6 +48,7 @@ public final class GroupMapper {
                 .status(group.getStatus())
                 .leaderId(group.getLeader().getId())
                 .myRole(myRole)
+                .myGroupRole(myRole)
                 .createdByName(toDisplayName(group.getLeader()))
                 .memberCount(activeMembers.size())
                 .projectCount(projectCount)

@@ -1,12 +1,31 @@
 import { useMemo } from 'react';
 import axios from 'axios';
 
+import { EmptyState, ErrorState, LoadingState } from '../../../shared/components';
 import type { UserProfileResponse } from '../../user/api/user.api';
-import { useProjectDashboardStats } from '../hooks';
-import type { DashboardStats } from '../types';
-import { AttendanceChart } from './AttendanceChart';
+import { useProjectDashboardStats, useResearchLogs, useProductsByProject } from '../hooks';
+import type { DashboardStats, ResearchProductStatus, ResearchProductType } from '../types';
 import { StatCard } from './StatCard';
 import { TaskProgressChart } from './TaskProgressChart';
+import { getStatusClass } from '../utils';
+
+const PRODUCT_TYPE_LABELS: Record<ResearchProductType, string> = {
+  FINAL_REPORT: 'Báo cáo tổng kết',
+  SLIDE: 'Slide thuyết trình',
+  SOURCE_CODE: 'Source code',
+  DATASET: 'Bộ dữ liệu',
+  DEMO_VIDEO: 'Video demo',
+  PAPER: 'Bài báo',
+  SOFTWARE_DEMO: 'Demo phần mềm',
+  OTHER: 'Khác',
+};
+
+const PRODUCT_STATUS_LABELS: Record<ResearchProductStatus, string> = {
+  SUBMITTED: 'Đã nộp',
+  ACCEPTED: 'Đã chấp nhận',
+  NEEDS_REVISION: 'Cần chỉnh sửa',
+  REJECTED: 'Không đạt',
+};
 
 interface DashboardPageProps {
   projectId: number;
@@ -27,11 +46,12 @@ const MAX_VISIBLE_GROUPS = 10;
 
 export function DashboardPage({ projectId, role, groupRole }: DashboardPageProps) {
   const { data: stats, error, isError, isFetching, isLoading, refetch } = useProjectDashboardStats(projectId);
+  const { data: logsData } = useResearchLogs(projectId);
+  const { data: products = [] } = useProductsByProject(projectId);
 
   const statsForProject = useMemo(() => (stats?.projectId === projectId ? stats : undefined), [projectId, stats]);
   const cards = useMemo(() => buildStatCards(statsForProject), [statsForProject]);
   const taskChartData = useMemo(() => getTaskProgressData(statsForProject), [statsForProject]);
-  const attendanceChartData = useMemo(() => statsForProject?.attendance.byStudent ?? [], [statsForProject]);
   const milestoneProgressData = useMemo(() => statsForProject?.milestoneProgress ?? [], [statsForProject]);
   const groupProgressData = useMemo(() => statsForProject?.groupProgress ?? [], [statsForProject]);
   const visibleMilestones = useMemo(
@@ -41,6 +61,23 @@ export function DashboardPage({ projectId, role, groupRole }: DashboardPageProps
   const hiddenMilestoneCount = Math.max(0, milestoneProgressData.length - MAX_VISIBLE_MILESTONES);
   const visibleGroups = useMemo(() => groupProgressData.slice(0, MAX_VISIBLE_GROUPS), [groupProgressData]);
   const hiddenGroupCount = Math.max(0, groupProgressData.length - MAX_VISIBLE_GROUPS);
+
+  const logs = useMemo(() => {
+    if (!logsData) return [];
+    return logsData.pages.flat();
+  }, [logsData]);
+  const recentLogs = useMemo(() => logs.slice(0, 5), [logs]);
+
+  const recentProducts = useMemo(() => {
+    return [...products]
+      .sort((a, b) => {
+        const timeA = new Date(a.submittedAt || a.createdAt || 0).getTime();
+        const timeB = new Date(b.submittedAt || b.createdAt || 0).getTime();
+        return timeB - timeA;
+      })
+      .slice(0, 5);
+  }, [products]);
+
   const isEmpty = useMemo(() => isDashboardEmpty(statsForProject), [statsForProject]);
   const scopeLabel = useMemo(() => resolveScopeLabel(statsForProject, role, groupRole), [groupRole, role, statsForProject]);
   const errorMessage = useMemo(() => getDashboardErrorMessage(error), [error]);
@@ -51,8 +88,8 @@ export function DashboardPage({ projectId, role, groupRole }: DashboardPageProps
     return (
       <section className="space-y-5">
         <DashboardHeader scopeLabel={scopeLabel} />
-        <div className="rounded-lg border border-slate-200 bg-white p-5 text-sm text-slate-600 shadow-sm">
-          Đang tải thống kê...
+        <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+          <LoadingState />
         </div>
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {Array.from({ length: 8 }).map((_, index) => (
@@ -67,14 +104,9 @@ export function DashboardPage({ projectId, role, groupRole }: DashboardPageProps
     return (
       <section className="space-y-5">
         <DashboardHeader scopeLabel={scopeLabel} />
-        <div className="rounded-lg border border-red-200 bg-red-50 p-5 text-sm text-red-700">
+        <ErrorState onRetry={!isForbidden ? () => refetch() : undefined}>
           {errorMessage}
-          {!isForbidden ? (
-            <button className="ml-3 font-semibold underline" type="button" onClick={() => refetch()}>
-              Tải lại
-            </button>
-          ) : null}
-        </div>
+        </ErrorState>
       </section>
     );
   }
@@ -83,9 +115,7 @@ export function DashboardPage({ projectId, role, groupRole }: DashboardPageProps
     return (
       <section className="space-y-5">
         <DashboardHeader scopeLabel={scopeLabel} />
-        <div className="rounded-lg border border-slate-200 bg-slate-50 p-5 text-sm text-slate-600">
-          Chưa có dữ liệu thống kê cho đề tài này.
-        </div>
+        <EmptyState>Chưa có dữ liệu.</EmptyState>
       </section>
     );
   }
@@ -106,15 +136,10 @@ export function DashboardPage({ projectId, role, groupRole }: DashboardPageProps
         ))}
       </div>
 
-      <div className="grid gap-5 xl:grid-cols-2">
+      <div className="grid gap-5">
         <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
           <h3 className="text-base font-semibold text-slate-950">Tiến độ task</h3>
           <TaskProgressChart taskProgress={taskChartData} />
-        </section>
-
-        <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-          <h3 className="text-base font-semibold text-slate-950">Điểm danh sinh viên</h3>
-          <AttendanceChart byStudent={attendanceChartData} />
         </section>
       </div>
 
@@ -170,6 +195,62 @@ export function DashboardPage({ projectId, role, groupRole }: DashboardPageProps
           </section>
         ) : null}
       </div>
+
+      <div className="grid gap-5 xl:grid-cols-2">
+        <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+          <h3 className="text-base font-semibold text-slate-950">Nhật ký nghiên cứu gần đây</h3>
+          {!recentLogs.length ? (
+            <p className="mt-4 text-sm text-slate-600">Chưa có nhật ký nghiên cứu nào.</p>
+          ) : (
+            <div className="mt-4 space-y-4">
+              {recentLogs.map((log) => (
+                <div key={log.id} className="relative pl-5 border-l-2 border-slate-100 pb-2 last:pb-0">
+                  <span className="absolute -left-1.5 top-1.5 h-3 w-3 rounded-full border-2 border-white bg-slate-900" />
+                  <div className="text-sm">
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="font-semibold text-slate-800">{log.authorName || 'Thành viên'}</span>
+                      <span className="text-xs text-slate-500">
+                        {log.workDate ? new Intl.DateTimeFormat('vi-VN').format(new Date(log.workDate)) : ''}
+                      </span>
+                    </div>
+                    <p className="mt-1 text-slate-600 line-clamp-2">{log.content}</p>
+                    {log.taskTitle && (
+                      <span className="mt-1.5 inline-block rounded bg-slate-100 px-2 py-0.5 text-xs text-slate-600">
+                        Nhiệm vụ: {log.taskTitle}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+
+        <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+          <h3 className="text-base font-semibold text-slate-950">Sản phẩm mới nộp</h3>
+          {!recentProducts.length ? (
+            <p className="mt-4 text-sm text-slate-600">Chưa có sản phẩm nghiên cứu nào.</p>
+          ) : (
+            <div className="mt-4 space-y-4">
+              {recentProducts.map((product) => (
+                <div key={product.id} className="flex items-start justify-between gap-4 rounded-md border border-slate-100 p-3 hover:bg-slate-50">
+                  <div className="min-w-0">
+                    <h4 className="truncate text-sm font-semibold text-slate-800">{product.title}</h4>
+                    <div className="mt-1 flex flex-wrap gap-2 text-xs text-slate-500">
+                      <span>Người nộp: {product.submittedByName || 'Chưa cập nhật'}</span>
+                      <span>•</span>
+                      <span>Loại: {PRODUCT_TYPE_LABELS[product.productType] ?? product.productType}</span>
+                    </div>
+                  </div>
+                  <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold ring-1 ${getStatusClass(product.status)}`}>
+                    {PRODUCT_STATUS_LABELS[product.status] ?? product.status}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+      </div>
     </section>
   );
 }
@@ -218,6 +299,11 @@ function buildStatCards(stats?: DashboardStats): StatCardModel[] {
       description: 'Tổng số báo cáo trong đề tài',
     },
     {
+      title: stats.scope === 'ME' ? 'Báo cáo của tôi đã duyệt' : 'Báo cáo đã duyệt',
+      value: stats.cards.approvedReportCount,
+      description: 'Báo cáo đã được phê duyệt',
+    },
+    {
       title: stats.scope === 'ME' ? 'Sản phẩm của tôi' : 'Sản phẩm nghiên cứu',
       value: stats.cards.productCount,
       description: 'Số sản phẩm đã ghi nhận',
@@ -226,12 +312,6 @@ function buildStatCards(stats?: DashboardStats): StatCardModel[] {
       title: stats.scope === 'ME' ? 'Điểm đánh giá của tôi' : 'Điểm đánh giá trung bình',
       value: formatScore(stats.cards.averageEvaluationScore),
       description: 'Điểm trung bình hiện tại',
-    },
-    {
-      title: stats.scope === 'ME' ? 'Tỷ lệ điểm danh của tôi' : 'Tỷ lệ điểm danh',
-      value: formatNumber(stats.cards.attendanceRate),
-      suffix: '%',
-      description: `${stats.attendance.totalAttendanceCount} lượt điểm danh`,
     },
     {
       title: 'Mốc đã hoàn thành',
@@ -284,7 +364,6 @@ function isDashboardEmpty(stats?: DashboardStats) {
     stats.cards.taskCount === 0 &&
     stats.cards.reportCount === 0 &&
     stats.cards.productCount === 0 &&
-    stats.attendance.totalAttendanceCount === 0 &&
     stats.cards.memberCount === 0
   );
 }

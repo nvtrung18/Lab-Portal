@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 
 import { Button, Modal } from '../../../shared/components';
+import { VALIDATION_MESSAGES } from '../../../shared/utils';
 import type { CreateProjectPayload, ResearchGroup } from '../types';
 
 interface CreateProjectModalProps {
@@ -40,10 +41,10 @@ export function CreateProjectModal({ group, isOpen, isSubmitting, onClose, onSub
   }
 
   const trimmedTitle = form.title.trim();
-  const titleError = touched && trimmedTitle.length < 3 ? 'Tên đề tài cần tối thiểu 3 ký tự.' : null;
+  const titleError = touched && trimmedTitle.length < 3 ? VALIDATION_MESSAGES.researchTitleRequired : null;
   const dateError =
     touched && form.startDate && form.expectedEndDate && form.expectedEndDate <= form.startDate
-      ? 'Ngày kết thúc dự kiến phải sau ngày bắt đầu.'
+      ? VALIDATION_MESSAGES.dateRange
       : null;
   const canSubmit = trimmedTitle.length >= 3 && !dateError;
 

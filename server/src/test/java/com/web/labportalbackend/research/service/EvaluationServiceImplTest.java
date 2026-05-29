@@ -3,6 +3,9 @@ package com.web.labportalbackend.research.service;
 import com.web.labportalbackend.auth.entity.Role;
 import com.web.labportalbackend.auth.entity.User;
 import com.web.labportalbackend.auth.repository.UserRepository;
+import com.web.labportalbackend.admin.systemconfig.dto.SystemConfigResponse;
+import com.web.labportalbackend.admin.systemconfig.service.SystemConfigService;
+import com.web.labportalbackend.admin.audit.service.AuditLogService;
 import com.web.labportalbackend.common.exception.InvalidEvaluationScoreException;
 import com.web.labportalbackend.lab.entity.Laboratory;
 import com.web.labportalbackend.lab.repository.LaboratoryRepository;
@@ -16,6 +19,7 @@ import com.web.labportalbackend.research.repository.GroupRepository;
 import com.web.labportalbackend.research.repository.ProjectRepository;
 import com.web.labportalbackend.research.service.impl.EvaluationServiceImpl;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -34,6 +38,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -62,8 +67,26 @@ class EvaluationServiceImplTest {
     @Mock
     private LogService logService;
 
+    @Mock
+    private ResearchLogService researchLogService;
+
+    @Mock
+    private SystemConfigService systemConfigService;
+
+    @Mock
+    private AuditLogService auditLogService;
+
     @InjectMocks
     private EvaluationServiceImpl evaluationService;
+
+    @BeforeEach
+    void setUp() {
+        // Default system config: evaluation max score = 10
+        SystemConfigResponse.ResearchConfig researchConfig =
+                new SystemConfigResponse.ResearchConfig(10, false, false, false);
+        SystemConfigResponse config = new SystemConfigResponse(null, null, null, null, researchConfig);
+        lenient().when(systemConfigService.getConfig()).thenReturn(config);
+    }
 
     @AfterEach
     void tearDown() {
@@ -102,7 +125,7 @@ class EvaluationServiceImplTest {
         ArgumentCaptor<EvaluationEntity> captor = ArgumentCaptor.forClass(EvaluationEntity.class);
         verify(evaluationRepository).save(captor.capture());
         assertEquals(20L, captor.getValue().getGroupId());
-        assertEquals(new BigDecimal("8.50"), captor.getValue().getAttendanceScore());
+        assertEquals(new BigDecimal("8.50"), captor.getValue().getContributionScore());
         assertEquals(new BigDecimal("8.70"), captor.getValue().getTotalScore());
         verify(logService).logAction(10L, 7L, "EVALUATE_STUDENT", "Evaluated student 12 with total score: 8.70");
     }
@@ -159,7 +182,7 @@ class EvaluationServiceImplTest {
         evaluation.setProjectId(10L);
         evaluation.setStudentId(12L);
         evaluation.setEvaluatorId(7L);
-        evaluation.setAttendanceScore(new BigDecimal("8.50"));
+        evaluation.setContributionScore(new BigDecimal("8.50"));
         evaluation.setTaskScore(new BigDecimal("9.00"));
         evaluation.setReportScore(new BigDecimal("8.00"));
         evaluation.setProductScore(new BigDecimal("8.50"));
@@ -192,11 +215,11 @@ class EvaluationServiceImplTest {
         when(laboratoryRepository.findFirstByManagerIdAndDeletedFalse(manager.getId())).thenReturn(Optional.of(lab));
     }
 
-    private EvaluationRequest request(BigDecimal attendanceScore) {
+    private EvaluationRequest request(BigDecimal contributionScore) {
         EvaluationRequest request = new EvaluationRequest();
         request.setProjectId(10L);
         request.setStudentId(12L);
-        request.setAttendanceScore(attendanceScore);
+        request.setContributionScore(contributionScore);
         request.setTaskScore(new BigDecimal("9.0"));
         request.setReportScore(new BigDecimal("8.0"));
         request.setProductScore(new BigDecimal("8.5"));

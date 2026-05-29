@@ -2,6 +2,11 @@ package com.web.labportalbackend.research.service.impl;
 
 import com.web.labportalbackend.auth.entity.User;
 import com.web.labportalbackend.auth.repository.UserRepository;
+import com.web.labportalbackend.admin.systemconfig.dto.SystemConfigResponse;
+import com.web.labportalbackend.admin.systemconfig.service.SystemConfigService;
+import com.web.labportalbackend.admin.audit.enums.AuditAction;
+import com.web.labportalbackend.admin.audit.enums.AuditModule;
+import com.web.labportalbackend.admin.audit.service.AuditLogService;
 import com.web.labportalbackend.common.exception.ResourceNotFoundException;
 import com.web.labportalbackend.lab.entity.Laboratory;
 import com.web.labportalbackend.lab.repository.LaboratoryRepository;
@@ -67,6 +72,8 @@ public class ProductServiceImpl implements ProductService {
     private final UserRepository userRepository;
     private final LogService logService;
     private final ResearchLogService researchLogService;
+    private final SystemConfigService systemConfigService;
+    private final AuditLogService auditLogService;
 
     @Value("${app.research.product-storage-path:storage/products}")
     private String productStoragePath;
@@ -119,6 +126,14 @@ public class ProductServiceImpl implements ProductService {
                 saved.getDescription(),
                 groupId == null ? ResearchLogVisibility.PROJECT : ResearchLogVisibility.GROUP
         );
+        auditLogService.log(
+                currentUser,
+                AuditAction.STUDENT_UPLOAD_PRODUCT,
+                AuditModule.PRODUCT,
+                "PRODUCT",
+                saved.getId(),
+                displayName(currentUser) + " đã nộp sản phẩm nghiên cứu " + saved.getTitle() + "."
+        );
         return ProductMapper.toResponse(saved);
     }
 
@@ -139,6 +154,36 @@ public class ProductServiceImpl implements ProductService {
         return productRepository.findByProjectIdAndDeletedFalseAndActiveTrueOrderByCreatedAtDescVersionDesc(projectId)
                 .stream()
                 .filter(product -> canStudentViewProduct(product, currentUser.getId(), allowedGroupIds))
+                .map(ProductMapper::toResponse)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ProductResponse> getByGroup(Long groupId) {
+        GroupEntity group = groupRepository.findByIdAndDeletedFalseAndActiveTrue(groupId)
+                .orElseThrow(() -> new ResourceNotFoundException("Research group", groupId));
+        ProjectEntity project = resolveProjectForGroup(group);
+        if (project == null) {
+            throw new AccessDeniedException("Research group is not assigned to a project");
+        }
+        User currentUser = getCurrentUser();
+        if (currentUser.hasRole("LAB_MANAGER")) {
+            canManagerViewProjectProducts(project, currentUser);
+            return productRepository.findByGroupIdAndDeletedFalseAndActiveTrueOrderByCreatedAtDescVersionDesc(groupId)
+                    .stream()
+                    .map(ProductMapper::toResponse)
+                    .toList();
+        }
+
+        if (!currentUser.hasRole("STUDENT")) {
+            throw new AccessDeniedException("Cannot access research products");
+        }
+        groupMemberRepository.findActiveRoleByGroupIdAndUserId(groupId, currentUser.getId())
+                .orElseThrow(() -> new AccessDeniedException("Cannot access products for this group"));
+
+        return productRepository.findByGroupIdAndDeletedFalseAndActiveTrueOrderByCreatedAtDescVersionDesc(groupId)
+                .stream()
                 .map(ProductMapper::toResponse)
                 .toList();
     }
@@ -219,6 +264,16 @@ public class ProductServiceImpl implements ProductService {
         return groupPointsToProject || projectPointsToGroup;
     }
 
+    private ProjectEntity resolveProjectForGroup(GroupEntity group) {
+        if (group.getProject() != null) {
+            return group.getProject();
+        }
+        return projectRepository.findByGroupIdAndDeletedFalseAndActiveTrue(group.getId())
+                .stream()
+                .findFirst()
+                .orElse(null);
+    }
+
     private Integer nextVersion(Long projectId, Long groupId, Long submittedById, ProductType productType) {
         if (groupId != null) {
             return productRepository
@@ -270,13 +325,23 @@ public class ProductServiceImpl implements ProductService {
         if (file == null || file.isEmpty()) {
             throw new IllegalArgumentException("Product file is empty");
         }
-        if (file.getSize() > MAX_PRODUCT_FILE_SIZE) {
-            throw new IllegalArgumentException("Product file must not exceed 50MB");
+        SystemConfigResponse.UploadConfig uploadConfig = systemConfig().upload();
+        long maxBytes = uploadConfig.productMaxSizeMb() * 1024L * 1024L;
+        if (file.getSize() > maxBytes) {
+            throw new IllegalArgumentException("Product file must not exceed "
+                    + uploadConfig.productMaxSizeMb() + "MB");
         }
         String extension = getExtension(file.getOriginalFilename());
+        if (!uploadConfig.productAllowedTypes().contains(extension)) {
+            throw new IllegalArgumentException("File type is not allowed by system configuration");
+        }
         if (!ALLOWED_EXTENSIONS.getOrDefault(productType, Set.of()).contains(extension)) {
             throw new IllegalArgumentException("File type is not allowed for product type " + productType);
         }
+    }
+
+    private SystemConfigResponse systemConfig() {
+        return systemConfigService.getConfig();
     }
 
     private String normalizeExternalLink(String externalLink) {

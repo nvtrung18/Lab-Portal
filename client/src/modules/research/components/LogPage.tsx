@@ -4,9 +4,8 @@ import { Button } from '../../../shared/components';
 import type { UserProfileResponse } from '../../user/api/user.api';
 import {
   useCreateResearchLog,
-  useMilestonesByProject,
-  useResearchGroupsByProject,
-  useResearchLogs,
+  useMilestonesByGroup,
+  useGroupResearchLogs,
 } from '../hooks';
 import type { ResearchGroupRole, ResearchLog, ResearchLogFilters, ResearchLogType } from '../types';
 import { CreateLogModal } from './CreateLogModal';
@@ -17,7 +16,7 @@ interface LogPageProps {
   currentUser?: UserProfileResponse | null;
   role: string;
   groupRole?: ResearchGroupRole | null;
-  groupId?: number | null;
+  groupId: number;
 }
 
 type MemberView = 'mine' | 'group';
@@ -45,49 +44,26 @@ function toNumberOrNull(value: string) {
 
 export function LogPage({ projectId, currentUser, role, groupRole, groupId }: LogPageProps) {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [groupFilter, setGroupFilter] = useState('');
   const [milestoneFilter, setMilestoneFilter] = useState('');
   const [taskFilter, setTaskFilter] = useState('');
   const [authorFilter, setAuthorFilter] = useState('');
   const [logTypeFilter, setLogTypeFilter] = useState('');
   const [memberView, setMemberView] = useState<MemberView>('mine');
 
-  const { data: groups = [] } = useResearchGroupsByProject(projectId);
-  const { data: milestones = [] } = useMilestonesByProject(projectId);
-  const createLog = useCreateResearchLog(projectId);
   const isManager = role === 'LAB_MANAGER';
+  const { data: milestones = [] } = useMilestonesByGroup(groupId);
+  const createLog = useCreateResearchLog(projectId);
 
-  const selectedGroup = useMemo(() => {
-    if (groupId) {
-      return groups.find((group) => group.id === groupId) ?? null;
-    }
-    if (groupFilter) {
-      return groups.find((group) => String(group.id) === groupFilter) ?? null;
-    }
-    return groups[0] ?? null;
-  }, [groupFilter, groupId, groups]);
-
-  const resolvedGroupRole = useMemo(() => {
-    if (groupRole) {
-      return groupRole;
-    }
-    if (selectedGroup?.myRole) {
-      return selectedGroup.myRole;
-    }
-    return selectedGroup?.members?.find((member) => member.userId === currentUser?.id)?.role ?? null;
-  }, [currentUser?.id, groupRole, selectedGroup]);
-
-  const isLeader = resolvedGroupRole === 'LEADER';
+  const isLeader = groupRole === 'LEADER';
   const isMember = !isManager && !isLeader;
-  const resolvedGroupId = groupId ?? selectedGroup?.id ?? null;
 
   const queryFilters = useMemo<ResearchLogFilters>(() => ({
-    groupId: isManager ? toNumberOrNull(groupFilter) : resolvedGroupId,
+    groupId,
     milestoneId: toNumberOrNull(milestoneFilter),
     taskId: toNumberOrNull(taskFilter),
     authorId: toNumberOrNull(authorFilter),
     logType: logTypeFilter ? (logTypeFilter as ResearchLogType) : null,
-  }), [authorFilter, groupFilter, isManager, logTypeFilter, milestoneFilter, resolvedGroupId, taskFilter]);
+  }), [authorFilter, logTypeFilter, milestoneFilter, groupId, taskFilter]);
 
   const {
     data: logPages,
@@ -97,7 +73,7 @@ export function LogPage({ projectId, currentUser, role, groupRole, groupId }: Lo
     isFetchingNextPage,
     isLoading,
     refetch,
-  } = useResearchLogs(projectId, queryFilters);
+  } = useGroupResearchLogs(groupId, queryFilters);
 
   const logs = useMemo(() => logPages?.pages.flat() ?? [], [logPages]);
   const sortedLogs = useMemo(() => sortNewestFirst(logs), [logs]);
@@ -120,10 +96,6 @@ export function LogPage({ projectId, currentUser, role, groupRole, groupId }: Lo
       .map((log) => ({ id: log.authorId, name: log.authorName as string })),
   ), [logs]);
   const availableLogTypes = useMemo(() => Array.from(new Set(logs.map((log) => log.logType))), [logs]);
-  const groupOptions = useMemo(
-    () => isManager ? groups : groups.filter((group) => group.id === resolvedGroupId),
-    [groups, isManager, resolvedGroupId],
-  );
   const showAdvancedFilters = isManager || isLeader;
 
   return (
@@ -165,24 +137,7 @@ export function LogPage({ projectId, currentUser, role, groupRole, groupId }: Lo
 
       {showAdvancedFilters ? (
         <div className="mt-5 grid gap-3 rounded-lg border border-slate-200 bg-slate-50 p-4 sm:grid-cols-2 lg:grid-cols-5">
-          {isManager ? (
-            <label className="block text-sm font-medium text-slate-700">
-              Nhóm nghiên cứu
-              <select
-                className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm"
-                value={groupFilter}
-                onChange={(event) => {
-                  setGroupFilter(event.target.value);
-                  setTaskFilter('');
-                }}
-              >
-                <option value="">Tất cả nhóm</option>
-                {groupOptions.map((group) => (
-                  <option key={group.id} value={group.id}>{group.name}</option>
-                ))}
-              </select>
-            </label>
-          ) : null}
+
 
           <label className="block text-sm font-medium text-slate-700">
             Mốc nghiên cứu
@@ -285,8 +240,8 @@ export function LogPage({ projectId, currentUser, role, groupRole, groupId }: Lo
 
       <CreateLogModal
         currentUser={currentUser}
-        groupId={resolvedGroupId}
-        groupRole={resolvedGroupRole}
+        groupId={groupId}
+        groupRole={groupRole}
         isOpen={isCreateOpen}
         isSubmitting={createLog.isPending}
         projectId={projectId}

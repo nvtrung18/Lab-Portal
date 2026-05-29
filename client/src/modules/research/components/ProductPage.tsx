@@ -3,7 +3,7 @@ import { FormEvent, useMemo, useState } from 'react';
 import { resolveApiAssetUrl } from '../../../shared/api';
 import { Button, EmptyState, ErrorState, LoadingState } from '../../../shared/components';
 import { LAB_MANAGER, STUDENT } from '../../../shared/constants/roles';
-import { useProductsByProject, useResearchGroupsByProject, useSubmitProduct } from '../hooks';
+import { useProductsByProject, useProductsByGroup, useResearchGroupsByProject, useSubmitProduct } from '../hooks';
 import type { ResearchProduct, ResearchProductStatus, ResearchProductType } from '../types';
 import { formatDate } from '../utils';
 
@@ -51,7 +51,13 @@ export function ProductPage({ projectId, groupId, role, groupRole, currentUserId
   const [formError, setFormError] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
 
-  const { data: products = [], isError, isLoading, refetch } = useProductsByProject(projectId);
+  const { data: projectProducts = [], isError: isProjectError, isLoading: isProjectLoading, refetch: refetchProject } = useProductsByProject(!groupId ? projectId : null);
+  const { data: groupProducts = [], isError: isGroupError, isLoading: isGroupLoading, refetch: refetchGroup } = useProductsByGroup(groupId);
+
+  const products = groupId ? groupProducts : projectProducts;
+  const isError = groupId ? isGroupError : isProjectError;
+  const isLoading = groupId ? isGroupLoading : isProjectLoading;
+  const refetch = groupId ? refetchGroup : refetchProject;
   const shouldLoadGroups = role === STUDENT;
   const { data: groups = [] } = useResearchGroupsByProject(shouldLoadGroups ? projectId : null);
   const submitProduct = useSubmitProduct(projectId, setUploadProgress);

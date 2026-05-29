@@ -26,11 +26,11 @@ public class EvaluationRequest {
     @Schema(description = "Evaluated student user ID", example = "12")
     private Long studentId;
 
-    @NotNull(message = "Attendance score is required")
-    @DecimalMin(value = "0.0", message = "Attendance score must be at least 0.0")
-    @DecimalMax(value = "10.0", message = "Attendance score must not exceed 10.0")
-    @JsonAlias("attendance_score")
-    private BigDecimal attendanceScore;
+    @NotNull(message = "Contribution score is required")
+    @DecimalMin(value = "0.0", message = "Contribution score must be at least 0.0")
+    @DecimalMax(value = "10.0", message = "Contribution score must not exceed 10.0")
+    @JsonAlias("contribution_score")
+    private BigDecimal contributionScore;
 
     @NotNull(message = "Task score is required")
     @DecimalMin(value = "0.0", message = "Task score must be at least 0.0")

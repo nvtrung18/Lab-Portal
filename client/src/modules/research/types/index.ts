@@ -154,7 +154,7 @@ export interface ResearchEvaluation {
   studentName?: string | null;
   evaluatorId?: number | null;
   evaluatorName?: string | null;
-  attendanceScore: number;
+  contributionScore: number;
   taskScore: number;
   reportScore: number;
   productScore: number;
@@ -181,8 +181,8 @@ export interface RawResearchEvaluation {
   evaluator_id?: number | null;
   evaluatorName?: string | null;
   evaluator_name?: string | null;
-  attendanceScore?: number;
-  attendance_score?: number;
+  contributionScore?: number;
+  contribution_score?: number;
   taskScore?: number;
   task_score?: number;
   reportScore?: number;
@@ -203,8 +203,9 @@ export interface RawResearchEvaluation {
 
 export interface SubmitEvaluationPayload {
   projectId: number;
+  groupId?: number | null;
   studentId: number;
-  attendanceScore: number;
+  contributionScore: number;
   taskScore: number;
   reportScore: number;
   productScore: number;
@@ -245,6 +246,7 @@ export interface ResearchGroup {
   projectCount?: number | null;
   leaderId?: number | null;
   myRole?: 'LEADER' | 'MEMBER' | null;
+  myGroupRole?: 'LEADER' | 'MEMBER' | null;
   createdByName?: string | null;
   createdAt?: string | null;
   members?: ResearchGroupMember[];
@@ -312,6 +314,8 @@ export interface CreateResearchProjectPayload {
 export interface ResearchMilestone {
   id: number;
   projectId: number;
+  groupId?: number | null;
+  groupName?: string | null;
   projectTitle?: string | null;
   title: string;
   description?: string | null;
@@ -322,6 +326,8 @@ export interface ResearchMilestone {
   progressPercent: number;
   evidenceUrl?: string | null;
   managerComment?: string | null;
+  myTaskCount?: number;
+  myCompletedTaskCount?: number;
   createdAt?: string | null;
   updatedAt?: string | null;
 }
@@ -339,6 +345,10 @@ export interface RawResearchTask {
   deadline?: string | null;
   status?: ResearchTaskStatus | 'IN_PROGRESS' | 'REVIEW' | null;
   progressPercent?: number | null;
+  milestoneTitle?: string | null;
+  milestone_title?: string | null;
+  latestReportStatus?: ResearchReportStatus | null;
+  latest_report_status?: ResearchReportStatus | null;
   createdAt?: string | null;
   updatedAt?: string | null;
 }
@@ -358,6 +368,8 @@ export interface ResearchTask {
   column: TaskColumn;
   progressPercent: number;
   isOverdue: boolean;
+  milestoneTitle?: string | null;
+  latestReportStatus?: ResearchReportStatus | null;
   createdAt: string | null;
   updatedAt: string | null;
 }
@@ -493,6 +505,7 @@ export type ManagerReportDecision = 'APPROVE' | 'REQUEST_REVISION' | 'REJECT';
 
 export interface CreateMilestonePayload {
   projectId: number;
+  groupId?: number | null;
   title: string;
   description?: string;
   assignedToStudentId?: number;
@@ -563,4 +576,11 @@ export interface CreateProjectPayload {
   requiredProducts?: string;
   evaluationCriteria?: string;
   status?: ProjectStatus;
+}
+
+export interface CreateTaskPayload {
+  title: string;
+  description?: string;
+  assignedToStudentId: number;
+  deadline?: string;
 }

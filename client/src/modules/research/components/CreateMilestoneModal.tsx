@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 
 import { Button, Modal } from '../../../shared/components';
+import { VALIDATION_MESSAGES } from '../../../shared/utils';
 import type { CreateMilestonePayload, MilestoneStatus, ResearchEligibleStudent } from '../types';
 
 interface CreateMilestoneModalProps {
@@ -47,7 +48,7 @@ export function CreateMilestoneModal({
   }
 
   const trimmedTitle = form.title.trim();
-  const titleError = touched && trimmedTitle.length < 3 ? 'Tên mốc nghiên cứu cần tối thiểu 3 ký tự.' : null;
+  const titleError = touched && trimmedTitle.length < 3 ? VALIDATION_MESSAGES.required : null;
   const progressIsValid = Number.isFinite(form.progressPercent) && form.progressPercent >= 0 && form.progressPercent <= 100;
   const completedProgressIsValid = form.status !== 'COMPLETED' || form.progressPercent === 100;
   const progressError =

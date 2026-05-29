@@ -2,6 +2,11 @@ package com.web.labportalbackend.research.service.impl;
 
 import com.web.labportalbackend.auth.entity.User;
 import com.web.labportalbackend.auth.repository.UserRepository;
+import com.web.labportalbackend.admin.systemconfig.dto.SystemConfigResponse;
+import com.web.labportalbackend.admin.systemconfig.service.SystemConfigService;
+import com.web.labportalbackend.admin.audit.enums.AuditAction;
+import com.web.labportalbackend.admin.audit.enums.AuditModule;
+import com.web.labportalbackend.admin.audit.service.AuditLogService;
 import com.web.labportalbackend.common.exception.ReportVersionConflictException;
 import com.web.labportalbackend.common.exception.ResourceNotFoundException;
 import com.web.labportalbackend.lab.entity.Laboratory;
@@ -14,6 +19,7 @@ import com.web.labportalbackend.research.dto.response.ReportFileDownload;
 import com.web.labportalbackend.research.entity.CommentEntity;
 import com.web.labportalbackend.research.entity.GroupEntity;
 import com.web.labportalbackend.research.entity.MilestoneEntity;
+import com.web.labportalbackend.research.entity.ProjectEntity;
 import com.web.labportalbackend.research.entity.ReportEntity;
 import com.web.labportalbackend.research.entity.TaskEntity;
 import com.web.labportalbackend.research.enums.GroupRole;
@@ -77,6 +83,8 @@ public class ReportServiceImpl implements ReportService {
     private final LaboratoryRepository laboratoryRepository;
     private final UserRepository userRepository;
     private final ResearchLogService researchLogService;
+    private final SystemConfigService systemConfigService;
+    private final AuditLogService auditLogService;
 
     @Value("${app.research.report-storage-path:storage/reports}")
     private String reportStoragePath;
@@ -98,6 +106,9 @@ public class ReportServiceImpl implements ReportService {
         assertCanSubmitReport(currentUser, milestone, task);
         Long projectId = milestone.getProject().getId();
         Long groupId = resolveGroupId(projectId, milestone);
+        if (groupId != null && !isMemberOfGroup(currentUser.getId(), groupId)) {
+            throw new AccessDeniedException("Cannot submit reports for this group");
+        }
         String scope = buildSubmissionScope(milestone.getId(), task.getId(), currentUser.getId());
         Integer version = reportRepository
                 .findMaxVersionByTaskIdAndSubmittedById(task.getId(), currentUser.getId())
@@ -138,6 +149,14 @@ public class ReportServiceImpl implements ReportService {
                             + " cho nhiệm vụ " + task.getTitle() + ".",
                     saved.getResult(),
                     ResearchLogVisibility.GROUP
+            );
+            auditLogService.log(
+                    currentUser,
+                    AuditAction.STUDENT_UPLOAD_REPORT,
+                    AuditModule.REPORT,
+                    "REPORT",
+                    saved.getId(),
+                    displayName(currentUser) + " đã nộp báo cáo cho nhiệm vụ " + task.getTitle() + "."
             );
             return ReportMapper.toResponse(saved, currentUser);
         } catch (DataIntegrityViolationException ex) {
@@ -242,17 +261,25 @@ public class ReportServiceImpl implements ReportService {
     @Transactional(readOnly = true)
     public List<ReportResponse> getReportsByGroup(Long groupId) {
         User currentUser = getCurrentUser();
-        if (!currentUser.hasRole("STUDENT")) {
-            throw new AccessDeniedException("Only students may access group reports");
-        }
         GroupEntity group = groupRepository.findByIdAndDeletedFalseAndActiveTrue(groupId)
                 .orElseThrow(() -> new ResourceNotFoundException("Research group", groupId));
-        GroupRole role = groupMemberRepository.findActiveRoleByGroupIdAndUserId(groupId, currentUser.getId())
-                .orElseThrow(() -> new AccessDeniedException("Cannot access reports for this group"));
-        if (role != GroupRole.LEADER) {
-            throw new AccessDeniedException("Only the group leader may view all member reports");
+        if (currentUser.hasRole("LAB_MANAGER")) {
+            Laboratory managedLab = laboratoryRepository.findFirstByManagerIdAndDeletedFalse(currentUser.getId())
+                    .orElseThrow(() -> new AccessDeniedException("Lab manager is not assigned to any lab"));
+            if (group.getLab() == null || !managedLab.getId().equals(group.getLab().getId())) {
+                throw new AccessDeniedException("Cannot access reports from another lab");
+            }
+        } else if (currentUser.hasRole("STUDENT")) {
+            GroupRole role = groupMemberRepository.findActiveRoleByGroupIdAndUserId(groupId, currentUser.getId())
+                    .orElseThrow(() -> new AccessDeniedException("Cannot access reports for this group"));
+            if (role != GroupRole.LEADER) {
+                throw new AccessDeniedException("Only the group leader may view all member reports");
+            }
+        } else {
+            throw new AccessDeniedException("Cannot access group reports");
         }
-        return reportRepository.findByGroupIdAndDeletedFalseAndActiveTrueOrderByCreatedAtDescVersionDesc(groupId)
+
+        return reportRepository.findReportsByGroupScope(groupId)
                 .stream()
                 .map(report -> {
                     MilestoneEntity milestone = findMilestone(report.getMilestoneId());
@@ -260,6 +287,35 @@ public class ReportServiceImpl implements ReportService {
                             ? null
                             : taskRepository.findById(report.getTaskId()).orElse(null);
                     return ReportMapper.toResponse(report, findSubmitter(report), group, milestone, task);
+                })
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ReportResponse> getMyReportsByGroup(Long groupId) {
+        User currentUser = getCurrentUser();
+        if (!currentUser.hasRole("STUDENT")) {
+            throw new AccessDeniedException("Only students may access their report history");
+        }
+        GroupEntity group = groupRepository.findByIdAndDeletedFalseAndActiveTrue(groupId)
+                .orElseThrow(() -> new ResourceNotFoundException("Research group", groupId));
+
+        if (!isMemberOfGroup(currentUser.getId(), groupId)) {
+            throw new AccessDeniedException("Cannot access reports for this group");
+        }
+
+        return reportRepository.findOwnReportsByGroupScope(
+                        groupId,
+                        currentUser.getId()
+                )
+                .stream()
+                .map(report -> {
+                    MilestoneEntity milestone = findMilestone(report.getMilestoneId());
+                    TaskEntity task = report.getTaskId() == null
+                            ? null
+                            : taskRepository.findById(report.getTaskId()).orElse(null);
+                    return ReportMapper.toResponse(report, currentUser, group, milestone, task);
                 })
                 .toList();
     }
@@ -299,10 +355,8 @@ public class ReportServiceImpl implements ReportService {
         ReportEntity report = findReport(reportId);
         User currentUser = getCurrentUser();
         String note = request.getNote().trim();
-        if (!currentUser.hasRole("STUDENT") || report.getGroupId() == null
-                || groupMemberRepository.findActiveRoleByGroupIdAndUserId(report.getGroupId(), currentUser.getId())
-                .filter(role -> role == GroupRole.LEADER)
-                .isEmpty()) {
+        Long groupId = resolveReportGroupId(report);
+        if (!currentUser.hasRole("STUDENT") || groupId == null || !isLeaderOfGroup(currentUser.getId(), groupId)) {
             throw new AccessDeniedException("Không thể kiểm tra báo cáo này");
         }
         if (currentUser.getId().equals(report.getSubmittedById())) {
@@ -321,13 +375,21 @@ public class ReportServiceImpl implements ReportService {
         ReportEntity saved = reportRepository.save(report);
         createSystemLogSafely(
                 saved.getProjectId(),
-                saved.getGroupId(),
+                groupId,
                 saved.getMilestoneId(),
                 saved.getTaskId(),
                 currentUser.getId(),
                 displayName(currentUser) + " đã kiểm tra báo cáo v" + saved.getVersion() + ".",
                 note,
                 ResearchLogVisibility.GROUP
+        );
+        auditLogService.log(
+                currentUser,
+                AuditAction.LEADER_REVIEW_REPORT,
+                AuditModule.REPORT,
+                "REPORT",
+                saved.getId(),
+                displayName(currentUser) + " đã kiểm tra báo cáo v" + saved.getVersion() + "."
         );
         return ReportMapper.toResponse(saved);
     }
@@ -343,8 +405,15 @@ public class ReportServiceImpl implements ReportService {
         }
         assertCanViewReports(currentUser, milestone);
         assertLatestSubmissionVersion(report);
-        if (report.getStatus() != ReportStatus.LEADER_REVIEWED) {
+        boolean requireLeaderReview = systemConfig().research().requireLeaderReviewBeforeManagerReview();
+        if (requireLeaderReview && report.getStatus() != ReportStatus.LEADER_REVIEWED) {
             throw new IllegalArgumentException("The report must be reviewed by the group leader first");
+        }
+        if (!requireLeaderReview
+                && report.getStatus() != ReportStatus.LEADER_REVIEWED
+                && report.getStatus() != ReportStatus.SUBMITTED
+                && report.getStatus() != ReportStatus.NEEDS_REVISION) {
+            throw new IllegalArgumentException("The report cannot be reviewed in current status");
         }
 
         ManagerReportDecision decision = request.getDecision();
@@ -377,6 +446,15 @@ public class ReportServiceImpl implements ReportService {
                         + " báo cáo của " + displayName(submitter) + ".",
                 comment,
                 ResearchLogVisibility.PROJECT
+        );
+        auditLogService.log(
+                currentUser,
+                AuditAction.MANAGER_REVIEW_REPORT,
+                AuditModule.REPORT,
+                "REPORT",
+                report.getId(),
+                displayName(currentUser) + " đã " + managerDecisionLabel(decision)
+                        + " báo cáo của " + displayName(submitter) + "."
         );
         return ReportMapper.toResponse(report);
     }
@@ -499,6 +577,10 @@ public class ReportServiceImpl implements ReportService {
             throw new AccessDeniedException("Only students may submit progress reports");
         }
         assertCanViewReports(currentUser, milestone);
+        Long groupId = resolveGroupId(milestone.getProject().getId(), milestone);
+        if (groupId != null && !isMemberOfGroup(currentUser.getId(), groupId)) {
+            throw new AccessDeniedException("Cannot submit reports for this group");
+        }
         if (!currentUser.getId().equals(task.getAssigneeId())) {
             throw new AccessDeniedException("Students may submit reports only for tasks assigned to them");
         }
@@ -540,6 +622,9 @@ public class ReportServiceImpl implements ReportService {
     }
 
     private Long resolveGroupId(Long projectId, MilestoneEntity milestone) {
+        if (milestone.getGroup() != null) {
+            return milestone.getGroup().getId();
+        }
         if (milestone.getProject().getGroup() != null) {
             return milestone.getProject().getGroup().getId();
         }
@@ -547,6 +632,26 @@ public class ReportServiceImpl implements ReportService {
                 .findFirst()
                 .map(GroupEntity::getId)
                 .orElse(null);
+    }
+
+    private Long resolveReportGroupId(ReportEntity report) {
+        if (report.getGroupId() != null) {
+            return report.getGroupId();
+        }
+
+        MilestoneEntity milestone = findMilestone(report.getMilestoneId());
+        return resolveGroupId(report.getProjectId(), milestone);
+    }
+
+    private boolean isMemberOfGroup(Long userId, Long groupId) {
+        return groupMemberRepository.existsByGroupIdAndUserIdAndActiveTrueAndDeletedFalse(groupId, userId);
+    }
+
+    @SuppressWarnings("unused")
+    private boolean isLeaderOfGroup(Long userId, Long groupId) {
+        return groupMemberRepository.findActiveRoleByGroupIdAndUserId(groupId, userId)
+                .filter(role -> role == GroupRole.LEADER)
+                .isPresent();
     }
 
     private StoredReportFile storeReportFile(MultipartFile file, Long taskId, Integer version) {
@@ -593,17 +698,27 @@ public class ReportServiceImpl implements ReportService {
         if (file == null || file.isEmpty()) {
             throw new IllegalArgumentException("File báo cáo là bắt buộc.");
         }
-        if (file.getSize() > MAX_REPORT_FILE_SIZE) {
-            throw new IllegalArgumentException("Dung lượng file không được vượt quá 10MB.");
+        SystemConfigResponse.UploadConfig uploadConfig = systemConfig().upload();
+        long maxBytes = uploadConfig.reportMaxSizeMb() * 1024L * 1024L;
+        if (file.getSize() > maxBytes) {
+            throw new IllegalArgumentException("Dung lượng file không được vượt quá "
+                    + uploadConfig.reportMaxSizeMb() + "MB.");
         }
         String extension = getExtension(file.getOriginalFilename());
+        if (!uploadConfig.reportAllowedTypes().contains(extension)) {
+            throw new IllegalArgumentException("Định dạng file báo cáo không được hỗ trợ.");
+        }
         String expectedContentType = ALLOWED_REPORT_TYPES.get(extension);
         String contentType = file.getContentType() == null
                 ? ""
                 : file.getContentType().toLowerCase(Locale.ROOT);
-        if (expectedContentType == null || !expectedContentType.equals(contentType)) {
+        if (expectedContentType != null && !expectedContentType.equals(contentType)) {
             throw new IllegalArgumentException("Chỉ hỗ trợ file PDF, DOC hoặc DOCX.");
         }
+    }
+
+    private SystemConfigResponse systemConfig() {
+        return systemConfigService.getConfig();
     }
 
     private String normalizeEvidenceLink(String evidenceLink) {

@@ -12,14 +12,15 @@ import { getPrimaryRedirectPath, useAuth } from '../hooks';
 import { USER_ME_QUERY_KEY } from '../../user/hooks';
 import type { Response } from '../../../shared/types';
 import { Button } from '../../../shared/components';
+import { VALIDATION_MESSAGES } from '../../../shared/utils';
 
 const loginSchema = z.object({
   email: z
     .string()
     .trim()
-    .min(1, 'Vui lòng nhập email')
-    .email('Email không đúng định dạng'),
-  password: z.string().min(1, 'Vui lòng nhập mật khẩu'),
+    .min(1, VALIDATION_MESSAGES.required)
+    .email(VALIDATION_MESSAGES.email),
+  password: z.string().min(1, VALIDATION_MESSAGES.required),
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;
@@ -78,10 +79,10 @@ export function LoginPage() {
   };
 
   return (
-    <section className="w-full rounded-lg border border-slate-200 bg-white p-5 shadow-sm sm:p-8">
+    <section className="min-w-0 w-full rounded-lg border border-slate-200 bg-white p-5 shadow-sm sm:p-8">
       <div>
         <h1 className="text-2xl font-semibold text-slate-950">Đăng nhập</h1>
-        <p className="mt-2 text-sm text-slate-600">
+        <p className="mt-2 break-words text-sm text-slate-600">
           Đăng nhập để vào đúng không gian làm việc theo vai trò.
         </p>
       </div>
@@ -109,14 +110,14 @@ export function LoginPage() {
         </div>
 
         <div>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <label
               className="block text-sm font-medium text-slate-700"
               htmlFor="password"
             >
               Mật khẩu
             </label>
-            <Link className="text-sm font-medium text-slate-700 hover:underline" to="/forgot-password">
+            <Link className="shrink-0 text-sm font-medium text-slate-700 hover:underline" to="/forgot-password">
               Quên mật khẩu?
             </Link>
           </div>

@@ -1,8 +1,12 @@
 import { memo, useMemo } from 'react';
 
-import type { DashboardStats } from '../types';
-
-type AttendanceStudent = DashboardStats['attendance']['byStudent'][number];
+export interface AttendanceStudent {
+  studentId: number;
+  studentName: string;
+  attendanceCount: number;
+  expectedAttendanceCount: number;
+  attendanceRate: number;
+}
 
 interface AttendanceChartProps {
   byStudent: AttendanceStudent[];

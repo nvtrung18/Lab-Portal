@@ -1,21 +1,31 @@
 import { getManagedLabId } from '../../../shared/utils/membership';
 import { useCurrentUser } from '../../user/hooks';
-import { useLab } from '../hooks';
+import { useLab, useLabDashboardStats } from '../hooks';
+import { StatCard } from '../../research/components/StatCard';
+import { AttendanceChart } from '../../research/components/AttendanceChart';
 
 export function LabOverviewPage() {
   const { data: currentUser, isLoading: isLoadingUser } = useCurrentUser();
   const managedLabId = getManagedLabId(currentUser);
   const { data: managedLab, isLoading: isLoadingLab, isError } = useLab(managedLabId);
+  const { data: stats, isLoading: isLoadingStats } = useLabDashboardStats(managedLabId);
 
-  if (isLoadingUser || isLoadingLab) {
+  if (isLoadingUser || isLoadingLab || isLoadingStats) {
     return (
-      <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-        <div className="h-6 w-40 animate-pulse rounded bg-slate-200" />
-        <div className="mt-6 grid gap-4 md:grid-cols-2">
-          <div className="h-16 animate-pulse rounded bg-slate-100" />
-          <div className="h-16 animate-pulse rounded bg-slate-100" />
-          <div className="h-16 animate-pulse rounded bg-slate-100" />
-          <div className="h-16 animate-pulse rounded bg-slate-100" />
+      <section className="space-y-6">
+        <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="h-6 w-40 animate-pulse rounded bg-slate-200" />
+          <div className="mt-6 grid gap-4 md:grid-cols-2">
+            <div className="h-16 animate-pulse rounded bg-slate-100" />
+            <div className="h-16 animate-pulse rounded bg-slate-100" />
+            <div className="h-16 animate-pulse rounded bg-slate-100" />
+            <div className="h-16 animate-pulse rounded bg-slate-100" />
+          </div>
+        </section>
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, index) => (
+            <StatCard key={index} title="Đang tải" value="0" loading />
+          ))}
         </div>
       </section>
     );
@@ -52,7 +62,7 @@ export function LabOverviewPage() {
         </p>
         <h2 className="mt-1 text-xl font-semibold text-slate-950">Tổng quan PTN</h2>
         <p className="mt-2 text-sm text-slate-600">
-          Chỉ hiển thị thông tin PTN mà quản lý hiện tại phụ trách.
+          Theo dõi tình hình sử dụng, điểm danh và vận hành phòng thí nghiệm.
         </p>
       </div>
 
@@ -98,6 +108,55 @@ export function LabOverviewPage() {
           </div>
         </dl>
       </div>
+
+      {stats && (
+        <>
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <StatCard
+              title="Tổng số thành viên PTN"
+              value={stats.memberCount}
+              description="Thành viên đang hoạt động"
+            />
+            <StatCard
+              title="Số ca sử dụng hôm nay"
+              value={stats.todaySlots}
+              description="Tổng số ca cấu hình"
+            />
+            <StatCard
+              title="Số booking hôm nay"
+              value={stats.todayBookings}
+              description="Lượt đặt sử dụng hôm nay"
+            />
+            <StatCard
+              title="Tỷ lệ điểm danh PTN"
+              value={Number.isInteger(stats.attendanceRate) ? stats.attendanceRate : stats.attendanceRate.toFixed(1)}
+              suffix="%"
+              description="Tỷ lệ trung bình toàn lab"
+            />
+            <StatCard
+              title="Nhiệm vụ vệ sinh chờ xử lý"
+              value={stats.pendingCleaningTasks}
+              description="Công việc chưa hoàn thành"
+            />
+            <StatCard
+              title="Khiếu nại đang chờ xử lý"
+              value={stats.pendingComplaints}
+              description="Phản hồi từ sinh viên"
+            />
+            <StatCard
+              title="Số đề tài NCKH đang thực hiện"
+              value={stats.activeResearchProjects}
+              description="Dự án nghiên cứu đang chạy"
+            />
+          </div>
+
+          <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+            <h3 className="text-base font-semibold text-slate-950">Điểm danh sinh viên</h3>
+            <AttendanceChart byStudent={stats.attendanceByStudent as any} />
+          </section>
+        </>
+      )}
     </section>
   );
 }
+

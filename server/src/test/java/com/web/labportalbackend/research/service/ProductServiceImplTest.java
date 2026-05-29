@@ -3,6 +3,9 @@ package com.web.labportalbackend.research.service;
 import com.web.labportalbackend.auth.entity.Role;
 import com.web.labportalbackend.auth.entity.User;
 import com.web.labportalbackend.auth.repository.UserRepository;
+import com.web.labportalbackend.admin.audit.service.AuditLogService;
+import com.web.labportalbackend.admin.systemconfig.dto.SystemConfigResponse;
+import com.web.labportalbackend.admin.systemconfig.service.SystemConfigService;
 import com.web.labportalbackend.lab.repository.LaboratoryRepository;
 import com.web.labportalbackend.research.dto.request.SubmitProductRequest;
 import com.web.labportalbackend.research.dto.response.ProductResponse;
@@ -18,6 +21,7 @@ import com.web.labportalbackend.research.repository.ProductRepository;
 import com.web.labportalbackend.research.repository.ProjectRepository;
 import com.web.labportalbackend.research.service.impl.ProductServiceImpl;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
@@ -41,6 +45,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -69,11 +74,31 @@ class ProductServiceImplTest {
     @Mock
     private LogService logService;
 
+    @Mock
+    private ResearchLogService researchLogService;
+
+    @Mock
+    private SystemConfigService systemConfigService;
+
+    @Mock
+    private AuditLogService auditLogService;
+
     @InjectMocks
     private ProductServiceImpl productService;
 
     @TempDir
     Path tempDir;
+
+    @BeforeEach
+    void setUp() {
+        SystemConfigResponse.UploadConfig uploadConfig = new SystemConfigResponse.UploadConfig(
+                10, 10,
+                List.of("pdf", "doc", "docx"),
+                List.of("pdf", "zip", "csv", "xlsx", "mp4", "ppt", "pptx")
+        );
+        SystemConfigResponse config = new SystemConfigResponse(null, null, null, uploadConfig, null);
+        lenient().when(systemConfigService.getConfig()).thenReturn(config);
+    }
 
     @AfterEach
     void tearDown() {

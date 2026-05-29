@@ -30,4 +30,34 @@ public interface UserRepository extends JpaRepository<User, Long> {
      */
     @Query("SELECT u FROM User u JOIN u.roles r WHERE r.name = :roleName")
     List<User> findByRoleName(@Param("roleName") String roleName);
+
+    @Query("SELECT COUNT(u) FROM User u WHERE u.deleted = false")
+    long countRegisteredUsers();
+
+    @Query("SELECT COUNT(u) FROM User u WHERE u.status = :status AND u.deleted = false")
+    long countByStatusAndNotDeleted(@Param("status") UserStatus status);
+
+    @Query("""
+            SELECT COUNT(DISTINCT u)
+            FROM User u
+            JOIN u.roles r
+            WHERE r.name = :roleName
+              AND u.deleted = false
+            """)
+    long countByRoleNameAndNotDeleted(@Param("roleName") String roleName);
+
+    @Query("""
+            SELECT COUNT(DISTINCT u)
+            FROM User u
+            JOIN u.roles r
+            WHERE r.name = 'LAB_MANAGER'
+              AND u.deleted = false
+              AND NOT EXISTS (
+                    SELECT l.id
+                    FROM Laboratory l
+                    WHERE l.manager.id = u.id
+                      AND l.deleted = false
+              )
+            """)
+    long countUnassignedManagers();
 }

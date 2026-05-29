@@ -13,6 +13,8 @@ public class MilestoneResponse {
     private Long id;
     private Long projectId;
     private String projectTitle;
+    private Long groupId;
+    private String groupName;
     private String title;
     private String description;
     private Long assignedToStudentId;
@@ -22,6 +24,8 @@ public class MilestoneResponse {
     private Integer progressPercent;
     private String evidenceUrl;
     private String managerComment;
+    private Integer myTaskCount;
+    private Integer myCompletedTaskCount;
     private Long createdById;
     private String createdByName;
     private Instant createdAt;

@@ -11,9 +11,9 @@ export type DashboardStats = {
     taskCount: number;
     taskCompletionRate: number;
     reportCount: number;
+    approvedReportCount: number;
     productCount: number;
     averageEvaluationScore: number | null;
-    attendanceRate: number;
     overdueTaskCount: number;
   };
   taskProgress: {
@@ -23,17 +23,6 @@ export type DashboardStats = {
     needsRevision: number;
     done: number;
     overdue: number;
-  };
-  attendance: {
-    totalAttendanceCount: number;
-    attendanceRate: number;
-    byStudent: Array<{
-      studentId: number;
-      studentName: string;
-      attendanceCount: number;
-      expectedAttendanceCount: number;
-      attendanceRate: number;
-    }>;
   };
   milestoneProgress: Array<{
     milestoneId: number;
@@ -75,21 +64,17 @@ export type RawProjectDashboardStats = {
     task_completion_rate?: number | null;
     reportCount?: number | null;
     report_count?: number | null;
+    approvedReportCount?: number | null;
+    approved_report_count?: number | null;
     productCount?: number | null;
     product_count?: number | null;
     averageEvaluationScore?: number | null;
     average_evaluation_score?: number | null;
-    attendanceCount?: number | null;
-    attendance_count?: number | null;
-    attendanceRate?: number | null;
-    attendance_rate?: number | null;
     overdueTaskCount?: number | null;
     overdue_task_count?: number | null;
   } | null;
   taskByStatus?: Record<string, number | null | undefined> | null;
   task_by_status?: Record<string, number | null | undefined> | null;
-  attendanceByStudent?: RawStudentAttendance[] | null;
-  attendance_by_student?: RawStudentAttendance[] | null;
   milestoneProgress?: RawMilestoneProgress[] | null;
   milestone_progress?: RawMilestoneProgress[] | null;
   groupProgress?: RawGroupProgress[] | null;

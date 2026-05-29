@@ -19,7 +19,7 @@ public class EvaluationResponse {
     private String studentName;
     private Long evaluatorId;
     private String evaluatorName;
-    private BigDecimal attendanceScore;
+    private BigDecimal contributionScore;
     private BigDecimal taskScore;
     private BigDecimal reportScore;
     private BigDecimal productScore;

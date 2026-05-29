@@ -34,9 +34,9 @@ export function adaptProjectDashboardStats(raw?: RawProjectDashboardStats | null
       taskCount: toNumber(overview.taskCount ?? overview.task_count),
       taskCompletionRate: toNumber(overview.taskCompletionRate ?? overview.task_completion_rate),
       reportCount: toNumber(overview.reportCount ?? overview.report_count),
+      approvedReportCount: toNumber(overview.approvedReportCount ?? overview.approved_report_count),
       productCount: toNumber(overview.productCount ?? overview.product_count),
       averageEvaluationScore: toNullableNumber(overview.averageEvaluationScore ?? overview.average_evaluation_score),
-      attendanceRate: toNumber(overview.attendanceRate ?? overview.attendance_rate),
       overdueTaskCount: toNumber(overview.overdueTaskCount ?? overview.overdue_task_count),
     },
     taskProgress: {
@@ -46,11 +46,6 @@ export function adaptProjectDashboardStats(raw?: RawProjectDashboardStats | null
       needsRevision: toNumber(taskByStatus.NEEDS_REVISION),
       done: toNumber(taskByStatus.DONE),
       overdue: toNumber(taskByStatus.OVERDUE),
-    },
-    attendance: {
-      totalAttendanceCount: toNumber(overview.attendanceCount ?? overview.attendance_count),
-      attendanceRate: toNumber(overview.attendanceRate ?? overview.attendance_rate),
-      byStudent: toArray(raw?.attendanceByStudent ?? raw?.attendance_by_student).map(adaptStudentAttendance),
     },
     milestoneProgress: toArray(raw?.milestoneProgress ?? raw?.milestone_progress).map(adaptMilestoneProgress),
     groupProgress: toArray(raw?.groupProgress ?? raw?.group_progress).map(adaptGroupProgress),

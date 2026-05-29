@@ -1,22 +1,40 @@
 import { useEffect, useState } from 'react';
 
-import { TOAST_EVENT, type ToastPayload } from './toast';
+import { PENDING_TOAST_KEY, TOAST_EVENT, type ToastPayload } from './toast';
 
 interface ToastState extends ToastPayload {
   id: number;
 }
 
 const VARIANT_CLASSES = {
-  success: 'border-emerald-200 bg-emerald-50 text-emerald-700',
-  error: 'border-red-200 bg-red-50 text-red-700',
-  warning: 'border-amber-200 bg-amber-50 text-amber-700',
-  info: 'border-blue-200 bg-blue-50 text-blue-700',
-};
+  success: 'border-emerald-200 bg-emerald-50 text-emerald-800',
+  error: 'border-red-200 bg-red-50 text-red-800',
+  warning: 'border-amber-200 bg-amber-50 text-amber-800',
+  info: 'border-blue-200 bg-blue-50 text-blue-800',
+} as const;
+
+const VARIANT_LABELS = {
+  success: 'Thành công',
+  error: 'Lỗi',
+  warning: 'Cảnh báo',
+  info: 'Thông tin',
+} as const;
 
 export function ToastContainer() {
   const [toast, setToast] = useState<ToastState | null>(null);
 
   useEffect(() => {
+    const pendingToast = sessionStorage.getItem(PENDING_TOAST_KEY);
+    if (pendingToast) {
+      sessionStorage.removeItem(PENDING_TOAST_KEY);
+      try {
+        const parsedToast = JSON.parse(pendingToast) as ToastPayload;
+        setToast({ ...parsedToast, id: Date.now() });
+      } catch {
+        // Ignore malformed persisted toast payloads.
+      }
+    }
+
     const handleToast = (event: Event) => {
       const customEvent = event as CustomEvent<ToastPayload>;
       setToast({ ...customEvent.detail, id: Date.now() });
@@ -40,15 +58,16 @@ export function ToastContainer() {
   }
 
   return (
-    <div className="fixed inset-x-3 top-3 z-[60] sm:inset-x-auto sm:right-4 sm:top-4 sm:max-w-sm">
+    <div className="fixed inset-x-3 bottom-3 z-[60] sm:inset-x-auto sm:bottom-4 sm:right-4 sm:w-96 sm:max-w-[calc(100vw-2rem)]">
       <div
         className={[
           'break-words rounded-md border px-4 py-3 text-sm shadow-lg',
           VARIANT_CLASSES[toast.variant],
         ].join(' ')}
-        role="status"
+        role={toast.variant === 'error' ? 'alert' : 'status'}
       >
-        {toast.message}
+        <p className="font-semibold">{VARIANT_LABELS[toast.variant]}</p>
+        <p className="mt-1">{toast.message}</p>
       </div>
     </div>
   );

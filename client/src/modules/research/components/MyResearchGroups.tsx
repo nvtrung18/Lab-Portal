@@ -1,201 +1,131 @@
-import { useEffect, useMemo, useState } from 'react';
-import type { ReactNode } from 'react';
+import { useNavigate } from 'react-router-dom';
 
-import { Button, EmptyState, ErrorState, LoadingState, ResponsiveTable } from '../../../shared/components';
+import { Button, EmptyState, ErrorState, LoadingState, toast } from '../../../shared/components';
 import { useMyResearchGroups } from '../hooks';
-import type { ResearchGroup, ResearchGroupMember } from '../types';
-import { formatDate, formatGroupRole, formatGroupStatus, getStatusClass } from '../utils';
-import { MilestoneList } from './MilestoneList';
-import { MyResearchTasks } from './MyResearchTasks';
-import { GroupReportsTab } from './GroupReportsTab';
+import type { ResearchGroup } from '../types';
+import { formatGroupStatus, getStatusClass } from '../utils';
 
 interface MyResearchGroupsProps {
   labId: number;
   currentUserId?: number | null;
 }
 
-function getMemberName(member: ResearchGroupMember) {
-  return member.fullName || member.email || `Người dùng #${member.userId}`;
-}
-
-function getProjectName(group: ResearchGroup) {
-  if (group.projectTitle) {
-    return group.projectCode ? `${group.projectCode} - ${group.projectTitle}` : group.projectTitle;
-  }
-  return 'Chưa cập nhật';
-}
-
 export function MyResearchGroups({ labId, currentUserId }: MyResearchGroupsProps) {
-  const [selectedGroupId, setSelectedGroupId] = useState<number | null>(null);
+  const navigate = useNavigate();
   const { data: groups = [], isError, isLoading, refetch } = useMyResearchGroups(labId);
 
-  useEffect(() => {
-    setSelectedGroupId(null);
-  }, [labId]);
+  function getProjectName(group: ResearchGroup) {
+    if (group.projectTitle) {
+      return group.projectCode ? `${group.projectCode} - ${group.projectTitle}` : group.projectTitle;
+    }
+    return 'Chưa có đề tài nghiên cứu';
+  }
 
-  const selectedGroup = useMemo(
-    () => groups.find((group) => group.id === selectedGroupId) ?? groups[0] ?? null,
-    [groups, selectedGroupId],
-  );
-
-  const myRoleByGroupId = useMemo(() => {
-    return new Map(
-      groups.map((group) => [
-        group.id,
-        group.myRole ?? group.members?.find((member) => member.userId === currentUserId)?.role ?? null,
-      ]),
-    );
-  }, [currentUserId, groups]);
-  const selectedGroupRole = selectedGroup ? myRoleByGroupId.get(selectedGroup.id) : null;
-  const isLeader = selectedGroupRole === 'LEADER';
-  const currentMembership = selectedGroup?.members?.find((member) => member.userId === currentUserId) ?? null;
+  function handleViewGroup(group: ResearchGroup) {
+    if (!group.projectId) {
+      toast.error('Nhóm nghiên cứu này chưa được liên kết với đề tài nào.');
+      return;
+    }
+    navigate(`/app/research/projects/${group.projectId}/groups/${group.id}`);
+  }
 
   return (
     <section className="space-y-6">
       <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="text-xl font-semibold text-slate-950">Nhóm của tôi</h2>
-        <p className="mt-2 text-sm text-slate-600">Các nhóm nghiên cứu mà bạn đang tham gia.</p>
+        <h2 className="text-xl font-bold text-slate-950">Nhóm nghiên cứu của tôi</h2>
+        <p className="mt-2 text-sm text-slate-600">
+          Danh sách các nhóm nghiên cứu bạn tham gia trong Phòng thí nghiệm này. Chọn một nhóm để vào không gian làm việc chi tiết.
+        </p>
       </div>
 
-      <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-        {isLoading ? (
-          <LoadingState>Đang tải danh sách nhóm nghiên cứu...</LoadingState>
-        ) : isError ? (
-          <ErrorState onRetry={() => refetch()}>
-            Không thể tải danh sách nhóm nghiên cứu.
-          </ErrorState>
-        ) : !groups.length ? (
-          <EmptyState>
-            Bạn chưa được phân vào nhóm nghiên cứu nào trong PTN này.
-          </EmptyState>
-        ) : (
-          <ResponsiveTable>
-            <table className="w-full min-w-[760px] divide-y divide-slate-200 text-sm">
-              <thead>
-                <tr className="text-left text-xs font-semibold uppercase text-slate-500">
-                  <th className="px-3 py-3">Tên nhóm</th>
-                  <th className="px-3 py-3">Đề tài nghiên cứu</th>
-                  <th className="px-3 py-3">Chủ đề nghiên cứu</th>
-                  <th className="px-3 py-3">Vai trò của tôi</th>
-                  <th className="px-3 py-3">Trưởng nhóm</th>
-                  <th className="px-3 py-3">Số thành viên</th>
-                  <th className="px-3 py-3">Trạng thái</th>
-                  <th className="px-3 py-3" />
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {groups.map((group) => (
-                  <tr key={group.id} className="align-top">
-                    <td className="px-3 py-3 font-semibold text-slate-950">{group.name}</td>
-                    <td className="px-3 py-3 text-slate-600">{getProjectName(group)}</td>
-                    <td className="px-3 py-3 text-slate-600">{group.topicName ?? 'Chưa cập nhật'}</td>
-                    <td className="px-3 py-3 text-slate-600">{formatGroupRole(myRoleByGroupId.get(group.id))}</td>
-                    <td className="px-3 py-3 text-slate-600">{group.leaderName ?? 'Chưa cập nhật'}</td>
-                    <td className="px-3 py-3 text-slate-600">{group.memberCount ?? group.members?.length ?? 0}</td>
-                    <td className="px-3 py-3">
-                      <span className={`rounded-full px-3 py-1 text-xs font-semibold ring-1 ${getStatusClass(group.status)}`}>
-                        {formatGroupStatus(group.status)}
-                      </span>
-                    </td>
-                    <td className="px-3 py-3 text-right">
-                      <Button onClick={() => setSelectedGroupId(group.id)} size="sm" variant="outline">
-                        Xem chi tiết
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </ResponsiveTable>
-        )}
-      </section>
+      {isLoading ? (
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {[1, 2, 3].map((n) => (
+            <div key={n} className="h-56 animate-pulse rounded-lg border border-slate-200 bg-white" />
+          ))}
+        </div>
+      ) : isError ? (
+        <ErrorState onRetry={() => refetch()}>
+          Không thể tải danh sách nhóm nghiên cứu của bạn.
+        </ErrorState>
+      ) : groups.length === 0 ? (
+        <EmptyState>
+          Bạn chưa được phân vào nhóm nghiên cứu nào trong PTN này.
+        </EmptyState>
+      ) : (
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {groups.map((group) => {
+            const myRole = group.myRole ?? group.members?.find((member) => member.userId === currentUserId)?.role ?? null;
+            const isLeader = myRole === 'LEADER';
 
-      {selectedGroup ? (
-        <section className="space-y-6">
-          <div className="grid gap-6 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
-            <div className="space-y-6">
-              <DetailPanel title="Thông tin nhóm">
-                <DescriptionRow label="Tên nhóm" value={selectedGroup.name} />
-                <DescriptionRow label="Mục tiêu" value={selectedGroup.objective ?? 'Chưa cập nhật'} />
-                <DescriptionRow label="Kế hoạch" value={selectedGroup.plan ?? 'Chưa cập nhật'} />
-                <DescriptionRow label="Trạng thái" value={formatGroupStatus(selectedGroup.status)} />
-                <DescriptionRow label="Ngày tạo" value={formatDate(selectedGroup.createdAt)} />
-              </DetailPanel>
-
-              <DetailPanel title="Thông tin đề tài">
-                <DescriptionRow label="Đề tài nghiên cứu" value={getProjectName(selectedGroup)} />
-                <DescriptionRow label="Chủ đề nghiên cứu" value={selectedGroup.topicName ?? 'Chưa cập nhật'} />
-                <DescriptionRow label="Quản lý PTN / giảng viên hướng dẫn" value={selectedGroup.managerName ?? 'Chưa cập nhật'} />
-              </DetailPanel>
-            </div>
-
-            <DetailPanel title={isLeader ? 'Thành viên nhóm' : 'Vai trò của tôi'}>
-              <div className="space-y-3">
-                {(isLeader ? selectedGroup.members ?? [] : currentMembership ? [currentMembership] : []).map((member) => (
-                  <div key={member.id} className="flex items-start justify-between gap-3 rounded-md border border-slate-200 p-3">
-                    <div>
-                      <p className="font-semibold text-slate-950">{getMemberName(member)}</p>
-                      <p className="mt-1 text-xs text-slate-500">{member.email ?? `Người dùng #${member.userId}`}</p>
-                    </div>
-                    <span className="shrink-0 rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
-                      {formatGroupRole(member.role)}
+            return (
+              <article
+                key={group.id}
+                className="flex flex-col justify-between rounded-lg border border-slate-200 bg-white p-5 shadow-sm hover:shadow-md transition duration-200"
+              >
+                <div className="space-y-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <h3 className="font-bold text-slate-950 text-base leading-snug line-clamp-1" title={group.name}>
+                      {group.name}
+                    </h3>
+                    <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ring-1 ${getStatusClass(group.status)}`}>
+                      {formatGroupStatus(group.status)}
                     </span>
                   </div>
-                ))}
-              </div>
-            </DetailPanel>
-          </div>
 
-          {selectedGroup.projectId ? (
-            <>
-              {!isLeader && currentUserId != null ? (
-                <MyResearchTasks
-                  currentUserId={currentUserId}
-                  groupId={selectedGroup.id}
-                  projectId={selectedGroup.projectId}
-                />
-              ) : null}
-              {isLeader ? (
-                <GroupReportsTab currentUserId={currentUserId} groupId={selectedGroup.id} />
-              ) : null}
-              <MilestoneList
-                key={`${labId}-${selectedGroup.projectId}`}
-                projectId={selectedGroup.projectId}
-                groupId={selectedGroup.id}
-                canCreate={false}
-                showTaskBoard
-                taskBoardRole={currentUserId != null ? (isLeader ? 'GROUP_LEADER' : 'STUDENT_MEMBER') : undefined}
-                taskBoardCurrentUserId={currentUserId}
-                title={isLeader ? 'Bảng tiến độ nhóm' : 'Mốc của tôi'}
-                description={isLeader
-                  ? 'Theo dõi toàn bộ mốc và nhiệm vụ của nhóm nghiên cứu.'
-                  : 'Chỉ hiển thị các mốc có nhiệm vụ được giao cho bạn.'}
-                emptyMessage={isLeader
-                  ? 'Đề tài này chưa có mốc nghiên cứu nào.'
-                  : 'Bạn chưa có mốc hoặc nhiệm vụ nào được giao trong đề tài này.'}
-              />
-            </>
-          ) : null}
-        </section>
-      ) : null}
+                  <div className="space-y-1">
+                    <span className="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                      Đề tài nghiên cứu
+                    </span>
+                    <p className="text-sm font-medium text-slate-800 line-clamp-2 leading-relaxed h-10">
+                      {getProjectName(group)}
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4 border-t border-slate-100 pt-4 text-xs">
+                    <div>
+                      <span className="block font-semibold text-slate-500">Vai trò của tôi</span>
+                      <span className={`inline-flex mt-1 rounded-full px-2 py-0.5 font-bold ${
+                        isLeader ? 'bg-blue-50 text-blue-700 ring-1 ring-blue-100' : 'bg-slate-50 text-slate-700 ring-1 ring-slate-100'
+                      }`}>
+                        {isLeader ? 'Trưởng nhóm' : 'Thành viên'}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="block font-semibold text-slate-500">Trưởng nhóm</span>
+                      <span className="block mt-1 text-slate-800 font-medium truncate" title={group.leaderName || 'Chưa phân công'}>
+                        {group.leaderName || 'Chưa phân công'}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="block font-semibold text-slate-500">Thành viên</span>
+                      <span className="block mt-1 text-slate-800 font-bold">
+                        {group.memberCount ?? group.members?.length ?? 0} người
+                      </span>
+                    </div>
+                    <div>
+                      <span className="block font-semibold text-slate-500">Chủ đề tuyển</span>
+                      <span className="block mt-1 text-slate-800 font-medium truncate" title={group.topicName || 'Chưa cập nhật'}>
+                        {group.topicName || 'Chưa cập nhật'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-5 pt-4 border-t border-slate-100">
+                  <Button
+                    onClick={() => handleViewGroup(group)}
+                    size="sm"
+                    className="w-full flex justify-center text-sm font-semibold py-2"
+                  >
+                    Xem chi tiết nhóm
+                  </Button>
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      )}
     </section>
-  );
-}
-
-function DetailPanel({ title, children }: { title: string; children: ReactNode }) {
-  return (
-    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <h3 className="text-base font-semibold text-slate-950">{title}</h3>
-      <div className="mt-4 space-y-3 text-sm">{children}</div>
-    </section>
-  );
-}
-
-function DescriptionRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <dt className="font-semibold text-slate-700">{label}</dt>
-      <dd className="mt-1 text-slate-600">{value}</dd>
-    </div>
   );
 }

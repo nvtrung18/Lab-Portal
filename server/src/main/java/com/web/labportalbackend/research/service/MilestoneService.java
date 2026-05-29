@@ -11,6 +11,10 @@ public interface MilestoneService {
 
     List<MilestoneResponse> getByProject(Long projectId);
 
+    List<MilestoneResponse> getByGroup(Long groupId);
+
+    List<MilestoneResponse> getMyMilestonesInGroup(Long groupId);
+
     MilestoneResponse getDetail(Long milestoneId);
 
     MilestoneResponse updateMilestone(Long milestoneId, UpdateMilestoneRequest request);

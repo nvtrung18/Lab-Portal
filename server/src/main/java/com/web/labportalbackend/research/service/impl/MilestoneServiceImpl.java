@@ -9,6 +9,7 @@ import com.web.labportalbackend.lab.repository.MembershipRepository;
 import com.web.labportalbackend.research.dto.request.CreateMilestoneRequest;
 import com.web.labportalbackend.research.dto.request.UpdateMilestoneRequest;
 import com.web.labportalbackend.research.dto.response.MilestoneResponse;
+import com.web.labportalbackend.research.entity.GroupEntity;
 import com.web.labportalbackend.research.entity.MilestoneEntity;
 import com.web.labportalbackend.research.entity.ProjectEntity;
 import com.web.labportalbackend.research.enums.MilestoneStatus;
@@ -17,6 +18,7 @@ import com.web.labportalbackend.research.enums.GroupRole;
 import com.web.labportalbackend.research.mapper.MilestoneMapper;
 import com.web.labportalbackend.research.repository.MilestoneRepository;
 import com.web.labportalbackend.research.repository.GroupMemberRepository;
+import com.web.labportalbackend.research.repository.GroupRepository;
 import com.web.labportalbackend.research.repository.ProjectRepository;
 import com.web.labportalbackend.research.repository.ReportRepository;
 import com.web.labportalbackend.research.repository.TaskRepository;
@@ -39,6 +41,7 @@ public class MilestoneServiceImpl implements MilestoneService {
 
     private final MilestoneRepository milestoneRepository;
     private final ProjectRepository projectRepository;
+    private final GroupRepository groupRepository;
     private final LaboratoryRepository laboratoryRepository;
     private final MembershipRepository membershipRepository;
     private final GroupMemberRepository groupMemberRepository;
@@ -49,8 +52,21 @@ public class MilestoneServiceImpl implements MilestoneService {
     @Override
     @Transactional
     public MilestoneResponse createMilestone(CreateMilestoneRequest request) {
+        if (request.getProjectId() == null && request.getGroupId() != null) {
+            GroupEntity group = groupRepository.findByIdAndDeletedFalseAndActiveTrue(request.getGroupId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Research group", request.getGroupId()));
+            ProjectEntity groupProject = resolveProjectForGroup(group);
+            if (groupProject != null) {
+                request.setProjectId(groupProject.getId());
+            }
+        }
+        if (request.getProjectId() == null) {
+            throw new IllegalArgumentException("Project ID is required");
+        }
+
         ProjectEntity project = projectRepository.findByIdAndDeletedFalseAndActiveTrue(request.getProjectId())
                 .orElseThrow(() -> new ResourceNotFoundException("Project", request.getProjectId()));
+        GroupEntity group = resolveGroupForMilestone(request.getGroupId(), project);
         User currentUser = getCurrentUser();
         assertManagerOwnsProject(currentUser, project);
         assertProjectAllowsMilestones(project);
@@ -64,8 +80,18 @@ public class MilestoneServiceImpl implements MilestoneService {
         }
 
         User assignedStudent = resolveAssignedStudent(request.getAssignedToStudentId(), project);
+        if (assignedStudent != null) {
+            boolean activeInGroup = groupMemberRepository.existsByGroupIdAndUserIdAndActiveTrueAndDeletedFalse(
+                    group.getId(),
+                    assignedStudent.getId()
+            );
+            if (!activeInGroup) {
+                throw new AccessDeniedException("Assignee must be an active student member of this research group");
+            }
+        }
         MilestoneEntity milestone = MilestoneEntity.builder()
                 .project(project)
+                .group(group)
                 .title(request.getTitle().trim())
                 .description(request.getDescription())
                 .assignedToStudent(assignedStudent)
@@ -92,6 +118,59 @@ public class MilestoneServiceImpl implements MilestoneService {
                 .stream()
                 .filter(milestone -> groupRole != GroupRole.MEMBER || isMemberMilestone(milestone, currentUser.getId()))
                 .map(MilestoneMapper::toResponse)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<MilestoneResponse> getByGroup(Long groupId) {
+        GroupEntity group = groupRepository.findByIdAndDeletedFalseAndActiveTrue(groupId)
+                .orElseThrow(() -> new ResourceNotFoundException("Research group", groupId));
+        ProjectEntity project = resolveProjectForGroup(group);
+        if (project == null) {
+            throw new AccessDeniedException("Research group is not assigned to a project");
+        }
+        User currentUser = getCurrentUser();
+        GroupRole groupRole;
+        if (currentUser.hasRole("LAB_MANAGER")) {
+            assertManagerOwnsProject(currentUser, project);
+            groupRole = null;
+        } else if (currentUser.hasRole("STUDENT")) {
+            groupRole = groupMemberRepository.findActiveRoleByGroupIdAndUserId(groupId, currentUser.getId())
+                    .orElseThrow(() -> new AccessDeniedException("Cannot access milestones for this group"));
+        } else {
+            throw new AccessDeniedException("Cannot access milestones");
+        }
+
+        return milestoneRepository.findByGroupIdAndDeletedFalseAndActiveTrueOrderByDeadlineAscCreatedAtAsc(groupId)
+                .stream()
+                .filter(milestone -> groupRole != GroupRole.MEMBER || isMemberMilestone(milestone, currentUser.getId()))
+                .map(MilestoneMapper::toResponse)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<MilestoneResponse> getMyMilestonesInGroup(Long groupId) {
+        GroupEntity group = groupRepository.findByIdAndDeletedFalseAndActiveTrue(groupId)
+                .orElseThrow(() -> new ResourceNotFoundException("Research group", groupId));
+        ProjectEntity project = resolveProjectForGroup(group);
+        if (project == null) {
+            throw new AccessDeniedException("Research group is not assigned to a project");
+        }
+        User currentUser = getCurrentUser();
+        if (!currentUser.hasRole("STUDENT") || !isMemberOfGroup(currentUser.getId(), groupId)) {
+            throw new AccessDeniedException("Cannot access milestones for this group");
+        }
+
+        return milestoneRepository.findByGroupIdAndDeletedFalseAndActiveTrueOrderByDeadlineAscCreatedAtAsc(groupId)
+                .stream()
+                .filter(milestone -> isMemberMilestone(milestone, currentUser.getId()))
+                .map(milestone -> {
+                    int myTaskCount = taskRepository.countByMilestoneIdAndAssigneeId(milestone.getId(), currentUser.getId());
+                    int myCompletedTaskCount = taskRepository.countDoneByMilestoneIdAndAssigneeId(milestone.getId(), currentUser.getId());
+                    return MilestoneMapper.toResponse(milestone, myTaskCount, myCompletedTaskCount);
+                })
                 .toList();
     }
 
@@ -142,6 +221,30 @@ public class MilestoneServiceImpl implements MilestoneService {
         if (project.getStatus() == ProjectStatus.CANCELLED || project.getStatus() == ProjectStatus.COMPLETED) {
             throw new IllegalStateException("Cannot create milestones for a completed or cancelled project");
         }
+    }
+
+    private GroupEntity resolveGroupForMilestone(Long groupId, ProjectEntity project) {
+        if (groupId == null) {
+            return project.getGroup();
+        }
+
+        GroupEntity group = groupRepository.findByIdAndDeletedFalseAndActiveTrue(groupId)
+                .orElseThrow(() -> new ResourceNotFoundException("Research group", groupId));
+        ProjectEntity groupProject = resolveProjectForGroup(group);
+        if (groupProject == null || !project.getId().equals(groupProject.getId())) {
+            throw new IllegalArgumentException("Research group does not belong to selected project");
+        }
+        return group;
+    }
+
+    private ProjectEntity resolveProjectForGroup(GroupEntity group) {
+        if (group.getProject() != null) {
+            return group.getProject();
+        }
+        return projectRepository.findByGroupIdAndDeletedFalseAndActiveTrue(group.getId())
+                .stream()
+                .findFirst()
+                .orElse(null);
     }
 
     private void assertSupportedStatus(MilestoneStatus status) {
@@ -203,6 +306,17 @@ public class MilestoneServiceImpl implements MilestoneService {
     private boolean isMemberMilestone(MilestoneEntity milestone, Long userId) {
         return (milestone.getAssignedToStudent() != null && userId.equals(milestone.getAssignedToStudent().getId()))
                 || taskRepository.existsByMilestoneIdAndAssigneeIdAndDeletedFalseAndActiveTrue(milestone.getId(), userId);
+    }
+
+    private boolean isMemberOfGroup(Long userId, Long groupId) {
+        return groupMemberRepository.existsByGroupIdAndUserIdAndActiveTrueAndDeletedFalse(groupId, userId);
+    }
+
+    @SuppressWarnings("unused")
+    private boolean isLeaderOfGroup(Long userId, Long groupId) {
+        return groupMemberRepository.findActiveRoleByGroupIdAndUserId(groupId, userId)
+                .filter(role -> role == GroupRole.LEADER)
+                .isPresent();
     }
 
     private void assertManagerOwnsProject(User currentUser, ProjectEntity project) {

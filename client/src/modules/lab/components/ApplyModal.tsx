@@ -8,6 +8,7 @@ import { z } from 'zod';
 import { Button, Modal } from '../../../shared/components';
 import { queryKeys } from '../../../shared/api';
 import type { Response } from '../../../shared/types';
+import { VALIDATION_MESSAGES } from '../../../shared/utils';
 import { getLabById, type LabResponse } from '../api';
 import { useApplyLab } from '../hooks';
 import { LABS_QUERY_KEY } from '../hooks/useLabs';
@@ -31,7 +32,7 @@ interface ApplyModalProps {
 }
 
 const INACTIVE_LAB_MESSAGE = 'PTN này đã ngừng hoạt động, không thể nộp đơn.';
-const REQUIRED_CV_MESSAGE = 'Vui lòng nhập CV URL hoặc tải lên file CV.';
+const REQUIRED_CV_MESSAGE = VALIDATION_MESSAGES.required;
 const MAX_CV_FILE_SIZE = 10 * 1024 * 1024;
 const ALLOWED_CV_EXTENSIONS = ['pdf', 'doc', 'docx'];
 
@@ -60,11 +61,11 @@ function validateCvFile(file: File) {
   const extension = file.name.split('.').pop()?.toLowerCase() ?? '';
 
   if (!ALLOWED_CV_EXTENSIONS.includes(extension)) {
-    return 'Tệp CV chỉ hỗ trợ định dạng PDF, DOC hoặc DOCX.';
+    return VALIDATION_MESSAGES.fileType;
   }
 
   if (file.size > MAX_CV_FILE_SIZE) {
-    return 'Tệp CV không được vượt quá 10MB.';
+    return VALIDATION_MESSAGES.reportFileSize;
   }
 
   return null;

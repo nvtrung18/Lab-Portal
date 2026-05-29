@@ -1,6 +1,7 @@
 import { type FormEvent, useMemo, useState } from 'react';
 
 import { Button, Modal } from '../../../shared/components';
+import { VALIDATION_MESSAGES } from '../../../shared/utils';
 import { useCreateSlot } from '../hooks';
 
 interface CreateSlotModalProps {
@@ -42,13 +43,13 @@ export function CreateSlotModal({ labId, isOpen, onClose }: CreateSlotModalProps
   const capacity = Number(form.capacity);
   const validationError = useMemo(() => {
     if (!form.date) {
-      return 'Ngày là bắt buộc.';
+      return VALIDATION_MESSAGES.required;
     }
     if (!form.startTime) {
-      return 'Giờ bắt đầu là bắt buộc.';
+      return VALIDATION_MESSAGES.required;
     }
     if (!form.endTime) {
-      return 'Giờ kết thúc là bắt buộc.';
+      return VALIDATION_MESSAGES.required;
     }
     if (!Number.isFinite(capacity) || capacity <= 0) {
       return 'Sức chứa phải lớn hơn 0.';
@@ -57,7 +58,7 @@ export function CreateSlotModal({ labId, isOpen, onClose }: CreateSlotModalProps
     const start = new Date(toLocalDateTime(form.date, form.startTime));
     const end = new Date(toLocalDateTime(form.date, form.endTime));
     if (start >= end) {
-      return 'Giờ kết thúc phải sau giờ bắt đầu.';
+      return VALIDATION_MESSAGES.dateRange;
     }
 
     return '';

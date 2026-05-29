@@ -1,9 +1,12 @@
-import { ErrorState, LoadingState, Modal } from '../../../shared/components';
-import { useMilestone } from '../hooks';
+import { useState } from 'react';
+
+import { ErrorState, LoadingState, Modal, Button } from '../../../shared/components';
+import { useMilestone, useResearchGroupMembers, useCreateTask } from '../hooks';
 import type { TaskBoardRole } from '../taskBoardHelpers';
 import { formatDate, formatMilestoneStatus, getStatusClass, isMilestoneOverdue } from '../utils';
 import { ManagerReportsList } from './ManagerReportsList';
 import { TaskBoard } from './TaskBoard';
+import { CreateTaskModal } from './CreateTaskModal';
 
 interface MilestoneDetailModalProps {
   milestoneId: number | null;
@@ -12,6 +15,7 @@ interface MilestoneDetailModalProps {
   taskBoardRole?: TaskBoardRole;
   taskBoardCurrentUserId?: number | null;
   groupId?: number | null;
+  labId?: number | null;
   onClose: () => void;
 }
 
@@ -22,9 +26,21 @@ export function MilestoneDetailModal({
   taskBoardRole,
   taskBoardCurrentUserId,
   groupId,
+  labId,
   onClose,
 }: MilestoneDetailModalProps) {
+  const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false);
   const { data: milestone, isError, isLoading, refetch } = useMilestone(milestoneId);
+
+  const { data: groupMembers = [], isLoading: isLoadingMembers } = useResearchGroupMembers(
+    taskBoardRole === 'LAB_MANAGER' ? groupId : null
+  );
+
+  const createTaskMutation = useCreateTask(
+    milestone?.id ?? 0,
+    milestone?.projectId,
+    groupId
+  );
 
   if (!milestoneId) {
     return null;
@@ -35,7 +51,8 @@ export function MilestoneDetailModal({
     : milestone?.status;
 
   return (
-    <Modal onClose={onClose} size="full" title="Chi tiết mốc nghiên cứu">
+    <>
+      <Modal onClose={onClose} size="full" title="Chi tiết mốc nghiên cứu">
         {isLoading ? (
           <LoadingState>Đang tải chi tiết mốc nghiên cứu...</LoadingState>
         ) : isError || !milestone ? (
@@ -107,7 +124,12 @@ export function MilestoneDetailModal({
             </dl>
 
             {showTaskBoard ? (
-              <>
+              <div className="space-y-4 border-t border-slate-200 pt-5">
+                {taskBoardRole === 'LAB_MANAGER' ? (
+                  <div className="flex justify-end">
+                    <Button onClick={() => setIsCreateTaskOpen(true)}>Tạo nhiệm vụ</Button>
+                  </div>
+                ) : null}
                 <TaskBoard
                   groupId={groupId}
                   milestoneId={milestone.id}
@@ -115,8 +137,9 @@ export function MilestoneDetailModal({
                   readonly={taskBoardReadonly}
                   role={taskBoardRole}
                   currentUserId={taskBoardCurrentUserId}
+                  labId={labId}
                 />
-              </>
+              </div>
             ) : null}
 
             {taskBoardRole === 'LAB_MANAGER' ? (
@@ -124,7 +147,21 @@ export function MilestoneDetailModal({
             ) : null}
           </div>
         )}
-    </Modal>
+      </Modal>
+
+      <CreateTaskModal
+        isOpen={isCreateTaskOpen}
+        groupMembers={groupMembers}
+        isLoadingMembers={isLoadingMembers}
+        isSubmitting={createTaskMutation.isPending}
+        onClose={() => setIsCreateTaskOpen(false)}
+        onSubmit={(payload) => {
+          createTaskMutation.mutate(payload, {
+            onSuccess: () => setIsCreateTaskOpen(false),
+          });
+        }}
+      />
+    </>
   );
 }
 

@@ -87,12 +87,21 @@ public class ReportController {
                 .body(file.resource());
     }
 
-    @GetMapping("/groups/{id}/reports")
-    @Operation(summary = "Get member report submissions for a research group leader")
-    @PreAuthorize("hasRole('STUDENT')")
+    @GetMapping({"/groups/{id}/reports", "/research-groups/{id}/reports"})
+    @Operation(summary = "Get member report submissions by group")
+    @PreAuthorize("hasAnyRole('LAB_MANAGER', 'STUDENT')")
     public ResponseEntity<Response<List<ReportResponse>>> getReportsByGroup(@PathVariable Long id) {
         return ResponseEntity.ok(
                 Response.ok("Group reports retrieved successfully", reportService.getReportsByGroup(id))
+        );
+    }
+
+    @GetMapping({"/groups/{id}/reports/me", "/research-groups/{id}/reports/me"})
+    @Operation(summary = "Get the current student's report submissions by group")
+    @PreAuthorize("hasRole('STUDENT')")
+    public ResponseEntity<Response<List<ReportResponse>>> getMyReportsByGroup(@PathVariable Long id) {
+        return ResponseEntity.ok(
+                Response.ok("My group reports retrieved successfully", reportService.getMyReportsByGroup(id))
         );
     }
 

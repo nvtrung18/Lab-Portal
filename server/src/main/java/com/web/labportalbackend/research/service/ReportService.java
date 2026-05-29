@@ -22,6 +22,8 @@ public interface ReportService {
 
     List<ReportResponse> getReportsByGroup(Long groupId);
 
+    List<ReportResponse> getMyReportsByGroup(Long groupId);
+
     List<ReportResponse> getPendingManagerReviewByLab(Long labId);
 
     ReportResponse leaderReview(Long reportId, LeaderReviewReportRequest request);

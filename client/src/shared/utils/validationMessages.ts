@@ -1,0 +1,15 @@
+export const VALIDATION_MESSAGES = {
+  required: 'Trường này là bắt buộc.',
+  email: 'Email không hợp lệ.',
+  password: 'Mật khẩu phải có ít nhất 8 ký tự.',
+  dateRange: 'Ngày kết thúc phải sau ngày bắt đầu.',
+  fileType: 'Định dạng file không được hỗ trợ.',
+  reportFileSize: 'Dung lượng file không được vượt quá 10MB.',
+  productFileSize: 'Dung lượng file không được vượt quá giới hạn cho phép.',
+  score: 'Điểm phải nằm trong khoảng 0 đến 10.',
+  comment: 'Nội dung góp ý không được để trống.',
+  researchTitleRequired: 'Tên đề tài là bắt buộc.',
+  groupNameRequired: 'Tên nhóm là bắt buộc.',
+  leaderMustBeMember: 'Trưởng nhóm phải nằm trong danh sách thành viên.',
+  memberRequired: 'Bạn cần chọn ít nhất một thành viên.',
+} as const;

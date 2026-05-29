@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { queryKeys } from '../../../shared/api';
 import { Button, EmptyState, ErrorState, LoadingState, toast } from '../../../shared/components';
+import { VALIDATION_MESSAGES } from '../../../shared/utils';
 import { addReportComment, getReportComments } from '../api';
 import type { ResearchReportComment } from '../types';
 import { CommentItem } from './CommentItem';
@@ -19,6 +20,7 @@ type SubmitStatus = 'idle' | 'success' | 'error';
 export function ReviewPanel({ reportId, canComment, currentUserId }: ReviewPanelProps) {
   const [content, setContent] = useState('');
   const [submitStatus, setSubmitStatus] = useState<SubmitStatus>('idle');
+  const [validationError, setValidationError] = useState<string | null>(null);
   const contentId = useId();
   const endRef = useRef<HTMLDivElement | null>(null);
   const queryClient = useQueryClient();
@@ -49,6 +51,7 @@ export function ReviewPanel({ reportId, canComment, currentUserId }: ReviewPanel
         );
       });
       setContent('');
+      setValidationError(null);
       setSubmitStatus('success');
       await queryClient.invalidateQueries({ queryKey });
       queueMicrotask(() => scrollToLatestComment());
@@ -78,6 +81,10 @@ export function ReviewPanel({ reportId, canComment, currentUserId }: ReviewPanel
   }
 
   function submitComment() {
+    if (!trimmedContent) {
+      setValidationError(VALIDATION_MESSAGES.comment);
+      return;
+    }
     if (!canSubmit) {
       return;
     }
@@ -128,6 +135,7 @@ export function ReviewPanel({ reportId, canComment, currentUserId }: ReviewPanel
             value={content}
             onChange={(event) => {
               setContent(event.target.value);
+              setValidationError(null);
               if (submitStatus !== 'idle') {
                 setSubmitStatus('idle');
               }
@@ -137,6 +145,7 @@ export function ReviewPanel({ reportId, canComment, currentUserId }: ReviewPanel
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="space-y-1">
               <p className="text-xs text-slate-500">{trimmedContent.length}/2000</p>
+              {validationError ? <p className="text-xs font-medium text-red-700">{validationError}</p> : null}
               {addComment.isPending ? <p className="text-xs font-medium text-slate-600">Đang gửi góp ý...</p> : null}
               {submitStatus === 'success' ? (
                 <p className="text-xs font-medium text-emerald-700">Đã gửi góp ý.</p>

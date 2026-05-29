@@ -9,6 +9,7 @@ import type {
   UpdateResearchGroupPayload,
   CreateResearchProjectPayload,
   CreateMilestonePayload,
+  CreateTaskPayload,
   UpdateMilestonePayload,
   CreateTopicPayload,
   ResearchMilestone,
@@ -35,14 +36,65 @@ import type {
 } from '../types';
 import { normalizeTask } from '../taskBoardHelpers';
 
+export * from './researchGroupApi';
+
+type PageLike<T> = {
+  items?: T[];
+  content?: T[];
+  data?: T[];
+  totalElements?: number;
+};
+
+function unwrapData<T>(responseBody: Response<T> | T | null | undefined): T | null {
+  if (responseBody && typeof responseBody === 'object' && 'data' in responseBody) {
+    return (responseBody as Response<T>).data ?? null;
+  }
+
+  return responseBody ?? null;
+}
+
+function unwrapArray<T>(responseBody: Response<T[]> | T[] | PageLike<T> | null | undefined): T[] {
+  const data = unwrapData<T[] | PageLike<T>>(responseBody);
+
+  if (Array.isArray(data)) {
+    return data;
+  }
+
+  if (data && typeof data === 'object') {
+    if (Array.isArray(data.items)) {
+      return data.items;
+    }
+
+    if (Array.isArray(data.content)) {
+      return data.content;
+    }
+
+    if (Array.isArray(data.data)) {
+      return data.data;
+    }
+  }
+
+  return [];
+}
+
+function unwrapObject<T>(responseBody: Response<T> | T | null | undefined): T {
+  const data = unwrapData<T>(responseBody);
+
+  if (data == null) {
+    throw new Error('API response does not contain data');
+  }
+
+  return data;
+}
+
 export async function getResearchProjectsByLab(labId: number): Promise<ResearchProject[]> {
   const response = await apiClient.get<Response<ResearchProject[]>>(`/api/labs/${labId}/research-projects`);
-  return response.data.data;
+  return unwrapArray<ResearchProject>(response.data);
 }
 
 export async function createResearchProject(payload: CreateResearchProjectPayload): Promise<ResearchProject> {
   const response = await apiClient.post<Response<ResearchProject>>('/api/research-projects', payload);
-  return response.data.data;
+  return unwrapObject<ResearchProject>(response.data);
 }
 
 export async function updateResearchProject(
@@ -50,12 +102,12 @@ export async function updateResearchProject(
   payload: CreateResearchProjectPayload,
 ): Promise<ResearchProject> {
   const response = await apiClient.put<Response<ResearchProject>>(`/api/research-projects/${projectId}`, payload);
-  return response.data.data;
+  return unwrapObject<ResearchProject>(response.data);
 }
 
 export async function getResearchProject(projectId: number): Promise<ResearchProject> {
   const response = await apiClient.get<Response<ResearchProject>>(`/api/research-projects/${projectId}`);
-  return response.data.data;
+  return unwrapObject<ResearchProject>(response.data);
 }
 
 export async function getResearchLogs(
@@ -75,12 +127,12 @@ export async function getResearchLogs(
       size,
     },
   });
-  return response.data.data.map(normalizeResearchLog);
+  return unwrapArray<RawResearchLog>(response.data).map(normalizeResearchLog);
 }
 
 export async function createResearchLog(payload: CreateResearchLogPayload): Promise<ResearchLog> {
   const response = await apiClient.post<Response<RawResearchLog>>('/api/logs', payload);
-  return normalizeResearchLog(response.data.data);
+  return normalizeResearchLog(unwrapObject<RawResearchLog>(response.data));
 }
 
 function normalizeResearchLog(log: RawResearchLog): ResearchLog {
@@ -113,12 +165,12 @@ function normalizeResearchLog(log: RawResearchLog): ResearchLog {
 
 export async function getEvaluationsByProject(projectId: number): Promise<ResearchEvaluation[]> {
   const response = await apiClient.get<Response<RawResearchEvaluation[]>>(`/api/projects/${projectId}/evaluations`);
-  return response.data.data.map(normalizeEvaluation);
+  return unwrapArray<RawResearchEvaluation>(response.data).map(normalizeEvaluation);
 }
 
 export async function submitEvaluation(payload: SubmitEvaluationPayload): Promise<ResearchEvaluation> {
   const response = await apiClient.post<Response<RawResearchEvaluation>>('/api/evaluations', payload);
-  return normalizeEvaluation(response.data.data);
+  return normalizeEvaluation(unwrapObject<RawResearchEvaluation>(response.data));
 }
 
 function normalizeEvaluation(evaluation: RawResearchEvaluation): ResearchEvaluation {
@@ -131,7 +183,7 @@ function normalizeEvaluation(evaluation: RawResearchEvaluation): ResearchEvaluat
     studentName: evaluation.studentName ?? evaluation.student_name ?? null,
     evaluatorId: evaluation.evaluatorId ?? evaluation.evaluator_id ?? null,
     evaluatorName: evaluation.evaluatorName ?? evaluation.evaluator_name ?? null,
-    attendanceScore: evaluation.attendanceScore ?? evaluation.attendance_score ?? 0,
+    contributionScore: evaluation.contributionScore ?? evaluation.contribution_score ?? 0,
     taskScore: evaluation.taskScore ?? evaluation.task_score ?? 0,
     reportScore: evaluation.reportScore ?? evaluation.report_score ?? 0,
     productScore: evaluation.productScore ?? evaluation.product_score ?? 0,
@@ -145,7 +197,7 @@ function normalizeEvaluation(evaluation: RawResearchEvaluation): ResearchEvaluat
 
 export async function getProductsByProject(projectId: number): Promise<ResearchProduct[]> {
   const response = await apiClient.get<Response<RawResearchProduct[]>>(`/api/projects/${projectId}/products`);
-  return response.data.data.map(normalizeProduct);
+  return unwrapArray<RawResearchProduct>(response.data).map(normalizeProduct);
 }
 
 export async function submitProduct(
@@ -176,7 +228,7 @@ export async function submitProduct(
       }
     },
   });
-  return normalizeProduct(response.data.data);
+  return normalizeProduct(unwrapObject<RawResearchProduct>(response.data));
 }
 
 function normalizeProduct(product: RawResearchProduct): ResearchProduct {
@@ -205,37 +257,42 @@ function normalizeProduct(product: RawResearchProduct): ResearchProduct {
 
 export async function getMilestonesByProject(projectId: number): Promise<ResearchMilestone[]> {
   const response = await apiClient.get<Response<ResearchMilestone[]>>(`/api/projects/${projectId}/milestones`);
-  return response.data.data;
+  return unwrapArray<ResearchMilestone>(response.data);
 }
 
 export async function getMilestone(milestoneId: number): Promise<ResearchMilestone> {
   const response = await apiClient.get<Response<ResearchMilestone>>(`/api/milestones/${milestoneId}`);
-  return response.data.data;
+  return unwrapObject<ResearchMilestone>(response.data);
 }
 
 export async function getTasksByMilestone(milestoneId: number): Promise<ResearchTask[]> {
   const response = await apiClient.get<Response<RawResearchTask[]>>(`/api/milestones/${milestoneId}/tasks`);
-  return response.data.data.map(normalizeTask);
+  return unwrapArray<RawResearchTask>(response.data).map(normalizeTask);
+}
+
+export async function createTask(milestoneId: number, payload: CreateTaskPayload): Promise<ResearchTask> {
+  const response = await apiClient.post<Response<RawResearchTask>>(`/api/milestones/${milestoneId}/tasks`, payload);
+  return normalizeTask(unwrapObject<RawResearchTask>(response.data));
 }
 
 export async function updateTaskStatus(taskId: number, status: TaskColumn): Promise<ResearchTask> {
   const response = await apiClient.put<Response<RawResearchTask>>(`/api/tasks/${taskId}/status`, { status });
-  return normalizeTask(response.data.data);
+  return normalizeTask(unwrapObject<RawResearchTask>(response.data));
 }
 
 export async function getReportsByMilestone(milestoneId: number): Promise<ResearchReport[]> {
   const response = await apiClient.get<Response<ResearchReport[]>>(`/api/milestones/${milestoneId}/reports`);
-  return response.data.data;
+  return unwrapArray<ResearchReport>(response.data);
 }
 
 export async function getMyReportsByMilestone(milestoneId: number): Promise<ResearchReport[]> {
   const response = await apiClient.get<Response<ResearchReport[]>>(`/api/milestones/${milestoneId}/reports/me`);
-  return response.data.data;
+  return unwrapArray<ResearchReport>(response.data);
 }
 
 export async function getReportsByTask(taskId: number): Promise<ResearchReport[]> {
   const response = await apiClient.get<Response<ResearchReport[]>>(`/api/tasks/${taskId}/reports`);
-  return response.data.data;
+  return unwrapArray<ResearchReport>(response.data);
 }
 
 export async function downloadReportFile(reportId: number): Promise<Blob> {
@@ -245,19 +302,9 @@ export async function downloadReportFile(reportId: number): Promise<Blob> {
   return response.data;
 }
 
-export async function getReportsByGroup(groupId: number): Promise<ResearchReport[]> {
-  const response = await apiClient.get<Response<ResearchReport[]>>(`/api/groups/${groupId}/reports`);
-  return response.data.data;
-}
-
 export async function getPendingManagerReports(labId: number): Promise<ResearchReport[]> {
   const response = await apiClient.get<Response<ResearchReport[]>>(`/api/labs/${labId}/reports/pending-review`);
-  return response.data.data;
-}
-
-export async function getMyResearchTasksByGroup(groupId: number): Promise<ResearchTask[]> {
-  const response = await apiClient.get<Response<RawResearchTask[]>>(`/api/groups/${groupId}/tasks`);
-  return response.data.data.map(normalizeTask);
+  return unwrapArray<ResearchReport>(response.data);
 }
 
 export async function submitReport(
@@ -284,26 +331,26 @@ export async function submitReport(
       }
     },
   });
-  return response.data.data;
+  return unwrapObject<ResearchReport>(response.data);
 }
 
 export async function getReportComments(reportId: number): Promise<ResearchReportComment[]> {
   const response = await apiClient.get<Response<ResearchReportComment[]>>(`/api/reports/${reportId}/comments`);
-  return response.data.data;
+  return unwrapArray<ResearchReportComment>(response.data);
 }
 
 export async function addReportComment(reportId: number, content: string): Promise<ResearchReportComment> {
   const response = await apiClient.post<Response<ResearchReportComment>>(`/api/reports/${reportId}/comments`, {
     content,
   });
-  return response.data.data;
+  return unwrapObject<ResearchReportComment>(response.data);
 }
 
 export async function leaderReviewReport(reportId: number, note: string): Promise<ResearchReport> {
   const response = await apiClient.patch<Response<ResearchReport>>(`/api/reports/${reportId}/leader-review`, {
     note,
   });
-  return response.data.data;
+  return unwrapObject<ResearchReport>(response.data);
 }
 
 export async function managerReviewReport(
@@ -315,12 +362,12 @@ export async function managerReviewReport(
     decision,
     comment,
   });
-  return response.data.data;
+  return unwrapObject<ResearchReport>(response.data);
 }
 
 export async function createMilestone(payload: CreateMilestonePayload): Promise<ResearchMilestone> {
   const response = await apiClient.post<Response<ResearchMilestone>>('/api/milestones', payload);
-  return response.data.data;
+  return unwrapObject<ResearchMilestone>(response.data);
 }
 
 export async function updateMilestone(
@@ -328,59 +375,54 @@ export async function updateMilestone(
   payload: UpdateMilestonePayload,
 ): Promise<ResearchMilestone> {
   const response = await apiClient.put<Response<ResearchMilestone>>(`/api/milestones/${milestoneId}`, payload);
-  return response.data.data;
+  return unwrapObject<ResearchMilestone>(response.data);
 }
 
 export async function getResearchTopicsByLab(labId: number): Promise<ResearchTopic[]> {
   const response = await apiClient.get<Response<ResearchTopic[]>>(`/api/labs/${labId}/research-topics`);
-  return response.data.data;
+  return unwrapArray<ResearchTopic>(response.data);
 }
 
 export async function createResearchTopic(payload: CreateTopicPayload): Promise<ResearchTopic> {
   const response = await apiClient.post<Response<ResearchTopic>>('/api/research-topics', payload);
-  return response.data.data;
+  return unwrapObject<ResearchTopic>(response.data);
 }
 
 export async function getGroupsByTopic(topicId: number): Promise<ResearchGroup[]> {
   const response = await apiClient.get<Response<ResearchGroup[]>>(`/api/research-topics/${topicId}/groups`);
-  return response.data.data;
+  return unwrapArray<ResearchGroup>(response.data);
 }
 
 export async function getGroupsByLab(labId: number): Promise<ResearchGroup[]> {
   const response = await apiClient.get<Response<ResearchGroup[]>>(`/api/labs/${labId}/groups`);
-  return response.data.data;
+  return unwrapArray<ResearchGroup>(response.data);
 }
 
 export async function getResearchGroupsByProject(projectId: number): Promise<ResearchGroup[]> {
   const response = await apiClient.get<Response<ResearchGroup[]>>(`/api/research-projects/${projectId}/groups`);
-  return response.data.data;
-}
-
-export async function getResearchGroup(groupId: number): Promise<ResearchGroup> {
-  const response = await apiClient.get<Response<ResearchGroup>>(`/api/research-groups/${groupId}`);
-  return response.data.data;
+  return unwrapArray<ResearchGroup>(response.data);
 }
 
 export async function getMyResearchGroupsByLab(labId: number): Promise<ResearchGroup[]> {
   const response = await apiClient.get<Response<ResearchGroup[]>>(`/api/labs/${labId}/research-groups/me`);
-  return response.data.data;
+  return unwrapArray<ResearchGroup>(response.data);
 }
 
 export async function getResearchEligibleStudents(labId: number): Promise<ResearchEligibleStudent[]> {
   const response = await apiClient.get<Response<ResearchEligibleStudent[]>>(
     `/api/labs/${labId}/research-eligible-students`,
   );
-  return response.data.data;
+  return unwrapArray<ResearchEligibleStudent>(response.data);
 }
 
 export async function createGroup(payload: CreateGroupPayload): Promise<ResearchGroup> {
   const response = await apiClient.post<Response<ResearchGroup>>('/api/groups', payload);
-  return response.data.data;
+  return unwrapObject<ResearchGroup>(response.data);
 }
 
 export async function createResearchGroup(payload: CreateResearchGroupPayload): Promise<ResearchGroup> {
   const response = await apiClient.post<Response<ResearchGroup>>('/api/research-groups', payload);
-  return response.data.data;
+  return unwrapObject<ResearchGroup>(response.data);
 }
 
 export async function updateResearchGroup(
@@ -388,15 +430,15 @@ export async function updateResearchGroup(
   payload: UpdateResearchGroupPayload,
 ): Promise<ResearchGroup> {
   const response = await apiClient.put<Response<ResearchGroup>>(`/api/research-groups/${groupId}`, payload);
-  return response.data.data;
+  return unwrapObject<ResearchGroup>(response.data);
 }
 
 export async function getProjectsByGroup(groupId: number): Promise<ResearchProject[]> {
   const response = await apiClient.get<Response<ResearchProject[]>>(`/api/groups/${groupId}/projects`);
-  return response.data.data;
+  return unwrapArray<ResearchProject>(response.data);
 }
 
 export async function createProject(payload: CreateProjectPayload): Promise<ResearchProject> {
   const response = await apiClient.post<Response<ResearchProject>>('/api/projects', payload);
-  return response.data.data;
+  return unwrapObject<ResearchProject>(response.data);
 }

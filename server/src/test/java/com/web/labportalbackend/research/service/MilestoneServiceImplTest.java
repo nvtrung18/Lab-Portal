@@ -12,10 +12,12 @@ import com.web.labportalbackend.research.dto.request.UpdateMilestoneRequest;
 import com.web.labportalbackend.research.dto.response.MilestoneResponse;
 import com.web.labportalbackend.research.entity.MilestoneEntity;
 import com.web.labportalbackend.research.entity.ProjectEntity;
+import com.web.labportalbackend.research.entity.GroupEntity;
 import com.web.labportalbackend.research.enums.MilestoneStatus;
 import com.web.labportalbackend.research.enums.ProjectStatus;
 import com.web.labportalbackend.research.enums.GroupRole;
 import com.web.labportalbackend.research.repository.GroupMemberRepository;
+import com.web.labportalbackend.research.repository.GroupRepository;
 import com.web.labportalbackend.research.repository.MilestoneRepository;
 import com.web.labportalbackend.research.repository.ProjectRepository;
 import com.web.labportalbackend.research.repository.ReportRepository;
@@ -48,6 +50,9 @@ class MilestoneServiceImplTest {
 
     @Mock
     private ProjectRepository projectRepository;
+
+    @Mock
+    private GroupRepository groupRepository;
 
     @Mock
     private LaboratoryRepository laboratoryRepository;
@@ -519,5 +524,72 @@ class MilestoneServiceImplTest {
         request.setStatus(MilestoneStatus.NOT_STARTED);
         request.setProgressPercent(0);
         return request;
+    }
+
+    @Test
+    void getMyMilestonesInGroup_successForStudentMember() {
+        User student = authenticate("student", "STUDENT");
+        Laboratory lab = lab(1L);
+        ProjectEntity project = project(10L, lab, ProjectStatus.ONGOING);
+        GroupEntity group = GroupEntity.builder().project(project).build();
+        group.setId(26L);
+
+        MilestoneEntity milestone = MilestoneEntity.builder()
+                .project(project)
+                .group(group)
+                .title("Mốc 1")
+                .deadline(LocalDate.of(2026, 6, 10))
+                .status(MilestoneStatus.IN_PROGRESS)
+                .progressPercent(35)
+                .build();
+        milestone.setId(20L);
+
+        when(groupRepository.findByIdAndDeletedFalseAndActiveTrue(26L)).thenReturn(Optional.of(group));
+        when(groupMemberRepository.existsByGroupIdAndUserIdAndActiveTrueAndDeletedFalse(26L, student.getId()))
+                .thenReturn(true);
+        when(milestoneRepository.findByGroupIdAndDeletedFalseAndActiveTrueOrderByDeadlineAscCreatedAtAsc(26L))
+                .thenReturn(List.of(milestone));
+        
+        // Mock isMemberMilestone checks
+        when(taskRepository.existsByMilestoneIdAndAssigneeIdAndDeletedFalseAndActiveTrue(20L, student.getId()))
+                .thenReturn(true);
+
+        when(taskRepository.countByMilestoneIdAndAssigneeId(20L, student.getId())).thenReturn(2);
+        when(taskRepository.countDoneByMilestoneIdAndAssigneeId(20L, student.getId())).thenReturn(1);
+
+        List<MilestoneResponse> result = milestoneService.getMyMilestonesInGroup(26L);
+
+        assertEquals(1, result.size());
+        assertEquals("Mốc 1", result.get(0).getTitle());
+        assertEquals(2, result.get(0).getMyTaskCount());
+        assertEquals(1, result.get(0).getMyCompletedTaskCount());
+    }
+
+    @Test
+    void getMyMilestonesInGroup_throwsAccessDeniedForOutsideStudent() {
+        User student = authenticate("student", "STUDENT");
+        Laboratory lab = lab(1L);
+        ProjectEntity project = project(10L, lab, ProjectStatus.ONGOING);
+        GroupEntity group = GroupEntity.builder().project(project).build();
+        group.setId(26L);
+
+        when(groupRepository.findByIdAndDeletedFalseAndActiveTrue(26L)).thenReturn(Optional.of(group));
+        when(groupMemberRepository.existsByGroupIdAndUserIdAndActiveTrueAndDeletedFalse(26L, student.getId()))
+                .thenReturn(false);
+
+        assertThrows(AccessDeniedException.class, () -> milestoneService.getMyMilestonesInGroup(26L));
+    }
+
+    @Test
+    void getMyMilestonesInGroup_throwsAccessDeniedForManager() {
+        authenticate("manager", "LAB_MANAGER");
+        Laboratory lab = lab(1L);
+        ProjectEntity project = project(10L, lab, ProjectStatus.ONGOING);
+        GroupEntity group = GroupEntity.builder().project(project).build();
+        group.setId(26L);
+
+        when(groupRepository.findByIdAndDeletedFalseAndActiveTrue(26L)).thenReturn(Optional.of(group));
+
+        assertThrows(AccessDeniedException.class, () -> milestoneService.getMyMilestonesInGroup(26L));
     }
 }

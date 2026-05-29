@@ -16,6 +16,8 @@ public interface ProductRepository extends JpaRepository<ProductEntity, Long> {
 
     List<ProductEntity> findByProjectIdAndDeletedFalseAndActiveTrueOrderByCreatedAtDescVersionDesc(Long projectId);
 
+    List<ProductEntity> findByGroupIdAndDeletedFalseAndActiveTrueOrderByCreatedAtDescVersionDesc(Long groupId);
+
     @Query("""
             SELECT MAX(p.version)
             FROM ProductEntity p
@@ -46,4 +48,7 @@ public interface ProductRepository extends JpaRepository<ProductEntity, Long> {
             @Param("submittedById") Long submittedById,
             @Param("productType") ProductType productType
     );
+
+    @Query("SELECT COUNT(p) FROM ProductEntity p WHERE p.active = true AND p.deleted = false")
+    long countSubmittedProducts();
 }

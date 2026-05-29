@@ -1,5 +1,8 @@
 package com.web.labportalbackend.research.service;
 
+import com.web.labportalbackend.admin.audit.service.AuditLogService;
+import com.web.labportalbackend.admin.systemconfig.dto.SystemConfigResponse;
+import com.web.labportalbackend.admin.systemconfig.service.SystemConfigService;
 import com.web.labportalbackend.common.exception.ReportVersionConflictException;
 import com.web.labportalbackend.auth.entity.Role;
 import com.web.labportalbackend.auth.entity.User;
@@ -28,6 +31,7 @@ import com.web.labportalbackend.research.repository.MilestoneRepository;
 import com.web.labportalbackend.research.repository.ReportRepository;
 import com.web.labportalbackend.research.repository.TaskRepository;
 import com.web.labportalbackend.research.service.impl.ReportServiceImpl;
+import com.web.labportalbackend.research.service.ResearchLogService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -42,8 +46,10 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.mock.web.MockMultipartFile;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -83,7 +89,44 @@ class ReportServiceImplTest {
     @Mock
     private UserRepository userRepository;
 
+    @Mock
+    private ResearchLogService researchLogService;
+
+    @Mock
+    private SystemConfigService systemConfigService;
+
+    @Mock
+    private AuditLogService auditLogService;
+
     private final List<Path> storedFiles = new ArrayList<>();
+
+    @BeforeEach
+    void cleanStorageDirectory() throws IOException {
+        Path storageDir = Paths.get("storage/reports").toAbsolutePath().normalize();
+        if (Files.exists(storageDir)) {
+            try (var walk = Files.walk(storageDir)) {
+                walk.sorted(java.util.Comparator.reverseOrder())
+                        .forEach(p -> { try { Files.deleteIfExists(p); } catch (IOException ignored) {} });
+            }
+        }
+    }
+
+    @BeforeEach
+    void stubSystemConfig() {
+        SystemConfigResponse config = new SystemConfigResponse(
+                null,
+                null,
+                null,
+                new SystemConfigResponse.UploadConfig(
+                        10,
+                        10,
+                        List.of("pdf", "doc", "docx"),
+                        List.of("pdf", "zip")
+                ),
+                new SystemConfigResponse.ResearchConfig(10, false, false, false)
+        );
+        lenient().when(systemConfigService.getConfig()).thenReturn(config);
+    }
 
     @BeforeEach
     void authenticateAssignedMember() {
@@ -324,7 +367,7 @@ class ReportServiceImplTest {
         when(groupRepository.findByIdAndDeletedFalseAndActiveTrue(90L)).thenReturn(Optional.of(group));
         when(groupMemberRepository.findActiveRoleByGroupIdAndUserId(90L, leader.getId()))
                 .thenReturn(Optional.of(GroupRole.LEADER));
-        when(reportRepository.findByGroupIdAndDeletedFalseAndActiveTrueOrderByCreatedAtDescVersionDesc(90L))
+        when(reportRepository.findReportsByGroupScope(90L))
                 .thenReturn(List.of(first, second));
         when(userRepository.findById(3L)).thenReturn(Optional.of(firstMember));
         when(userRepository.findById(4L)).thenReturn(Optional.of(secondMember));
@@ -350,7 +393,7 @@ class ReportServiceImplTest {
 
         assertThrows(AccessDeniedException.class, () -> reportService.getReportsByGroup(90L));
 
-        verify(reportRepository, never()).findByGroupIdAndDeletedFalseAndActiveTrueOrderByCreatedAtDescVersionDesc(any());
+        verify(reportRepository, never()).findReportsByGroupScope(any());
     }
 
     @Test

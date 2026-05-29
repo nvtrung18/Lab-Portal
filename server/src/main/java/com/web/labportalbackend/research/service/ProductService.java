@@ -10,4 +10,6 @@ public interface ProductService {
     ProductResponse submitProduct(SubmitProductRequest request, MultipartFile file);
 
     List<ProductResponse> getByProject(Long projectId);
+
+    List<ProductResponse> getByGroup(Long groupId);
 }

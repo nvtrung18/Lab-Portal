@@ -3,6 +3,7 @@ export * from './AttendanceChart';
 export * from './CreateGroupModal';
 export * from './CreateLogModal';
 export * from './CreateMilestoneModal';
+export * from './CreateTaskModal';
 export * from './CreateProjectModal';
 export * from './CreateResearchGroupModal';
 export * from './CreateResearchProjectModal';
@@ -41,3 +42,9 @@ export * from './LeaderReviewButton';
 export * from './LeaderReviewModal';
 export * from './ManagerReviewActions';
 export * from './ManagerReviewModal';
+export * from './ReportHistoryModal';
+export * from './LatestReportSummary';
+export * from './ReportVersionItem';
+export * from './ReportCommentsModal';
+
+

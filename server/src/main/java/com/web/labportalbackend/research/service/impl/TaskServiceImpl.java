@@ -13,6 +13,11 @@ import com.web.labportalbackend.research.dto.response.TaskResponse;
 import com.web.labportalbackend.research.entity.MilestoneEntity;
 import com.web.labportalbackend.research.entity.GroupEntity;
 import com.web.labportalbackend.research.entity.TaskEntity;
+import com.web.labportalbackend.research.entity.ProjectEntity;
+import com.web.labportalbackend.admin.systemconfig.dto.SystemConfigResponse;
+import com.web.labportalbackend.admin.systemconfig.service.SystemConfigService;
+import com.web.labportalbackend.research.entity.ReportEntity;
+import com.web.labportalbackend.research.enums.ReportStatus;
 import com.web.labportalbackend.research.enums.GroupRole;
 import com.web.labportalbackend.research.enums.TaskStatus;
 import com.web.labportalbackend.research.mapper.TaskMapper;
@@ -60,21 +65,52 @@ public class TaskServiceImpl implements TaskService {
     private final GroupMemberRepository groupMemberRepository;
     private final LaboratoryRepository laboratoryRepository;
     private final UserRepository userRepository;
+    private final SystemConfigService systemConfigService;
 
     @Override
     @Transactional
     public TaskResponse createTask(CreateTaskRequest request) {
-        if (!milestoneRepository.existsById(request.getMilestoneId())) {
-            throw new ResourceNotFoundException("Milestone", request.getMilestoneId());
+        MilestoneEntity milestone = milestoneRepository.findByIdAndDeletedFalseAndActiveTrue(request.getMilestoneId())
+                .orElseThrow(() -> new ResourceNotFoundException("Milestone", request.getMilestoneId()));
+
+        User currentUser = getCurrentUser();
+        ProjectEntity project = milestone.getProject();
+        if (!currentUser.hasRole("LAB_MANAGER")) {
+            throw new AccessDeniedException("Only lab managers can create tasks");
+        }
+        assertManagerCanAccessProject(currentUser, project);
+
+        if (request.getAssignedToStudentId() == null) {
+            throw new IllegalArgumentException("Assigned student ID is required");
+        }
+
+        User student = userRepository.findById(request.getAssignedToStudentId())
+                .orElseThrow(() -> new ResourceNotFoundException("User", request.getAssignedToStudentId()));
+
+        Long groupId = milestone.getGroup() != null ? milestone.getGroup().getId() : (project.getGroup() != null ? project.getGroup().getId() : null);
+        if (groupId == null) {
+            throw new IllegalArgumentException("Milestone does not belong to any research group");
+        }
+
+        boolean activeInGroup = groupMemberRepository.existsByGroupIdAndUserIdAndActiveTrueAndDeletedFalse(
+                groupId,
+                request.getAssignedToStudentId()
+        );
+        if (!student.hasRole("STUDENT") || !activeInGroup) {
+            throw new AccessDeniedException("Assignee must be an active student member of this research group");
         }
 
         TaskEntity task = TaskEntity.builder()
                 .milestoneId(request.getMilestoneId())
-                .title(request.getTitle())
+                .assigneeId(request.getAssignedToStudentId())
+                .title(request.getTitle().trim())
+                .description(request.getDescription())
+                .deadline(request.getDeadline())
                 .status(TaskStatus.TODO)
+                .progressPercent(0)
                 .build();
 
-        return TaskMapper.toResponse(taskRepository.save(task));
+        return TaskMapper.toResponse(taskRepository.save(task), project.getId());
     }
 
     @Override
@@ -122,25 +158,67 @@ public class TaskServiceImpl implements TaskService {
     public List<TaskResponse> getByGroup(Long groupId) {
         GroupEntity group = groupRepository.findByIdAndDeletedFalseAndActiveTrue(groupId)
                 .orElseThrow(() -> new ResourceNotFoundException("Research group", groupId));
-        if (group.getProject() == null) {
-            throw new AccessDeniedException("Research group is not assigned to a project");
-        }
-
         User currentUser = getCurrentUser();
-        Long projectId = group.getProject().getId();
+        Long projectId = group.getProject() == null ? null : group.getProject().getId();
         if (currentUser.hasRole("LAB_MANAGER")) {
-            assertManagerCanAccessProject(currentUser, group.getProject());
-            return taskRepository.findBoardTasksByProjectId(projectId).stream()
+            assertManagerCanAccessGroup(currentUser, group);
+            return taskRepository.findBoardTasksByGroupId(groupId).stream()
                     .map(task -> TaskMapper.toResponse(task, projectId))
                     .toList();
         }
 
-        GroupRole groupRole = resolveStudentProjectRole(currentUser, projectId);
+        GroupRole groupRole = groupMemberRepository.findActiveRoleByGroupIdAndUserId(groupId, currentUser.getId())
+                .orElseThrow(() -> new AccessDeniedException("Cannot access tasks for this group"));
         List<TaskEntity> visibleTasks = groupRole == GroupRole.LEADER
-                ? taskRepository.findBoardTasksByProjectId(projectId)
-                : taskRepository.findAssignedBoardTasksByProjectId(projectId, currentUser.getId());
+                ? taskRepository.findBoardTasksByGroupId(groupId)
+                : taskRepository.findAssignedBoardTasksByGroupId(groupId, currentUser.getId());
         return visibleTasks.stream()
                 .map(task -> TaskMapper.toResponse(task, projectId))
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<TaskResponse> getMyTasksInGroup(Long groupId) {
+        GroupEntity group = groupRepository.findByIdAndDeletedFalseAndActiveTrue(groupId)
+                .orElseThrow(() -> new ResourceNotFoundException("Research group", groupId));
+        User currentUser = getCurrentUser();
+        Long projectId = group.getProject() == null ? null : group.getProject().getId();
+
+        if (!currentUser.hasRole("STUDENT") || !isMemberOfGroup(currentUser.getId(), groupId)) {
+            throw new AccessDeniedException("Cannot access tasks for this group");
+        }
+
+        List<TaskEntity> tasks = taskRepository.findAssignedBoardTasksByGroupId(groupId, currentUser.getId());
+        if (tasks.isEmpty()) {
+            return List.of();
+        }
+
+        List<Long> taskIds = tasks.stream().map(TaskEntity::getId).toList();
+        List<ReportEntity> reports = reportRepository.findActiveReportsByTaskIds(taskIds);
+        Map<Long, ReportStatus> latestReportStatusMap = reports.stream()
+                .collect(java.util.stream.Collectors.toMap(
+                        ReportEntity::getTaskId,
+                        r -> r,
+                        (r1, r2) -> r1.getVersion() > r2.getVersion() ? r1 : r2
+                ))
+                .entrySet().stream()
+                .collect(java.util.stream.Collectors.toMap(
+                        Map.Entry::getKey,
+                        e -> e.getValue().getStatus()
+                ));
+
+        List<MilestoneEntity> milestones = milestoneRepository.findByGroupIdAndDeletedFalseAndActiveTrueOrderByDeadlineAscCreatedAtAsc(groupId);
+        Map<Long, String> milestoneTitles = milestones.stream()
+                .collect(java.util.stream.Collectors.toMap(MilestoneEntity::getId, MilestoneEntity::getTitle, (a, b) -> a));
+
+        return tasks.stream()
+                .map(task -> {
+                    String milestoneTitle = milestoneTitles.get(task.getMilestoneId());
+                    ReportStatus reportStatus = latestReportStatusMap.get(task.getId());
+                    String latestReportStatusStr = reportStatus != null ? reportStatus.name() : null;
+                    return TaskMapper.toResponse(task, projectId, groupId, milestoneTitle, latestReportStatusStr);
+                })
                 .toList();
     }
 
@@ -269,5 +347,28 @@ public class TaskServiceImpl implements TaskService {
         }
         return userRepository.findByUsername(authentication.getName())
                 .orElseThrow(() -> new ResourceNotFoundException("User", "username", authentication.getName()));
+    }
+
+    private void assertManagerCanAccessGroup(User currentUser, GroupEntity group) {
+        Laboratory managedLab = laboratoryRepository.findFirstByManagerIdAndDeletedFalse(currentUser.getId())
+                .orElseThrow(() -> new AccessDeniedException("Lab manager is not assigned to any lab"));
+        if (group.getLab() == null || !managedLab.getId().equals(group.getLab().getId())) {
+            throw new AccessDeniedException("Cannot access tasks from another lab");
+        }
+    }
+
+    private boolean isMemberOfGroup(Long userId, Long groupId) {
+        return groupMemberRepository.existsByGroupIdAndUserIdAndActiveTrueAndDeletedFalse(groupId, userId);
+    }
+
+    @SuppressWarnings("unused")
+    private boolean isLeaderOfGroup(Long userId, Long groupId) {
+        return groupMemberRepository.findActiveRoleByGroupIdAndUserId(groupId, userId)
+                .filter(role -> role == GroupRole.LEADER)
+                .isPresent();
+    }
+
+    private SystemConfigResponse systemConfig() {
+        return systemConfigService.getConfig();
     }
 }

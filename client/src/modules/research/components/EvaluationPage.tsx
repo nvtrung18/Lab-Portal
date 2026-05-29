@@ -1,15 +1,16 @@
 import { FormEvent, useMemo, useState } from 'react';
 
-import { Button, EmptyState, ErrorState, LoadingState } from '../../../shared/components';
+import { Button, EmptyState, ErrorState, LoadingState, Modal } from '../../../shared/components';
 import { LAB_MANAGER, STUDENT } from '../../../shared/constants/roles';
-import { useEvaluationsByProject, useResearchGroupsByProject, useSubmitEvaluation } from '../hooks';
-import type { ResearchEvaluation, ResearchGroup, ResearchGroupMember } from '../types';
+import { VALIDATION_MESSAGES } from '../../../shared/utils';
+import { useEvaluationsByGroup, useResearchGroup, useSubmitEvaluation } from '../hooks';
+import type { ResearchEvaluation } from '../types';
 
 const SCORE_FIELDS = [
-  ['attendanceScore', 'Điểm danh'],
-  ['taskScore', 'Điểm nhiệm vụ'],
-  ['reportScore', 'Điểm báo cáo'],
-  ['productScore', 'Điểm sản phẩm'],
+  ['contributionScore', 'Điểm đóng góp nhóm'],
+  ['taskScore', 'Điểm hoàn thành nhiệm vụ'],
+  ['reportScore', 'Điểm chất lượng báo cáo'],
+  ['productScore', 'Điểm chất lượng sản phẩm'],
   ['attitudeScore', 'Điểm thái độ nghiên cứu'],
 ] as const;
 
@@ -17,6 +18,7 @@ type ScoreField = (typeof SCORE_FIELDS)[number][0];
 
 interface EvaluationPageProps {
   projectId: number;
+  groupId: number;
   role: typeof LAB_MANAGER | typeof STUDENT | string;
   currentUserId?: number | null;
 }
@@ -34,7 +36,7 @@ type EvaluationFormState = Record<ScoreField, string> & {
 };
 
 const DEFAULT_FORM_STATE: EvaluationFormState = {
-  attendanceScore: '0',
+  contributionScore: '0',
   taskScore: '0',
   reportScore: '0',
   productScore: '0',
@@ -42,16 +44,28 @@ const DEFAULT_FORM_STATE: EvaluationFormState = {
   lecturerComment: '',
 };
 
-export function EvaluationPage({ projectId, role, currentUserId }: EvaluationPageProps) {
+export function EvaluationPage({ projectId, groupId, role, currentUserId }: EvaluationPageProps) {
   const isManager = role === LAB_MANAGER;
-  const { data: evaluations = [], isError, isLoading, refetch } = useEvaluationsByProject(projectId);
-  const { data: groups = [], isLoading: isLoadingGroups } = useResearchGroupsByProject(isManager ? projectId : null);
+  const { data: evaluations = [], isError, isLoading, refetch } = useEvaluationsByGroup(groupId);
+  const { data: group, isLoading: isLoadingGroup } = useResearchGroup(groupId);
   const [editingStudent, setEditingStudent] = useState<EvaluationStudent | null>(null);
   const [formState, setFormState] = useState<EvaluationFormState>(DEFAULT_FORM_STATE);
   const [formError, setFormError] = useState<string | null>(null);
   const submitEvaluation = useSubmitEvaluation(projectId);
 
-  const students = useMemo(() => getProjectStudents(groups), [groups]);
+  const students = useMemo<EvaluationStudent[]>(() => {
+    if (!group || !group.members) {
+      return [];
+    }
+    return group.members.map((member) => ({
+      userId: member.userId,
+      fullName: member.fullName ?? member.email ?? `#${member.userId}`,
+      email: member.email,
+      groupId: group.id,
+      groupName: group.name,
+    })).sort((first, second) => first.fullName.localeCompare(second.fullName));
+  }, [group]);
+
   const evaluationByStudentId = useMemo(() => new Map(evaluations.map((evaluation) => [evaluation.studentId, evaluation])), [evaluations]);
   const studentEvaluations = currentUserId
     ? evaluations.filter((evaluation) => evaluation.studentId === currentUserId)
@@ -82,7 +96,7 @@ export function EvaluationPage({ projectId, role, currentUserId }: EvaluationPag
     }
     const parsedScores = parseScores(formState);
     if (!parsedScores) {
-      setFormError('Điểm phải nằm trong khoảng 0 đến 10.');
+      setFormError(VALIDATION_MESSAGES.score);
       return;
     }
     if (formState.lecturerComment.trim().length > 2000) {
@@ -93,6 +107,7 @@ export function EvaluationPage({ projectId, role, currentUserId }: EvaluationPag
     submitEvaluation.mutate(
       {
         projectId,
+        groupId: editingStudent.groupId,
         studentId: editingStudent.userId,
         ...parsedScores,
         lecturerComment: formState.lecturerComment.trim(),
@@ -131,8 +146,25 @@ export function EvaluationPage({ projectId, role, currentUserId }: EvaluationPag
         <p className="mt-1 text-sm text-slate-600">Chấm điểm từng sinh viên trong đề tài theo thang 0 đến 10.</p>
       </div>
 
+      <Modal
+        closeDisabled={submitEvaluation.isPending}
+        footer={editingStudent ? (
+          <>
+            <Button disabled={submitEvaluation.isPending} onClick={closeForm} type="button" variant="outline">
+              Hủy
+            </Button>
+            <Button form="evaluation-form" loading={submitEvaluation.isPending} loadingText="Đang lưu..." type="submit">
+              Lưu đánh giá
+            </Button>
+          </>
+        ) : null}
+        isOpen={Boolean(editingStudent)}
+        onClose={closeForm}
+        size="xl"
+        title={editingStudent ? (evaluationByStudentId.has(editingStudent.userId) ? 'Cập nhật đánh giá' : 'Chấm điểm') : 'Chấm điểm'}
+      >
       {editingStudent ? (
-        <form className="mt-5 rounded-md border border-slate-200 bg-slate-50 p-4" onSubmit={handleSubmit}>
+        <form id="evaluation-form" onSubmit={handleSubmit}>
           <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <h4 className="font-semibold text-slate-950">
@@ -142,9 +174,6 @@ export function EvaluationPage({ projectId, role, currentUserId }: EvaluationPag
                 {editingStudent.fullName} · {editingStudent.groupName}
               </p>
             </div>
-            <Button disabled={submitEvaluation.isPending} onClick={closeForm} size="sm" type="button" variant="ghost">
-              Đóng
-            </Button>
           </div>
 
           <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
@@ -182,18 +211,11 @@ export function EvaluationPage({ projectId, role, currentUserId }: EvaluationPag
 
           {formError ? <p className="mt-3 text-sm font-semibold text-red-700">{formError}</p> : null}
 
-          <div className="mt-4 flex flex-wrap gap-2">
-            <Button loading={submitEvaluation.isPending} loadingText="Đang lưu..." type="submit">
-              Lưu đánh giá
-            </Button>
-            <Button disabled={submitEvaluation.isPending} onClick={closeForm} type="button" variant="outline">
-              Hủy
-            </Button>
-          </div>
         </form>
       ) : null}
+      </Modal>
 
-      {isLoading || isLoadingGroups ? (
+      {isLoading || isLoadingGroup ? (
         <LoadingState className="mt-5">Đang tải danh sách đánh giá...</LoadingState>
       ) : isError ? (
         <ErrorState className="mt-5" onRetry={() => refetch()}>
@@ -208,7 +230,7 @@ export function EvaluationPage({ projectId, role, currentUserId }: EvaluationPag
               <tr>
                 <th className="px-3 py-3">Họ tên</th>
                 <th className="px-3 py-3">Nhóm</th>
-                <th className="px-3 py-3">Điểm danh</th>
+                <th className="px-3 py-3">Đóng góp nhóm</th>
                 <th className="px-3 py-3">Nhiệm vụ</th>
                 <th className="px-3 py-3">Báo cáo</th>
                 <th className="px-3 py-3">Sản phẩm</th>
@@ -223,9 +245,9 @@ export function EvaluationPage({ projectId, role, currentUserId }: EvaluationPag
                 const evaluation = evaluationByStudentId.get(student.userId);
                 return (
                   <tr key={`${student.groupId}-${student.userId}`}>
-                    <td className="px-3 py-3 font-semibold text-slate-900">{student.fullName}</td>
+                    <td className="px-3 py-3 font-semibold text-slate-950">{student.fullName}</td>
                     <td className="px-3 py-3 text-slate-600">{student.groupName}</td>
-                    <ScoreCell value={evaluation?.attendanceScore} />
+                    <ScoreCell value={evaluation?.contributionScore} />
                     <ScoreCell value={evaluation?.taskScore} />
                     <ScoreCell value={evaluation?.reportScore} />
                     <ScoreCell value={evaluation?.productScore} />
@@ -265,10 +287,10 @@ function EvaluationCard({ evaluation }: { evaluation: ResearchEvaluation }) {
         </div>
       </div>
       <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2 lg:grid-cols-5">
-        <EvaluationField label="Điểm danh" value={formatScore(evaluation.attendanceScore)} />
-        <EvaluationField label="Điểm nhiệm vụ" value={formatScore(evaluation.taskScore)} />
-        <EvaluationField label="Điểm báo cáo" value={formatScore(evaluation.reportScore)} />
-        <EvaluationField label="Điểm sản phẩm" value={formatScore(evaluation.productScore)} />
+        <EvaluationField label="Điểm đóng góp nhóm" value={formatScore(evaluation.contributionScore)} />
+        <EvaluationField label="Điểm hoàn thành nhiệm vụ" value={formatScore(evaluation.taskScore)} />
+        <EvaluationField label="Điểm chất lượng báo cáo" value={formatScore(evaluation.reportScore)} />
+        <EvaluationField label="Điểm chất lượng sản phẩm" value={formatScore(evaluation.productScore)} />
         <EvaluationField label="Điểm thái độ nghiên cứu" value={formatScore(evaluation.attitudeScore)} />
       </dl>
       <div className="mt-4 rounded-md border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
@@ -296,24 +318,6 @@ function ScoreCell({ strong = false, value }: { strong?: boolean; value?: number
   );
 }
 
-function getProjectStudents(groups: ResearchGroup[]) {
-  const students = new Map<number, EvaluationStudent>();
-  groups.forEach((group) => {
-    group.members?.forEach((member: ResearchGroupMember) => {
-      if (!students.has(member.userId)) {
-        students.set(member.userId, {
-          userId: member.userId,
-          fullName: member.fullName ?? member.email ?? `#${member.userId}`,
-          email: member.email,
-          groupId: group.id,
-          groupName: group.name,
-        });
-      }
-    });
-  });
-  return [...students.values()].sort((first, second) => first.fullName.localeCompare(second.fullName));
-}
-
 function parseScores(formState: EvaluationFormState): Record<ScoreField, number> | null {
   const parsed = {} as Record<ScoreField, number>;
   for (const [field] of SCORE_FIELDS) {
@@ -326,9 +330,10 @@ function parseScores(formState: EvaluationFormState): Record<ScoreField, number>
   return parsed;
 }
 
+// Keep formatScore helper
 function toFormState(evaluation: ResearchEvaluation): EvaluationFormState {
   return {
-    attendanceScore: String(evaluation.attendanceScore),
+    contributionScore: String(evaluation.contributionScore),
     taskScore: String(evaluation.taskScore),
     reportScore: String(evaluation.reportScore),
     productScore: String(evaluation.productScore),

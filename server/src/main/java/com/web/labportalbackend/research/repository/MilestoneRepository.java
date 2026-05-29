@@ -14,6 +14,9 @@ public interface MilestoneRepository extends JpaRepository<MilestoneEntity, Long
     @EntityGraph(attributePaths = {"project", "createdBy", "assignedToStudent"})
     List<MilestoneEntity> findByProjectIdAndDeletedFalseAndActiveTrueOrderByDeadlineAscCreatedAtAsc(Long projectId);
 
+    @EntityGraph(attributePaths = {"project", "group", "createdBy", "assignedToStudent"})
+    List<MilestoneEntity> findByGroupIdAndDeletedFalseAndActiveTrueOrderByDeadlineAscCreatedAtAsc(Long groupId);
+
     @EntityGraph(attributePaths = {"project", "project.lab", "createdBy", "assignedToStudent"})
     Optional<MilestoneEntity> findByIdAndDeletedFalseAndActiveTrue(Long milestoneId);
 

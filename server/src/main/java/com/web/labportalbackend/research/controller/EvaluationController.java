@@ -44,4 +44,13 @@ public class EvaluationController {
                 Response.ok("Evaluations retrieved successfully", evaluationService.getByProject(id))
         );
     }
+
+    @GetMapping("/research-groups/{groupId}/evaluations")
+    @Operation(summary = "Get evaluations by research group")
+    @PreAuthorize("hasAnyRole('LAB_MANAGER', 'STUDENT')")
+    public ResponseEntity<Response<List<EvaluationResponse>>> getEvaluationsByGroup(@PathVariable Long groupId) {
+        return ResponseEntity.ok(
+                Response.ok("Evaluations retrieved successfully", evaluationService.getByGroup(groupId))
+        );
+    }
 }

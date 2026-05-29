@@ -43,4 +43,13 @@ public class ProductController {
                 Response.ok("Products retrieved successfully", productService.getByProject(projectId))
         );
     }
+
+    @GetMapping("/research-groups/{groupId}/products")
+    @Operation(summary = "Get products by research group")
+    @PreAuthorize("hasAnyRole('LAB_MANAGER', 'STUDENT')")
+    public ResponseEntity<Response<List<ProductResponse>>> getProductsByGroup(@PathVariable Long groupId) {
+        return ResponseEntity.ok(
+                Response.ok("Products retrieved successfully", productService.getByGroup(groupId))
+        );
+    }
 }

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 
 import { Button, Modal } from '../../../shared/components';
+import { VALIDATION_MESSAGES } from '../../../shared/utils';
 import type { CreateResearchGroupPayload, ResearchEligibleStudent, ResearchProject } from '../types';
 import { GroupMemberSelector } from './GroupMemberSelector';
 
@@ -101,7 +102,7 @@ export function CreateResearchGroupModal({
               onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
             />
             {touched && trimmedName.length < 3 ? (
-              <span className="mt-1 block text-xs text-red-600">Tên nhóm cần tối thiểu 3 ký tự.</span>
+              <span className="mt-1 block text-xs text-red-600">{VALIDATION_MESSAGES.groupNameRequired}</span>
             ) : null}
           </label>
 
@@ -131,8 +132,11 @@ export function CreateResearchGroupModal({
             onLeaderChange={(leaderStudentId) => setForm((current) => ({ ...current, leaderStudentId }))}
             onMembersChange={(memberIds) => setForm((current) => ({ ...current, memberIds }))}
           />
+          {touched && form.memberIds.length === 0 ? (
+            <p className="text-xs text-red-600">{VALIDATION_MESSAGES.memberRequired}</p>
+          ) : null}
           {touched && (!form.leaderStudentId || !form.memberIds.includes(form.leaderStudentId)) ? (
-            <p className="text-xs text-red-600">Trưởng nhóm phải nằm trong danh sách thành viên.</p>
+            <p className="text-xs text-red-600">{VALIDATION_MESSAGES.leaderMustBeMember}</p>
           ) : null}
         </div>
 

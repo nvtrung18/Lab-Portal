@@ -1,8 +1,8 @@
 import { useCallback, useMemo, useState } from 'react';
 import type { DragEvent } from 'react';
 
-import { EmptyState, ErrorState, toast } from '../../../shared/components';
-import { useReportsByMilestone, useTasksByMilestone, useUpdateTaskStatus } from '../hooks';
+import { Button, EmptyState, ErrorState, toast } from '../../../shared/components';
+import { useReportsByMilestone, useTasksByMilestone, useUpdateTaskStatus, useCreateTask, useResearchGroupMembers } from '../hooks';
 import {
   canDragTask,
   canMoveTask,
@@ -16,6 +16,7 @@ import type { ResearchReport, ResearchTask, ResearchTaskStatus, TaskColumn } fro
 import { getStatusClass } from '../utils';
 import { TaskCard } from './TaskCard';
 import { ReportUploadModal } from './ReportUploadModal';
+import { CreateTaskModal } from './CreateTaskModal';
 
 interface TaskBoardProps {
   milestoneId: number;
@@ -24,17 +25,32 @@ interface TaskBoardProps {
   currentUserId?: number | null;
   projectId?: number | null;
   groupId?: number | null;
+  labId?: number | null;
 }
 
-export function TaskBoard({ milestoneId, readonly = true, role, currentUserId, projectId, groupId }: TaskBoardProps) {
+export function TaskBoard({ milestoneId, readonly = true, role, currentUserId, projectId, groupId, labId }: TaskBoardProps) {
   const [draggedTask, setDraggedTask] = useState<{ taskId: number; sourceStatus: ResearchTaskStatus } | null>(null);
   const [dropColumn, setDropColumn] = useState<TaskColumn | null>(null);
   const [reportTask, setReportTask] = useState<ResearchTask | null>(null);
+  const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false);
   const { data: tasks = [], isError, isLoading, refetch } = useTasksByMilestone(milestoneId);
   const memberView = role === 'STUDENT_MEMBER';
+
+  const { data: groupMembers = [], isLoading: isLoadingMembers } = useResearchGroupMembers(
+    role === 'LAB_MANAGER' && groupId ? groupId : null
+  );
+  const createTaskMutation = useCreateTask(milestoneId, projectId, groupId);
   const { data: reports = [] } = useReportsByMilestone(milestoneId, memberView);
-  const updateStatus = useUpdateTaskStatus(milestoneId);
-  const tasksByColumn = useMemo(() => groupTasksByColumn(tasks), [tasks]);
+  const updateStatus = useUpdateTaskStatus(milestoneId, projectId);
+
+  const visibleTasks = useMemo(() => {
+    if (memberView && currentUserId) {
+      return tasks.filter((t) => t.assignedToStudentId === currentUserId);
+    }
+    return tasks;
+  }, [tasks, memberView, currentUserId]);
+
+  const tasksByColumn = useMemo(() => groupTasksByColumn(visibleTasks), [visibleTasks]);
   const latestReportByTaskId = useMemo(() => {
     const latest = new Map<number, ResearchReport>();
     reports.forEach((report) => {
@@ -144,7 +160,18 @@ export function TaskBoard({ milestoneId, readonly = true, role, currentUserId, p
         </ErrorState>
       ) : !tasks.length ? (
         <EmptyState className="mt-4">
-          {memberView ? 'Bạn chưa có nhiệm vụ nào trong mốc nghiên cứu này.' : 'Mốc nghiên cứu này chưa có nhiệm vụ nào.'}
+          <div className="flex flex-col items-center justify-center text-center py-6 gap-3">
+            <p className="text-slate-600 font-medium">
+              {memberView
+                ? 'Bạn chưa được giao nhiệm vụ nào trong nhóm này.'
+                : 'Nhóm chưa có nhiệm vụ nào.'}
+            </p>
+            {role === 'LAB_MANAGER' && (
+              <Button onClick={() => setIsCreateTaskOpen(true)} size="sm">
+                Tạo nhiệm vụ
+              </Button>
+            )}
+          </div>
         </EmptyState>
       ) : (
         <div className="mt-4 max-w-full overscroll-x-contain overflow-x-auto pb-2">
@@ -188,10 +215,14 @@ export function TaskBoard({ milestoneId, readonly = true, role, currentUserId, p
                               ? 'Nộp báo cáo'
                               : null
                           : null}
-                        reportStatus={latestReportByTaskId.get(task.id)?.status ?? null}
                         onReportAction={setReportTask}
                         onDragEnd={handleDragEnd}
                         onDragStart={handleDragStart}
+                        currentUserId={currentUserId}
+                        projectId={projectId}
+                        groupId={groupId}
+                        role={role}
+                        labId={labId}
                       />
                     ))}
                     {!columnTasks.length && canInteract ? (
@@ -219,6 +250,21 @@ export function TaskBoard({ milestoneId, readonly = true, role, currentUserId, p
           onClose={() => setReportTask(null)}
         />
       ) : null}
+
+      {role === 'LAB_MANAGER' && (
+        <CreateTaskModal
+          isOpen={isCreateTaskOpen}
+          groupMembers={groupMembers}
+          isLoadingMembers={isLoadingMembers}
+          isSubmitting={createTaskMutation.isPending}
+          onClose={() => setIsCreateTaskOpen(false)}
+          onSubmit={(payload) => {
+            createTaskMutation.mutate(payload, {
+              onSuccess: () => setIsCreateTaskOpen(false),
+            });
+          }}
+        />
+      )}
     </section>
   );
 }

@@ -7,6 +7,7 @@ export const queryKeys = {
     student: ['studentLabs'] as const,
     detail: (labId: number) => ['lab', labId] as const,
     members: (labId: number) => ['labMembers', labId] as const,
+    dashboardStats: (labId: number) => ['labDashboardStats', labId] as const,
   },
   applications: {
     all: ['applications'] as const,
@@ -20,6 +21,7 @@ export const queryKeys = {
   },
   bookings: {
     mine: ['myBookings'] as const,
+    byLab: (labId: number) => ['bookings', labId] as const,
   },
   cleaning: {
     overview: (labId: number) => ['cleaningOverview', labId] as const,
@@ -41,12 +43,24 @@ export const queryKeys = {
     projectStats: (projectId: number) => ['projectStats', projectId, 'overview'] as const,
     groups: (projectId: number) => ['researchGroups', projectId] as const,
     group: (groupId: number) => ['researchGroup', groupId] as const,
+    groupMembers: (groupId: number) => ['researchGroupMembers', groupId] as const,
     eligibleStudents: (labId: number) => ['researchEligibleStudents', labId] as const,
     myGroups: (labId: number) => ['myResearchGroups', labId] as const,
     milestones: (projectId: number) => ['milestones', projectId] as const,
     milestone: (milestoneId: number) => ['milestone', milestoneId] as const,
     products: (projectId: number) => ['products', projectId] as const,
     evaluations: (projectId: number) => ['evaluations', projectId] as const,
+    groupMilestones: (groupId: number) => ['groupMilestones', groupId] as const,
+    myGroupMilestones: (groupId: number) => ['myGroupMilestones', groupId] as const,
+    groupTasks: (groupId: number) => ['groupTasks', groupId] as const,
+    groupProducts: (groupId: number) => ['groupProducts', groupId] as const,
+    groupEvaluations: (groupId: number) => ['groupEvaluations', groupId] as const,
+    groupResearchLogs: (groupId: number, filters?: object) => {
+      if (filters) {
+        return ['groupResearchLogs', groupId, filters] as const;
+      }
+      return ['groupResearchLogs', groupId] as const;
+    },
     logs: (projectId: number, filters?: object) => {
       if (filters) {
         return ['researchLogs', projectId, filters] as const;
@@ -58,6 +72,7 @@ export const queryKeys = {
     myTasks: (groupId: number) => ['myResearchTasks', groupId] as const,
     taskReports: (taskId: number) => ['reports', 'task', taskId] as const,
     groupReports: (groupId: number) => ['groupReports', groupId] as const,
+    myGroupReports: (groupId: number) => ['myGroupReports', groupId] as const,
     managerReports: (labId: number) => ['managerReports', labId] as const,
     myMilestoneReports: (milestoneId: number) => ['reports', 'milestone', milestoneId, 'me'] as const,
     reportComments: (reportId: number) => ['reportComments', reportId] as const,
@@ -66,5 +81,7 @@ export const queryKeys = {
     users: ['adminUsers'] as const,
     labs: ['adminLabs'] as const,
     availableManagers: ['availableManagers'] as const,
+    dashboardStats: ['adminDashboardStats'] as const,
+    systemConfig: ['systemConfig'] as const,
   },
 } as const;

@@ -103,6 +103,49 @@ public class ResearchLogServiceImpl implements ResearchLogService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public List<ResearchLogResponse> getGroupLogs(
+            Long groupId,
+            Long milestoneId,
+            Long taskId,
+            Long authorId,
+            ResearchLogType logType,
+            Integer page,
+            Integer size
+    ) {
+        GroupEntity group = groupRepository.findByIdAndDeletedFalseAndActiveTrue(groupId)
+                .orElseThrow(() -> new ResourceNotFoundException("Research group", groupId));
+        ProjectEntity project = resolveProjectForGroup(group);
+        if (project == null) {
+            throw new AccessDeniedException("Research group is not assigned to a project");
+        }
+        User currentUser = getCurrentUser();
+        AccessScope accessScope = resolveAccessScope(currentUser, project);
+        assertRequestedGroupAllowed(groupId, accessScope);
+
+        PageRequest pageRequest = PageRequest.of(
+                page == null || page < 0 ? DEFAULT_PAGE : page,
+                Math.min(size == null || size <= 0 ? DEFAULT_SIZE : size, MAX_SIZE),
+                Sort.by(Sort.Direction.DESC, "createdAt")
+        );
+
+        Specification<ResearchLogEntity> spec = buildSpecification(
+                project.getId(),
+                groupId,
+                milestoneId,
+                taskId,
+                authorId,
+                logType,
+                currentUser,
+                accessScope
+        );
+        return researchLogRepository.findAll(spec, pageRequest)
+                .stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
+    @Override
     @Transactional
     public ResearchLogResponse createManualLog(CreateResearchLogRequest request) {
         ProjectEntity project = findProject(request.getProjectId());
@@ -138,7 +181,7 @@ public class ResearchLogServiceImpl implements ResearchLogService {
     }
 
     @Override
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional
     public void createSystemLog(
             Long projectId,
             Long groupId,
@@ -390,6 +433,16 @@ public class ResearchLogServiceImpl implements ResearchLogService {
     private ProjectEntity findProject(Long projectId) {
         return projectRepository.findByIdAndDeletedFalseAndActiveTrue(projectId)
                 .orElseThrow(() -> new ResourceNotFoundException("Project", projectId));
+    }
+
+    private ProjectEntity resolveProjectForGroup(GroupEntity group) {
+        if (group.getProject() != null) {
+            return group.getProject();
+        }
+        return projectRepository.findByGroupIdAndDeletedFalseAndActiveTrue(group.getId())
+                .stream()
+                .findFirst()
+                .orElse(null);
     }
 
     private void assertManagerCanAccessProject(User currentUser, ProjectEntity project) {

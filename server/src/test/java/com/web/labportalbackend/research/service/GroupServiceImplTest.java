@@ -21,6 +21,7 @@ import com.web.labportalbackend.research.repository.GroupMemberRepository;
 import com.web.labportalbackend.research.repository.GroupRepository;
 import com.web.labportalbackend.research.repository.ProjectRepository;
 import com.web.labportalbackend.research.repository.ResearchTopicRepository;
+import com.web.labportalbackend.admin.audit.service.AuditLogService;
 import com.web.labportalbackend.research.service.impl.GroupServiceImpl;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -63,6 +64,9 @@ class GroupServiceImplTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private AuditLogService auditLogService;
 
     @InjectMocks
     private GroupServiceImpl groupService;

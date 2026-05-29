@@ -29,7 +29,7 @@ public final class EvaluationMapper {
                 .studentName(student == null ? null : student.getFullName())
                 .evaluatorId(evaluation.getEvaluatorId())
                 .evaluatorName(evaluator == null ? null : evaluator.getFullName())
-                .attendanceScore(evaluation.getAttendanceScore())
+                .contributionScore(evaluation.getContributionScore())
                 .taskScore(evaluation.getTaskScore())
                 .reportScore(evaluation.getReportScore())
                 .productScore(evaluation.getProductScore())

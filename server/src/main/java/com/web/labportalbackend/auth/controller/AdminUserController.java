@@ -1,7 +1,10 @@
 package com.web.labportalbackend.auth.controller;
 
 import com.web.labportalbackend.auth.dto.UpdateUserRolesRequest;
+import com.web.labportalbackend.auth.dto.UpdateUserRoleRequest;
+import com.web.labportalbackend.auth.dto.UpdateUserRoleResponse;
 import com.web.labportalbackend.auth.dto.UserResponse;
+import com.web.labportalbackend.auth.dto.AssignableManagerResponse;
 import com.web.labportalbackend.auth.service.AuthService;
 import com.web.labportalbackend.common.dto.Response;
 import jakarta.validation.Valid;
@@ -28,11 +31,23 @@ public class AdminUserController {
         return ResponseEntity.ok(Response.ok("Users retrieved", manageableUsers));
     }
 
+    @GetMapping("/assignable-managers")
+    public ResponseEntity<Response<List<AssignableManagerResponse>>> getAssignableManagers() {
+        return ResponseEntity.ok(Response.ok("Assignable managers retrieved", authService.getAssignableManagers()));
+    }
+
     @PutMapping("/{id}/roles")
     public ResponseEntity<Response<UserResponse>> updateRoles(
             @PathVariable Long id,
             @Valid @RequestBody UpdateUserRolesRequest request) {
-        return ResponseEntity.ok(Response.ok("User roles updated", authService.updateUserRoles(id, request.getRoles())));
+        return ResponseEntity.ok(Response.ok("User roles updated", authService.updateUserRoles(id, request)));
+    }
+
+    @PatchMapping("/{id}/role")
+    public ResponseEntity<UpdateUserRoleResponse> patchRole(
+            @PathVariable Long id,
+            @Valid @RequestBody UpdateUserRoleRequest request) {
+        return ResponseEntity.ok(authService.patchUserRole(id, request));
     }
 
     @PutMapping("/{id}/ban")

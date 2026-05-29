@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 
 import { Button, Modal } from '../../../shared/components';
+import { VALIDATION_MESSAGES } from '../../../shared/utils';
 import type { UserProfileResponse } from '../../user/api/user.api';
 import { useMilestonesByProject, useTasksByMilestone } from '../hooks';
 import type { CreateResearchLogPayload, ResearchGroupRole, ResearchLogVisibility } from '../types';
@@ -107,8 +108,8 @@ export function CreateLogModal({
   const durationIsValid = Number.isFinite(form.durationMinutes) && form.durationMinutes >= 0;
   const evidenceIsValid = isValidUrl(form.evidenceLink);
   const memberScopeIsValid = !isMember || ownsSelectedMilestone || ownsSelectedTask;
-  const workDateError = touched && !form.workDate ? 'Ngày làm việc là bắt buộc.' : null;
-  const contentError = touched && !trimmedContent ? 'Nội dung đã làm là bắt buộc.' : null;
+  const workDateError = touched && !form.workDate ? VALIDATION_MESSAGES.required : null;
+  const contentError = touched && !trimmedContent ? VALIDATION_MESSAGES.required : null;
   const durationError = touched && !durationIsValid ? 'Thời gian làm phải lớn hơn hoặc bằng 0.' : null;
   const evidenceError = touched && !evidenceIsValid ? 'Link minh chứng không hợp lệ.' : null;
   const memberScopeError = touched && !memberScopeIsValid

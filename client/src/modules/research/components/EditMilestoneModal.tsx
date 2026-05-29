@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 
 import { Button, Modal } from '../../../shared/components';
+import { VALIDATION_MESSAGES } from '../../../shared/utils';
 import type { MilestoneStatus, ResearchEligibleStudent, ResearchMilestone, UpdateMilestonePayload } from '../types';
 
 interface EditMilestoneModalProps {
@@ -112,7 +113,7 @@ export function EditMilestoneModal({
               onChange={(event) => setForm((current) => ({ ...current, title: event.target.value }))}
             />
             {touched && trimmedTitle.length < 3 ? (
-              <span className="mt-1 block text-xs text-red-600">Tên mốc nghiên cứu cần tối thiểu 3 ký tự.</span>
+              <span className="mt-1 block text-xs text-red-600">{VALIDATION_MESSAGES.required}</span>
             ) : null}
           </label>
 

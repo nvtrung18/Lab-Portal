@@ -105,4 +105,36 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
             @Param("cutoff") Instant cutoff
     );
 
+    @Query("""
+            SELECT COUNT(b)
+            FROM Booking b
+            WHERE b.startTime >= :startOfDay
+              AND b.startTime < :startOfNextDay
+              AND b.status IN :statuses
+              AND b.deleted = false
+              AND b.active = true
+            """)
+    long countActiveBookingsStartingBetweenAndStatusIn(
+            @Param("startOfDay") Instant startOfDay,
+            @Param("startOfNextDay") Instant startOfNextDay,
+            @Param("statuses") List<BookingStatus> statuses
+    );
+
+    @Query("""
+            SELECT COUNT(b)
+            FROM Booking b
+            WHERE b.lab.id = :labId
+              AND b.startTime >= :startOfDay
+              AND b.startTime < :startOfNextDay
+              AND b.status IN :statuses
+              AND b.deleted = false
+              AND b.active = true
+            """)
+    long countActiveBookingsStartingBetweenAndLabIdAndStatusIn(
+            @Param("labId") Long labId,
+            @Param("startOfDay") Instant startOfDay,
+            @Param("startOfNextDay") Instant startOfNextDay,
+            @Param("statuses") List<BookingStatus> statuses
+    );
 }
+

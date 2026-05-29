@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 
 import { Button, Modal } from '../../../shared/components';
+import { VALIDATION_MESSAGES } from '../../../shared/utils';
 import type { CreateGroupPayload, ResearchTopic } from '../types';
 
 interface CreateGroupModalProps {
@@ -43,7 +44,7 @@ export function CreateGroupModal({
   }
 
   const trimmedName = form.name.trim();
-  const nameError = touched && trimmedName.length < 3 ? 'Tên nhóm nghiên cứu cần tối thiểu 3 ký tự.' : null;
+  const nameError = touched && trimmedName.length < 3 ? VALIDATION_MESSAGES.groupNameRequired : null;
   const canSubmit = Boolean(labId) && trimmedName.length >= 3;
 
   return (

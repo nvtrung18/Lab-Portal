@@ -18,7 +18,9 @@ public interface AuthService {
     List<RoleResponse> getAllRoles();
     List<UserResponse> getAllUsers();
     UserResponse getUserById(Long id);
-    UserResponse updateUserRoles(Long id, java.util.Set<String> roles);
+    UserResponse updateUserRoles(Long id, UpdateUserRolesRequest request);
+    UpdateUserRoleResponse patchUserRole(Long id, UpdateUserRoleRequest request);
     UserResponse banUser(Long id);
     UserResponse unbanUser(Long id);
+    List<AssignableManagerResponse> getAssignableManagers();
 }

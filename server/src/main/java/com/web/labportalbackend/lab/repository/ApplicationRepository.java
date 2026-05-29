@@ -5,6 +5,8 @@ import com.web.labportalbackend.lab.entity.Application;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -56,4 +58,7 @@ public interface ApplicationRepository extends JpaRepository<Application, Long> 
      * Find all non-deleted applications with pagination.
      */
     Page<Application> findByDeletedFalse(Pageable pageable);
+
+    @Query("SELECT COUNT(a) FROM Application a WHERE a.status = :status AND a.deleted = false")
+    long countByStatusAndNotDeleted(@Param("status") ApplicationStatus status);
 }

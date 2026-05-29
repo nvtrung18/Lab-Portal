@@ -38,8 +38,8 @@ public class EvaluationEntity extends BaseEntity {
     @Column(name = "reviewer_id", nullable = false)
     private Long evaluatorId;
 
-    @Column(name = "attendance_score", nullable = false, precision = 4, scale = 2)
-    private BigDecimal attendanceScore;
+    @Column(name = "contribution_score", nullable = false, precision = 4, scale = 2)
+    private BigDecimal contributionScore;
 
     @Column(name = "task_score", nullable = false, precision = 4, scale = 2)
     private BigDecimal taskScore;

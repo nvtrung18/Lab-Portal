@@ -2,6 +2,9 @@ package com.web.labportalbackend.research.service.impl;
 
 import com.web.labportalbackend.auth.entity.User;
 import com.web.labportalbackend.auth.repository.UserRepository;
+import com.web.labportalbackend.admin.audit.enums.AuditAction;
+import com.web.labportalbackend.admin.audit.enums.AuditModule;
+import com.web.labportalbackend.admin.audit.service.AuditLogService;
 import com.web.labportalbackend.common.exception.ResourceNotFoundException;
 import com.web.labportalbackend.lab.entity.Laboratory;
 import com.web.labportalbackend.lab.repository.LaboratoryRepository;
@@ -39,6 +42,7 @@ public class ProjectServiceImpl implements ProjectService {
     private final LaboratoryRepository laboratoryRepository;
     private final MembershipRepository membershipRepository;
     private final UserRepository userRepository;
+    private final AuditLogService auditLogService;
 
     @Override
     @Transactional
@@ -68,7 +72,16 @@ public class ProjectServiceImpl implements ProjectService {
                 .createdBy(currentUser)
                 .build();
 
-        return ProjectMapper.toResponse(projectRepository.save(project));
+        ProjectEntity saved = projectRepository.save(project);
+        auditLogService.log(
+                currentUser,
+                AuditAction.CREATE_RESEARCH_PROJECT,
+                AuditModule.RESEARCH,
+                "RESEARCH_PROJECT",
+                saved.getId(),
+                displayName(currentUser) + " đã tạo đề tài nghiên cứu " + saved.getTitle() + "."
+        );
+        return ProjectMapper.toResponse(saved);
     }
 
     @Override
@@ -98,7 +111,16 @@ public class ProjectServiceImpl implements ProjectService {
                 .createdBy(currentUser)
                 .build();
 
-        return ProjectMapper.toResponse(projectRepository.save(project));
+        ProjectEntity saved = projectRepository.save(project);
+        auditLogService.log(
+                currentUser,
+                AuditAction.CREATE_RESEARCH_PROJECT,
+                AuditModule.RESEARCH,
+                "RESEARCH_PROJECT",
+                saved.getId(),
+                displayName(currentUser) + " đã tạo đề tài nghiên cứu " + saved.getTitle() + "."
+        );
+        return ProjectMapper.toResponse(saved);
     }
 
     @Override
@@ -127,7 +149,16 @@ public class ProjectServiceImpl implements ProjectService {
         project.setRequiredProducts(request.getRequiredProducts());
         project.setEvaluationCriteria(request.getEvaluationCriteria());
 
-        return ProjectMapper.toResponse(projectRepository.save(project));
+        ProjectEntity saved = projectRepository.save(project);
+        auditLogService.log(
+                currentUser,
+                AuditAction.UPDATE_RESEARCH_PROJECT,
+                AuditModule.RESEARCH,
+                "RESEARCH_PROJECT",
+                saved.getId(),
+                displayName(currentUser) + " đã cập nhật đề tài nghiên cứu " + saved.getTitle() + "."
+        );
+        return ProjectMapper.toResponse(saved);
     }
 
     @Override
@@ -250,5 +281,11 @@ public class ProjectServiceImpl implements ProjectService {
         }
         return userRepository.findByUsername(authentication.getName())
                 .orElseThrow(() -> new ResourceNotFoundException("User", "username", authentication.getName()));
+    }
+
+    private String displayName(User user) {
+        return user.getFullName() == null || user.getFullName().isBlank()
+                ? user.getUsername()
+                : user.getFullName();
     }
 }

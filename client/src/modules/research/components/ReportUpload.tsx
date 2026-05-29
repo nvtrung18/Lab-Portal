@@ -5,6 +5,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { queryKeys } from '../../../shared/api';
 import { Button, toast } from '../../../shared/components';
+import { VALIDATION_MESSAGES } from '../../../shared/utils';
 import { submitReport } from '../api';
 import type { ResearchReport, SubmitReportPayload } from '../types';
 
@@ -49,7 +50,7 @@ export function ReportUpload({ taskId, milestoneId, projectId, groupId, onSucces
     },
     onSuccess: async (report) => {
       setUploadPercent(100);
-      setFeedback({ kind: 'success', text: 'Tải lên thành công.' });
+      setFeedback({ kind: 'success', text: 'Đã nộp báo cáo.' });
       const invalidations = [
         queryClient.invalidateQueries({ queryKey: queryKeys.research.taskReports(taskId) }),
         queryClient.invalidateQueries({ queryKey: queryKeys.research.tasks(milestoneId) }),
@@ -58,13 +59,16 @@ export function ReportUpload({ taskId, milestoneId, projectId, groupId, onSucces
       ];
       if (projectId) {
         invalidations.push(queryClient.invalidateQueries({ queryKey: queryKeys.research.milestones(projectId) }));
+        invalidations.push(queryClient.invalidateQueries({ queryKey: queryKeys.research.projectStats(projectId) }));
       }
       if (groupId) {
         invalidations.push(queryClient.invalidateQueries({ queryKey: queryKeys.research.myTasks(groupId) }));
         invalidations.push(queryClient.invalidateQueries({ queryKey: queryKeys.research.groupReports(groupId) }));
+        invalidations.push(queryClient.invalidateQueries({ queryKey: queryKeys.research.myGroupReports(groupId) }));
+        invalidations.push(queryClient.invalidateQueries({ queryKey: queryKeys.research.myGroupMilestones(groupId) }));
       }
       await Promise.all(invalidations);
-      toast.success('Tải lên thành công.');
+      toast.success('Đã nộp báo cáo.');
       onSuccess?.(report);
     },
     onError: (error) => {
@@ -89,7 +93,7 @@ export function ReportUpload({ taskId, milestoneId, projectId, groupId, onSucces
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!file) {
-      setFileError('Tài liệu báo cáo là bắt buộc.');
+      setFileError(VALIDATION_MESSAGES.required);
       return;
     }
     upload.mutate({
@@ -173,10 +177,10 @@ function FilePreview({ file }: { file: File }) {
 function validateFile(file: File) {
   const extension = getExtension(file.name);
   if (!ALLOWED_EXTENSIONS.has(extension) || (file.type && !ALLOWED_MIME_TYPES.has(file.type))) {
-    return 'Chỉ hỗ trợ file PDF, DOC hoặc DOCX.';
+    return VALIDATION_MESSAGES.fileType;
   }
   if (file.size > MAX_FILE_SIZE) {
-    return 'Dung lượng file không được vượt quá 10MB.';
+    return VALIDATION_MESSAGES.reportFileSize;
   }
   return null;
 }

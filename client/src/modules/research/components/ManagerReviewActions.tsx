@@ -18,6 +18,7 @@ export function ManagerReviewActions({ labId, report }: ManagerReviewActionsProp
     report.projectId,
     labId,
     report.taskId,
+    report.groupId,
   );
 
   if (report.status !== 'LEADER_REVIEWED') {

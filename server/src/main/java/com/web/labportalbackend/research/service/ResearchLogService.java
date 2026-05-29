@@ -19,6 +19,16 @@ public interface ResearchLogService {
             Integer size
     );
 
+    List<ResearchLogResponse> getGroupLogs(
+            Long groupId,
+            Long milestoneId,
+            Long taskId,
+            Long authorId,
+            ResearchLogType logType,
+            Integer page,
+            Integer size
+    );
+
     ResearchLogResponse createManualLog(CreateResearchLogRequest request);
 
     void createSystemLog(

@@ -6,11 +6,12 @@ import { z } from 'zod';
 
 import { Button, toast } from '../../../shared/components';
 import type { Response } from '../../../shared/types';
+import { VALIDATION_MESSAGES } from '../../../shared/utils';
 import type { UserMembershipResponse } from '../api';
 import { useCurrentUser, useUpdateProfile } from '../hooks';
 
 const profileSchema = z.object({
-  fullName: z.string().trim().min(1, 'Vui lòng nhập họ tên').max(100, 'Họ tên tối đa 100 ký tự'),
+  fullName: z.string().trim().min(1, VALIDATION_MESSAGES.required).max(100, 'Họ tên tối đa 100 ký tự'),
   phone: z
     .string()
     .trim()

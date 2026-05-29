@@ -2,6 +2,11 @@ package com.web.labportalbackend.research.service.impl;
 
 import com.web.labportalbackend.auth.entity.User;
 import com.web.labportalbackend.auth.repository.UserRepository;
+import com.web.labportalbackend.admin.systemconfig.dto.SystemConfigResponse;
+import com.web.labportalbackend.admin.systemconfig.service.SystemConfigService;
+import com.web.labportalbackend.admin.audit.enums.AuditAction;
+import com.web.labportalbackend.admin.audit.enums.AuditModule;
+import com.web.labportalbackend.admin.audit.service.AuditLogService;
 import com.web.labportalbackend.common.exception.InvalidEvaluationScoreException;
 import com.web.labportalbackend.common.exception.ResourceNotFoundException;
 import com.web.labportalbackend.lab.entity.Laboratory;
@@ -12,6 +17,7 @@ import com.web.labportalbackend.research.entity.EvaluationEntity;
 import com.web.labportalbackend.research.entity.GroupEntity;
 import com.web.labportalbackend.research.entity.ProjectEntity;
 import com.web.labportalbackend.research.enums.ResearchLogVisibility;
+import com.web.labportalbackend.research.enums.GroupRole;
 import com.web.labportalbackend.research.mapper.EvaluationMapper;
 import com.web.labportalbackend.research.repository.EvaluationRepository;
 import com.web.labportalbackend.research.repository.GroupMemberRepository;
@@ -48,6 +54,8 @@ public class EvaluationServiceImpl implements EvaluationService {
     private final UserRepository userRepository;
     private final LogService logService;
     private final ResearchLogService researchLogService;
+    private final SystemConfigService systemConfigService;
+    private final AuditLogService auditLogService;
 
     @Override
     @Transactional
@@ -69,7 +77,7 @@ public class EvaluationServiceImpl implements EvaluationService {
         evaluation.setGroupId(groupId);
         evaluation.setStudentId(student.getId());
         evaluation.setEvaluatorId(currentUser.getId());
-        evaluation.setAttendanceScore(normalizeScore(request.getAttendanceScore()));
+        evaluation.setContributionScore(normalizeScore(request.getContributionScore()));
         evaluation.setTaskScore(normalizeScore(request.getTaskScore()));
         evaluation.setReportScore(normalizeScore(request.getReportScore()));
         evaluation.setProductScore(normalizeScore(request.getProductScore()));
@@ -89,6 +97,15 @@ public class EvaluationServiceImpl implements EvaluationService {
                 displayName(currentUser) + " đã tạo đánh giá cho " + displayName(student) + ".",
                 "Điểm tổng: " + totalScore,
                 ResearchLogVisibility.PROJECT
+        );
+        auditLogService.log(
+                currentUser,
+                AuditAction.EVALUATE_STUDENT,
+                AuditModule.EVALUATION,
+                "EVALUATION",
+                saved.getId(),
+                displayName(currentUser) + " đã chấm điểm " + displayName(student)
+                        + " trong đề tài " + project.getTitle() + "."
         );
         return toDetailedResponse(saved, student, currentUser);
     }
@@ -118,6 +135,43 @@ public class EvaluationServiceImpl implements EvaluationService {
                 .stream()
                 .map(this::toDetailedResponse)
                 .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<EvaluationResponse> getByGroup(Long groupId) {
+        GroupEntity group = groupRepository.findByIdAndDeletedFalseAndActiveTrue(groupId)
+                .orElseThrow(() -> new ResourceNotFoundException("Research group", groupId));
+        ProjectEntity project = group.getProject();
+        if (project == null) {
+            throw new AccessDeniedException("Research group is not assigned to a project");
+        }
+        User currentUser = getCurrentUser();
+        if (currentUser.hasRole("LAB_MANAGER")) {
+            assertManagerOwnsProject(currentUser, project);
+            return evaluationRepository.findByGroupIdAndDeletedFalseAndActiveTrueOrderByCreatedAtDesc(groupId)
+                    .stream()
+                    .map(this::toDetailedResponse)
+                    .toList();
+        }
+
+        if (!currentUser.hasRole("STUDENT")) {
+            throw new AccessDeniedException("Cannot access research evaluations");
+        }
+        GroupRole role = groupMemberRepository.findActiveRoleByGroupIdAndUserId(groupId, currentUser.getId())
+                .orElseThrow(() -> new AccessDeniedException("Cannot access evaluations for this group"));
+
+        if (role == GroupRole.LEADER) {
+            return evaluationRepository.findByGroupIdAndDeletedFalseAndActiveTrueOrderByCreatedAtDesc(groupId)
+                    .stream()
+                    .map(this::toDetailedResponse)
+                    .toList();
+        } else {
+            return evaluationRepository.findByGroupIdAndStudentIdAndDeletedFalseAndActiveTrueOrderByCreatedAtDesc(groupId, currentUser.getId())
+                    .stream()
+                    .map(this::toDetailedResponse)
+                    .toList();
+        }
     }
 
     private void assertManagerOwnsProject(User currentUser, ProjectEntity project) {
@@ -158,7 +212,7 @@ public class EvaluationServiceImpl implements EvaluationService {
     }
 
     private void validateScores(EvaluationRequest request) {
-        validateScore(request.getAttendanceScore());
+        validateScore(request.getContributionScore());
         validateScore(request.getTaskScore());
         validateScore(request.getReportScore());
         validateScore(request.getProductScore());
@@ -166,13 +220,14 @@ public class EvaluationServiceImpl implements EvaluationService {
     }
 
     private void validateScore(BigDecimal score) {
-        if (score == null || score.compareTo(MIN_SCORE) < 0 || score.compareTo(MAX_SCORE) > 0) {
-            throw new InvalidEvaluationScoreException(score);
+        BigDecimal maxScore = BigDecimal.valueOf(systemConfig().research().evaluationMaxScore());
+        if (score == null || score.compareTo(MIN_SCORE) < 0 || score.compareTo(maxScore) > 0) {
+            throw new InvalidEvaluationScoreException(score, maxScore);
         }
     }
 
     private BigDecimal calculateTotalScore(EvaluationRequest request) {
-        return normalizeScore(request.getAttendanceScore())
+        return normalizeScore(request.getContributionScore())
                 .add(normalizeScore(request.getTaskScore()))
                 .add(normalizeScore(request.getReportScore()))
                 .add(normalizeScore(request.getProductScore()))
@@ -214,5 +269,9 @@ public class EvaluationServiceImpl implements EvaluationService {
         }
         return userRepository.findByUsername(authentication.getName())
                 .orElseThrow(() -> new ResourceNotFoundException("User", "username", authentication.getName()));
+    }
+
+    private SystemConfigResponse systemConfig() {
+        return systemConfigService.getConfig();
     }
 }

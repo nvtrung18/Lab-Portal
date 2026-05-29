@@ -1,6 +1,7 @@
 import { useId, useState } from 'react';
 
 import { Button } from '../../../shared/components';
+import { VALIDATION_MESSAGES } from '../../../shared/utils';
 
 interface CommentInputProps {
   isSubmitting: boolean;
@@ -9,14 +10,19 @@ interface CommentInputProps {
 
 export function CommentInput({ isSubmitting, onSubmit }: CommentInputProps) {
   const [content, setContent] = useState('');
+  const [error, setError] = useState<string | null>(null);
   const contentId = useId();
 
   function handleSubmit() {
     const value = content.trim();
     if (!value) {
+      setError(VALIDATION_MESSAGES.comment);
       return;
     }
-    onSubmit(value, () => setContent(''));
+    onSubmit(value, () => {
+      setContent('');
+      setError(null);
+    });
   }
 
   return (
@@ -30,9 +36,13 @@ export function CommentInput({ isSubmitting, onSubmit }: CommentInputProps) {
         maxLength={5000}
         placeholder="Nhập nội dung trao đổi..."
         value={content}
-        onChange={(event) => setContent(event.target.value)}
+        onChange={(event) => {
+          setContent(event.target.value);
+          setError(null);
+        }}
       />
-      <Button disabled={!content.trim()} loading={isSubmitting} onClick={handleSubmit} size="sm">
+      {error ? <p className="text-xs font-medium text-red-700">{error}</p> : null}
+      <Button disabled={isSubmitting} loading={isSubmitting} onClick={handleSubmit} size="sm">
         Gửi góp ý
       </Button>
     </div>
