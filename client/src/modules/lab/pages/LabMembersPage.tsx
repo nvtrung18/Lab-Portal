@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 
-import { Button, EmptyState, ResponsiveTable } from '../../../shared/components';
+import { Button, EmptyState, ErrorState, LoadingState, ResponsiveTable } from '../../../shared/components';
 import { getManagedLabId, getManagedLabName } from '../../../shared/utils/membership';
 import { useCurrentUser } from '../../user/hooks';
 import { useLabMembers, useRemoveLabMember } from '../hooks';
@@ -64,12 +64,7 @@ export function LabMembersPage() {
   if (isLoadingUser || isLoading) {
     return (
       <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-        <div className="h-6 w-44 animate-pulse rounded bg-slate-200" />
-        <div className="mt-6 space-y-3">
-          {Array.from({ length: 4 }).map((_, index) => (
-            <div key={index} className="h-10 animate-pulse rounded bg-slate-100" />
-          ))}
-        </div>
+        <LoadingState />
       </section>
     );
   }
@@ -84,8 +79,8 @@ export function LabMembersPage() {
 
   if (isError) {
     return (
-      <section className="rounded-lg border border-red-200 bg-white p-6 text-sm text-red-700 shadow-sm">
-        Không thể tải danh sách thành viên PTN.
+      <section className="rounded-lg border border-red-200 bg-white p-6 shadow-sm">
+        <ErrorState />
       </section>
     );
   }

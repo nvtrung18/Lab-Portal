@@ -2,6 +2,8 @@ package com.web.labportalbackend.booking.service.impl;
 
 import com.web.labportalbackend.auth.entity.User;
 import com.web.labportalbackend.auth.repository.UserRepository;
+import com.web.labportalbackend.admin.systemconfig.dto.SystemConfigResponse;
+import com.web.labportalbackend.admin.systemconfig.service.SystemConfigService;
 import com.web.labportalbackend.booking.dto.request.CreateBookingRequest;
 import com.web.labportalbackend.booking.dto.request.ReviewBookingRequest;
 import com.web.labportalbackend.booking.dto.response.BookingResponse;
@@ -14,6 +16,7 @@ import com.web.labportalbackend.booking.service.BookingService;
 import com.web.labportalbackend.common.email.BookingEmailData;
 import com.web.labportalbackend.common.email.EmailService;
 import com.web.labportalbackend.common.enums.BookingStatus;
+import com.web.labportalbackend.common.enums.LabStatus;
 import com.web.labportalbackend.common.enums.TimeSlotStatus;
 import com.web.labportalbackend.common.exception.DuplicateBookingException;
 import com.web.labportalbackend.lab.entity.Laboratory;
@@ -44,6 +47,7 @@ public class BookingServiceImpl implements BookingService {
     private final MembershipRepository membershipRepository;
     private final LaboratoryRepository laboratoryRepository;
     private final EmailService emailService;
+    private final SystemConfigService systemConfigService;
 
     @Override
     @Transactional
@@ -216,6 +220,10 @@ public class BookingServiceImpl implements BookingService {
         if (slot.getStatus() != TimeSlotStatus.AVAILABLE) {
             throw new IllegalStateException("Time slot is not available for registration");
         }
+        if (systemConfig().lab().disableBookingForInactiveLab()
+                && slot.getLab().getStatus() != LabStatus.AVAILABLE) {
+            throw new IllegalStateException("Lab is not available for booking");
+        }
         if (!slot.getStartTime().isAfter(Instant.now())) {
             throw new IllegalStateException("Time slot has already started or expired");
         }
@@ -274,5 +282,9 @@ public class BookingServiceImpl implements BookingService {
         }
         return userRepository.findByUsername(authentication.getName())
                 .orElseThrow(() -> new EntityNotFoundException("Current user not found"));
+    }
+
+    private SystemConfigResponse systemConfig() {
+        return systemConfigService.getConfig();
     }
 }

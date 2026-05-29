@@ -25,14 +25,18 @@ export function useAssignLabManager() {
     mutationFn: ({ labId, managerId }: { labId: number; managerId: number }) =>
       assignLabManager(labId, managerId),
     onSuccess: () => {
-      toast.success('Gán manager thành công.');
+      toast.success('Đã gán quản lý PTN thành công.');
       void queryClient.invalidateQueries({ queryKey: ADMIN_LABS_QUERY_KEY });
       void queryClient.invalidateQueries({ queryKey: ADMIN_USERS_QUERY_KEY });
-      void queryClient.invalidateQueries({ queryKey: AVAILABLE_MANAGERS_QUERY_KEY });
+      void queryClient.invalidateQueries({ queryKey: ['assignableManagers'] });
+      void queryClient.invalidateQueries({ queryKey: ['assignableLabs'] });
       void queryClient.invalidateQueries({ queryKey: USER_ME_QUERY_KEY });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.admin.dashboardStats });
+      void queryClient.invalidateQueries({ queryKey: ['adminAuditLogs'] });
     },
-    onError: () => {
-      toast.error('Không thể gán manager.');
+    onError: (err: any) => {
+      const errMsg = err?.response?.data?.message || 'Không thể gán quản lý PTN.';
+      toast.error(errMsg);
     },
   });
 }
@@ -43,11 +47,13 @@ export function useCreateLab() {
   return useMutation({
     mutationFn: createLab,
     onSuccess: () => {
-      toast.success('Tạo lab thành công.');
+      toast.success('Đã tạo phòng thí nghiệm thành công.');
       void queryClient.invalidateQueries({ queryKey: ADMIN_LABS_QUERY_KEY });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.admin.dashboardStats });
+      void queryClient.invalidateQueries({ queryKey: ['adminAuditLogs'] });
     },
     onError: () => {
-      toast.error('Không thể tạo lab.');
+      toast.error('Không thể tạo phòng thí nghiệm.');
     },
   });
 }
@@ -77,13 +83,15 @@ export function useUpdateLabStatus() {
     mutationFn: ({ labId, status }: { labId: number; status: 'AVAILABLE' | 'INACTIVE' }) =>
       updateLabStatus(labId, status),
     onSuccess: () => {
-      toast.success('Cập nhật trạng thái lab thành công.');
+      toast.success('Đã cập nhật trạng thái PTN thành công.');
       void queryClient.invalidateQueries({ queryKey: ADMIN_LABS_QUERY_KEY });
       void queryClient.invalidateQueries({ queryKey: LABS_QUERY_KEY });
       void queryClient.invalidateQueries({ queryKey: STUDENT_LABS_QUERY_KEY });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.admin.dashboardStats });
+      void queryClient.invalidateQueries({ queryKey: ['adminAuditLogs'] });
     },
     onError: () => {
-      toast.error('Không thể cập nhật trạng thái lab.');
+      toast.error('Không thể cập nhật trạng thái PTN.');
     },
   });
 }

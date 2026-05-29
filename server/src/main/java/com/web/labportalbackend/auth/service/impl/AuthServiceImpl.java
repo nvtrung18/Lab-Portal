@@ -9,9 +9,14 @@ import com.web.labportalbackend.auth.repository.UserRepository;
 import com.web.labportalbackend.auth.security.JwtProvider;
 import com.web.labportalbackend.auth.service.AuthService;
 import com.web.labportalbackend.auth.service.RedisOtpService;
+import com.web.labportalbackend.admin.audit.enums.AuditAction;
+import com.web.labportalbackend.admin.audit.enums.AuditModule;
+import com.web.labportalbackend.admin.audit.service.AuditLogService;
 import com.web.labportalbackend.common.email.EmailService;
 import com.web.labportalbackend.common.enums.UserStatus;
+import com.web.labportalbackend.common.enums.LabStatus;
 import com.web.labportalbackend.lab.repository.LaboratoryRepository;
+import com.web.labportalbackend.lab.entity.Laboratory;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -54,6 +59,7 @@ public class AuthServiceImpl implements AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtProvider jwtProvider;
     private final RedisOtpService redisOtpService;
+    private final AuditLogService auditLogService;
 
     @Value("${jwt.access-token-expiration}")
     private long accessTokenExpiration;
@@ -219,7 +225,7 @@ public class AuthServiceImpl implements AuthService {
         return userRepository.findAll().stream()
                 .filter(user -> !user.hasRole("ADMIN"))
                 .filter(user -> user.getStatus() != UserStatus.PENDING_VERIFICATION)
-                .map(AuthMapper::toUserResponse)
+                .map(this::mapUserToResponse)
                 .toList();
     }
 
@@ -231,16 +237,20 @@ public class AuthServiceImpl implements AuthService {
         if (user.hasRole("ADMIN")) {
             throw new EntityNotFoundException("User not found with ID: " + id);
         }
-        return AuthMapper.toUserResponse(user);
+        return mapUserToResponse(user);
     }
 
     @Override
     @Transactional
-    public UserResponse updateUserRoles(Long id, Set<String> roles) {
+    public UserResponse updateUserRoles(Long id, UpdateUserRolesRequest request) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("User not found with ID: " + id));
         if (user.hasRole("ADMIN")) {
             throw new IllegalArgumentException("Không thể quản lý tài khoản ADMIN.");
+        }
+        Set<String> roles = request.getRoles();
+        if (roles == null || roles.isEmpty()) {
+            throw new IllegalArgumentException("Roles are required");
         }
         Set<String> normalizedRoles = roles.stream()
                 .map(role -> role.replace("ROLE_", "").toUpperCase())
@@ -248,10 +258,73 @@ public class AuthServiceImpl implements AuthService {
         if (normalizedRoles.contains("ADMIN")) {
             throw new IllegalArgumentException("Không thể phân quyền ADMIN tại màn quản lý Users.");
         }
-        if (user.hasRole("LAB_MANAGER") && !normalizedRoles.contains("LAB_MANAGER")
-                && laboratoryRepository.findFirstByManagerIdAndDeletedFalse(id).isPresent()) {
-            throw new IllegalArgumentException("Vui lòng gỡ manager khỏi lab trước khi đổi role.");
+
+        boolean willBeManager = normalizedRoles.contains("LAB_MANAGER");
+        boolean wasManager = user.hasRole("LAB_MANAGER");
+
+        if (willBeManager) {
+            Long managedLabId = request.getManagedLabId();
+            if (managedLabId == null) {
+                throw new IllegalArgumentException("Bắt buộc chọn PTN khi đổi vai trò sang LAB_MANAGER.");
+            }
+            Laboratory lab = laboratoryRepository.findById(managedLabId)
+                    .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy PTN với ID: " + managedLabId));
+
+            // 1. Nếu user đang quản lý PTN khác, gỡ gán khỏi PTN cũ đó
+            laboratoryRepository.findFirstByManagerIdAndDeletedFalse(user.getId())
+                    .filter(existingLab -> !existingLab.getId().equals(managedLabId))
+                    .ifPresent(existingLab -> {
+                        existingLab.setManager(null);
+                        laboratoryRepository.save(existingLab);
+                        auditLogService.logCurrentUser(
+                                AuditAction.ASSIGN_MANAGER,
+                                AuditModule.LAB,
+                                "LAB",
+                                existingLab.getId(),
+                                "Admin đã gỡ gán manager " + displayName(user) + " khỏi PTN " + existingLab.getLabName() + " do phân công PTN mới."
+                        );
+                    });
+
+            // 2. Nếu PTN mới đang có manager khác, gỡ gán manager cũ đó
+            User oldManager = lab.getManager();
+            if (oldManager != null && !oldManager.getId().equals(user.getId())) {
+                lab.setManager(null);
+                laboratoryRepository.save(lab);
+                auditLogService.logCurrentUser(
+                        AuditAction.ASSIGN_MANAGER,
+                        AuditModule.LAB,
+                        "LAB",
+                        lab.getId(),
+                        "Admin đã gỡ gán manager " + displayName(oldManager) + " khỏi PTN " + lab.getLabName() + " (do thay thế bởi " + displayName(user) + ")."
+                );
+            }
+
+            // 3. Gán manager mới cho PTN
+            lab.setManager(user);
+            laboratoryRepository.save(lab);
+            auditLogService.logCurrentUser(
+                    AuditAction.ASSIGN_MANAGER,
+                    AuditModule.LAB,
+                    "LAB",
+                    lab.getId(),
+                    "Admin đã gán " + displayName(user) + " quản lý PTN " + lab.getLabName() + "."
+            );
+        } else if (wasManager) {
+            // Đổi từ LAB_MANAGER về STUDENT hoặc vai trò khác -> gỡ gán khỏi PTN cũ
+            laboratoryRepository.findFirstByManagerIdAndDeletedFalse(user.getId())
+                    .ifPresent(existingLab -> {
+                        existingLab.setManager(null);
+                        laboratoryRepository.save(existingLab);
+                        auditLogService.logCurrentUser(
+                                AuditAction.ASSIGN_MANAGER,
+                                AuditModule.LAB,
+                                "LAB",
+                                existingLab.getId(),
+                                "Admin đã gỡ gán manager " + displayName(user) + " khỏi PTN " + existingLab.getLabName() + " (do đổi vai trò về " + String.join(", ", normalizedRoles) + ")."
+                        );
+                    });
         }
+
         Set<Role> nextRoles = new HashSet<>();
         for (String roleName : normalizedRoles) {
             Role role = roleRepository.findByName(roleName)
@@ -259,7 +332,153 @@ public class AuthServiceImpl implements AuthService {
             nextRoles.add(role);
         }
         user.setRoles(nextRoles);
-        return AuthMapper.toUserResponse(userRepository.save(user));
+        User saved = userRepository.save(user);
+
+        auditLogService.logCurrentUser(
+                AuditAction.CHANGE_USER_ROLE,
+                AuditModule.USER,
+                "USER",
+                saved.getId(),
+                "Admin đã đổi vai trò của " + displayName(saved) + " thành " + String.join(", ", normalizedRoles) + "."
+        );
+        return mapUserToResponse(saved);
+    }
+
+    @Override
+    @Transactional
+    public UpdateUserRoleResponse patchUserRole(Long id, UpdateUserRoleRequest request) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("User not found with ID: " + id));
+
+        // 2. Không cho đổi role của ADMIN chính.
+        if (user.hasRole("ADMIN")) {
+            throw new IllegalArgumentException("Không thể thay đổi vai trò của tài khoản ADMIN.");
+        }
+
+        String newRoleName = request.getRole().replace("ROLE_", "").toUpperCase();
+
+        // 3. Không cho tạo thêm ADMIN qua API này.
+        if (newRoleName.equals("ADMIN")) {
+            throw new IllegalArgumentException("Không thể phân quyền ADMIN qua API này.");
+        }
+
+        // Validate roles
+        Role targetRole = roleRepository.findByName(newRoleName)
+                .orElseThrow(() -> new EntityNotFoundException("Role not found: " + newRoleName));
+
+        boolean willBeManager = newRoleName.equals("LAB_MANAGER");
+        boolean wasManager = user.hasRole("LAB_MANAGER");
+
+        Long labId = request.getLabId();
+        Laboratory assignedLab = null;
+
+        if (willBeManager) {
+            // 4. Nếu role = LAB_MANAGER
+            // labId bắt buộc
+            if (labId == null) {
+                throw new IllegalArgumentException("Bắt buộc chọn PTN khi đổi vai trò sang LAB_MANAGER.");
+            }
+
+            // labId phải tồn tại
+            assignedLab = laboratoryRepository.findById(labId)
+                    .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy PTN với ID: " + labId));
+
+            // lab phải ACTIVE hoặc AVAILABLE (ở hệ thống này status là enum LabStatus.AVAILABLE, CLOSED, MAINTENANCE, INACTIVE)
+            // status không được là INACTIVE hoặc CLOSED
+            if (assignedLab.getStatus() == LabStatus.INACTIVE || assignedLab.getStatus() == LabStatus.CLOSED) {
+                throw new IllegalArgumentException("Chỉ có thể gán người quản lý cho PTN đang hoạt động.");
+            }
+
+            // User không được bị BANNED/DISABLED (UserStatus: ACTIVE, PENDING_VERIFICATION, INACTIVE, SUSPENDED)
+            if (user.getStatus() == UserStatus.SUSPENDED || user.getStatus() == UserStatus.INACTIVE) {
+                throw new IllegalArgumentException("Không thể gán quyền quản lý cho tài khoản đang bị khóa hoặc vô hiệu hóa.");
+            }
+
+            // Nếu user đang quản lý PTN khác thì báo lỗi
+            laboratoryRepository.findFirstByManagerIdAndDeletedFalse(user.getId())
+                    .filter(existingLab -> !existingLab.getId().equals(labId))
+                    .ifPresent(existingLab -> {
+                        throw new IllegalArgumentException("Người dùng đã là quản lý của phòng thí nghiệm: " + existingLab.getLabName());
+                    });
+
+            // Nếu lab đã có manager khác thì báo lỗi (Option A)
+            User currentLabManager = assignedLab.getManager();
+            if (currentLabManager != null && !currentLabManager.getId().equals(user.getId())) {
+                throw new IllegalArgumentException("PTN này đã có quản lý.");
+            }
+
+            // Gán lab mới
+            assignedLab.setManager(user);
+            laboratoryRepository.save(assignedLab);
+
+            auditLogService.logCurrentUser(
+                    AuditAction.ASSIGN_MANAGER,
+                    AuditModule.LAB,
+                    "LAB",
+                    assignedLab.getId(),
+                    "Admin đã gán " + displayName(user) + " quản lý " + assignedLab.getLabName() + "."
+            );
+        } else if (wasManager) {
+            // 5. Nếu role chuyển từ LAB_MANAGER về STUDENT:
+            // Bỏ gán lab cũ nếu user đang quản lý lab đó
+            laboratoryRepository.findFirstByManagerIdAndDeletedFalse(user.getId())
+                    .ifPresent(existingLab -> {
+                        existingLab.setManager(null);
+                        laboratoryRepository.save(existingLab);
+                        auditLogService.logCurrentUser(
+                                AuditAction.ASSIGN_MANAGER,
+                                AuditModule.LAB,
+                                "LAB",
+                                existingLab.getId(),
+                                "Admin đã gỡ gán manager " + displayName(user) + " khỏi PTN " + existingLab.getLabName() + " (do đổi vai trò về " + newRoleName + ")."
+                        );
+                    });
+        }
+
+        // Update user.role
+        Set<Role> nextRoles = new HashSet<>();
+        nextRoles.add(targetRole);
+        user.setRoles(nextRoles);
+        User savedUser = userRepository.save(user);
+
+        auditLogService.logCurrentUser(
+                AuditAction.CHANGE_USER_ROLE,
+                AuditModule.USER,
+                "USER",
+                savedUser.getId(),
+                "Admin đã đổi vai trò của " + displayName(savedUser) + " thành " + newRoleName + "."
+        );
+
+        // Fetch lab information for the response
+        Long finalManagedLabId = null;
+        String finalManagedLabName = null;
+
+        if (willBeManager && assignedLab != null) {
+            finalManagedLabId = assignedLab.getId();
+            finalManagedLabName = assignedLab.getLabName();
+        } else {
+            Laboratory currentLab = laboratoryRepository.findFirstByManagerIdAndDeletedFalse(savedUser.getId()).orElse(null);
+            if (currentLab != null) {
+                finalManagedLabId = currentLab.getId();
+                finalManagedLabName = currentLab.getLabName();
+            }
+        }
+
+        String responseMessage = newRoleName.equals("STUDENT")
+                ? "Đã chuyển người dùng về vai trò sinh viên."
+                : "Đã cập nhật vai trò người dùng.";
+
+        return UpdateUserRoleResponse.builder()
+                .message(responseMessage)
+                .user(UpdateUserRoleResponse.UserRoleInfo.builder()
+                        .id(savedUser.getId())
+                        .fullName(savedUser.getFullName())
+                        .email(savedUser.getEmail())
+                        .role(newRoleName)
+                        .managedLabId(finalManagedLabId)
+                        .managedLabName(finalManagedLabName)
+                        .build())
+                .build();
     }
 
     @Override
@@ -275,7 +494,15 @@ public class AuthServiceImpl implements AuthService {
         }
         user.setStatus(UserStatus.SUSPENDED);
         user.setActive(false);
-        return AuthMapper.toUserResponse(userRepository.save(user));
+        User saved = userRepository.save(user);
+        auditLogService.logCurrentUser(
+                AuditAction.BAN_USER,
+                AuditModule.USER,
+                "USER",
+                saved.getId(),
+                "Admin đã khóa tài khoản " + displayName(saved) + "."
+        );
+        return mapUserToResponse(saved);
     }
 
     @Override
@@ -288,7 +515,31 @@ public class AuthServiceImpl implements AuthService {
         }
         user.setStatus(UserStatus.ACTIVE);
         user.setActive(true);
-        return AuthMapper.toUserResponse(userRepository.save(user));
+        User saved = userRepository.save(user);
+        auditLogService.logCurrentUser(
+                AuditAction.UNBAN_USER,
+                AuditModule.USER,
+                "USER",
+                saved.getId(),
+                "Admin đã mở khóa tài khoản " + displayName(saved) + "."
+        );
+        return mapUserToResponse(saved);
+    }
+
+    private String displayName(User user) {
+        return user.getFullName() == null || user.getFullName().isBlank()
+                ? user.getUsername()
+                : user.getFullName();
+    }
+
+    private UserResponse mapUserToResponse(User user) {
+        if (user.hasRole("LAB_MANAGER")) {
+            Laboratory lab = laboratoryRepository.findFirstByManagerIdAndDeletedFalse(user.getId()).orElse(null);
+            if (lab != null) {
+                return AuthMapper.toUserResponse(user, lab.getId(), lab.getLabName());
+            }
+        }
+        return AuthMapper.toUserResponse(user);
     }
 
     private AuthResponse buildAuthResponse(User user) {
@@ -359,5 +610,22 @@ public class AuthServiceImpl implements AuthService {
 
     private String passwordResetVerifiedKey(String token) {
         return PASSWORD_RESET_VERIFIED_PREFIX + token;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<AssignableManagerResponse> getAssignableManagers() {
+        return userRepository.findAll().stream()
+                .filter(user -> user.getStatus() == UserStatus.ACTIVE)
+                .filter(user -> user.hasRole("LAB_MANAGER"))
+                .filter(user -> laboratoryRepository.findFirstByManagerIdAndDeletedFalse(user.getId()).isEmpty())
+                .map(user -> AssignableManagerResponse.builder()
+                        .id(user.getId())
+                        .fullName(user.getFullName())
+                        .email(user.getEmail())
+                        .role("LAB_MANAGER")
+                        .managedLabId(null)
+                        .build())
+                .toList();
     }
 }

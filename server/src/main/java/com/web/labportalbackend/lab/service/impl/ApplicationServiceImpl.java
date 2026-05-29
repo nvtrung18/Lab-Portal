@@ -2,6 +2,9 @@ package com.web.labportalbackend.lab.service.impl;
 
 import com.web.labportalbackend.auth.entity.User;
 import com.web.labportalbackend.auth.repository.UserRepository;
+import com.web.labportalbackend.admin.audit.enums.AuditAction;
+import com.web.labportalbackend.admin.audit.enums.AuditModule;
+import com.web.labportalbackend.admin.audit.service.AuditLogService;
 import com.web.labportalbackend.lab.dto.response.ApplicationResponseDTO;
 import com.web.labportalbackend.common.enums.ApplicationStatus;
 import com.web.labportalbackend.common.enums.LabStatus;
@@ -47,6 +50,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     private final UserRepository userRepository;
     private final LaboratoryRepository laboratoryRepository;
     private final MembershipRepository membershipRepository;
+    private final AuditLogService auditLogService;
 
     @Override @Transactional
     public ApplicationResponseDTO apply(Long labId, Long userId, String cvUrl, MultipartFile cvFile) {
@@ -109,7 +113,21 @@ public class ApplicationServiceImpl implements ApplicationService {
             membershipRepository.save(membership);
             log.info("Membership activated: userId={}, labId={}", app.getUser().getId(), app.getLaboratory().getId());
         }
+        auditLogService.logCurrentUser(
+                AuditAction.REVIEW_APPLICATION,
+                AuditModule.LAB,
+                "APPLICATION",
+                updated.getId(),
+                "Manager đã duyệt hồ sơ ứng tuyển của " + displayName(app.getUser())
+                        + " vào " + app.getLaboratory().getLabName() + " với kết quả " + newStatus + "."
+        );
         return mapToDTO(updated);
+    }
+
+    private String displayName(User user) {
+        return user.getFullName() == null || user.getFullName().isBlank()
+                ? user.getUsername()
+                : user.getFullName();
     }
 
     @Override @Transactional(readOnly = true)

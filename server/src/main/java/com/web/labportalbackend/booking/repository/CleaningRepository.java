@@ -41,4 +41,27 @@ public interface CleaningRepository extends JpaRepository<CleaningEntity, Long> 
             @Param("slotId") Long slotId,
             @Param("staffId") Long staffId
     );
+
+    @Query("""
+            SELECT COUNT(c)
+            FROM CleaningEntity c
+            WHERE c.status NOT IN :completedStatuses
+              AND c.deleted = false
+              AND c.active = true
+            """)
+    long countActiveIncomplete(@Param("completedStatuses") List<CleaningStatus> completedStatuses);
+
+    @Query("""
+            SELECT COUNT(c)
+            FROM CleaningEntity c
+            WHERE c.slot.lab.id = :labId
+              AND c.status NOT IN :completedStatuses
+              AND c.deleted = false
+              AND c.active = true
+            """)
+    long countActiveIncompleteByLabId(
+            @Param("labId") Long labId,
+            @Param("completedStatuses") List<CleaningStatus> completedStatuses
+    );
 }
+

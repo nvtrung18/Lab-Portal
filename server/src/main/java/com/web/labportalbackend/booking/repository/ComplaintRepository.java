@@ -21,4 +21,21 @@ public interface ComplaintRepository extends JpaRepository<ComplaintEntity, Long
 
     @Query("SELECT c FROM ComplaintEntity c WHERE c.penalty.booking.lab.id = :labId AND c.deleted = false AND c.active = true ORDER BY c.createdAt DESC")
     List<ComplaintEntity> findActiveByLabId(@Param("labId") Long labId);
+
+    @Query("SELECT COUNT(c) FROM ComplaintEntity c WHERE c.status = :status AND c.deleted = false AND c.active = true")
+    long countActiveByStatus(@Param("status") ComplaintStatus status);
+
+    @Query("""
+            SELECT COUNT(c)
+            FROM ComplaintEntity c
+            WHERE c.penalty.booking.lab.id = :labId
+              AND c.status = :status
+              AND c.deleted = false
+              AND c.active = true
+            """)
+    long countActiveByLabIdAndStatus(
+            @Param("labId") Long labId,
+            @Param("status") ComplaintStatus status
+    );
 }
+

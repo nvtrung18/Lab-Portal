@@ -23,4 +23,6 @@ public interface GroupService {
     List<GroupResponse> getMyGroupsByLab(Long labId);
 
     GroupResponse getDetail(Long groupId);
+
+    List<GroupMemberResponse> getMembers(Long groupId);
 }

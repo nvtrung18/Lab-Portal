@@ -90,3 +90,31 @@ export async function applyForLab(
 
   return response.data.data;
 }
+
+export interface LabStudentAttendance {
+  studentId: number;
+  studentName: string;
+  attendanceCount: number;
+  expectedAttendanceCount: number;
+  attendanceRate: number;
+}
+
+export interface LabDashboardStats {
+  labId: number;
+  memberCount: number;
+  todaySlots: number;
+  todayBookings: number;
+  attendanceRate: number;
+  attendanceByStudent: LabStudentAttendance[];
+  pendingCleaningTasks: number;
+  pendingComplaints: number;
+  activeResearchProjects: number;
+}
+
+export async function getLabDashboardStats(labId: number): Promise<LabDashboardStats> {
+  const response = await apiClient.get<Response<LabDashboardStats>>(
+    `/api/labs/${labId}/dashboard/stats`,
+  );
+  return response.data.data;
+}
+

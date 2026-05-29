@@ -3,14 +3,18 @@ package com.web.labportalbackend.research.service;
 import com.web.labportalbackend.auth.entity.Role;
 import com.web.labportalbackend.auth.entity.User;
 import com.web.labportalbackend.auth.repository.UserRepository;
+import com.web.labportalbackend.lab.entity.Laboratory;
+import com.web.labportalbackend.lab.repository.LaboratoryRepository;
 import com.web.labportalbackend.research.dto.request.CreateCommentRequest;
 import com.web.labportalbackend.research.dto.response.CommentResponse;
-import com.web.labportalbackend.research.dto.response.ReportResponse;
 import com.web.labportalbackend.research.entity.CommentEntity;
+import com.web.labportalbackend.research.entity.MilestoneEntity;
+import com.web.labportalbackend.research.entity.ProjectEntity;
 import com.web.labportalbackend.research.entity.ReportEntity;
 import com.web.labportalbackend.research.enums.GroupRole;
 import com.web.labportalbackend.research.repository.CommentRepository;
 import com.web.labportalbackend.research.repository.GroupMemberRepository;
+import com.web.labportalbackend.research.repository.MilestoneRepository;
 import com.web.labportalbackend.research.repository.ReportRepository;
 import com.web.labportalbackend.research.service.impl.ReviewServiceImpl;
 import org.junit.jupiter.api.Test;
@@ -41,10 +45,13 @@ class ReviewServiceImplTest {
     private ReportRepository reportRepository;
 
     @Mock
+    private MilestoneRepository milestoneRepository;
+
+    @Mock
     private GroupMemberRepository groupMemberRepository;
 
     @Mock
-    private ReportService reportService;
+    private LaboratoryRepository laboratoryRepository;
 
     @Mock
     private UserRepository userRepository;
@@ -59,10 +66,10 @@ class ReviewServiceImplTest {
 
         when(reportRepository.findById(10L)).thenReturn(java.util.Optional.of(report));
         when(userRepository.findById(7L)).thenReturn(java.util.Optional.of(student(7L, "STUDENT")));
-        when(groupMemberRepository.existsLeaderByReportIdAndUserId(10L, 7L)).thenReturn(true);
+        when(groupMemberRepository.findActiveRoleByGroupIdAndUserId(30L, 7L))
+                .thenReturn(java.util.Optional.of(GroupRole.LEADER));
         when(groupMemberRepository.findActiveRoleByReportIdAndUserId(10L, 7L))
                 .thenReturn(java.util.Optional.of(GroupRole.LEADER));
-        when(reportService.getReportsByTask(20L)).thenReturn(List.of(visibleReport(10L)));
         when(commentRepository.save(any(CommentEntity.class))).thenAnswer(invocation -> {
             CommentEntity comment = invocation.getArgument(0);
             comment.setId(100L);
@@ -87,7 +94,6 @@ class ReviewServiceImplTest {
         assertEquals(10L, captor.getValue().getReportId());
         assertEquals(7L, captor.getValue().getAuthorId());
         assertEquals("Looks good, please add the appendix.", captor.getValue().getContent());
-        verify(reportService).getReportsByTask(20L);
     }
 
     @Test
@@ -98,12 +104,12 @@ class ReviewServiceImplTest {
 
         when(reportRepository.findById(10L)).thenReturn(java.util.Optional.of(report));
         when(userRepository.findById(7L)).thenReturn(java.util.Optional.of(student(7L, "STUDENT")));
-        when(reportService.getReportsByTask(20L)).thenReturn(List.of(visibleReport(10L)));
+        when(groupMemberRepository.findActiveRoleByGroupIdAndUserId(30L, 7L))
+                .thenReturn(java.util.Optional.of(GroupRole.MEMBER));
         when(commentRepository.save(any(CommentEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         reviewService.addComment(10L, 7L, request);
 
-        verify(reportService).getReportsByTask(20L);
         verify(commentRepository).save(any(CommentEntity.class));
     }
 
@@ -113,7 +119,8 @@ class ReviewServiceImplTest {
 
         when(reportRepository.findById(10L)).thenReturn(java.util.Optional.of(report(10L, 20L)));
         when(userRepository.findById(7L)).thenReturn(java.util.Optional.of(student(7L, "STUDENT")));
-        when(groupMemberRepository.existsLeaderByReportIdAndUserId(10L, 7L)).thenReturn(false);
+        when(groupMemberRepository.findActiveRoleByGroupIdAndUserId(30L, 7L))
+                .thenReturn(java.util.Optional.empty());
 
         assertThrows(AccessDeniedException.class, () -> reviewService.addComment(10L, 7L, request));
         verify(commentRepository, never()).save(any(CommentEntity.class));
@@ -127,22 +134,22 @@ class ReviewServiceImplTest {
 
         when(reportRepository.findById(10L)).thenReturn(java.util.Optional.of(report));
         when(commentRepository.findByReportIdOrderByCreatedAtAsc(10L)).thenReturn(List.of(older, newer));
-        when(reportService.getReportsByTask(20L)).thenReturn(List.of(visibleReport(10L)));
         when(userRepository.findById(7L)).thenReturn(java.util.Optional.of(student(7L, "STUDENT")));
         when(userRepository.findById(8L)).thenReturn(java.util.Optional.of(student(8L, "STUDENT")));
+        when(groupMemberRepository.findActiveRoleByGroupIdAndUserId(30L, 7L))
+                .thenReturn(java.util.Optional.of(GroupRole.LEADER));
         when(groupMemberRepository.findActiveRoleByReportIdAndUserId(10L, 7L))
                 .thenReturn(java.util.Optional.of(GroupRole.LEADER));
         when(groupMemberRepository.findActiveRoleByReportIdAndUserId(10L, 8L))
                 .thenReturn(java.util.Optional.of(GroupRole.MEMBER));
 
-        List<CommentResponse> responses = reviewService.getByReport(10L);
+        List<CommentResponse> responses = reviewService.getByReport(10L, 7L);
 
         assertEquals(2, responses.size());
         assertEquals(Instant.parse("2026-05-14T01:00:00Z"), responses.get(0).getCreatedAt());
         assertEquals(Instant.parse("2026-05-14T02:00:00Z"), responses.get(1).getCreatedAt());
         assertEquals(GroupRole.LEADER, responses.get(0).getGroupRole());
         assertEquals(GroupRole.MEMBER, responses.get(1).getGroupRole());
-        verify(reportService).getReportsByTask(20L);
         verify(commentRepository).findByReportIdOrderByCreatedAtAsc(10L);
     }
 
@@ -152,14 +159,16 @@ class ReviewServiceImplTest {
         ReportEntity report = report(10L, null);
         when(reportRepository.findById(10L)).thenReturn(java.util.Optional.of(report));
         when(userRepository.findById(2L)).thenReturn(java.util.Optional.of(student(2L, "LAB_MANAGER")));
-        when(reportService.getReportsByMilestone(5L)).thenReturn(List.of(visibleReport(10L)));
+        when(milestoneRepository.findByIdAndDeletedFalseAndActiveTrue(5L))
+                .thenReturn(java.util.Optional.of(milestoneWithLab(99L)));
+        when(laboratoryRepository.findFirstByManagerIdAndDeletedFalse(2L))
+                .thenReturn(java.util.Optional.of(lab(99L)));
         when(commentRepository.save(any(CommentEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         CommentResponse response = reviewService.addComment(10L, 2L, request);
 
         assertEquals("LAB_MANAGER", response.getAuthorRole());
         assertEquals(null, response.getGroupRole());
-        verify(reportService).getReportsByMilestone(5L);
         verify(commentRepository).save(any(CommentEntity.class));
     }
 
@@ -168,9 +177,13 @@ class ReviewServiceImplTest {
         ReportEntity report = report(10L, null);
 
         when(reportRepository.findById(10L)).thenReturn(java.util.Optional.of(report));
-        when(reportService.getReportsByMilestone(5L)).thenReturn(List.of(visibleReport(11L)));
+        when(userRepository.findById(7L)).thenReturn(java.util.Optional.of(student(7L, "STUDENT")));
+        when(milestoneRepository.findByIdAndDeletedFalseAndActiveTrue(5L))
+                .thenReturn(java.util.Optional.of(milestoneWithLab(99L)));
+        when(groupMemberRepository.findActiveRoleByProjectIdAndUserId(40L, 7L))
+                .thenReturn(java.util.Optional.empty());
 
-        assertThrows(AccessDeniedException.class, () -> reviewService.getByReport(10L));
+        assertThrows(AccessDeniedException.class, () -> reviewService.getByReport(10L, 7L));
         verify(commentRepository, never()).findByReportIdOrderByCreatedAtAsc(10L);
     }
 
@@ -208,11 +221,8 @@ class ReviewServiceImplTest {
                 .submissionScope("M:5:T:" + (taskId == null ? "_" : taskId) + ":U:3")
                 .build();
         report.setId(id);
+        report.setGroupId(taskId == null ? null : 30L);
         return report;
-    }
-
-    private ReportResponse visibleReport(Long id) {
-        return ReportResponse.builder().id(id).build();
     }
 
     private User student(Long id, String role) {
@@ -222,5 +232,21 @@ class ReviewServiceImplTest {
         user.setEmail("user" + id + "@labportal.com");
         user.addRole(new Role(role, role));
         return user;
+    }
+
+    private MilestoneEntity milestoneWithLab(Long labId) {
+        MilestoneEntity milestone = new MilestoneEntity();
+        milestone.setId(5L);
+        ProjectEntity project = new ProjectEntity();
+        project.setId(40L);
+        project.setLab(lab(labId));
+        milestone.setProject(project);
+        return milestone;
+    }
+
+    private Laboratory lab(Long id) {
+        Laboratory lab = new Laboratory();
+        lab.setId(id);
+        return lab;
     }
 }

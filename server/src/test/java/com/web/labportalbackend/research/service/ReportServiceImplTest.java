@@ -1,10 +1,14 @@
 package com.web.labportalbackend.research.service;
 
+import com.web.labportalbackend.admin.audit.service.AuditLogService;
+import com.web.labportalbackend.admin.systemconfig.dto.SystemConfigResponse;
+import com.web.labportalbackend.admin.systemconfig.service.SystemConfigService;
 import com.web.labportalbackend.common.exception.ReportVersionConflictException;
 import com.web.labportalbackend.auth.entity.Role;
 import com.web.labportalbackend.auth.entity.User;
 import com.web.labportalbackend.auth.repository.UserRepository;
 import com.web.labportalbackend.research.dto.request.SubmitReportRequest;
+import com.web.labportalbackend.research.dto.request.ReplaceReportRequest;
 import com.web.labportalbackend.research.dto.request.LeaderReviewReportRequest;
 import com.web.labportalbackend.research.dto.request.ManagerReviewReportRequest;
 import com.web.labportalbackend.research.dto.response.ReportResponse;
@@ -16,6 +20,7 @@ import com.web.labportalbackend.research.entity.ReportEntity;
 import com.web.labportalbackend.research.entity.TaskEntity;
 import com.web.labportalbackend.research.enums.GroupRole;
 import com.web.labportalbackend.research.enums.ReportStatus;
+import com.web.labportalbackend.research.enums.LeaderReportDecision;
 import com.web.labportalbackend.research.enums.ManagerReportDecision;
 import com.web.labportalbackend.research.enums.MilestoneStatus;
 import com.web.labportalbackend.research.enums.TaskStatus;
@@ -28,6 +33,7 @@ import com.web.labportalbackend.research.repository.MilestoneRepository;
 import com.web.labportalbackend.research.repository.ReportRepository;
 import com.web.labportalbackend.research.repository.TaskRepository;
 import com.web.labportalbackend.research.service.impl.ReportServiceImpl;
+import com.web.labportalbackend.research.service.ResearchLogService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -41,9 +47,12 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.test.util.ReflectionTestUtils;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -83,7 +92,42 @@ class ReportServiceImplTest {
     @Mock
     private UserRepository userRepository;
 
+    @Mock
+    private ResearchLogService researchLogService;
+
+    @Mock
+    private SystemConfigService systemConfigService;
+
+    @Mock
+    private AuditLogService auditLogService;
+
     private final List<Path> storedFiles = new ArrayList<>();
+    private Path testReportStorageDir;
+
+    @BeforeEach
+    void cleanStorageDirectory() throws IOException {
+        deleteDirectoryIfExists(Paths.get("storage/reports").toAbsolutePath().normalize());
+        deleteDirectoryIfExists(Paths.get("../storage/reports").toAbsolutePath().normalize());
+        testReportStorageDir = Files.createTempDirectory("report-service-test-");
+        ReflectionTestUtils.setField(reportService, "reportStoragePath", testReportStorageDir.toString());
+    }
+
+    @BeforeEach
+    void stubSystemConfig() {
+        SystemConfigResponse config = new SystemConfigResponse(
+                null,
+                null,
+                null,
+                new SystemConfigResponse.UploadConfig(
+                        10,
+                        10,
+                        List.of("pdf", "doc", "docx"),
+                        List.of("pdf", "zip")
+                ),
+                new SystemConfigResponse.ResearchConfig(10, false, false, false)
+        );
+        lenient().when(systemConfigService.getConfig()).thenReturn(config);
+    }
 
     @BeforeEach
     void authenticateAssignedMember() {
@@ -107,6 +151,9 @@ class ReportServiceImplTest {
         lenient().when(milestoneRepository.findByIdAndDeletedFalseAndActiveTrue(5L)).thenReturn(Optional.of(milestone));
         lenient().when(groupMemberRepository.findActiveRoleByProjectIdAndUserId(50L, 3L))
                 .thenReturn(Optional.of(GroupRole.MEMBER));
+        lenient().when(reportRepository
+                .findTopByTaskIdAndSubmittedByIdAndDeletedFalseAndActiveTrueOrderByVersionDescCreatedAtDesc(any(), any()))
+                .thenReturn(Optional.empty());
     }
 
     @AfterEach
@@ -120,6 +167,13 @@ class ReportServiceImplTest {
             }
         });
         storedFiles.clear();
+        if (testReportStorageDir != null) {
+            try {
+                deleteDirectoryIfExists(testReportStorageDir);
+            } catch (java.io.IOException ignored) {
+                // Best-effort cleanup of the temporary report storage directory.
+            }
+        }
     }
 
     @Test
@@ -324,7 +378,7 @@ class ReportServiceImplTest {
         when(groupRepository.findByIdAndDeletedFalseAndActiveTrue(90L)).thenReturn(Optional.of(group));
         when(groupMemberRepository.findActiveRoleByGroupIdAndUserId(90L, leader.getId()))
                 .thenReturn(Optional.of(GroupRole.LEADER));
-        when(reportRepository.findByGroupIdAndDeletedFalseAndActiveTrueOrderByCreatedAtDescVersionDesc(90L))
+        when(reportRepository.findReportsByGroupScope(90L))
                 .thenReturn(List.of(first, second));
         when(userRepository.findById(3L)).thenReturn(Optional.of(firstMember));
         when(userRepository.findById(4L)).thenReturn(Optional.of(secondMember));
@@ -350,7 +404,7 @@ class ReportServiceImplTest {
 
         assertThrows(AccessDeniedException.class, () -> reportService.getReportsByGroup(90L));
 
-        verify(reportRepository, never()).findByGroupIdAndDeletedFalseAndActiveTrueOrderByCreatedAtDescVersionDesc(any());
+        verify(reportRepository, never()).findReportsByGroupScope(any());
     }
 
     @Test
@@ -369,7 +423,7 @@ class ReportServiceImplTest {
         TaskEntity task = task(10L);
 
         when(laboratoryRepository.findFirstByManagerIdAndDeletedFalse(manager.getId())).thenReturn(Optional.of(lab));
-        when(reportRepository.findPendingManagerReviewByLabId(1L)).thenReturn(List.of(report));
+        when(reportRepository.findPendingManagerReviewByLabId(org.mockito.ArgumentMatchers.eq(1L), org.mockito.ArgumentMatchers.anyBoolean())).thenReturn(List.of(report));
         when(milestoneRepository.findByIdAndDeletedFalseAndActiveTrue(5L)).thenReturn(Optional.of(milestone));
         when(groupRepository.findByIdAndDeletedFalseAndActiveTrue(90L)).thenReturn(Optional.of(group));
         when(taskRepository.findById(10L)).thenReturn(Optional.of(task));
@@ -393,7 +447,7 @@ class ReportServiceImplTest {
 
         assertThrows(AccessDeniedException.class, () -> reportService.getPendingManagerReviewByLab(2L));
 
-        verify(reportRepository, never()).findPendingManagerReviewByLabId(any());
+        verify(reportRepository, never()).findPendingManagerReviewByLabId(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.anyBoolean());
     }
 
     @Test
@@ -418,6 +472,71 @@ class ReportServiceImplTest {
         );
 
         verify(reportRepository, never()).saveAndFlush(any());
+    }
+
+    @Test
+    void submitReport_rejectsTodoTaskBeforeStart() {
+        SubmitReportRequest request = request(10L);
+        TaskEntity task = task(10L);
+        task.setStatus(TaskStatus.TODO);
+        when(taskRepository.findById(10L)).thenReturn(Optional.of(task));
+
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> reportService.submitReport(request, file("todo-task.pdf"))
+        );
+
+        assertEquals("Bạn cần bắt đầu thực hiện nhiệm vụ trước khi nộp báo cáo.", exception.getMessage());
+        verify(reportRepository, never()).saveAndFlush(any());
+    }
+
+    @Test
+    void submitReport_rejectsResubmitWhenLatestReportSubmitted() {
+        assertSubmitRejectedByLatestStatus(
+                ReportStatus.SUBMITTED,
+                "Báo cáo đang chờ trưởng nhóm kiểm tra, chưa thể nộp lại."
+        );
+    }
+
+    @Test
+    void submitReport_rejectsResubmitWhenLatestReportLeaderReviewed() {
+        assertSubmitRejectedByLatestStatus(
+                ReportStatus.LEADER_REVIEWED,
+                "Báo cáo đang chờ quản lý duyệt, chưa thể nộp lại."
+        );
+    }
+
+    @Test
+    void submitReport_rejectsResubmitWhenLatestReportApproved() {
+        assertSubmitRejectedByLatestStatus(
+                ReportStatus.APPROVED,
+                "Báo cáo đã được duyệt, không thể nộp lại."
+        );
+    }
+
+    @Test
+    void submitReport_allowsResubmitWhenLatestReportNeedsRevision() {
+        SubmitReportRequest request = request(10L);
+        TaskEntity task = task(10L);
+        task.setStatus(TaskStatus.NEEDS_REVISION);
+        ReportEntity latest = report(99L, 10L, 1);
+        latest.setStatus(ReportStatus.NEEDS_REVISION);
+
+        when(taskRepository.findById(10L)).thenReturn(Optional.of(task));
+        when(reportRepository.findTopByTaskIdAndSubmittedByIdAndDeletedFalseAndActiveTrueOrderByVersionDescCreatedAtDesc(10L, 3L))
+                .thenReturn(Optional.of(latest));
+        when(reportRepository.findMaxVersionByTaskIdAndSubmittedById(10L, 3L)).thenReturn(Optional.of(1));
+        when(reportRepository.saveAndFlush(any(ReportEntity.class))).thenAnswer(invocation -> {
+            ReportEntity report = invocation.getArgument(0);
+            trackStoredFile(report);
+            return report;
+        });
+
+        ReportResponse response = reportService.submitReport(request, file("report-v2.pdf"));
+
+        assertEquals(2, response.getVersion());
+        assertEquals(ReportStatus.SUBMITTED, response.getStatus());
+        assertEquals(TaskStatus.WAITING_REVIEW, task.getStatus());
     }
 
     @Test
@@ -467,7 +586,8 @@ class ReportServiceImplTest {
         User leader = authenticate(7L, "leader", "STUDENT");
         ReportEntity report = report(100L, 10L, 1);
         LeaderReviewReportRequest request = new LeaderReviewReportRequest();
-        request.setNote("Báo cáo đã đủ nội dung nhóm yêu cầu.");
+        request.setDecision(LeaderReportDecision.ACCEPT);
+        request.setComment("Báo cáo đã đủ nội dung nhóm yêu cầu.");
 
         when(reportRepository.findById(100L)).thenReturn(Optional.of(report));
         when(groupMemberRepository.findActiveRoleByGroupIdAndUserId(90L, leader.getId()))
@@ -480,30 +600,32 @@ class ReportServiceImplTest {
 
         assertEquals(ReportStatus.LEADER_REVIEWED, response.getStatus());
         assertNotNull(response.getLeaderReviewedAt());
-        assertEquals(request.getNote(), response.getLeaderComment());
-        verify(commentRepository).save(any());
+        assertEquals(request.getComment(), response.getLeaderComment());
+        ArgumentCaptor<com.web.labportalbackend.research.entity.CommentEntity> commentCaptor =
+                ArgumentCaptor.forClass(com.web.labportalbackend.research.entity.CommentEntity.class);
+        verify(commentRepository).save(commentCaptor.capture());
+        assertEquals("Trưởng nhóm đã chấp nhận báo cáo: " + request.getComment(), commentCaptor.getValue().getContent());
         verify(reportRepository).save(report);
     }
 
     @Test
-    void leaderReview_allowsLatestReportThatNeedsRevision() {
+    void leaderReview_rejectsReportWithNeedsRevisionStatus() {
         User leader = authenticate(7L, "leader", "STUDENT");
         ReportEntity report = report(100L, 10L, 2);
         report.setStatus(ReportStatus.NEEDS_REVISION);
         LeaderReviewReportRequest request = new LeaderReviewReportRequest();
-        request.setNote("Bản sửa đổi đã đủ nội dung.");
+        request.setDecision(LeaderReportDecision.ACCEPT);
+        request.setComment("Bản sửa đổi.");
 
         when(reportRepository.findById(100L)).thenReturn(Optional.of(report));
         when(groupMemberRepository.findActiveRoleByGroupIdAndUserId(90L, leader.getId()))
                 .thenReturn(Optional.of(GroupRole.LEADER));
         when(groupMemberRepository.findActiveRoleByProjectIdAndUserId(50L, leader.getId()))
                 .thenReturn(Optional.of(GroupRole.LEADER));
-        when(reportRepository.save(report)).thenReturn(report);
 
-        ReportResponse response = reportService.leaderReview(100L, request);
-
-        assertEquals(ReportStatus.LEADER_REVIEWED, response.getStatus());
-        assertEquals("Bản sửa đổi đã đủ nội dung.", response.getLeaderComment());
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> reportService.leaderReview(100L, request));
+        assertEquals("Chỉ có thể xử lý báo cáo đang chờ trưởng nhóm kiểm tra.", exception.getMessage());
+        verify(reportRepository, never()).save(any());
     }
 
     @Test
@@ -512,14 +634,76 @@ class ReportServiceImplTest {
         ReportEntity report = report(100L, 10L, 1);
         report.setSubmittedById(leader.getId());
         LeaderReviewReportRequest request = new LeaderReviewReportRequest();
-        request.setNote("Tự kiểm tra.");
+        request.setDecision(LeaderReportDecision.ACCEPT);
+        request.setComment("Tự kiểm tra.");
 
         when(reportRepository.findById(100L)).thenReturn(Optional.of(report));
         when(groupMemberRepository.findActiveRoleByGroupIdAndUserId(90L, leader.getId()))
                 .thenReturn(Optional.of(GroupRole.LEADER));
 
-        assertThrows(AccessDeniedException.class, () -> reportService.leaderReview(100L, request));
+        AccessDeniedException exception = assertThrows(AccessDeniedException.class, () -> reportService.leaderReview(100L, request));
+        assertEquals("Bạn không thể tự xử lý báo cáo của chính mình. Báo cáo này sẽ do quản lý PTN duyệt.", exception.getMessage());
         verify(reportRepository, never()).save(any());
+    }
+
+    @Test
+    void leaderReview_requestRevision_transitionsReportAndTaskStatus() {
+        User leader = authenticate(7L, "leader", "STUDENT");
+        ReportEntity report = report(100L, 10L, 1);
+        LeaderReviewReportRequest request = new LeaderReviewReportRequest();
+        request.setDecision(LeaderReportDecision.REQUEST_REVISION);
+        request.setComment("Cần bổ sung kết quả.");
+
+        TaskEntity task = task(10L);
+        task.setStatus(TaskStatus.WAITING_REVIEW);
+
+        when(reportRepository.findById(100L)).thenReturn(Optional.of(report));
+        when(groupMemberRepository.findActiveRoleByGroupIdAndUserId(90L, leader.getId()))
+                .thenReturn(Optional.of(GroupRole.LEADER));
+        when(groupMemberRepository.findActiveRoleByProjectIdAndUserId(50L, leader.getId()))
+                .thenReturn(Optional.of(GroupRole.LEADER));
+        when(taskRepository.findById(10L)).thenReturn(Optional.of(task));
+        when(reportRepository.save(report)).thenReturn(report);
+
+        ReportResponse response = reportService.leaderReview(100L, request);
+
+        assertEquals(ReportStatus.NEEDS_REVISION, response.getStatus());
+        assertEquals(TaskStatus.NEEDS_REVISION, task.getStatus());
+        verify(taskRepository).save(task);
+        ArgumentCaptor<com.web.labportalbackend.research.entity.CommentEntity> commentCaptor =
+                ArgumentCaptor.forClass(com.web.labportalbackend.research.entity.CommentEntity.class);
+        verify(commentRepository).save(commentCaptor.capture());
+        assertEquals("Trưởng nhóm yêu cầu nộp lại báo cáo: " + request.getComment(), commentCaptor.getValue().getContent());
+    }
+
+    @Test
+    void leaderReview_reject_transitionsReportAndTaskStatus() {
+        User leader = authenticate(7L, "leader", "STUDENT");
+        ReportEntity report = report(100L, 10L, 1);
+        LeaderReviewReportRequest request = new LeaderReviewReportRequest();
+        request.setDecision(LeaderReportDecision.REJECT);
+        request.setComment("Sai nhiệm vụ.");
+
+        TaskEntity task = task(10L);
+        task.setStatus(TaskStatus.WAITING_REVIEW);
+
+        when(reportRepository.findById(100L)).thenReturn(Optional.of(report));
+        when(groupMemberRepository.findActiveRoleByGroupIdAndUserId(90L, leader.getId()))
+                .thenReturn(Optional.of(GroupRole.LEADER));
+        when(groupMemberRepository.findActiveRoleByProjectIdAndUserId(50L, leader.getId()))
+                .thenReturn(Optional.of(GroupRole.LEADER));
+        when(taskRepository.findById(10L)).thenReturn(Optional.of(task));
+        when(reportRepository.save(report)).thenReturn(report);
+
+        ReportResponse response = reportService.leaderReview(100L, request);
+
+        assertEquals(ReportStatus.LEADER_REJECTED, report.getStatus());
+        assertEquals(TaskStatus.NEEDS_REVISION, task.getStatus());
+        verify(taskRepository).save(task);
+        ArgumentCaptor<com.web.labportalbackend.research.entity.CommentEntity> commentCaptor =
+                ArgumentCaptor.forClass(com.web.labportalbackend.research.entity.CommentEntity.class);
+        verify(commentRepository).save(commentCaptor.capture());
+        assertEquals("Trưởng nhóm từ chối báo cáo: " + request.getComment(), commentCaptor.getValue().getContent());
     }
 
     @Test
@@ -545,7 +729,60 @@ class ReportServiceImplTest {
         assertEquals(MilestoneStatus.COMPLETED, milestone.getStatus());
         assertEquals(100, milestone.getProgressPercent());
         verify(milestoneRepository).save(milestone);
-        verify(commentRepository).save(any());
+        ArgumentCaptor<com.web.labportalbackend.research.entity.CommentEntity> commentCaptor =
+                ArgumentCaptor.forClass(com.web.labportalbackend.research.entity.CommentEntity.class);
+        verify(commentRepository).save(commentCaptor.capture());
+        assertEquals("Quản lý PTN đã chấp nhận báo cáo: " + request.getComment(), commentCaptor.getValue().getContent());
+    }
+
+    @Test
+    void managerReview_rejectsReportFromAnotherLab() {
+        User manager = authenticate(2L, "manager", "LAB_MANAGER");
+        Laboratory myLab = new Laboratory();
+        myLab.setId(1L);
+        Laboratory otherLab = new Laboratory();
+        otherLab.setId(2L);
+        MilestoneEntity milestone = managerMilestone(otherLab);
+        ReportEntity report = report(100L, null, 1);
+        report.setStatus(ReportStatus.LEADER_REVIEWED);
+
+        when(reportRepository.findById(100L)).thenReturn(Optional.of(report));
+        when(milestoneRepository.findByIdAndDeletedFalseAndActiveTrue(5L)).thenReturn(Optional.of(milestone));
+        when(laboratoryRepository.findFirstByManagerIdAndDeletedFalse(manager.getId())).thenReturn(Optional.of(myLab));
+
+        AccessDeniedException exception = assertThrows(
+                AccessDeniedException.class,
+                () -> reportService.managerReview(100L, managerRequest(ManagerReportDecision.APPROVE))
+        );
+        assertEquals("Bạn không có quyền duyệt báo cáo này.", exception.getMessage());
+        verify(reportRepository, never()).save(any());
+    }
+
+    @Test
+    void managerReview_rejectsSubmittedReportWhenLeaderReviewRequired() {
+        User manager = authenticate(2L, "manager", "LAB_MANAGER");
+        Laboratory lab = new Laboratory();
+        lab.setId(1L);
+        MilestoneEntity milestone = managerMilestone(lab);
+        ReportEntity report = report(100L, null, 1);
+        report.setStatus(ReportStatus.SUBMITTED);
+
+        when(reportRepository.findById(100L)).thenReturn(Optional.of(report));
+        when(milestoneRepository.findByIdAndDeletedFalseAndActiveTrue(5L)).thenReturn(Optional.of(milestone));
+        when(laboratoryRepository.findFirstByManagerIdAndDeletedFalse(manager.getId())).thenReturn(Optional.of(lab));
+
+        SystemConfigResponse config = mock(SystemConfigResponse.class);
+        SystemConfigResponse.ResearchConfig researchConfig = mock(SystemConfigResponse.ResearchConfig.class);
+        when(systemConfigService.getConfig()).thenReturn(config);
+        when(config.research()).thenReturn(researchConfig);
+        when(researchConfig.requireLeaderReviewBeforeManagerReview()).thenReturn(true);
+
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> reportService.managerReview(100L, managerRequest(ManagerReportDecision.APPROVE))
+        );
+        assertEquals("Báo cáo cần được trưởng nhóm kiểm tra trước.", exception.getMessage());
+        verify(reportRepository, never()).save(any());
     }
 
     @Test
@@ -571,6 +808,10 @@ class ReportServiceImplTest {
         assertEquals(ReportStatus.NEEDS_REVISION, response.getStatus());
         assertEquals(MilestoneStatus.IN_PROGRESS, milestone.getStatus());
         assertEquals(0, milestone.getProgressPercent());
+        ArgumentCaptor<com.web.labportalbackend.research.entity.CommentEntity> commentCaptor =
+                ArgumentCaptor.forClass(com.web.labportalbackend.research.entity.CommentEntity.class);
+        verify(commentRepository).save(commentCaptor.capture());
+        assertEquals("Quản lý PTN yêu cầu nộp lại báo cáo: Nhận xét duyệt báo cáo.", commentCaptor.getValue().getContent());
     }
 
     @Test
@@ -588,10 +829,11 @@ class ReportServiceImplTest {
         when(reportRepository.existsBySubmissionScopeAndVersionGreaterThan(report.getSubmissionScope(), report.getVersion()))
                 .thenReturn(true);
 
-        assertThrows(
+        IllegalArgumentException exception = assertThrows(
                 IllegalArgumentException.class,
                 () -> reportService.managerReview(100L, managerRequest(ManagerReportDecision.APPROVE))
         );
+        assertEquals("Chỉ có thể xử lý phiên bản báo cáo mới nhất.", exception.getMessage());
 
         verify(reportRepository, never()).save(any());
         verify(milestoneRepository, never()).save(any());
@@ -692,6 +934,113 @@ class ReportServiceImplTest {
         verify(taskRepository).save(task);
     }
 
+    private ReplaceReportRequest replaceRequest() {
+        ReplaceReportRequest request = new ReplaceReportRequest();
+        request.setTitle("Updated Title");
+        request.setContentDone("Updated Content Done");
+        request.setResult("Updated Result");
+        request.setDifficulty("Updated Difficulty");
+        request.setNextPlan("Updated Next Plan");
+        request.setSelfAssessment("Updated Self Assessment");
+        request.setEvidenceLink("http://evidence.link");
+        return request;
+    }
+
+    @Test
+    void replaceReport_successWithoutNewFile() {
+        ReplaceReportRequest request = replaceRequest();
+        ReportEntity report = report(100L, 10L, 1);
+        report.setStatus(ReportStatus.SUBMITTED);
+
+        when(reportRepository.findById(100L)).thenReturn(Optional.of(report));
+        when(reportRepository.existsBySubmissionScopeAndVersionGreaterThan(report.getSubmissionScope(), 1)).thenReturn(false);
+        when(reportRepository.save(any(ReportEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        ReportResponse response = reportService.replaceReport(100L, request, null);
+
+        assertEquals(100L, response.getId());
+        assertEquals("Updated Title", response.getTitle());
+        assertEquals("Updated Content Done", response.getContentDone());
+        assertEquals(1, response.getVersion());
+        assertEquals(ReportStatus.SUBMITTED, response.getStatus());
+        verify(reportRepository).save(any(ReportEntity.class));
+    }
+
+    @Test
+    void replaceReport_successWithNewFile() {
+        ReplaceReportRequest request = replaceRequest();
+        ReportEntity report = report(100L, 10L, 1);
+        report.setStatus(ReportStatus.SUBMITTED);
+
+        when(reportRepository.findById(100L)).thenReturn(Optional.of(report));
+        when(reportRepository.existsBySubmissionScopeAndVersionGreaterThan(report.getSubmissionScope(), 1)).thenReturn(false);
+        when(reportRepository.save(any(ReportEntity.class))).thenAnswer(invocation -> {
+            ReportEntity saved = invocation.getArgument(0);
+            trackStoredFile(saved);
+            return saved;
+        });
+
+        MockMultipartFile newFile = file("report-updated.pdf");
+        ReportResponse response = reportService.replaceReport(100L, request, newFile);
+
+        assertEquals(100L, response.getId());
+        assertEquals("Updated Title", response.getTitle());
+        assertEquals("report-updated.pdf", response.getFileName());
+        assertEquals(1, response.getVersion());
+        verify(reportRepository).save(any(ReportEntity.class));
+    }
+
+    @Test
+    void replaceReport_throwsAccessDeniedWhenNotSubmittedByCurrentUser() {
+        ReplaceReportRequest request = replaceRequest();
+        ReportEntity report = report(100L, 10L, 1);
+        report.setSubmittedById(999L); // Different user
+
+        when(reportRepository.findById(100L)).thenReturn(Optional.of(report));
+
+        AccessDeniedException exception = assertThrows(
+                AccessDeniedException.class,
+                () -> reportService.replaceReport(100L, request, null)
+        );
+
+        assertEquals("Bạn không có quyền cập nhật báo cáo này.", exception.getMessage());
+        verify(reportRepository, never()).save(any());
+    }
+
+    @Test
+    void replaceReport_throwsIllegalArgumentExceptionWhenStatusNotSubmitted() {
+        ReplaceReportRequest request = replaceRequest();
+        ReportEntity report = report(100L, 10L, 1);
+        report.setStatus(ReportStatus.APPROVED); // Handled
+
+        when(reportRepository.findById(100L)).thenReturn(Optional.of(report));
+
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> reportService.replaceReport(100L, request, null)
+        );
+
+        assertEquals("Báo cáo đã được xử lý, không thể cập nhật phiên bản này.", exception.getMessage());
+        verify(reportRepository, never()).save(any());
+    }
+
+    @Test
+    void replaceReport_throwsIllegalArgumentExceptionWhenNotLatestVersion() {
+        ReplaceReportRequest request = replaceRequest();
+        ReportEntity report = report(100L, 10L, 1);
+
+        when(reportRepository.findById(100L)).thenReturn(Optional.of(report));
+        when(reportRepository.existsBySubmissionScopeAndVersionGreaterThan(report.getSubmissionScope(), 1)).thenReturn(true); // There is a newer version
+
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> reportService.replaceReport(100L, request, null)
+        );
+
+        assertEquals("Chỉ có thể xử lý phiên bản báo cáo mới nhất.", exception.getMessage());
+        verify(reportRepository, never()).save(any());
+    }
+
     private SubmitReportRequest request(Long taskId) {
         SubmitReportRequest request = new SubmitReportRequest();
         request.setTaskId(taskId);
@@ -709,10 +1058,29 @@ class ReportServiceImplTest {
                 .milestoneId(5L)
                 .assigneeId(3L)
                 .title("Analyze result")
-                .status(TaskStatus.TODO)
+                .status(TaskStatus.DOING)
                 .build();
         task.setId(id);
         return task;
+    }
+
+    private void assertSubmitRejectedByLatestStatus(ReportStatus latestStatus, String expectedMessage) {
+        SubmitReportRequest request = request(10L);
+        TaskEntity task = task(10L);
+        ReportEntity latest = report(99L, 10L, 1);
+        latest.setStatus(latestStatus);
+
+        when(taskRepository.findById(10L)).thenReturn(Optional.of(task));
+        when(reportRepository.findTopByTaskIdAndSubmittedByIdAndDeletedFalseAndActiveTrueOrderByVersionDescCreatedAtDesc(10L, 3L))
+                .thenReturn(Optional.of(latest));
+
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> reportService.submitReport(request, file("blocked-resubmit.pdf"))
+        );
+
+        assertEquals(expectedMessage, exception.getMessage());
+        verify(reportRepository, never()).saveAndFlush(any());
     }
 
     private ReportEntity report(Long id, Long taskId, Integer version) {
@@ -749,6 +1117,15 @@ class ReportServiceImplTest {
 
     private MockMultipartFile file(String filename) {
         return new MockMultipartFile("file", filename, "application/pdf", "report".getBytes());
+    }
+
+    private void deleteDirectoryIfExists(Path storageDir) throws IOException {
+        if (Files.exists(storageDir)) {
+            try (var walk = Files.walk(storageDir)) {
+                walk.sorted(java.util.Comparator.reverseOrder())
+                        .forEach(p -> { try { Files.deleteIfExists(p); } catch (IOException ignored) {} });
+            }
+        }
     }
 
     private User authenticate(Long id, String username, String roleName) {

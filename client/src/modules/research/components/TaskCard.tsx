@@ -1,29 +1,28 @@
-import { memo } from 'react';
+import { memo, useMemo, useState } from 'react';
 import type { DragEvent } from 'react';
 
 import type { ResearchTask } from '../types';
-import type { ResearchReportStatus } from '../types';
 import { getStatusClass, formatDate } from '../utils';
 import { Button } from '../../../shared/components';
-
-const REPORT_STATUS_LABELS: Record<ResearchReportStatus, string> = {
-  SUBMITTED: 'Đã nộp, chờ kiểm tra',
-  LEADER_REVIEWED: 'Trưởng nhóm đã kiểm tra',
-  NEEDS_REVISION: 'Cần chỉnh sửa',
-  APPROVED: 'Báo cáo đã được duyệt',
-  REJECTED: 'Báo cáo bị từ chối',
-};
+import { useReportsByTask } from '../hooks';
+import { ReportHistoryModal } from './ReportHistoryModal';
+import { LatestReportSummary } from './LatestReportSummary';
+import type { TaskBoardRole } from '../taskBoardHelpers';
 
 interface TaskCardProps {
   task: ResearchTask;
   draggable?: boolean;
   isUpdating?: boolean;
   dragDisabledReason?: string;
-  reportStatus?: ResearchReportStatus | null;
   reportActionLabel?: 'Nộp báo cáo' | 'Nộp lại báo cáo' | null;
   onReportAction?: (task: ResearchTask) => void;
   onDragStart?: (event: DragEvent<HTMLElement>, task: ResearchTask) => void;
   onDragEnd?: () => void;
+  currentUserId?: number | null;
+  projectId?: number | null;
+  groupId?: number | null;
+  role?: TaskBoardRole;
+  labId?: number | null;
 }
 
 export const TaskCard = memo(function TaskCard({
@@ -31,12 +30,20 @@ export const TaskCard = memo(function TaskCard({
   draggable = false,
   isUpdating = false,
   dragDisabledReason,
-  reportStatus,
   reportActionLabel,
   onReportAction,
   onDragStart,
   onDragEnd,
+  currentUserId,
+  projectId,
+  groupId,
+  role,
+  labId,
 }: TaskCardProps) {
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [defaultOpenLatestReview, setDefaultOpenLatestReview] = useState(false);
+  const { data: reports = [] } = useReportsByTask(task.id);
+
   return (
     <article
       aria-busy={isUpdating}
@@ -94,18 +101,61 @@ export const TaskCard = memo(function TaskCard({
       <span className={`mt-3 inline-flex rounded-full px-2 py-1 text-[11px] font-semibold ring-1 ${getStatusClass(task.status)}`}>
         {task.statusLabel}
       </span>
-      <div className="mt-3 rounded-md bg-slate-50 p-2 text-xs">
-        <p className="font-semibold text-slate-700">Trạng thái báo cáo</p>
-        <p className={`mt-1 font-medium ${reportStatus === 'APPROVED' ? 'text-emerald-700' : 'text-slate-600'}`}>
-          {reportStatus ? REPORT_STATUS_LABELS[reportStatus] : 'Chưa nộp báo cáo'}
-        </p>
-        {reportActionLabel ? (
-          <Button className="mt-2" onClick={() => onReportAction?.(task)} size="sm" variant="outline">
-            {reportActionLabel}
-          </Button>
-        ) : null}
+      
+      <div className="mt-3 rounded-md bg-slate-50 p-2.5 text-xs space-y-2">
+        <LatestReportSummary reports={reports} />
+
+        <div className="flex flex-wrap gap-2 pt-1 border-t border-slate-200/50">
+          {reportActionLabel ? (
+            <Button onClick={() => onReportAction?.(task)} size="sm" variant="outline">
+              {reportActionLabel}
+            </Button>
+          ) : null}
+          {reports.length > 0 ? (
+            <>
+              <Button
+                onClick={() => {
+                  setIsHistoryOpen(true);
+                  setDefaultOpenLatestReview(false);
+                }}
+                size="sm"
+                variant="outline"
+                type="button"
+              >
+                Xem lịch sử báo cáo
+              </Button>
+              <Button
+                onClick={() => {
+                  setIsHistoryOpen(true);
+                  setDefaultOpenLatestReview(true);
+                }}
+                size="sm"
+                variant="outline"
+                type="button"
+              >
+                Xem góp ý
+              </Button>
+            </>
+          ) : null}
+        </div>
       </div>
+      
       {isUpdating ? <p className="mt-2 text-[11px] font-medium text-slate-500">Đang cập nhật...</p> : null}
+
+      {reports.length > 0 && (
+        <ReportHistoryModal
+          isOpen={isHistoryOpen}
+          onClose={() => setIsHistoryOpen(false)}
+          taskId={task.id}
+          taskTitle={task.title}
+          currentUserId={currentUserId}
+          role={role}
+          labId={labId}
+          groupId={groupId}
+          defaultOpenLatestReview={defaultOpenLatestReview}
+        />
+      )}
     </article>
   );
 });
+

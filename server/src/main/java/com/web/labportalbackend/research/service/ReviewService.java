@@ -8,5 +8,5 @@ import java.util.List;
 public interface ReviewService {
     CommentResponse addComment(Long reportId, Long authorId, CreateCommentRequest request);
 
-    List<CommentResponse> getByReport(Long reportId);
+    List<CommentResponse> getByReport(Long reportId, Long currentUserId);
 }

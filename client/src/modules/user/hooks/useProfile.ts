@@ -9,6 +9,7 @@ export function useCurrentUser() {
   return useQuery({
     queryKey: USER_ME_QUERY_KEY,
     queryFn: getProfile,
+    retry: false,
     staleTime: 5 * 60 * 1000,
   });
 }

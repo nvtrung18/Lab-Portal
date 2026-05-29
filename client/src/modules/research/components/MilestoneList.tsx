@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 
 import { Button, EmptyState, ErrorState, LoadingState } from '../../../shared/components';
-import { useCreateMilestone, useMilestonesByProject, useResearchEligibleStudents, useUpdateMilestone } from '../hooks';
+import { useCreateMilestone, useMilestonesByProject, useMilestonesByGroup, useMyMilestonesByGroup, useResearchEligibleStudents, useUpdateMilestone, useResearchGroupMembers } from '../hooks';
 import type { ResearchMilestone } from '../types';
 import type { TaskBoardRole } from '../taskBoardHelpers';
-import { formatDate, formatMilestoneStatus, getStatusClass, isMilestoneOverdue } from '../utils';
+import { formatDate, formatMilestoneStatus, getApiErrorMessage, getStatusClass, isMilestoneOverdue } from '../utils';
 import { CreateMilestoneModal } from './CreateMilestoneModal';
 import { EditMilestoneModal } from './EditMilestoneModal';
 import { MilestoneDetailModal } from './MilestoneDetailModal';
@@ -17,6 +17,7 @@ interface MilestoneListProps {
   taskBoardRole?: TaskBoardRole;
   taskBoardCurrentUserId?: number | null;
   groupId?: number | null;
+  groupRole?: 'LEADER' | 'MEMBER' | null;
   emptyMessage?: string;
   title?: string;
   description?: string;
@@ -30,6 +31,7 @@ export function MilestoneList({
   taskBoardRole = canCreate ? 'LAB_MANAGER' : undefined,
   taskBoardCurrentUserId,
   groupId,
+  groupRole,
   emptyMessage = 'Chưa có mốc nghiên cứu nào.',
   title = 'Mốc nghiên cứu',
   description = 'Các giai đoạn chính cần hoàn thành trong đề tài.',
@@ -37,10 +39,48 @@ export function MilestoneList({
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [detailMilestoneId, setDetailMilestoneId] = useState<number | null>(null);
   const [editingMilestone, setEditingMilestone] = useState<ResearchMilestone | null>(null);
-  const { data: milestones = [], isError, isLoading, refetch } = useMilestonesByProject(projectId);
+  const isMember = groupRole === 'MEMBER';
+  const { data: projectMilestones = [], error: projectError, isError: isProjectError, isLoading: isProjectLoading, refetch: refetchProject } = useMilestonesByProject(!groupId ? projectId : null);
+  const { data: allGroupMilestones = [], error: allGroupError, isError: isAllGroupError, isLoading: isAllGroupLoading, refetch: refetchAllGroup } = useMilestonesByGroup(!isMember ? groupId : null);
+  const { data: myGroupMilestones = [], error: myGroupError, isError: isMyGroupError, isLoading: isMyGroupLoading, refetch: refetchMyGroup } = useMyMilestonesByGroup(isMember ? groupId : null);
+
+  const milestones = groupId ? (isMember ? myGroupMilestones : allGroupMilestones) : projectMilestones;
+  const isLoading = groupId ? (isMember ? isMyGroupLoading : isAllGroupLoading) : isProjectLoading;
+  const isError = groupId ? (isMember ? isMyGroupError : isAllGroupError) : isProjectError;
+  const error = groupId ? (isMember ? myGroupError : allGroupError) : projectError;
+  const refetch = groupId ? (isMember ? refetchMyGroup : refetchAllGroup) : refetchProject;
+  const errorMessage = getApiErrorMessage(error, {
+    fallback: 'Không thể tải danh sách mốc nghiên cứu.',
+    forbidden: 'Bạn không có quyền xem mốc nghiên cứu của nhóm này.',
+  });
+
+  const resolvedTitle = isMember ? 'Mốc của tôi' : title;
+  const resolvedDescription = isMember ? 'Chỉ hiển thị các mốc nghiên cứu có nhiệm vụ được giao cho bạn.' : description;
+  const resolvedEmptyMessage = isMember ? 'Bạn chưa được giao mốc nghiên cứu nào trong nhóm này.' : emptyMessage;
+
   const { data: students = [], isLoading: isLoadingStudents } = useResearchEligibleStudents(
-    canCreate ? labId : null,
+    canCreate && !groupId ? labId : null,
   );
+  const { data: groupMembers = [], isLoading: isLoadingMembers } = useResearchGroupMembers(
+    canCreate && groupId ? groupId : null,
+  );
+  const resolvedStudents = useMemo(() => {
+    if (groupId) {
+      return groupMembers.map((m) => ({
+        id: m.id,
+        userId: m.userId,
+        fullName: m.fullName,
+        email: m.email ?? '',
+        labId: labId ?? 0,
+        labName: '',
+        role: m.role,
+        status: 'ACTIVE',
+      }));
+    }
+    return students;
+  }, [groupId, groupMembers, students, labId]);
+  const resolvedLoadingStudents = groupId ? isLoadingMembers : isLoadingStudents;
+
   const createMilestone = useCreateMilestone(projectId);
   const updateMilestone = useUpdateMilestone(projectId);
 
@@ -64,8 +104,8 @@ export function MilestoneList({
     <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h3 className="text-lg font-semibold text-slate-950">{title}</h3>
-          <p className="mt-1 text-sm text-slate-600">{description}</p>
+          <h3 className="text-lg font-semibold text-slate-950">{resolvedTitle}</h3>
+          <p className="mt-1 text-sm text-slate-600">{resolvedDescription}</p>
         </div>
         {canCreate ? (
           <Button onClick={() => setIsCreateOpen(true)}>
@@ -78,11 +118,20 @@ export function MilestoneList({
         <LoadingState className="mt-5">Đang tải danh sách mốc nghiên cứu...</LoadingState>
       ) : isError ? (
         <ErrorState className="mt-5" onRetry={() => refetch()}>
-          Không thể tải danh sách mốc nghiên cứu.
+          {errorMessage}
         </ErrorState>
       ) : !milestones.length ? (
         <EmptyState className="mt-5">
-          {emptyMessage}
+          <div className="flex flex-col items-center justify-center text-center py-6 gap-3">
+            <p className="text-slate-600 font-medium">
+              {resolvedEmptyMessage}
+            </p>
+            {canCreate && (
+              <Button onClick={() => setIsCreateOpen(true)} size="sm">
+                Tạo mốc nghiên cứu
+              </Button>
+            )}
+          </div>
         </EmptyState>
       ) : (
         <ol className="mt-5 space-y-3">
@@ -107,6 +156,18 @@ export function MilestoneList({
                         <dt className="font-semibold text-slate-700">Ngày tạo</dt>
                         <dd className="mt-1">{formatDate(milestone.createdAt)}</dd>
                       </div>
+                      {isMember ? (
+                        <>
+                          <div>
+                            <dt className="font-semibold text-slate-700">Số nhiệm vụ của tôi</dt>
+                            <dd className="mt-1 font-bold text-slate-950">{milestone.myTaskCount ?? 0}</dd>
+                          </div>
+                          <div>
+                            <dt className="font-semibold text-slate-700">Số nhiệm vụ đã hoàn thành</dt>
+                            <dd className="mt-1 font-bold text-emerald-700">{milestone.myCompletedTaskCount ?? 0}</dd>
+                          </div>
+                        </>
+                      ) : null}
                     </dl>
                     <div className="mt-3 max-w-sm">
                       <div className="flex items-center justify-between text-sm">
@@ -153,16 +214,16 @@ export function MilestoneList({
           <CreateMilestoneModal
             isOpen={isCreateOpen}
             projectId={projectId}
-            students={students}
-            isLoadingStudents={isLoadingStudents}
+            students={resolvedStudents}
+            isLoadingStudents={resolvedLoadingStudents}
             isSubmitting={createMilestone.isPending}
             onClose={() => setIsCreateOpen(false)}
-            onSubmit={(payload) => createMilestone.mutate(payload, { onSuccess: () => setIsCreateOpen(false) })}
+            onSubmit={(payload) => createMilestone.mutate({ ...payload, groupId }, { onSuccess: () => setIsCreateOpen(false) })}
           />
           <EditMilestoneModal
             milestone={editingMilestone}
-            students={students}
-            isLoadingStudents={isLoadingStudents}
+            students={resolvedStudents}
+            isLoadingStudents={resolvedLoadingStudents}
             isSubmitting={updateMilestone.isPending}
             onClose={() => setEditingMilestone(null)}
             onSubmit={(payload) => {
@@ -185,6 +246,7 @@ export function MilestoneList({
         taskBoardRole={taskBoardRole}
         taskBoardCurrentUserId={taskBoardCurrentUserId}
         groupId={groupId}
+        labId={labId}
         onClose={() => setDetailMilestoneId(null)}
       />
     </section>

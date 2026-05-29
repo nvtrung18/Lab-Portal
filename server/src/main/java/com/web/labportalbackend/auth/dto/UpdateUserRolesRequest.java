@@ -11,4 +11,6 @@ import java.util.Set;
 public class UpdateUserRolesRequest {
     @NotEmpty(message = "Roles are required")
     private Set<String> roles;
+
+    private Long managedLabId;
 }

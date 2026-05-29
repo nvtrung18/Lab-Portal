@@ -2,14 +2,18 @@ package com.web.labportalbackend.research.dto.response;
 
 import lombok.Builder;
 import lombok.Getter;
+import lombok.Setter;
 import com.web.labportalbackend.research.enums.ReportStatus;
 
 import java.time.Instant;
 
 @Getter
 @Builder
+@Setter
 public class ReportResponse {
     private Long id;
+    private String submittedByGroupRole;
+    private Boolean isLatestVersion;
     private Long projectId;
     private Long groupId;
     private Long milestoneId;
@@ -33,8 +37,10 @@ public class ReportResponse {
     private Long fileSize;
     private String evidenceLink;
     private ReportStatus status;
+    private Long leaderReviewerId;
     private Instant leaderReviewedAt;
     private String leaderComment;
+    private Long managerReviewerId;
     private Instant managerReviewedAt;
     private String managerComment;
     private Instant createdAt;

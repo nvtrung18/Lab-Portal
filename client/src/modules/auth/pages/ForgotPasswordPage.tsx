@@ -10,6 +10,7 @@ import {
 } from '../api';
 import type { Response } from '../../../shared/types';
 import { Button } from '../../../shared/components';
+import { VALIDATION_MESSAGES } from '../../../shared/utils';
 
 type ForgotPasswordStep = 'email' | 'otp' | 'password';
 
@@ -59,11 +60,11 @@ export function ForgotPasswordPage() {
     setMessage('');
 
     if (!normalizedEmail) {
-      setError('Vui lòng nhập email.');
+      setError(VALIDATION_MESSAGES.required);
       return;
     }
     if (!isValidEmail(normalizedEmail)) {
-      setError('Email không hợp lệ.');
+      setError(VALIDATION_MESSAGES.email);
       return;
     }
 
@@ -116,8 +117,8 @@ export function ForgotPasswordPage() {
       setStep('email');
       return;
     }
-    if (newPassword.length < 6) {
-      setError('Mật khẩu mới tối thiểu 6 ký tự.');
+    if (newPassword.length < 8) {
+      setError(VALIDATION_MESSAGES.password);
       return;
     }
     if (newPassword !== confirmPassword) {
@@ -141,9 +142,9 @@ export function ForgotPasswordPage() {
   };
 
   return (
-    <section className="w-full rounded-lg border border-slate-200 bg-white p-5 shadow-sm sm:p-8">
+    <section className="min-w-0 w-full rounded-lg border border-slate-200 bg-white p-5 shadow-sm sm:p-8">
       <h1 className="text-2xl font-semibold text-slate-950">Quên mật khẩu</h1>
-      <p className="mt-2 text-sm text-slate-600">
+      <p className="mt-2 break-words text-sm text-slate-600">
         Xác thực email bằng mã OTP trước khi đặt lại mật khẩu.
       </p>
 
@@ -152,7 +153,7 @@ export function ForgotPasswordPage() {
           <div
             key={item.key}
             className={[
-              'flex min-w-0 items-center justify-center whitespace-nowrap text-xs font-medium text-slate-400 sm:text-sm',
+              'flex min-w-0 items-center justify-center break-words text-xs font-medium text-slate-400 sm:text-sm',
               index === currentStepIndex ? 'font-bold text-slate-950' : '',
               index < currentStepIndex ? 'text-emerald-700' : '',
             ].join(' ')}

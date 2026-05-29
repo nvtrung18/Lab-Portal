@@ -9,4 +9,6 @@ public interface EvaluationService {
     EvaluationResponse evaluateProject(Long projectId, EvaluationRequest request);
 
     List<EvaluationResponse> getByProject(Long projectId);
+
+    List<EvaluationResponse> getByGroup(Long groupId);
 }

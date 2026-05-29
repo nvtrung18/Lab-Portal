@@ -1,4 +1,5 @@
 import { EmptyState, ErrorState, LoadingState } from '../../../shared/components';
+import { useCurrentUser } from '../../user/hooks';
 import { usePendingManagerReports } from '../hooks';
 import { ReportItem } from './ReportItem';
 
@@ -8,6 +9,7 @@ interface ManagerPendingReportsProps {
 
 export function ManagerPendingReports({ labId }: ManagerPendingReportsProps) {
   const { data: reports = [], isError, isLoading, refetch } = usePendingManagerReports(labId);
+  const { data: currentUser } = useCurrentUser();
 
   return (
     <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
@@ -29,6 +31,7 @@ export function ManagerPendingReports({ labId }: ManagerPendingReportsProps) {
           {reports.map((report) => (
             <ReportItem
               canComment
+              currentUserId={currentUser?.id}
               key={report.id}
               labId={labId}
               milestoneId={report.milestoneId}

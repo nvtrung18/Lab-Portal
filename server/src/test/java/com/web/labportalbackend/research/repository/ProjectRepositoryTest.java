@@ -46,6 +46,7 @@ class ProjectRepositoryTest {
         GroupEntity group = createGroup("Project Query Group");
         ProjectEntity project = ProjectEntity.builder()
                 .group(group)
+                .lab(group.getLab())
                 .title("Stable Query Project")
                 .description("Repository query verification")
                 .status(ProjectStatus.ONGOING)

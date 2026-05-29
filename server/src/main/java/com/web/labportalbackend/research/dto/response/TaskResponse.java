@@ -13,8 +13,11 @@ public class TaskResponse {
     private Long id;
     private Long milestoneId;
     private Long projectId;
+    private Long groupId;
+    private String milestoneTitle;
     private String title;
     private String description;
+    private String latestReportStatus;
     private Long assignedToStudentId;
     private String assignedToStudentName;
     private String assignedToStudentEmail;

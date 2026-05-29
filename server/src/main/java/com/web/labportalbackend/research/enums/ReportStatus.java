@@ -4,6 +4,7 @@ public enum ReportStatus {
     SUBMITTED,
     LEADER_REVIEWED,
     NEEDS_REVISION,
+    LEADER_REJECTED,
     APPROVED,
-    REJECTED
+    MANAGER_REJECTED
 }

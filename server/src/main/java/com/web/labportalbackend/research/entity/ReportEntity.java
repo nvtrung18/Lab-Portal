@@ -73,11 +73,17 @@ public class ReportEntity extends BaseEntity {
     @Column(name = "evidence_link", length = 1000)
     private String evidenceLink;
 
+    @Column(name = "leader_reviewer_id")
+    private Long leaderReviewerId;
+
     @Column(name = "leader_reviewed_at")
     private Instant leaderReviewedAt;
 
     @Column(name = "leader_comment", columnDefinition = "TEXT")
     private String leaderComment;
+
+    @Column(name = "manager_reviewer_id")
+    private Long managerReviewerId;
 
     @Column(name = "manager_reviewed_at")
     private Instant managerReviewedAt;

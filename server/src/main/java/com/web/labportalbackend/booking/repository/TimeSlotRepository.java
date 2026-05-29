@@ -112,4 +112,33 @@ public interface TimeSlotRepository extends JpaRepository<TimeSlot, Long> {
 
     @Query("SELECT ts FROM TimeSlot ts WHERE ts.endTime <= :cutoff AND ts.deleted = false AND ts.active = true")
     List<TimeSlot> findEndedSlots(@Param("cutoff") Instant cutoff);
+
+    @Query("""
+            SELECT COUNT(ts)
+            FROM TimeSlot ts
+            WHERE ts.startTime >= :startOfDay
+              AND ts.startTime < :startOfNextDay
+              AND ts.deleted = false
+              AND ts.active = true
+            """)
+    long countActiveSlotsStartingBetween(
+            @Param("startOfDay") Instant startOfDay,
+            @Param("startOfNextDay") Instant startOfNextDay
+    );
+
+    @Query("""
+            SELECT COUNT(ts)
+            FROM TimeSlot ts
+            WHERE ts.lab.id = :labId
+              AND ts.startTime >= :startOfDay
+              AND ts.startTime < :startOfNextDay
+              AND ts.deleted = false
+              AND ts.active = true
+            """)
+    long countActiveSlotsStartingBetweenAndLabId(
+            @Param("labId") Long labId,
+            @Param("startOfDay") Instant startOfDay,
+            @Param("startOfNextDay") Instant startOfNextDay
+    );
 }
+

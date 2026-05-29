@@ -2,6 +2,9 @@ package com.web.labportalbackend.research.service.impl;
 
 import com.web.labportalbackend.auth.entity.User;
 import com.web.labportalbackend.auth.repository.UserRepository;
+import com.web.labportalbackend.admin.audit.enums.AuditAction;
+import com.web.labportalbackend.admin.audit.enums.AuditModule;
+import com.web.labportalbackend.admin.audit.service.AuditLogService;
 import com.web.labportalbackend.common.exception.DuplicateMemberException;
 import com.web.labportalbackend.common.exception.ResourceNotFoundException;
 import com.web.labportalbackend.common.enums.LabStatus;
@@ -50,6 +53,7 @@ public class GroupServiceImpl implements GroupService {
     private final ProjectRepository projectRepository;
     private final ResearchTopicRepository topicRepository;
     private final UserRepository userRepository;
+    private final AuditLogService auditLogService;
 
     @Override
     @Transactional
@@ -90,6 +94,14 @@ public class GroupServiceImpl implements GroupService {
         GroupMemberEntity savedLeaderMember = groupMemberRepository.save(leaderMember);
         savedGroup.getMembers().add(savedLeaderMember);
 
+        auditLogService.log(
+                currentUser,
+                AuditAction.CREATE_RESEARCH_GROUP,
+                AuditModule.RESEARCH,
+                "RESEARCH_GROUP",
+                savedGroup.getId(),
+                displayName(currentUser) + " đã tạo nhóm nghiên cứu " + savedGroup.getName() + "."
+        );
         return GroupMapper.toResponse(savedGroup);
     }
 
@@ -131,6 +143,14 @@ public class GroupServiceImpl implements GroupService {
             savedGroup.getMembers().add(savedMember);
         }
 
+        auditLogService.log(
+                currentUser,
+                AuditAction.CREATE_RESEARCH_GROUP,
+                AuditModule.RESEARCH,
+                "RESEARCH_GROUP",
+                savedGroup.getId(),
+                displayName(currentUser) + " đã tạo nhóm nghiên cứu " + savedGroup.getName() + "."
+        );
         return GroupMapper.toResponse(savedGroup);
     }
 
@@ -214,7 +234,16 @@ public class GroupServiceImpl implements GroupService {
         group.setLeader(leader);
 
         groupMemberRepository.saveAll(group.getMembers());
-        return GroupMapper.toResponse(groupRepository.save(group));
+        GroupEntity saved = groupRepository.save(group);
+        auditLogService.log(
+                currentUser,
+                AuditAction.UPDATE_RESEARCH_GROUP,
+                AuditModule.RESEARCH,
+                "RESEARCH_GROUP",
+                saved.getId(),
+                displayName(currentUser) + " đã cập nhật nhóm nghiên cứu " + saved.getName() + "."
+        );
+        return GroupMapper.toResponse(saved);
     }
 
     @Override
@@ -316,26 +345,50 @@ public class GroupServiceImpl implements GroupService {
                 .orElseThrow(() -> new ResourceNotFoundException("Research group", groupId));
         User currentUser = getCurrentUser();
 
+        assertCanAccessGroup(currentUser, group);
+
+        return GroupMapper.toResponse(
+                group,
+                projectRepository.countByGroupIdAndDeletedFalseAndActiveTrue(group.getId()),
+                currentUser.getId()
+        );
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<GroupMemberResponse> getMembers(Long groupId) {
+        GroupEntity group = groupRepository.findByIdAndDeletedFalseAndActiveTrue(groupId)
+                .orElseThrow(() -> new ResourceNotFoundException("Research group", groupId));
+        assertCanAccessGroup(getCurrentUser(), group);
+
+        if (group.getMembers() == null || group.getMembers().isEmpty()) {
+            return List.of();
+        }
+
+        return group.getMembers().stream()
+                .filter(member -> !Boolean.FALSE.equals(member.getActive()) && !Boolean.TRUE.equals(member.getDeleted()))
+                .map(GroupMapper::toMemberResponse)
+                .toList();
+    }
+
+    private void assertCanAccessGroup(User currentUser, GroupEntity group) {
         if (currentUser.hasRole("LAB_MANAGER")) {
             if (group.getProject() == null) {
                 throw new AccessDeniedException("Research group is not assigned to a project");
             }
             assertCanAccessLab(currentUser, group.getProject().getLab());
-        } else if (currentUser.hasRole("STUDENT")) {
-            if (!groupMemberRepository.existsByGroupIdAndUserIdAndActiveTrueAndDeletedFalse(
-                    groupId,
-                    currentUser.getId()
-            )) {
-                throw new AccessDeniedException("Student is not an active member of this research group");
-            }
-        } else {
-            throw new AccessDeniedException("Cannot access research group detail");
+            return;
         }
 
-        return GroupMapper.toResponse(
-                group,
-                projectRepository.countByGroupIdAndDeletedFalseAndActiveTrue(group.getId())
-        );
+        if (currentUser.hasRole("STUDENT") &&
+                groupMemberRepository.existsByGroupIdAndUserIdAndActiveTrueAndDeletedFalse(
+                        group.getId(),
+                        currentUser.getId()
+                )) {
+            return;
+        }
+
+        throw new AccessDeniedException("Cannot access research group detail");
     }
 
     private void validateProjectGroupMembers(CreateGroupRequest request, Long labId) {
@@ -408,5 +461,11 @@ public class GroupServiceImpl implements GroupService {
         }
         return userRepository.findByUsername(authentication.getName())
                 .orElseThrow(() -> new ResourceNotFoundException("User", "username", authentication.getName()));
+    }
+
+    private String displayName(User user) {
+        return user.getFullName() == null || user.getFullName().isBlank()
+                ? user.getUsername()
+                : user.getFullName();
     }
 }

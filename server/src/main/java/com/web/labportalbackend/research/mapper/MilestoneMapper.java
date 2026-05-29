@@ -9,10 +9,16 @@ import lombok.NoArgsConstructor;
 public final class MilestoneMapper {
 
     public static MilestoneResponse toResponse(MilestoneEntity milestone) {
+        return toResponse(milestone, null, null);
+    }
+
+    public static MilestoneResponse toResponse(MilestoneEntity milestone, Integer myTaskCount, Integer myCompletedTaskCount) {
         return MilestoneResponse.builder()
                 .id(milestone.getId())
                 .projectId(milestone.getProject().getId())
                 .projectTitle(milestone.getProject().getTitle())
+                .groupId(milestone.getGroup() != null ? milestone.getGroup().getId() : null)
+                .groupName(milestone.getGroup() != null ? milestone.getGroup().getName() : null)
                 .title(milestone.getTitle() != null ? milestone.getTitle() : milestone.getName())
                 .description(milestone.getDescription())
                 .assignedToStudentId(milestone.getAssignedToStudent() != null
@@ -28,6 +34,8 @@ public final class MilestoneMapper {
                 .progressPercent(milestone.getProgressPercent() != null ? milestone.getProgressPercent() : 0)
                 .evidenceUrl(milestone.getEvidenceUrl())
                 .managerComment(milestone.getManagerComment())
+                .myTaskCount(myTaskCount)
+                .myCompletedTaskCount(myCompletedTaskCount)
                 .createdById(milestone.getCreatedBy() != null ? milestone.getCreatedBy().getId() : null)
                 .createdByName(milestone.getCreatedBy() != null
                         ? milestone.getCreatedBy().getFullName() != null

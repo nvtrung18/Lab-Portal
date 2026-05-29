@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 
+import { LoadingState } from '../../../shared/components';
 import { getManagedLabId } from '../../../shared/utils/membership';
 import { useCreatePenalty, useSlotPenalties } from '../../penalty/hooks';
 import { formatPenaltyType } from '../../penalty/utils';
@@ -114,7 +115,7 @@ export function SlotDetailPage() {
 
       <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
         {isLoadingSlot ? (
-          <div className="h-20 animate-pulse rounded bg-slate-100" />
+          <LoadingState />
         ) : slot ? (
           <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <div>

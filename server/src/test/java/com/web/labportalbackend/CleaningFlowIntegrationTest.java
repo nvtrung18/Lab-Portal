@@ -59,6 +59,9 @@ class CleaningFlowIntegrationTest {
         User staff = new User();
         staff.setId(3L);
         staff.setUsername("staff");
+        Role studentRole = new Role();
+        studentRole.setName("STUDENT");
+        staff.addRole(studentRole);
 
         SecurityContextHolder.getContext().setAuthentication(
                 new UsernamePasswordAuthenticationToken("manager", null)

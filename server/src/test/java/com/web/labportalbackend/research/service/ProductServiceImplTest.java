@@ -1,23 +1,52 @@
 package com.web.labportalbackend.research.service;
 
+import com.web.labportalbackend.auth.entity.Role;
+import com.web.labportalbackend.auth.entity.User;
+import com.web.labportalbackend.auth.repository.UserRepository;
+import com.web.labportalbackend.admin.audit.service.AuditLogService;
+import com.web.labportalbackend.admin.systemconfig.dto.SystemConfigResponse;
+import com.web.labportalbackend.admin.systemconfig.service.SystemConfigService;
+import com.web.labportalbackend.lab.repository.LaboratoryRepository;
+import com.web.labportalbackend.research.dto.request.SubmitProductRequest;
 import com.web.labportalbackend.research.dto.response.ProductResponse;
+import com.web.labportalbackend.research.entity.GroupEntity;
 import com.web.labportalbackend.research.entity.ProductEntity;
+import com.web.labportalbackend.research.entity.ProjectEntity;
+import com.web.labportalbackend.research.enums.GroupRole;
+import com.web.labportalbackend.research.enums.ProductStatus;
+import com.web.labportalbackend.research.enums.ProductType;
+import com.web.labportalbackend.research.repository.GroupMemberRepository;
+import com.web.labportalbackend.research.repository.GroupRepository;
 import com.web.labportalbackend.research.repository.ProductRepository;
 import com.web.labportalbackend.research.repository.ProjectRepository;
 import com.web.labportalbackend.research.service.impl.ProductServiceImpl;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.test.util.ReflectionTestUtils;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Instant;
+import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -31,21 +60,88 @@ class ProductServiceImplTest {
     private ProjectRepository projectRepository;
 
     @Mock
+    private GroupRepository groupRepository;
+
+    @Mock
+    private GroupMemberRepository groupMemberRepository;
+
+    @Mock
+    private LaboratoryRepository laboratoryRepository;
+
+    @Mock
+    private UserRepository userRepository;
+
+    @Mock
     private LogService logService;
+
+    @Mock
+    private ResearchLogService researchLogService;
+
+    @Mock
+    private SystemConfigService systemConfigService;
+
+    @Mock
+    private AuditLogService auditLogService;
 
     @InjectMocks
     private ProductServiceImpl productService;
 
+    @TempDir
+    Path tempDir;
+
+    @BeforeEach
+    void setUp() {
+        SystemConfigResponse.UploadConfig uploadConfig = new SystemConfigResponse.UploadConfig(
+                10, 10,
+                List.of("pdf", "doc", "docx"),
+                List.of("pdf", "zip", "csv", "xlsx", "mp4", "ppt", "pptx")
+        );
+        SystemConfigResponse config = new SystemConfigResponse(null, null, null, uploadConfig, null);
+        lenient().when(systemConfigService.getConfig()).thenReturn(config);
+    }
+
+    @AfterEach
+    void tearDown() {
+        SecurityContextHolder.clearContext();
+    }
+
     @Test
-    void submitProduct_uploadsFileAndCreatesProduct() {
+    void submitProduct_uploadsFileAndCreatesVersionedSubmittedProduct() throws Exception {
+        ReflectionTestUtils.setField(productService, "productStoragePath", tempDir.toString());
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken("student", null, List.of())
+        );
+        User student = new User();
+        student.setId(5L);
+        student.setUsername("student");
+        student.addRole(new Role("STUDENT", "Student"));
+
+        SubmitProductRequest request = new SubmitProductRequest();
+        request.setProjectId(10L);
+        request.setProductType(ProductType.SOURCE_CODE);
+        request.setTitle("Source code demo nhận diện khuôn mặt");
+        request.setDescription("Demo source");
+
         MockMultipartFile file = new MockMultipartFile(
                 "file",
-                "final.zip",
+                "..\\final.zip",
                 "application/zip",
                 "artifact".getBytes()
         );
 
-        when(projectRepository.existsById(10L)).thenReturn(true);
+        ProjectEntity project = ProjectEntity.builder().title("Project").build();
+        project.setId(10L);
+
+        when(userRepository.findByUsername("student")).thenReturn(Optional.of(student));
+        when(projectRepository.findByIdAndDeletedFalseAndActiveTrue(10L))
+                .thenReturn(Optional.of(project));
+        when(groupMemberRepository.findActiveRoleByProjectIdAndUserId(10L, 5L))
+                .thenReturn(Optional.of(GroupRole.MEMBER));
+        when(productRepository.findMaxPersonalVersionByProjectIdAndSubmitterAndProductType(
+                10L,
+                5L,
+                ProductType.SOURCE_CODE
+        )).thenReturn(Optional.of(1));
         when(productRepository.save(any(ProductEntity.class))).thenAnswer(invocation -> {
             ProductEntity product = invocation.getArgument(0);
             product.setId(100L);
@@ -53,18 +149,57 @@ class ProductServiceImplTest {
             return product;
         });
 
-        ProductResponse response = productService.submitProduct(10L, file, "Final Product");
+        ProductResponse response = productService.submitProduct(request, file);
 
         assertEquals(100L, response.getId());
         assertEquals(10L, response.getProjectId());
-        assertEquals("Final Product", response.getName());
-        assertTrue(response.getFileUrl().startsWith("local://research-products/10/"));
-        assertTrue(response.getFileUrl().endsWith("-final.zip"));
+        assertEquals(ProductType.SOURCE_CODE, response.getProductType());
+        assertEquals("Source code demo nhận diện khuôn mặt", response.getTitle());
+        assertEquals(2, response.getVersion());
+        assertEquals(ProductStatus.SUBMITTED, response.getStatus());
+        assertEquals("/storage/products/10/2.zip", response.getFileUrl());
+        assertTrue(Files.exists(tempDir.resolve("10").resolve("2.zip")));
 
         ArgumentCaptor<ProductEntity> captor = ArgumentCaptor.forClass(ProductEntity.class);
         verify(productRepository).save(captor.capture());
         assertEquals(10L, captor.getValue().getProjectId());
-        assertEquals("Final Product", captor.getValue().getName());
-        verify(logService).logAction(10L, null, "SUBMIT_PRODUCT", "Submitted product: Final Product");
+        assertEquals(5L, captor.getValue().getSubmittedById());
+        assertEquals("final.zip", captor.getValue().getFileName());
+        verify(logService).logAction(10L, 5L, "SUBMIT_PRODUCT",
+                "Submitted product: Source code demo nhận diện khuôn mặt v2");
+    }
+
+    @Test
+    void submitProduct_rejectsMemberSubmittingGroupProduct() {
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken("member", null, List.of())
+        );
+        User member = new User();
+        member.setId(6L);
+        member.setUsername("member");
+        member.addRole(new Role("STUDENT", "Student"));
+
+        SubmitProductRequest request = new SubmitProductRequest();
+        request.setProjectId(10L);
+        request.setGroupId(20L);
+        request.setProductType(ProductType.PAPER);
+        request.setTitle("Paper");
+        request.setExternalLink("https://example.com/paper");
+
+        ProjectEntity project = ProjectEntity.builder().title("Project").build();
+        project.setId(10L);
+        GroupEntity group = GroupEntity.builder().project(project).name("Group").leader(member).build();
+        group.setId(20L);
+
+        when(userRepository.findByUsername("member")).thenReturn(Optional.of(member));
+        when(projectRepository.findByIdAndDeletedFalseAndActiveTrue(10L))
+                .thenReturn(Optional.of(project));
+        when(groupRepository.findByIdAndDeletedFalseAndActiveTrue(20L))
+                .thenReturn(Optional.of(group));
+        when(groupMemberRepository.findActiveRoleByGroupIdAndUserId(20L, 6L))
+                .thenReturn(Optional.of(GroupRole.MEMBER));
+
+        assertThrows(AccessDeniedException.class, () -> productService.submitProduct(request, null));
+        verify(productRepository, never()).save(any(ProductEntity.class));
     }
 }

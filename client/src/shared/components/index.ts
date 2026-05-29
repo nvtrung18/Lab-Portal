@@ -1,5 +1,6 @@
 export * from './Button';
 export * from './DataState';
+export * from './ErrorBoundary';
 export * from './Forbidden';
 export * from './ForbiddenPage';
 export * from './Modal';

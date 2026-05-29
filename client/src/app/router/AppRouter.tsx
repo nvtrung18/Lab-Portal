@@ -5,6 +5,7 @@ import {
   AdminLabsPage,
   AdminSettingsPage,
   AdminUsersPage,
+  AdminAuditLogPage,
 } from '../../modules/admin/pages';
 import {
   ForgotPasswordPage,
@@ -13,7 +14,7 @@ import {
   ResetPasswordPage,
   VerifyRegisterPage,
 } from '../../modules/auth/pages';
-import { BookingPage, CheckInPage, LabSlotsPage, MyBookingsPage, SlotDetailPage } from '../../modules/booking/pages';
+import { CheckInPage, LabSlotsPage, MyBookingsPage, SlotDetailPage } from '../../modules/booking/pages';
 import {
   ApplicationListPage,
   CleaningPage,
@@ -22,7 +23,7 @@ import {
   LabOverviewPage,
 } from '../../modules/lab/pages';
 import { ManagerComplaintsPage, PenaltyPage } from '../../modules/penalty/pages';
-import { ResearchPage, ResearchProjectDetailPage } from '../../modules/research/pages';
+import { ResearchPage, ResearchProjectDetailPage, ResearchGroupDetailPage } from '../../modules/research/pages';
 import { OtherPage, ProfilePage } from '../../modules/user/pages';
 import { AdminLayout, AuthLayout, MainLayout } from '../../layouts';
 import { ForbiddenPage, NotFoundPage } from '../../shared/components';
@@ -43,6 +44,7 @@ export function AppRouter() {
       </Route>
 
       <Route path="/403" element={<ForbiddenPage />} />
+      <Route path="/404" element={<NotFoundPage />} />
 
       <Route element={<ProtectedRoute allowedRoles={[ADMIN]} />}>
         <Route path="/admin" element={<AdminLayout />}>
@@ -52,6 +54,7 @@ export function AppRouter() {
           <Route path="labs" element={<AdminLabsPage />} />
           <Route path="system-config" element={<AdminSettingsPage />} />
           <Route path="settings" element={<Navigate to="/admin/system-config" replace />} />
+          <Route path="audit-logs" element={<AdminAuditLogPage />} />
         </Route>
       </Route>
 
@@ -79,6 +82,7 @@ export function AppRouter() {
           <Route element={<ActiveMembershipRoute allowLabManager />}>
             <Route path="research" element={<ResearchPage />} />
             <Route path="research/projects/:projectId" element={<ResearchProjectDetailPage />} />
+            <Route path="research/projects/:projectId/groups/:groupId" element={<ResearchGroupDetailPage />} />
           </Route>
         </Route>
       </Route>
@@ -90,7 +94,8 @@ export function AppRouter() {
           <Route path="lab-info" element={<Navigate to="/app/lab-overview" replace />} />
           <Route path="lab-slots" element={<LabSlotsPage />} />
           <Route path="lab-slots/:slotId" element={<SlotDetailPage />} />
-          <Route path="lab-bookings" element={<BookingPage />} />
+          <Route path="lab-bookings" element={<Navigate to="/app/lab-slots" replace />} />
+          <Route path="lab-bokings" element={<Navigate to="/app/lab-slots" replace />} />
           <Route path="checkin-scan" element={<CheckInPage />} />
           <Route path="lab-members" element={<LabMembersPage />} />
           <Route path="cleaning" element={<CleaningPage />} />
@@ -99,7 +104,7 @@ export function AppRouter() {
       </Route>
 
       <Route path="/" element={<Navigate to="/app/profile" replace />} />
-      <Route path="*" element={<NotFoundPage />} />
+      <Route path="*" element={<Navigate to="/404" replace />} />
     </Routes>
   );
 }

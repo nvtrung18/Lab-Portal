@@ -9,7 +9,9 @@ import com.web.labportalbackend.lab.dto.request.UpdateLabStatusRequest;
 import com.web.labportalbackend.lab.dto.response.ApplicationResponseDTO;
 import com.web.labportalbackend.lab.dto.response.LabMemberResponse;
 import com.web.labportalbackend.lab.dto.response.LabResponse;
+import com.web.labportalbackend.lab.dto.response.LabDashboardStatsResponse;
 import com.web.labportalbackend.lab.entity.Membership;
+
 import com.web.labportalbackend.lab.entity.Laboratory;
 import com.web.labportalbackend.lab.repository.LaboratoryRepository;
 import com.web.labportalbackend.lab.repository.MembershipRepository;
@@ -77,6 +79,19 @@ public class LaboratoryController {
     public ResponseEntity<Response<LabResponse>> getLabById(@PathVariable Long id) {
         LabResponse laboratory = labService.getLabById(id);
         return ResponseEntity.ok(Response.ok("Laboratory retrieved successfully", laboratory));
+    }
+
+    @GetMapping("/{id}/dashboard/stats")
+    @Operation(summary = "Get laboratory dashboard statistics")
+    @SecurityRequirement(name = "Bearer Authentication")
+    @PreAuthorize("hasRole('LAB_MANAGER')")
+    public ResponseEntity<Response<LabDashboardStatsResponse>> getLabDashboardStats(
+            @PathVariable Long id,
+            Authentication authentication) {
+        // Assert the user can manage/view this lab
+        assertCanViewLabMembers(id, authentication);
+        LabDashboardStatsResponse stats = labService.getLabDashboardStats(id);
+        return ResponseEntity.ok(Response.ok("Laboratory dashboard statistics retrieved successfully", stats));
     }
 
     @GetMapping("/{id}/members")

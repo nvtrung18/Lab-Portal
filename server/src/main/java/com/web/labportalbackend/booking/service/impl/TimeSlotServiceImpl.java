@@ -2,6 +2,11 @@ package com.web.labportalbackend.booking.service.impl;
 
 import com.web.labportalbackend.auth.entity.User;
 import com.web.labportalbackend.auth.repository.UserRepository;
+import com.web.labportalbackend.admin.systemconfig.dto.SystemConfigResponse;
+import com.web.labportalbackend.admin.systemconfig.service.SystemConfigService;
+import com.web.labportalbackend.admin.audit.enums.AuditAction;
+import com.web.labportalbackend.admin.audit.enums.AuditModule;
+import com.web.labportalbackend.admin.audit.service.AuditLogService;
 import com.web.labportalbackend.booking.dto.request.CancelTimeSlotRequest;
 import com.web.labportalbackend.booking.dto.request.CreateTimeSlotRequest;
 import com.web.labportalbackend.booking.dto.response.TimeSlotResponse;
@@ -28,6 +33,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.time.Instant;
 
 @Slf4j
 @Service
@@ -43,6 +49,8 @@ public class TimeSlotServiceImpl implements TimeSlotService {
     private final UserRepository userRepository;
     private final BookingRepository bookingRepository;
     private final EmailService emailService;
+    private final SystemConfigService systemConfigService;
+    private final AuditLogService auditLogService;
 
     @Override
     @Transactional
@@ -66,7 +74,16 @@ public class TimeSlotServiceImpl implements TimeSlotService {
                 .status(status)
                 .build();
 
-        return toResponse(timeSlotRepository.save(slot));
+        TimeSlot saved = timeSlotRepository.save(slot);
+        auditLogService.log(
+                currentUser,
+                AuditAction.CREATE_SLOT,
+                AuditModule.BOOKING,
+                "TIME_SLOT",
+                saved.getId(),
+                "Manager đã tạo ca sử dụng cho " + lab.getLabName() + "."
+        );
+        return toResponse(saved);
     }
 
     @Override
@@ -77,7 +94,12 @@ public class TimeSlotServiceImpl implements TimeSlotService {
 
         assertCanViewSlots(getCurrentUser(), lab);
 
-        return timeSlotRepository.findUsableByLabId(labId, java.time.Instant.now(), HIDDEN_SLOT_STATUSES).stream()
+        SystemConfigResponse.BookingConfig bookingConfig = systemConfig().booking();
+        Instant cutoff = bookingConfig.hidePastSlots() ? Instant.now() : Instant.EPOCH;
+        List<TimeSlotStatus> hiddenStatuses = bookingConfig.hideCancelledSlots()
+                ? HIDDEN_SLOT_STATUSES
+                : List.of(TimeSlotStatus.INACTIVE, TimeSlotStatus.ARCHIVED);
+        return timeSlotRepository.findUsableByLabId(labId, cutoff, hiddenStatuses).stream()
                 .map(this::toResponse)
                 .toList();
     }
@@ -126,6 +148,15 @@ public class TimeSlotServiceImpl implements TimeSlotService {
         if (Boolean.TRUE.equals(request.getNotifyByEmail())) {
             notifySlotCancelled(currentUser, savedSlot, affectedBookings, request.getReason());
         }
+
+        auditLogService.log(
+                currentUser,
+                AuditAction.CANCEL_SLOT,
+                AuditModule.BOOKING,
+                "TIME_SLOT",
+                savedSlot.getId(),
+                "Manager đã hủy ca sử dụng của " + savedSlot.getLab().getLabName() + "."
+        );
 
         return toResponse(savedSlot);
     }
@@ -230,6 +261,10 @@ public class TimeSlotServiceImpl implements TimeSlotService {
                 BookingStatus.PENDING_APPROVAL
         );
         return TimeSlotMapper.toResponse(slot, approvedCount, checkedInCount, pendingCount);
+    }
+
+    private SystemConfigResponse systemConfig() {
+        return systemConfigService.getConfig();
     }
 
     private void notifySlotCancelled(

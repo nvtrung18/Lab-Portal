@@ -16,5 +16,7 @@ public interface TaskService {
 
     List<TaskResponse> getByGroup(Long groupId);
 
+    List<TaskResponse> getMyTasksInGroup(Long groupId);
+
     TaskResponse updateStatus(Long taskId, UpdateTaskStatusRequest request);
 }

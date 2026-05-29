@@ -9,14 +9,18 @@ import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import java.time.LocalDate;
 
 @Getter
 @Setter
 public class CreateMilestoneRequest {
 
-    @NotNull(message = "Project ID is required")
     private Long projectId;
+
+    private Long groupId;
 
     @NotBlank(message = "Milestone title is required")
     @Size(min = 3, max = 200, message = "Milestone title must be between 3 and 200 characters")

@@ -10,14 +10,20 @@ import lombok.NoArgsConstructor;
 public final class TaskMapper {
 
     public static TaskResponse toResponse(TaskEntity task) {
-        return toResponse(task, null);
+        return toResponse(task, null, null, null, null);
     }
 
     public static TaskResponse toResponse(TaskEntity task, Long projectId) {
+        return toResponse(task, projectId, null, null, null);
+    }
+
+    public static TaskResponse toResponse(TaskEntity task, Long projectId, Long groupId, String milestoneTitle, String latestReportStatus) {
         return TaskResponse.builder()
                 .id(task.getId())
                 .milestoneId(task.getMilestoneId())
                 .projectId(projectId)
+                .groupId(groupId)
+                .milestoneTitle(milestoneTitle)
                 .title(task.getTitle())
                 .description(task.getDescription())
                 .assignedToStudentId(task.getAssignedToStudent() != null
@@ -32,6 +38,7 @@ public final class TaskMapper {
                 .deadline(task.getDeadline())
                 .status(toPublicStatus(task.getStatus()))
                 .progressPercent(task.getProgressPercent() != null ? task.getProgressPercent() : 0)
+                .latestReportStatus(latestReportStatus)
                 .createdAt(task.getCreatedAt())
                 .updatedAt(task.getUpdatedAt())
                 .build();

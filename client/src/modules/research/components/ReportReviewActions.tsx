@@ -1,9 +1,10 @@
 import { useState } from 'react';
 
 import { Button } from '../../../shared/components';
-import { useLeaderReviewReport, useManagerReviewReport } from '../hooks';
+import { useLeaderReviewReport } from '../hooks';
 import type { TaskBoardRole } from '../taskBoardHelpers';
-import type { ManagerReportDecision, ResearchReport } from '../types';
+import type { LeaderReportDecision, ResearchReport } from '../types';
+import { LeaderReviewModal } from './LeaderReviewModal';
 
 interface ReportReviewActionsProps {
   report: ResearchReport;
@@ -20,80 +21,40 @@ export function ReportReviewActions({
   milestoneId,
   projectId,
   groupId,
-  labId,
 }: ReportReviewActionsProps) {
-  const [note, setNote] = useState('');
-  const leaderReview = useLeaderReviewReport(report.id, milestoneId, projectId, groupId);
-  const managerReview = useManagerReviewReport(report.id, milestoneId, projectId, labId);
-  const isLeaderAction = role === 'GROUP_LEADER'
-    && (report.status === 'SUBMITTED' || report.status === 'NEEDS_REVISION');
-  const isManagerAction = role === 'LAB_MANAGER' && report.status === 'LEADER_REVIEWED';
+  const [decision, setDecision] = useState<LeaderReportDecision | null>(null);
+  const leaderReview = useLeaderReviewReport(report.id, milestoneId, projectId, groupId, report.taskId);
+  const isLeaderAction = role === 'GROUP_LEADER' && report.status === 'SUBMITTED';
 
-  if (!isLeaderAction && !isManagerAction) {
+  if (!isLeaderAction) {
     return null;
   }
 
-  function reviewAsManager(decision: ManagerReportDecision) {
-    const comment = note.trim();
-    if (!comment) {
-      return;
-    }
-    managerReview.mutate({ decision, comment }, { onSuccess: () => setNote('') });
-  }
-
   return (
-    <section className="mt-4 rounded-md border border-amber-200 bg-amber-50 p-4">
-      <h6 className="text-sm font-semibold text-slate-900">
-        {isLeaderAction ? 'Kiểm tra báo cáo của thành viên' : 'Duyệt cuối báo cáo'}
-      </h6>
-      <textarea
-        className="mt-3 min-h-20 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm"
-        maxLength={5000}
-        placeholder={isLeaderAction ? 'Nhập ghi chú kiểm tra...' : 'Nhập nhận xét duyệt báo cáo...'}
-        value={note}
-        onChange={(event) => setNote(event.target.value)}
-      />
+    <section className="mt-4 rounded-md border border-amber-200 bg-amber-50/50 p-4">
+      <h6 className="text-sm font-semibold text-slate-900">Kiểm tra báo cáo của thành viên</h6>
       <div className="mt-3 flex flex-wrap gap-2">
-        {isLeaderAction ? (
-          <Button
-            disabled={!note.trim()}
-            loading={leaderReview.isPending}
-            onClick={() => leaderReview.mutate(note.trim(), { onSuccess: () => setNote('') })}
-            size="sm"
-          >
-            Đánh dấu đã kiểm tra
-          </Button>
-        ) : (
-          <>
-            <Button
-              disabled={!note.trim()}
-              loading={managerReview.isPending}
-              onClick={() => reviewAsManager('APPROVE')}
-              size="sm"
-            >
-              Duyệt báo cáo
-            </Button>
-            <Button
-              disabled={!note.trim()}
-              loading={managerReview.isPending}
-              onClick={() => reviewAsManager('REQUEST_REVISION')}
-              size="sm"
-              variant="outline"
-            >
-              Yêu cầu chỉnh sửa
-            </Button>
-            <Button
-              disabled={!note.trim()}
-              loading={managerReview.isPending}
-              onClick={() => reviewAsManager('REJECT')}
-              size="sm"
-              variant="danger"
-            >
-              Từ chối
-            </Button>
-          </>
-        )}
+        <Button onClick={() => setDecision('ACCEPT')} size="sm">
+          Duyệt báo cáo
+        </Button>
+        <Button onClick={() => setDecision('REQUEST_REVISION')} size="sm" variant="outline">
+          Yêu cầu chỉnh sửa
+        </Button>
+        <Button onClick={() => setDecision('REJECT')} size="sm" variant="danger">
+          Từ chối
+        </Button>
       </div>
+      <LeaderReviewModal
+        decision={decision}
+        isOpen={decision !== null}
+        isSubmitting={leaderReview.isPending}
+        onClose={() => setDecision(null)}
+        onSubmit={(nextDecision, comment) =>
+          leaderReview.mutate(
+            { decision: nextDecision, comment },
+            { onSuccess: () => setDecision(null) },
+          )}
+      />
     </section>
   );
 }

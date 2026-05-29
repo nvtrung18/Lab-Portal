@@ -1,6 +1,7 @@
 package com.web.labportalbackend.research.repository;
 
 import com.web.labportalbackend.research.entity.ReportEntity;
+import com.web.labportalbackend.research.enums.ReportStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -27,6 +28,11 @@ public interface ReportRepository extends JpaRepository<ReportEntity, Long> {
 
     List<ReportEntity> findByTaskIdOrderByVersionDesc(Long taskId);
 
+    Optional<ReportEntity> findTopByTaskIdAndSubmittedByIdAndDeletedFalseAndActiveTrueOrderByVersionDescCreatedAtDesc(
+            Long taskId,
+            Long submittedById
+    );
+
     List<ReportEntity> findByMilestoneIdOrderByCreatedAtDescVersionDesc(Long milestoneId);
 
     List<ReportEntity> findByMilestoneIdAndSubmittedByIdOrderByCreatedAtDescVersionDesc(
@@ -36,17 +42,71 @@ public interface ReportRepository extends JpaRepository<ReportEntity, Long> {
 
     List<ReportEntity> findByGroupIdAndDeletedFalseAndActiveTrueOrderByCreatedAtDescVersionDesc(Long groupId);
 
+    List<ReportEntity> findByGroupIdAndSubmittedByIdAndDeletedFalseAndActiveTrueOrderByCreatedAtDescVersionDesc(Long groupId, Long submittedById);
+
+    @Query("""
+            SELECT r
+            FROM ReportEntity r
+            JOIN MilestoneEntity m ON m.id = r.milestoneId
+            LEFT JOIN TaskEntity t ON t.id = r.taskId
+            WHERE m.group.id = :groupId
+              AND r.deleted = false
+              AND r.active = true
+              AND m.deleted = false
+              AND m.active = true
+              AND (
+                    r.taskId IS NULL
+                    OR (
+                        t.deleted = false
+                        AND t.active = true
+                        AND t.milestoneId = m.id
+                    )
+              )
+            ORDER BY r.createdAt DESC, r.version DESC
+            """)
+    List<ReportEntity> findReportsByGroupScope(@Param("groupId") Long groupId);
+
+    @Query("""
+            SELECT r
+            FROM ReportEntity r
+            JOIN MilestoneEntity m ON m.id = r.milestoneId
+            LEFT JOIN TaskEntity t ON t.id = r.taskId
+            WHERE m.group.id = :groupId
+              AND r.submittedById = :submittedById
+              AND r.deleted = false
+              AND r.active = true
+              AND m.deleted = false
+              AND m.active = true
+              AND (
+                    r.taskId IS NULL
+                    OR (
+                        t.deleted = false
+                        AND t.active = true
+                        AND t.milestoneId = m.id
+                    )
+              )
+            ORDER BY r.createdAt DESC, r.version DESC
+            """)
+    List<ReportEntity> findOwnReportsByGroupScope(
+            @Param("groupId") Long groupId,
+            @Param("submittedById") Long submittedById
+    );
+
     @Query("""
             SELECT r
             FROM ReportEntity r
             JOIN MilestoneEntity m ON m.id = r.milestoneId
             WHERE m.project.lab.id = :labId
-              AND r.status = com.web.labportalbackend.research.enums.ReportStatus.LEADER_REVIEWED
+              AND (r.status = com.web.labportalbackend.research.enums.ReportStatus.LEADER_REVIEWED
+                   OR (:requireLeaderReview = false AND r.status = com.web.labportalbackend.research.enums.ReportStatus.SUBMITTED))
               AND r.deleted = false
               AND r.active = true
             ORDER BY r.createdAt ASC
             """)
-    List<ReportEntity> findPendingManagerReviewByLabId(@Param("labId") Long labId);
+    List<ReportEntity> findPendingManagerReviewByLabId(
+            @Param("labId") Long labId,
+            @Param("requireLeaderReview") boolean requireLeaderReview
+    );
 
     boolean existsBySubmissionScopeAndVersionGreaterThan(String submissionScope, Integer version);
 
@@ -103,4 +163,22 @@ public interface ReportRepository extends JpaRepository<ReportEntity, Long> {
             WHERE m.project.id = :projectId
             """)
     long countByProjectId(@Param("projectId") Long projectId);
+
+    @Query("""
+            SELECT COUNT(r)
+            FROM ReportEntity r
+            WHERE r.status IN :statuses
+              AND r.deleted = false
+              AND r.active = true
+            """)
+    long countActiveByStatusIn(@Param("statuses") List<ReportStatus> statuses);
+
+    @Query("""
+            SELECT r
+            FROM ReportEntity r
+            WHERE r.taskId IN :taskIds
+              AND r.deleted = false
+              AND r.active = true
+            """)
+    List<ReportEntity> findActiveReportsByTaskIds(@Param("taskIds") List<Long> taskIds);
 }

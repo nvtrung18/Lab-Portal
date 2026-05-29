@@ -27,6 +27,7 @@ public class GroupResponse {
     private GroupStatus status;
     private Long leaderId;
     private GroupRole myRole;
+    private GroupRole myGroupRole;
     private String createdByName;
     private Integer memberCount;
     private Long projectCount;

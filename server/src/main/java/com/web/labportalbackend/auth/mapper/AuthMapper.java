@@ -17,6 +17,10 @@ import java.util.stream.Collectors;
 public final class AuthMapper {
 
     public static UserResponse toUserResponse(User user) {
+        return toUserResponse(user, null, null);
+    }
+
+    public static UserResponse toUserResponse(User user, Long managedLabId, String managedLabName) {
         return UserResponse.builder()
                 .id(user.getId())
                 .email(user.getEmail())
@@ -29,6 +33,8 @@ public final class AuthMapper {
                         .collect(Collectors.toSet()))
                 .createdAt(user.getCreatedAt())
                 .updatedAt(user.getUpdatedAt())
+                .managedLabId(managedLabId)
+                .managedLabName(managedLabName)
                 .build();
     }
 

@@ -1,3 +1,4 @@
+import { EmptyState, ErrorState, LoadingState } from '../../../shared/components';
 import { CheckinButton } from '../components';
 import { useCancelBooking, useMyBookings } from '../hooks';
 import { getBookingStatusLabel, isCancellableBooking } from '../utils';
@@ -26,22 +27,15 @@ export function MyBookingsPage() {
   if (isLoading) {
     return (
       <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-        <div className="h-6 w-48 animate-pulse rounded bg-slate-200" />
-        <div className="mt-5 space-y-3">
-          <div className="h-24 animate-pulse rounded bg-slate-100" />
-          <div className="h-24 animate-pulse rounded bg-slate-100" />
-        </div>
+        <LoadingState />
       </section>
     );
   }
 
   if (isError) {
     return (
-      <section className="rounded-lg border border-red-200 bg-white p-6 text-sm text-red-700 shadow-sm">
-        Không thể tải danh sách đăng ký.
-        <button className="ml-3 font-semibold underline" type="button" onClick={() => refetch()}>
-          Tải lại
-        </button>
+      <section className="rounded-lg border border-red-200 bg-white p-6 shadow-sm">
+        <ErrorState onRetry={() => refetch()} />
       </section>
     );
   }
@@ -56,9 +50,9 @@ export function MyBookingsPage() {
       </div>
 
       {!bookings.length ? (
-        <div className="rounded-lg border border-slate-200 bg-white p-6 text-sm text-slate-600 shadow-sm">
+        <EmptyState>
           Bạn chưa có đăng ký sử dụng PTN nào.
-        </div>
+        </EmptyState>
       ) : (
         <div className="grid gap-4 lg:grid-cols-2">
           {bookings.map((booking) => {

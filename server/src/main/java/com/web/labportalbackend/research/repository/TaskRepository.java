@@ -88,6 +88,34 @@ public interface TaskRepository extends JpaRepository<TaskEntity, Long> {
             @Param("assigneeId") Long assigneeId
     );
 
+    @EntityGraph(attributePaths = "assignedToStudent")
+    @Query("""
+            SELECT t
+            FROM TaskEntity t
+            JOIN MilestoneEntity m ON m.id = t.milestoneId
+            WHERE m.group.id = :groupId
+              AND t.deleted = false
+              AND t.active = true
+            ORDER BY t.deadline ASC, t.createdAt ASC
+            """)
+    List<TaskEntity> findBoardTasksByGroupId(@Param("groupId") Long groupId);
+
+    @EntityGraph(attributePaths = "assignedToStudent")
+    @Query("""
+            SELECT t
+            FROM TaskEntity t
+            JOIN MilestoneEntity m ON m.id = t.milestoneId
+            WHERE m.group.id = :groupId
+              AND t.assigneeId = :assigneeId
+              AND t.deleted = false
+              AND t.active = true
+            ORDER BY t.deadline ASC, t.createdAt ASC
+            """)
+    List<TaskEntity> findAssignedBoardTasksByGroupId(
+            @Param("groupId") Long groupId,
+            @Param("assigneeId") Long assigneeId
+    );
+
     @Query("""
             SELECT COUNT(t)
             FROM TaskEntity t
@@ -104,6 +132,33 @@ public interface TaskRepository extends JpaRepository<TaskEntity, Long> {
               AND t.status = com.web.labportalbackend.research.enums.TaskStatus.DONE
             """)
     long countDoneByProjectId(@Param("projectId") Long projectId);
+
+    @Query("""
+            SELECT COUNT(t)
+            FROM TaskEntity t
+            WHERE t.milestoneId = :milestoneId
+              AND t.assigneeId = :assigneeId
+              AND t.deleted = false
+              AND t.active = true
+            """)
+    int countByMilestoneIdAndAssigneeId(
+            @Param("milestoneId") Long milestoneId,
+            @Param("assigneeId") Long assigneeId
+    );
+
+    @Query("""
+            SELECT COUNT(t)
+            FROM TaskEntity t
+            WHERE t.milestoneId = :milestoneId
+              AND t.assigneeId = :assigneeId
+              AND t.status = com.web.labportalbackend.research.enums.TaskStatus.DONE
+              AND t.deleted = false
+              AND t.active = true
+            """)
+    int countDoneByMilestoneIdAndAssigneeId(
+            @Param("milestoneId") Long milestoneId,
+            @Param("assigneeId") Long assigneeId
+    );
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @EntityGraph(attributePaths = "assignedToStudent")

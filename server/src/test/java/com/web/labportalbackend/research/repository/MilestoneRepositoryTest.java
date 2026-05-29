@@ -79,6 +79,7 @@ class MilestoneRepositoryTest {
 
         ProjectEntity project = ProjectEntity.builder()
                 .group(group)
+                .lab(lab)
                 .title("Milestone Project")
                 .description("Timeline project")
                 .status(ProjectStatus.ONGOING)

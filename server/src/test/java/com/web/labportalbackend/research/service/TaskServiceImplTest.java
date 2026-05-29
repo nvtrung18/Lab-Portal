@@ -1,5 +1,7 @@
 package com.web.labportalbackend.research.service;
 
+import com.web.labportalbackend.admin.systemconfig.dto.SystemConfigResponse;
+import com.web.labportalbackend.admin.systemconfig.service.SystemConfigService;
 import com.web.labportalbackend.auth.entity.Role;
 import com.web.labportalbackend.auth.entity.User;
 import com.web.labportalbackend.auth.repository.UserRepository;
@@ -23,6 +25,7 @@ import com.web.labportalbackend.research.repository.MilestoneRepository;
 import com.web.labportalbackend.research.repository.ReportRepository;
 import com.web.labportalbackend.research.repository.TaskRepository;
 import com.web.labportalbackend.research.service.impl.TaskServiceImpl;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -42,6 +45,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.lenient;
 
 @ExtendWith(MockitoExtension.class)
 class TaskServiceImplTest {
@@ -67,8 +71,18 @@ class TaskServiceImplTest {
     @Mock
     private UserRepository userRepository;
 
+    @Mock
+    private SystemConfigService systemConfigService;
+
     @InjectMocks
     private TaskServiceImpl taskService;
+
+    @BeforeEach
+    void setUp() {
+        SystemConfigResponse.ResearchConfig researchConfig = new SystemConfigResponse.ResearchConfig(10, true, false, false);
+        SystemConfigResponse config = new SystemConfigResponse(null, null, null, null, researchConfig);
+        lenient().when(systemConfigService.getConfig()).thenReturn(config);
+    }
 
     @AfterEach
     void clearSecurityContext() {
@@ -218,16 +232,16 @@ class TaskServiceImplTest {
         GroupEntity group = group(100L, 50L);
 
         when(groupRepository.findByIdAndDeletedFalseAndActiveTrue(100L)).thenReturn(Optional.of(group));
-        when(groupMemberRepository.findActiveRoleByProjectIdAndUserId(50L, leader.getId()))
+        when(groupMemberRepository.findActiveRoleByGroupIdAndUserId(100L, leader.getId()))
                 .thenReturn(Optional.of(GroupRole.LEADER));
-        when(taskRepository.findBoardTasksByProjectId(50L)).thenReturn(List.of(task(1L, 10L, 7L)));
+        when(taskRepository.findBoardTasksByGroupId(100L)).thenReturn(List.of(task(1L, 10L, 7L)));
 
         List<TaskResponse> responses = taskService.getByGroup(100L);
 
         assertEquals(1, responses.size());
         assertEquals(1L, responses.get(0).getId());
-        verify(taskRepository).findBoardTasksByProjectId(50L);
-        verify(taskRepository, never()).findAssignedBoardTasksByProjectId(any(), any());
+        verify(taskRepository).findBoardTasksByGroupId(100L);
+        verify(taskRepository, never()).findAssignedBoardTasksByGroupId(any(), any());
     }
 
     @Test
@@ -236,17 +250,17 @@ class TaskServiceImplTest {
         GroupEntity group = group(100L, 50L);
 
         when(groupRepository.findByIdAndDeletedFalseAndActiveTrue(100L)).thenReturn(Optional.of(group));
-        when(groupMemberRepository.findActiveRoleByProjectIdAndUserId(50L, member.getId()))
+        when(groupMemberRepository.findActiveRoleByGroupIdAndUserId(100L, member.getId()))
                 .thenReturn(Optional.of(GroupRole.MEMBER));
-        when(taskRepository.findAssignedBoardTasksByProjectId(50L, member.getId()))
+        when(taskRepository.findAssignedBoardTasksByGroupId(100L, member.getId()))
                 .thenReturn(List.of(task(1L, 10L, member.getId())));
 
         List<TaskResponse> responses = taskService.getByGroup(100L);
 
         assertEquals(1, responses.size());
         assertEquals(member.getId(), responses.get(0).getAssignedToStudentId());
-        verify(taskRepository).findAssignedBoardTasksByProjectId(50L, member.getId());
-        verify(taskRepository, never()).findBoardTasksByProjectId(any());
+        verify(taskRepository).findAssignedBoardTasksByGroupId(100L, member.getId());
+        verify(taskRepository, never()).findBoardTasksByGroupId(any());
     }
 
     @Test
@@ -590,5 +604,79 @@ class TaskServiceImplTest {
         Laboratory lab = new Laboratory();
         lab.setId(id);
         return lab;
+    }
+
+    @Test
+    void getMyTasksInGroup_successForStudentMember() {
+        User student = authenticate("student", "STUDENT");
+        Laboratory lab = lab(1L);
+        ProjectEntity project = ProjectEntity.builder().lab(lab).title("Face Recognition").build();
+        project.setId(10L);
+        GroupEntity group = GroupEntity.builder().project(project).build();
+        group.setId(26L);
+
+        MilestoneEntity milestone = MilestoneEntity.builder()
+                .project(project)
+                .group(group)
+                .title("Mốc 1")
+                .build();
+        milestone.setId(1L);
+
+        TaskEntity task = TaskEntity.builder()
+                .milestoneId(1L)
+                .assigneeId(student.getId())
+                .title("Tìm hiểu FaceNet")
+                .status(TaskStatus.TODO)
+                .progressPercent(0)
+                .build();
+        task.setId(100L);
+
+        com.web.labportalbackend.research.entity.ReportEntity report = com.web.labportalbackend.research.entity.ReportEntity.builder()
+                .taskId(100L)
+                .version(1)
+                .status(com.web.labportalbackend.research.enums.ReportStatus.APPROVED)
+                .build();
+
+        when(groupRepository.findByIdAndDeletedFalseAndActiveTrue(26L)).thenReturn(Optional.of(group));
+        when(groupMemberRepository.existsByGroupIdAndUserIdAndActiveTrueAndDeletedFalse(26L, student.getId()))
+                .thenReturn(true);
+        when(taskRepository.findAssignedBoardTasksByGroupId(26L, student.getId()))
+                .thenReturn(List.of(task));
+        when(reportRepository.findActiveReportsByTaskIds(List.of(100L)))
+                .thenReturn(List.of(report));
+        when(milestoneRepository.findByGroupIdAndDeletedFalseAndActiveTrueOrderByDeadlineAscCreatedAtAsc(26L))
+                .thenReturn(List.of(milestone));
+
+        List<TaskResponse> result = taskService.getMyTasksInGroup(26L);
+
+        assertEquals(1, result.size());
+        assertEquals("Tìm hiểu FaceNet", result.get(0).getTitle());
+        assertEquals(26L, result.get(0).getGroupId());
+        assertEquals("Mốc 1", result.get(0).getMilestoneTitle());
+        assertEquals("APPROVED", result.get(0).getLatestReportStatus());
+    }
+
+    @Test
+    void getMyTasksInGroup_throwsAccessDeniedForOutsideStudent() {
+        User student = authenticate("student", "STUDENT");
+        GroupEntity group = GroupEntity.builder().build();
+        group.setId(26L);
+
+        when(groupRepository.findByIdAndDeletedFalseAndActiveTrue(26L)).thenReturn(Optional.of(group));
+        when(groupMemberRepository.existsByGroupIdAndUserIdAndActiveTrueAndDeletedFalse(26L, student.getId()))
+                .thenReturn(false);
+
+        assertThrows(AccessDeniedException.class, () -> taskService.getMyTasksInGroup(26L));
+    }
+
+    @Test
+    void getMyTasksInGroup_throwsAccessDeniedForManager() {
+        authenticate("manager", "LAB_MANAGER");
+        GroupEntity group = GroupEntity.builder().build();
+        group.setId(26L);
+
+        when(groupRepository.findByIdAndDeletedFalseAndActiveTrue(26L)).thenReturn(Optional.of(group));
+
+        assertThrows(AccessDeniedException.class, () -> taskService.getMyTasksInGroup(26L));
     }
 }

@@ -36,6 +36,12 @@ public class UserResponse {
     @Schema(description = "Assigned role names", example = "[\"ADMIN\"]")
     private Set<String> roles;
 
+    @Schema(description = "Managed laboratory ID if user is LAB_MANAGER", example = "3")
+    private Long managedLabId;
+
+    @Schema(description = "Managed laboratory name if user is LAB_MANAGER", example = "AI Lab")
+    private String managedLabName;
+
     @Schema(description = "Account creation timestamp")
     private Instant createdAt;
 

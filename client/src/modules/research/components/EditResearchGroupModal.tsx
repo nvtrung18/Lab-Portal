@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 
 import { Button, Modal } from '../../../shared/components';
+import { VALIDATION_MESSAGES } from '../../../shared/utils';
 import type {
   GroupStatus,
   ResearchEligibleStudent,
@@ -113,7 +114,7 @@ export function EditResearchGroupModal({
               onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
             />
             {touched && trimmedName.length < 3 ? (
-              <span className="mt-1 block text-xs text-red-600">Tên nhóm cần tối thiểu 3 ký tự.</span>
+              <span className="mt-1 block text-xs text-red-600">{VALIDATION_MESSAGES.groupNameRequired}</span>
             ) : null}
           </label>
 
@@ -158,10 +159,10 @@ export function EditResearchGroupModal({
             onMembersChange={(memberIds) => setForm((current) => ({ ...current, memberIds }))}
           />
           {touched && !hasMembers ? (
-            <p className="text-xs text-red-600">Nhóm phải có ít nhất một thành viên.</p>
+            <p className="text-xs text-red-600">{VALIDATION_MESSAGES.memberRequired}</p>
           ) : null}
           {touched && !leaderIsMember ? (
-            <p className="text-xs text-red-600">Trưởng nhóm phải nằm trong danh sách thành viên.</p>
+            <p className="text-xs text-red-600">{VALIDATION_MESSAGES.leaderMustBeMember}</p>
           ) : null}
         </div>
 

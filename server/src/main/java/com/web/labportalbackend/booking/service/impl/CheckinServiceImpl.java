@@ -2,6 +2,8 @@ package com.web.labportalbackend.booking.service.impl;
 
 import com.web.labportalbackend.auth.entity.User;
 import com.web.labportalbackend.auth.repository.UserRepository;
+import com.web.labportalbackend.admin.systemconfig.dto.SystemConfigResponse;
+import com.web.labportalbackend.admin.systemconfig.service.SystemConfigService;
 import com.web.labportalbackend.booking.dto.response.BookingResponse;
 import com.web.labportalbackend.booking.dto.response.CheckinQrResponse;
 import com.web.labportalbackend.booking.entity.Booking;
@@ -39,6 +41,7 @@ public class CheckinServiceImpl implements CheckinService {
     private final UserRepository userRepository;
     private final LaboratoryRepository laboratoryRepository;
     private final StringRedisTemplate redisTemplate;
+    private final SystemConfigService systemConfigService;
 
     @Override
     @Transactional(readOnly = true)
@@ -137,7 +140,7 @@ public class CheckinServiceImpl implements CheckinService {
     }
 
     private Instant checkinEnd(Booking booking) {
-        return booking.getStartTime().plus(Duration.ofMinutes(CHECKIN_AFTER_START_MINUTES));
+        return booking.getStartTime().plus(Duration.ofMinutes(systemConfig().booking().checkinWindowMinutes()));
     }
 
     private String createToken() {
@@ -157,5 +160,9 @@ public class CheckinServiceImpl implements CheckinService {
         }
         return userRepository.findByUsername(authentication.getName())
                 .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy người dùng hiện tại."));
+    }
+
+    private SystemConfigResponse systemConfig() {
+        return systemConfigService.getConfig();
     }
 }

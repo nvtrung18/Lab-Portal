@@ -2,7 +2,9 @@ package com.web.labportalbackend.research.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.web.labportalbackend.auth.entity.Role;
 import com.web.labportalbackend.auth.entity.User;
+import com.web.labportalbackend.auth.repository.RoleRepository;
 import com.web.labportalbackend.auth.repository.UserRepository;
 import com.web.labportalbackend.booking.entity.Booking;
 import com.web.labportalbackend.booking.repository.BookingRepository;
@@ -31,7 +33,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,6 +43,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
@@ -60,6 +62,9 @@ class ProjectStatsIntegrationTest {
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
+
+    @Autowired
+    private RoleRepository roleRepository;
 
     @Autowired
     private UserRepository userRepository;
@@ -89,7 +94,6 @@ class ProjectStatsIntegrationTest {
     private BookingRepository bookingRepository;
 
     @Test
-    @WithMockUser
     void getProjectStats_updatesTaskCompletionAndReportCount() throws Exception {
         ProjectFixture fixture = createProjectFixture("task-report");
         TaskEntity done = createTask(fixture.milestone(), TaskStatus.DONE);
@@ -100,16 +104,17 @@ class ProjectStatsIntegrationTest {
         createReport(review, 2);
 
         JsonNode data = callStats(fixture.project().getId());
+        JsonNode overview = data.get("overview");
 
-        assertEquals(3, data.get("total_tasks").asLong());
-        assertEquals(1, data.get("done_tasks").asLong());
-        assertEquals("33.33", data.get("completion_rate").decimalValue().toPlainString());
-        assertEquals(3, data.get("report_count").asLong());
-        assertEquals(0, data.get("attendance").get("total_bookings").asLong());
+        assertEquals(fixture.project().getId().longValue(), data.get("projectId").asLong());
+        assertEquals(3, overview.get("taskCount").asLong());
+        assertEquals(1, overview.get("completedTaskCount").asLong());
+        assertEquals("33.33", overview.get("taskCompletionRate").decimalValue().toPlainString());
+        assertEquals(3, overview.get("reportCount").asLong());
+        assertEquals(0, overview.get("attendanceCount").asLong());
     }
 
     @Test
-    @WithMockUser
     void getProjectStats_mapsAttendanceFromBookingStatsPort() throws Exception {
         ProjectFixture fixture = createProjectFixture("attendance");
         createTask(fixture.milestone(), TaskStatus.DONE);
@@ -118,15 +123,13 @@ class ProjectStatsIntegrationTest {
         createBooking(fixture.member(), fixture.lab(), BookingStatus.NO_SHOW);
         createBooking(fixture.member(), fixture.lab(), BookingStatus.CONFIRMED);
 
-        JsonNode attendance = callStats(fixture.project().getId()).get("attendance");
+        JsonNode overview = callStats(fixture.project().getId()).get("overview");
 
-        assertEquals(4, attendance.get("total_bookings").asLong());
-        assertEquals(2, attendance.get("attended_sessions").asLong());
-        assertEquals(1, attendance.get("no_show_sessions").asLong());
+        assertEquals(2, overview.get("attendanceCount").asLong());
+        assertEquals("50.0", overview.get("attendanceRate").decimalValue().toPlainString());
     }
 
     @Test
-    @WithMockUser
     void getProjectStats_matchesNativeSqlCounts() throws Exception {
         ProjectFixture fixture = createProjectFixture("sanity");
         TaskEntity doneOne = createTask(fixture.milestone(), TaskStatus.DONE);
@@ -141,6 +144,7 @@ class ProjectStatsIntegrationTest {
         createBooking(fixture.member(), fixture.lab(), BookingStatus.NO_SHOW);
 
         JsonNode data = callStats(fixture.project().getId());
+        JsonNode overview = data.get("overview");
         Long projectId = fixture.project().getId();
 
         Long totalTasks = jdbcTemplate.queryForObject("""
@@ -201,17 +205,24 @@ class ProjectStatsIntegrationTest {
                   AND b.active = true AND b.deleted = false
                 """, Long.class, projectId);
 
-        assertEquals(totalTasks, data.get("total_tasks").asLong());
-        assertEquals(doneTasks, data.get("done_tasks").asLong());
-        assertEquals(reportCount, data.get("report_count").asLong());
-        assertEquals(totalBookings, data.get("attendance").get("total_bookings").asLong());
-        assertEquals(attendedSessions, data.get("attendance").get("attended_sessions").asLong());
-        assertEquals(noShowSessions, data.get("attendance").get("no_show_sessions").asLong());
+        assertEquals(totalTasks, overview.get("taskCount").asLong());
+        assertEquals(doneTasks, overview.get("completedTaskCount").asLong());
+        assertEquals(reportCount, overview.get("reportCount").asLong());
+        assertEquals(attendedSessions, overview.get("attendanceCount").asLong());
+        assertEquals(
+                attendedSessions == 0 ? "0" : java.math.BigDecimal.valueOf(attendedSessions)
+                        .multiply(java.math.BigDecimal.valueOf(100))
+                        .divide(java.math.BigDecimal.valueOf(totalBookings), 2, java.math.RoundingMode.HALF_UP)
+                        .stripTrailingZeros()
+                        .toPlainString(),
+                overview.get("attendanceRate").decimalValue().stripTrailingZeros().toPlainString()
+        );
     }
 
     private JsonNode callStats(Long projectId) throws Exception {
         String response = mockMvc.perform(get("/projects/{id}/stats", projectId)
-                        .param("type", "overview"))
+                        .param("type", "overview")
+                        .with(user("stats_manager").roles("LAB_MANAGER")))
                 .andExpect(status().isOk())
                 .andReturn()
                 .getResponse()
@@ -221,6 +232,7 @@ class ProjectStatsIntegrationTest {
 
     private ProjectFixture createProjectFixture(String name) {
         int sequence = SEQUENCE.incrementAndGet();
+        User manager = findOrCreateManager();
         User leader = createUser(name + "_leader_" + sequence);
         User member = createUser(name + "_member_" + sequence);
 
@@ -228,6 +240,7 @@ class ProjectStatsIntegrationTest {
         lab.setLabName("Stats " + name + " Lab " + sequence);
         lab.setLocation("Room S" + sequence);
         lab.setCapacity(12);
+        lab.setManager(manager);
         lab = laboratoryRepository.saveAndFlush(lab);
 
         GroupEntity group = GroupEntity.builder()
@@ -264,6 +277,17 @@ class ProjectStatsIntegrationTest {
         milestone = milestoneRepository.saveAndFlush(milestone);
 
         return new ProjectFixture(member, lab, project, milestone);
+    }
+
+    private User findOrCreateManager() {
+        return userRepository.findByUsername("stats_manager")
+                .orElseGet(() -> {
+                    Role role = roleRepository.findByName("LAB_MANAGER")
+                            .orElseGet(() -> roleRepository.saveAndFlush(new Role("LAB_MANAGER", "Lab manager")));
+                    User user = createUser("stats_manager");
+                    user.addRole(role);
+                    return userRepository.saveAndFlush(user);
+                });
     }
 
     private User createUser(String username) {

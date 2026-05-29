@@ -93,6 +93,8 @@ export function normalizeTask(raw: RawResearchTask): ResearchTask {
     column: getTaskColumn(status),
     progressPercent: Math.min(100, Math.max(0, raw.progressPercent ?? 0)),
     isOverdue: isTaskOverdue({ deadline: raw.deadline, status }),
+    milestoneTitle: raw.milestoneTitle ?? raw.milestone_title ?? null,
+    latestReportStatus: raw.latestReportStatus ?? raw.latest_report_status ?? null,
     createdAt: raw.createdAt ?? null,
     updatedAt: raw.updatedAt ?? null,
   };

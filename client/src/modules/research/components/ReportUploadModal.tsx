@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 
 import { Button, EmptyState, Modal } from '../../../shared/components';
-import type { ResearchTask } from '../types';
+import type { ResearchTask, ResearchReport } from '../types';
 import { ReportUpload } from './ReportUpload';
 
 interface ReportUploadModalProps {
@@ -11,6 +11,9 @@ interface ReportUploadModalProps {
   groupId?: number | null;
   tasks: ResearchTask[];
   title?: string;
+  mode?: 'create' | 'replace' | 'resubmit';
+  reportId?: number | null;
+  initialValues?: ResearchReport | null;
   onClose: () => void;
 }
 
@@ -21,6 +24,9 @@ export function ReportUploadModal({
   groupId,
   tasks,
   title = 'Nộp báo cáo tiến độ',
+  mode = 'create',
+  reportId,
+  initialValues,
   onClose,
 }: ReportUploadModalProps) {
   const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null);
@@ -66,6 +72,9 @@ export function ReportUploadModal({
             milestoneId={milestoneId}
             projectId={projectId}
             taskId={selectedTaskId}
+            mode={mode}
+            reportId={reportId}
+            initialValues={initialValues}
             onSuccess={() => onClose()}
           />
         </div>

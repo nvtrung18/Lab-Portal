@@ -1,8 +1,11 @@
 package com.web.labportalbackend.research.repository;
 
 import com.web.labportalbackend.research.entity.GroupEntity;
+import com.web.labportalbackend.research.enums.GroupStatus;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -24,4 +27,7 @@ public interface GroupRepository extends JpaRepository<GroupEntity, Long> {
     Optional<GroupEntity> findByIdAndDeletedFalseAndActiveTrue(Long id);
 
     long countByTopicIdAndDeletedFalseAndActiveTrue(Long topicId);
+
+    @Query("SELECT COUNT(g) FROM GroupEntity g WHERE g.status = :status AND g.deleted = false AND g.active = true")
+    long countActiveByStatus(@Param("status") GroupStatus status);
 }

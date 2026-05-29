@@ -11,10 +11,10 @@ import lombok.Setter;
 @Setter
 public class ManagerReviewReportRequest {
 
-    @NotNull(message = "Review decision is required")
+    @NotNull(message = "Quyết định duyệt báo cáo là bắt buộc.")
     private ManagerReportDecision decision;
 
-    @NotBlank(message = "Review comment is required")
-    @Size(max = 5000, message = "Review comment must not exceed 5000 characters")
+    @NotBlank(message = "Nhận xét của quản lý không được để trống.")
+    @Size(max = 5000, message = "Nhận xét của quản lý không được vượt quá 5000 ký tự.")
     private String comment;
 }

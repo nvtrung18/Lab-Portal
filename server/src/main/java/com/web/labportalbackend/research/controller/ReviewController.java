@@ -47,9 +47,13 @@ public class ReviewController {
     @GetMapping("/reports/{id}/comments")
     @Operation(summary = "Get comments by report")
     @PreAuthorize("hasAnyRole('LAB_MANAGER', 'STUDENT')")
-    public ResponseEntity<Response<List<CommentResponse>>> getCommentsByReport(@PathVariable Long id) {
+    public ResponseEntity<Response<List<CommentResponse>>> getCommentsByReport(
+            @PathVariable Long id,
+            Authentication authentication
+    ) {
+        Long currentUserId = resolveAuthorId(authentication);
         return ResponseEntity.ok(
-                Response.ok("Comments retrieved successfully", reviewService.getByReport(id))
+                Response.ok("Comments retrieved successfully", reviewService.getByReport(id, currentUserId))
         );
     }
 

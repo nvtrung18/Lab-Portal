@@ -111,4 +111,13 @@ public class GroupController {
                 Response.ok("Research group detail retrieved successfully", groupService.getDetail(id))
         );
     }
+
+    @GetMapping("/research-groups/{id}/members")
+    @Operation(summary = "Get research group members")
+    @PreAuthorize("hasAnyRole('LAB_MANAGER', 'STUDENT')")
+    public ResponseEntity<Response<List<GroupMemberResponse>>> getMembers(@PathVariable Long id) {
+        return ResponseEntity.ok(
+                Response.ok("Research group members retrieved successfully", groupService.getMembers(id))
+        );
+    }
 }

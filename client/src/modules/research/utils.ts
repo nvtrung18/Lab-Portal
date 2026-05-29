@@ -1,4 +1,38 @@
+import axios from 'axios';
+
 import type { GroupStatus, MilestoneStatus, ProjectStatus, ResearchPriority, TopicStatus } from './types';
+
+interface ApiErrorMessageContext {
+  fallback?: string;
+  forbidden?: string;
+  notFound?: string;
+}
+
+export function getApiErrorMessage(error: unknown, context: string | ApiErrorMessageContext = {}) {
+  const options = typeof context === 'string' ? { fallback: context } : context;
+
+  if (axios.isAxiosError(error)) {
+    if (!error.response) {
+      return 'Không thể kết nối tới máy chủ. Vui lòng kiểm tra BE hoặc VITE_API_BASE_URL.';
+    }
+
+    const status = error.response.status;
+    if (status === 401) {
+      return 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.';
+    }
+    if (status === 403) {
+      return options.forbidden ?? 'Bạn không có quyền xem dữ liệu này.';
+    }
+    if (status === 404) {
+      return options.notFound ?? 'Không tìm thấy dữ liệu.';
+    }
+    if (status >= 500) {
+      return 'Hệ thống đang gặp sự cố. Vui lòng thử lại sau.';
+    }
+  }
+
+  return options.fallback ?? 'Không thể tải dữ liệu.';
+}
 
 export function formatTopicStatus(status?: TopicStatus | null) {
   const labels: Record<TopicStatus, string> = {
@@ -109,3 +143,8 @@ export function formatDate(value?: string | null) {
   }
   return new Intl.DateTimeFormat('vi-VN').format(new Date(value));
 }
+
+export function formatReportSubmitterName(report: { submittedByName?: string | null }) {
+  return report.submittedByName || 'Không rõ người nộp';
+}
+

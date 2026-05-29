@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { queryKeys } from '../../../shared/api';
 import { toast } from '../../../shared/components';
@@ -12,8 +12,8 @@ import {
   updateResearchGroup,
   createResearchProject,
   updateResearchProject,
+  createResearchLog,
   getResearchEligibleStudents,
-  getResearchGroup,
   getResearchGroupsByProject,
   getMyResearchGroupsByLab,
   getMilestone,
@@ -22,33 +22,57 @@ import {
   getReportsByMilestone,
   getMyReportsByMilestone,
   getReportsByTask,
-  getReportsByGroup,
   getPendingManagerReports,
-  getMyResearchTasksByGroup,
   getReportComments,
   addReportComment,
   leaderReviewReport,
   managerReviewReport,
   updateTaskStatus,
+  createTask,
   getResearchProject,
+  getProjectDashboardStats,
+  getResearchLogs,
+  getEvaluationsByProject,
+  submitEvaluation,
+  getProductsByProject,
+  submitProduct,
   getResearchProjectsByLab,
   createResearchTopic,
   getGroupsByTopic,
   getProjectsByGroup,
   getResearchTopicsByLab,
 } from '../api';
+import {
+  getGroupEvaluations,
+  getGroupMilestones,
+  getGroupProducts,
+  getGroupReports,
+  getGroupResearchLogs,
+  getGroupTasks,
+  getMyGroupMilestones,
+  getMyGroupReports,
+  getMyGroupTasks,
+  getResearchGroup,
+  getResearchGroupMembers,
+} from '../api/researchGroupApi';
 import type {
   CreateGroupPayload,
   CreateProjectPayload,
   CreateResearchGroupPayload,
   UpdateResearchGroupPayload,
   CreateResearchProjectPayload,
+  CreateResearchLogPayload,
   CreateMilestonePayload,
+  CreateTaskPayload,
   UpdateMilestonePayload,
   CreateTopicPayload,
+  SubmitProductPayload,
+  SubmitEvaluationPayload,
   ResearchTask,
   TaskColumn,
   ManagerReportDecision,
+  LeaderReportDecision,
+  ResearchLogFilters,
 } from '../types';
 import { updateTaskStatusInCache } from '../taskBoardHelpers';
 
@@ -58,6 +82,10 @@ function getErrorMessage(error: unknown, fallback: string) {
     return data?.message ?? data?.errors?.[0] ?? fallback;
   }
   return fallback;
+}
+
+function isValidId(value?: number | null) {
+  return typeof value === 'number' && Number.isFinite(value) && value > 0;
 }
 
 export function useResearchTopicsByLab(labId?: number | null) {
@@ -161,6 +189,175 @@ export function useResearchProject(projectId?: number | null) {
   });
 }
 
+export function useProjectDashboardStats(projectId?: number | null) {
+  return useQuery({
+    queryKey: queryKeys.research.projectStats(projectId as number),
+    queryFn: () => getProjectDashboardStats(projectId as number),
+    enabled: Boolean(projectId),
+    retry: (failureCount, error) => {
+      if (axios.isAxiosError(error)) {
+        const status = error.response?.status;
+        if (status === 403) {
+          return false;
+        }
+        if (!status || status >= 500) {
+          return failureCount < 1;
+        }
+        return false;
+      }
+      return failureCount < 1;
+    },
+    staleTime: 60000,
+    refetchOnReconnect: true,
+    refetchOnWindowFocus: true,
+  });
+}
+
+const RESEARCH_LOG_PAGE_SIZE = 20;
+
+export function useResearchLogs(projectId?: number | null, filters: ResearchLogFilters = {}) {
+  return useInfiniteQuery({
+    queryKey: queryKeys.research.logs(projectId as number, filters),
+    queryFn: ({ pageParam }) => getResearchLogs(projectId as number, filters, pageParam, RESEARCH_LOG_PAGE_SIZE),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage, allPages) =>
+      lastPage.length === RESEARCH_LOG_PAGE_SIZE ? allPages.length : undefined,
+    enabled: Boolean(projectId),
+    staleTime: 30000,
+    refetchOnWindowFocus: true,
+  });
+}
+
+export function useGroupResearchLogs(groupId?: number | null, filters: ResearchLogFilters = {}) {
+  const hasFilters = Object.values(filters).some((value) => value !== undefined && value !== null && value !== '');
+
+  return useInfiniteQuery({
+    queryKey: queryKeys.research.groupResearchLogs(groupId as number, hasFilters ? filters : undefined),
+    queryFn: ({ pageParam }) => getGroupResearchLogs(groupId as number, filters, pageParam, RESEARCH_LOG_PAGE_SIZE),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage, allPages) =>
+      lastPage.length === RESEARCH_LOG_PAGE_SIZE ? allPages.length : undefined,
+    enabled: isValidId(groupId),
+    staleTime: 30000,
+    refetchOnWindowFocus: true,
+  });
+}
+
+export function useCreateResearchLog(projectId?: number | null) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: CreateResearchLogPayload) => createResearchLog(payload),
+    onSuccess: async (_log, payload) => {
+      const targetProjectId = projectId ?? payload.projectId;
+      const invalidations = [
+        queryClient.invalidateQueries({ queryKey: queryKeys.research.logs(targetProjectId) }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.research.projectStats(targetProjectId) }),
+      ];
+      if (payload.groupId) {
+        invalidations.push(
+          queryClient.invalidateQueries({ queryKey: queryKeys.research.groupResearchLogs(payload.groupId) })
+        );
+      }
+      await Promise.all(invalidations);
+      toast.success('Đã tạo nhật ký nghiên cứu.');
+    },
+    onError: (error) => {
+      toast.error(getErrorMessage(error, 'Không thể tạo nhật ký nghiên cứu.'));
+    },
+  });
+}
+
+export function useEvaluationsByProject(projectId?: number | null) {
+  return useQuery({
+    queryKey: queryKeys.research.evaluations(projectId as number),
+    queryFn: () => getEvaluationsByProject(projectId as number),
+    enabled: Boolean(projectId),
+    staleTime: 30000,
+    refetchOnWindowFocus: true,
+  });
+}
+
+export function useEvaluationsByGroup(groupId?: number | null) {
+  return useQuery({
+    queryKey: queryKeys.research.groupEvaluations(groupId as number),
+    queryFn: () => getGroupEvaluations(groupId as number),
+    enabled: isValidId(groupId),
+    staleTime: 30000,
+    refetchOnWindowFocus: true,
+  });
+}
+
+export function useSubmitEvaluation(projectId?: number | null) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: SubmitEvaluationPayload) => submitEvaluation(payload),
+    onSuccess: async (_evaluation, payload) => {
+      const targetProjectId = projectId ?? payload.projectId;
+      const invalidations = [
+        queryClient.invalidateQueries({ queryKey: queryKeys.research.evaluations(targetProjectId) }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.research.projectStats(targetProjectId) }),
+      ];
+      if (payload.groupId) {
+        invalidations.push(
+          queryClient.invalidateQueries({ queryKey: queryKeys.research.groupEvaluations(payload.groupId) })
+        );
+      }
+      await Promise.all(invalidations);
+      toast.success('Đã lưu đánh giá kết quả nghiên cứu.');
+    },
+    onError: (error) => {
+      toast.error(getErrorMessage(error, 'Không thể lưu đánh giá kết quả nghiên cứu.'));
+    },
+  });
+}
+
+export function useProductsByProject(projectId?: number | null) {
+  return useQuery({
+    queryKey: queryKeys.research.products(projectId as number),
+    queryFn: () => getProductsByProject(projectId as number),
+    enabled: Boolean(projectId),
+    staleTime: 30000,
+    refetchOnWindowFocus: true,
+  });
+}
+
+export function useProductsByGroup(groupId?: number | null) {
+  return useQuery({
+    queryKey: queryKeys.research.groupProducts(groupId as number),
+    queryFn: () => getGroupProducts(groupId as number),
+    enabled: isValidId(groupId),
+    staleTime: 30000,
+    refetchOnWindowFocus: true,
+  });
+}
+
+export function useSubmitProduct(projectId?: number | null, onUploadProgress?: (percent: number) => void) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: SubmitProductPayload) => submitProduct(payload, onUploadProgress),
+    onSuccess: async (_product, payload) => {
+      const targetProjectId = projectId ?? payload.projectId;
+      const invalidations = [
+        queryClient.invalidateQueries({ queryKey: queryKeys.research.products(targetProjectId) }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.research.projectStats(targetProjectId) }),
+      ];
+      if (payload.groupId) {
+        invalidations.push(
+          queryClient.invalidateQueries({ queryKey: queryKeys.research.groupProducts(payload.groupId) })
+        );
+      }
+      await Promise.all(invalidations);
+      toast.success('Đã nộp sản phẩm nghiên cứu.');
+    },
+    onError: (error) => {
+      toast.error(getErrorMessage(error, 'Không thể nộp sản phẩm nghiên cứu.'));
+    },
+  });
+}
+
 export function useResearchGroupsByProject(projectId?: number | null) {
   return useQuery({
     queryKey: queryKeys.research.groups(projectId as number),
@@ -176,7 +373,18 @@ export function useResearchGroup(groupId?: number | null) {
   return useQuery({
     queryKey: queryKeys.research.group(groupId as number),
     queryFn: () => getResearchGroup(groupId as number),
-    enabled: Boolean(groupId),
+    enabled: isValidId(groupId),
+    staleTime: 30000,
+    refetchOnReconnect: true,
+    refetchOnWindowFocus: true,
+  });
+}
+
+export function useResearchGroupMembers(groupId?: number | null) {
+  return useQuery({
+    queryKey: queryKeys.research.groupMembers(groupId as number),
+    queryFn: () => getResearchGroupMembers(groupId as number),
+    enabled: isValidId(groupId),
     staleTime: 30000,
     refetchOnReconnect: true,
     refetchOnWindowFocus: true,
@@ -210,6 +418,28 @@ export function useMilestonesByProject(projectId?: number | null) {
     queryKey: queryKeys.research.milestones(projectId as number),
     queryFn: () => getMilestonesByProject(projectId as number),
     enabled: Boolean(projectId),
+    staleTime: 30000,
+    refetchOnReconnect: true,
+    refetchOnWindowFocus: true,
+  });
+}
+
+export function useMilestonesByGroup(groupId?: number | null) {
+  return useQuery({
+    queryKey: queryKeys.research.groupMilestones(groupId as number),
+    queryFn: () => getGroupMilestones(groupId as number),
+    enabled: isValidId(groupId),
+    staleTime: 30000,
+    refetchOnReconnect: true,
+    refetchOnWindowFocus: true,
+  });
+}
+
+export function useMyMilestonesByGroup(groupId?: number | null) {
+  return useQuery({
+    queryKey: queryKeys.research.myGroupMilestones(groupId as number),
+    queryFn: () => getMyGroupMilestones(groupId as number),
+    enabled: isValidId(groupId),
     staleTime: 30000,
     refetchOnReconnect: true,
     refetchOnWindowFocus: true,
@@ -264,8 +494,18 @@ export function useReportsByTask(taskId?: number | null) {
 export function useGroupReports(groupId?: number | null) {
   return useQuery({
     queryKey: queryKeys.research.groupReports(groupId as number),
-    queryFn: () => getReportsByGroup(groupId as number),
-    enabled: Boolean(groupId),
+    queryFn: () => getGroupReports(groupId as number),
+    enabled: isValidId(groupId),
+    staleTime: 30000,
+    refetchOnWindowFocus: true,
+  });
+}
+
+export function useMyGroupReports(groupId?: number | null) {
+  return useQuery({
+    queryKey: queryKeys.research.myGroupReports(groupId as number),
+    queryFn: () => getMyGroupReports(groupId as number),
+    enabled: isValidId(groupId),
     staleTime: 30000,
     refetchOnWindowFocus: true,
   });
@@ -284,8 +524,18 @@ export function usePendingManagerReports(labId?: number | null) {
 export function useMyResearchTasks(groupId?: number | null) {
   return useQuery({
     queryKey: queryKeys.research.myTasks(groupId as number),
-    queryFn: () => getMyResearchTasksByGroup(groupId as number),
-    enabled: Boolean(groupId),
+    queryFn: () => getMyGroupTasks(groupId as number),
+    enabled: isValidId(groupId),
+    staleTime: 30000,
+    refetchOnWindowFocus: true,
+  });
+}
+
+export function useGroupTasks(groupId?: number | null) {
+  return useQuery({
+    queryKey: queryKeys.research.groupTasks(groupId as number),
+    queryFn: () => getGroupTasks(groupId as number),
+    enabled: isValidId(groupId),
     staleTime: 30000,
     refetchOnWindowFocus: true,
   });
@@ -320,6 +570,7 @@ function invalidateReviewedReport(
   milestoneId: number,
   projectId: number,
   groupId?: number | null,
+  taskId?: number | null,
 ) {
   const invalidations = [
     queryClient.invalidateQueries({ queryKey: queryKeys.research.reports(milestoneId) }),
@@ -327,21 +578,44 @@ function invalidateReviewedReport(
     queryClient.invalidateQueries({ queryKey: queryKeys.research.tasks(milestoneId) }),
     queryClient.invalidateQueries({ queryKey: queryKeys.research.milestones(projectId) }),
     queryClient.invalidateQueries({ queryKey: queryKeys.research.milestone(milestoneId) }),
+    queryClient.invalidateQueries({ queryKey: queryKeys.research.projectStats(projectId) }),
   ];
   if (groupId) {
     invalidations.push(queryClient.invalidateQueries({ queryKey: queryKeys.research.groupReports(groupId) }));
+    invalidations.push(queryClient.invalidateQueries({ queryKey: queryKeys.research.myGroupReports(groupId) }));
+    invalidations.push(queryClient.invalidateQueries({ queryKey: queryKeys.research.groupMilestones(groupId) }));
+    invalidations.push(queryClient.invalidateQueries({ queryKey: queryKeys.research.myGroupMilestones(groupId) }));
+    invalidations.push(queryClient.invalidateQueries({ queryKey: queryKeys.research.groupTasks(groupId) }));
+    invalidations.push(queryClient.invalidateQueries({ queryKey: queryKeys.research.myTasks(groupId) }));
+    invalidations.push(queryClient.invalidateQueries({ queryKey: queryKeys.research.groupEvaluations(groupId) }));
+  }
+  if (taskId) {
+    invalidations.push(queryClient.invalidateQueries({ queryKey: queryKeys.research.taskReports(taskId) }));
   }
   return Promise.all(invalidations);
 }
 
-export function useLeaderReviewReport(reportId: number, milestoneId: number, projectId: number, groupId?: number | null) {
+export function useLeaderReviewReport(
+  reportId: number,
+  milestoneId: number,
+  projectId: number,
+  groupId?: number | null,
+  taskId?: number | null,
+) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (note: string) => leaderReviewReport(reportId, note),
-    onSuccess: async () => {
-      await invalidateReviewedReport(queryClient, reportId, milestoneId, projectId, groupId);
-      toast.success('Đã đánh dấu báo cáo đã kiểm tra.');
+    mutationFn: ({ decision, comment }: { decision: LeaderReportDecision; comment: string }) =>
+      leaderReviewReport(reportId, decision, comment),
+    onSuccess: async (_report, variables) => {
+      await invalidateReviewedReport(queryClient, reportId, milestoneId, projectId, groupId, taskId);
+      toast.success(
+        variables.decision === 'ACCEPT'
+          ? 'Đã duyệt báo cáo.'
+          : variables.decision === 'REQUEST_REVISION'
+            ? 'Đã yêu cầu chỉnh sửa báo cáo.'
+            : 'Đã từ chối báo cáo.',
+      );
     },
     onError: (error) => {
       toast.error(getErrorMessage(error, 'Không thể kiểm tra báo cáo.'));
@@ -349,14 +623,21 @@ export function useLeaderReviewReport(reportId: number, milestoneId: number, pro
   });
 }
 
-export function useManagerReviewReport(reportId: number, milestoneId: number, projectId: number, labId?: number | null) {
+export function useManagerReviewReport(
+  reportId: number,
+  milestoneId: number,
+  projectId: number,
+  labId?: number | null,
+  taskId?: number | null,
+  groupId?: number | null,
+) {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: ({ decision, comment }: { decision: ManagerReportDecision; comment: string }) =>
       managerReviewReport(reportId, decision, comment),
     onSuccess: async (_report, variables) => {
-      await invalidateReviewedReport(queryClient, reportId, milestoneId, projectId);
+      await invalidateReviewedReport(queryClient, reportId, milestoneId, projectId, groupId, taskId);
       if (labId) {
         await queryClient.invalidateQueries({ queryKey: queryKeys.research.managerReports(labId) });
       }
@@ -374,7 +655,7 @@ export function useManagerReviewReport(reportId: number, milestoneId: number, pr
   });
 }
 
-export function useUpdateTaskStatus(milestoneId: number) {
+export function useUpdateTaskStatus(milestoneId: number, projectId?: number | null) {
   const queryClient = useQueryClient();
   const queryKey = queryKeys.research.tasks(milestoneId);
 
@@ -404,7 +685,11 @@ export function useUpdateTaskStatus(milestoneId: number) {
       toast.success('Đã cập nhật trạng thái nhiệm vụ.');
     },
     onSettled: async () => {
-      await queryClient.invalidateQueries({ queryKey });
+      const invalidations = [queryClient.invalidateQueries({ queryKey })];
+      if (projectId) {
+        invalidations.push(queryClient.invalidateQueries({ queryKey: queryKeys.research.projectStats(projectId) }));
+      }
+      await Promise.all(invalidations);
     },
   });
 }
@@ -414,20 +699,80 @@ export function useCreateMilestone(projectId?: number | null) {
 
   return useMutation({
     mutationFn: (payload: CreateMilestonePayload) => createMilestone(payload),
-    onSuccess: async (_milestone, payload) => {
+    onSuccess: async (milestone, payload) => {
       const targetProjectId = projectId ?? payload.projectId;
-      await Promise.all([
+      const invalidations = [
         queryClient.invalidateQueries({
           queryKey: queryKeys.research.milestones(targetProjectId),
         }),
         queryClient.invalidateQueries({
+          queryKey: queryKeys.research.milestone(milestone.id),
+        }),
+        queryClient.invalidateQueries({
           queryKey: queryKeys.research.project(targetProjectId),
         }),
-      ]);
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.research.projectStats(targetProjectId),
+        }),
+      ];
+      if (milestone.groupId) {
+        invalidations.push(
+          queryClient.invalidateQueries({
+            queryKey: queryKeys.research.groupMilestones(milestone.groupId),
+          }),
+          queryClient.invalidateQueries({
+            queryKey: queryKeys.research.myGroupMilestones(milestone.groupId),
+          })
+        );
+      }
+      await Promise.all(invalidations);
       toast.success('Đã tạo mốc nghiên cứu thành công.');
     },
     onError: (error) => {
       toast.error(getErrorMessage(error, 'Không thể tạo mốc nghiên cứu.'));
+    },
+  });
+}
+
+export function useCreateTask(milestoneId: number, projectId?: number | null, groupId?: number | null) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: CreateTaskPayload) => createTask(milestoneId, payload),
+    onSuccess: async () => {
+      const invalidations = [
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.research.tasks(milestoneId),
+        }),
+      ];
+      if (groupId) {
+        invalidations.push(
+          queryClient.invalidateQueries({
+            queryKey: queryKeys.research.groupTasks(groupId),
+          }),
+          queryClient.invalidateQueries({
+            queryKey: queryKeys.research.myTasks(groupId),
+          }),
+          queryClient.invalidateQueries({
+            queryKey: queryKeys.research.groupMilestones(groupId),
+          }),
+          queryClient.invalidateQueries({
+            queryKey: queryKeys.research.myGroupMilestones(groupId),
+          })
+        );
+      }
+      if (projectId) {
+        invalidations.push(
+          queryClient.invalidateQueries({
+            queryKey: queryKeys.research.projectStats(projectId),
+          })
+        );
+      }
+      await Promise.all(invalidations);
+      toast.success('Đã tạo nhiệm vụ thành công.');
+    },
+    onError: (error) => {
+      toast.error(getErrorMessage(error, 'Không thể tạo nhiệm vụ.'));
     },
   });
 }
@@ -438,12 +783,24 @@ export function useUpdateMilestone(projectId?: number | null) {
   return useMutation({
     mutationFn: ({ milestoneId, payload }: { milestoneId: number; payload: UpdateMilestonePayload }) =>
       updateMilestone(milestoneId, payload),
-    onSuccess: async (_milestone, variables) => {
-      await Promise.all([
+    onSuccess: async (milestone, variables) => {
+      const invalidations = [
         queryClient.invalidateQueries({ queryKey: queryKeys.research.milestones(projectId as number) }),
         queryClient.invalidateQueries({ queryKey: queryKeys.research.milestone(variables.milestoneId) }),
         queryClient.invalidateQueries({ queryKey: queryKeys.research.project(projectId as number) }),
-      ]);
+        queryClient.invalidateQueries({ queryKey: queryKeys.research.projectStats(projectId as number) }),
+      ];
+      if (milestone.groupId) {
+        invalidations.push(
+          queryClient.invalidateQueries({
+            queryKey: queryKeys.research.groupMilestones(milestone.groupId),
+          }),
+          queryClient.invalidateQueries({
+            queryKey: queryKeys.research.myGroupMilestones(milestone.groupId),
+          })
+        );
+      }
+      await Promise.all(invalidations);
       toast.success('Đã cập nhật mốc nghiên cứu thành công.');
     },
     onError: (error) => {
@@ -457,10 +814,15 @@ export function useCreateResearchProject(labId?: number | null) {
 
   return useMutation({
     mutationFn: (payload: CreateResearchProjectPayload) => createResearchProject(payload),
-    onSuccess: async (_project, payload) => {
-      await queryClient.invalidateQueries({
-        queryKey: queryKeys.research.projects(labId ?? payload.labId),
-      });
+    onSuccess: async (project, payload) => {
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.research.projects(labId ?? payload.labId),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.research.project(project.id),
+        }),
+      ]);
       toast.success('Đã tạo đề tài nghiên cứu thành công.');
     },
     onError: (error) => {
@@ -483,6 +845,9 @@ export function useUpdateResearchProject(labId?: number | null) {
         queryClient.invalidateQueries({
           queryKey: queryKeys.research.project(variables.projectId),
         }),
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.research.projectStats(variables.projectId),
+        }),
       ]);
       toast.success('Đã cập nhật đề tài nghiên cứu thành công.');
     },
@@ -497,12 +862,17 @@ export function useCreateResearchGroup(projectId?: number | null, labId?: number
 
   return useMutation({
     mutationFn: (payload: CreateResearchGroupPayload) => createResearchGroup(payload),
-    onSuccess: async (_group, payload) => {
+    onSuccess: async (group, payload) => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: queryKeys.research.groups(projectId ?? payload.projectId) }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.research.group(group.id) }),
         queryClient.invalidateQueries({ queryKey: queryKeys.research.project(projectId ?? payload.projectId) }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.research.projectStats(projectId ?? payload.projectId) }),
         labId
           ? queryClient.invalidateQueries({ queryKey: queryKeys.research.projects(labId) })
+          : Promise.resolve(),
+        labId
+          ? queryClient.invalidateQueries({ queryKey: queryKeys.research.myGroups(labId) })
           : Promise.resolve(),
       ]);
       toast.success('Đã tạo nhóm nghiên cứu thành công.');
@@ -524,6 +894,7 @@ export function useUpdateResearchGroup(projectId?: number | null, labId?: number
         queryClient.invalidateQueries({ queryKey: queryKeys.research.groups(projectId as number) }),
         queryClient.invalidateQueries({ queryKey: queryKeys.research.group(variables.groupId) }),
         queryClient.invalidateQueries({ queryKey: queryKeys.research.project(projectId as number) }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.research.projectStats(projectId as number) }),
         labId
           ? queryClient.invalidateQueries({ queryKey: queryKeys.research.projects(labId) })
           : Promise.resolve(),

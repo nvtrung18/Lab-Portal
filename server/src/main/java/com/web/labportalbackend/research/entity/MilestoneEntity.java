@@ -25,6 +25,10 @@ public class MilestoneEntity extends BaseEntity {
     @JoinColumn(name = "project_id", nullable = false)
     private ProjectEntity project;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "group_id")
+    private GroupEntity group;
+
     /**
      * Legacy timeline name retained while older task fixtures are migrated.
      */
