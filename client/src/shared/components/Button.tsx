@@ -57,12 +57,6 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       type={type}
       {...props}
     >
-      {loading ? (
-        <span
-          aria-hidden="true"
-          className="h-4 w-4 animate-spin rounded-full border-2 border-current border-r-transparent"
-        />
-      ) : null}
       {loading && loadingText ? loadingText : children}
     </button>
   );

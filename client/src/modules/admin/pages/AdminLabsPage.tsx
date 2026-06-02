@@ -372,7 +372,7 @@ function LabDetailModal({ lab, onClose }: LabDetailModalProps) {
 
         {!lab.manager ? (
           <div className="mt-4 rounded-md border border-amber-800 bg-amber-950/50 px-3 py-2 text-xs font-medium text-amber-300">
-            ⚠ PTN này chưa được phân công quản lý.
+            PTN này chưa được phân công quản lý.
           </div>
         ) : null}
 
@@ -524,7 +524,7 @@ export function AdminLabsPage() {
       {/* Warning banners */}
       {labsWithoutManager.length > 0 ? (
         <div className="rounded-lg border border-amber-800 bg-amber-950/30 px-4 py-3 text-sm text-amber-300">
-          <span className="font-semibold">⚠ Cảnh báo:</span>{' '}
+          <span className="font-semibold">Cảnh báo:</span>{' '}
           {labsWithoutManager.length === 1
             ? `PTN "${labsWithoutManager[0].labName}" đang hoạt động nhưng chưa có quản lý.`
             : `${labsWithoutManager.length} PTN đang hoạt động chưa có quản lý: ${labsWithoutManager.map((l) => `"${l.labName}"`).join(', ')}.`}
@@ -533,7 +533,7 @@ export function AdminLabsPage() {
 
       {unassignedManagers.length > 0 ? (
         <div className="rounded-lg border border-blue-800 bg-blue-950/30 px-4 py-3 text-sm text-blue-300">
-          <span className="font-semibold">ℹ Thông tin:</span>{' '}
+          <span className="font-semibold">Thông tin:</span>{' '}
           {unassignedManagers.length === 1
             ? `Quản lý "${unassignedManagers[0].fullName || unassignedManagers[0].email}" chưa được gán PTN.`
             : `${unassignedManagers.length} quản lý chưa được gán PTN: ${unassignedManagers.map((u) => `"${u.fullName || u.email}"`).join(', ')}.`}

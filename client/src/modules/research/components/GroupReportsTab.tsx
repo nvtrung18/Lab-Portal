@@ -286,12 +286,7 @@ export function GroupReportsTab({
               >
                 {/* Task Title & Report Status */}
                 <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-50 pb-3">
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="rounded-full bg-blue-50 p-1.5 shrink-0 text-blue-600">
-                      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-                      </svg>
-                    </div>
+                  <div className="min-w-0">
                     <h4 className="text-base font-bold text-slate-900 leading-snug truncate" title={report.taskTitle || report.title}>
                       {report.taskTitle || 'Nhiệm vụ chung'}
                     </h4>
@@ -350,9 +345,6 @@ export function GroupReportsTab({
                         })
                       }
                     >
-                      <svg className="mr-1.5 h-4 w-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
                       Xem lịch sử báo cáo
                     </Button>
                     <Button
@@ -367,9 +359,6 @@ export function GroupReportsTab({
                         })
                       }
                     >
-                      <svg className="mr-1.5 h-4 w-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                      </svg>
                       Xem góp ý ({report.commentCount ?? 0})
                     </Button>
 
@@ -379,9 +368,6 @@ export function GroupReportsTab({
                         size="sm"
                         onClick={() => setUploadModalConfig({ isOpen: true, report })}
                       >
-                        <svg className="mr-1.5 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                        </svg>
                         Nộp lại báo cáo
                       </Button>
                     )}

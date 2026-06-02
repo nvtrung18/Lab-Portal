@@ -106,12 +106,7 @@ export function ResearchProjectDetailPage() {
       {/* Student Group Banner */}
       {isStudent && studentGroup && (
         <div className="flex flex-col gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-3">
-            <div className="rounded-full bg-amber-100 p-2 text-amber-800">
-              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
+          <div className="min-w-0">
             <div>
               <h4 className="font-semibold text-amber-900">
                 Bạn thuộc nhóm nghiên cứu: <span className="font-bold">{studentGroup.name}</span>
