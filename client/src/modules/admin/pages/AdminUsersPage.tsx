@@ -192,7 +192,7 @@ export function AdminUsersPage() {
           };
         }
         const warningSuffix = (confirmAction.newRole !== LAB_MANAGER && managesLab)
-          ? `\n\n⚠️ Lưu ý: Người dùng này đang quản lý PTN "${managesLab}". Khi đổi vai trò về ${formatRole(confirmAction.newRole)}, hệ thống sẽ tự động gỡ gán quyền quản lý khỏi PTN này.`
+          ? `\n\nLưu ý: Người dùng này đang quản lý PTN "${managesLab}". Khi đổi vai trò về ${formatRole(confirmAction.newRole)}, hệ thống sẽ tự động gỡ gán quyền quản lý khỏi PTN này.`
           : '';
         return {
           title: 'Xác nhận đổi vai trò',

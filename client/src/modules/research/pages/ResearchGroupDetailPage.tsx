@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
-import { Link, Navigate, useParams } from 'react-router-dom';
+import { Link, Navigate, useParams, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 
 import { EmptyState, ErrorState, LoadingState } from '../../../shared/components';
@@ -37,14 +37,8 @@ type GroupDetailTab =
   | 'milestones'
   | 'tasks'
   | 'reports'
-  | 'myMilestones'
-  | 'myTasks'
-  | 'myReports'
-  | 'groupMilestones'
-  | 'groupTasks'
-  | 'groupReports'
   | 'products'
-  | 'evaluation'
+  | 'evaluations'
   | 'logs';
 
 const GROUP_DETAIL_MANAGER_TABS: Array<{ value: GroupDetailTab; label: string }> = [
@@ -55,7 +49,7 @@ const GROUP_DETAIL_MANAGER_TABS: Array<{ value: GroupDetailTab; label: string }>
   { value: 'tasks', label: 'Nhiệm vụ' },
   { value: 'reports', label: 'Báo cáo nhóm' },
   { value: 'products', label: 'Sản phẩm nhóm' },
-  { value: 'evaluation', label: 'Đánh giá' },
+  { value: 'evaluations', label: 'Đánh giá' },
   { value: 'logs', label: 'Nhật ký nghiên cứu' },
 ];
 
@@ -70,8 +64,14 @@ const GROUP_DETAIL_STUDENT_TABS = (isLeader: boolean): Array<{ value: GroupDetai
   ...(isLeader ? [{ value: 'logs', label: 'Nhật ký nhóm' } as const] : []),
 ];
 
+const GROUP_DETAIL_TAB_KEYS = GROUP_DETAIL_MANAGER_TABS.map((tab) => tab.value);
+
+function isGroupDetailTab(value: string | null): value is GroupDetailTab {
+  return GROUP_DETAIL_TAB_KEYS.includes(value as GroupDetailTab);
+}
+
 export function ResearchGroupDetailPage() {
-  const [activeTab, setActiveTab] = useState<GroupDetailTab>('overview');
+  const [searchParams, setSearchParams] = useSearchParams();
   const { projectId, groupId } = useParams();
   const numericProjectId = Number(projectId);
   const numericGroupId = Number(groupId);
@@ -91,6 +91,24 @@ export function ResearchGroupDetailPage() {
   const { data: groups = [], isLoading: isLoadingGroups } = useResearchGroupsByProject(
     Number.isFinite(numericProjectId) ? numericProjectId : null
   );
+  const userInGroup = group?.members?.find((m) => m.userId === currentUser?.id);
+  const groupRole = group?.myGroupRole || group?.myRole || userInGroup?.role;
+  const isLeader = groupRole === 'LEADER';
+  const isMember = groupRole === 'MEMBER';
+  const tabs = isManager
+    ? GROUP_DETAIL_MANAGER_TABS
+    : GROUP_DETAIL_STUDENT_TABS(isLeader);
+  const tabParam = searchParams.get('tab');
+  const requestedTab = isGroupDetailTab(tabParam) ? tabParam : 'overview';
+  const activeTab = tabs.some((tab) => tab.value === requestedTab) ? requestedTab : 'overview';
+
+  function handleTabChange(nextTab: GroupDetailTab) {
+    setSearchParams((currentParams) => {
+      const nextParams = new URLSearchParams(currentParams);
+      nextParams.set('tab', nextTab);
+      return nextParams;
+    }, { replace: true });
+  }
 
   const { data: stats } = useProjectDashboardStats(
     project?.id && activeTab === 'overview' ? project.id : null
@@ -144,10 +162,6 @@ export function ResearchGroupDetailPage() {
   }
 
   // Security & Role check: currentUser must belong to the group
-  const userInGroup = group.members?.find((m) => m.userId === currentUser?.id);
-  const groupRole = group.myGroupRole || group.myRole || userInGroup?.role;
-  const isLeader = groupRole === 'LEADER';
-  const isMember = groupRole === 'MEMBER';
   const canViewGroupManagement = isManager || isLeader;
   const canViewMyWork = isLeader || isMember;
   const canViewGroupProducts = canViewGroupManagement || isMember;
@@ -165,10 +179,6 @@ export function ResearchGroupDetailPage() {
     ? 'STUDENT_MEMBER'
     : undefined;
 
-  const tabs = isManager
-    ? GROUP_DETAIL_MANAGER_TABS
-    : GROUP_DETAIL_STUDENT_TABS(isLeader);
-
   return (
     <section className="space-y-6">
       {/* Premium Header */}
@@ -179,14 +189,14 @@ export function ResearchGroupDetailPage() {
               className="inline-flex rounded-md border border-slate-200 bg-white px-3.5 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50 transition duration-150"
               to="/app/research"
             >
-              ← Quay lại danh sách nhóm
+              Quay lại danh sách nhóm
             </Link>
           ) : (
             <Link
               className="inline-flex rounded-md border border-slate-200 bg-white px-3.5 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50 transition duration-150"
               to={`/app/research/projects/${project.id}`}
             >
-              ← Quay lại đề tài
+              Quay lại đề tài
             </Link>
           )}
           <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Đề tài: {project.title}</span>
@@ -262,7 +272,7 @@ export function ResearchGroupDetailPage() {
             type="button"
             role="tab"
             aria-selected={activeTab === tab.value}
-            onClick={() => setActiveTab(tab.value)}
+            onClick={() => handleTabChange(tab.value)}
           >
             {tab.label}
           </button>
@@ -359,7 +369,7 @@ export function ResearchGroupDetailPage() {
         />
       ) : null}
 
-      {activeTab === 'evaluation' && isManager ? (
+      {activeTab === 'evaluations' && isManager ? (
         <EvaluationPage
           key={`evaluation-${group.id}`}
           currentUserId={currentUser?.id}
@@ -421,41 +431,21 @@ function GroupOverviewTab({
           title="Mốc hoàn thành"
           value={`${completedMilestones}/${milestones.length}`}
           desc="Các cột mốc nghiên cứu chính"
-          icon={
-            <svg className="h-5 w-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          }
         />
         <StatItem
           title="Tiến độ Task"
           value={`${taskCompletionRate}%`}
           desc="Phần trăm nhiệm vụ đã hoàn thành"
-          icon={
-            <svg className="h-5 w-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          }
         />
         <StatItem
           title="Báo cáo đã nộp"
           value={reports.length}
           desc="Tổng số báo cáo tiến độ"
-          icon={
-            <svg className="h-5 w-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-          }
         />
         <StatItem
           title="Sản phẩm nghiên cứu"
           value={products.length}
           desc="Các sản phẩm khoa học đã lưu"
-          icon={
-            <svg className="h-5 w-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-            </svg>
-          }
         />
       </div>
 
@@ -582,8 +572,7 @@ function GroupMembersTab({ group, isLeader }: { group: any; isLeader: boolean })
                   </span>
                 </td>
                 <td className="px-6 py-4">
-                  <span className="inline-flex items-center gap-1.5 text-emerald-700 font-semibold">
-                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-600" />
+                  <span className="inline-flex text-emerald-700 font-semibold">
                     Hoạt động
                   </span>
                 </td>
@@ -1014,16 +1003,13 @@ function StatItem({
   title,
   value,
   desc,
-  icon,
 }: {
   title: string;
   value: string | number;
   desc: string;
-  icon: React.ReactNode;
 }) {
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm flex items-start gap-4">
-      <div className="rounded-full bg-slate-50 p-2.5 shrink-0">{icon}</div>
+    <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
       <div>
         <span className="block text-xs font-semibold text-slate-500 uppercase tracking-wider">
           {title}

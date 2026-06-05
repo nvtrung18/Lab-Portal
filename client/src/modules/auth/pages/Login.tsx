@@ -7,7 +7,6 @@ import { useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 
 import { loginAPI } from '../api';
-import { PasswordVisibilityIcon } from '../components/PasswordVisibilityIcon';
 import { getPrimaryRedirectPath, useAuth } from '../hooks';
 import { USER_ME_QUERY_KEY } from '../../user/hooks';
 import type { Response } from '../../../shared/types';
@@ -126,19 +125,19 @@ export function LoginPage() {
               id="password"
               type={showPassword ? 'text' : 'password'}
               autoComplete="current-password"
-              className="block w-full rounded-md border border-slate-300 px-3 py-2 pr-12 text-sm text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
+              className="block w-full rounded-md border border-slate-300 px-3 py-2 pr-16 text-sm text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
               placeholder="Nhập mật khẩu"
               disabled={isSubmitting}
               {...register('password')}
             />
             <button
               type="button"
-              className="absolute inset-y-0 right-0 flex items-center px-3 text-slate-600 hover:text-slate-950 disabled:cursor-not-allowed disabled:text-slate-300"
+              className="absolute inset-y-0 right-0 flex items-center px-3 text-xs font-semibold text-slate-600 hover:text-slate-950 disabled:cursor-not-allowed disabled:text-slate-300"
               disabled={isSubmitting}
               aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
               onClick={() => setShowPassword((value) => !value)}
             >
-              <PasswordVisibilityIcon visible={showPassword} />
+              {showPassword ? 'Ẩn' : 'Hiện'}
             </button>
           </div>
           {errors.password ? (

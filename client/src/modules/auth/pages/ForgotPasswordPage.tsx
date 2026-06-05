@@ -2,7 +2,6 @@ import axios from 'axios';
 import { type FormEvent, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
-import { PasswordVisibilityIcon } from '../components';
 import {
   resetPasswordAPI,
   sendForgotPasswordCodeAPI,
@@ -227,7 +226,7 @@ export function ForgotPasswordPage() {
           </p>
           <div className="relative">
             <input
-              className="w-full rounded-md border border-slate-300 px-3 py-2 pr-12 text-sm outline-none focus:border-slate-900"
+              className="w-full rounded-md border border-slate-300 px-3 py-2 pr-16 text-sm outline-none focus:border-slate-900"
               placeholder="Mật khẩu mới"
               type={showPassword ? 'text' : 'password'}
               value={newPassword}
@@ -235,16 +234,16 @@ export function ForgotPasswordPage() {
             />
             <button
               aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
-              className="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-slate-600"
+              className="absolute inset-y-0 right-0 flex w-14 items-center justify-center text-xs font-semibold text-slate-600"
               onClick={() => setShowPassword((value) => !value)}
               type="button"
             >
-              <PasswordVisibilityIcon visible={showPassword} />
+              {showPassword ? 'Ẩn' : 'Hiện'}
             </button>
           </div>
           <div className="relative">
             <input
-              className="w-full rounded-md border border-slate-300 px-3 py-2 pr-12 text-sm outline-none focus:border-slate-900"
+              className="w-full rounded-md border border-slate-300 px-3 py-2 pr-16 text-sm outline-none focus:border-slate-900"
               placeholder="Nhập lại mật khẩu mới"
               type={showConfirmPassword ? 'text' : 'password'}
               value={confirmPassword}
@@ -252,11 +251,11 @@ export function ForgotPasswordPage() {
             />
             <button
               aria-label={showConfirmPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
-              className="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-slate-600"
+              className="absolute inset-y-0 right-0 flex w-14 items-center justify-center text-xs font-semibold text-slate-600"
               onClick={() => setShowConfirmPassword((value) => !value)}
               type="button"
             >
-              <PasswordVisibilityIcon visible={showConfirmPassword} />
+              {showConfirmPassword ? 'Ẩn' : 'Hiện'}
             </button>
           </div>
           <Button

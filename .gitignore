@@ -49,3 +49,6 @@ out/
 
 # Local backend environment
 server/.env.properties
+
+# Local Docker Compose environment
+.env.properties
