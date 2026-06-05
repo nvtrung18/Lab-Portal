@@ -73,7 +73,7 @@ export function LeaderReviewModal({ isOpen, isSubmitting, decision, onClose, onS
         {/* Decision selector when opened from a generic action button */}
         {decision === null ? (
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500">
+            <label className="block text-xs font-medium uppercase tracking-wider text-slate-500">
               Quyết định kiểm tra
             </label>
             <div className="mt-2 flex flex-wrap gap-2">
@@ -87,10 +87,10 @@ export function LeaderReviewModal({ isOpen, isSubmitting, decision, onClose, onS
                     className={`rounded-md px-3 py-2 text-xs font-semibold ring-1 transition duration-150 ${
                       isSelected
                         ? d === 'REJECT'
-                          ? 'bg-red-50 text-red-700 ring-red-300 font-bold'
+                          ? 'bg-red-50 text-red-700 ring-red-300 font-medium'
                           : d === 'REQUEST_REVISION'
-                            ? 'bg-amber-50 text-amber-700 ring-amber-300 font-bold'
-                            : 'bg-blue-50 text-blue-700 ring-blue-300 font-bold'
+                            ? 'bg-amber-50 text-amber-700 ring-amber-300 font-medium'
+                            : 'bg-blue-50 text-blue-700 ring-blue-300 font-medium'
                         : 'bg-white text-slate-600 ring-slate-200 hover:bg-slate-50'
                     }`}
                   >
@@ -104,7 +104,7 @@ export function LeaderReviewModal({ isOpen, isSubmitting, decision, onClose, onS
 
         {/* Comment Note Text Area */}
         <div>
-          <label className="block text-xs font-bold uppercase tracking-wider text-slate-500" htmlFor="leader-review-note">
+          <label className="block text-xs font-medium uppercase tracking-wider text-slate-500" htmlFor="leader-review-note">
             Ghi chú / Nhận xét của Trưởng nhóm
           </label>
           <textarea

@@ -185,7 +185,7 @@ export function GroupReportsTab({
       {/* Header Info */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-4">
         <div>
-          <h3 className="text-lg font-bold text-slate-950">{displayTitle}</h3>
+          <h3 className="text-lg font-medium text-slate-950">{displayTitle}</h3>
           <p className="mt-1 text-sm text-slate-600">{displaySubtitle}</p>
         </div>
 
@@ -196,7 +196,7 @@ export function GroupReportsTab({
               onClick={() => setSubTab('me')}
               className={`rounded-md px-3 py-1.5 text-xs font-semibold transition ${
                 subTab === 'me'
-                  ? 'bg-white text-blue-700 shadow-sm font-bold'
+                  ? 'bg-white text-blue-700 shadow-sm font-medium'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
@@ -206,7 +206,7 @@ export function GroupReportsTab({
               onClick={() => setSubTab('group')}
               className={`rounded-md px-3 py-1.5 text-xs font-semibold transition ${
                 subTab === 'group'
-                  ? 'bg-white text-blue-700 shadow-sm font-bold'
+                  ? 'bg-white text-blue-700 shadow-sm font-medium'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
@@ -287,7 +287,7 @@ export function GroupReportsTab({
                 {/* Task Title & Report Status */}
                 <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-50 pb-3">
                   <div className="min-w-0">
-                    <h4 className="text-base font-bold text-slate-900 leading-snug truncate" title={report.taskTitle || report.title}>
+                    <h4 className="text-base font-medium text-slate-900 leading-snug truncate" title={report.taskTitle || report.title}>
                       {report.taskTitle || 'Nhiệm vụ chung'}
                     </h4>
                   </div>
@@ -301,19 +301,19 @@ export function GroupReportsTab({
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5 text-sm bg-slate-50/50 rounded-lg p-3 border border-slate-100/50">
                   <div className="min-w-0">
                     <span className="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Người nộp</span>
-                    <span className="block mt-0.5 font-bold text-slate-800 truncate" title={getSubmitterLabel(report)}>
+                    <span className="block mt-0.5 font-medium text-slate-800 truncate" title={getSubmitterLabel(report)}>
                       {getSubmitterLabel(report)}
                     </span>
                   </div>
                   <div className="min-w-0">
                     <span className="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Mốc</span>
-                    <span className="block mt-0.5 font-bold text-slate-800 truncate" title={report.milestoneTitle || 'N/A'}>
+                    <span className="block mt-0.5 font-medium text-slate-800 truncate" title={report.milestoneTitle || 'N/A'}>
                       {report.milestoneTitle || 'Nhiệm vụ chung'}
                     </span>
                   </div>
                   <div>
                     <span className="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Báo cáo mới nhất</span>
-                    <span className="block mt-0.5 font-bold text-blue-700">v{report.version}</span>
+                    <span className="block mt-0.5 font-medium text-blue-700">v{report.version}</span>
                   </div>
                   <div>
                     <span className="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Ngày nộp</span>

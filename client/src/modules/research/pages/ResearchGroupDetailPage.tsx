@@ -186,14 +186,14 @@ export function ResearchGroupDetailPage() {
         <div className="flex flex-wrap items-center justify-between gap-4">
           {isStudent ? (
             <Link
-              className="inline-flex rounded-md border border-slate-200 bg-white px-3.5 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50 transition duration-150"
+              className="inline-flex rounded-md border border-slate-200 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition duration-150"
               to="/app/research"
             >
               Quay lại danh sách nhóm
             </Link>
           ) : (
             <Link
-              className="inline-flex rounded-md border border-slate-200 bg-white px-3.5 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50 transition duration-150"
+              className="inline-flex rounded-md border border-slate-200 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition duration-150"
               to={`/app/research/projects/${project.id}`}
             >
               Quay lại đề tài
@@ -205,8 +205,8 @@ export function ResearchGroupDetailPage() {
         <div className="mt-4 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
             <div className="flex items-center gap-2.5">
-              <h2 className="text-2xl font-bold text-slate-950">{group.name}</h2>
-              <span className="rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-bold text-blue-700 ring-1 ring-blue-100">
+              <h2 className="text-2xl font-medium text-slate-950">{group.name}</h2>
+              <span className="rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-700 ring-1 ring-blue-100">
                 Nhóm nghiên cứu
               </span>
             </div>
@@ -219,19 +219,19 @@ export function ResearchGroupDetailPage() {
         <dl className="mt-5 grid gap-4 text-sm sm:grid-cols-2 lg:grid-cols-5 border-t border-slate-100 pt-5">
           <div className="min-w-0 flex-1">
             <dt className="font-semibold text-slate-500 text-xs uppercase tracking-wider">Đề tài nghiên cứu</dt>
-            <dd className="mt-1 text-slate-800 font-bold truncate leading-snug" title={project.title}>
+            <dd className="mt-1 text-slate-800 font-medium truncate leading-snug" title={project.title}>
               {project.title}
             </dd>
           </div>
           <div>
             <dt className="font-semibold text-slate-500 text-xs uppercase tracking-wider">Trưởng nhóm</dt>
-            <dd className="mt-1 text-slate-800 font-bold">{group.leaderName || 'Chưa phân công'}</dd>
+            <dd className="mt-1 text-slate-800 font-medium">{group.leaderName || 'Chưa phân công'}</dd>
           </div>
           {isStudent ? (
             <div>
               <dt className="font-semibold text-slate-500 text-xs uppercase tracking-wider">Vai trò của tôi</dt>
               <dd className="mt-1">
-                <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-bold ring-1 ${
+                <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ${
                   isLeader ? 'bg-blue-50 text-blue-700 ring-blue-100' : 'bg-slate-50 text-slate-700 ring-slate-100'
                 }`}>
                   {isLeader ? 'Trưởng nhóm' : 'Thành viên'}
@@ -247,7 +247,7 @@ export function ResearchGroupDetailPage() {
           <div>
             <dt className="font-semibold text-slate-500 text-xs uppercase tracking-wider">Trạng thái nhóm</dt>
             <dd className="mt-1">
-              <span className="inline-flex rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-bold text-emerald-700 ring-1 ring-emerald-100">
+              <span className="inline-flex rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700 ring-1 ring-emerald-100">
                 Hoạt động
               </span>
             </dd>
@@ -265,7 +265,7 @@ export function ResearchGroupDetailPage() {
           <button
             className={`whitespace-nowrap border-b-2 px-4 py-3 text-sm font-semibold transition-all ${
               activeTab === tab.value
-                ? 'border-blue-600 text-blue-600 font-bold'
+                ? 'border-blue-600 text-blue-600 font-medium'
                 : 'border-transparent text-slate-600 hover:text-slate-900'
             }`}
             key={tab.value}
@@ -451,20 +451,20 @@ function GroupOverviewTab({
 
       {isStudent && (
         <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm space-y-4">
-          <h3 className="text-base font-bold text-slate-900 border-b border-slate-100 pb-3">Chi tiết thông tin nhóm</h3>
+          <h3 className="text-base font-medium text-slate-900 border-b border-slate-100 pb-3">Chi tiết thông tin nhóm</h3>
           <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 text-sm">
             <div className="bg-slate-50/50 rounded-lg p-3.5 border border-slate-100 space-y-0.5">
               <dt className="font-semibold text-slate-500 text-xs uppercase tracking-wider">Tên nhóm</dt>
-              <dd className="font-bold text-slate-900 text-base">{group.name}</dd>
+              <dd className="font-medium text-slate-900 text-base">{group.name}</dd>
             </div>
             <div className="bg-slate-50/50 rounded-lg p-3.5 border border-slate-100 space-y-0.5">
               <dt className="font-semibold text-slate-500 text-xs uppercase tracking-wider">Trưởng nhóm</dt>
-              <dd className="font-bold text-slate-800">{group.leaderName || 'Chưa phân công'}</dd>
+              <dd className="font-medium text-slate-800">{group.leaderName || 'Chưa phân công'}</dd>
             </div>
             <div className="bg-slate-50/50 rounded-lg p-3.5 border border-slate-100 space-y-0.5">
               <dt className="font-semibold text-slate-500 text-xs uppercase tracking-wider">Vai trò của tôi</dt>
-              <dd className="font-bold text-slate-800">
-                <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-bold ring-1 ${
+              <dd className="font-medium text-slate-800">
+                <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ${
                   isLeader ? 'bg-blue-50 text-blue-700 ring-blue-100' : 'bg-slate-50 text-slate-700 ring-slate-100'
                 }`}>
                   {isLeader ? 'Trưởng nhóm' : 'Thành viên'}
@@ -474,14 +474,14 @@ function GroupOverviewTab({
             <div className="bg-slate-50/50 rounded-lg p-3.5 border border-slate-100 space-y-0.5">
               <dt className="font-semibold text-slate-500 text-xs uppercase tracking-wider">Trạng thái nhóm</dt>
               <dd>
-                <span className="inline-flex rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-bold text-emerald-700 ring-1 ring-emerald-100">
+                <span className="inline-flex rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700 ring-1 ring-emerald-100">
                   Hoạt động
                 </span>
               </dd>
             </div>
             <div className="bg-slate-50/50 rounded-lg p-3.5 border border-slate-100 space-y-0.5">
               <dt className="font-semibold text-slate-500 text-xs uppercase tracking-wider">Ngày tạo nhóm</dt>
-              <dd className="font-bold text-slate-800">{formatDate(group.createdAt)}</dd>
+              <dd className="font-medium text-slate-800">{formatDate(group.createdAt)}</dd>
             </div>
           </dl>
         </div>
@@ -491,13 +491,13 @@ function GroupOverviewTab({
         {/* Plan / Descriptions Card */}
         <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm lg:col-span-2 space-y-4">
           <div>
-            <h3 className="text-base font-bold text-slate-900">Kế hoạch nghiên cứu của nhóm</h3>
+            <h3 className="text-base font-medium text-slate-900">Kế hoạch nghiên cứu của nhóm</h3>
             <p className="mt-2 text-sm text-slate-600 leading-relaxed whitespace-pre-line">
               {group.plan || 'Chưa có kế hoạch nghiên cứu chi tiết.'}
             </p>
           </div>
           <div className="border-t border-slate-100 pt-4">
-            <h3 className="text-base font-bold text-slate-900">Mô tả chi tiết nhóm</h3>
+            <h3 className="text-base font-medium text-slate-900">Mô tả chi tiết nhóm</h3>
             <p className="mt-2 text-sm text-slate-600 leading-relaxed">
               {group.description || 'Chưa cập nhật mô tả nhóm.'}
             </p>
@@ -506,7 +506,7 @@ function GroupOverviewTab({
 
         {/* Members List Card */}
         <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-          <h3 className="text-base font-bold text-slate-900">Thành viên nhóm ({group.members?.length ?? 0})</h3>
+          <h3 className="text-base font-medium text-slate-900">Thành viên nhóm ({group.members?.length ?? 0})</h3>
           <div className="mt-4 divide-y divide-slate-100">
             {group.members?.map((member: any) => (
               <div key={member.id} className="py-3 flex items-center justify-between gap-3 text-sm">
@@ -514,7 +514,7 @@ function GroupOverviewTab({
                   <span className="block font-semibold text-slate-900">{member.fullName || member.email}</span>
                   <span className="block text-xs text-slate-500">{member.email}</span>
                 </div>
-                <span className={`rounded-full px-2 py-0.5 text-xs font-bold ring-1 ${
+                <span className={`rounded-full px-2 py-0.5 text-xs font-medium ring-1 ${
                   member.role === 'LEADER'
                     ? 'bg-blue-50 text-blue-700 ring-blue-100'
                     : 'bg-slate-50 text-slate-700 ring-slate-100'
@@ -538,7 +538,7 @@ function GroupMembersTab({ group, isLeader }: { group: any; isLeader: boolean })
   return (
     <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm space-y-6">
       <div>
-        <h3 className="text-lg font-bold text-slate-950">Thành viên nhóm</h3>
+        <h3 className="text-lg font-medium text-slate-950">Thành viên nhóm</h3>
         <p className="mt-1 text-sm text-slate-600">
           Danh sách thành viên chính thức tham gia nhóm nghiên cứu.
         </p>
@@ -563,7 +563,7 @@ function GroupMembersTab({ group, isLeader }: { group: any; isLeader: boolean })
                 </td>
                 <td className="px-6 py-4 text-slate-600">{member.email}</td>
                 <td className="px-6 py-4">
-                  <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-bold ring-1 ${
+                  <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ${
                     member.role === 'LEADER'
                       ? 'bg-blue-50 text-blue-700 ring-blue-100'
                       : 'bg-slate-50 text-slate-700 ring-slate-100'
@@ -630,12 +630,12 @@ function GroupProjectTab({ project }: { project: any }) {
     <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
         <div>
-          <h3 className="text-lg font-bold text-slate-950">Thông tin đề tài nghiên cứu</h3>
+          <h3 className="text-lg font-medium text-slate-950">Thông tin đề tài nghiên cứu</h3>
           <p className="mt-1 text-sm text-slate-600">
             Chi tiết đề tài khoa học nhóm đang thực hiện. Thông tin này ở chế độ chỉ đọc.
           </p>
         </div>
-        <span className={`inline-flex shrink-0 rounded-full px-3 py-1 text-xs font-bold uppercase ring-1 ${getProjectStatusClass(project.status)}`}>
+        <span className={`inline-flex shrink-0 rounded-full px-3 py-1 text-xs font-medium uppercase ring-1 ${getProjectStatusClass(project.status)}`}>
           {formatProjectStatus(project.status)}
         </span>
       </div>
@@ -643,7 +643,7 @@ function GroupProjectTab({ project }: { project: any }) {
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         <div className="rounded-lg border border-slate-100 bg-slate-50/50 p-4 space-y-1">
           <span className="block text-xs font-semibold text-slate-500 uppercase tracking-wider">Tên đề tài</span>
-          <span className="block font-bold text-slate-900 text-sm leading-snug">{project.title}</span>
+          <span className="block font-medium text-slate-900 text-sm leading-snug">{project.title}</span>
         </div>
         <div className="rounded-lg border border-slate-100 bg-slate-50/50 p-4 space-y-1">
           <span className="block text-xs font-semibold text-slate-500 uppercase tracking-wider">Chủ đề nghiên cứu</span>
@@ -667,25 +667,25 @@ function GroupProjectTab({ project }: { project: any }) {
 
       <div className="border-t border-slate-100 pt-5 space-y-5">
         <div>
-          <h4 className="text-sm font-bold text-slate-900 uppercase tracking-wider">Mô tả chi tiết</h4>
+          <h4 className="text-sm font-medium text-slate-900 uppercase tracking-wider">Mô tả chi tiết</h4>
           <p className="mt-2 text-sm text-slate-600 leading-relaxed whitespace-pre-line">
             {project.description || 'Chưa có mô tả chi tiết cho đề tài.'}
           </p>
         </div>
         <div>
-          <h4 className="text-sm font-bold text-slate-900 uppercase tracking-wider">Mục tiêu đề tài</h4>
+          <h4 className="text-sm font-medium text-slate-900 uppercase tracking-wider">Mục tiêu đề tài</h4>
           <p className="mt-2 text-sm text-slate-600 leading-relaxed whitespace-pre-line">
             {project.objective || 'Chưa có thông tin mục tiêu đề tài.'}
           </p>
         </div>
         <div>
-          <h4 className="text-sm font-bold text-slate-900 uppercase tracking-wider">Sản phẩm kỳ vọng</h4>
+          <h4 className="text-sm font-medium text-slate-900 uppercase tracking-wider">Sản phẩm kỳ vọng</h4>
           <p className="mt-2 text-sm text-slate-600 leading-relaxed whitespace-pre-line bg-blue-50/30 rounded-lg p-4 border border-blue-100/50">
             {project.requiredProducts || 'Chưa có thông tin sản phẩm kỳ vọng.'}
           </p>
         </div>
         <div>
-          <h4 className="text-sm font-bold text-slate-900 uppercase tracking-wider">Tiêu chí đánh giá</h4>
+          <h4 className="text-sm font-medium text-slate-900 uppercase tracking-wider">Tiêu chí đánh giá</h4>
           <p className="mt-2 text-sm text-slate-600 leading-relaxed whitespace-pre-line bg-emerald-50/20 rounded-lg p-4 border border-emerald-100/30">
             {project.evaluationCriteria || 'Chưa có thông tin tiêu chí đánh giá.'}
           </p>
@@ -829,7 +829,7 @@ function GroupTasksTab({
       {/* Milestone Selector */}
       <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h3 className="text-base font-bold text-slate-900">Nhiệm vụ theo mốc nghiên cứu</h3>
+          <h3 className="text-base font-medium text-slate-900">Nhiệm vụ theo mốc nghiên cứu</h3>
           <p className="mt-1 text-sm text-slate-600">Chọn mốc nghiên cứu để xem và quản lý danh sách nhiệm vụ.</p>
         </div>
         <div className="w-full sm:w-72">
@@ -851,7 +851,7 @@ function GroupTasksTab({
       {selectedMilestoneId && (
         <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm space-y-4">
           <div className="border-b border-slate-100 pb-4">
-            <h4 className="text-base font-bold text-slate-900">{selectedMilestone.title}</h4>
+            <h4 className="text-base font-medium text-slate-900">{selectedMilestone.title}</h4>
             <p className="mt-1 text-sm text-slate-600">{selectedMilestone.description || 'Chưa có mô tả cho mốc này.'}</p>
           </div>
           <TaskBoard
@@ -895,7 +895,7 @@ function LeaderTasksWrapper({
           onClick={() => setSubTab('me')}
           className={`rounded-md px-4 py-1.5 text-xs font-semibold transition ${
             subTab === 'me'
-              ? 'bg-white text-blue-700 shadow-sm font-bold'
+              ? 'bg-white text-blue-700 shadow-sm font-medium'
               : 'text-slate-600 hover:text-slate-900'
           }`}
         >
@@ -905,7 +905,7 @@ function LeaderTasksWrapper({
           onClick={() => setSubTab('group')}
           className={`rounded-md px-4 py-1.5 text-xs font-semibold transition ${
             subTab === 'group'
-              ? 'bg-white text-blue-700 shadow-sm font-bold'
+              ? 'bg-white text-blue-700 shadow-sm font-medium'
               : 'text-slate-600 hover:text-slate-900'
           }`}
         >
@@ -955,7 +955,7 @@ function LeaderMilestonesWrapper({
           onClick={() => setSubTab('me')}
           className={`rounded-md px-4 py-1.5 text-xs font-semibold transition ${
             subTab === 'me'
-              ? 'bg-white text-blue-700 shadow-sm font-bold'
+              ? 'bg-white text-blue-700 shadow-sm font-medium'
               : 'text-slate-600 hover:text-slate-900'
           }`}
         >
@@ -965,7 +965,7 @@ function LeaderMilestonesWrapper({
           onClick={() => setSubTab('group')}
           className={`rounded-md px-4 py-1.5 text-xs font-semibold transition ${
             subTab === 'group'
-              ? 'bg-white text-blue-700 shadow-sm font-bold'
+              ? 'bg-white text-blue-700 shadow-sm font-medium'
               : 'text-slate-600 hover:text-slate-900'
           }`}
         >
@@ -1014,7 +1014,7 @@ function StatItem({
         <span className="block text-xs font-semibold text-slate-500 uppercase tracking-wider">
           {title}
         </span>
-        <span className="block mt-1 text-2xl font-bold text-slate-900 leading-none">
+        <span className="block mt-1 text-2xl font-medium text-slate-900 leading-none">
           {value}
         </span>
         <span className="block mt-1 text-xs text-slate-500 truncate">

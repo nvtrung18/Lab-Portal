@@ -109,7 +109,7 @@ export function ResearchProjectDetailPage() {
           <div className="min-w-0">
             <div>
               <h4 className="font-semibold text-amber-900">
-                Bạn thuộc nhóm nghiên cứu: <span className="font-bold">{studentGroup.name}</span>
+                Bạn thuộc nhóm nghiên cứu: <span className="font-medium">{studentGroup.name}</span>
               </h4>
               <p className="text-xs text-amber-700">
                 Truy cập vào trang chi tiết nhóm của bạn để xem mốc công việc, sản phẩm và nhật ký cá nhân.

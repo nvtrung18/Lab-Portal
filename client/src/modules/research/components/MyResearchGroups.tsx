@@ -32,7 +32,7 @@ export function MyResearchGroups({ labId, currentUserId }: MyResearchGroupsProps
   return (
     <section className="space-y-6">
       <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="text-xl font-bold text-slate-950">Nhóm nghiên cứu của tôi</h2>
+        <h2 className="text-xl font-medium text-slate-950">Nhóm nghiên cứu của tôi</h2>
         <p className="mt-2 text-sm text-slate-600">
           Danh sách các nhóm nghiên cứu bạn tham gia trong Phòng thí nghiệm này. Chọn một nhóm để vào không gian làm việc chi tiết.
         </p>
@@ -65,10 +65,10 @@ export function MyResearchGroups({ labId, currentUserId }: MyResearchGroupsProps
               >
                 <div className="space-y-4">
                   <div className="flex items-start justify-between gap-3">
-                    <h3 className="font-bold text-slate-950 text-base leading-snug line-clamp-1" title={group.name}>
+                    <h3 className="font-medium text-slate-950 text-base leading-snug line-clamp-1" title={group.name}>
                       {group.name}
                     </h3>
-                    <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ring-1 ${getStatusClass(group.status)}`}>
+                    <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ring-1 ${getStatusClass(group.status)}`}>
                       {formatGroupStatus(group.status)}
                     </span>
                   </div>
@@ -85,7 +85,7 @@ export function MyResearchGroups({ labId, currentUserId }: MyResearchGroupsProps
                   <div className="grid grid-cols-2 gap-4 border-t border-slate-100 pt-4 text-xs">
                     <div>
                       <span className="block font-semibold text-slate-500">Vai trò của tôi</span>
-                      <span className={`inline-flex mt-1 rounded-full px-2 py-0.5 font-bold ${
+                      <span className={`inline-flex mt-1 rounded-full px-2 py-0.5 font-medium ${
                         isLeader ? 'bg-blue-50 text-blue-700 ring-1 ring-blue-100' : 'bg-slate-50 text-slate-700 ring-1 ring-slate-100'
                       }`}>
                         {isLeader ? 'Trưởng nhóm' : 'Thành viên'}
@@ -99,7 +99,7 @@ export function MyResearchGroups({ labId, currentUserId }: MyResearchGroupsProps
                     </div>
                     <div>
                       <span className="block font-semibold text-slate-500">Thành viên</span>
-                      <span className="block mt-1 text-slate-800 font-bold">
+                      <span className="block mt-1 text-slate-800 font-medium">
                         {group.memberCount ?? group.members?.length ?? 0} người
                       </span>
                     </div>

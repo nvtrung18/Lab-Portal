@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { type FormEvent, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { Eye, EyeOff } from 'lucide-react';
 
 import { registerAPI, sendRegisterCodeAPI, verifyRegisterCodeAPI } from '../api';
 import type { Response } from '../../../shared/types';
@@ -237,12 +238,17 @@ export function RegisterPage() {
               onChange={(event) => setPassword(event.target.value)}
             />
             <button
-              aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
-              className="absolute inset-y-0 right-0 flex w-14 items-center justify-center text-xs font-semibold text-slate-600"
-              onClick={() => setShowPassword((value) => !value)}
               type="button"
+              className="absolute inset-y-0 right-0 flex items-center px-3 text-slate-600 hover:text-slate-950 disabled:cursor-not-allowed disabled:text-slate-300"
+              disabled={isSubmitting}
+              aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+              onClick={() => setShowPassword((value) => !value)}
             >
-              {showPassword ? 'Ẩn' : 'Hiện'}
+              {showPassword ? (
+                <EyeOff size={18} />
+              ) : (
+                <Eye size={18} />
+              )}
             </button>
           </div>
           <div className="relative">
@@ -254,12 +260,17 @@ export function RegisterPage() {
               onChange={(event) => setConfirmPassword(event.target.value)}
             />
             <button
-              aria-label={showConfirmPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
-              className="absolute inset-y-0 right-0 flex w-14 items-center justify-center text-xs font-semibold text-slate-600"
-              onClick={() => setShowConfirmPassword((value) => !value)}
               type="button"
+              className="absolute inset-y-0 right-0 flex items-center px-3 text-slate-600 hover:text-slate-950 disabled:cursor-not-allowed disabled:text-slate-300"
+              disabled={isSubmitting}
+              aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+              onClick={() => setShowPassword((value) => !value)}
             >
-              {showConfirmPassword ? 'Ẩn' : 'Hiện'}
+              {showPassword ? (
+                <EyeOff size={18} />
+              ) : (
+                <Eye size={18} />
+              )}
             </button>
           </div>
           <Button
