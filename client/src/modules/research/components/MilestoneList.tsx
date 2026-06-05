@@ -160,11 +160,11 @@ export function MilestoneList({
                         <>
                           <div>
                             <dt className="font-semibold text-slate-700">Số nhiệm vụ của tôi</dt>
-                            <dd className="mt-1 font-bold text-slate-950">{milestone.myTaskCount ?? 0}</dd>
+                            <dd className="mt-1 font-medium text-slate-950">{milestone.myTaskCount ?? 0}</dd>
                           </div>
                           <div>
                             <dt className="font-semibold text-slate-700">Số nhiệm vụ đã hoàn thành</dt>
-                            <dd className="mt-1 font-bold text-emerald-700">{milestone.myCompletedTaskCount ?? 0}</dd>
+                            <dd className="mt-1 font-medium text-emerald-700">{milestone.myCompletedTaskCount ?? 0}</dd>
                           </div>
                         </>
                       ) : null}

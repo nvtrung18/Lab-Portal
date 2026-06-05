@@ -32,11 +32,11 @@ export function LatestReportSummary({ reports }: LatestReportSummaryProps) {
     <div>
       <p className="font-semibold text-slate-700">Báo cáo mới nhất</p>
       <div className="mt-1 flex items-center justify-between gap-2">
-        <p className={`font-medium ${reportStatus === 'APPROVED' ? 'text-emerald-700 font-bold' : 'text-slate-600'}`}>
+        <p className={`font-medium ${reportStatus === 'APPROVED' ? 'text-emerald-700 font-medium' : 'text-slate-600'}`}>
           {reportStatus ? REPORT_STATUS_LABELS[reportStatus] : 'Chưa nộp báo cáo'}
         </p>
         {latestVersion ? (
-          <span className="rounded bg-slate-200 px-1.5 py-0.5 text-[10px] font-bold text-slate-800 shrink-0">
+          <span className="rounded bg-slate-200 px-1.5 py-0.5 text-[10px] font-medium text-slate-800 shrink-0">
             v{latestVersion}
           </span>
         ) : null}

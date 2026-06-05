@@ -1,4 +1,22 @@
-# Root / IDE / OS
+!.gitignore
+!README.md
+!docker-compose.yml
+!.env.properties
+
+# Docker folder
+!docker/
+!docker/**
+
+# Client folder
+!client/
+!client/**
+
+# Server folder
+!server/
+!server/**
+
+
+# IDE / OS
 .idea/
 *.iml
 *.iws
@@ -6,13 +24,14 @@
 .vscode/
 .DS_Store
 Thumbs.db
+
+# Logs
 *.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
-# Do not commit QA working files
-qa/
-
-# Backend
-server/HELP.md
+# Backend build artifacts
 server/target/
 server/.mvn/wrapper/maven-wrapper.jar
 server/.apt_generated
@@ -22,33 +41,29 @@ server/.project
 server/.settings/
 server/.springBeans
 server/.sts4-cache/
+server/HELP.md
+server/storage/
+server/uploads/
 
-# Keep target folders inside source trees if needed
-!server/**/src/main/**/target/
-!server/**/src/test/**/target/
+# Backend sensitive env (keep .env.example, ignore actual env)
+server/.env.properties
 
-# Frontend
+# Frontend build artifacts & dependencies
 client/node_modules/
+client/dist/
+client/build/
+client/coverage/
 client/.pnp
 client/.pnp.js
-client/coverage/
-client/build/
-client/dist/
 client/.env.local
 client/.env.development.local
 client/.env.test.local
 client/.env.production.local
-client/npm-debug.log*
-client/yarn-debug.log*
-client/yarn-error.log*
 
-# Shared build outputs
+# Root level ignores
+node_modules/
+package-lock.json
 bin/
 build/
 out/
-
-# Local backend environment
-server/.env.properties
-
-# Local Docker Compose environment
-.env.properties
+qa/

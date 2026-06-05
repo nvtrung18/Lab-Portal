@@ -134,7 +134,7 @@ function GroupCard({
       <div>
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h4 className="text-base font-bold text-slate-900 line-clamp-1">{group.name}</h4>
+            <h4 className="text-base font-medium text-slate-900 line-clamp-1">{group.name}</h4>
             <p className="mt-1 text-xs text-slate-500 line-clamp-2">
               {group.objective || 'Chưa cập nhật mục tiêu nhóm.'}
             </p>
@@ -171,7 +171,7 @@ function GroupCard({
           </div>
           <div>
             <span className="block font-medium text-slate-500">Báo cáo chờ duyệt</span>
-            <span className={`mt-0.5 block font-semibold ${pendingReportsCount > 0 ? 'text-orange-600 font-bold' : 'text-slate-800'}`}>
+            <span className={`mt-0.5 block font-semibold ${pendingReportsCount > 0 ? 'text-orange-600 font-medium' : 'text-slate-800'}`}>
               {pendingReportsCount} báo cáo
             </span>
           </div>
@@ -188,7 +188,7 @@ function GroupCard({
         <div className="mt-3 max-w-full">
           <div className="flex items-center justify-between text-xs">
             <span className="font-medium text-slate-500">Tiến độ task</span>
-            <span className="font-bold text-slate-800">{taskCompletionRate}%</span>
+            <span className="font-medium text-slate-800">{taskCompletionRate}%</span>
           </div>
           <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
             <div

@@ -213,7 +213,7 @@ function FilePreview({ file }: { file: File }) {
   return (
     <div className="rounded-md border border-slate-200 bg-slate-50 p-3 text-sm">
       <div className="flex items-center gap-3">
-        <span className="rounded bg-white px-2 py-1 text-xs font-bold text-slate-700 ring-1 ring-slate-200">
+        <span className="rounded bg-white px-2 py-1 text-xs font-medium text-slate-700 ring-1 ring-slate-200">
           {extension}
         </span>
         <div className="min-w-0">

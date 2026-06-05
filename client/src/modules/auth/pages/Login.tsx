@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
+import { Eye, EyeOff } from 'lucide-react';
 
 import { loginAPI } from '../api';
 import { getPrimaryRedirectPath, useAuth } from '../hooks';
@@ -12,6 +13,7 @@ import { USER_ME_QUERY_KEY } from '../../user/hooks';
 import type { Response } from '../../../shared/types';
 import { Button } from '../../../shared/components';
 import { VALIDATION_MESSAGES } from '../../../shared/utils';
+
 
 const loginSchema = z.object({
   email: z
@@ -132,12 +134,16 @@ export function LoginPage() {
             />
             <button
               type="button"
-              className="absolute inset-y-0 right-0 flex items-center px-3 text-xs font-semibold text-slate-600 hover:text-slate-950 disabled:cursor-not-allowed disabled:text-slate-300"
+              className="absolute inset-y-0 right-0 flex items-center px-3 text-slate-600 hover:text-slate-950 disabled:cursor-not-allowed disabled:text-slate-300"
               disabled={isSubmitting}
               aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
               onClick={() => setShowPassword((value) => !value)}
             >
-              {showPassword ? 'Ẩn' : 'Hiện'}
+              {showPassword ? (
+                <EyeOff size={18} />
+              ) : (
+                <Eye size={18} />
+              )}
             </button>
           </div>
           {errors.password ? (
