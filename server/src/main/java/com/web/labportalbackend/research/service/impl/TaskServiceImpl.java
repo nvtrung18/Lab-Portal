@@ -45,17 +45,18 @@ public class TaskServiceImpl implements TaskService {
     private static final String APPROVED_REPORT_REQUIRED =
             "Cần có báo cáo được duyệt trước khi hoàn thành nhiệm vụ/mốc nghiên cứu.";
     private static final Map<TaskStatus, Set<TaskStatus>> MANAGER_STATUS_TRANSITIONS = Map.of(
-            TaskStatus.TODO, Set.of(TaskStatus.DOING, TaskStatus.CANCELLED),
-            TaskStatus.DOING, Set.of(TaskStatus.WAITING_REVIEW, TaskStatus.CANCELLED),
-            TaskStatus.WAITING_REVIEW, Set.of(TaskStatus.DONE, TaskStatus.NEEDS_REVISION, TaskStatus.CANCELLED),
-            TaskStatus.NEEDS_REVISION, Set.of(TaskStatus.DOING, TaskStatus.CANCELLED),
-            TaskStatus.OVERDUE, Set.of(TaskStatus.DOING, TaskStatus.WAITING_REVIEW,
-                    TaskStatus.NEEDS_REVISION, TaskStatus.DONE, TaskStatus.CANCELLED)
+            TaskStatus.BACKLOG, Set.of(TaskStatus.TODO, TaskStatus.IN_PROGRESS, TaskStatus.CANCELLED),
+            TaskStatus.TODO, Set.of(TaskStatus.IN_PROGRESS, TaskStatus.BLOCKED, TaskStatus.CANCELLED),
+            TaskStatus.IN_PROGRESS, Set.of(TaskStatus.IN_REVIEW, TaskStatus.BLOCKED, TaskStatus.CANCELLED),
+            TaskStatus.IN_REVIEW, Set.of(TaskStatus.DONE, TaskStatus.NEEDS_REVISION, TaskStatus.BLOCKED, TaskStatus.CANCELLED),
+            TaskStatus.NEEDS_REVISION, Set.of(TaskStatus.IN_PROGRESS, TaskStatus.BLOCKED, TaskStatus.CANCELLED),
+            TaskStatus.BLOCKED, Set.of(TaskStatus.TODO, TaskStatus.IN_PROGRESS, TaskStatus.CANCELLED)
     );
     private static final Map<TaskStatus, Set<TaskStatus>> STUDENT_STATUS_TRANSITIONS = Map.of(
-            TaskStatus.TODO, Set.of(TaskStatus.DOING),
-            TaskStatus.DOING, Set.of(TaskStatus.WAITING_REVIEW),
-            TaskStatus.NEEDS_REVISION, Set.of(TaskStatus.DOING)
+            TaskStatus.TODO, Set.of(TaskStatus.IN_PROGRESS),
+            TaskStatus.IN_PROGRESS, Set.of(TaskStatus.IN_REVIEW, TaskStatus.BLOCKED),
+            TaskStatus.NEEDS_REVISION, Set.of(TaskStatus.IN_PROGRESS),
+            TaskStatus.BLOCKED, Set.of(TaskStatus.IN_PROGRESS)
     );
 
     private final TaskRepository taskRepository;
@@ -101,12 +102,16 @@ public class TaskServiceImpl implements TaskService {
         }
 
         TaskEntity task = TaskEntity.builder()
+                .projectId(project.getId())
+                .groupId(groupId)
                 .milestoneId(request.getMilestoneId())
                 .assigneeId(request.getAssignedToStudentId())
                 .title(request.getTitle().trim())
                 .description(request.getDescription())
                 .deadline(request.getDeadline())
+                .dueDate(request.getDeadline())
                 .status(TaskStatus.TODO)
+                .createdBy(currentUser.getId())
                 .progressPercent(0)
                 .build();
 
@@ -234,9 +239,8 @@ public class TaskServiceImpl implements TaskService {
         assertCanViewTasks(currentUser, milestone);
         assertCanUpdateTaskStatus(currentUser, task);
 
-        TaskStatus currentStatus = toWorkflowStatus(task.getStatus());
+        TaskStatus currentStatus = task.getStatus();
         TaskStatus requestedStatus = request.getStatus();
-        validateStatusTarget(requestedStatus);
 
         if (currentStatus == requestedStatus) {
             return TaskMapper.toResponse(task, milestone.getProject().getId());
@@ -275,28 +279,12 @@ public class TaskServiceImpl implements TaskService {
         throw new AccessDeniedException("Members may update only their assigned tasks");
     }
 
-    private void validateStatusTarget(TaskStatus status) {
-        if (status == TaskStatus.IN_PROGRESS || status == TaskStatus.REVIEW || status == TaskStatus.OVERDUE) {
-            throw new IllegalArgumentException("Unsupported task status target");
-        }
-    }
-
-    private TaskStatus toWorkflowStatus(TaskStatus status) {
-        if (status == TaskStatus.IN_PROGRESS) {
-            return TaskStatus.DOING;
-        }
-        if (status == TaskStatus.REVIEW) {
-            return TaskStatus.WAITING_REVIEW;
-        }
-        return status;
-    }
-
     private void applyStatusProgress(TaskEntity task, TaskStatus requestedStatus) {
-        if (requestedStatus == TaskStatus.DOING
+        if (requestedStatus == TaskStatus.IN_PROGRESS
                 && (task.getProgressPercent() == null || task.getProgressPercent() < 10)) {
             task.setProgressPercent(10);
         }
-        if (requestedStatus == TaskStatus.WAITING_REVIEW) {
+        if (requestedStatus == TaskStatus.IN_REVIEW) {
             task.setProgressPercent(90);
         }
         if (requestedStatus == TaskStatus.DONE) {

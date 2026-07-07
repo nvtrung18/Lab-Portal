@@ -189,8 +189,9 @@ public class StatsServiceImpl implements StatsService {
                 SELECT
                     COUNT(t.id) AS total_count,
                     COALESCE(SUM(CASE WHEN t.status = 'DONE' THEN 1 ELSE 0 END), 0) AS done_count,
-                    COALESCE(SUM(CASE WHEN t.status = 'OVERDUE'
-                        OR (t.deadline IS NOT NULL AND t.deadline < CURRENT_DATE AND t.status <> 'DONE')
+                    COALESCE(SUM(CASE WHEN t.deadline IS NOT NULL
+                        AND t.deadline < CURRENT_DATE
+                        AND t.status NOT IN ('DONE', 'CANCELLED')
                         THEN 1 ELSE 0 END), 0) AS overdue_count
                 FROM tasks t
                 JOIN milestones m ON m.id = t.milestone_id

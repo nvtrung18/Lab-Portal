@@ -1,16 +1,12 @@
 package com.web.labportalbackend.research.enums;
 
 public enum TaskStatus {
+    BACKLOG,
     TODO,
-    DOING,
-    WAITING_REVIEW,
+    IN_PROGRESS,
+    IN_REVIEW,
     NEEDS_REVISION,
     DONE,
-    OVERDUE,
-    CANCELLED,
-    /**
-     * Legacy values retained while older records and feature tests are migrated.
-     */
-    IN_PROGRESS,
-    REVIEW
+    BLOCKED,
+    CANCELLED
 }

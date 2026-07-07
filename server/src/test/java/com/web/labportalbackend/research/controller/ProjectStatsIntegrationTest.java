@@ -97,7 +97,7 @@ class ProjectStatsIntegrationTest {
     void getProjectStats_updatesTaskCompletionAndReportCount() throws Exception {
         ProjectFixture fixture = createProjectFixture("task-report");
         TaskEntity done = createTask(fixture.milestone(), TaskStatus.DONE);
-        TaskEntity review = createTask(fixture.milestone(), TaskStatus.REVIEW);
+        TaskEntity review = createTask(fixture.milestone(), TaskStatus.IN_REVIEW);
         TaskEntity todo = createTask(fixture.milestone(), TaskStatus.TODO);
         createReport(done, 1);
         createReport(review, 1);

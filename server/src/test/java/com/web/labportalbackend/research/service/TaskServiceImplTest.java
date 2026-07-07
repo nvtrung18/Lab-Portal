@@ -91,11 +91,24 @@ class TaskServiceImplTest {
 
     @Test
     void createTask_savesTodoTaskWhenMilestoneExists() {
+        User manager = authenticate("manager", "LAB_MANAGER");
+        Laboratory lab = lab(1L);
+        MilestoneEntity milestone = milestone(10L, 100L);
+        milestone.getProject().setLab(lab);
+
         CreateTaskRequest request = new CreateTaskRequest();
         request.setMilestoneId(10L);
         request.setTitle("Prepare dataset");
+        request.setAssignedToStudentId(7L);
+        request.setDeadline(LocalDate.of(2026, 8, 1));
 
-        when(milestoneRepository.existsById(10L)).thenReturn(true);
+        User student = student(7L);
+        student.addRole(new Role("STUDENT", "STUDENT"));
+
+        when(milestoneRepository.findByIdAndDeletedFalseAndActiveTrue(10L)).thenReturn(Optional.of(milestone));
+        when(laboratoryRepository.findFirstByManagerIdAndDeletedFalse(manager.getId())).thenReturn(Optional.of(lab));
+        when(userRepository.findById(7L)).thenReturn(Optional.of(student));
+        when(groupMemberRepository.existsByGroupIdAndUserIdAndActiveTrueAndDeletedFalse(100L, 7L)).thenReturn(true);
         when(taskRepository.save(any(TaskEntity.class))).thenAnswer(invocation -> {
             TaskEntity task = invocation.getArgument(0);
             task.setId(20L);
@@ -108,11 +121,18 @@ class TaskServiceImplTest {
         assertEquals(10L, response.getMilestoneId());
         assertEquals("Prepare dataset", response.getTitle());
         assertEquals(TaskStatus.TODO, response.getStatus());
-        assertNull(response.getAssignedToStudentId());
+        assertEquals(7L, response.getAssignedToStudentId());
+        assertEquals(50L, response.getProjectId());
+        assertEquals(100L, response.getGroupId());
+        assertEquals(LocalDate.of(2026, 8, 1), response.getDueDate());
 
         ArgumentCaptor<TaskEntity> captor = ArgumentCaptor.forClass(TaskEntity.class);
         verify(taskRepository).save(captor.capture());
         assertEquals(TaskStatus.TODO, captor.getValue().getStatus());
+        assertEquals(50L, captor.getValue().getProjectId());
+        assertEquals(100L, captor.getValue().getGroupId());
+        assertEquals(LocalDate.of(2026, 8, 1), captor.getValue().getDueDate());
+        assertEquals(manager.getId(), captor.getValue().getCreatedBy());
     }
 
     @Test
@@ -164,7 +184,7 @@ class TaskServiceImplTest {
         first.setProgressPercent(35);
         first.setCreatedAt(Instant.parse("2026-01-01T00:00:00Z"));
         TaskEntity second = task(2L, 10L, null);
-        second.setStatus(TaskStatus.REVIEW);
+        second.setStatus(TaskStatus.IN_REVIEW);
         second.setCreatedAt(Instant.parse("2026-01-02T00:00:00Z"));
 
         when(milestoneRepository.findByIdAndDeletedFalseAndActiveTrue(10L)).thenReturn(Optional.of(milestone));
@@ -185,7 +205,7 @@ class TaskServiceImplTest {
         assertEquals(LocalDate.of(2026, 6, 10), responses.get(0).getDeadline());
         assertEquals(35, responses.get(0).getProgressPercent());
         assertEquals(2L, responses.get(1).getId());
-        assertEquals(TaskStatus.WAITING_REVIEW, responses.get(1).getStatus());
+        assertEquals(TaskStatus.IN_REVIEW, responses.get(1).getStatus());
         verify(taskRepository).findByMilestoneIdAndDeletedFalseAndActiveTrueOrderByDeadlineAscCreatedAtAsc(10L);
     }
 
@@ -295,11 +315,11 @@ class TaskServiceImplTest {
     }
 
     @Test
-    void updateStatus_studentMovesAssignedTodoToDoingAndStartsProgress() {
+    void updateStatus_studentMovesAssignedTodoToInProgressAndStartsProgress() {
         User currentStudent = authenticate("student", "STUDENT");
         TaskEntity task = task(20L, 10L, currentStudent.getId());
         MilestoneEntity milestone = milestone(10L, 100L);
-        UpdateTaskStatusRequest request = statusRequest(TaskStatus.DOING);
+        UpdateTaskStatusRequest request = statusRequest(TaskStatus.IN_PROGRESS);
 
         when(taskRepository.findByIdForUpdate(20L)).thenReturn(Optional.of(task));
         when(milestoneRepository.findByIdAndDeletedFalseAndActiveTrue(10L)).thenReturn(Optional.of(milestone));
@@ -309,7 +329,7 @@ class TaskServiceImplTest {
 
         TaskResponse response = taskService.updateStatus(20L, request);
 
-        assertEquals(TaskStatus.DOING, response.getStatus());
+        assertEquals(TaskStatus.IN_PROGRESS, response.getStatus());
         assertEquals(10, response.getProgressPercent());
         verify(taskRepository).save(task);
     }
@@ -318,7 +338,7 @@ class TaskServiceImplTest {
     void updateStatus_studentCannotMoveTaskToDone() {
         User currentStudent = authenticate("student", "STUDENT");
         TaskEntity task = task(20L, 10L, currentStudent.getId());
-        task.setStatus(TaskStatus.WAITING_REVIEW);
+        task.setStatus(TaskStatus.IN_REVIEW);
 
         when(taskRepository.findByIdForUpdate(20L)).thenReturn(Optional.of(task));
         when(milestoneRepository.findByIdAndDeletedFalseAndActiveTrue(10L))
@@ -332,7 +352,7 @@ class TaskServiceImplTest {
     }
 
     @Test
-    void updateStatus_studentMovesAssignedRevisionTaskBackToDoing() {
+    void updateStatus_studentMovesAssignedRevisionTaskBackToInProgress() {
         User currentStudent = authenticate("student", "STUDENT");
         TaskEntity task = task(20L, 10L, currentStudent.getId());
         task.setStatus(TaskStatus.NEEDS_REVISION);
@@ -345,9 +365,9 @@ class TaskServiceImplTest {
                 .thenReturn(Optional.of(GroupRole.MEMBER));
         when(taskRepository.save(task)).thenReturn(task);
 
-        TaskResponse response = taskService.updateStatus(20L, statusRequest(TaskStatus.DOING));
+        TaskResponse response = taskService.updateStatus(20L, statusRequest(TaskStatus.IN_PROGRESS));
 
-        assertEquals(TaskStatus.DOING, response.getStatus());
+        assertEquals(TaskStatus.IN_PROGRESS, response.getStatus());
         assertEquals(10, response.getProgressPercent());
         verify(taskRepository).save(task);
     }
@@ -356,7 +376,7 @@ class TaskServiceImplTest {
     void updateStatus_studentSubmitsDoingTaskForReviewAtNinetyPercent() {
         User currentStudent = authenticate("student", "STUDENT");
         TaskEntity task = task(20L, 10L, currentStudent.getId());
-        task.setStatus(TaskStatus.DOING);
+        task.setStatus(TaskStatus.IN_PROGRESS);
         task.setProgressPercent(35);
 
         when(taskRepository.findByIdForUpdate(20L)).thenReturn(Optional.of(task));
@@ -366,9 +386,9 @@ class TaskServiceImplTest {
                 .thenReturn(Optional.of(GroupRole.MEMBER));
         when(taskRepository.save(task)).thenReturn(task);
 
-        TaskResponse response = taskService.updateStatus(20L, statusRequest(TaskStatus.WAITING_REVIEW));
+        TaskResponse response = taskService.updateStatus(20L, statusRequest(TaskStatus.IN_REVIEW));
 
-        assertEquals(TaskStatus.WAITING_REVIEW, response.getStatus());
+        assertEquals(TaskStatus.IN_REVIEW, response.getStatus());
         assertEquals(90, response.getProgressPercent());
         verify(taskRepository).save(task);
     }
@@ -401,7 +421,7 @@ class TaskServiceImplTest {
                 .thenReturn(Optional.of(GroupRole.MEMBER));
 
         assertThrows(AccessDeniedException.class,
-                () -> taskService.updateStatus(20L, statusRequest(TaskStatus.DOING)));
+                () -> taskService.updateStatus(20L, statusRequest(TaskStatus.IN_PROGRESS)));
         verify(taskRepository, never()).save(any());
     }
 
@@ -417,7 +437,7 @@ class TaskServiceImplTest {
                 .thenReturn(Optional.empty());
 
         assertThrows(AccessDeniedException.class,
-                () -> taskService.updateStatus(20L, statusRequest(TaskStatus.DOING)));
+                () -> taskService.updateStatus(20L, statusRequest(TaskStatus.IN_PROGRESS)));
         verify(taskRepository, never()).save(any());
     }
 
@@ -433,9 +453,9 @@ class TaskServiceImplTest {
                 .thenReturn(Optional.of(GroupRole.LEADER));
         when(taskRepository.save(task)).thenReturn(task);
 
-        TaskResponse response = taskService.updateStatus(20L, statusRequest(TaskStatus.DOING));
+        TaskResponse response = taskService.updateStatus(20L, statusRequest(TaskStatus.IN_PROGRESS));
 
-        assertEquals(TaskStatus.DOING, response.getStatus());
+        assertEquals(TaskStatus.IN_PROGRESS, response.getStatus());
         verify(taskRepository).save(task);
     }
 
@@ -446,7 +466,7 @@ class TaskServiceImplTest {
         MilestoneEntity milestone = milestone(10L, 100L);
         milestone.getProject().setLab(lab);
         TaskEntity task = task(20L, 10L, 7L);
-        task.setStatus(TaskStatus.WAITING_REVIEW);
+        task.setStatus(TaskStatus.IN_REVIEW);
         task.setProgressPercent(70);
 
         when(taskRepository.findByIdForUpdate(20L)).thenReturn(Optional.of(task));
@@ -469,7 +489,7 @@ class TaskServiceImplTest {
         MilestoneEntity milestone = milestone(10L, 100L);
         milestone.getProject().setLab(lab);
         TaskEntity task = task(20L, 10L, 7L);
-        task.setStatus(TaskStatus.WAITING_REVIEW);
+        task.setStatus(TaskStatus.IN_REVIEW);
 
         when(taskRepository.findByIdForUpdate(20L)).thenReturn(Optional.of(task));
         when(milestoneRepository.findByIdAndDeletedFalseAndActiveTrue(10L)).thenReturn(Optional.of(milestone));
@@ -491,7 +511,7 @@ class TaskServiceImplTest {
         MilestoneEntity milestone = milestone(10L, 100L);
         milestone.getProject().setLab(lab);
         TaskEntity task = task(20L, 10L, 7L);
-        task.setStatus(TaskStatus.WAITING_REVIEW);
+        task.setStatus(TaskStatus.IN_REVIEW);
         task.setProgressPercent(90);
 
         when(taskRepository.findByIdForUpdate(20L)).thenReturn(Optional.of(task));
@@ -518,12 +538,12 @@ class TaskServiceImplTest {
                 .thenReturn(Optional.of(lab(1L)));
 
         assertThrows(AccessDeniedException.class,
-                () -> taskService.updateStatus(20L, statusRequest(TaskStatus.DOING)));
+                () -> taskService.updateStatus(20L, statusRequest(TaskStatus.IN_PROGRESS)));
         verify(taskRepository, never()).save(any());
     }
 
     @Test
-    void updateStatus_rejectsManualOverdueTarget() {
+    void updateStatus_rejectsInvalidDirectDoneTransitionFromTodo() {
         User manager = authenticate("manager", "LAB_MANAGER");
         Laboratory lab = lab(1L);
         MilestoneEntity milestone = milestone(10L, 100L);
@@ -534,7 +554,7 @@ class TaskServiceImplTest {
         when(laboratoryRepository.findFirstByManagerIdAndDeletedFalse(manager.getId())).thenReturn(Optional.of(lab));
 
         assertThrows(IllegalArgumentException.class,
-                () -> taskService.updateStatus(20L, statusRequest(TaskStatus.OVERDUE)));
+                () -> taskService.updateStatus(20L, statusRequest(TaskStatus.DONE)));
         verify(taskRepository, never()).save(any());
     }
 

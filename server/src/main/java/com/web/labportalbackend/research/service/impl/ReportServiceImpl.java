@@ -141,7 +141,7 @@ public class ReportServiceImpl implements ReportService {
                 .build();
 
         if (task.getStatus() != TaskStatus.DONE && task.getStatus() != TaskStatus.CANCELLED) {
-            task.setStatus(TaskStatus.WAITING_REVIEW);
+            task.setStatus(TaskStatus.IN_REVIEW);
             task.setProgressPercent(90);
             taskRepository.save(task);
         }
@@ -389,7 +389,7 @@ public class ReportServiceImpl implements ReportService {
             if (report.getTaskId() != null) {
                 TaskEntity task = taskRepository.findById(report.getTaskId())
                         .orElseThrow(() -> new ResourceNotFoundException("Task", report.getTaskId()));
-                if (task.getStatus() == TaskStatus.WAITING_REVIEW || task.getStatus() == TaskStatus.DOING) {
+                if (task.getStatus() == TaskStatus.IN_REVIEW || task.getStatus() == TaskStatus.IN_PROGRESS) {
                     task.setStatus(TaskStatus.NEEDS_REVISION);
                     taskRepository.save(task);
                 }
@@ -658,7 +658,7 @@ public class ReportServiceImpl implements ReportService {
     }
 
     private void validateTaskReportSubmissionState(TaskEntity task, Long currentUserId) {
-        TaskStatus taskStatus = toWorkflowTaskStatus(task.getStatus());
+        TaskStatus taskStatus = task.getStatus() == null ? TaskStatus.TODO : task.getStatus();
         if (taskStatus == TaskStatus.TODO) {
             throw new IllegalArgumentException("Bạn cần bắt đầu thực hiện nhiệm vụ trước khi nộp báo cáo.");
         }
@@ -672,7 +672,7 @@ public class ReportServiceImpl implements ReportService {
                 .orElse(null);
 
         if (latestStatus == null) {
-            if (taskStatus == TaskStatus.DOING || taskStatus == TaskStatus.NEEDS_REVISION) {
+            if (taskStatus == TaskStatus.IN_PROGRESS || taskStatus == TaskStatus.NEEDS_REVISION) {
                 return;
             }
             throw new IllegalArgumentException("Bạn cần bắt đầu thực hiện nhiệm vụ trước khi nộp báo cáo.");
@@ -694,16 +694,6 @@ public class ReportServiceImpl implements ReportService {
         }
 
         throw new IllegalArgumentException("Trạng thái báo cáo hiện tại không cho phép nộp lại.");
-    }
-
-    private TaskStatus toWorkflowTaskStatus(TaskStatus status) {
-        if (status == TaskStatus.IN_PROGRESS) {
-            return TaskStatus.DOING;
-        }
-        if (status == TaskStatus.REVIEW) {
-            return TaskStatus.WAITING_REVIEW;
-        }
-        return status == null ? TaskStatus.TODO : status;
     }
 
     private GroupRole assertCanViewReports(User currentUser, MilestoneEntity milestone) {

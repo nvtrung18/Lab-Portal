@@ -2,7 +2,6 @@ package com.web.labportalbackend.research.mapper;
 
 import com.web.labportalbackend.research.dto.response.TaskResponse;
 import com.web.labportalbackend.research.entity.TaskEntity;
-import com.web.labportalbackend.research.enums.TaskStatus;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
@@ -21,8 +20,10 @@ public final class TaskMapper {
         return TaskResponse.builder()
                 .id(task.getId())
                 .milestoneId(task.getMilestoneId())
-                .projectId(projectId)
-                .groupId(groupId)
+                .projectId(task.getProjectId() != null ? task.getProjectId() : projectId)
+                .groupId(task.getGroupId() != null ? task.getGroupId() : groupId)
+                .parentTaskId(task.getParentTaskId())
+                .epicId(task.getEpicId())
                 .milestoneTitle(milestoneTitle)
                 .title(task.getTitle())
                 .description(task.getDescription())
@@ -36,21 +37,16 @@ public final class TaskMapper {
                         ? task.getAssignedToStudent().getEmail()
                         : null)
                 .deadline(task.getDeadline())
-                .status(toPublicStatus(task.getStatus()))
+                .dueDate(task.getDueDate() != null ? task.getDueDate() : task.getDeadline())
+                .status(task.getStatus())
+                .priority(task.getPriority())
+                .type(task.getType())
+                .blockedReason(task.getBlockedReason())
+                .createdBy(task.getCreatedBy())
                 .progressPercent(task.getProgressPercent() != null ? task.getProgressPercent() : 0)
                 .latestReportStatus(latestReportStatus)
                 .createdAt(task.getCreatedAt())
                 .updatedAt(task.getUpdatedAt())
                 .build();
-    }
-
-    private static TaskStatus toPublicStatus(TaskStatus status) {
-        if (status == TaskStatus.IN_PROGRESS) {
-            return TaskStatus.DOING;
-        }
-        if (status == TaskStatus.REVIEW) {
-            return TaskStatus.WAITING_REVIEW;
-        }
-        return status;
     }
 }

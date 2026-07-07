@@ -536,7 +536,7 @@ class ReportServiceImplTest {
 
         assertEquals(2, response.getVersion());
         assertEquals(ReportStatus.SUBMITTED, response.getStatus());
-        assertEquals(TaskStatus.WAITING_REVIEW, task.getStatus());
+        assertEquals(TaskStatus.IN_REVIEW, task.getStatus());
     }
 
     @Test
@@ -655,7 +655,7 @@ class ReportServiceImplTest {
         request.setComment("Cần bổ sung kết quả.");
 
         TaskEntity task = task(10L);
-        task.setStatus(TaskStatus.WAITING_REVIEW);
+        task.setStatus(TaskStatus.IN_REVIEW);
 
         when(reportRepository.findById(100L)).thenReturn(Optional.of(report));
         when(groupMemberRepository.findActiveRoleByGroupIdAndUserId(90L, leader.getId()))
@@ -685,7 +685,7 @@ class ReportServiceImplTest {
         request.setComment("Sai nhiệm vụ.");
 
         TaskEntity task = task(10L);
-        task.setStatus(TaskStatus.WAITING_REVIEW);
+        task.setStatus(TaskStatus.IN_REVIEW);
 
         when(reportRepository.findById(100L)).thenReturn(Optional.of(report));
         when(groupMemberRepository.findActiveRoleByGroupIdAndUserId(90L, leader.getId()))
@@ -848,7 +848,7 @@ class ReportServiceImplTest {
         ReportEntity report = report(100L, 10L, 1);
         report.setStatus(ReportStatus.LEADER_REVIEWED);
         TaskEntity task = task(10L);
-        task.setStatus(TaskStatus.WAITING_REVIEW);
+        task.setStatus(TaskStatus.IN_REVIEW);
         task.setProgressPercent(90);
 
         when(reportRepository.findById(100L)).thenReturn(Optional.of(report));
@@ -912,7 +912,7 @@ class ReportServiceImplTest {
         ReportEntity report = report(100L, 10L, 1);
         report.setStatus(ReportStatus.LEADER_REVIEWED);
         TaskEntity task = task(10L);
-        task.setStatus(TaskStatus.WAITING_REVIEW);
+        task.setStatus(TaskStatus.IN_REVIEW);
 
         when(reportRepository.findById(100L)).thenReturn(Optional.of(report));
         when(milestoneRepository.findByIdAndDeletedFalseAndActiveTrue(5L)).thenReturn(Optional.of(milestone));
@@ -1058,7 +1058,7 @@ class ReportServiceImplTest {
                 .milestoneId(5L)
                 .assigneeId(3L)
                 .title("Analyze result")
-                .status(TaskStatus.DOING)
+                .status(TaskStatus.IN_PROGRESS)
                 .build();
         task.setId(id);
         return task;
