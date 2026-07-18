@@ -47,6 +47,13 @@ public class GlobalExceptionHandler {
                 .body(Response.badRequest("Request body contains an invalid value"));
     }
 
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<Response<Void>> handleMethodArgumentTypeMismatch(MethodArgumentTypeMismatchException ex) {
+        log.warn("Request parameter has an invalid value: {}", ex.getName());
+        return ResponseEntity.badRequest()
+                .body(Response.badRequest("Request contains an invalid parameter value"));
+    }
+
     @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
     public ResponseEntity<Response<Void>> handleUnsupportedMediaType(HttpMediaTypeNotSupportedException ex) {
         log.warn("Unsupported request media type: {}", ex.getContentType());

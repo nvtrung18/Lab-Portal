@@ -3,7 +3,12 @@ package com.web.labportalbackend.research.controller;
 import com.web.labportalbackend.common.dto.Response;
 import com.web.labportalbackend.research.dto.request.CreateTaskRequest;
 import com.web.labportalbackend.research.dto.request.UpdateTaskStatusRequest;
+import com.web.labportalbackend.research.dto.response.ProjectTaskBoardResponse;
 import com.web.labportalbackend.research.dto.response.TaskResponse;
+import com.web.labportalbackend.research.enums.TaskPriority;
+import com.web.labportalbackend.research.enums.TaskStatus;
+import com.web.labportalbackend.research.enums.TaskType;
+import com.web.labportalbackend.research.service.TaskBoardReadService;
 import com.web.labportalbackend.research.service.TaskService;
 import org.springframework.http.HttpStatus;
 import io.swagger.v3.oas.annotations.Operation;
@@ -22,6 +27,27 @@ import java.util.List;
 public class TaskController {
 
     private final TaskService taskService;
+    private final TaskBoardReadService taskBoardReadService;
+
+    @GetMapping("/research/projects/{projectId}/board")
+    @Operation(summary = "Get project task board")
+    @PreAuthorize("hasAnyRole('LAB_MANAGER','STUDENT')")
+    public ResponseEntity<Response<ProjectTaskBoardResponse>> getProjectBoard(
+            @PathVariable Long projectId,
+            @RequestParam(required = false) Long groupId,
+            @RequestParam(required = false) Long assigneeId,
+            @RequestParam(required = false) TaskStatus status,
+            @RequestParam(required = false) TaskPriority priority,
+            @RequestParam(required = false) TaskType type,
+            @RequestParam(defaultValue = "false") boolean includeBacklog,
+            @RequestParam(defaultValue = "false") boolean includeCancelled
+    ) {
+        return ResponseEntity.ok(Response.ok(
+                "Project task board retrieved successfully",
+                taskBoardReadService.read(projectId, groupId, assigneeId, status, priority, type,
+                        includeBacklog, includeCancelled)
+        ));
+    }
 
     @GetMapping("/milestones/{id}/tasks")
     @Operation(summary = "Get read-only task board by milestone")
