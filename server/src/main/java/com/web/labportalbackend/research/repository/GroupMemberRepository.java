@@ -83,6 +83,29 @@ public interface GroupMemberRepository extends JpaRepository<GroupMemberEntity, 
     );
 
     @Query("""
+            SELECT DISTINCT g.id
+            FROM GroupMemberEntity gm
+            JOIN gm.group g
+            LEFT JOIN g.project gp
+            LEFT JOIN ProjectEntity p ON p.group.id = g.id
+            WHERE gm.user.id = :userId
+              AND gm.user.active = true
+              AND gm.user.deleted = false
+              AND gm.role = :role
+              AND gm.active = true
+              AND gm.deleted = false
+              AND g.active = true
+              AND g.deleted = false
+              AND ((gp.id = :projectId AND gp.active = true AND gp.deleted = false AND gp.lab.id = g.lab.id)
+                   OR (p.id = :projectId AND p.active = true AND p.deleted = false AND p.lab.id = g.lab.id))
+            """)
+    List<Long> findActiveGroupIdsByProjectIdAndUserIdAndRole(
+            @Param("projectId") Long projectId,
+            @Param("userId") Long userId,
+            @Param("role") GroupRole role
+    );
+
+    @Query("""
             SELECT gm.role
             FROM GroupMemberEntity gm
             JOIN gm.group g

@@ -20,6 +20,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Optional;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -47,6 +48,62 @@ class TaskPermissionHelperTest {
 
     @InjectMocks
     private TaskPermissionHelper helper;
+
+    @Test
+    void managerCanViewBoardOnlyForManagedLabProject() {
+        Laboratory managedLab = lab(1L);
+        User manager = user(2L, "LAB_MANAGER");
+        ProjectEntity ownProject = ProjectEntity.builder().lab(managedLab).build();
+        ownProject.setId(50L);
+        ProjectEntity otherProject = ProjectEntity.builder().lab(lab(2L)).build();
+        otherProject.setId(60L);
+
+        when(userRepository.findById(2L)).thenReturn(Optional.of(manager));
+        when(laboratoryRepository.findFirstByManagerIdAndDeletedFalse(2L)).thenReturn(Optional.of(managedLab));
+
+        assertTrue(helper.canViewProjectBoard(2L, ownProject));
+        assertFalse(helper.canViewProjectBoard(2L, otherProject));
+    }
+
+    @Test
+    void activeStudentMembershipCanViewProjectBoard() {
+        User student = user(7L, "STUDENT");
+        ProjectEntity project = ProjectEntity.builder().lab(lab(1L)).build();
+        project.setId(50L);
+        when(userRepository.findById(7L)).thenReturn(Optional.of(student));
+        when(groupMemberRepository.findActiveGroupIdsByProjectIdAndUserIdAndRole(50L, 7L, GroupRole.LEADER))
+                .thenReturn(List.of(100L));
+
+        assertTrue(helper.canViewProjectBoard(7L, project));
+    }
+
+    @Test
+    void projectBoardFailsClosedForInactiveUserOrMissingOwnership() {
+        User inactive = user(7L, "STUDENT");
+        inactive.setActive(false);
+        when(userRepository.findById(7L)).thenReturn(Optional.of(inactive));
+
+        assertFalse(helper.canViewProjectBoard(7L, ProjectEntity.builder().build()));
+    }
+
+    @Test
+    void projectBoardFailsClosedForInactiveLabOrInconsistentProjectGroup() {
+        User student = user(7L, "STUDENT");
+        Laboratory projectLab = lab(1L);
+        Laboratory otherLab = lab(2L);
+        ProjectEntity project = ProjectEntity.builder().lab(projectLab).group(group(otherLab)).build();
+        project.setId(50L);
+        project.getGroup().setId(100L);
+        when(userRepository.findById(7L)).thenReturn(Optional.of(student));
+
+        assertFalse(helper.canViewProjectBoard(7L, project));
+
+        project.setGroup(null);
+        projectLab.setActive(false);
+        assertFalse(helper.canViewProjectBoard(7L, project));
+        verify(groupMemberRepository, never())
+                .findActiveGroupIdsByProjectIdAndUserIdAndRole(50L, 7L, GroupRole.LEADER);
+    }
 
     @Test
     void assigneeCanUpdateOwnTaskStatusWhenTaskHasGroupScope() {
