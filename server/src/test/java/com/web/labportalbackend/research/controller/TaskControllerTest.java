@@ -3,6 +3,7 @@ package com.web.labportalbackend.research.controller;
 import com.web.labportalbackend.auth.security.JwtAuthenticationFilter;
 import com.web.labportalbackend.common.exception.ResourceNotFoundException;
 import com.web.labportalbackend.research.dto.response.ProjectTaskBoardResponse;
+import com.web.labportalbackend.research.dto.response.TaskBacklogPageResponse;
 import com.web.labportalbackend.research.dto.response.TaskBoardColumnResponse;
 import com.web.labportalbackend.research.enums.TaskPriority;
 import com.web.labportalbackend.research.enums.TaskStatus;
@@ -263,6 +264,136 @@ class TaskControllerTest {
         verifyNoInteractions(taskBoardReadService);
     }
 
+    @Test
+    void getProjectBacklogReturnsExactWrapperShapeAndDefaultBindings() throws Exception {
+        when(taskBoardReadService.readBacklog(PROJECT_ID, 0, 20)).thenReturn(backlog(0, 20));
+
+        mockMvc.perform(backlogRequest(PROJECT_ID).with(manager()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", aMapWithSize(6)))
+                .andExpect(jsonPath("$.code").value(0))
+                .andExpect(jsonPath("$.message").value("Project backlog retrieved successfully"))
+                .andExpect(jsonPath("$.data", aMapWithSize(5)))
+                .andExpect(jsonPath("$.data.content").isArray())
+                .andExpect(jsonPath("$.data.page").value(0))
+                .andExpect(jsonPath("$.data.size").value(20))
+                .andExpect(jsonPath("$.data.totalElements").value(0))
+                .andExpect(jsonPath("$.data.totalPages").value(0));
+
+        verify(taskBoardReadService).readBacklog(PROJECT_ID, 0, 20);
+    }
+
+    @Test
+    void explicitBacklogPaginationIsForwardedUnchanged() throws Exception {
+        when(taskBoardReadService.readBacklog(PROJECT_ID, 1, 50)).thenReturn(backlog(1, 50));
+
+        mockMvc.perform(backlogRequest(PROJECT_ID).param("page", "1").param("size", "50").with(manager()))
+                .andExpect(status().isOk());
+
+        verify(taskBoardReadService).readBacklog(PROJECT_ID, 1, 50);
+    }
+
+    @Test
+    void maximumBacklogPageSizeIsAccepted() throws Exception {
+        when(taskBoardReadService.readBacklog(PROJECT_ID, 0, 100)).thenReturn(backlog(0, 100));
+
+        mockMvc.perform(backlogRequest(PROJECT_ID).param("size", "100").with(manager()))
+                .andExpect(status().isOk());
+
+        verify(taskBoardReadService).readBacklog(PROJECT_ID, 0, 100);
+    }
+
+    @ParameterizedTest
+    @MethodSource("malformedBacklogRequests")
+    void malformedBacklogValuesReturnBadRequestWithoutCallingService(MockHttpServletRequestBuilder request) throws Exception {
+        mockMvc.perform(request.with(manager()))
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(taskBoardReadService);
+    }
+
+    @ParameterizedTest
+    @MethodSource("invalidBacklogPagination")
+    void invalidBacklogPaginationUsesExistingBadRequestMapping(int page, int size) throws Exception {
+        when(taskBoardReadService.readBacklog(PROJECT_ID, page, size))
+                .thenThrow(new IllegalArgumentException("Invalid pagination"));
+
+        mockMvc.perform(backlogRequest(PROJECT_ID)
+                        .param("page", Integer.toString(page))
+                        .param("size", Integer.toString(size))
+                        .with(manager()))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value(400));
+
+        verify(taskBoardReadService).readBacklog(PROJECT_ID, page, size);
+    }
+
+    @Test
+    void labManagerCanReachProjectBacklog() throws Exception {
+        when(taskBoardReadService.readBacklog(PROJECT_ID, 0, 20)).thenReturn(backlog(0, 20));
+
+        mockMvc.perform(backlogRequest(PROJECT_ID).with(manager()))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void studentSystemRoleAllowsLeaderAndMemberActorsToReachProjectBacklog() throws Exception {
+        when(taskBoardReadService.readBacklog(PROJECT_ID, 0, 20)).thenReturn(backlog(0, 20));
+
+        mockMvc.perform(backlogRequest(PROJECT_ID).with(user("leader").roles("STUDENT")))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void unauthenticatedBacklogRequestUsesExistingUnauthorizedResult() throws Exception {
+        mockMvc.perform(backlogRequest(PROJECT_ID))
+                .andExpect(status().isUnauthorized());
+
+        verifyNoInteractions(taskBoardReadService);
+    }
+
+    @Test
+    void unsupportedSystemRoleCannotReachProjectBacklog() throws Exception {
+        mockMvc.perform(backlogRequest(PROJECT_ID).with(user("admin").roles("ADMIN")))
+                .andExpect(status().isForbidden());
+
+        verifyNoInteractions(taskBoardReadService);
+    }
+
+    @Test
+    void backlogWrongScopeIsForbidden() throws Exception {
+        when(taskBoardReadService.readBacklog(PROJECT_ID, 0, 20))
+                .thenThrow(new AccessDeniedException("Cannot access tasks for this project"));
+
+        mockMvc.perform(backlogRequest(PROJECT_ID).with(manager()))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value(403));
+    }
+
+    @Test
+    void backlogMissingProjectIsNotFound() throws Exception {
+        when(taskBoardReadService.readBacklog(PROJECT_ID, 0, 20))
+                .thenThrow(new ResourceNotFoundException("Project", PROJECT_ID));
+
+        mockMvc.perform(backlogRequest(PROJECT_ID).with(manager()))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value(404));
+    }
+
+    @Test
+    void unrelatedSortParameterCannotChangeBacklogDelegation() throws Exception {
+        when(taskBoardReadService.readBacklog(PROJECT_ID, 1, 50)).thenReturn(backlog(1, 50));
+
+        mockMvc.perform(backlogRequest(PROJECT_ID)
+                        .param("page", "1")
+                        .param("size", "50")
+                        .param("sort", "priority,desc")
+                        .with(manager()))
+                .andExpect(status().isOk());
+
+        verify(taskBoardReadService).readBacklog(PROJECT_ID, 1, 50);
+    }
+
     private void stubDefaultBoard() {
         when(taskBoardReadService.read(PROJECT_ID, null, null, null, null, null, false, false))
                 .thenReturn(board(TaskStatus.TODO));
@@ -275,8 +406,16 @@ class TaskControllerTest {
                 .build();
     }
 
+    private TaskBacklogPageResponse backlog(int page, int size) {
+        return new TaskBacklogPageResponse(List.of(), page, size, 0, 0);
+    }
+
     private MockHttpServletRequestBuilder boardRequest(Object projectId) {
         return apiGet("/research/projects/{projectId}/board", projectId);
+    }
+
+    private MockHttpServletRequestBuilder backlogRequest(Object projectId) {
+        return apiGet("/research/projects/{projectId}/backlog", projectId);
     }
 
     private MockHttpServletRequestBuilder apiGet(String path, Object... uriVariables) {
@@ -300,6 +439,23 @@ class TaskControllerTest {
                 Arguments.of(get("/api/research/projects/not-a-number/board").contextPath("/api")),
                 Arguments.of(get("/api/research/projects/123/board").contextPath("/api").param("groupId", "bad")),
                 Arguments.of(get("/api/research/projects/123/board").contextPath("/api").param("assigneeId", "bad"))
+        );
+    }
+
+    private static Stream<Arguments> malformedBacklogRequests() {
+        return Stream.of(
+                Arguments.of(get("/api/research/projects/not-a-number/backlog").contextPath("/api")),
+                Arguments.of(get("/api/research/projects/123/backlog").contextPath("/api").param("page", "abc")),
+                Arguments.of(get("/api/research/projects/123/backlog").contextPath("/api").param("size", "abc"))
+        );
+    }
+
+    private static Stream<Arguments> invalidBacklogPagination() {
+        return Stream.of(
+                Arguments.of(-1, 20),
+                Arguments.of(0, 0),
+                Arguments.of(0, -1),
+                Arguments.of(0, 101)
         );
     }
 }
