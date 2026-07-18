@@ -1,0 +1,305 @@
+package com.web.labportalbackend.research.controller;
+
+import com.web.labportalbackend.auth.security.JwtAuthenticationFilter;
+import com.web.labportalbackend.common.exception.ResourceNotFoundException;
+import com.web.labportalbackend.research.dto.response.ProjectTaskBoardResponse;
+import com.web.labportalbackend.research.dto.response.TaskBoardColumnResponse;
+import com.web.labportalbackend.research.enums.TaskPriority;
+import com.web.labportalbackend.research.enums.TaskStatus;
+import com.web.labportalbackend.research.enums.TaskType;
+import com.web.labportalbackend.research.service.TaskBoardReadService;
+import com.web.labportalbackend.research.service.TaskService;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.FilterType;
+import org.springframework.context.annotation.Import;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
+
+import java.util.List;
+import java.util.stream.Stream;
+
+import static org.hamcrest.Matchers.aMapWithSize;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+@WebMvcTest(
+        controllers = TaskController.class,
+        excludeFilters = @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = JwtAuthenticationFilter.class)
+)
+@Import(TaskControllerTest.MethodSecurityTestConfig.class)
+class TaskControllerTest {
+
+    private static final Long PROJECT_ID = 123L;
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    @MockitoBean
+    private TaskService taskService;
+
+    @MockitoBean
+    private TaskBoardReadService taskBoardReadService;
+
+    @TestConfiguration
+    @EnableMethodSecurity
+    static class MethodSecurityTestConfig {
+    }
+
+    @Test
+    void getProjectBoardReturnsExactWrapperShapeAndDefaultBindings() throws Exception {
+        ProjectTaskBoardResponse response = board(TaskStatus.TODO);
+        when(taskBoardReadService.read(PROJECT_ID, null, null, null, null, null, false, false))
+                .thenReturn(response);
+
+        mockMvc.perform(boardRequest(PROJECT_ID).with(manager()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", aMapWithSize(6)))
+                .andExpect(jsonPath("$.code").value(0))
+                .andExpect(jsonPath("$.message").value("Project task board retrieved successfully"))
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.error").value(false))
+                .andExpect(jsonPath("$.data", aMapWithSize(2)))
+                .andExpect(jsonPath("$.data.projectId").value(PROJECT_ID))
+                .andExpect(jsonPath("$.data.columns[0]", aMapWithSize(2)))
+                .andExpect(jsonPath("$.data.columns[0].status").value("TODO"))
+                .andExpect(jsonPath("$.data.columns[0].tasks").isArray())
+                .andExpect(jsonPath("$.errors").doesNotExist())
+                .andExpect(jsonPath("$.timestamp").exists());
+
+        verify(taskBoardReadService).read(PROJECT_ID, null, null, null, null, null, false, false);
+    }
+
+    @Test
+    void allQueryParametersAreConvertedAndForwardedUnchanged() throws Exception {
+        when(taskBoardReadService.read(PROJECT_ID, 10L, 20L, TaskStatus.IN_REVIEW,
+                TaskPriority.HIGH, TaskType.REVIEW, true, true)).thenReturn(board(TaskStatus.IN_REVIEW));
+
+        mockMvc.perform(boardRequest(PROJECT_ID)
+                        .param("groupId", "10")
+                        .param("assigneeId", "20")
+                        .param("status", "IN_REVIEW")
+                        .param("priority", "HIGH")
+                        .param("type", "REVIEW")
+                        .param("includeBacklog", "true")
+                        .param("includeCancelled", "true")
+                        .with(manager()))
+                .andExpect(status().isOk());
+
+        verify(taskBoardReadService).read(PROJECT_ID, 10L, 20L, TaskStatus.IN_REVIEW,
+                TaskPriority.HIGH, TaskType.REVIEW, true, true);
+    }
+
+    @ParameterizedTest
+    @MethodSource("explicitStatusForwardingCases")
+    void explicitStatusAndIncludeFlagsAreForwardedUnchanged(TaskStatus taskStatus,
+                                                            boolean includeBacklog,
+                                                            boolean includeCancelled) throws Exception {
+        when(taskBoardReadService.read(PROJECT_ID, null, null, taskStatus, null, null,
+                includeBacklog, includeCancelled)).thenReturn(board(taskStatus));
+
+        mockMvc.perform(boardRequest(PROJECT_ID)
+                        .param("status", taskStatus.name())
+                        .param("includeBacklog", Boolean.toString(includeBacklog))
+                        .param("includeCancelled", Boolean.toString(includeCancelled))
+                        .with(manager()))
+                .andExpect(status().isOk());
+
+        verify(taskBoardReadService).read(PROJECT_ID, null, null, taskStatus, null, null,
+                includeBacklog, includeCancelled);
+    }
+
+    @Test
+    void bothIncludeFlagsAreForwardedWhenStatusIsAbsent() throws Exception {
+        when(taskBoardReadService.read(PROJECT_ID, null, null, null, null, null, true, true))
+                .thenReturn(board(TaskStatus.BACKLOG));
+
+        mockMvc.perform(boardRequest(PROJECT_ID)
+                        .param("includeBacklog", "true")
+                        .param("includeCancelled", "true")
+                        .with(manager()))
+                .andExpect(status().isOk());
+
+        verify(taskBoardReadService).read(PROJECT_ID, null, null, null, null, null, true, true);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"NOT_A_STATUS", "DOING", "WAITING_REVIEW", "OVERDUE"})
+    void invalidAndLegacyStatusesReturnBadRequestWithoutCallingService(String statusValue) throws Exception {
+        mockMvc.perform(boardRequest(PROJECT_ID).param("status", statusValue).with(manager()))
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(taskBoardReadService);
+    }
+
+    @Test
+    void invalidPriorityReturnsBadRequestWithoutCallingService() throws Exception {
+        mockMvc.perform(boardRequest(PROJECT_ID).param("priority", "CRITICAL").with(manager()))
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(taskBoardReadService);
+    }
+
+    @Test
+    void invalidTypeReturnsBadRequestWithoutCallingService() throws Exception {
+        mockMvc.perform(boardRequest(PROJECT_ID).param("type", "FEATURE").with(manager()))
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(taskBoardReadService);
+    }
+
+    @ParameterizedTest
+    @MethodSource("malformedIdRequests")
+    void malformedIdsReturnBadRequestWithoutCallingService(MockHttpServletRequestBuilder request) throws Exception {
+        mockMvc.perform(request.with(manager()))
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(taskBoardReadService);
+    }
+
+    @Test
+    void labManagerCanReachProjectBoard() throws Exception {
+        stubDefaultBoard();
+
+        mockMvc.perform(boardRequest(PROJECT_ID).with(manager()))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void studentSystemRoleAllowsLeaderMembershipActorsToReachProjectBoard() throws Exception {
+        stubDefaultBoard();
+
+        mockMvc.perform(boardRequest(PROJECT_ID).with(user("leader").roles("STUDENT")))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void unauthenticatedRequestUsesExistingUnauthorizedSecurityResult() throws Exception {
+        mockMvc.perform(boardRequest(PROJECT_ID))
+                .andExpect(status().isUnauthorized());
+
+        verifyNoInteractions(taskBoardReadService);
+    }
+
+    @Test
+    void unsupportedSystemRoleIsForbidden() throws Exception {
+        mockMvc.perform(boardRequest(PROJECT_ID).with(user("admin").roles("ADMIN")))
+                .andExpect(status().isForbidden());
+
+        verifyNoInteractions(taskBoardReadService);
+    }
+
+    @Test
+    void wrongProjectOwnershipIsForbidden() throws Exception {
+        when(taskBoardReadService.read(PROJECT_ID, null, null, null, null, null, false, false))
+                .thenThrow(new AccessDeniedException("Cannot access tasks for this project"));
+
+        mockMvc.perform(boardRequest(PROJECT_ID).with(manager()))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value(403));
+
+        verify(taskBoardReadService).read(PROJECT_ID, null, null, null, null, null, false, false);
+    }
+
+    @Test
+    void missingProjectIsNotFound() throws Exception {
+        when(taskBoardReadService.read(PROJECT_ID, null, null, null, null, null, false, false))
+                .thenThrow(new ResourceNotFoundException("Project", PROJECT_ID));
+
+        mockMvc.perform(boardRequest(PROJECT_ID).with(manager()))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value(404));
+
+        verify(taskBoardReadService).read(PROJECT_ID, null, null, null, null, null, false, false);
+    }
+
+    @Test
+    void missingOrInactiveFilterResourceIsNotFound() throws Exception {
+        when(taskBoardReadService.read(PROJECT_ID, 999L, null, null, null, null, false, false))
+                .thenThrow(new ResourceNotFoundException("Research group", 999L));
+
+        mockMvc.perform(boardRequest(PROJECT_ID).param("groupId", "999").with(manager()))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value(404));
+
+        verify(taskBoardReadService).read(PROJECT_ID, 999L, null, null, null, null, false, false);
+    }
+
+    @Test
+    void existingOutOfScopeFilterResourceIsForbidden() throws Exception {
+        when(taskBoardReadService.read(PROJECT_ID, null, 999L, null, null, null, false, false))
+                .thenThrow(new AccessDeniedException("Assignee is outside the requested project or task scope"));
+
+        mockMvc.perform(boardRequest(PROJECT_ID).param("assigneeId", "999").with(manager()))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value(403));
+
+        verify(taskBoardReadService).read(PROJECT_ID, null, 999L, null, null, null, false, false);
+    }
+
+    @Test
+    void representativeExistingTaskRouteRemainsAvailableWithoutBoardCollision() throws Exception {
+        when(taskService.getByMilestone(77L)).thenReturn(List.of());
+
+        mockMvc.perform(apiGet("/milestones/{id}/tasks", 77L).with(manager()))
+                .andExpect(status().isOk());
+
+        verify(taskService).getByMilestone(77L);
+        verifyNoInteractions(taskBoardReadService);
+    }
+
+    private void stubDefaultBoard() {
+        when(taskBoardReadService.read(PROJECT_ID, null, null, null, null, null, false, false))
+                .thenReturn(board(TaskStatus.TODO));
+    }
+
+    private ProjectTaskBoardResponse board(TaskStatus status) {
+        return ProjectTaskBoardResponse.builder()
+                .projectId(PROJECT_ID)
+                .columns(List.of(TaskBoardColumnResponse.builder().status(status).tasks(List.of()).build()))
+                .build();
+    }
+
+    private MockHttpServletRequestBuilder boardRequest(Object projectId) {
+        return apiGet("/research/projects/{projectId}/board", projectId);
+    }
+
+    private MockHttpServletRequestBuilder apiGet(String path, Object... uriVariables) {
+        return get("/api" + path, uriVariables).contextPath("/api");
+    }
+
+    private org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.UserRequestPostProcessor manager() {
+        return user("manager").roles("LAB_MANAGER");
+    }
+
+    private static Stream<Arguments> explicitStatusForwardingCases() {
+        return Stream.of(
+                Arguments.of(TaskStatus.TODO, true, false),
+                Arguments.of(TaskStatus.BACKLOG, false, false),
+                Arguments.of(TaskStatus.CANCELLED, false, false)
+        );
+    }
+
+    private static Stream<Arguments> malformedIdRequests() {
+        return Stream.of(
+                Arguments.of(get("/api/research/projects/not-a-number/board").contextPath("/api")),
+                Arguments.of(get("/api/research/projects/123/board").contextPath("/api").param("groupId", "bad")),
+                Arguments.of(get("/api/research/projects/123/board").contextPath("/api").param("assigneeId", "bad"))
+        );
+    }
+}
