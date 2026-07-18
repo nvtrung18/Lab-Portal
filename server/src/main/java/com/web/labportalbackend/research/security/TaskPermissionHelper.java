@@ -24,6 +24,38 @@ public class TaskPermissionHelper {
     private final GroupMemberRepository groupMemberRepository;
     private final LaboratoryRepository laboratoryRepository;
 
+    public boolean canViewProjectBoard(Long userId, ProjectEntity project) {
+        if (!hasUsableUser(userId) || project == null || project.getId() == null
+                || project.getLab() == null || project.getLab().getId() == null
+                || !Boolean.TRUE.equals(project.getLab().getActive())
+                || Boolean.TRUE.equals(project.getLab().getDeleted())
+                || hasInconsistentProjectGroup(project)) {
+            return false;
+        }
+        if (isLabManager(userId)) {
+            return laboratoryRepository.findFirstByManagerIdAndDeletedFalse(userId)
+                    .filter(lab -> Boolean.TRUE.equals(lab.getActive()))
+                    .map(Laboratory::getId)
+                    .filter(project.getLab().getId()::equals)
+                    .isPresent();
+        }
+        return !groupMemberRepository.findActiveGroupIdsByProjectIdAndUserIdAndRole(
+                        project.getId(), userId, GroupRole.LEADER).isEmpty()
+                || !groupMemberRepository.findActiveGroupIdsByProjectIdAndUserIdAndRole(
+                        project.getId(), userId, GroupRole.MEMBER).isEmpty();
+    }
+
+    private boolean hasInconsistentProjectGroup(ProjectEntity project) {
+        GroupEntity group = project.getGroup();
+        if (group == null) {
+            return false;
+        }
+        return group.getId() == null || !Boolean.TRUE.equals(group.getActive()) || Boolean.TRUE.equals(group.getDeleted())
+                || group.getLab() == null || group.getLab().getId() == null
+                || !project.getLab().getId().equals(group.getLab().getId())
+                || (group.getProject() != null && !project.getId().equals(group.getProject().getId()));
+    }
+
     public boolean canViewTask(Long userId, TaskEntity task) {
         if (!hasUsableUser(userId) || !hasTaskScope(task)) {
             return false;

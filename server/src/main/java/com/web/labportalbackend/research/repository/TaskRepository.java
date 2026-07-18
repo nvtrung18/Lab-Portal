@@ -8,6 +8,9 @@ import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import com.web.labportalbackend.research.enums.TaskPriority;
+import com.web.labportalbackend.research.enums.TaskStatus;
+import com.web.labportalbackend.research.enums.TaskType;
 
 import java.util.List;
 import java.util.Optional;
@@ -114,6 +117,87 @@ public interface TaskRepository extends JpaRepository<TaskEntity, Long> {
     List<TaskEntity> findAssignedBoardTasksByGroupId(
             @Param("groupId") Long groupId,
             @Param("assigneeId") Long assigneeId
+    );
+
+    @EntityGraph(attributePaths = "assignedToStudent")
+    @Query("""
+            SELECT DISTINCT t
+            FROM TaskEntity t
+            WHERE t.projectId = :projectId
+              AND EXISTS (SELECT m.id FROM MilestoneEntity m JOIN m.project p
+                          WHERE m.id = t.milestoneId AND p.id = :projectId
+                            AND p.active = true AND p.deleted = false)
+              AND t.active = true
+              AND t.deleted = false
+              AND (t.groupId IS NULL OR t.groupId IN (
+                    SELECT g.id FROM GroupEntity g LEFT JOIN g.project gp
+                    WHERE g.active = true AND g.deleted = false
+                      AND ((gp.id = :projectId AND gp.active = true AND gp.deleted = false AND gp.lab.id = g.lab.id)
+                           OR EXISTS (SELECT p.id FROM ProjectEntity p
+                                      WHERE p.id = :projectId AND p.active = true AND p.deleted = false
+                                        AND p.group.id = g.id AND p.lab.id = g.lab.id))
+                  ))
+              AND (:groupId IS NULL OR t.groupId = :groupId)
+              AND (:assigneeId IS NULL OR t.assigneeId = :assigneeId)
+              AND (:status IS NULL OR t.status = :status)
+              AND (:priority IS NULL OR t.priority = :priority)
+              AND (:type IS NULL OR t.type = :type)
+              AND (:includeBacklog = true OR t.status <> com.web.labportalbackend.research.enums.TaskStatus.BACKLOG)
+              AND (:includeCancelled = true OR t.status <> com.web.labportalbackend.research.enums.TaskStatus.CANCELLED)
+            ORDER BY CASE WHEN t.dueDate IS NULL THEN 1 ELSE 0 END, t.dueDate ASC, t.createdAt ASC, t.id ASC
+            """)
+    List<TaskEntity> findBoardTasksForManager(
+            @Param("projectId") Long projectId,
+            @Param("groupId") Long groupId,
+            @Param("assigneeId") Long assigneeId,
+            @Param("status") TaskStatus status,
+            @Param("priority") TaskPriority priority,
+            @Param("type") TaskType type,
+            @Param("includeBacklog") boolean includeBacklog,
+            @Param("includeCancelled") boolean includeCancelled
+    );
+
+    @EntityGraph(attributePaths = "assignedToStudent")
+    @Query("""
+            SELECT DISTINCT t
+            FROM TaskEntity t
+            WHERE t.projectId = :projectId
+              AND EXISTS (SELECT m.id FROM MilestoneEntity m JOIN m.project p
+                          WHERE m.id = t.milestoneId AND p.id = :projectId
+                            AND p.active = true AND p.deleted = false)
+              AND t.active = true
+              AND t.deleted = false
+              AND t.groupId IN (
+                    SELECT g.id FROM GroupEntity g LEFT JOIN g.project gp
+                    WHERE g.active = true AND g.deleted = false
+                      AND ((gp.id = :projectId AND gp.active = true AND gp.deleted = false AND gp.lab.id = g.lab.id)
+                           OR EXISTS (SELECT p.id FROM ProjectEntity p
+                                      WHERE p.id = :projectId AND p.active = true AND p.deleted = false
+                                        AND p.group.id = g.id AND p.lab.id = g.lab.id))
+                  )
+              AND ((t.groupId IN :leaderGroupIds)
+                   OR (t.groupId IN :memberGroupIds AND t.assigneeId = :currentUserId))
+              AND (:groupId IS NULL OR t.groupId = :groupId)
+              AND (:assigneeId IS NULL OR t.assigneeId = :assigneeId)
+              AND (:status IS NULL OR t.status = :status)
+              AND (:priority IS NULL OR t.priority = :priority)
+              AND (:type IS NULL OR t.type = :type)
+              AND (:includeBacklog = true OR t.status <> com.web.labportalbackend.research.enums.TaskStatus.BACKLOG)
+              AND (:includeCancelled = true OR t.status <> com.web.labportalbackend.research.enums.TaskStatus.CANCELLED)
+            ORDER BY CASE WHEN t.dueDate IS NULL THEN 1 ELSE 0 END, t.dueDate ASC, t.createdAt ASC, t.id ASC
+            """)
+    List<TaskEntity> findBoardTasksForStudent(
+            @Param("projectId") Long projectId,
+            @Param("leaderGroupIds") List<Long> leaderGroupIds,
+            @Param("memberGroupIds") List<Long> memberGroupIds,
+            @Param("currentUserId") Long currentUserId,
+            @Param("groupId") Long groupId,
+            @Param("assigneeId") Long assigneeId,
+            @Param("status") TaskStatus status,
+            @Param("priority") TaskPriority priority,
+            @Param("type") TaskType type,
+            @Param("includeBacklog") boolean includeBacklog,
+            @Param("includeCancelled") boolean includeCancelled
     );
 
     @Query("""
