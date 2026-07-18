@@ -4,6 +4,7 @@ import com.web.labportalbackend.auth.entity.User;
 import com.web.labportalbackend.auth.repository.UserRepository;
 import com.web.labportalbackend.common.exception.ResourceNotFoundException;
 import com.web.labportalbackend.research.dto.response.ProjectTaskBoardResponse;
+import com.web.labportalbackend.research.dto.response.TaskBacklogPageResponse;
 import com.web.labportalbackend.research.dto.response.TaskBoardColumnResponse;
 import com.web.labportalbackend.research.entity.GroupEntity;
 import com.web.labportalbackend.research.entity.ProjectEntity;
@@ -20,6 +21,8 @@ import com.web.labportalbackend.research.repository.TaskRepository;
 import com.web.labportalbackend.research.security.TaskPermissionHelper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -87,6 +90,44 @@ public class TaskBoardReadService {
                         .map(column -> TaskBoardColumnResponse.builder().status(column).tasks(List.copyOf(grouped.get(column))).build())
                         .toList())
                 .build();
+    }
+
+    @Transactional(readOnly = true)
+    public TaskBacklogPageResponse readBacklog(Long projectId, int page, int size) {
+        ProjectEntity project = projectRepository.findByIdAndDeletedFalseAndActiveTrue(projectId)
+                .orElseThrow(() -> new ResourceNotFoundException("Project", projectId));
+        User user = currentUser();
+        if (!permissionHelper.canViewProjectBoard(user.getId(), project)) {
+            throw new AccessDeniedException("Cannot access tasks for this project");
+        }
+
+        boolean manager = user.hasRole("LAB_MANAGER");
+        List<Long> leaderGroups = manager ? List.of() : groupIds(projectId, user.getId(), GroupRole.LEADER);
+        List<Long> memberGroups = manager ? List.of() : groupIds(projectId, user.getId(), GroupRole.MEMBER);
+        validatePagination(page, size);
+
+        PageRequest pageRequest = PageRequest.of(page, size);
+        Page<TaskEntity> tasks = manager
+                ? taskRepository.findBacklogTasksForManager(projectId, pageRequest)
+                : taskRepository.findBacklogTasksForStudent(projectId, nonEmpty(leaderGroups), nonEmpty(memberGroups),
+                        user.getId(), pageRequest);
+
+        return new TaskBacklogPageResponse(
+                tasks.getContent().stream().map(TaskMapper::toResponse).toList(),
+                tasks.getNumber(),
+                tasks.getSize(),
+                tasks.getTotalElements(),
+                tasks.getTotalPages()
+        );
+    }
+
+    private void validatePagination(int page, int size) {
+        if (page < 0) {
+            throw new IllegalArgumentException("Page must be zero or greater");
+        }
+        if (size <= 0 || size > 100) {
+            throw new IllegalArgumentException("Size must be between 1 and 100");
+        }
     }
 
     private void validateGroupFilter(ProjectEntity project, Long groupId, boolean manager,

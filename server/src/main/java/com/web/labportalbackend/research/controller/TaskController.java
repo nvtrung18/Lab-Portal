@@ -4,6 +4,7 @@ import com.web.labportalbackend.common.dto.Response;
 import com.web.labportalbackend.research.dto.request.CreateTaskRequest;
 import com.web.labportalbackend.research.dto.request.UpdateTaskStatusRequest;
 import com.web.labportalbackend.research.dto.response.ProjectTaskBoardResponse;
+import com.web.labportalbackend.research.dto.response.TaskBacklogPageResponse;
 import com.web.labportalbackend.research.dto.response.TaskResponse;
 import com.web.labportalbackend.research.enums.TaskPriority;
 import com.web.labportalbackend.research.enums.TaskStatus;
@@ -46,6 +47,20 @@ public class TaskController {
                 "Project task board retrieved successfully",
                 taskBoardReadService.read(projectId, groupId, assigneeId, status, priority, type,
                         includeBacklog, includeCancelled)
+        ));
+    }
+
+    @GetMapping("/research/projects/{projectId}/backlog")
+    @Operation(summary = "Get project task backlog")
+    @PreAuthorize("hasAnyRole('LAB_MANAGER','STUDENT')")
+    public ResponseEntity<Response<TaskBacklogPageResponse>> getProjectBacklog(
+            @PathVariable Long projectId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        return ResponseEntity.ok(Response.ok(
+                "Project backlog retrieved successfully",
+                taskBoardReadService.readBacklog(projectId, page, size)
         ));
     }
 

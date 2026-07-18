@@ -8,6 +8,8 @@ import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import com.web.labportalbackend.research.enums.TaskPriority;
 import com.web.labportalbackend.research.enums.TaskStatus;
 import com.web.labportalbackend.research.enums.TaskType;
@@ -198,6 +200,103 @@ public interface TaskRepository extends JpaRepository<TaskEntity, Long> {
             @Param("type") TaskType type,
             @Param("includeBacklog") boolean includeBacklog,
             @Param("includeCancelled") boolean includeCancelled
+    );
+
+    @EntityGraph(attributePaths = "assignedToStudent")
+    @Query(value = """
+            SELECT DISTINCT t
+            FROM TaskEntity t
+            WHERE t.projectId = :projectId
+              AND t.status = com.web.labportalbackend.research.enums.TaskStatus.BACKLOG
+              AND EXISTS (SELECT m.id FROM MilestoneEntity m JOIN m.project p
+                          WHERE m.id = t.milestoneId AND p.id = :projectId
+                            AND p.active = true AND p.deleted = false)
+              AND t.active = true
+              AND t.deleted = false
+              AND (t.groupId IS NULL OR t.groupId IN (
+                    SELECT g.id FROM GroupEntity g LEFT JOIN g.project gp
+                    WHERE g.active = true AND g.deleted = false
+                      AND ((gp.id = :projectId AND gp.active = true AND gp.deleted = false AND gp.lab.id = g.lab.id)
+                           OR EXISTS (SELECT p.id FROM ProjectEntity p
+                                      WHERE p.id = :projectId AND p.active = true AND p.deleted = false
+                                        AND p.group.id = g.id AND p.lab.id = g.lab.id))
+                  ))
+            ORDER BY CASE WHEN t.dueDate IS NULL THEN 1 ELSE 0 END, t.dueDate ASC, t.createdAt ASC, t.id ASC
+            """,
+            countQuery = """
+            SELECT COUNT(DISTINCT t.id)
+            FROM TaskEntity t
+            WHERE t.projectId = :projectId
+              AND t.status = com.web.labportalbackend.research.enums.TaskStatus.BACKLOG
+              AND EXISTS (SELECT m.id FROM MilestoneEntity m JOIN m.project p
+                          WHERE m.id = t.milestoneId AND p.id = :projectId
+                            AND p.active = true AND p.deleted = false)
+              AND t.active = true
+              AND t.deleted = false
+              AND (t.groupId IS NULL OR t.groupId IN (
+                    SELECT g.id FROM GroupEntity g LEFT JOIN g.project gp
+                    WHERE g.active = true AND g.deleted = false
+                      AND ((gp.id = :projectId AND gp.active = true AND gp.deleted = false AND gp.lab.id = g.lab.id)
+                           OR EXISTS (SELECT p.id FROM ProjectEntity p
+                                      WHERE p.id = :projectId AND p.active = true AND p.deleted = false
+                                        AND p.group.id = g.id AND p.lab.id = g.lab.id))
+                  ))
+            """)
+    Page<TaskEntity> findBacklogTasksForManager(
+            @Param("projectId") Long projectId,
+            Pageable pageable
+    );
+
+    @EntityGraph(attributePaths = "assignedToStudent")
+    @Query(value = """
+            SELECT DISTINCT t
+            FROM TaskEntity t
+            WHERE t.projectId = :projectId
+              AND t.status = com.web.labportalbackend.research.enums.TaskStatus.BACKLOG
+              AND EXISTS (SELECT m.id FROM MilestoneEntity m JOIN m.project p
+                          WHERE m.id = t.milestoneId AND p.id = :projectId
+                            AND p.active = true AND p.deleted = false)
+              AND t.active = true
+              AND t.deleted = false
+              AND t.groupId IN (
+                    SELECT g.id FROM GroupEntity g LEFT JOIN g.project gp
+                    WHERE g.active = true AND g.deleted = false
+                      AND ((gp.id = :projectId AND gp.active = true AND gp.deleted = false AND gp.lab.id = g.lab.id)
+                           OR EXISTS (SELECT p.id FROM ProjectEntity p
+                                      WHERE p.id = :projectId AND p.active = true AND p.deleted = false
+                                        AND p.group.id = g.id AND p.lab.id = g.lab.id))
+                  )
+              AND (t.groupId IN :leaderGroupIds
+                   OR (t.groupId IN :memberGroupIds AND t.assigneeId = :currentUserId))
+            ORDER BY CASE WHEN t.dueDate IS NULL THEN 1 ELSE 0 END, t.dueDate ASC, t.createdAt ASC, t.id ASC
+            """,
+            countQuery = """
+            SELECT COUNT(DISTINCT t.id)
+            FROM TaskEntity t
+            WHERE t.projectId = :projectId
+              AND t.status = com.web.labportalbackend.research.enums.TaskStatus.BACKLOG
+              AND EXISTS (SELECT m.id FROM MilestoneEntity m JOIN m.project p
+                          WHERE m.id = t.milestoneId AND p.id = :projectId
+                            AND p.active = true AND p.deleted = false)
+              AND t.active = true
+              AND t.deleted = false
+              AND t.groupId IN (
+                    SELECT g.id FROM GroupEntity g LEFT JOIN g.project gp
+                    WHERE g.active = true AND g.deleted = false
+                      AND ((gp.id = :projectId AND gp.active = true AND gp.deleted = false AND gp.lab.id = g.lab.id)
+                           OR EXISTS (SELECT p.id FROM ProjectEntity p
+                                      WHERE p.id = :projectId AND p.active = true AND p.deleted = false
+                                        AND p.group.id = g.id AND p.lab.id = g.lab.id))
+                  )
+              AND (t.groupId IN :leaderGroupIds
+                   OR (t.groupId IN :memberGroupIds AND t.assigneeId = :currentUserId))
+            """)
+    Page<TaskEntity> findBacklogTasksForStudent(
+            @Param("projectId") Long projectId,
+            @Param("leaderGroupIds") List<Long> leaderGroupIds,
+            @Param("memberGroupIds") List<Long> memberGroupIds,
+            @Param("currentUserId") Long currentUserId,
+            Pageable pageable
     );
 
     @Query("""
