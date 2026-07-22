@@ -1,5 +1,8 @@
 package com.web.labportalbackend.research.service.impl;
 
+import com.web.labportalbackend.admin.audit.enums.AuditAction;
+import com.web.labportalbackend.admin.audit.enums.AuditModule;
+import com.web.labportalbackend.admin.audit.service.AuditLogService;
 import com.web.labportalbackend.auth.entity.User;
 import com.web.labportalbackend.auth.repository.UserRepository;
 import com.web.labportalbackend.common.exception.InvalidAssigneeException;
@@ -7,6 +10,7 @@ import com.web.labportalbackend.common.exception.ResourceNotFoundException;
 import com.web.labportalbackend.lab.entity.Laboratory;
 import com.web.labportalbackend.lab.repository.LaboratoryRepository;
 import com.web.labportalbackend.research.dto.request.AssignTaskRequest;
+import com.web.labportalbackend.research.dto.request.CreateResearchTaskRequest;
 import com.web.labportalbackend.research.dto.request.CreateTaskRequest;
 import com.web.labportalbackend.research.dto.request.UpdateTaskStatusRequest;
 import com.web.labportalbackend.research.dto.response.TaskResponse;
@@ -19,14 +23,18 @@ import com.web.labportalbackend.admin.systemconfig.service.SystemConfigService;
 import com.web.labportalbackend.research.entity.ReportEntity;
 import com.web.labportalbackend.research.enums.ReportStatus;
 import com.web.labportalbackend.research.enums.GroupRole;
+import com.web.labportalbackend.research.enums.TaskPriority;
 import com.web.labportalbackend.research.enums.TaskStatus;
+import com.web.labportalbackend.research.enums.TaskType;
 import com.web.labportalbackend.research.mapper.TaskMapper;
 import com.web.labportalbackend.research.repository.GroupMemberRepository;
 import com.web.labportalbackend.research.repository.GroupRepository;
 import com.web.labportalbackend.research.repository.MilestoneRepository;
+import com.web.labportalbackend.research.repository.ProjectRepository;
 import com.web.labportalbackend.research.repository.ReportRepository;
 import com.web.labportalbackend.research.repository.TaskRepository;
 import com.web.labportalbackend.research.service.TaskService;
+import com.web.labportalbackend.research.security.TaskPermissionHelper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
@@ -67,6 +75,9 @@ public class TaskServiceImpl implements TaskService {
     private final LaboratoryRepository laboratoryRepository;
     private final UserRepository userRepository;
     private final SystemConfigService systemConfigService;
+    private final ProjectRepository projectRepository;
+    private final TaskPermissionHelper taskPermissionHelper;
+    private final AuditLogService auditLogService;
 
     @Override
     @Transactional
@@ -120,9 +131,123 @@ public class TaskServiceImpl implements TaskService {
 
     @Override
     @Transactional
+    public TaskResponse createResearchTask(CreateResearchTaskRequest request) {
+        User currentUser = getUsableCurrentUser();
+        if (!currentUser.hasRole("LAB_MANAGER")) {
+            throw new AccessDeniedException("Only lab managers can create official tasks");
+        }
+
+        ProjectEntity project = projectRepository.findByIdAndDeletedFalseAndActiveTrue(request.getProjectId())
+                .orElseThrow(() -> new ResourceNotFoundException("Project", request.getProjectId()));
+        if (!taskPermissionHelper.canCreateOfficialTask(currentUser.getId(), project)) {
+            throw new AccessDeniedException("Cannot create official tasks for this project");
+        }
+        if (request.getAssigneeId() != null && request.getGroupId() == null) {
+            throw new IllegalArgumentException("Project-level tasks cannot have an assignee");
+        }
+
+        GroupEntity group = resolveCreateGroup(request.getGroupId(), project);
+        MilestoneEntity milestone = resolveCreateMilestone(request.getMilestoneId(), request.getGroupId(), project);
+        TaskEntity parent = resolveCreateParent(request.getParentTaskId(), request.getProjectId(), request.getGroupId());
+        User assignee = resolveCreateAssignee(request.getAssigneeId(), request.getGroupId());
+
+        TaskEntity task = TaskEntity.builder()
+                .projectId(project.getId())
+                .groupId(group == null ? null : group.getId())
+                .milestoneId(milestone == null ? null : milestone.getId())
+                .parentTaskId(parent == null ? null : parent.getId())
+                .assigneeId(assignee == null ? null : assignee.getId())
+                .title(request.getTitle().trim())
+                .description(request.getDescription())
+                .deadline(request.getDueDate())
+                .dueDate(request.getDueDate())
+                .status(milestone == null ? TaskStatus.BACKLOG : TaskStatus.TODO)
+                .priority(request.getPriority() == null ? TaskPriority.MEDIUM : request.getPriority())
+                .type(request.getType() == null ? TaskType.TASK : request.getType())
+                .createdBy(currentUser.getId())
+                .progressPercent(0)
+                .build();
+
+        TaskEntity saved = taskRepository.save(task);
+        auditLogService.log(
+                currentUser,
+                AuditAction.CREATE_RESEARCH_TASK,
+                AuditModule.RESEARCH,
+                "RESEARCH_TASK",
+                saved.getId(),
+                "Created official research task: " + saved.getTitle()
+        );
+        return TaskMapper.toResponse(saved);
+    }
+
+    private GroupEntity resolveCreateGroup(Long groupId, ProjectEntity project) {
+        if (groupId == null) {
+            return null;
+        }
+        GroupEntity group = groupRepository.findByIdAndDeletedFalseAndActiveTrue(groupId)
+                .orElseThrow(() -> new ResourceNotFoundException("Research group", groupId));
+        boolean newModelMatch = group.getProject() != null && project.getId().equals(group.getProject().getId());
+        boolean legacyModelMatch = project.getGroup() != null && groupId.equals(project.getGroup().getId());
+        boolean conflictingProject = group.getProject() != null && !newModelMatch;
+        boolean belongsToProject = !conflictingProject && (newModelMatch || legacyModelMatch);
+        boolean sameLab = group.getLab() != null && group.getLab().getId() != null
+                && project.getLab() != null && group.getLab().getId().equals(project.getLab().getId());
+        if (!belongsToProject || !sameLab) {
+            throw new IllegalArgumentException("Research group does not belong to the requested project and lab");
+        }
+        return group;
+    }
+
+    private MilestoneEntity resolveCreateMilestone(Long milestoneId, Long groupId, ProjectEntity project) {
+        if (milestoneId == null) {
+            return null;
+        }
+        MilestoneEntity milestone = milestoneRepository.findByIdAndDeletedFalseAndActiveTrue(milestoneId)
+                .orElseThrow(() -> new ResourceNotFoundException("Milestone", milestoneId));
+        if (milestone.getProject() == null || !project.getId().equals(milestone.getProject().getId())) {
+            throw new IllegalArgumentException("Milestone does not belong to the requested project");
+        }
+        Long milestoneGroupId = milestone.getGroup() == null ? null : milestone.getGroup().getId();
+        if (milestoneGroupId != null && !milestoneGroupId.equals(groupId)) {
+            throw new IllegalArgumentException("Milestone group does not match the requested group");
+        }
+        return milestone;
+    }
+
+    private TaskEntity resolveCreateParent(Long parentTaskId, Long projectId, Long groupId) {
+        if (parentTaskId == null) {
+            return null;
+        }
+        TaskEntity parent = taskRepository.findByIdAndDeletedFalseAndActiveTrue(parentTaskId)
+                .orElseThrow(() -> new ResourceNotFoundException("Task", parentTaskId));
+        if (!projectId.equals(parent.getProjectId()) || !java.util.Objects.equals(groupId, parent.getGroupId())) {
+            throw new IllegalArgumentException("Parent task must have the same project and group scope");
+        }
+        return parent;
+    }
+
+    private User resolveCreateAssignee(Long assigneeId, Long groupId) {
+        if (assigneeId == null) {
+            return null;
+        }
+        User assignee = userRepository.findById(assigneeId)
+                .filter(user -> Boolean.TRUE.equals(user.getActive()))
+                .filter(user -> !Boolean.TRUE.equals(user.getDeleted()))
+                .orElseThrow(() -> new ResourceNotFoundException("User", assigneeId));
+        if (!groupMemberRepository.existsByGroupIdAndUserIdAndActiveTrueAndDeletedFalse(groupId, assigneeId)) {
+            throw new IllegalArgumentException("Assignee must have an active membership in the requested group");
+        }
+        return assignee;
+    }
+
+    @Override
+    @Transactional
     public TaskResponse assign(Long taskId, AssignTaskRequest request) {
         TaskEntity task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new ResourceNotFoundException("Task", taskId));
+        if (task.getMilestoneId() == null) {
+            throw new IllegalArgumentException("Legacy task assign endpoint requires a milestone");
+        }
         MilestoneEntity milestone = milestoneRepository.findById(task.getMilestoneId())
                 .orElseThrow(() -> new ResourceNotFoundException("Milestone", task.getMilestoneId()));
 
@@ -232,6 +357,9 @@ public class TaskServiceImpl implements TaskService {
     public TaskResponse updateStatus(Long taskId, UpdateTaskStatusRequest request) {
         TaskEntity task = taskRepository.findByIdForUpdate(taskId)
                 .orElseThrow(() -> new ResourceNotFoundException("Task", taskId));
+        if (task.getMilestoneId() == null) {
+            throw new IllegalArgumentException("Legacy task status endpoint requires a milestone");
+        }
         MilestoneEntity milestone = milestoneRepository.findByIdAndDeletedFalseAndActiveTrue(task.getMilestoneId())
                 .orElseThrow(() -> new ResourceNotFoundException("Milestone", task.getMilestoneId()));
         User currentUser = getCurrentUser();
@@ -335,6 +463,14 @@ public class TaskServiceImpl implements TaskService {
         }
         return userRepository.findByUsername(authentication.getName())
                 .orElseThrow(() -> new ResourceNotFoundException("User", "username", authentication.getName()));
+    }
+
+    private User getUsableCurrentUser() {
+        User user = getCurrentUser();
+        if (!Boolean.TRUE.equals(user.getActive()) || Boolean.TRUE.equals(user.getDeleted())) {
+            throw new AccessDeniedException("Authenticated user is inactive or deleted");
+        }
+        return user;
     }
 
     private void assertManagerCanAccessGroup(User currentUser, GroupEntity group) {

@@ -2,6 +2,9 @@ package com.web.labportalbackend.research.service;
 
 import com.web.labportalbackend.admin.systemconfig.dto.SystemConfigResponse;
 import com.web.labportalbackend.admin.systemconfig.service.SystemConfigService;
+import com.web.labportalbackend.admin.audit.enums.AuditAction;
+import com.web.labportalbackend.admin.audit.enums.AuditModule;
+import com.web.labportalbackend.admin.audit.service.AuditLogService;
 import com.web.labportalbackend.auth.entity.Role;
 import com.web.labportalbackend.auth.entity.User;
 import com.web.labportalbackend.auth.repository.UserRepository;
@@ -11,6 +14,7 @@ import com.web.labportalbackend.lab.entity.Laboratory;
 import com.web.labportalbackend.lab.repository.LaboratoryRepository;
 import com.web.labportalbackend.research.dto.request.AssignTaskRequest;
 import com.web.labportalbackend.research.dto.request.CreateTaskRequest;
+import com.web.labportalbackend.research.dto.request.CreateResearchTaskRequest;
 import com.web.labportalbackend.research.dto.request.UpdateTaskStatusRequest;
 import com.web.labportalbackend.research.dto.response.TaskResponse;
 import com.web.labportalbackend.research.entity.GroupEntity;
@@ -18,13 +22,17 @@ import com.web.labportalbackend.research.entity.MilestoneEntity;
 import com.web.labportalbackend.research.entity.ProjectEntity;
 import com.web.labportalbackend.research.entity.TaskEntity;
 import com.web.labportalbackend.research.enums.TaskStatus;
+import com.web.labportalbackend.research.enums.TaskPriority;
+import com.web.labportalbackend.research.enums.TaskType;
 import com.web.labportalbackend.research.enums.GroupRole;
 import com.web.labportalbackend.research.repository.GroupMemberRepository;
 import com.web.labportalbackend.research.repository.GroupRepository;
 import com.web.labportalbackend.research.repository.MilestoneRepository;
+import com.web.labportalbackend.research.repository.ProjectRepository;
 import com.web.labportalbackend.research.repository.ReportRepository;
 import com.web.labportalbackend.research.repository.TaskRepository;
 import com.web.labportalbackend.research.service.impl.TaskServiceImpl;
+import com.web.labportalbackend.research.security.TaskPermissionHelper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.AfterEach;
@@ -73,6 +81,15 @@ class TaskServiceImplTest {
 
     @Mock
     private SystemConfigService systemConfigService;
+
+    @Mock
+    private ProjectRepository projectRepository;
+
+    @Mock
+    private TaskPermissionHelper taskPermissionHelper;
+
+    @Mock
+    private AuditLogService auditLogService;
 
     @InjectMocks
     private TaskServiceImpl taskService;
@@ -133,6 +150,67 @@ class TaskServiceImplTest {
         assertEquals(100L, captor.getValue().getGroupId());
         assertEquals(LocalDate.of(2026, 8, 1), captor.getValue().getDueDate());
         assertEquals(manager.getId(), captor.getValue().getCreatedBy());
+    }
+
+    @Test
+    void createResearchTask_createsProjectBacklogWithServerOwnedDefaultsAndAudit() {
+        User manager = authenticate("manager", "LAB_MANAGER");
+        Laboratory lab = lab(1L);
+        ProjectEntity project = ProjectEntity.builder().lab(lab).title("Project").build();
+        project.setId(50L);
+        CreateResearchTaskRequest request = new CreateResearchTaskRequest();
+        request.setProjectId(50L);
+        request.setTitle("  Prepare dataset  ");
+        request.setDueDate(LocalDate.of(2026, 8, 1));
+
+        when(projectRepository.findByIdAndDeletedFalseAndActiveTrue(50L)).thenReturn(Optional.of(project));
+        when(taskPermissionHelper.canCreateOfficialTask(manager.getId(), project)).thenReturn(true);
+        when(taskRepository.save(any(TaskEntity.class))).thenAnswer(invocation -> {
+            TaskEntity task = invocation.getArgument(0);
+            task.setId(20L);
+            return task;
+        });
+
+        TaskResponse response = taskService.createResearchTask(request);
+
+        assertEquals(20L, response.getId());
+        assertNull(response.getMilestoneId());
+        assertEquals(50L, response.getProjectId());
+        assertEquals("Prepare dataset", response.getTitle());
+        assertEquals(TaskStatus.BACKLOG, response.getStatus());
+        assertEquals(TaskPriority.MEDIUM, response.getPriority());
+        assertEquals(TaskType.TASK, response.getType());
+        assertEquals(LocalDate.of(2026, 8, 1), response.getDueDate());
+        assertEquals(LocalDate.of(2026, 8, 1), response.getDeadline());
+        assertEquals(manager.getId(), response.getCreatedBy());
+        assertEquals(0, response.getProgressPercent());
+        verify(auditLogService).log(manager, AuditAction.CREATE_RESEARCH_TASK, AuditModule.RESEARCH,
+                "RESEARCH_TASK", 20L, "Created official research task: Prepare dataset");
+    }
+
+    @Test
+    void createResearchTask_checksProjectPermissionBeforeScopedReferences() {
+        User manager = authenticate("manager", "LAB_MANAGER");
+        ProjectEntity project = ProjectEntity.builder().lab(lab(2L)).title("Other lab").build();
+        project.setId(50L);
+        CreateResearchTaskRequest request = new CreateResearchTaskRequest();
+        request.setProjectId(50L);
+        request.setGroupId(100L);
+        request.setMilestoneId(10L);
+        request.setParentTaskId(5L);
+        request.setAssigneeId(7L);
+        request.setTitle("Prepare dataset");
+
+        when(projectRepository.findByIdAndDeletedFalseAndActiveTrue(50L)).thenReturn(Optional.of(project));
+        when(taskPermissionHelper.canCreateOfficialTask(manager.getId(), project)).thenReturn(false);
+
+        assertThrows(AccessDeniedException.class, () -> taskService.createResearchTask(request));
+
+        verifyNoInteractions(groupRepository, milestoneRepository);
+        verify(taskRepository, never()).findById(anyLong());
+        verify(userRepository, never()).findById(7L);
+        verify(taskRepository, never()).save(any());
+        verifyNoInteractions(auditLogService);
     }
 
     @Test

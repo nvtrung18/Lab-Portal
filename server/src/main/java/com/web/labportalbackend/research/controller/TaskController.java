@@ -1,6 +1,7 @@
 package com.web.labportalbackend.research.controller;
 
 import com.web.labportalbackend.common.dto.Response;
+import com.web.labportalbackend.research.dto.request.CreateResearchTaskRequest;
 import com.web.labportalbackend.research.dto.request.CreateTaskRequest;
 import com.web.labportalbackend.research.dto.request.UpdateTaskStatusRequest;
 import com.web.labportalbackend.research.dto.response.ProjectTaskBoardResponse;
@@ -29,6 +30,16 @@ public class TaskController {
 
     private final TaskService taskService;
     private final TaskBoardReadService taskBoardReadService;
+
+    @PostMapping("/research/tasks")
+    @Operation(summary = "Create an official research task")
+    @PreAuthorize("hasRole('LAB_MANAGER')")
+    public ResponseEntity<Response<TaskResponse>> createResearchTask(
+            @Valid @RequestBody CreateResearchTaskRequest request
+    ) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(Response.ok("Task created successfully", taskService.createResearchTask(request)));
+    }
 
     @GetMapping("/research/projects/{projectId}/board")
     @Operation(summary = "Get project task board")

@@ -153,8 +153,8 @@ public class ResearchLogServiceImpl implements ResearchLogService {
         AccessScope accessScope = resolveAccessScope(currentUser, project);
 
         Long groupId = resolveGroupIdForCreate(request, project, accessScope);
+        TaskEntity task = validateTask(request.getTaskId(), project.getId(), request.getMilestoneId());
         MilestoneEntity milestone = validateMilestone(request.getMilestoneId(), project.getId());
-        TaskEntity task = validateTask(request.getTaskId(), project.getId(), milestone == null ? null : milestone.getId());
         validateGroup(groupId, project.getId());
         assertCanCreateLog(currentUser, accessScope, groupId, milestone, task);
         ResearchLogVisibility visibility = resolveAllowedVisibility(request.getVisibility(), accessScope, groupId);
@@ -423,6 +423,15 @@ public class ResearchLogServiceImpl implements ResearchLogService {
         }
         TaskEntity task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new ResourceNotFoundException("Task", taskId));
+        if (task.getProjectId() != null && !projectId.equals(task.getProjectId())) {
+            throw new IllegalArgumentException("Task does not belong to selected project");
+        }
+        if (task.getMilestoneId() == null) {
+            if (requestMilestoneId != null) {
+                throw new IllegalArgumentException("Task without a milestone cannot be linked to a milestone log");
+            }
+            return task;
+        }
         MilestoneEntity taskMilestone = validateMilestone(task.getMilestoneId(), projectId);
         if (requestMilestoneId != null && !requestMilestoneId.equals(taskMilestone.getId())) {
             throw new IllegalArgumentException("Task does not belong to selected milestone");

@@ -27,6 +27,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.any;
 
 @ExtendWith(MockitoExtension.class)
 class TaskPermissionHelperTest {
@@ -63,6 +64,81 @@ class TaskPermissionHelperTest {
 
         assertTrue(helper.canViewProjectBoard(2L, ownProject));
         assertFalse(helper.canViewProjectBoard(2L, otherProject));
+    }
+
+    @Test
+    void managerCanCreateOfficialTaskOnlyInExactActiveManagedLab() {
+        User manager = user(2L, "LAB_MANAGER");
+        Laboratory lab = lab(1L);
+        ProjectEntity project = ProjectEntity.builder().lab(lab).build();
+        project.setId(50L);
+        when(userRepository.findById(2L)).thenReturn(Optional.of(manager));
+        when(laboratoryRepository.existsByIdAndManagerIdAndActiveTrueAndDeletedFalse(1L, 2L)).thenReturn(true);
+
+        assertTrue(helper.canCreateOfficialTask(2L, project));
+
+        verify(laboratoryRepository).existsByIdAndManagerIdAndActiveTrueAndDeletedFalse(1L, 2L);
+        verify(laboratoryRepository, never()).findFirstByManagerIdAndDeletedFalse(2L);
+    }
+
+    @Test
+    void officialTaskCreateFailsClosedForOtherLabInactiveOrDeletedActorsAndResources() {
+        User manager = user(2L, "LAB_MANAGER");
+        Laboratory lab = lab(1L);
+        ProjectEntity project = ProjectEntity.builder().lab(lab).build();
+        project.setId(50L);
+        when(userRepository.findById(2L)).thenReturn(Optional.of(manager));
+        when(laboratoryRepository.existsByIdAndManagerIdAndActiveTrueAndDeletedFalse(1L, 2L)).thenReturn(false);
+
+        assertFalse(helper.canCreateOfficialTask(2L, project));
+
+        manager.setActive(false);
+        assertFalse(helper.canCreateOfficialTask(2L, project));
+        manager.setActive(true);
+        manager.setDeleted(true);
+        assertFalse(helper.canCreateOfficialTask(2L, project));
+        manager.setDeleted(false);
+        project.setActive(false);
+        assertFalse(helper.canCreateOfficialTask(2L, project));
+        project.setActive(true);
+        project.setDeleted(true);
+        assertFalse(helper.canCreateOfficialTask(2L, project));
+        project.setDeleted(false);
+        lab.setActive(false);
+        assertFalse(helper.canCreateOfficialTask(2L, project));
+        lab.setActive(true);
+        lab.setDeleted(true);
+        assertFalse(helper.canCreateOfficialTask(2L, project));
+    }
+
+    @Test
+    void officialTaskCreateDoesNotDependOnWhichManagedLabWouldBeReturnedFirst() {
+        User manager = user(2L, "LAB_MANAGER");
+        Laboratory targetLab = lab(2L);
+        ProjectEntity project = ProjectEntity.builder().lab(targetLab).build();
+        project.setId(50L);
+        when(userRepository.findById(2L)).thenReturn(Optional.of(manager));
+        when(laboratoryRepository.existsByIdAndManagerIdAndActiveTrueAndDeletedFalse(2L, 2L)).thenReturn(true);
+
+        assertTrue(helper.canCreateOfficialTask(2L, project));
+
+        verify(laboratoryRepository, never()).findFirstByManagerIdAndDeletedFalse(2L);
+    }
+
+    @Test
+    void studentLeaderAndMemberSystemActorsCannotCreateOfficialTasks() {
+        Laboratory lab = lab(1L);
+        ProjectEntity project = ProjectEntity.builder().lab(lab).build();
+        project.setId(50L);
+        when(userRepository.findById(7L)).thenReturn(Optional.of(user(7L, "STUDENT")));
+        when(userRepository.findById(8L)).thenReturn(Optional.of(user(8L, "LEADER")));
+        when(userRepository.findById(9L)).thenReturn(Optional.of(user(9L, "MEMBER")));
+
+        assertFalse(helper.canCreateOfficialTask(7L, project));
+        assertFalse(helper.canCreateOfficialTask(8L, project));
+        assertFalse(helper.canCreateOfficialTask(9L, project));
+
+        verify(laboratoryRepository, never()).existsByIdAndManagerIdAndActiveTrueAndDeletedFalse(any(), any());
     }
 
     @Test

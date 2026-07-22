@@ -207,6 +207,20 @@ class ReportServiceImplTest {
     }
 
     @Test
+    void submitReport_rejectsTaskWithoutMilestoneBeforeRepositoryNullLookup() {
+        TaskEntity task = task(10L);
+        task.setMilestoneId(null);
+        when(taskRepository.findById(10L)).thenReturn(Optional.of(task));
+
+        IllegalArgumentException error = assertThrows(IllegalArgumentException.class,
+                () -> reportService.submitReport(request(10L), file("report.pdf")));
+
+        assertEquals("Report operation requires the task to have a milestone", error.getMessage());
+        verify(milestoneRepository, never()).findByIdAndDeletedFalseAndActiveTrue(null);
+        verify(reportRepository, never()).saveAndFlush(any());
+    }
+
+    @Test
     void submitReport_createsNextVersionWhenTaskHasPreviousReport() {
         SubmitReportRequest request = request(10L);
         TaskEntity task = task(10L);

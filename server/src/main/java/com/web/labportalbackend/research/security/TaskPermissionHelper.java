@@ -24,6 +24,18 @@ public class TaskPermissionHelper {
     private final GroupMemberRepository groupMemberRepository;
     private final LaboratoryRepository laboratoryRepository;
 
+    public boolean canCreateOfficialTask(Long userId, ProjectEntity project) {
+        if (!hasUsableUser(userId) || !isLabManager(userId) || project == null || project.getId() == null
+                || !Boolean.TRUE.equals(project.getActive()) || Boolean.TRUE.equals(project.getDeleted())
+                || project.getLab() == null || project.getLab().getId() == null
+                || !Boolean.TRUE.equals(project.getLab().getActive())
+                || Boolean.TRUE.equals(project.getLab().getDeleted())) {
+            return false;
+        }
+        return laboratoryRepository.existsByIdAndManagerIdAndActiveTrueAndDeletedFalse(
+                project.getLab().getId(), userId);
+    }
+
     public boolean canViewProjectBoard(Long userId, ProjectEntity project) {
         if (!hasUsableUser(userId) || project == null || project.getId() == null
                 || project.getLab() == null || project.getLab().getId() == null

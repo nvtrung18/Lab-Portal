@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import java.time.LocalDate;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 class TaskMapperTest {
 
@@ -54,5 +55,24 @@ class TaskMapperTest {
         assertEquals(TaskType.REVIEW, response.getType());
         assertEquals("Waiting for lab result", response.getBlockedReason());
         assertEquals(2L, response.getCreatedBy());
+    }
+
+    @Test
+    void toResponse_mapsNullMilestoneGroupAndAssigneeSafely() {
+        TaskEntity task = TaskEntity.builder()
+                .projectId(50L)
+                .milestoneId(null)
+                .groupId(null)
+                .assigneeId(null)
+                .title("Project backlog")
+                .status(com.web.labportalbackend.research.enums.TaskStatus.BACKLOG)
+                .build();
+
+        TaskResponse response = TaskMapper.toResponse(task);
+
+        assertNull(response.getMilestoneId());
+        assertNull(response.getGroupId());
+        assertNull(response.getAssignedToStudentId());
+        assertEquals(50L, response.getProjectId());
     }
 }

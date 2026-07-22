@@ -83,6 +83,49 @@ class TaskRepositoryTest {
     }
 
     @Test
+    void boardQueriesIncludeNullMilestoneOnlyWithinExistingAuthorizationScope() {
+        TaskEntity managerProjectBacklog = task(projectId, null, null, TaskStatus.BACKLOG,
+                TaskPriority.MEDIUM, TaskType.TASK);
+        managerProjectBacklog.setMilestoneId(null);
+        managerProjectBacklog = save(managerProjectBacklog);
+        TaskEntity leaderBacklog = task(projectId, leaderGroupId, otherUserId, TaskStatus.BACKLOG,
+                TaskPriority.MEDIUM, TaskType.TASK);
+        leaderBacklog.setMilestoneId(null);
+        leaderBacklog = save(leaderBacklog);
+        TaskEntity memberOwn = task(projectId, memberGroupId, userId, TaskStatus.BACKLOG,
+                TaskPriority.MEDIUM, TaskType.TASK);
+        memberOwn.setMilestoneId(null);
+        memberOwn = save(memberOwn);
+        TaskEntity memberOther = task(projectId, memberGroupId, otherUserId, TaskStatus.BACKLOG,
+                TaskPriority.MEDIUM, TaskType.TASK);
+        memberOther.setMilestoneId(null);
+        memberOther = save(memberOther);
+        TaskEntity otherProject = task(otherProjectId, null, null, TaskStatus.BACKLOG,
+                TaskPriority.MEDIUM, TaskType.TASK);
+        otherProject.setMilestoneId(null);
+        save(otherProject);
+
+        assertEquals(List.of(managerProjectBacklog.getId(), leaderBacklog.getId(), memberOwn.getId(), memberOther.getId()),
+                ids(taskRepository.findBoardTasksForManager(projectId, null, null, TaskStatus.BACKLOG,
+                        null, null, true, false)));
+        assertEquals(List.of(leaderBacklog.getId(), memberOwn.getId()),
+                ids(taskRepository.findBoardTasksForStudent(projectId, List.of(leaderGroupId),
+                        List.of(memberGroupId), userId, null, null, TaskStatus.BACKLOG,
+                        null, null, true, false)));
+    }
+
+    @Test
+    void milestoneCompletionChecksIgnoreProjectBacklogWithoutMilestone() {
+        TaskEntity projectBacklog = task(projectId, null, null, TaskStatus.BACKLOG,
+                TaskPriority.MEDIUM, TaskType.TASK);
+        projectBacklog.setMilestoneId(null);
+        save(projectBacklog);
+
+        assertEquals(false, taskRepository.existsIncompleteTaskByMilestoneId(milestoneId));
+        assertEquals(false, taskRepository.existsTaskWithoutApprovedReportByMilestoneId(milestoneId));
+    }
+
+    @Test
     void studentQueryUnionsLeaderAndAssignedMemberScopeWithoutDuplicates() {
         TaskEntity leader = save(task(projectId, leaderGroupId, otherUserId, TaskStatus.TODO, LocalDate.of(2026, 8, 1), "2026-07-01T00:00:00Z"));
         TaskEntity own = save(task(projectId, memberGroupId, userId, TaskStatus.TODO, LocalDate.of(2026, 8, 2), "2026-07-01T00:00:00Z"));
