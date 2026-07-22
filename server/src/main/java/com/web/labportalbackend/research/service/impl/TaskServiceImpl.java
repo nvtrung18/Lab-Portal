@@ -12,6 +12,7 @@ import com.web.labportalbackend.lab.repository.LaboratoryRepository;
 import com.web.labportalbackend.research.dto.request.AssignTaskRequest;
 import com.web.labportalbackend.research.dto.request.CreateResearchTaskRequest;
 import com.web.labportalbackend.research.dto.request.CreateTaskRequest;
+import com.web.labportalbackend.research.dto.request.PatchResearchTaskRequest;
 import com.web.labportalbackend.research.dto.request.UpdateTaskStatusRequest;
 import com.web.labportalbackend.research.dto.response.TaskResponse;
 import com.web.labportalbackend.research.entity.MilestoneEntity;
@@ -78,6 +79,7 @@ public class TaskServiceImpl implements TaskService {
     private final ProjectRepository projectRepository;
     private final TaskPermissionHelper taskPermissionHelper;
     private final AuditLogService auditLogService;
+    private final TaskMetadataPatchService taskMetadataPatchService;
 
     @Override
     @Transactional
@@ -178,6 +180,12 @@ public class TaskServiceImpl implements TaskService {
                 "Created official research task: " + saved.getTitle()
         );
         return TaskMapper.toResponse(saved);
+    }
+
+    @Override
+    @Transactional
+    public TaskResponse patchResearchTask(Long taskId, PatchResearchTaskRequest request) {
+        return taskMetadataPatchService.patch(taskId, request);
     }
 
     private GroupEntity resolveCreateGroup(Long groupId, ProjectEntity project) {

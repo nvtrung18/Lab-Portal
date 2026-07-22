@@ -3,6 +3,7 @@ package com.web.labportalbackend.research.controller;
 import com.web.labportalbackend.common.dto.Response;
 import com.web.labportalbackend.research.dto.request.CreateResearchTaskRequest;
 import com.web.labportalbackend.research.dto.request.CreateTaskRequest;
+import com.web.labportalbackend.research.dto.request.PatchResearchTaskRequest;
 import com.web.labportalbackend.research.dto.request.UpdateTaskStatusRequest;
 import com.web.labportalbackend.research.dto.response.ProjectTaskBoardResponse;
 import com.web.labportalbackend.research.dto.response.TaskBacklogPageResponse;
@@ -39,6 +40,18 @@ public class TaskController {
     ) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(Response.ok("Task created successfully", taskService.createResearchTask(request)));
+    }
+
+    @PatchMapping("/research/tasks/{taskId}")
+    @Operation(summary = "Patch research task metadata")
+    @PreAuthorize("hasAnyRole('LAB_MANAGER','STUDENT')")
+    public ResponseEntity<Response<TaskResponse>> patchResearchTask(
+            @PathVariable Long taskId,
+            @Valid @RequestBody PatchResearchTaskRequest request
+    ) {
+        return ResponseEntity.ok(
+                Response.ok("Task metadata updated successfully", taskService.patchResearchTask(taskId, request))
+        );
     }
 
     @GetMapping("/research/projects/{projectId}/board")
