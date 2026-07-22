@@ -40,6 +40,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -359,6 +360,143 @@ class TaskControllerTest {
     }
 
     @Test
+    void patchResearchTaskReturnsOkWrapperAndDelegatesPresenceAwareRequest() throws Exception {
+        TaskResponse response = TaskResponse.builder()
+                .id(20L).projectId(PROJECT_ID).title("Updated task")
+                .status(TaskStatus.BACKLOG).priority(TaskPriority.HIGH).type(TaskType.TASK)
+                .progressPercent(0).build();
+        when(taskService.patchResearchTask(org.mockito.ArgumentMatchers.eq(20L),
+                org.mockito.ArgumentMatchers.any())).thenReturn(response);
+
+        mockMvc.perform(apiPatch("/research/tasks/{taskId}", 20L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"title\":\"Updated task\",\"priority\":\"HIGH\"}")
+                        .with(manager()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", aMapWithSize(6)))
+                .andExpect(jsonPath("$.data.id").value(20L))
+                .andExpect(jsonPath("$.data.title").value("Updated task"))
+                .andExpect(jsonPath("$.data.priority").value("HIGH"));
+
+        verify(taskService).patchResearchTask(org.mockito.ArgumentMatchers.eq(20L),
+                org.mockito.ArgumentMatchers.argThat(request -> request.isTitlePresent()
+                        && request.isPriorityPresent()
+                        && !request.isDescriptionPresent()));
+    }
+
+    @Test
+    void patchResearchTaskAllowsStudentRoleThroughCoarseControllerBoundary() throws Exception {
+        when(taskService.patchResearchTask(org.mockito.ArgumentMatchers.eq(20L),
+                org.mockito.ArgumentMatchers.any())).thenReturn(TaskResponse.builder().id(20L).title("Task").build());
+
+        mockMvc.perform(apiPatch("/research/tasks/{taskId}", 20L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"description\":null}")
+                        .with(user("leader").roles("STUDENT")))
+                .andExpect(status().isOk());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"ADMIN", "MEMBER", "LEADER"})
+    void patchResearchTaskRejectsUnsupportedSystemRoles(String role) throws Exception {
+        mockMvc.perform(apiPatch("/research/tasks/{taskId}", 20L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"title\":\"Task\"}")
+                        .with(user("actor").roles(role)))
+                .andExpect(status().isForbidden());
+
+        verifyNoInteractions(taskService);
+    }
+
+    @Test
+    void patchResearchTaskRequiresAuthentication() throws Exception {
+        mockMvc.perform(apiPatch("/research/tasks/{taskId}", 20L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"title\":\"Task\"}"))
+                .andExpect(status().isUnauthorized());
+
+        verifyNoInteractions(taskService);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "{\"status\":\"DONE\"}",
+            "{\"projectId\":123}",
+            "{\"titel\":\"Typo\"}",
+            "{\"title\":\"Valid\",\"status\":\"DONE\"}",
+            "{}"
+    })
+    void patchResearchTaskMapsUnknownAndEmptyRequestErrorsToBadRequest(String body) throws Exception {
+        when(taskService.patchResearchTask(org.mockito.ArgumentMatchers.eq(20L),
+                org.mockito.ArgumentMatchers.any())).thenAnswer(invocation -> {
+            com.web.labportalbackend.research.dto.request.PatchResearchTaskRequest request = invocation.getArgument(1);
+            if (!request.getUnknownFields().isEmpty()) {
+                throw new IllegalArgumentException("Unknown task patch fields: " + request.getUnknownFields());
+            }
+            if (!request.hasAnyRecognizedField()) {
+                throw new IllegalArgumentException("Task patch request must contain at least one recognized field");
+            }
+            return TaskResponse.builder().id(20L).build();
+        });
+
+        mockMvc.perform(apiPatch("/research/tasks/{taskId}", 20L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body)
+                        .with(manager()))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value(400));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "{\"priority\":\"CRITICAL\"}",
+            "{\"type\":\"UNKNOWN\"}",
+            "{\"dueDate\":\"not-a-date\"}"
+    })
+    void patchResearchTaskRejectsInvalidEnumAndDateJson(String body) throws Exception {
+        mockMvc.perform(apiPatch("/research/tasks/{taskId}", 20L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body)
+                        .with(manager()))
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(taskService);
+    }
+
+    @Test
+    void patchResearchTaskAppliesBeanSizeValidation() throws Exception {
+        String body = "{\"title\":\"" + "t".repeat(201) + "\",\"description\":\""
+                + "d".repeat(4001) + "\"}";
+
+        mockMvc.perform(apiPatch("/research/tasks/{taskId}", 20L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body)
+                        .with(manager()))
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(taskService);
+    }
+
+    @Test
+    void patchResearchTaskMapsServiceValidationPermissionAndMissingTaskErrors() throws Exception {
+        when(taskService.patchResearchTask(org.mockito.ArgumentMatchers.eq(20L),
+                org.mockito.ArgumentMatchers.any()))
+                .thenThrow(new IllegalArgumentException("Title cannot be null"))
+                .thenThrow(new AccessDeniedException("Cannot update task metadata"))
+                .thenThrow(new ResourceNotFoundException("Task", 20L));
+
+        mockMvc.perform(apiPatch("/research/tasks/{taskId}", 20L)
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"title\":null}").with(manager()))
+                .andExpect(status().isBadRequest());
+        mockMvc.perform(apiPatch("/research/tasks/{taskId}", 20L)
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"title\":\"Task\"}").with(manager()))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(apiPatch("/research/tasks/{taskId}", 20L)
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"title\":\"Task\"}").with(manager()))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
     void getProjectBacklogReturnsExactWrapperShapeAndDefaultBindings() throws Exception {
         when(taskBoardReadService.readBacklog(PROJECT_ID, 0, 20)).thenReturn(backlog(0, 20));
 
@@ -518,6 +656,10 @@ class TaskControllerTest {
 
     private MockHttpServletRequestBuilder apiPost(String path, Object... uriVariables) {
         return post("/api" + path, uriVariables).contextPath("/api").with(csrf());
+    }
+
+    private MockHttpServletRequestBuilder apiPatch(String path, Object... uriVariables) {
+        return patch("/api" + path, uriVariables).contextPath("/api").with(csrf());
     }
 
     private org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.UserRequestPostProcessor manager() {

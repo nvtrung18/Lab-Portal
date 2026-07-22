@@ -3,6 +3,7 @@
 *.md
 !README.md
 !docs/decisions/P2-DECISION-01.md
+!docs/decisions/P2-DECISION-02.md
 *.docx
 !docker-compose.yml
 !.env.properties
