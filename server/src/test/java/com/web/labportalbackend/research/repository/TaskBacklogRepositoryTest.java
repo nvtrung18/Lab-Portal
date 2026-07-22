@@ -60,6 +60,9 @@ class TaskBacklogRepositoryTest {
     void managerReturnsOnlyValidBacklogIncludingUngroupedTasks() {
         TaskEntity grouped = save(task(project, leaderGroup, milestone, user, TaskStatus.BACKLOG));
         TaskEntity ungrouped = save(task(project, null, milestone, user, TaskStatus.BACKLOG));
+        TaskEntity projectBacklog = task(project, null, null, user, TaskStatus.BACKLOG);
+        projectBacklog.setAssigneeId(null);
+        projectBacklog = save(projectBacklog);
         TaskEntity legacy = save(task(project, legacyGroup, milestone, user, TaskStatus.BACKLOG));
         save(task(project, leaderGroup, milestone, user, TaskStatus.TODO));
         save(task(project, leaderGroup, milestone, user, TaskStatus.CANCELLED));
@@ -73,9 +76,9 @@ class TaskBacklogRepositoryTest {
 
         Page<TaskEntity> page = taskRepository.findBacklogTasksForManager(project.getId(), PageRequest.of(0, 20));
 
-        assertEquals(List.of(grouped.getId(), ungrouped.getId(), legacy.getId()).stream().sorted().toList(),
+        assertEquals(List.of(grouped.getId(), ungrouped.getId(), projectBacklog.getId(), legacy.getId()).stream().sorted().toList(),
                 ids(page).stream().sorted().toList());
-        assertEquals(3, page.getTotalElements());
+        assertEquals(4, page.getTotalElements());
         assertEquals(1, page.getTotalPages());
     }
 
@@ -121,8 +124,10 @@ class TaskBacklogRepositoryTest {
     @Test
     void studentUnionsLeaderAndOwnMemberScopeWithoutUngroupedOrDuplicates() {
         TaskEntity leader = save(task(project, leaderGroup, milestone, otherUser, TaskStatus.BACKLOG));
+        TaskEntity leaderWithoutMilestone = save(task(project, leaderGroup, null, otherUser, TaskStatus.BACKLOG));
         TaskEntity leaderOwn = save(task(project, leaderGroup, milestone, user, TaskStatus.BACKLOG));
         TaskEntity memberOwn = save(task(project, memberGroup, milestone, user, TaskStatus.BACKLOG));
+        TaskEntity memberOwnWithoutMilestone = save(task(project, memberGroup, null, user, TaskStatus.BACKLOG));
         save(task(project, memberGroup, milestone, otherUser, TaskStatus.BACKLOG));
         save(task(project, null, milestone, user, TaskStatus.BACKLOG));
         save(task(project, leaderGroup, milestone, user, TaskStatus.TODO));
@@ -131,9 +136,10 @@ class TaskBacklogRepositoryTest {
                 List.of(leaderGroup.getId()), List.of(leaderGroup.getId(), memberGroup.getId()), user.getId(),
                 PageRequest.of(0, 20));
 
-        assertEquals(List.of(leader.getId(), leaderOwn.getId(), memberOwn.getId()).stream().sorted().toList(),
+        assertEquals(List.of(leader.getId(), leaderWithoutMilestone.getId(), leaderOwn.getId(),
+                        memberOwn.getId(), memberOwnWithoutMilestone.getId()).stream().sorted().toList(),
                 ids(page).stream().sorted().toList());
-        assertEquals(3, page.getTotalElements());
+        assertEquals(5, page.getTotalElements());
     }
 
     @Test
@@ -211,7 +217,7 @@ class TaskBacklogRepositoryTest {
         TaskEntity task = TaskEntity.builder()
                 .projectId(taskProject.getId())
                 .groupId(group == null ? null : group.getId())
-                .milestoneId(taskMilestone.getId())
+                .milestoneId(taskMilestone == null ? null : taskMilestone.getId())
                 .assigneeId(assignee.getId())
                 .title("Backlog task")
                 .status(status)

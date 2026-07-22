@@ -5,6 +5,7 @@ import com.web.labportalbackend.common.exception.ResourceNotFoundException;
 import com.web.labportalbackend.research.dto.response.ProjectTaskBoardResponse;
 import com.web.labportalbackend.research.dto.response.TaskBacklogPageResponse;
 import com.web.labportalbackend.research.dto.response.TaskBoardColumnResponse;
+import com.web.labportalbackend.research.dto.response.TaskResponse;
 import com.web.labportalbackend.research.enums.TaskPriority;
 import com.web.labportalbackend.research.enums.TaskStatus;
 import com.web.labportalbackend.research.enums.TaskType;
@@ -26,6 +27,7 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
+import org.springframework.http.MediaType;
 
 import java.util.List;
 import java.util.stream.Stream;
@@ -34,8 +36,11 @@ import static org.hamcrest.Matchers.aMapWithSize;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.doThrow;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -265,6 +270,95 @@ class TaskControllerTest {
     }
 
     @Test
+    void createResearchTaskReturnsCreatedWrapperAndDelegatesCanonicalRoute() throws Exception {
+        TaskResponse response = TaskResponse.builder()
+                .id(20L).projectId(PROJECT_ID).title("Official task")
+                .status(TaskStatus.BACKLOG).priority(TaskPriority.MEDIUM).type(TaskType.TASK)
+                .progressPercent(0).build();
+        when(taskService.createResearchTask(org.mockito.ArgumentMatchers.any())).thenReturn(response);
+
+        mockMvc.perform(apiPost("/research/tasks")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"projectId\":123,\"title\":\"Official task\"}")
+                        .with(manager()))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$", aMapWithSize(6)))
+                .andExpect(jsonPath("$.data.id").value(20L))
+                .andExpect(jsonPath("$.data.projectId").value(PROJECT_ID))
+                .andExpect(jsonPath("$.data.status").value("BACKLOG"));
+
+        verify(taskService).createResearchTask(org.mockito.ArgumentMatchers.argThat(request ->
+                PROJECT_ID.equals(request.getProjectId()) && "Official task".equals(request.getTitle())));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"STUDENT", "LEADER", "MEMBER", "ADMIN"})
+    void createResearchTaskRejectsNonManagerRoles(String role) throws Exception {
+        mockMvc.perform(apiPost("/research/tasks")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"projectId\":123,\"title\":\"Official task\"}")
+                        .with(user("actor").roles(role)))
+                .andExpect(status().isForbidden());
+
+        verifyNoInteractions(taskService);
+    }
+
+    @Test
+    void createResearchTaskRequiresAuthenticationAndValidBody() throws Exception {
+        mockMvc.perform(apiPost("/research/tasks")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"projectId\":123,\"title\":\"Official task\"}"))
+                .andExpect(status().isUnauthorized());
+
+        mockMvc.perform(apiPost("/research/tasks")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"title\":\"\"}")
+                        .with(manager()))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void createResearchTaskRejectsInvalidEnumsAndMapsServiceErrors() throws Exception {
+        mockMvc.perform(apiPost("/research/tasks")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"projectId\":123,\"title\":\"Task\",\"priority\":\"CRITICAL\"}")
+                        .with(manager()))
+                .andExpect(status().isBadRequest());
+
+        when(taskService.createResearchTask(org.mockito.ArgumentMatchers.any()))
+                .thenThrow(new IllegalArgumentException("Group mismatch"));
+        mockMvc.perform(apiPost("/research/tasks")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"projectId\":123,\"title\":\"Task\"}")
+                        .with(manager()))
+                .andExpect(status().isBadRequest());
+
+        org.mockito.Mockito.reset(taskService);
+        doThrow(new ResourceNotFoundException("Project", PROJECT_ID))
+                .when(taskService).createResearchTask(org.mockito.ArgumentMatchers.any());
+        mockMvc.perform(apiPost("/research/tasks")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"projectId\":123,\"title\":\"Task\"}")
+                        .with(manager()))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void legacyCreateRouteStillDelegatesToLegacyMethod() throws Exception {
+        when(taskService.createTask(org.mockito.ArgumentMatchers.any())).thenReturn(
+                TaskResponse.builder().id(30L).milestoneId(77L).title("Legacy").status(TaskStatus.TODO).build());
+
+        mockMvc.perform(apiPost("/milestones/77/tasks")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"title\":\"Legacy\",\"assignedToStudentId\":7}")
+                        .with(manager()))
+                .andExpect(status().isCreated());
+
+        verify(taskService).createTask(org.mockito.ArgumentMatchers.argThat(request ->
+                Long.valueOf(77L).equals(request.getMilestoneId())));
+    }
+
+    @Test
     void getProjectBacklogReturnsExactWrapperShapeAndDefaultBindings() throws Exception {
         when(taskBoardReadService.readBacklog(PROJECT_ID, 0, 20)).thenReturn(backlog(0, 20));
 
@@ -420,6 +514,10 @@ class TaskControllerTest {
 
     private MockHttpServletRequestBuilder apiGet(String path, Object... uriVariables) {
         return get("/api" + path, uriVariables).contextPath("/api");
+    }
+
+    private MockHttpServletRequestBuilder apiPost(String path, Object... uriVariables) {
+        return post("/api" + path, uriVariables).contextPath("/api").with(csrf());
     }
 
     private org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.UserRequestPostProcessor manager() {
