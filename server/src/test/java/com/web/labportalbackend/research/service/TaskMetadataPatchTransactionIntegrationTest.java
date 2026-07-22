@@ -101,6 +101,46 @@ class TaskMetadataPatchTransactionIntegrationTest {
         verify(auditLogService, never()).log(any(), any(), any(), any(), any(), any(), any());
     }
 
+    @Test
+    void pureNoOpKeepsPersistedTimestampAndSkipsSaveAndAudit() {
+        TaskEntity task = fixture("patch-no-op");
+        var updatedAtBefore = taskRepository.findById(task.getId()).orElseThrow().getUpdatedAt();
+        long auditsBefore = auditLogRepository.count();
+        clearInvocations(taskRepository, auditLogService);
+        PatchResearchTaskRequest noOp = new PatchResearchTaskRequest();
+        noOp.setTitle("  Original title  ");
+        noOp.setPriority(TaskPriority.MEDIUM);
+
+        taskService.patchResearchTask(task.getId(), noOp);
+
+        TaskEntity reloaded = taskRepository.findById(task.getId()).orElseThrow();
+        assertEquals("Original title", reloaded.getTitle());
+        assertEquals(updatedAtBefore, reloaded.getUpdatedAt());
+        assertEquals(auditsBefore, auditLogRepository.count());
+        verify(taskRepository, never()).save(any(TaskEntity.class));
+        verify(auditLogService, never()).log(any(), any(), any(), any(), any(), any(), any());
+    }
+
+    @Test
+    void managerWithTwoLabsIsAuthorizedAgainstTheTaskTargetLab() {
+        TaskEntity task = fixture("patch-multi-lab");
+        String managerUsername = SecurityContextHolder.getContext().getAuthentication().getName();
+        User manager = userRepository.findByUsername(managerUsername).orElseThrow();
+        Laboratory secondLab = new Laboratory();
+        secondLab.setLabName("Other managed lab");
+        secondLab.setLocation("Room 2");
+        secondLab.setCapacity(12);
+        secondLab.setManager(manager);
+        laboratoryRepository.save(secondLab);
+        clearInvocations(taskRepository, auditLogService);
+
+        taskService.patchResearchTask(task.getId(), request("Updated in target lab"));
+
+        assertEquals("Updated in target lab", taskRepository.findById(task.getId()).orElseThrow().getTitle());
+        verify(taskRepository).save(any(TaskEntity.class));
+        verify(auditLogService).log(any(), any(), any(), any(), any(), any(), any());
+    }
+
     private TaskEntity fixture(String suffix) {
         Role managerRole = roleRepository.findByName("LAB_MANAGER")
                 .orElseGet(() -> roleRepository.save(new Role("LAB_MANAGER", "Lab manager")));

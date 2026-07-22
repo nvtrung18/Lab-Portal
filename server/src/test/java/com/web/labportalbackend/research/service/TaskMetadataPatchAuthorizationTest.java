@@ -171,7 +171,7 @@ class TaskMetadataPatchAuthorizationTest {
     }
 
     @Test
-    void activeLeaderCanPatchAllowedFieldButAnyGroupIdPresenceIsForbidden() {
+    void activeLeaderCanPatchAllowedField() {
         User leader = user(7L, "leader", "STUDENT");
         TaskEntity groupTask = task(20L, 50L, 100L);
         authenticate(leader);
@@ -187,10 +187,26 @@ class TaskMetadataPatchAuthorizationTest {
 
         assertEquals("Changed", service.patch(20L, title("Changed")).getTitle());
 
+        verify(taskRepository).findByIdForUpdate(20L);
+    }
+
+    @Test
+    void leaderGroupIdPresenceIsRejectedBeforeLockedLookup() {
+        User leader = user(7L, "leader-group", "STUDENT");
+        TaskEntity groupTask = task(20L, 50L, 100L);
+        authenticate(leader);
+        stubCurrentUser(leader);
+        when(taskRepository.findByIdAndDeletedFalseAndActiveTrue(20L)).thenReturn(Optional.of(groupTask));
+        when(groupMemberRepository.findActiveRoleByGroupIdAndUserId(100L, 7L))
+                .thenReturn(Optional.of(GroupRole.LEADER));
         PatchResearchTaskRequest forbidden = new PatchResearchTaskRequest();
         forbidden.setGroupId(100L);
+
         assertThrows(AccessDeniedException.class, () -> service.patch(20L, forbidden));
-        verify(taskRepository, times(2)).findByIdForUpdate(20L);
+
+        verify(taskRepository, never()).findByIdForUpdate(20L);
+        verify(taskRepository, never()).save(any());
+        verifyNoInteractions(auditLogService);
     }
 
     @Test
@@ -254,16 +270,31 @@ class TaskMetadataPatchAuthorizationTest {
     }
 
     @Test
-    void lockedReloadRejectsManagerWhenTaskScopeChanges() {
-        ProjectEntity otherProject = project(60L, lab(2L));
+    void lockedReloadRejectsProjectScopeChangeBeforeSecondAuthorization() {
         TaskEntity moved = task(20L, 60L, null);
         stubCurrentUser(manager);
         when(taskRepository.findByIdAndDeletedFalseAndActiveTrue(20L)).thenReturn(Optional.of(task));
         when(taskRepository.findByIdForUpdate(20L)).thenReturn(Optional.of(moved));
         when(projectRepository.findByIdAndDeletedFalseAndActiveTrue(50L)).thenReturn(Optional.of(project));
-        when(projectRepository.findByIdAndDeletedFalseAndActiveTrue(60L)).thenReturn(Optional.of(otherProject));
         when(laboratoryRepository.existsByIdAndManagerIdAndActiveTrueAndDeletedFalse(1L, 2L)).thenReturn(true);
-        when(laboratoryRepository.existsByIdAndManagerIdAndActiveTrueAndDeletedFalse(2L, 2L)).thenReturn(false);
+
+        assertThrows(AccessDeniedException.class, () -> service.patch(20L, title("Changed")));
+
+        verify(taskRepository, never()).save(any());
+        verifyNoInteractions(auditLogService);
+    }
+
+    @Test
+    void lockedReloadRejectsGroupScopeChangeBeforeSecondAuthorization() {
+        User leader = user(7L, "leader-both-groups", "STUDENT");
+        TaskEntity initial = task(20L, 50L, 100L);
+        TaskEntity moved = task(20L, 50L, 101L);
+        authenticate(leader);
+        stubCurrentUser(leader);
+        when(taskRepository.findByIdAndDeletedFalseAndActiveTrue(20L)).thenReturn(Optional.of(initial));
+        when(taskRepository.findByIdForUpdate(20L)).thenReturn(Optional.of(moved));
+        when(groupMemberRepository.findActiveRoleByGroupIdAndUserId(100L, 7L))
+                .thenReturn(Optional.of(GroupRole.LEADER));
 
         assertThrows(AccessDeniedException.class, () -> service.patch(20L, title("Changed")));
 

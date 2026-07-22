@@ -5,6 +5,8 @@ import com.web.labportalbackend.research.dto.request.PatchResearchTaskRequest;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 
 import java.util.List;
 
@@ -13,9 +15,12 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@SpringBootTest
 class PatchResearchTaskRequestJsonTest {
 
-    private final ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
+    @Autowired
+    private ObjectMapper objectMapper;
+
     private final Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
 
     @Test
@@ -76,6 +81,16 @@ class PatchResearchTaskRequestJsonTest {
                 PatchResearchTaskRequest.class);
 
         assertEquals(List.of("titlePresent", "unknownFields"), List.copyOf(request.getUnknownFields()));
+        assertFalse(request.hasAnyRecognizedField());
+    }
+
+    @Test
+    void caseVariantsAndNullUnknownValuesRemainUnknownWithApplicationMapper() throws Exception {
+        PatchResearchTaskRequest request = objectMapper.readValue(
+                "{\"Status\":null,\"GroupId\":100,\"titlePresent\":null}",
+                PatchResearchTaskRequest.class);
+
+        assertEquals(List.of("Status", "GroupId", "titlePresent"), List.copyOf(request.getUnknownFields()));
         assertFalse(request.hasAnyRecognizedField());
     }
 

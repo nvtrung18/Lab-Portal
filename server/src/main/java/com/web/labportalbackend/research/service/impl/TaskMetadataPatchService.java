@@ -57,15 +57,16 @@ public class TaskMetadataPatchService {
         TaskEntity current = taskRepository.findByIdAndDeletedFalseAndActiveTrue(taskId)
                 .orElseThrow(() -> new ResourceNotFoundException("Task", taskId));
         authorize(actor, actorType, current);
+        if (actorType == ActorType.LEADER && request.isGroupIdPresent()) {
+            throw new AccessDeniedException("Leaders cannot change or resend task groupId");
+        }
 
         TaskEntity locked = taskRepository.findByIdForUpdate(taskId)
                 .orElseThrow(() -> new ResourceNotFoundException("Task", taskId));
         assertUsableTask(locked);
+        assertScopeUnchanged(current, locked);
         ProjectEntity project = loadProject(locked.getProjectId());
         authorize(actor, actorType, locked);
-        if (actorType == ActorType.LEADER && request.isGroupIdPresent()) {
-            throw new AccessDeniedException("Leaders cannot change or resend task groupId");
-        }
 
         Candidate candidate = candidateFrom(locked, request);
         ResolvedCandidate resolved = validateCandidate(locked, candidate, project, actorType);
@@ -159,6 +160,13 @@ public class TaskMetadataPatchService {
         if (task == null || task.getId() == null || !Boolean.TRUE.equals(task.getActive())
                 || Boolean.TRUE.equals(task.getDeleted()) || task.getProjectId() == null) {
             throw new AccessDeniedException("Task is not active in a valid project scope");
+        }
+    }
+
+    private void assertScopeUnchanged(TaskEntity current, TaskEntity locked) {
+        if (!Objects.equals(current.getProjectId(), locked.getProjectId())
+                || !Objects.equals(current.getGroupId(), locked.getGroupId())) {
+            throw new AccessDeniedException("Task scope changed while authorizing metadata update");
         }
     }
 
