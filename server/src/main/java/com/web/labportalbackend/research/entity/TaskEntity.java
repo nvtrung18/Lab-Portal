@@ -28,7 +28,7 @@ public class TaskEntity extends BaseEntity {
     @Column(name = "group_id")
     private Long groupId;
 
-    @Column(name = "milestone_id", nullable = false)
+    @Column(name = "milestone_id")
     private Long milestoneId;
 
     @Column(name = "assignee_id")

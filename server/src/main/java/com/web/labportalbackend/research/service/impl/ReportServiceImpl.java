@@ -727,6 +727,9 @@ public class ReportServiceImpl implements ReportService {
     }
 
     private MilestoneEntity findMilestone(Long milestoneId) {
+        if (milestoneId == null) {
+            throw new IllegalArgumentException("Report operation requires the task to have a milestone");
+        }
         return milestoneRepository.findByIdAndDeletedFalseAndActiveTrue(milestoneId)
                 .orElseThrow(() -> new ResourceNotFoundException("Milestone", milestoneId));
     }

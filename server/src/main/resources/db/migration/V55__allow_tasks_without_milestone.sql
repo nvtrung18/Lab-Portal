@@ -1,0 +1,2 @@
+ALTER TABLE tasks
+    MODIFY COLUMN milestone_id BIGINT NULL;

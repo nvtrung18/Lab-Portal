@@ -19,6 +19,8 @@ import java.util.Optional;
 
 @Repository
 public interface TaskRepository extends JpaRepository<TaskEntity, Long> {
+    Optional<TaskEntity> findByIdAndDeletedFalseAndActiveTrue(Long id);
+
     @EntityGraph(attributePaths = "assignedToStudent")
     List<TaskEntity> findByMilestoneIdAndDeletedFalseAndActiveTrueOrderByDeadlineAscCreatedAtAsc(Long milestoneId);
 
@@ -126,9 +128,13 @@ public interface TaskRepository extends JpaRepository<TaskEntity, Long> {
             SELECT DISTINCT t
             FROM TaskEntity t
             WHERE t.projectId = :projectId
-              AND EXISTS (SELECT m.id FROM MilestoneEntity m JOIN m.project p
-                          WHERE m.id = t.milestoneId AND p.id = :projectId
-                            AND p.active = true AND p.deleted = false)
+              AND EXISTS (SELECT p.id FROM ProjectEntity p
+                          WHERE p.id = :projectId AND p.active = true AND p.deleted = false)
+              AND (t.milestoneId IS NULL OR EXISTS (
+                    SELECT m.id FROM MilestoneEntity m JOIN m.project p
+                    WHERE m.id = t.milestoneId AND p.id = :projectId
+                      AND m.active = true AND m.deleted = false
+                      AND p.active = true AND p.deleted = false))
               AND t.active = true
               AND t.deleted = false
               AND (t.groupId IS NULL OR t.groupId IN (
@@ -164,9 +170,13 @@ public interface TaskRepository extends JpaRepository<TaskEntity, Long> {
             SELECT DISTINCT t
             FROM TaskEntity t
             WHERE t.projectId = :projectId
-              AND EXISTS (SELECT m.id FROM MilestoneEntity m JOIN m.project p
-                          WHERE m.id = t.milestoneId AND p.id = :projectId
-                            AND p.active = true AND p.deleted = false)
+              AND EXISTS (SELECT p.id FROM ProjectEntity p
+                          WHERE p.id = :projectId AND p.active = true AND p.deleted = false)
+              AND (t.milestoneId IS NULL OR EXISTS (
+                    SELECT m.id FROM MilestoneEntity m JOIN m.project p
+                    WHERE m.id = t.milestoneId AND p.id = :projectId
+                      AND m.active = true AND m.deleted = false
+                      AND p.active = true AND p.deleted = false))
               AND t.active = true
               AND t.deleted = false
               AND t.groupId IN (
@@ -208,9 +218,13 @@ public interface TaskRepository extends JpaRepository<TaskEntity, Long> {
             FROM TaskEntity t
             WHERE t.projectId = :projectId
               AND t.status = com.web.labportalbackend.research.enums.TaskStatus.BACKLOG
-              AND EXISTS (SELECT m.id FROM MilestoneEntity m JOIN m.project p
-                          WHERE m.id = t.milestoneId AND p.id = :projectId
-                            AND p.active = true AND p.deleted = false)
+              AND EXISTS (SELECT p.id FROM ProjectEntity p
+                          WHERE p.id = :projectId AND p.active = true AND p.deleted = false)
+              AND (t.milestoneId IS NULL OR EXISTS (
+                    SELECT m.id FROM MilestoneEntity m JOIN m.project p
+                    WHERE m.id = t.milestoneId AND p.id = :projectId
+                      AND m.active = true AND m.deleted = false
+                      AND p.active = true AND p.deleted = false))
               AND t.active = true
               AND t.deleted = false
               AND (t.groupId IS NULL OR t.groupId IN (
@@ -228,9 +242,13 @@ public interface TaskRepository extends JpaRepository<TaskEntity, Long> {
             FROM TaskEntity t
             WHERE t.projectId = :projectId
               AND t.status = com.web.labportalbackend.research.enums.TaskStatus.BACKLOG
-              AND EXISTS (SELECT m.id FROM MilestoneEntity m JOIN m.project p
-                          WHERE m.id = t.milestoneId AND p.id = :projectId
-                            AND p.active = true AND p.deleted = false)
+              AND EXISTS (SELECT p.id FROM ProjectEntity p
+                          WHERE p.id = :projectId AND p.active = true AND p.deleted = false)
+              AND (t.milestoneId IS NULL OR EXISTS (
+                    SELECT m.id FROM MilestoneEntity m JOIN m.project p
+                    WHERE m.id = t.milestoneId AND p.id = :projectId
+                      AND m.active = true AND m.deleted = false
+                      AND p.active = true AND p.deleted = false))
               AND t.active = true
               AND t.deleted = false
               AND (t.groupId IS NULL OR t.groupId IN (
@@ -253,9 +271,13 @@ public interface TaskRepository extends JpaRepository<TaskEntity, Long> {
             FROM TaskEntity t
             WHERE t.projectId = :projectId
               AND t.status = com.web.labportalbackend.research.enums.TaskStatus.BACKLOG
-              AND EXISTS (SELECT m.id FROM MilestoneEntity m JOIN m.project p
-                          WHERE m.id = t.milestoneId AND p.id = :projectId
-                            AND p.active = true AND p.deleted = false)
+              AND EXISTS (SELECT p.id FROM ProjectEntity p
+                          WHERE p.id = :projectId AND p.active = true AND p.deleted = false)
+              AND (t.milestoneId IS NULL OR EXISTS (
+                    SELECT m.id FROM MilestoneEntity m JOIN m.project p
+                    WHERE m.id = t.milestoneId AND p.id = :projectId
+                      AND m.active = true AND m.deleted = false
+                      AND p.active = true AND p.deleted = false))
               AND t.active = true
               AND t.deleted = false
               AND t.groupId IN (
@@ -275,9 +297,13 @@ public interface TaskRepository extends JpaRepository<TaskEntity, Long> {
             FROM TaskEntity t
             WHERE t.projectId = :projectId
               AND t.status = com.web.labportalbackend.research.enums.TaskStatus.BACKLOG
-              AND EXISTS (SELECT m.id FROM MilestoneEntity m JOIN m.project p
-                          WHERE m.id = t.milestoneId AND p.id = :projectId
-                            AND p.active = true AND p.deleted = false)
+              AND EXISTS (SELECT p.id FROM ProjectEntity p
+                          WHERE p.id = :projectId AND p.active = true AND p.deleted = false)
+              AND (t.milestoneId IS NULL OR EXISTS (
+                    SELECT m.id FROM MilestoneEntity m JOIN m.project p
+                    WHERE m.id = t.milestoneId AND p.id = :projectId
+                      AND m.active = true AND m.deleted = false
+                      AND p.active = true AND p.deleted = false))
               AND t.active = true
               AND t.deleted = false
               AND t.groupId IN (
