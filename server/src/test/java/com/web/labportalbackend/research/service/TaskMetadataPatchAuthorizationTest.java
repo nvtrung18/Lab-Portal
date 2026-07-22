@@ -21,6 +21,7 @@ import com.web.labportalbackend.research.repository.MilestoneRepository;
 import com.web.labportalbackend.research.repository.ProjectRepository;
 import com.web.labportalbackend.research.repository.TaskRepository;
 import com.web.labportalbackend.research.service.impl.TaskMetadataPatchService;
+import com.web.labportalbackend.common.exception.ResourceNotFoundException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -102,6 +103,20 @@ class TaskMetadataPatchAuthorizationTest {
     }
 
     @Test
+    void inactiveManagerAndInactiveProjectAreRejectedBeforeLock() {
+        manager.setActive(false);
+        stubCurrentUser(manager);
+        assertThrows(AccessDeniedException.class, () -> service.patch(20L, title("Changed")));
+        verify(taskRepository, never()).findByIdAndDeletedFalseAndActiveTrue(any());
+
+        manager.setActive(true);
+        when(taskRepository.findByIdAndDeletedFalseAndActiveTrue(20L)).thenReturn(Optional.of(task));
+        when(projectRepository.findByIdAndDeletedFalseAndActiveTrue(50L)).thenReturn(Optional.empty());
+        assertThrows(ResourceNotFoundException.class, () -> service.patch(20L, title("Changed")));
+        verify(taskRepository, never()).findByIdForUpdate(20L);
+    }
+
+    @Test
     void ordinaryMemberIsDeniedBeforeLockedLookupEvenWhenAssigned() {
         User member = user(7L, "member", "STUDENT");
         TaskEntity groupTask = task(20L, 50L, 100L);
@@ -140,6 +155,19 @@ class TaskMetadataPatchAuthorizationTest {
         verify(laboratoryRepository, times(2)).existsByIdAndManagerIdAndActiveTrueAndDeletedFalse(1L, 2L);
         verify(taskRepository).findByIdForUpdate(20L);
         verify(taskRepository).save(task);
+    }
+
+    @Test
+    void managerWithMultipleLabsStillAuthorizesByTargetLabId() {
+        stubAuthorizedManager(task, project);
+        when(taskRepository.save(any(TaskEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        service.patch(20L, title("Changed"));
+
+        verify(laboratoryRepository, times(2))
+                .existsByIdAndManagerIdAndActiveTrueAndDeletedFalse(1L, 2L);
+        verify(laboratoryRepository, never())
+                .existsByIdAndManagerIdAndActiveTrueAndDeletedFalse(2L, 2L);
     }
 
     @Test
