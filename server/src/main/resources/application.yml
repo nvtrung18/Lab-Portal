@@ -51,6 +51,22 @@ server:
     enabled: true
     min-response-size: 1024
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
+      probes:
+        enabled: true
+      group:
+        liveness:
+          include: livenessState
+        readiness:
+          include: readinessState,db
+
 jwt:
   access-token-expiration: ${JWT_EXPIRATION:86400000}
   refresh-token-expiration: ${JWT_REFRESH_EXPIRATION:604800000}

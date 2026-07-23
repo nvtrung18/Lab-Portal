@@ -8,8 +8,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.time.Instant;
-import java.util.HashMap;
 import java.util.Map;
 
 @RestController
@@ -18,22 +16,24 @@ import java.util.Map;
 public class HealthCheckController {
 
     @GetMapping("/health")
-    @Operation(summary = "Health check", description = "Check overall system health")
+    @Operation(summary = "Legacy health check", description = "Deprecated compatibility endpoint; use /actuator/health")
+    @Deprecated
     public ResponseEntity<Response<Map<String, Object>>> health() {
-        Map<String, Object> health = new HashMap<>();
-        health.put("status", "UP");
-        health.put("timestamp", System.currentTimeMillis());
-        health.put("database", "MySQL - Connected");
-        health.put("security", "JWT - Active");
+        Map<String, Object> health = Map.of(
+                "status", "UP",
+                "timestamp", System.currentTimeMillis(),
+                "actuator", "/api/actuator/health"
+        );
         return ResponseEntity.ok(Response.ok("System is running", health));
     }
 
     @GetMapping("/info")
     @Operation(summary = "System info")
     public ResponseEntity<Response<Map<String, String>>> info() {
-        Map<String, String> info = new HashMap<>();
-        info.put("version", "1.0.0-SNAPSHOT");
-        info.put("description", "Lab Portal Backend API");
+        Map<String, String> info = Map.of(
+                "version", "1.0.0-SNAPSHOT",
+                "description", "Lab Portal Backend API"
+        );
         return ResponseEntity.ok(Response.ok("System information", info));
     }
 }
