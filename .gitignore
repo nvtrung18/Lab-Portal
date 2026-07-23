@@ -39,6 +39,7 @@ yarn-error.log*
 
 # Backend build artifacts
 server/target/
+server/.eb-staging/
 server/.mvn/wrapper/maven-wrapper.jar
 server/.apt_generated
 server/.classpath
