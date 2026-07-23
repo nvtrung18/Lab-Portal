@@ -95,6 +95,22 @@ Redis host, port, password, TLS flag and connect timeout are profile-driven. Loc
 
 `CV_STORAGE_PATH` controls both CV writes and the existing `/api/uploads/cv/...` static URL contract through `StaticResourceConfig`. Report and product adapters continue using `REPORT_STORAGE_PATH` and `PRODUCT_STORAGE_PATH`, with their existing API/download contracts and path-containment checks. This is not an S3 adapter. Tracked upload binaries are classified separately and are not removed by this branch.
 
+Tracked-binary ledger (unchanged; removal requires explicit per-file approval):
+
+```text
+server/storage/products/29/groups/47/1.zip
+server/storage/products/29/groups/47/2.zip
+server/storage/products/37/1.pdf
+server/storage/products/37/groups/54/2.pdf
+server/uploads/reports/18f6309c-e5b9-4733-b3ec-4ca27e3520c6_Qu_n_l__NCKH_sinh_vi_n.pdf
+server/uploads/cv/279ff9df-3ff3-4a40-8520-fb3c1308ff6e_NguyenVanTrung_CV_Intern_BackendDev.pdf
+server/uploads/cv/51b9572a-1aa4-4e14-82ef-a5b96a9fa4d0_NguyenVanTrung_CV_Intern_BackendDev.pdf
+server/uploads/cv/748fa20e-d86a-44dc-bdf5-15a92636680e_NguyenVanTrung_CV_Intern_BackendDev.pdf
+server/uploads/cv/844953dc-306a-40b8-a318-4096f225deab_NguyenVanTrung_CV_Intern_BackendDev.pdf
+server/uploads/cv/87446408-47c5-4956-af39-b32a9a91ff10_NguyenVanTrung_CV_Intern_BackendDev.pdf
+server/uploads/cv/ba0c932e-3ebd-4124-8580-222ff4fd6f6b_BTL_Web.docx
+```
+
 ## Frontend build
 
 Production builds fail clearly when `VITE_API_BASE_URL` is missing, empty, malformed, contains credentials, has a path such as `/api`, or ends with `/`.
