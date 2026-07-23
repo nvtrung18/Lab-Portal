@@ -3,7 +3,7 @@ services:
     image: redis:7-alpine
     container_name: lab-portal-redis
     ports:
-      - "${REDIS_PORT_HOST}:6379"
+      - "${REDIS_PORT:-6379}:6379"
     command: ["redis-server", "--appendonly", "no"]
 
   mysql:
@@ -11,8 +11,10 @@ services:
     container_name: lab_portal_mysql
     restart: unless-stopped
     environment:
-        MYSQL_ROOT_PASSWORD: 190305
-        MYSQL_DATABASE: lab_portal
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
     ports:
       - "3306:3306"
     volumes:
@@ -43,7 +45,7 @@ services:
     volumes:
       - ./client:/app
       - lab_portal_frontend_admin_node_modules:/app/node_modules
-    command: sh -c "npm install && npm run dev:admin"
+    command: sh -c "npm ci && npm run dev:admin"
 
   frontend-manager:
     build:
@@ -59,7 +61,7 @@ services:
     volumes:
       - ./client:/app
       - lab_portal_frontend_manager_node_modules:/app/node_modules
-    command: sh -c "npm install && npm run dev:manager"
+    command: sh -c "npm ci && npm run dev:manager"
 
   frontend-user:
     build:
@@ -75,7 +77,7 @@ services:
     volumes:
       - ./client:/app
       - lab_portal_frontend_user_node_modules:/app/node_modules
-    command: sh -c "npm install && npm run dev:user"
+    command: sh -c "npm ci && npm run dev:user"
 
 volumes:
   lab_portal_mysql_data:
