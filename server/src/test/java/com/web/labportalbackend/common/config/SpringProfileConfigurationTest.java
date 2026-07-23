@@ -2,11 +2,14 @@ package com.web.labportalbackend.common.config;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.config.YamlPropertiesFactoryBean;
+import org.springframework.core.env.PropertiesPropertySource;
+import org.springframework.core.env.StandardEnvironment;
 import org.springframework.core.io.FileSystemResource;
 
 import java.util.Properties;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SpringProfileConfigurationTest {
 
@@ -30,6 +33,20 @@ class SpringProfileConfigurationTest {
         assertThat(properties.getProperty("server.port")).isEqualTo("${PORT:8080}");
         assertThat(properties.getProperty("server.servlet.context-path")).isEqualTo("/api");
         assertThat(properties.getProperty("management.endpoints.web.exposure.include")).isEqualTo("health");
+    }
+
+    @Test
+    void productionProfileFailsClearlyWhenRequiredDatabaseHostIsMissing() {
+        StandardEnvironment environment = new StandardEnvironment();
+        environment.getPropertySources().remove(StandardEnvironment.SYSTEM_ENVIRONMENT_PROPERTY_SOURCE_NAME);
+        environment.getPropertySources().remove(StandardEnvironment.SYSTEM_PROPERTIES_PROPERTY_SOURCE_NAME);
+        environment.getPropertySources().addLast(
+                new PropertiesPropertySource("application-prod.yml", load("application-prod.yml"))
+        );
+
+        assertThatThrownBy(() -> environment.getProperty("spring.datasource.url"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("DB_HOST");
     }
 
     private Properties load(String resource) {

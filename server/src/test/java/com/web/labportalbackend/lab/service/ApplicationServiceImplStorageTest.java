@@ -1,8 +1,11 @@
 package com.web.labportalbackend.lab.service;
 
 import com.web.labportalbackend.admin.audit.service.AuditLogService;
+import com.web.labportalbackend.auth.config.SecurityConfig;
 import com.web.labportalbackend.auth.entity.User;
 import com.web.labportalbackend.auth.repository.UserRepository;
+import com.web.labportalbackend.auth.security.JwtAuthenticationFilter;
+import com.web.labportalbackend.common.config.StaticResourceConfig;
 import com.web.labportalbackend.common.enums.ApplicationStatus;
 import com.web.labportalbackend.common.enums.LabStatus;
 import com.web.labportalbackend.lab.entity.Application;
@@ -11,12 +14,24 @@ import com.web.labportalbackend.lab.repository.ApplicationRepository;
 import com.web.labportalbackend.lab.repository.LaboratoryRepository;
 import com.web.labportalbackend.lab.repository.MembershipRepository;
 import com.web.labportalbackend.lab.service.impl.ApplicationServiceImpl;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Answers;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.FilterType;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.util.FileSystemUtils;
+import org.springframework.web.bind.annotation.RestController;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
@@ -24,11 +39,36 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@WebMvcTest(
+        controllers = ApplicationServiceImplStorageTest.EmptyController.class,
+        excludeFilters = @ComponentScan.Filter(
+                type = FilterType.ASSIGNABLE_TYPE,
+                classes = {SecurityConfig.class, JwtAuthenticationFilter.class}
+        )
+)
+@AutoConfigureMockMvc(addFilters = false)
+@Import(StaticResourceConfig.class)
 class ApplicationServiceImplStorageTest {
 
-    @TempDir
-    Path tempDir;
+    private static final Path TEMP_ROOT = createTempRoot();
+    private static final Path CV_STORAGE_PATH = TEMP_ROOT.resolve("custom-cv");
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    @DynamicPropertySource
+    static void storageProperties(DynamicPropertyRegistry registry) {
+        registry.add("app.storage.cv-path", CV_STORAGE_PATH::toString);
+    }
+
+    @AfterAll
+    static void cleanup() throws IOException {
+        FileSystemUtils.deleteRecursively(TEMP_ROOT);
+    }
 
     @Test
     void cvUsesConfiguredDirectoryAndKeepsExistingPublicUrlContract() throws Exception {
@@ -40,7 +80,7 @@ class ApplicationServiceImplStorageTest {
         ApplicationServiceImpl service = new ApplicationServiceImpl(
                 applicationRepository, userRepository, laboratoryRepository, membershipRepository, auditLogService
         );
-        ReflectionTestUtils.setField(service, "cvStoragePath", tempDir.resolve("custom-cv").toString());
+        ReflectionTestUtils.setField(service, "cvStoragePath", CV_STORAGE_PATH.toString());
 
         User user = new User();
         user.setId(7L);
@@ -70,7 +110,22 @@ class ApplicationServiceImplStorageTest {
                 new MockMultipartFile("cvFile", "../CV résumé.pdf", "application/pdf", "cv".getBytes()));
 
         assertThat(response.getCvFileUrl()).startsWith("/api/uploads/cv/").doesNotContain("..", "\\");
-        Path storedFile = Files.list(tempDir.resolve("custom-cv")).findFirst().orElseThrow();
+        Path storedFile = Files.list(CV_STORAGE_PATH).findFirst().orElseThrow();
         assertThat(Files.exists(storedFile)).isTrue();
+        mockMvc.perform(get(response.getCvFileUrl().substring("/api".length())))
+                .andExpect(status().isOk())
+                .andExpect(content().bytes("cv".getBytes()));
+    }
+
+    private static Path createTempRoot() {
+        try {
+            return Files.createTempDirectory("lab-portal-cv-storage-");
+        } catch (IOException ex) {
+            throw new ExceptionInInitializerError(ex);
+        }
+    }
+
+    @RestController
+    static class EmptyController {
     }
 }

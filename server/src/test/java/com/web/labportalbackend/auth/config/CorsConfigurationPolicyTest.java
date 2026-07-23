@@ -6,10 +6,12 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -61,6 +63,23 @@ class CorsConfigurationPolicyTest {
                         .header("Origin", "https://untrusted.example.invalid")
                         .header("Access-Control-Request-Method", "POST"))
                 .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void malformedConfiguredOriginsAreRejected() {
+        for (String malformed : new String[]{
+                "null",
+                "ftp://frontend.example.invalid",
+                "https://user@frontend.example.invalid",
+                "https://frontend.example.invalid/path",
+                "https://frontend.example.invalid/"
+        }) {
+            SecurityConfig config = new SecurityConfig(null, null);
+            ReflectionTestUtils.setField(config, "configuredAllowedOrigins", malformed);
+            assertThatThrownBy(config::corsConfigurationSource)
+                    .as("configured origin %s", malformed)
+                    .isInstanceOf(IllegalStateException.class);
+        }
     }
 
     private CorsConfiguration configuration() {

@@ -21,6 +21,8 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -128,9 +130,26 @@ public class SecurityConfig {
                 .map(String::trim)
                 .filter(value -> !value.isBlank())
                 .collect(Collectors.toCollection(LinkedHashSet::new));
-        if (parsed.isEmpty() || parsed.stream().anyMatch(origin -> origin.contains("*"))) {
-            throw new IllegalStateException("APP_CORS_ALLOWED_ORIGINS must use exact origins without wildcards.");
+        if (parsed.isEmpty() || parsed.stream().anyMatch(origin -> !isExactHttpOrigin(origin))) {
+            throw new IllegalStateException("APP_CORS_ALLOWED_ORIGINS must contain valid exact HTTP(S) origins.");
         }
         return List.copyOf(parsed);
+    }
+
+    private boolean isExactHttpOrigin(String origin) {
+        try {
+            URI uri = new URI(origin);
+            String scheme = uri.getScheme();
+            int port = uri.getPort();
+            return ("http".equalsIgnoreCase(scheme) || "https".equalsIgnoreCase(scheme))
+                    && uri.getHost() != null
+                    && uri.getUserInfo() == null
+                    && (uri.getRawPath() == null || uri.getRawPath().isEmpty())
+                    && uri.getRawQuery() == null
+                    && uri.getRawFragment() == null
+                    && (port == -1 || (port > 0 && port <= 65535));
+        } catch (URISyntaxException ex) {
+            return false;
+        }
     }
 }
