@@ -3,6 +3,7 @@ package com.web.labportalbackend.auth.config;
 import com.web.labportalbackend.auth.security.CustomUserDetailsService;
 import com.web.labportalbackend.auth.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -20,7 +21,11 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import java.util.Arrays;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Spring Security configuration with JWT authentication.
@@ -35,6 +40,9 @@ public class SecurityConfig {
 
     private final CustomUserDetailsService userDetailsService;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+
+    @Value("${app.cors.allowed-origins:http://localhost:5173,http://localhost:5174,http://localhost:5175}")
+    private String configuredAllowedOrigins;
 
     /**
      * Paths accessible without authentication.
@@ -100,15 +108,29 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOriginPatterns(List.of("http://localhost:*"));
+        config.setAllowedOrigins(parseAllowedOrigins(configuredAllowedOrigins));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-        config.setAllowedHeaders(List.of("*"));
-        config.setExposedHeaders(List.of("Authorization"));
-        config.setAllowCredentials(true);
+        config.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept"));
+        config.setAllowCredentials(false);
         config.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
         return source;
+    }
+
+    private List<String> parseAllowedOrigins(String origins) {
+        if (origins == null || origins.isBlank()) {
+            throw new IllegalStateException("APP_CORS_ALLOWED_ORIGINS must contain at least one exact origin.");
+        }
+
+        Set<String> parsed = Arrays.stream(origins.split(","))
+                .map(String::trim)
+                .filter(value -> !value.isBlank())
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+        if (parsed.isEmpty() || parsed.stream().anyMatch(origin -> origin.contains("*"))) {
+            throw new IllegalStateException("APP_CORS_ALLOWED_ORIGINS must use exact origins without wildcards.");
+        }
+        return List.copyOf(parsed);
     }
 }

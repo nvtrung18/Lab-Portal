@@ -113,7 +113,7 @@ export function getStoredUser(): StoredUser | null {
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
-  withCredentials: true,
+  withCredentials: false,
 });
 
 const PUBLIC_AUTH_PATHS = [
