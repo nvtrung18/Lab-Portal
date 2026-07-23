@@ -20,6 +20,7 @@ import com.web.labportalbackend.lab.repository.MembershipRepository;
 import com.web.labportalbackend.lab.service.ApplicationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -44,13 +45,15 @@ import java.util.UUID;
 public class ApplicationServiceImpl implements ApplicationService {
     private static final long MAX_CV_FILE_SIZE = 10 * 1024 * 1024;
     private static final Set<String> ALLOWED_CV_EXTENSIONS = Set.of("pdf", "doc", "docx");
-    private static final Path CV_UPLOAD_DIR = Paths.get("uploads", "cv");
 
     private final ApplicationRepository applicationRepository;
     private final UserRepository userRepository;
     private final LaboratoryRepository laboratoryRepository;
     private final MembershipRepository membershipRepository;
     private final AuditLogService auditLogService;
+
+    @Value("${app.storage.cv-path:uploads/cv}")
+    private String cvStoragePath;
 
     @Override @Transactional
     public ApplicationResponseDTO apply(Long labId, Long userId, String cvUrl, MultipartFile cvFile) {
@@ -197,10 +200,14 @@ public class ApplicationServiceImpl implements ApplicationService {
         String extension = getExtension(originalFileName);
         String safeOriginalName = originalFileName.replaceAll("[^A-Za-z0-9._-]", "_");
         String storedFileName = UUID.randomUUID() + "_" + safeOriginalName;
-        Path target = CV_UPLOAD_DIR.resolve(storedFileName).normalize();
+        Path uploadDirectory = Paths.get(cvStoragePath).toAbsolutePath().normalize();
+        Path target = uploadDirectory.resolve(storedFileName).normalize();
+        if (!target.startsWith(uploadDirectory)) {
+            throw new IllegalArgumentException("Invalid CV storage path");
+        }
 
         try {
-            Files.createDirectories(CV_UPLOAD_DIR);
+            Files.createDirectories(uploadDirectory);
             cvFile.transferTo(target);
         } catch (IOException ex) {
             throw new IllegalStateException("Cannot store CV file.", ex);

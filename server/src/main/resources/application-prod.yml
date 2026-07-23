@@ -1,0 +1,53 @@
+spring:
+  datasource:
+    url: jdbc:mysql://${DB_HOST}:${DB_PORT}/${DB_NAME}?useUnicode=true&characterEncoding=utf8&connectionCollation=utf8mb4_unicode_ci&serverTimezone=UTC&useSSL=true
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+  mail:
+    host: ${MAIL_HOST}
+    port: ${MAIL_PORT}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: ${MAIL_SMTP_AUTH:true}
+          starttls:
+            enable: ${MAIL_SMTP_STARTTLS_ENABLE:true}
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
+      password: ${REDIS_PASSWORD:}
+      connect-timeout: ${REDIS_CONNECT_TIMEOUT:2s}
+      ssl:
+        enabled: ${REDIS_SSL_ENABLED}
+
+app:
+  mail:
+    from: ${MAIL_FROM:}
+  cors:
+    allowed-origins: ${APP_CORS_ALLOWED_ORIGINS}
+  storage:
+    cv-path: ${CV_STORAGE_PATH}
+  research:
+    report-storage-path: ${REPORT_STORAGE_PATH}
+    product-storage-path: ${PRODUCT_STORAGE_PATH}
+  dev-seed:
+    enabled: false
+
+jwt:
+  secret: ${JWT_SECRET}
+
+logging:
+  level:
+    root: INFO
+    com.web.labportalbackend: INFO
+    org.hibernate.SQL: WARN
+    org.hibernate.orm.jdbc.bind: WARN
+
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false

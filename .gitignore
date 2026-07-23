@@ -4,9 +4,10 @@
 !README.md
 !docs/decisions/P2-DECISION-01.md
 !docs/decisions/P2-DECISION-02.md
+!docs/deployment/
+!docs/deployment/**/*.md
 *.docx
 !docker-compose.yml
-!.env.properties
 .codegraph
 # Docker folder
 !docker/
@@ -38,6 +39,7 @@ yarn-error.log*
 
 # Backend build artifacts
 server/target/
+server/.eb-staging/
 server/.mvn/wrapper/maven-wrapper.jar
 server/.apt_generated
 server/.classpath
@@ -50,7 +52,15 @@ server/HELP.md
 server/storage/
 server/uploads/
 
-# Backend sensitive env (keep .env.example, ignore actual env)
+# Environment files (examples and reviewed frontend mode files stay tracked)
+.env
+.env.*
+**/.env
+**/.env.*
+!.env.example
+!**/.env.example
+!client/.env.development
+!client/.env.production
 server/.env.properties
 
 # Frontend build artifacts & dependencies
