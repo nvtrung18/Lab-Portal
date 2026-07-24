@@ -10,13 +10,13 @@ $targetRoot = Join-Path $serverRoot 'target'
 $stagingRoot = Join-Path $serverRoot '.eb-staging'
 
 if (-not $env:JAVA_HOME) {
-    throw 'JAVA_HOME must point to JDK 17 before packaging.'
+    throw 'JAVA_HOME must point to JDK 21 before packaging.'
 }
 
 $javaPath = (Get-Command java -ErrorAction Stop).Source
 $javaVersion = [System.Diagnostics.FileVersionInfo]::GetVersionInfo($javaPath).ProductVersion
-if ($javaVersion -notmatch '^17\.') {
-    throw "JDK 17 is required; detected: $javaVersion"
+if ($javaVersion -notmatch '^21\.') {
+    throw "JDK 21 is required; detected: $javaVersion"
 }
 
 Push-Location $serverRoot
