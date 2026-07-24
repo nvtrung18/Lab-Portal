@@ -15,7 +15,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Java-17-ED8B00?style=flat-square&logo=openjdk" alt="Java 17"/>
+  <img src="https://img.shields.io/badge/Java-21-ED8B00?style=flat-square&logo=openjdk" alt="Java 21"/>
   <img src="https://img.shields.io/badge/Vite-6-646CFF?style=flat-square&logo=vite" alt="Vite"/>
   <img src="https://img.shields.io/badge/TailwindCSS-3.4-06B6D4?style=flat-square&logo=tailwindcss" alt="Tailwind"/>
   <img src="https://img.shields.io/badge/Flyway-53%20migrations-CC0200?style=flat-square&logo=flyway" alt="Flyway"/>
@@ -187,7 +187,7 @@ Hệ thống được thiết kế theo kiến trúc **Client-Server**, backend 
 
 | Công Nghệ | Phiên Bản | Mục Đích |
 |------------|-----------|----------|
-| **Java** | 17 | Ngôn ngữ lập trình chính |
+| **Java** | 21 | Ngôn ngữ lập trình chính |
 | **Spring Boot** | 3.4.5 | Application framework |
 | **Spring Security 6** | — | Authentication & Authorization (JWT + RBAC) |
 | **Spring Data JPA** | — | ORM (Hibernate) |
@@ -790,7 +790,7 @@ Lab-Portal/
 
 | Phần Mềm | Phiên Bản Tối Thiểu | Tải Về |
 |-----------|---------------------|--------|
-| **Java JDK** | 17+ | [Download](https://adoptium.net/) |
+| **Java JDK** | 21+ | [Download](https://adoptium.net/) |
 | **Node.js** | 18+ | [Download](https://nodejs.org/) |
 | **Docker Desktop** | Latest | [Download](https://www.docker.com/products/docker-desktop/) |
 | **Maven** | 3.9+ (hoặc dùng Maven Wrapper) | [Download](https://maven.apache.org/) |
