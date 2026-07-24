@@ -29,7 +29,11 @@ The application remains a local-filesystem application in this phase. S3 integra
 Start locally from `server/` after providing values from `server/.env.example`:
 
 ```powershell
+<<<<<<< HEAD
 $env:JAVA_HOME = "C:\Program Files\Java\jdk-21"
+=======
+$env:JAVA_HOME = "C:\Program Files\Java\jdk-17"
+>>>>>>> origin/Dev
 $env:Path = "$env:JAVA_HOME\bin;$env:Path"
 .\mvnw.cmd spring-boot:run
 ```
@@ -136,7 +140,11 @@ web: java -jar application.jar --spring.profiles.active=prod
 Create a local bundle with:
 
 ```powershell
+<<<<<<< HEAD
 $env:JAVA_HOME = "C:\Program Files\Java\jdk-21"
+=======
+$env:JAVA_HOME = "C:\Program Files\Java\jdk-17"
+>>>>>>> origin/Dev
 $env:Path = "$env:JAVA_HOME\bin;$env:Path"
 .\scripts\package-eb.ps1
 ```
