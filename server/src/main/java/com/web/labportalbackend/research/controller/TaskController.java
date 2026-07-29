@@ -4,6 +4,7 @@ import com.web.labportalbackend.common.dto.Response;
 import com.web.labportalbackend.research.dto.request.CreateResearchTaskRequest;
 import com.web.labportalbackend.research.dto.request.CreateTaskRequest;
 import com.web.labportalbackend.research.dto.request.PatchResearchTaskRequest;
+import com.web.labportalbackend.research.dto.request.PatchTaskStatusRequest;
 import com.web.labportalbackend.research.dto.request.UpdateTaskStatusRequest;
 import com.web.labportalbackend.research.dto.response.ProjectTaskBoardResponse;
 import com.web.labportalbackend.research.dto.response.TaskBacklogPageResponse;
@@ -51,6 +52,19 @@ public class TaskController {
     ) {
         return ResponseEntity.ok(
                 Response.ok("Task metadata updated successfully", taskService.patchResearchTask(taskId, request))
+        );
+    }
+
+    @PatchMapping("/research/tasks/{taskId}/status")
+    @Operation(summary = "Update canonical research task status")
+    @PreAuthorize("hasAnyRole('LAB_MANAGER','STUDENT')")
+    public ResponseEntity<Response<TaskResponse>> patchResearchTaskStatus(
+            @PathVariable Long taskId,
+            @Valid @RequestBody PatchTaskStatusRequest request
+    ) {
+        return ResponseEntity.ok(
+                Response.ok("Task status updated successfully",
+                        taskService.patchResearchTaskStatus(taskId, request))
         );
     }
 

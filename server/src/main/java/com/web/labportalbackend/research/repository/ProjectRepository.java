@@ -2,8 +2,10 @@ package com.web.labportalbackend.research.repository;
 
 import com.web.labportalbackend.research.entity.ProjectEntity;
 import com.web.labportalbackend.research.enums.ProjectStatus;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -13,6 +15,16 @@ import java.util.Optional;
 
 @Repository
 public interface ProjectRepository extends JpaRepository<ProjectEntity, Long> {
+
+    @Lock(LockModeType.PESSIMISTIC_READ)
+    @Query("""
+            SELECT p
+            FROM ProjectEntity p
+            WHERE p.id = :id
+              AND p.deleted = false
+              AND p.active = true
+            """)
+    Optional<ProjectEntity> findByIdForStatusAuthorization(@Param("id") Long id);
 
     @EntityGraph(attributePaths = {"group", "topic", "manager", "createdBy"})
     List<ProjectEntity> findByGroupIdAndDeletedFalseAndActiveTrue(Long groupId);
@@ -37,4 +49,3 @@ public interface ProjectRepository extends JpaRepository<ProjectEntity, Long> {
             @Param("status") ProjectStatus status
     );
 }
-

@@ -46,6 +46,15 @@ public class SystemConfigServiceImpl implements SystemConfigService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public SystemConfigResponse getConfigForStatusAuthorization() {
+        return systemConfigRepository.findByConfigKeyForStatusAuthorization(GLOBAL_CONFIG_KEY)
+                .map(SystemConfigEntity::getConfigValueJson)
+                .map(this::readConfig)
+                .orElseGet(this::defaultConfig);
+    }
+
+    @Override
     @Transactional
     public SystemConfigResponse updateConfig(SystemConfigRequest request) {
         SystemConfigResponse config = toResponse(request);
@@ -149,11 +158,23 @@ public class SystemConfigServiceImpl implements SystemConfigService {
     private SystemConfigResponse readConfig(String configValueJson) {
         try {
             SystemConfigResponse config = objectMapper.readValue(configValueJson, SystemConfigResponse.class);
+            if (!hasCompleteSections(config)) {
+                return defaultConfig();
+            }
             validate(config);
             return config;
-        } catch (JsonProcessingException | IllegalArgumentException ex) {
+        } catch (JsonProcessingException | IllegalArgumentException | NullPointerException ex) {
             return defaultConfig();
         }
+    }
+
+    private boolean hasCompleteSections(SystemConfigResponse config) {
+        return config != null
+                && config.account() != null
+                && config.lab() != null
+                && config.booking() != null
+                && config.upload() != null
+                && config.research() != null;
     }
 
     private String writeConfig(SystemConfigResponse config) {

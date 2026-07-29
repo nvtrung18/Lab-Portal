@@ -4,6 +4,7 @@ import com.web.labportalbackend.research.dto.request.AssignTaskRequest;
 import com.web.labportalbackend.research.dto.request.CreateResearchTaskRequest;
 import com.web.labportalbackend.research.dto.request.CreateTaskRequest;
 import com.web.labportalbackend.research.dto.request.PatchResearchTaskRequest;
+import com.web.labportalbackend.research.dto.request.PatchTaskStatusRequest;
 import com.web.labportalbackend.research.dto.request.UpdateTaskStatusRequest;
 import com.web.labportalbackend.research.dto.response.TaskResponse;
 
@@ -15,6 +16,8 @@ public interface TaskService {
     TaskResponse createResearchTask(CreateResearchTaskRequest request);
 
     TaskResponse patchResearchTask(Long taskId, PatchResearchTaskRequest request);
+
+    TaskResponse patchResearchTaskStatus(Long taskId, PatchTaskStatusRequest request);
 
     TaskResponse assign(Long taskId, AssignTaskRequest request);
 

@@ -2,8 +2,10 @@ package com.web.labportalbackend.research.repository;
 
 import com.web.labportalbackend.research.entity.GroupMemberEntity;
 import com.web.labportalbackend.research.enums.GroupRole;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -13,6 +15,20 @@ import java.util.Optional;
 
 @Repository
 public interface GroupMemberRepository extends JpaRepository<GroupMemberEntity, Long> {
+    @Lock(LockModeType.PESSIMISTIC_READ)
+    @Query("""
+            SELECT gm
+            FROM GroupMemberEntity gm
+            WHERE gm.group.id = :groupId
+              AND gm.user.id = :userId
+              AND gm.active = true
+              AND gm.deleted = false
+            """)
+    Optional<GroupMemberEntity> findActiveForStatusAuthorization(
+            @Param("groupId") Long groupId,
+            @Param("userId") Long userId
+    );
+
     boolean existsByGroupIdAndUserId(Long groupId, Long userId);
 
     boolean existsByGroupIdAndUserIdAndActiveTrueAndDeletedFalse(Long groupId, Long userId);
