@@ -6,11 +6,14 @@ import com.web.labportalbackend.research.dto.response.ProjectTaskBoardResponse;
 import com.web.labportalbackend.research.dto.response.TaskBacklogPageResponse;
 import com.web.labportalbackend.research.dto.response.TaskBoardColumnResponse;
 import com.web.labportalbackend.research.dto.response.TaskResponse;
+import com.web.labportalbackend.research.dto.response.TaskCommentResponse;
+import com.web.labportalbackend.research.dto.request.CreateTaskCommentRequest;
 import com.web.labportalbackend.research.enums.TaskPriority;
 import com.web.labportalbackend.research.enums.TaskStatus;
 import com.web.labportalbackend.research.enums.TaskType;
 import com.web.labportalbackend.research.service.TaskBoardReadService;
 import com.web.labportalbackend.research.service.TaskService;
+import com.web.labportalbackend.research.service.TaskCommentService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -30,9 +33,11 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 import org.springframework.http.MediaType;
 
 import java.util.List;
+import java.time.Instant;
 import java.util.stream.Stream;
 
 import static org.hamcrest.Matchers.aMapWithSize;
+import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -63,6 +68,155 @@ class TaskControllerTest {
 
     @MockitoBean
     private TaskBoardReadService taskBoardReadService;
+
+    @MockitoBean
+    private TaskCommentService taskCommentService;
+
+    @Test
+    void createTaskCommentReturnsCreatedWrapperAndDelegatesRouteContent() throws Exception {
+        when(taskCommentService.addComment(org.mockito.ArgumentMatchers.eq(20L),
+                org.mockito.ArgumentMatchers.any())).thenReturn(TaskCommentResponse.builder()
+                .id(501L).taskId(20L).authorId(7L).authorName("Student User")
+                .authorEmail("student@example.test").authorRole("STUDENT")
+                .groupRole(com.web.labportalbackend.research.enums.GroupRole.MEMBER)
+                .content("Add dates").createdAt(Instant.parse("2026-07-29T01:00:00Z")).build());
+
+        mockMvc.perform(apiPost("/research/tasks/{taskId}/comments", 20L)
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"content\":\"Add dates\"}")
+                        .with(user("student").roles("STUDENT")))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$", aMapWithSize(6)))
+                .andExpect(jsonPath("$.code").value(0))
+                .andExpect(jsonPath("$.message").value("Task comment created successfully"))
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.error").value(false))
+                .andExpect(jsonPath("$.timestamp").exists())
+                .andExpect(jsonPath("$.data", aMapWithSize(9)))
+                .andExpect(jsonPath("$.data.id").value(501))
+                .andExpect(jsonPath("$.data.taskId").value(20))
+                .andExpect(jsonPath("$.data.authorId").value(7))
+                .andExpect(jsonPath("$.data.authorName").value("Student User"))
+                .andExpect(jsonPath("$.data.authorEmail").value("student@example.test"))
+                .andExpect(jsonPath("$.data.authorRole").value("STUDENT"))
+                .andExpect(jsonPath("$.data.groupRole").value("MEMBER"))
+                .andExpect(jsonPath("$.data.content").value("Add dates"))
+                .andExpect(jsonPath("$.data.createdAt").value("2026-07-29T01:00:00Z"));
+
+        verify(taskCommentService).addComment(org.mockito.ArgumentMatchers.eq(20L),
+                org.mockito.ArgumentMatchers.argThat((CreateTaskCommentRequest request) ->
+                        "Add dates".equals(request.getContent())));
+    }
+
+    @Test
+    void createTaskCommentSerializesNullableGroupRoleInTheFrozenDataShape() throws Exception {
+        when(taskCommentService.addComment(org.mockito.ArgumentMatchers.eq(20L), org.mockito.ArgumentMatchers.any()))
+                .thenReturn(TaskCommentResponse.builder().id(501L).taskId(20L).authorId(7L)
+                        .authorName("Student User").authorEmail("student@example.test").authorRole("LAB_MANAGER")
+                        .content("Add dates").createdAt(Instant.parse("2026-07-29T01:00:00Z")).build());
+
+        mockMvc.perform(apiPost("/research/tasks/{taskId}/comments", 20L).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"content\":\"Add dates\"}").with(manager()))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.data", aMapWithSize(9)))
+                .andExpect(jsonPath("$.data.groupRole").value(nullValue()));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"{\"content\":\"\"}", "{\"content\":\"   \"}"})
+    void createTaskCommentRejectsBlankBody(String body) throws Exception {
+        mockMvc.perform(apiPost("/research/tasks/{taskId}/comments", 20L)
+                        .contentType(MediaType.APPLICATION_JSON).content(body).with(manager()))
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(taskCommentService);
+    }
+
+    @Test
+    void createTaskCommentMapsUnknownBodyFieldToBadRequest() throws Exception {
+        when(taskCommentService.addComment(org.mockito.ArgumentMatchers.eq(20L),
+                org.mockito.ArgumentMatchers.any())).thenAnswer(invocation -> {
+            CreateTaskCommentRequest request = invocation.getArgument(1);
+            if (!request.getUnknownFields().isEmpty()) {
+                throw new IllegalArgumentException("Unknown task comment fields: " + request.getUnknownFields());
+            }
+            return TaskCommentResponse.builder().build();
+        });
+
+        mockMvc.perform(apiPost("/research/tasks/{taskId}/comments", 20L)
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"content\":\"Valid\",\"authorId\":8}")
+                        .with(manager()))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void createTaskCommentAllowsManagerAndStudentAndRejectsUnauthenticatedRequests() throws Exception {
+        when(taskCommentService.addComment(org.mockito.ArgumentMatchers.eq(20L), org.mockito.ArgumentMatchers.any()))
+                .thenReturn(TaskCommentResponse.builder().id(1L).content("Valid").build());
+        mockMvc.perform(apiPost("/research/tasks/{taskId}/comments", 20L).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"content\":\"Valid\"}").with(manager()))
+                .andExpect(status().isCreated());
+        mockMvc.perform(apiPost("/research/tasks/{taskId}/comments", 20L).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"content\":\"Valid\"}").with(user("student").roles("STUDENT")))
+                .andExpect(status().isCreated());
+        mockMvc.perform(apiPost("/research/tasks/{taskId}/comments", 20L).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"content\":\"Valid\"}"))
+                .andExpect(status().isUnauthorized());
+        verify(taskCommentService, org.mockito.Mockito.times(2))
+                .addComment(org.mockito.ArgumentMatchers.eq(20L), org.mockito.ArgumentMatchers.any());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"", "null", "{", "{\"content\":null}"})
+    void createTaskCommentRejectsMalformedOrDisallowedBodiesWithoutServiceInvocation(String body) throws Exception {
+        mockMvc.perform(apiPost("/research/tasks/{taskId}/comments", 20L).contentType(MediaType.APPLICATION_JSON)
+                        .content(body).with(manager()))
+                .andExpect(status().isBadRequest());
+        verifyNoInteractions(taskCommentService);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"{\"content\":\"Valid\",\"taskId\":99}", "{\"content\":\"Valid\",\"other\":true}"})
+    void createTaskCommentMapsUnknownIdentityAndUnrelatedFieldsToBadRequest(String body) throws Exception {
+        when(taskCommentService.addComment(org.mockito.ArgumentMatchers.eq(20L), org.mockito.ArgumentMatchers.any()))
+                .thenThrow(new IllegalArgumentException("Unknown task comment fields"));
+        mockMvc.perform(apiPost("/research/tasks/{taskId}/comments", 20L).contentType(MediaType.APPLICATION_JSON)
+                        .content(body).with(manager()))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value(400));
+    }
+
+    @Test
+    void createTaskCommentRejectsNonNumericTaskIdWithoutServiceInvocation() throws Exception {
+        mockMvc.perform(apiPost("/research/tasks/{taskId}/comments", "not-a-number")
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"content\":\"Valid\"}").with(manager()))
+                .andExpect(status().isBadRequest());
+        verifyNoInteractions(taskCommentService);
+    }
+
+    @Test
+    void createTaskCommentMapsServiceValidationPermissionAndNotFoundErrors() throws Exception {
+        when(taskCommentService.addComment(org.mockito.ArgumentMatchers.eq(20L), org.mockito.ArgumentMatchers.any()))
+                .thenThrow(new IllegalArgumentException("Invalid"))
+                .thenThrow(new AccessDeniedException("Denied"))
+                .thenThrow(new ResourceNotFoundException("Task", 20L));
+        for (int expected : List.of(400, 403, 404)) {
+            mockMvc.perform(apiPost("/research/tasks/{taskId}/comments", 20L).contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"content\":\"Valid\"}").with(manager()))
+                    .andExpect(status().is(expected))
+                    .andExpect(jsonPath("$.code").value(expected));
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"ADMIN", "LEADER", "MEMBER", "LAB_STAFF"})
+    void createTaskCommentRejectsUnsupportedSystemRoles(String role) throws Exception {
+        mockMvc.perform(apiPost("/research/tasks/{taskId}/comments", 20L)
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"content\":\"Valid\"}")
+                        .with(user("unsupported").roles(role)))
+                .andExpect(status().isForbidden());
+
+        verifyNoInteractions(taskCommentService);
+    }
 
     @TestConfiguration
     @EnableMethodSecurity

@@ -2,17 +2,20 @@ package com.web.labportalbackend.research.controller;
 
 import com.web.labportalbackend.common.dto.Response;
 import com.web.labportalbackend.research.dto.request.CreateResearchTaskRequest;
+import com.web.labportalbackend.research.dto.request.CreateTaskCommentRequest;
 import com.web.labportalbackend.research.dto.request.CreateTaskRequest;
 import com.web.labportalbackend.research.dto.request.PatchResearchTaskRequest;
 import com.web.labportalbackend.research.dto.request.PatchTaskStatusRequest;
 import com.web.labportalbackend.research.dto.request.UpdateTaskStatusRequest;
 import com.web.labportalbackend.research.dto.response.ProjectTaskBoardResponse;
 import com.web.labportalbackend.research.dto.response.TaskBacklogPageResponse;
+import com.web.labportalbackend.research.dto.response.TaskCommentResponse;
 import com.web.labportalbackend.research.dto.response.TaskResponse;
 import com.web.labportalbackend.research.enums.TaskPriority;
 import com.web.labportalbackend.research.enums.TaskStatus;
 import com.web.labportalbackend.research.enums.TaskType;
 import com.web.labportalbackend.research.service.TaskBoardReadService;
+import com.web.labportalbackend.research.service.TaskCommentService;
 import com.web.labportalbackend.research.service.TaskService;
 import org.springframework.http.HttpStatus;
 import io.swagger.v3.oas.annotations.Operation;
@@ -32,6 +35,18 @@ public class TaskController {
 
     private final TaskService taskService;
     private final TaskBoardReadService taskBoardReadService;
+    private final TaskCommentService taskCommentService;
+
+    @PostMapping("/research/tasks/{taskId}/comments")
+    @Operation(summary = "Create a task comment")
+    @PreAuthorize("hasAnyRole('LAB_MANAGER','STUDENT')")
+    public ResponseEntity<Response<TaskCommentResponse>> createTaskComment(
+            @PathVariable Long taskId,
+            @Valid @RequestBody CreateTaskCommentRequest request
+    ) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(Response.ok("Task comment created successfully", taskCommentService.addComment(taskId, request)));
+    }
 
     @PostMapping("/research/tasks")
     @Operation(summary = "Create an official research task")
