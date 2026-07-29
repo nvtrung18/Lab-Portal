@@ -15,6 +15,7 @@ import com.web.labportalbackend.lab.repository.LaboratoryRepository;
 import com.web.labportalbackend.research.dto.request.AssignTaskRequest;
 import com.web.labportalbackend.research.dto.request.CreateTaskRequest;
 import com.web.labportalbackend.research.dto.request.CreateResearchTaskRequest;
+import com.web.labportalbackend.research.dto.request.PatchTaskStatusRequest;
 import com.web.labportalbackend.research.dto.request.UpdateTaskStatusRequest;
 import com.web.labportalbackend.research.dto.response.TaskResponse;
 import com.web.labportalbackend.research.entity.GroupEntity;
@@ -32,6 +33,7 @@ import com.web.labportalbackend.research.repository.ProjectRepository;
 import com.web.labportalbackend.research.repository.ReportRepository;
 import com.web.labportalbackend.research.repository.TaskRepository;
 import com.web.labportalbackend.research.service.impl.TaskServiceImpl;
+import com.web.labportalbackend.research.service.impl.TaskStatusUpdateService;
 import com.web.labportalbackend.research.security.TaskPermissionHelper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -91,6 +93,9 @@ class TaskServiceImplTest {
     @Mock
     private AuditLogService auditLogService;
 
+    @Mock
+    private TaskStatusUpdateService taskStatusUpdateService;
+
     @InjectMocks
     private TaskServiceImpl taskService;
 
@@ -104,6 +109,22 @@ class TaskServiceImplTest {
     @AfterEach
     void clearSecurityContext() {
         SecurityContextHolder.clearContext();
+    }
+
+    @Test
+    void patchResearchTaskStatus_delegatesCanonicalRequestUnchanged() {
+        PatchTaskStatusRequest request = new PatchTaskStatusRequest();
+        request.setStatus(TaskStatus.IN_PROGRESS);
+        TaskResponse expected = TaskResponse.builder()
+                .id(20L)
+                .status(TaskStatus.IN_PROGRESS)
+                .build();
+        when(taskStatusUpdateService.patch(20L, request)).thenReturn(expected);
+
+        TaskResponse response = taskService.patchResearchTaskStatus(20L, request);
+
+        assertSame(expected, response);
+        verify(taskStatusUpdateService).patch(20L, request);
     }
 
     @Test

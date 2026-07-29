@@ -6,6 +6,7 @@ import com.web.labportalbackend.auth.repository.UserRepository;
 import com.web.labportalbackend.lab.entity.Laboratory;
 import com.web.labportalbackend.lab.repository.LaboratoryRepository;
 import com.web.labportalbackend.research.entity.GroupEntity;
+import com.web.labportalbackend.research.entity.GroupMemberEntity;
 import com.web.labportalbackend.research.entity.ProjectEntity;
 import com.web.labportalbackend.research.entity.TaskEntity;
 import com.web.labportalbackend.research.enums.GroupRole;
@@ -13,18 +14,26 @@ import com.web.labportalbackend.research.enums.TaskStatus;
 import com.web.labportalbackend.research.repository.GroupMemberRepository;
 import com.web.labportalbackend.research.repository.GroupRepository;
 import com.web.labportalbackend.research.repository.ProjectRepository;
+import com.web.labportalbackend.research.repository.ReportRepository;
+import com.web.labportalbackend.research.repository.TaskRepository;
+import jakarta.persistence.LockModeType;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.jpa.repository.Lock;
 
+import java.lang.reflect.Method;
 import java.util.Optional;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.ArgumentMatchers.any;
@@ -220,9 +229,9 @@ class TaskPermissionHelperTest {
         User manager = user(2L, "LAB_MANAGER");
 
         when(userRepository.findById(2L)).thenReturn(Optional.of(manager));
-        when(laboratoryRepository.findFirstByManagerIdAndDeletedFalse(2L)).thenReturn(Optional.of(lab));
         when(projectRepository.findByIdAndDeletedFalseAndActiveTrue(50L)).thenReturn(Optional.of(project));
         when(groupRepository.findByIdAndDeletedFalseAndActiveTrue(100L)).thenReturn(Optional.of(group(lab)));
+        when(laboratoryRepository.existsByIdAndManagerIdAndActiveTrueAndDeletedFalse(1L, 2L)).thenReturn(true);
 
         assertTrue(helper.canManageTask(2L, task));
         assertTrue(helper.canUpdateTaskStatus(2L, task));
@@ -260,12 +269,186 @@ class TaskPermissionHelperTest {
         User manager = user(2L, "LAB_MANAGER");
 
         when(userRepository.findById(2L)).thenReturn(Optional.of(manager));
-        when(laboratoryRepository.findFirstByManagerIdAndDeletedFalse(2L)).thenReturn(Optional.of(managedLab));
         when(projectRepository.findByIdAndDeletedFalseAndActiveTrue(50L))
                 .thenReturn(Optional.of(ProjectEntity.builder().lab(managedLab).build()));
         when(groupRepository.findByIdAndDeletedFalseAndActiveTrue(100L)).thenReturn(Optional.of(group(otherLab)));
 
         assertFalse(helper.isManagerOfTaskProjectOrLab(2L, task));
+    }
+
+    @Test
+    void managerResolutionFailsClosedWhenNonNullProjectCannotResolve() {
+        TaskEntity task = task();
+        User manager = user(2L, "LAB_MANAGER");
+        when(userRepository.findById(2L)).thenReturn(Optional.of(manager));
+        when(projectRepository.findByIdAndDeletedFalseAndActiveTrue(50L)).thenReturn(Optional.empty());
+
+        assertFalse(helper.isManagerOfTaskProjectOrLab(2L, task));
+        verify(laboratoryRepository, never())
+                .existsByIdAndManagerIdAndActiveTrueAndDeletedFalse(any(), any());
+    }
+
+    @Test
+    void managerResolutionFailsClosedWhenNonNullGroupCannotResolve() {
+        TaskEntity task = task();
+        User manager = user(2L, "LAB_MANAGER");
+        when(userRepository.findById(2L)).thenReturn(Optional.of(manager));
+        when(projectRepository.findByIdAndDeletedFalseAndActiveTrue(50L))
+                .thenReturn(Optional.of(ProjectEntity.builder().lab(lab(1L)).build()));
+        when(groupRepository.findByIdAndDeletedFalseAndActiveTrue(100L)).thenReturn(Optional.empty());
+
+        assertFalse(helper.isManagerOfTaskProjectOrLab(2L, task));
+        verify(laboratoryRepository, never())
+                .existsByIdAndManagerIdAndActiveTrueAndDeletedFalse(any(), any());
+    }
+
+    @Test
+    void managerResolutionFailsClosedWhenResolvedScopeHasNullLab() {
+        TaskEntity task = task();
+        User manager = user(2L, "LAB_MANAGER");
+        when(userRepository.findById(2L)).thenReturn(Optional.of(manager));
+        when(projectRepository.findByIdAndDeletedFalseAndActiveTrue(50L))
+                .thenReturn(Optional.of(ProjectEntity.builder().lab(null).build()));
+
+        assertFalse(helper.isManagerOfTaskProjectOrLab(2L, task));
+    }
+
+    @Test
+    void managerResolutionAllowsFallbackOnlyForGenuinelyNullProjectId() {
+        TaskEntity task = task();
+        task.setProjectId(null);
+        User manager = user(2L, "LAB_MANAGER");
+        when(userRepository.findById(2L)).thenReturn(Optional.of(manager));
+        when(groupRepository.findByIdAndDeletedFalseAndActiveTrue(100L))
+                .thenReturn(Optional.of(group(lab(1L))));
+        when(laboratoryRepository.existsByIdAndManagerIdAndActiveTrueAndDeletedFalse(1L, 2L))
+                .thenReturn(true);
+
+        assertTrue(helper.isManagerOfTaskProjectOrLab(2L, task));
+    }
+
+    @Test
+    void lockedStatusScopeUsesProjectThenGroupThenExactLaboratoryReads() {
+        TaskEntity task = task();
+        Laboratory laboratory = lab(1L);
+        when(projectRepository.findByIdForStatusAuthorization(50L))
+                .thenReturn(Optional.of(ProjectEntity.builder().lab(laboratory).build()));
+        when(groupRepository.findByIdForStatusAuthorization(100L))
+                .thenReturn(Optional.of(group(laboratory)));
+        when(laboratoryRepository.findByIdForStatusAuthorization(1L))
+                .thenReturn(Optional.of(laboratory));
+
+        TaskPermissionHelper.StatusAuthorizationScope scope =
+                helper.resolveStatusAuthorizationScope(task);
+
+        assertTrue(scope.valid());
+        assertTrue(Long.valueOf(1L).equals(scope.laboratoryId()));
+        var order = inOrder(projectRepository, groupRepository, laboratoryRepository);
+        order.verify(projectRepository).findByIdForStatusAuthorization(50L);
+        order.verify(groupRepository).findByIdForStatusAuthorization(100L);
+        order.verify(laboratoryRepository).findByIdForStatusAuthorization(1L);
+        verify(projectRepository, never()).findByIdAndDeletedFalseAndActiveTrue(any());
+        verify(groupRepository, never()).findByIdAndDeletedFalseAndActiveTrue(any());
+    }
+
+    @Test
+    void lockedStatusScopeFailsClosedWhenEitherNonNullScopeCannotResolve() {
+        TaskEntity task = task();
+        when(projectRepository.findByIdForStatusAuthorization(50L)).thenReturn(Optional.empty());
+        when(groupRepository.findByIdForStatusAuthorization(100L))
+                .thenReturn(Optional.of(group(lab(1L))));
+
+        TaskPermissionHelper.StatusAuthorizationScope missingProject =
+                helper.resolveStatusAuthorizationScope(task);
+
+        assertFalse(missingProject.valid());
+        verify(groupRepository).findByIdForStatusAuthorization(100L);
+        verify(laboratoryRepository, never()).findByIdForStatusAuthorization(any());
+    }
+
+    @Test
+    void lockedStatusScopeFailsClosedWhenResolvedLabsDisagree() {
+        TaskEntity task = task();
+        when(projectRepository.findByIdForStatusAuthorization(50L))
+                .thenReturn(Optional.of(ProjectEntity.builder().lab(lab(1L)).build()));
+        when(groupRepository.findByIdForStatusAuthorization(100L))
+                .thenReturn(Optional.of(group(lab(2L))));
+
+        TaskPermissionHelper.StatusAuthorizationScope scope =
+                helper.resolveStatusAuthorizationScope(task);
+
+        assertFalse(scope.valid());
+        verify(laboratoryRepository, never()).findByIdForStatusAuthorization(any());
+    }
+
+    @Test
+    void lockedStatusScopeFailsClosedWhenEitherResolvedScopeHasNoLab() {
+        TaskEntity task = task();
+        when(projectRepository.findByIdForStatusAuthorization(50L))
+                .thenReturn(Optional.of(ProjectEntity.builder().lab(lab(1L)).build()));
+        when(groupRepository.findByIdForStatusAuthorization(100L))
+                .thenReturn(Optional.of(group(null)));
+
+        TaskPermissionHelper.StatusAuthorizationScope scope =
+                helper.resolveStatusAuthorizationScope(task);
+
+        assertFalse(scope.valid());
+        verify(laboratoryRepository, never()).findByIdForStatusAuthorization(any());
+    }
+
+    @Test
+    void lockedStatusScopeFallsBackOnlyWhenProjectIdIsGenuinelyNull() {
+        TaskEntity task = task();
+        task.setProjectId(null);
+        Laboratory laboratory = lab(1L);
+        when(groupRepository.findByIdForStatusAuthorization(100L))
+                .thenReturn(Optional.of(group(laboratory)));
+        when(laboratoryRepository.findByIdForStatusAuthorization(1L))
+                .thenReturn(Optional.of(laboratory));
+
+        TaskPermissionHelper.StatusAuthorizationScope scope =
+                helper.resolveStatusAuthorizationScope(task);
+
+        assertTrue(scope.valid());
+        assertTrue(Long.valueOf(1L).equals(scope.laboratoryId()));
+        verify(projectRepository, never()).findByIdForStatusAuthorization(any());
+        verify(groupRepository).findByIdForStatusAuthorization(100L);
+        verify(laboratoryRepository).findByIdForStatusAuthorization(1L);
+    }
+
+    @Test
+    void finalAuthorizationRepositoriesDeclareTaskFirstCurrentLockingReads() throws Exception {
+        assertLock(TaskRepository.class, "findByIdForUpdate",
+                LockModeType.PESSIMISTIC_WRITE, Long.class);
+        assertLock(UserRepository.class, "findByIdForStatusAuthorization",
+                LockModeType.PESSIMISTIC_READ, Long.class);
+        assertLock(ProjectRepository.class, "findByIdForStatusAuthorization",
+                LockModeType.PESSIMISTIC_READ, Long.class);
+        assertLock(GroupRepository.class, "findByIdForStatusAuthorization",
+                LockModeType.PESSIMISTIC_READ, Long.class);
+        assertLock(LaboratoryRepository.class, "findByIdForStatusAuthorization",
+                LockModeType.PESSIMISTIC_READ, Long.class);
+        assertLock(LaboratoryRepository.class, "findManagedByIdForStatusAuthorization",
+                LockModeType.PESSIMISTIC_READ, Long.class, Long.class);
+        assertLock(GroupMemberRepository.class, "findActiveForStatusAuthorization",
+                LockModeType.PESSIMISTIC_READ, Long.class, Long.class);
+        assertLock(ReportRepository.class, "findLatestApprovedForStatusAuthorization",
+                LockModeType.PESSIMISTIC_READ, Long.class);
+    }
+
+    @Test
+    void lockedStatusMembershipUsesOnlyCurrentLockingRead() {
+        TaskEntity task = task();
+        GroupMemberEntity membership = GroupMemberEntity.builder()
+                .role(GroupRole.LEADER)
+                .build();
+        when(groupMemberRepository.findActiveForStatusAuthorization(100L, 7L))
+                .thenReturn(Optional.of(membership));
+
+        assertTrue(helper.findGroupRoleForStatusAuthorization(7L, task) == GroupRole.LEADER);
+
+        verify(groupMemberRepository).findActiveForStatusAuthorization(100L, 7L);
+        verify(groupMemberRepository, never()).findActiveRoleByGroupIdAndUserId(any(), any());
     }
 
     @Test
@@ -281,6 +464,18 @@ class TaskPermissionHelperTest {
         assertTrue(helper.canUpdateTaskStatus(7L, cancelled));
         assertTrue(helper.canUpdateTaskStatus(7L, blocked));
         assertFalse(cancelled.getStatus() == blocked.getStatus());
+    }
+
+    private void assertLock(
+            Class<?> repositoryType,
+            String methodName,
+            LockModeType expected,
+            Class<?>... parameterTypes
+    ) throws Exception {
+        Method method = repositoryType.getMethod(methodName, parameterTypes);
+        Lock lock = method.getAnnotation(Lock.class);
+        assertNotNull(lock, repositoryType.getSimpleName() + "." + methodName);
+        assertEquals(expected, lock.value(), repositoryType.getSimpleName() + "." + methodName);
     }
 
     private TaskEntity task() {
