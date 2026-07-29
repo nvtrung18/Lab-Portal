@@ -42,6 +42,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -418,6 +419,173 @@ class TaskControllerTest {
         verifyNoInteractions(taskService);
     }
 
+    @Test
+    void canonicalStatusPatchUsesDistinctRouteAndTypedRequest() throws Exception {
+        when(taskService.patchResearchTaskStatus(org.mockito.ArgumentMatchers.eq(20L),
+                org.mockito.ArgumentMatchers.any()))
+                .thenReturn(TaskResponse.builder().id(20L).status(TaskStatus.IN_PROGRESS).build());
+
+        mockMvc.perform(apiPatch("/research/tasks/{taskId}/status", 20L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"status\":\"IN_PROGRESS\",\"blockedReason\":null}")
+                        .with(manager()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", aMapWithSize(6)))
+                .andExpect(jsonPath("$.code").value(0))
+                .andExpect(jsonPath("$.message").value("Task status updated successfully"))
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.error").value(false))
+                .andExpect(jsonPath("$.data.id").value(20L))
+                .andExpect(jsonPath("$.data.status").value("IN_PROGRESS"))
+                .andExpect(jsonPath("$.timestamp").exists());
+
+        verify(taskService).patchResearchTaskStatus(org.mockito.ArgumentMatchers.eq(20L),
+                org.mockito.ArgumentMatchers.argThat(request ->
+                        request.getStatus() == TaskStatus.IN_PROGRESS
+                                && request.getBlockedReason() == null));
+    }
+
+    @Test
+    void canonicalStatusPatchAllowsStudentAndPreservesVisibleFormatReason() throws Exception {
+        when(taskService.patchResearchTaskStatus(org.mockito.ArgumentMatchers.eq(20L),
+                org.mockito.ArgumentMatchers.any()))
+                .thenReturn(TaskResponse.builder().id(20L).status(TaskStatus.BLOCKED).build());
+
+        mockMvc.perform(apiPatch("/research/tasks/{taskId}/status", 20L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"status\":\"BLOCKED\",\"blockedReason\":\"Waiting\u200B for equipment\"}")
+                        .with(user("student").roles("STUDENT")))
+                .andExpect(status().isOk());
+
+        verify(taskService).patchResearchTaskStatus(org.mockito.ArgumentMatchers.eq(20L),
+                org.mockito.ArgumentMatchers.argThat(request ->
+                        request.getStatus() == TaskStatus.BLOCKED
+                                && "Waiting\u200B for equipment".equals(request.getBlockedReason())));
+    }
+
+    @Test
+    void canonicalStatusPatchRejectsUnknownAndInvalidReasonBeforeService() throws Exception {
+        mockMvc.perform(apiPatch("/research/tasks/{taskId}/status", 20L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"status\":\"IN_PROGRESS\",\"progressPercent\":10}")
+                        .with(manager()))
+                .andExpect(status().isBadRequest());
+        mockMvc.perform(apiPatch("/research/tasks/{taskId}/status", 20L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"status\":\"BLOCKED\",\"blockedReason\":\"visible\\u0000\"}")
+                .with(manager()))
+                .andExpect(status().isBadRequest());
+        verifyNoInteractions(taskService);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "{}",
+            "{\"status\":null}",
+            "{\"blockedReason\":\"reason only\"}",
+            "{\"status\":\"UNKNOWN\"}",
+            "{\"Status\":\"DONE\"}",
+            "{\"status\":\"IN_PROGRESS\""
+    })
+    void canonicalStatusPatchRejectsMalformedOrMissingStatusBeforeService(String body) throws Exception {
+        mockMvc.perform(apiPatch("/research/tasks/{taskId}/status", 20L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body)
+                        .with(manager()))
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(taskService);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"ADMIN", "LAB_STAFF", "RESEARCHER", "LEADER", "MEMBER"})
+    void canonicalStatusPatchRejectsUnsupportedRoles(String role) throws Exception {
+        mockMvc.perform(apiPatch("/research/tasks/{taskId}/status", 20L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"status\":\"IN_PROGRESS\"}")
+                        .with(user("actor").roles(role)))
+                .andExpect(status().isForbidden());
+
+        verifyNoInteractions(taskService);
+    }
+
+    @Test
+    void canonicalStatusPatchRequiresAuthentication() throws Exception {
+        mockMvc.perform(apiPatch("/research/tasks/{taskId}/status", 20L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"status\":\"IN_PROGRESS\"}"))
+                .andExpect(status().isUnauthorized());
+
+        verifyNoInteractions(taskService);
+    }
+
+    @Test
+    void canonicalStatusPatchMapsServiceDomainErrors() throws Exception {
+        when(taskService.patchResearchTaskStatus(org.mockito.ArgumentMatchers.eq(20L),
+                org.mockito.ArgumentMatchers.any()))
+                .thenThrow(new IllegalArgumentException("Invalid transition"))
+                .thenThrow(new AccessDeniedException("Denied"))
+                .thenThrow(new ResourceNotFoundException("Task", 20L));
+
+        mockMvc.perform(apiPatch("/research/tasks/{taskId}/status", 20L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"status\":\"IN_PROGRESS\"}")
+                        .with(manager()))
+                .andExpect(status().isBadRequest());
+        mockMvc.perform(apiPatch("/research/tasks/{taskId}/status", 20L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"status\":\"IN_PROGRESS\"}")
+                        .with(manager()))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(apiPatch("/research/tasks/{taskId}/status", 20L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"status\":\"IN_PROGRESS\"}")
+                        .with(manager()))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void canonicalStatusPatchPreservesExistingRuntimeErrorMappings() throws Exception {
+        when(taskService.patchResearchTaskStatus(org.mockito.ArgumentMatchers.eq(20L),
+                org.mockito.ArgumentMatchers.any()))
+                .thenThrow(new IllegalStateException("Configuration unavailable"))
+                .thenThrow(new RuntimeException("Audit unavailable"));
+
+        mockMvc.perform(apiPatch("/research/tasks/{taskId}/status", 20L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"status\":\"IN_PROGRESS\"}")
+                        .with(manager()))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value(400));
+        mockMvc.perform(apiPatch("/research/tasks/{taskId}/status", 20L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"status\":\"IN_PROGRESS\"}")
+                        .with(manager()))
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.code").value(500));
+    }
+
+    @Test
+    void legacyStatusPutRemainsIsolatedFromCanonicalPatch() throws Exception {
+        when(taskService.updateStatus(org.mockito.ArgumentMatchers.eq(20L),
+                org.mockito.ArgumentMatchers.any()))
+                .thenReturn(TaskResponse.builder().id(20L).status(TaskStatus.IN_PROGRESS).build());
+
+        mockMvc.perform(apiPut("/tasks/{id}/status", 20L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"status\":\"IN_PROGRESS\"}")
+                        .with(manager()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.status").value("IN_PROGRESS"));
+
+        verify(taskService).updateStatus(org.mockito.ArgumentMatchers.eq(20L),
+                org.mockito.ArgumentMatchers.argThat(request ->
+                        request.getStatus() == TaskStatus.IN_PROGRESS));
+        verify(taskService, org.mockito.Mockito.never())
+                .patchResearchTaskStatus(org.mockito.ArgumentMatchers.anyLong(),
+                        org.mockito.ArgumentMatchers.any());
+    }
+
     @ParameterizedTest
     @ValueSource(strings = {
             "{\"status\":\"DONE\"}",
@@ -660,6 +828,10 @@ class TaskControllerTest {
 
     private MockHttpServletRequestBuilder apiPatch(String path, Object... uriVariables) {
         return patch("/api" + path, uriVariables).contextPath("/api").with(csrf());
+    }
+
+    private MockHttpServletRequestBuilder apiPut(String path, Object... uriVariables) {
+        return put("/api" + path, uriVariables).contextPath("/api").with(csrf());
     }
 
     private org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.UserRequestPostProcessor manager() {

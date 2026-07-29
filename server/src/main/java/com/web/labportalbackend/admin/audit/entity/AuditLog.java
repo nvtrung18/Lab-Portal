@@ -12,6 +12,8 @@ import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 @Entity
 @Table(name = "audit_logs", indexes = {
@@ -53,5 +55,6 @@ public class AuditLog extends BaseEntity {
     private String description;
 
     @Column(name = "metadata_json", columnDefinition = "json")
+    @JdbcTypeCode(SqlTypes.JSON)
     private String metadataJson;
 }

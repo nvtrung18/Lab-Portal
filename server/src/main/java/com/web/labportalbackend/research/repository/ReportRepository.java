@@ -2,7 +2,9 @@ package com.web.labportalbackend.research.repository;
 
 import com.web.labportalbackend.research.entity.ReportEntity;
 import com.web.labportalbackend.research.enums.ReportStatus;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -12,6 +14,25 @@ import java.util.Optional;
 
 @Repository
 public interface ReportRepository extends JpaRepository<ReportEntity, Long> {
+
+    @Lock(LockModeType.PESSIMISTIC_READ)
+    @Query("""
+            SELECT r
+            FROM ReportEntity r
+            WHERE r.taskId = :taskId
+              AND r.status = com.web.labportalbackend.research.enums.ReportStatus.APPROVED
+              AND r.deleted = false
+              AND r.active = true
+              AND NOT EXISTS (
+                    SELECT newer.id
+                    FROM ReportEntity newer
+                    WHERE newer.submissionScope = r.submissionScope
+                      AND newer.version > r.version
+                      AND newer.deleted = false
+                      AND newer.active = true
+              )
+            """)
+    List<ReportEntity> findLatestApprovedForStatusAuthorization(@Param("taskId") Long taskId);
 
     @Query("""
             SELECT MAX(r.version)

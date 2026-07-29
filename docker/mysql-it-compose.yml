@@ -1,0 +1,28 @@
+services:
+  mysql-it:
+    image: mysql:8.0
+    ports:
+      - "127.0.0.1:${LAB_PORTAL_MYSQL_IT_PORT:-3307}:3306"
+    environment:
+      MYSQL_DATABASE: ${LAB_PORTAL_MYSQL_IT_DATABASE:-lab_portal_it}
+      MYSQL_USER: ${LAB_PORTAL_MYSQL_IT_USERNAME:?Set LAB_PORTAL_MYSQL_IT_USERNAME to a disposable MySQL user}
+      MYSQL_PASSWORD: ${LAB_PORTAL_MYSQL_IT_PASSWORD:?Set LAB_PORTAL_MYSQL_IT_PASSWORD to a disposable MySQL password}
+      MYSQL_ROOT_PASSWORD: ${LAB_PORTAL_MYSQL_IT_ROOT_PASSWORD:?Set LAB_PORTAL_MYSQL_IT_ROOT_PASSWORD to a disposable MySQL root password}
+    command:
+      [
+        "--character-set-server=utf8mb4",
+        "--collation-server=utf8mb4_unicode_ci",
+        "--transaction-isolation=REPEATABLE-READ",
+        "--log-bin-trust-function-creators=1"
+      ]
+    tmpfs:
+      - /var/lib/mysql
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "MYSQL_PWD=\"$${MYSQL_ROOT_PASSWORD}\" mysql --protocol=socket -uroot -e \"GRANT SELECT ON performance_schema.data_lock_waits TO '$${MYSQL_USER}'@'%';\" && MYSQL_PWD=\"$${MYSQL_PASSWORD}\" mysql --protocol=socket -u\"$${MYSQL_USER}\" -NBe 'SELECT 1 FROM performance_schema.data_lock_waits LIMIT 1'"
+        ]
+      interval: 2s
+      timeout: 2s
+      retries: 30

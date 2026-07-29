@@ -5,6 +5,7 @@ import com.web.labportalbackend.auth.repository.UserRepository;
 import com.web.labportalbackend.lab.entity.Laboratory;
 import com.web.labportalbackend.lab.repository.LaboratoryRepository;
 import com.web.labportalbackend.research.entity.GroupEntity;
+import com.web.labportalbackend.research.entity.GroupMemberEntity;
 import com.web.labportalbackend.research.entity.ProjectEntity;
 import com.web.labportalbackend.research.entity.TaskEntity;
 import com.web.labportalbackend.research.enums.GroupRole;
@@ -120,33 +121,107 @@ public class TaskPermissionHelper {
             return false;
         }
 
-        Long managedLabId = laboratoryRepository.findFirstByManagerIdAndDeletedFalse(userId)
-                .map(Laboratory::getId)
+        Long projectLabId = null;
+        boolean invalidScope = false;
+        if (task.getProjectId() != null) {
+            ProjectEntity project = projectRepository.findByIdAndDeletedFalseAndActiveTrue(task.getProjectId())
+                    .orElse(null);
+            if (project == null || project.getLab() == null || project.getLab().getId() == null) {
+                invalidScope = true;
+            } else {
+                projectLabId = project.getLab().getId();
+            }
+        }
+
+        Long groupLabId = null;
+        if (task.getGroupId() != null) {
+            GroupEntity group = groupRepository.findByIdAndDeletedFalseAndActiveTrue(task.getGroupId())
+                    .orElse(null);
+            if (group == null || group.getLab() == null || group.getLab().getId() == null) {
+                invalidScope = true;
+            } else {
+                groupLabId = group.getLab().getId();
+            }
+        }
+
+        if (invalidScope || (task.getProjectId() == null && task.getGroupId() == null)) {
+            return false;
+        }
+        if (projectLabId != null && groupLabId != null && !projectLabId.equals(groupLabId)) {
+            return false;
+        }
+        Long targetLabId = projectLabId != null ? projectLabId : groupLabId;
+        return targetLabId != null
+                && laboratoryRepository.existsByIdAndManagerIdAndActiveTrueAndDeletedFalse(targetLabId, userId);
+    }
+
+    /**
+     * Resolve current task scope in the fixed project -> group -> laboratory
+     * lock order. The caller already owns task and actor locks and calls the
+     * membership method only after this method returns.
+     */
+    public StatusAuthorizationScope resolveStatusAuthorizationScope(TaskEntity task) {
+        if (task == null || (task.getProjectId() == null && task.getGroupId() == null)) {
+            return StatusAuthorizationScope.invalid();
+        }
+
+        Long projectLabId = null;
+        boolean invalidScope = false;
+        if (task.getProjectId() != null) {
+            ProjectEntity project = projectRepository.findByIdForStatusAuthorization(task.getProjectId())
+                    .orElse(null);
+            if (project == null || project.getLab() == null || project.getLab().getId() == null) {
+                invalidScope = true;
+            } else {
+                projectLabId = project.getLab().getId();
+            }
+        }
+
+        Long groupLabId = null;
+        if (task.getGroupId() != null) {
+            GroupEntity group = groupRepository.findByIdForStatusAuthorization(task.getGroupId())
+                    .orElse(null);
+            if (group == null || group.getLab() == null || group.getLab().getId() == null) {
+                invalidScope = true;
+            } else {
+                groupLabId = group.getLab().getId();
+            }
+        }
+
+        if (invalidScope
+                || (projectLabId != null && groupLabId != null && !projectLabId.equals(groupLabId))) {
+            return StatusAuthorizationScope.invalid();
+        }
+        Long targetLabId = projectLabId != null ? projectLabId : groupLabId;
+        Laboratory laboratory = laboratoryRepository.findByIdForStatusAuthorization(targetLabId)
                 .orElse(null);
-        if (managedLabId == null) {
-            return false;
+        if (laboratory == null) {
+            return StatusAuthorizationScope.invalid();
         }
+        return new StatusAuthorizationScope(true, targetLabId);
+    }
 
-        Long projectLabId = task.getProjectId() == null
-                ? null
-                : projectRepository.findByIdAndDeletedFalseAndActiveTrue(task.getProjectId())
-                        .map(ProjectEntity::getLab)
-                        .map(Laboratory::getId)
-                        .orElse(null);
-        Long groupLabId = task.getGroupId() == null
-                ? null
-                : groupRepository.findByIdAndDeletedFalseAndActiveTrue(task.getGroupId())
-                        .map(GroupEntity::getLab)
-                        .map(Laboratory::getId)
-                        .orElse(null);
+    public boolean isLaboratoryManagedByForStatusAuthorization(Long laboratoryId, Long userId) {
+        return laboratoryId != null
+                && userId != null
+                && laboratoryRepository
+                        .findManagedByIdForStatusAuthorization(laboratoryId, userId)
+                        .isPresent();
+    }
 
-        if (projectLabId == null && groupLabId == null) {
-            return false;
+    public GroupRole findGroupRoleForStatusAuthorization(Long userId, TaskEntity task) {
+        if (userId == null || task == null || task.getGroupId() == null) {
+            return null;
         }
-        if (projectLabId != null && !managedLabId.equals(projectLabId)) {
-            return false;
+        return groupMemberRepository.findActiveForStatusAuthorization(task.getGroupId(), userId)
+                .map(GroupMemberEntity::getRole)
+                .orElse(null);
+    }
+
+    public record StatusAuthorizationScope(boolean valid, Long laboratoryId) {
+        private static StatusAuthorizationScope invalid() {
+            return new StatusAuthorizationScope(false, null);
         }
-        return groupLabId == null || managedLabId.equals(groupLabId);
     }
 
     private boolean isScopedTaskAssignee(Long userId, TaskEntity task) {
