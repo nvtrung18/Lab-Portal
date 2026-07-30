@@ -14,7 +14,9 @@ import com.web.labportalbackend.common.exception.ResourceNotFoundException;
 import com.web.labportalbackend.lab.entity.Laboratory;
 import com.web.labportalbackend.lab.repository.LaboratoryRepository;
 import com.web.labportalbackend.research.dto.request.CreateTaskProposalRequest;
+import com.web.labportalbackend.research.dto.request.RejectTaskProposalRequest;
 import com.web.labportalbackend.research.dto.response.TaskProposalResponse;
+import com.web.labportalbackend.research.dto.response.TaskProposalReviewResponse;
 import com.web.labportalbackend.research.entity.GroupEntity;
 import com.web.labportalbackend.research.entity.GroupMemberEntity;
 import com.web.labportalbackend.research.entity.MilestoneEntity;
@@ -24,7 +26,9 @@ import com.web.labportalbackend.research.entity.TaskProposalEntity;
 import com.web.labportalbackend.research.enums.GroupRole;
 import com.web.labportalbackend.research.enums.TaskPriority;
 import com.web.labportalbackend.research.enums.TaskProposalStatus;
+import com.web.labportalbackend.research.enums.TaskStatus;
 import com.web.labportalbackend.research.enums.TaskType;
+import com.web.labportalbackend.research.exception.TaskProposalReviewConflictException;
 import com.web.labportalbackend.research.repository.GroupMemberRepository;
 import com.web.labportalbackend.research.repository.GroupRepository;
 import com.web.labportalbackend.research.repository.MilestoneRepository;
@@ -41,12 +45,14 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InOrder;
+import org.mockito.ArgumentCaptor;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -61,6 +67,7 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -498,6 +505,443 @@ class TaskProposalServiceImplTest {
         assertEquals(LockModeType.PESSIMISTIC_READ, taskLock.value());
     }
 
+    @Test
+    void leaderApprovalUsesFreshLockedActorAndSameLockedProposalForExactlyOneTask()
+            throws Exception {
+        ReviewFixture fixture = stubReviewScope(false, TaskProposalStatus.PENDING);
+        when(taskRepository.saveAndFlush(any())).thenAnswer(invocation -> {
+            TaskEntity task = invocation.getArgument(0);
+            task.setId(501L);
+            task.setCreatedAt(Instant.parse("2026-07-30T09:00:00Z"));
+            task.setUpdatedAt(Instant.parse("2026-07-30T09:00:00Z"));
+            return task;
+        });
+        when(taskProposalRepository.saveAndFlush(fixture.proposal()))
+                .thenReturn(fixture.proposal());
+
+        TaskProposalReviewResponse response = service.approve(fixture.proposal().getId());
+
+        ArgumentCaptor<TaskEntity> taskCaptor = ArgumentCaptor.forClass(TaskEntity.class);
+        verify(taskRepository).saveAndFlush(taskCaptor.capture());
+        TaskEntity task = taskCaptor.getValue();
+        assertEquals(fixture.project().getId(), task.getProjectId());
+        assertEquals(fixture.group().getId(), task.getGroupId());
+        assertNull(task.getMilestoneId());
+        assertNull(task.getParentTaskId());
+        assertNull(task.getAssigneeId());
+        assertEquals("Proposal title", task.getTitle());
+        assertNull(task.getDescription());
+        assertNull(task.getDeadline());
+        assertNull(task.getDueDate());
+        assertEquals(TaskStatus.BACKLOG, task.getStatus());
+        assertEquals(TaskPriority.MEDIUM, task.getPriority());
+        assertEquals(TaskType.TASK, task.getType());
+        assertEquals(fixture.freshActor().getId(), task.getCreatedBy());
+        assertEquals(0, task.getProgressPercent());
+        assertEquals(TaskProposalStatus.APPROVED, fixture.proposal().getStatus());
+        assertEquals(fixture.freshActor().getId(), fixture.proposal().getReviewedById());
+        assertNull(fixture.proposal().getReason());
+        assertEquals(fixture.proposal().getId(), response.getProposalId());
+        assertEquals(501L, response.getCreatedTask().getId());
+        assertEquals(fixture.freshActor().getId(), response.getReviewedById());
+        verify(taskRepository, times(1)).saveAndFlush(any());
+        verify(taskProposalRepository, times(1))
+                .saveAndFlush(fixture.proposal());
+
+        InOrder order = inOrder(
+                userRepository,
+                entityManager,
+                taskProposalRepository,
+                projectRepository,
+                groupRepository,
+                laboratoryRepository,
+                groupMemberRepository,
+                taskRepository,
+                auditLogService
+        );
+        order.verify(userRepository).findByUsername("student");
+        order.verify(entityManager).clear();
+        order.verify(taskProposalRepository).findByIdForReview(fixture.proposal().getId());
+        order.verify(userRepository).findByIdForStatusAuthorization(fixture.freshActor().getId());
+        order.verify(projectRepository).findByIdForStatusAuthorization(fixture.project().getId());
+        order.verify(groupRepository).findByIdForStatusAuthorization(fixture.group().getId());
+        order.verify(laboratoryRepository).findByIdForStatusAuthorization(fixture.lab().getId());
+        order.verify(groupMemberRepository).findActiveForStatusAuthorization(
+                fixture.group().getId(), fixture.freshActor().getId());
+        order.verify(taskRepository).saveAndFlush(any());
+        order.verify(taskProposalRepository).saveAndFlush(fixture.proposal());
+        order.verify(auditLogService).log(
+                fixture.freshActor(),
+                AuditAction.REVIEW_TASK_PROPOSAL,
+                AuditModule.RESEARCH,
+                "TASK_PROPOSAL",
+                fixture.proposal().getId(),
+                "Approved task proposal",
+                "{\"decision\":\"APPROVED\",\"createdTaskId\":501}"
+        );
+        verify(entityManager).clear();
+    }
+
+    @Test
+    void leaderRejectionUsesAuthenticatedLeaderAndCreatesNoTask() {
+        ReviewFixture fixture = stubReviewScope(false, TaskProposalStatus.PENDING);
+        when(taskProposalRepository.saveAndFlush(fixture.proposal()))
+                .thenReturn(fixture.proposal());
+        RejectTaskProposalRequest request = new RejectTaskProposalRequest();
+        request.setReason("  Outside the agreed scope  ");
+
+        TaskProposalReviewResponse response =
+                service.reject(fixture.proposal().getId(), request);
+
+        assertEquals(TaskProposalStatus.REJECTED, fixture.proposal().getStatus());
+        assertEquals(fixture.freshActor().getId(), fixture.proposal().getReviewedById());
+        assertEquals("Outside the agreed scope", fixture.proposal().getReason());
+        assertEquals(fixture.freshActor().getId(), response.getReviewedById());
+        assertEquals("Outside the agreed scope", response.getReason());
+        assertNull(response.getCreatedTask());
+        verify(groupMemberRepository).findActiveForStatusAuthorization(
+                fixture.group().getId(), fixture.freshActor().getId());
+        verify(taskProposalRepository, times(1))
+                .saveAndFlush(fixture.proposal());
+        verifyNoInteractions(taskRepository);
+        verify(auditLogService, times(1)).log(
+                fixture.freshActor(),
+                AuditAction.REVIEW_TASK_PROPOSAL,
+                AuditModule.RESEARCH,
+                "TASK_PROPOSAL",
+                fixture.proposal().getId(),
+                "Rejected task proposal",
+                "{\"decision\":\"REJECTED\"}"
+        );
+    }
+
+    @Test
+    void managerApprovalMapsEveryProposalFieldExactlyAndAttributesSessionActor() {
+        ReviewFixture fixture = stubReviewScope(true, TaskProposalStatus.PENDING);
+        LocalDate dueDate = LocalDate.of(2026, 10, 15);
+        MilestoneEntity milestone = MilestoneEntity.builder()
+                .project(fixture.project())
+                .group(fixture.group())
+                .title("Milestone")
+                .build();
+        milestone.setId(40L);
+        TaskEntity parent = TaskEntity.builder()
+                .projectId(fixture.project().getId())
+                .groupId(fixture.group().getId())
+                .title("Parent")
+                .build();
+        parent.setId(41L);
+        fixture.proposal().setMilestoneId(milestone.getId());
+        fixture.proposal().setPayloadJson("""
+                {"projectId":20,"groupId":30,"milestoneId":40,
+                 "parentTaskId":41,"title":"  Exact mapped title  ",
+                 "description":"Exact mapped description","priority":"HIGH",
+                 "type":"REVIEW","dueDate":"2026-10-15"}
+                """);
+        when(milestoneRepository.findByIdForProposalSubmission(milestone.getId()))
+                .thenReturn(Optional.of(milestone));
+        when(taskRepository.findByIdForProposalSubmission(parent.getId()))
+                .thenReturn(Optional.of(parent));
+        when(taskRepository.saveAndFlush(any())).thenAnswer(invocation -> {
+            TaskEntity task = invocation.getArgument(0);
+            task.setId(502L);
+            return task;
+        });
+        when(taskProposalRepository.saveAndFlush(fixture.proposal()))
+                .thenReturn(fixture.proposal());
+
+        TaskProposalReviewResponse response =
+                service.approve(fixture.proposal().getId());
+
+        ArgumentCaptor<TaskEntity> taskCaptor =
+                ArgumentCaptor.forClass(TaskEntity.class);
+        verify(taskRepository, times(1)).saveAndFlush(taskCaptor.capture());
+        TaskEntity task = taskCaptor.getValue();
+        assertEquals(fixture.project().getId(), task.getProjectId());
+        assertEquals(fixture.group().getId(), task.getGroupId());
+        assertEquals(milestone.getId(), task.getMilestoneId());
+        assertEquals(parent.getId(), task.getParentTaskId());
+        assertNull(task.getAssigneeId());
+        assertEquals("Exact mapped title", task.getTitle());
+        assertEquals("Exact mapped description", task.getDescription());
+        assertEquals(dueDate, task.getDeadline());
+        assertEquals(dueDate, task.getDueDate());
+        assertEquals(TaskStatus.TODO, task.getStatus());
+        assertEquals(TaskPriority.HIGH, task.getPriority());
+        assertEquals(TaskType.REVIEW, task.getType());
+        assertEquals(fixture.freshActor().getId(), task.getCreatedBy());
+        assertEquals(0, task.getProgressPercent());
+        assertEquals(TaskProposalStatus.APPROVED, fixture.proposal().getStatus());
+        assertEquals(fixture.freshActor().getId(), fixture.proposal().getReviewedById());
+        assertNull(fixture.proposal().getReason());
+        assertEquals(fixture.freshActor().getId(), response.getReviewedById());
+        assertEquals(502L, response.getCreatedTask().getId());
+        verify(laboratoryRepository).findManagedByIdForStatusAuthorization(
+                fixture.lab().getId(), fixture.freshActor().getId());
+        verify(taskProposalRepository, times(1))
+                .saveAndFlush(fixture.proposal());
+        verify(auditLogService, times(1)).log(
+                fixture.freshActor(),
+                AuditAction.REVIEW_TASK_PROPOSAL,
+                AuditModule.RESEARCH,
+                "TASK_PROPOSAL",
+                fixture.proposal().getId(),
+                "Approved task proposal",
+                "{\"decision\":\"APPROVED\",\"createdTaskId\":502}"
+        );
+    }
+
+    @Test
+    void managerRejectionNormalizesReasonAndCreatesNoTask() {
+        ReviewFixture fixture = stubReviewScope(true, TaskProposalStatus.PENDING);
+        when(taskProposalRepository.saveAndFlush(fixture.proposal()))
+                .thenReturn(fixture.proposal());
+        RejectTaskProposalRequest request = new RejectTaskProposalRequest();
+        request.setReason("  Not aligned with the milestone  ");
+
+        TaskProposalReviewResponse response =
+                service.reject(fixture.proposal().getId(), request);
+
+        assertEquals(TaskProposalStatus.REJECTED, fixture.proposal().getStatus());
+        assertEquals("Not aligned with the milestone", fixture.proposal().getReason());
+        assertEquals(fixture.freshActor().getId(), fixture.proposal().getReviewedById());
+        assertEquals(fixture.freshActor().getId(), response.getReviewedById());
+        assertNull(response.getCreatedTask());
+        assertEquals("Not aligned with the milestone", response.getReason());
+        verify(laboratoryRepository).findManagedByIdForStatusAuthorization(
+                fixture.lab().getId(), fixture.freshActor().getId());
+        verify(taskProposalRepository, times(1))
+                .saveAndFlush(fixture.proposal());
+        verifyNoInteractions(taskRepository);
+        verify(auditLogService, times(1)).log(
+                fixture.freshActor(),
+                AuditAction.REVIEW_TASK_PROPOSAL,
+                AuditModule.RESEARCH,
+                "TASK_PROPOSAL",
+                fixture.proposal().getId(),
+                "Rejected task proposal",
+                "{\"decision\":\"REJECTED\"}"
+        );
+    }
+
+    @Test
+    void studentRoleWithoutCurrentLeaderMembershipCannotApprove() {
+        ReviewFixture fixture = stubReviewScope(false, TaskProposalStatus.PENDING);
+        when(groupMemberRepository.findActiveForStatusAuthorization(
+                fixture.group().getId(), fixture.freshActor().getId()))
+                .thenReturn(Optional.empty());
+
+        assertThrows(
+                AccessDeniedException.class,
+                () -> service.approve(fixture.proposal().getId())
+        );
+
+        verify(groupMemberRepository).findActiveForStatusAuthorization(
+                fixture.group().getId(), fixture.freshActor().getId());
+        assertNoReviewWrites(fixture, TaskProposalStatus.PENDING);
+    }
+
+    @Test
+    void leaderCannotRejectProposalOutsideAuthorizedGroupBoundary() {
+        ReviewFixture fixture = stubReviewScope(false, TaskProposalStatus.PENDING);
+        when(groupMemberRepository.findActiveForStatusAuthorization(
+                fixture.group().getId(), fixture.freshActor().getId()))
+                .thenReturn(Optional.empty());
+        RejectTaskProposalRequest request = new RejectTaskProposalRequest();
+        request.setReason("Out of scope");
+
+        assertThrows(
+                AccessDeniedException.class,
+                () -> service.reject(fixture.proposal().getId(), request)
+        );
+
+        assertNoReviewWrites(fixture, TaskProposalStatus.PENDING);
+    }
+
+    @Test
+    void managerRoleWithoutAuthoritativeManagedLabCannotReject() {
+        ReviewFixture fixture = stubReviewScope(true, TaskProposalStatus.PENDING);
+        when(laboratoryRepository.findManagedByIdForStatusAuthorization(
+                fixture.lab().getId(), fixture.freshActor().getId()))
+                .thenReturn(Optional.empty());
+        RejectTaskProposalRequest request = new RejectTaskProposalRequest();
+        request.setReason("Out of scope");
+
+        assertThrows(
+                AccessDeniedException.class,
+                () -> service.reject(fixture.proposal().getId(), request)
+        );
+
+        verify(laboratoryRepository).findManagedByIdForStatusAuthorization(
+                fixture.lab().getId(), fixture.freshActor().getId());
+        verify(groupMemberRepository).findActiveForStatusAuthorization(
+                fixture.group().getId(), fixture.freshActor().getId());
+        assertNoReviewWrites(fixture, TaskProposalStatus.PENDING);
+    }
+
+    @Test
+    void dualCapabilityActorFallsBackToLeaderWhenManagerScopeIsInvalid() {
+        ReviewFixture fixture = stubReviewScope(true, TaskProposalStatus.PENDING);
+        when(laboratoryRepository.findManagedByIdForStatusAuthorization(
+                fixture.lab().getId(), fixture.freshActor().getId()))
+                .thenReturn(Optional.empty());
+        GroupMemberEntity membership = GroupMemberEntity.builder()
+                .group(fixture.group())
+                .user(fixture.freshActor())
+                .role(GroupRole.LEADER)
+                .build();
+        membership.setId(31L);
+        when(groupMemberRepository.findActiveForStatusAuthorization(
+                fixture.group().getId(), fixture.freshActor().getId()))
+                .thenReturn(Optional.of(membership));
+        when(taskRepository.saveAndFlush(any())).thenAnswer(invocation -> {
+            TaskEntity task = invocation.getArgument(0);
+            task.setId(503L);
+            return task;
+        });
+        when(taskProposalRepository.saveAndFlush(fixture.proposal()))
+                .thenReturn(fixture.proposal());
+
+        TaskProposalReviewResponse response =
+                service.approve(fixture.proposal().getId());
+
+        assertEquals(TaskProposalStatus.APPROVED, response.getStatus());
+        assertEquals(fixture.freshActor().getId(), response.getReviewedById());
+        verify(laboratoryRepository).findManagedByIdForStatusAuthorization(
+                fixture.lab().getId(), fixture.freshActor().getId());
+        verify(groupMemberRepository).findActiveForStatusAuthorization(
+                fixture.group().getId(), fixture.freshActor().getId());
+        verify(taskRepository, times(1)).saveAndFlush(any());
+        verify(taskProposalRepository, times(1))
+                .saveAndFlush(fixture.proposal());
+        verify(auditLogService, times(1)).log(
+                any(), any(), any(), any(), any(), any(), any());
+    }
+
+    @Test
+    void staleAttachedActorIsClearedAndFreshLockedRoleControlsAuthorization() {
+        ReviewFixture fixture = stubReviewScope(false, TaskProposalStatus.PENDING);
+        User staleActor = fixture.initialActor();
+        staleActor.addRole(new Role("LAB_MANAGER", "Lab manager"));
+        fixture.freshActor().getRoles().clear();
+        when(groupMemberRepository.findActiveForStatusAuthorization(
+                fixture.group().getId(), fixture.freshActor().getId()))
+                .thenReturn(Optional.empty());
+
+        assertThrows(
+                AccessDeniedException.class,
+                () -> service.approve(fixture.proposal().getId())
+        );
+
+        InOrder order = inOrder(userRepository, entityManager, taskProposalRepository);
+        order.verify(userRepository).findByUsername("student");
+        order.verify(entityManager).clear();
+        order.verify(taskProposalRepository).findByIdForReview(fixture.proposal().getId());
+        order.verify(userRepository).findByIdForStatusAuthorization(fixture.freshActor().getId());
+        verify(taskProposalRepository, never()).saveAndFlush(any());
+        verifyNoInteractions(taskRepository, auditLogService);
+    }
+
+    @Test
+    void authorizationIsCheckedBeforeTerminalConflict() {
+        ReviewFixture fixture = stubReviewScope(false, TaskProposalStatus.APPROVED);
+        when(groupMemberRepository.findActiveForStatusAuthorization(
+                fixture.group().getId(), fixture.freshActor().getId()))
+                .thenReturn(Optional.empty());
+
+        assertThrows(
+                AccessDeniedException.class,
+                () -> service.approve(fixture.proposal().getId())
+        );
+
+        verify(taskProposalRepository, never()).saveAndFlush(any());
+        verifyNoInteractions(taskRepository, auditLogService);
+    }
+
+    @Test
+    void authorizedTerminalProposalReturnsConflictWithoutWrites() {
+        ReviewFixture fixture = stubReviewScope(false, TaskProposalStatus.REJECTED);
+
+        assertThrows(
+                TaskProposalReviewConflictException.class,
+                () -> service.approve(fixture.proposal().getId())
+        );
+
+        verify(taskProposalRepository, never()).saveAndFlush(any());
+        verifyNoInteractions(taskRepository, auditLogService);
+    }
+
+    @Test
+    void authorizedTerminalProposalCannotBeRejectedAndHasNoSideEffects() {
+        ReviewFixture fixture = stubReviewScope(true, TaskProposalStatus.APPROVED);
+        RejectTaskProposalRequest request = new RejectTaskProposalRequest();
+        request.setReason("Too late");
+
+        assertThrows(
+                TaskProposalReviewConflictException.class,
+                () -> service.reject(fixture.proposal().getId(), request)
+        );
+
+        assertNoReviewWrites(fixture, TaskProposalStatus.APPROVED);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "{",
+            "{\"projectId\":20,\"groupId\":30,\"title\":\"Title\",\"priority\":\"MEDIUM\",\"type\":\"TASK\",\"unknown\":true}",
+            "{\"projectId\":20,\"groupId\":30,\"title\":\"Title\",\"priority\":null,\"type\":\"TASK\"}",
+            "{\"projectId\":999,\"groupId\":30,\"title\":\"Title\",\"priority\":\"MEDIUM\",\"type\":\"TASK\"}",
+            "{\"projectId\":\"20\",\"groupId\":30,\"milestoneId\":null,\"parentTaskId\":null,\"title\":\"Title\",\"description\":null,\"priority\":\"MEDIUM\",\"type\":\"TASK\",\"dueDate\":null}",
+            "{\"projectId\":20,\"groupId\":30,\"milestoneId\":null,\"parentTaskId\":null,\"title\":\"Title\",\"description\":null,\"priority\":\"MEDIUM\",\"type\":\"TASK\"}"
+    })
+    void corruptStoredPayloadFailsAsServerRuntimeWithoutWrites(String payloadJson) {
+        ReviewFixture fixture = stubReviewScope(false, TaskProposalStatus.PENDING);
+        fixture.proposal().setPayloadJson(payloadJson);
+
+        RuntimeException failure = assertThrows(
+                RuntimeException.class,
+                () -> service.approve(fixture.proposal().getId())
+        );
+
+        assertFalse(failure instanceof IllegalArgumentException);
+        assertFalse(failure instanceof IllegalStateException);
+        verify(taskProposalRepository, never()).saveAndFlush(any());
+        verifyNoInteractions(taskRepository, auditLogService);
+    }
+
+    @Test
+    void reviewRepositoryUsesPessimisticWriteLock() throws Exception {
+        Lock reviewLock = TaskProposalRepository.class
+                .getMethod("findByIdForReview", Long.class)
+                .getAnnotation(Lock.class);
+
+        assertEquals(LockModeType.PESSIMISTIC_WRITE, reviewLock.value());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"", "   ", "bad\u0001reason"})
+    void invalidRejectionReasonFailsBeforeIdentityOrDatabaseReads(String reason) {
+        RejectTaskProposalRequest request = new RejectTaskProposalRequest();
+        request.setReason(reason);
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> service.reject(100L, request)
+        );
+
+        verifyNoInteractions(
+                projectRepository,
+                groupRepository,
+                laboratoryRepository,
+                groupMemberRepository,
+                milestoneRepository,
+                taskRepository,
+                taskProposalRepository,
+                auditLogService,
+                entityManager
+        );
+    }
+
     private TaskProposalServiceImpl service(ObjectMapper mapper) {
         return new TaskProposalServiceImpl(
                 userRepository,
@@ -512,6 +956,18 @@ class TaskProposalServiceImplTest {
                 mapper,
                 entityManager
         );
+    }
+
+    private void assertNoReviewWrites(
+            ReviewFixture fixture,
+            TaskProposalStatus expectedStatus
+    ) {
+        assertEquals(expectedStatus, fixture.proposal().getStatus());
+        assertNull(fixture.proposal().getReviewedById());
+        assertNull(fixture.proposal().getReason());
+        assertNull(fixture.proposal().getReviewedAt());
+        verify(taskProposalRepository, never()).saveAndFlush(any());
+        verifyNoInteractions(taskRepository, auditLogService);
     }
 
     private Fixture stubValidScope(GroupRole groupRole, boolean legacyAssociation) {
@@ -545,6 +1001,85 @@ class TaskProposalServiceImplTest {
         when(groupMemberRepository.findActiveForStatusAuthorization(group.getId(), actor.getId()))
                 .thenReturn(Optional.of(membership));
         return new Fixture(actor, lab, project, group);
+    }
+
+    private ReviewFixture stubReviewScope(
+            boolean manager,
+            TaskProposalStatus status
+    ) {
+        User initialActor = actor();
+        User freshActor = actor();
+        if (manager) {
+            initialActor.addRole(new Role("LAB_MANAGER", "Lab manager"));
+            freshActor.addRole(new Role("LAB_MANAGER", "Lab manager"));
+        }
+
+        Laboratory lab = new Laboratory();
+        lab.setId(10L);
+        lab.setManager(manager ? freshActor : null);
+        ProjectEntity project = ProjectEntity.builder()
+                .lab(lab)
+                .title("Project")
+                .build();
+        project.setId(20L);
+        GroupEntity group = GroupEntity.builder()
+                .lab(lab)
+                .leader(freshActor)
+                .name("Group")
+                .project(project)
+                .build();
+        group.setId(30L);
+        GroupMemberEntity membership = GroupMemberEntity.builder()
+                .group(group)
+                .user(freshActor)
+                .role(GroupRole.LEADER)
+                .build();
+        membership.setId(31L);
+
+        TaskProposalEntity proposal = TaskProposalEntity.builder()
+                .proposedById(8L)
+                .projectId(project.getId())
+                .groupId(group.getId())
+                .milestoneId(null)
+                .payloadJson("""
+                        {"projectId":20,"groupId":30,"milestoneId":null,
+                         "parentTaskId":null,"title":"Proposal title",
+                         "description":null,"priority":"MEDIUM","type":"TASK",
+                         "dueDate":null}
+                        """)
+                .status(status)
+                .assistedByAi(false)
+                .build();
+        proposal.setId(100L);
+
+        when(userRepository.findByUsername("student")).thenReturn(Optional.of(initialActor));
+        when(taskProposalRepository.findByIdForReview(proposal.getId()))
+                .thenReturn(Optional.of(proposal));
+        when(userRepository.findByIdForStatusAuthorization(freshActor.getId()))
+                .thenReturn(Optional.of(freshActor));
+        when(projectRepository.findByIdForStatusAuthorization(project.getId()))
+                .thenReturn(Optional.of(project));
+        when(groupRepository.findByIdForStatusAuthorization(group.getId()))
+                .thenReturn(Optional.of(group));
+        when(laboratoryRepository.findByIdForStatusAuthorization(lab.getId()))
+                .thenReturn(Optional.of(lab));
+        if (manager) {
+            when(laboratoryRepository.findManagedByIdForStatusAuthorization(
+                    lab.getId(), freshActor.getId()))
+                    .thenReturn(Optional.of(lab));
+        } else {
+            when(groupMemberRepository.findActiveForStatusAuthorization(
+                    group.getId(), freshActor.getId()))
+                    .thenReturn(Optional.of(membership));
+        }
+        return new ReviewFixture(
+                initialActor,
+                freshActor,
+                lab,
+                project,
+                group,
+                proposal
+        );
     }
 
     private User actor() {
@@ -587,6 +1122,16 @@ class TaskProposalServiceImplTest {
             Laboratory lab,
             ProjectEntity project,
             GroupEntity group
+    ) {
+    }
+
+    private record ReviewFixture(
+            User initialActor,
+            User freshActor,
+            Laboratory lab,
+            ProjectEntity project,
+            GroupEntity group,
+            TaskProposalEntity proposal
     ) {
     }
 }

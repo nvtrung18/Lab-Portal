@@ -3,9 +3,13 @@ package com.web.labportalbackend.research.controller;
 import com.web.labportalbackend.auth.security.JwtAuthenticationFilter;
 import com.web.labportalbackend.common.exception.ResourceNotFoundException;
 import com.web.labportalbackend.research.dto.response.TaskProposalResponse;
+import com.web.labportalbackend.research.dto.response.TaskProposalReviewResponse;
+import com.web.labportalbackend.research.dto.response.TaskResponse;
 import com.web.labportalbackend.research.enums.TaskPriority;
 import com.web.labportalbackend.research.enums.TaskProposalStatus;
+import com.web.labportalbackend.research.enums.TaskStatus;
 import com.web.labportalbackend.research.enums.TaskType;
+import com.web.labportalbackend.research.exception.TaskProposalReviewConflictException;
 import com.web.labportalbackend.research.service.TaskProposalService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -28,6 +32,7 @@ import java.time.Instant;
 import static org.hamcrest.Matchers.aMapWithSize;
 import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -222,6 +227,147 @@ class TaskProposalControllerTest {
                         && request.getDueDate().toString().equals("2026-08-31")));
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = {"STUDENT", "LAB_MANAGER"})
+    void eligibleSystemRoleCanReachApprovalService(String role) throws Exception {
+        when(taskProposalService.approve(100L)).thenReturn(approvalResponse());
+
+        mockMvc.perform(post("/api/research/task-proposals/100/approve")
+                        .contextPath("/api")
+                        .with(csrf())
+                        .with(user("reviewer").roles(role)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(0))
+                .andExpect(jsonPath("$.message").value(
+                        "Task proposal approved successfully"))
+                .andExpect(jsonPath("$.data.proposalId").value(100))
+                .andExpect(jsonPath("$.data.status").value("APPROVED"))
+                .andExpect(jsonPath("$.data.reviewedById").value(7))
+                .andExpect(jsonPath("$.data.reason").value(nullValue()))
+                .andExpect(jsonPath("$.data.reviewedAt")
+                        .value("2026-07-30T09:00:00Z"))
+                .andExpect(jsonPath("$.data.createdTask.id").value(501))
+                .andExpect(jsonPath("$.data.createdTask.status").value("BACKLOG"));
+
+        verify(taskProposalService).approve(100L);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"STUDENT", "LAB_MANAGER"})
+    void eligibleSystemRoleCanReachRejectionService(String role) throws Exception {
+        when(taskProposalService.reject(eq(100L), any()))
+                .thenReturn(rejectionResponse());
+
+        mockMvc.perform(post("/api/research/task-proposals/100/reject")
+                        .contextPath("/api")
+                        .with(csrf())
+                        .with(user("reviewer").roles(role))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"reason\":\"  Not ready  \"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(0))
+                .andExpect(jsonPath("$.message").value(
+                        "Task proposal rejected successfully"))
+                .andExpect(jsonPath("$.data.proposalId").value(100))
+                .andExpect(jsonPath("$.data.status").value("REJECTED"))
+                .andExpect(jsonPath("$.data.reviewedById").value(7))
+                .andExpect(jsonPath("$.data.reason").value("Not ready"))
+                .andExpect(jsonPath("$.data.createdTask").value(nullValue()));
+
+        verify(taskProposalService).reject(eq(100L),
+                org.mockito.ArgumentMatchers.argThat(request ->
+                        request.getReason().equals("  Not ready  ")));
+    }
+
+    @Test
+    void unauthenticatedReviewIsUnauthorized() throws Exception {
+        mockMvc.perform(post("/api/research/task-proposals/100/approve")
+                        .contextPath("/api")
+                        .with(csrf()))
+                .andExpect(status().isUnauthorized());
+        mockMvc.perform(post("/api/research/task-proposals/100/reject")
+                        .contextPath("/api")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"reason\":\"Not ready\"}"))
+                .andExpect(status().isUnauthorized());
+
+        verifyNoInteractions(taskProposalService);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"ADMIN", "RESEARCHER", "LEADER", "UNRELATED"})
+    void unsupportedReviewSystemRolesAreForbidden(String role) throws Exception {
+        mockMvc.perform(post("/api/research/task-proposals/100/approve")
+                        .contextPath("/api")
+                        .with(csrf())
+                        .with(user("unsupported").roles(role)))
+                .andExpect(status().isForbidden());
+
+        verifyNoInteractions(taskProposalService);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "",
+            "null",
+            "{",
+            "{}",
+            "{\"reason\":null}",
+            "{\"reason\":\"\"}",
+            "{\"reason\":\"   \"}",
+            "{\"reason\":\"bad\\u0001reason\"}",
+            "{\"reason\":\"valid\",\"reviewedById\":99}",
+            "{\"Reason\":\"valid\"}"
+    })
+    void invalidRejectBodiesAreBadRequestWithoutDelegation(String body)
+            throws Exception {
+        mockMvc.perform(post("/api/research/task-proposals/100/reject")
+                        .contextPath("/api")
+                        .with(csrf())
+                        .with(user("student").roles("STUDENT"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value(400));
+
+        verifyNoInteractions(taskProposalService);
+    }
+
+    @Test
+    void oversizedRejectReasonIsBadRequestWithoutDelegation() throws Exception {
+        String body = "{\"reason\":\"" + "r".repeat(4001) + "\"}";
+
+        mockMvc.perform(post("/api/research/task-proposals/100/reject")
+                        .contextPath("/api")
+                        .with(csrf())
+                        .with(user("student").roles("STUDENT"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(taskProposalService);
+    }
+
+    @Test
+    void reviewServiceErrorsKeepExactHttpContract() throws Exception {
+        when(taskProposalService.approve(100L))
+                .thenThrow(new AccessDeniedException("Out of scope"))
+                .thenThrow(new ResourceNotFoundException("Task proposal", 100L))
+                .thenThrow(new TaskProposalReviewConflictException(
+                        "Already reviewed"))
+                .thenThrow(new RuntimeException("Corrupt payload"));
+
+        for (int expected : new int[]{403, 404, 409, 500}) {
+            mockMvc.perform(post("/api/research/task-proposals/100/approve")
+                            .contextPath("/api")
+                            .with(csrf())
+                            .with(user("student").roles("STUDENT")))
+                    .andExpect(status().is(expected))
+                    .andExpect(jsonPath("$.code").value(expected));
+        }
+    }
+
     private org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder request(String body) {
         return post("/api/research/task-proposals")
                 .contextPath("/api")
@@ -243,6 +389,38 @@ class TaskProposalControllerTest {
                 .status(TaskProposalStatus.PENDING)
                 .createdAt(Instant.parse("2026-07-30T08:00:00Z"))
                 .updatedAt(Instant.parse("2026-07-30T08:00:00Z"))
+                .build();
+    }
+
+    private TaskProposalReviewResponse approvalResponse() {
+        TaskResponse task = TaskResponse.builder()
+                .id(501L)
+                .projectId(20L)
+                .groupId(30L)
+                .title("Proposal title")
+                .status(TaskStatus.BACKLOG)
+                .priority(TaskPriority.MEDIUM)
+                .type(TaskType.TASK)
+                .createdBy(7L)
+                .progressPercent(0)
+                .build();
+        return TaskProposalReviewResponse.builder()
+                .proposalId(100L)
+                .status(TaskProposalStatus.APPROVED)
+                .reviewedById(7L)
+                .reviewedAt(Instant.parse("2026-07-30T09:00:00Z"))
+                .createdTask(task)
+                .build();
+    }
+
+    private TaskProposalReviewResponse rejectionResponse() {
+        return TaskProposalReviewResponse.builder()
+                .proposalId(100L)
+                .status(TaskProposalStatus.REJECTED)
+                .reviewedById(7L)
+                .reason("Not ready")
+                .reviewedAt(Instant.parse("2026-07-30T09:00:00Z"))
+                .createdTask(null)
                 .build();
     }
 

@@ -1,6 +1,7 @@
 package com.web.labportalbackend.common.exception;
 
 import com.web.labportalbackend.common.dto.Response;
+import com.web.labportalbackend.research.exception.TaskProposalReviewConflictException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -186,6 +187,15 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ApplicationAlreadyReviewedException.class)
     public ResponseEntity<Response<Void>> handleAlreadyReviewed(ApplicationAlreadyReviewedException ex) {
         log.warn("Already reviewed: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(Response.conflict(ex.getMessage()));
+    }
+
+    @ExceptionHandler(TaskProposalReviewConflictException.class)
+    public ResponseEntity<Response<Void>> handleTaskProposalReviewConflict(
+            TaskProposalReviewConflictException ex
+    ) {
+        log.warn("Task proposal review conflict: {}", ex.getMessage());
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(Response.conflict(ex.getMessage()));
     }
