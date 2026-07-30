@@ -1,0 +1,30 @@
+CREATE TABLE research_task_proposal (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    proposed_by BIGINT NOT NULL,
+    reviewed_by BIGINT NULL,
+    project_id BIGINT NOT NULL,
+    group_id BIGINT NOT NULL,
+    milestone_id BIGINT NULL,
+    ai_action_suggestion_id BIGINT NULL,
+    assisted_by_ai BOOLEAN NOT NULL DEFAULT FALSE,
+    payload_json JSON NOT NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'PENDING',
+    reason TEXT NULL,
+    reviewed_at TIMESTAMP(6) NULL,
+    created_at TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    updated_at TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+    active BOOLEAN NOT NULL DEFAULT TRUE,
+    deleted BOOLEAN NOT NULL DEFAULT FALSE,
+
+    CONSTRAINT fk_task_proposal_proposer FOREIGN KEY (proposed_by) REFERENCES users (id),
+    CONSTRAINT fk_task_proposal_reviewer FOREIGN KEY (reviewed_by) REFERENCES users (id),
+    CONSTRAINT fk_task_proposal_project FOREIGN KEY (project_id) REFERENCES projects (id),
+    CONSTRAINT fk_task_proposal_group FOREIGN KEY (group_id) REFERENCES research_groups (id),
+    CONSTRAINT fk_task_proposal_milestone FOREIGN KEY (milestone_id) REFERENCES milestones (id),
+    CONSTRAINT chk_task_proposal_status CHECK (status IN ('PENDING', 'APPROVED', 'REJECTED')),
+
+    INDEX idx_task_proposal_proposer_status_created (proposed_by, status, created_at, id),
+    INDEX idx_task_proposal_group_status_created (group_id, status, created_at, id),
+    INDEX idx_task_proposal_project_status_created (project_id, status, created_at, id),
+    INDEX idx_task_proposal_ai_suggestion (ai_action_suggestion_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
