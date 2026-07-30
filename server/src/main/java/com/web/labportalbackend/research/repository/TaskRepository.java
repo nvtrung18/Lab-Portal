@@ -21,6 +21,16 @@ import java.util.Optional;
 public interface TaskRepository extends JpaRepository<TaskEntity, Long> {
     Optional<TaskEntity> findByIdAndDeletedFalseAndActiveTrue(Long id);
 
+    @Lock(LockModeType.PESSIMISTIC_READ)
+    @Query("""
+            SELECT t
+            FROM TaskEntity t
+            WHERE t.id = :id
+              AND t.deleted = false
+              AND t.active = true
+            """)
+    Optional<TaskEntity> findByIdForProposalSubmission(@Param("id") Long id);
+
     @EntityGraph(attributePaths = "assignedToStudent")
     List<TaskEntity> findByMilestoneIdAndDeletedFalseAndActiveTrueOrderByDeadlineAscCreatedAtAsc(Long milestoneId);
 
