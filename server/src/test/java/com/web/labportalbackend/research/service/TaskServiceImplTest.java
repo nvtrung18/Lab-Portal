@@ -33,6 +33,7 @@ import com.web.labportalbackend.research.repository.ProjectRepository;
 import com.web.labportalbackend.research.repository.ReportRepository;
 import com.web.labportalbackend.research.repository.TaskRepository;
 import com.web.labportalbackend.research.service.impl.TaskServiceImpl;
+import com.web.labportalbackend.research.service.impl.TaskActivityRecorder;
 import com.web.labportalbackend.research.service.impl.TaskStatusUpdateService;
 import com.web.labportalbackend.research.security.TaskPermissionHelper;
 import org.junit.jupiter.api.BeforeEach;
@@ -96,6 +97,9 @@ class TaskServiceImplTest {
     @Mock
     private TaskStatusUpdateService taskStatusUpdateService;
 
+    @Mock
+    private TaskActivityRecorder taskActivityRecorder;
+
     @InjectMocks
     private TaskServiceImpl taskService;
 
@@ -130,6 +134,8 @@ class TaskServiceImplTest {
     @Test
     void createTask_savesTodoTaskWhenMilestoneExists() {
         User manager = authenticate("manager", "LAB_MANAGER");
+        manager.setActive(false);
+        manager.setDeleted(true);
         Laboratory lab = lab(1L);
         MilestoneEntity milestone = milestone(10L, 100L);
         milestone.getProject().setLab(lab);
@@ -171,6 +177,7 @@ class TaskServiceImplTest {
         assertEquals(100L, captor.getValue().getGroupId());
         assertEquals(LocalDate.of(2026, 8, 1), captor.getValue().getDueDate());
         assertEquals(manager.getId(), captor.getValue().getCreatedBy());
+        verify(taskActivityRecorder, times(1)).recordCreation(same(captor.getValue()), same(manager));
     }
 
     @Test
@@ -207,6 +214,12 @@ class TaskServiceImplTest {
         assertEquals(0, response.getProgressPercent());
         verify(auditLogService).log(manager, AuditAction.CREATE_RESEARCH_TASK, AuditModule.RESEARCH,
                 "RESEARCH_TASK", 20L, "Created official research task: Prepare dataset");
+        ArgumentCaptor<TaskEntity> saved = ArgumentCaptor.forClass(TaskEntity.class);
+        verify(taskActivityRecorder, times(1)).recordCreation(saved.capture(), same(manager));
+        assertEquals(20L, saved.getValue().getId());
+        assertEquals("Prepare dataset", saved.getValue().getTitle());
+        assertEquals(TaskStatus.BACKLOG, saved.getValue().getStatus());
+        assertEquals(manager.getId(), saved.getValue().getCreatedBy());
     }
 
     @Test
@@ -231,7 +244,7 @@ class TaskServiceImplTest {
         verify(taskRepository, never()).findById(anyLong());
         verify(userRepository, never()).findById(7L);
         verify(taskRepository, never()).save(any());
-        verifyNoInteractions(auditLogService);
+        verifyNoInteractions(auditLogService, taskActivityRecorder);
     }
 
     @Test
@@ -252,6 +265,7 @@ class TaskServiceImplTest {
         assertEquals(7L, response.getAssignedToStudentId());
         assertEquals(20L, response.getId());
         verify(taskRepository).save(task);
+        verifyNoInteractions(taskActivityRecorder);
     }
 
     @Test
@@ -269,6 +283,7 @@ class TaskServiceImplTest {
         assertThrows(InvalidAssigneeException.class, () -> taskService.assign(20L, request));
 
         verify(taskRepository, never()).save(any());
+        verifyNoInteractions(taskActivityRecorder);
     }
 
     @Test
@@ -416,6 +431,8 @@ class TaskServiceImplTest {
     @Test
     void updateStatus_studentMovesAssignedTodoToInProgressAndStartsProgress() {
         User currentStudent = authenticate("student", "STUDENT");
+        currentStudent.setActive(false);
+        currentStudent.setDeleted(true);
         TaskEntity task = task(20L, 10L, currentStudent.getId());
         MilestoneEntity milestone = milestone(10L, 100L);
         UpdateTaskStatusRequest request = statusRequest(TaskStatus.IN_PROGRESS);
@@ -426,11 +443,15 @@ class TaskServiceImplTest {
                 .thenReturn(Optional.of(GroupRole.MEMBER));
         when(taskRepository.save(task)).thenReturn(task);
 
+        TaskActivityRecorder.TaskSnapshot snapshot = mock(TaskActivityRecorder.TaskSnapshot.class);
+        when(taskActivityRecorder.capture(same(task))).thenReturn(snapshot);
+
         TaskResponse response = taskService.updateStatus(20L, request);
 
         assertEquals(TaskStatus.IN_PROGRESS, response.getStatus());
         assertEquals(10, response.getProgressPercent());
         verify(taskRepository).save(task);
+        verify(taskActivityRecorder).recordMutation(same(snapshot), same(task), same(currentStudent));
     }
 
     @Test
@@ -448,6 +469,27 @@ class TaskServiceImplTest {
         assertThrows(IllegalArgumentException.class,
                 () -> taskService.updateStatus(20L, statusRequest(TaskStatus.DONE)));
         verify(taskRepository, never()).save(any());
+        verifyNoInteractions(taskActivityRecorder);
+    }
+
+    @Test
+    void updateStatus_sameStatusSkipsActivityForLegacyActorWithoutUsabilityChecks() {
+        User manager = authenticate("manager", "LAB_MANAGER");
+        manager.setActive(false);
+        manager.setDeleted(true);
+        MilestoneEntity milestone = milestone(10L, 100L);
+        milestone.getProject().setLab(lab(1L));
+        TaskEntity task = task(20L, 10L, null);
+
+        when(taskRepository.findByIdForUpdate(20L)).thenReturn(Optional.of(task));
+        when(milestoneRepository.findByIdAndDeletedFalseAndActiveTrue(10L)).thenReturn(Optional.of(milestone));
+        when(laboratoryRepository.findFirstByManagerIdAndDeletedFalse(manager.getId())).thenReturn(Optional.of(lab(1L)));
+
+        TaskResponse response = taskService.updateStatus(20L, statusRequest(TaskStatus.TODO));
+
+        assertEquals(TaskStatus.TODO, response.getStatus());
+        verify(taskRepository, never()).save(any());
+        verifyNoInteractions(taskActivityRecorder);
     }
 
     @Test
