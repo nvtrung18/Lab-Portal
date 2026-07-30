@@ -27,6 +27,7 @@ import com.web.labportalbackend.research.repository.ReportRepository;
 import com.web.labportalbackend.research.repository.TaskRepository;
 import com.web.labportalbackend.research.security.TaskPermissionHelper;
 import com.web.labportalbackend.research.service.impl.TaskServiceImpl;
+import com.web.labportalbackend.research.service.impl.TaskActivityRecorder;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -61,6 +62,7 @@ class OfficialTaskCreationServiceTest {
     @Mock ProjectRepository projectRepository;
     @Mock TaskPermissionHelper taskPermissionHelper;
     @Mock AuditLogService auditLogService;
+    @Mock TaskActivityRecorder taskActivityRecorder;
     @InjectMocks TaskServiceImpl service;
 
     private User manager;

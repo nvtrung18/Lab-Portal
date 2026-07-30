@@ -82,6 +82,7 @@ public class TaskServiceImpl implements TaskService {
     private final AuditLogService auditLogService;
     private final TaskMetadataPatchService taskMetadataPatchService;
     private final TaskStatusUpdateService taskStatusUpdateService;
+    private final TaskActivityRecorder taskActivityRecorder;
 
     @Override
     @Transactional
@@ -130,7 +131,9 @@ public class TaskServiceImpl implements TaskService {
                 .progressPercent(0)
                 .build();
 
-        return TaskMapper.toResponse(taskRepository.save(task), project.getId());
+        TaskEntity saved = taskRepository.save(task);
+        taskActivityRecorder.recordCreation(saved, currentUser);
+        return TaskMapper.toResponse(saved, project.getId());
     }
 
     @Override
@@ -173,6 +176,7 @@ public class TaskServiceImpl implements TaskService {
                 .build();
 
         TaskEntity saved = taskRepository.save(task);
+        taskActivityRecorder.recordCreation(saved, currentUser);
         auditLogService.log(
                 currentUser,
                 AuditAction.CREATE_RESEARCH_TASK,
@@ -401,9 +405,12 @@ public class TaskServiceImpl implements TaskService {
             assertApprovedReportForCompletion(task);
         }
 
+        TaskActivityRecorder.TaskSnapshot before = taskActivityRecorder.capture(task);
         task.setStatus(requestedStatus);
         applyStatusProgress(task, requestedStatus);
-        return TaskMapper.toResponse(taskRepository.save(task), milestone.getProject().getId());
+        TaskEntity saved = taskRepository.save(task);
+        taskActivityRecorder.recordMutation(before, saved, currentUser);
+        return TaskMapper.toResponse(saved, milestone.getProject().getId());
     }
 
     private void assertCanUpdateTaskStatus(User currentUser, TaskEntity task) {

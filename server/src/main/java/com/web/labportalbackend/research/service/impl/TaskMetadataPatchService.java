@@ -47,6 +47,7 @@ public class TaskMetadataPatchService {
     private final GroupMemberRepository groupMemberRepository;
     private final LaboratoryRepository laboratoryRepository;
     private final AuditLogService auditLogService;
+    private final TaskActivityRecorder taskActivityRecorder;
 
     public TaskResponse patch(Long taskId, PatchResearchTaskRequest request) {
         validateRequestShape(request);
@@ -75,8 +76,10 @@ public class TaskMetadataPatchService {
             return TaskMapper.toResponse(locked);
         }
 
+        TaskActivityRecorder.TaskSnapshot before = taskActivityRecorder.capture(locked);
         apply(locked, candidate, resolved, request);
         TaskEntity saved = taskRepository.save(locked);
+        taskActivityRecorder.recordMutation(before, saved, actor);
         auditLogService.log(
                 actor,
                 AuditAction.UPDATE_RESEARCH_TASK,

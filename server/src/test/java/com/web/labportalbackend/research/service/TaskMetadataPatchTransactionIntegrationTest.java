@@ -12,11 +12,13 @@ import com.web.labportalbackend.lab.repository.LaboratoryRepository;
 import com.web.labportalbackend.research.dto.request.PatchResearchTaskRequest;
 import com.web.labportalbackend.research.entity.ProjectEntity;
 import com.web.labportalbackend.research.entity.TaskEntity;
+import com.web.labportalbackend.research.enums.TaskAuditAction;
 import com.web.labportalbackend.research.enums.TaskPriority;
 import com.web.labportalbackend.research.enums.TaskStatus;
 import com.web.labportalbackend.research.enums.TaskType;
 import com.web.labportalbackend.research.repository.ProjectRepository;
 import com.web.labportalbackend.research.repository.TaskRepository;
+import com.web.labportalbackend.research.repository.TaskActivityRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,18 +43,20 @@ class TaskMetadataPatchTransactionIntegrationTest {
     @Autowired ProjectRepository projectRepository;
     @Autowired AuditLogRepository auditLogRepository;
     @MockitoSpyBean TaskRepository taskRepository;
+    @MockitoSpyBean TaskActivityRepository taskActivityRepository;
     @MockitoSpyBean AuditLogService auditLogService;
 
     @AfterEach
     void cleanSecurityAndSpies() {
         SecurityContextHolder.clearContext();
-        reset(taskRepository, auditLogService);
+        reset(taskRepository, taskActivityRepository, auditLogService);
     }
 
     @Test
     void taskMetadataAndAuditCommitTogether() {
         TaskEntity task = fixture("patch-success");
         long auditsBefore = auditLogRepository.count();
+        long activitiesBefore = taskActivityRepository.count();
         PatchResearchTaskRequest request = request("Committed title");
 
         taskService.patchResearchTask(task.getId(), request);
@@ -61,6 +65,14 @@ class TaskMetadataPatchTransactionIntegrationTest {
         assertEquals("Committed title", committed.getTitle());
         assertEquals(TaskPriority.HIGH, committed.getPriority());
         assertEquals(auditsBefore + 1, auditLogRepository.count());
+        assertEquals(activitiesBefore + 1, taskActivityRepository.count());
+        var activity = taskActivityRepository.findAll().stream()
+                .filter(row -> task.getId().equals(row.getTaskId())).reduce((first, second) -> second).orElseThrow();
+        assertEquals(userRepository.findByUsername(SecurityContextHolder.getContext().getAuthentication().getName())
+                .orElseThrow().getId(), activity.getUserId());
+        assertEquals(TaskAuditAction.TASK_METADATA_UPDATED, activity.getAction());
+        assertEquals(snapshot(task, "Original title", TaskPriority.MEDIUM), activity.getOldValue());
+        assertEquals(snapshot(task, "Committed title", TaskPriority.HIGH), activity.getNewValue());
         var audit = auditLogRepository.findAll().stream()
                 .filter(log -> log.getAction() == AuditAction.UPDATE_RESEARCH_TASK)
                 .filter(log -> task.getId().equals(log.getTargetId()))
@@ -73,6 +85,7 @@ class TaskMetadataPatchTransactionIntegrationTest {
     void auditRuntimeFailureRollsBackAllMetadata() {
         TaskEntity task = fixture("patch-audit-failure");
         long auditsBefore = auditLogRepository.count();
+        long activitiesBefore = taskActivityRepository.count();
         doThrow(new IllegalStateException("audit unavailable"))
                 .when(auditLogService).log(any(), any(), any(), any(), any(), any(), any());
 
@@ -85,19 +98,41 @@ class TaskMetadataPatchTransactionIntegrationTest {
         assertEquals(TaskPriority.MEDIUM, reloaded.getPriority());
         assertEquals(TaskStatus.BACKLOG, reloaded.getStatus());
         assertEquals(auditsBefore, auditLogRepository.count());
+        assertEquals(activitiesBefore, taskActivityRepository.count());
     }
 
     @Test
     void taskSaveFailureDoesNotCommitAudit() {
         TaskEntity task = fixture("patch-save-failure");
         long auditsBefore = auditLogRepository.count();
+        long activitiesBefore = taskActivityRepository.count();
         doThrow(new IllegalStateException("task save failed")).when(taskRepository).save(any(TaskEntity.class));
 
         assertThrows(RuntimeException.class,
                 () -> taskService.patchResearchTask(task.getId(), request("Unsaved title")));
 
         assertEquals("Original title", taskRepository.findById(task.getId()).orElseThrow().getTitle());
+        assertEquals(TaskPriority.MEDIUM, taskRepository.findById(task.getId()).orElseThrow().getPriority());
         assertEquals(auditsBefore, auditLogRepository.count());
+        assertEquals(activitiesBefore, taskActivityRepository.count());
+        verify(taskActivityRepository, never()).save(any());
+        verify(auditLogService, never()).log(any(), any(), any(), any(), any(), any(), any());
+    }
+
+    @Test
+    void activitySaveFailureRollsBackTaskActivityAndAudit() {
+        TaskEntity task = fixture("patch-activity-failure");
+        long auditsBefore = auditLogRepository.count();
+        long activitiesBefore = taskActivityRepository.count();
+        doThrow(new IllegalStateException("activity save failed"))
+                .when(taskActivityRepository).save(any());
+
+        assertThrows(RuntimeException.class,
+                () -> taskService.patchResearchTask(task.getId(), request("Rolled back activity")));
+
+        assertEquals("Original title", taskRepository.findById(task.getId()).orElseThrow().getTitle());
+        assertEquals(auditsBefore, auditLogRepository.count());
+        assertEquals(activitiesBefore, taskActivityRepository.count());
         verify(auditLogService, never()).log(any(), any(), any(), any(), any(), any(), any());
     }
 
@@ -106,7 +141,8 @@ class TaskMetadataPatchTransactionIntegrationTest {
         TaskEntity task = fixture("patch-no-op");
         var updatedAtBefore = taskRepository.findById(task.getId()).orElseThrow().getUpdatedAt();
         long auditsBefore = auditLogRepository.count();
-        clearInvocations(taskRepository, auditLogService);
+        long activitiesBefore = taskActivityRepository.count();
+        clearInvocations(taskRepository, auditLogService, taskActivityRepository);
         PatchResearchTaskRequest noOp = new PatchResearchTaskRequest();
         noOp.setTitle("  Original title  ");
         noOp.setPriority(TaskPriority.MEDIUM);
@@ -117,7 +153,9 @@ class TaskMetadataPatchTransactionIntegrationTest {
         assertEquals("Original title", reloaded.getTitle());
         assertEquals(updatedAtBefore, reloaded.getUpdatedAt());
         assertEquals(auditsBefore, auditLogRepository.count());
+        assertEquals(activitiesBefore, taskActivityRepository.count());
         verify(taskRepository, never()).save(any(TaskEntity.class));
+        verify(taskActivityRepository, never()).save(any());
         verify(auditLogService, never()).log(any(), any(), any(), any(), any(), any(), any());
     }
 
@@ -179,5 +217,11 @@ class TaskMetadataPatchTransactionIntegrationTest {
         request.setTitle(title);
         request.setPriority(TaskPriority.HIGH);
         return request;
+    }
+
+    private String snapshot(TaskEntity task, String title, TaskPriority priority) {
+        return "{\"schemaVersion\":1,\"projectId\":" + task.getProjectId()
+                + ",\"title\":\"" + title + "\",\"status\":\"BACKLOG\",\"priority\":\""
+                + priority + "\",\"type\":\"TASK\",\"progressPercent\":0}";
     }
 }

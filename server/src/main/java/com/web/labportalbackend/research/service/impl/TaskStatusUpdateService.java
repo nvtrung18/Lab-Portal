@@ -45,6 +45,7 @@ public class TaskStatusUpdateService {
     private final TaskWorkflowService taskWorkflowService;
     private final AuditLogService auditLogService;
     private final EntityManager entityManager;
+    private final TaskActivityRecorder taskActivityRecorder;
 
     public TaskResponse patch(Long taskId, PatchTaskStatusRequest request) {
         validateRequestShape(request);
@@ -103,6 +104,7 @@ public class TaskStatusUpdateService {
             return TaskMapper.toResponse(locked);
         }
 
+        TaskActivityRecorder.TaskSnapshot before = taskActivityRecorder.capture(locked);
         Integer oldProgress = locked.getProgressPercent();
         if (!decision.statusUnchanged()) {
             locked.setStatus(decision.toStatus());
@@ -117,6 +119,7 @@ public class TaskStatusUpdateService {
         boolean progressChanged = decision.resolvedProgressPercent() != null
                 && !Objects.equals(oldProgress, decision.resolvedProgressPercent());
         TaskEntity saved = taskRepository.save(locked);
+        taskActivityRecorder.recordMutation(before, saved, actor);
         String metadata = "{"
                 + "\"fromStatus\":\"" + decision.fromStatus().name() + "\","
                 + "\"toStatus\":\"" + decision.toStatus().name() + "\","

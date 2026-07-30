@@ -23,6 +23,7 @@ import com.web.labportalbackend.research.repository.MilestoneRepository;
 import com.web.labportalbackend.research.repository.ProjectRepository;
 import com.web.labportalbackend.research.repository.TaskRepository;
 import com.web.labportalbackend.research.service.impl.TaskMetadataPatchService;
+import com.web.labportalbackend.research.service.impl.TaskActivityRecorder;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -54,6 +55,7 @@ class TaskMetadataPatchServiceTest {
     @Mock GroupMemberRepository groupMemberRepository;
     @Mock LaboratoryRepository laboratoryRepository;
     @Mock AuditLogService auditLogService;
+    @Mock TaskActivityRecorder taskActivityRecorder;
     @InjectMocks TaskMetadataPatchService service;
 
     private User manager;
@@ -93,10 +95,13 @@ class TaskMetadataPatchServiceTest {
         assertEquals(updatedAt, task.getUpdatedAt());
         verify(taskRepository, never()).save(any());
         verifyNoInteractions(auditLogService);
+        verifyNoInteractions(taskActivityRecorder);
     }
 
     @Test
     void mixedPatchAppliesOncePreservesServerFieldsAndAuditsStableActualOrder() {
+        TaskActivityRecorder.TaskSnapshot before = snapshot(1);
+        when(taskActivityRecorder.capture(same(task))).thenReturn(before);
         task.setMilestoneId(10L);
         task.setDescription("old");
         task.setStatus(TaskStatus.IN_PROGRESS);
@@ -128,6 +133,7 @@ class TaskMetadataPatchServiceTest {
         verify(auditLogService).log(eq(manager), eq(AuditAction.UPDATE_RESEARCH_TASK),
                 eq(AuditModule.RESEARCH), eq("RESEARCH_TASK"), eq(20L), anyString(), metadata.capture());
         assertEquals("{\"changedFields\":[\"description\",\"priority\",\"dueDate\"]}", metadata.getValue());
+        verify(taskActivityRecorder).recordMutation(same(before), same(task), same(manager));
     }
 
     @Test
@@ -157,10 +163,13 @@ class TaskMetadataPatchServiceTest {
         assertThrows(IllegalArgumentException.class, () -> service.patch(20L, nullType));
         verify(taskRepository, never()).save(any());
         verifyNoInteractions(auditLogService);
+        verifyNoInteractions(taskActivityRecorder);
     }
 
     @Test
     void explicitNullDueDateClearsCanonicalAndLegacyFields() {
+        TaskActivityRecorder.TaskSnapshot before = snapshot(2);
+        when(taskActivityRecorder.capture(same(task))).thenReturn(before);
         task.setDueDate(LocalDate.of(2026, 8, 1));
         task.setDeadline(LocalDate.of(2026, 8, 1));
         PatchResearchTaskRequest request = new PatchResearchTaskRequest();
@@ -172,6 +181,7 @@ class TaskMetadataPatchServiceTest {
         assertNull(task.getDeadline());
         verify(auditLogService).log(any(), any(), any(), any(), any(), any(),
                 eq("{\"changedFields\":[\"dueDate\"]}"));
+        verify(taskActivityRecorder).recordMutation(same(before), same(task), same(manager));
     }
 
     @Test
@@ -191,6 +201,7 @@ class TaskMetadataPatchServiceTest {
         assertEquals(100L, task.getGroupId());
         verify(taskRepository, never()).save(any());
         verifyNoInteractions(auditLogService);
+        verifyNoInteractions(taskActivityRecorder);
     }
 
     @Test
@@ -273,6 +284,8 @@ class TaskMetadataPatchServiceTest {
 
     @Test
     void explicitAssigneeUpdatesMapperAssociationAndRequiresMembership() {
+        TaskActivityRecorder.TaskSnapshot before = snapshot(3);
+        when(taskActivityRecorder.capture(same(task))).thenReturn(before);
         GroupEntity group = group(100L, project, lab);
         User assignee = user(7L, "member", "ADMIN");
         task.setGroupId(100L);
@@ -284,6 +297,13 @@ class TaskMetadataPatchServiceTest {
 
         assertEquals("member@example.test", service.patch(20L, request).getAssignedToStudentEmail());
         assertSame(assignee, task.getAssignedToStudent());
+        verify(taskActivityRecorder).recordMutation(same(before), same(task), same(manager));
+    }
+
+    private TaskActivityRecorder.TaskSnapshot snapshot(int schemaVersion) {
+        return new TaskActivityRecorder.TaskSnapshot(schemaVersion, null, null, null, null, null,
+                "before-" + schemaVersion, null, TaskStatus.TODO, TaskPriority.MEDIUM, TaskType.TASK,
+                null, null, 0);
     }
 
     private void authenticate(User user) {

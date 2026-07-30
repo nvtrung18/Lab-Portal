@@ -11,8 +11,10 @@ import com.web.labportalbackend.lab.entity.Laboratory;
 import com.web.labportalbackend.lab.repository.LaboratoryRepository;
 import com.web.labportalbackend.research.dto.request.CreateResearchTaskRequest;
 import com.web.labportalbackend.research.entity.ProjectEntity;
+import com.web.labportalbackend.research.enums.TaskAuditAction;
 import com.web.labportalbackend.research.repository.ProjectRepository;
 import com.web.labportalbackend.research.repository.TaskRepository;
+import com.web.labportalbackend.research.repository.TaskActivityRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,12 +40,13 @@ class OfficialTaskCreationTransactionIntegrationTest {
     @Autowired ProjectRepository projectRepository;
     @Autowired AuditLogRepository auditLogRepository;
     @MockitoSpyBean TaskRepository taskRepository;
+    @MockitoSpyBean TaskActivityRepository taskActivityRepository;
     @MockitoSpyBean AuditLogService auditLogService;
 
     @AfterEach
     void cleanSecurityAndSpies() {
         SecurityContextHolder.clearContext();
-        reset(taskRepository, auditLogService);
+        reset(taskRepository, taskActivityRepository, auditLogService);
     }
 
     @Test
@@ -51,11 +54,21 @@ class OfficialTaskCreationTransactionIntegrationTest {
         ProjectEntity project = fixture("success");
         long tasksBefore = taskRepository.count();
         long auditsBefore = auditLogRepository.count();
+        long activitiesBefore = taskActivityRepository.count();
 
         taskService.createResearchTask(request(project.getId(), "Committed task"));
 
         assertEquals(tasksBefore + 1, taskRepository.count());
         assertEquals(auditsBefore + 1, auditLogRepository.count());
+        assertEquals(activitiesBefore + 1, taskActivityRepository.count());
+        var activity = taskActivityRepository.findAll().stream()
+                .filter(row -> row.getNewValue() != null && row.getNewValue().contains("\"title\":\"Committed task\""))
+                .reduce((first, second) -> second).orElseThrow();
+        User actor = userRepository.findByUsername(currentUsername()).orElseThrow();
+        assertEquals(actor.getId(), activity.getUserId());
+        assertEquals(TaskAuditAction.TASK_CREATED, activity.getAction());
+        assertEquals("{\"schemaVersion\":1,\"projectId\":" + project.getId()
+                + ",\"title\":\"Committed task\",\"status\":\"BACKLOG\",\"priority\":\"MEDIUM\",\"type\":\"TASK\",\"progressPercent\":0}", activity.getNewValue());
         assertEquals(AuditAction.CREATE_RESEARCH_TASK,
                 auditLogRepository.findAll().stream()
                         .filter(log -> "RESEARCH_TASK".equals(log.getTargetType()))
@@ -68,6 +81,7 @@ class OfficialTaskCreationTransactionIntegrationTest {
         ProjectEntity project = fixture("audit-failure");
         long tasksBefore = taskRepository.count();
         long auditsBefore = auditLogRepository.count();
+        long activitiesBefore = taskActivityRepository.count();
         doThrow(new IllegalStateException("audit unavailable"))
                 .when(auditLogService).log(any(), any(), any(), any(), any(), any());
 
@@ -76,6 +90,7 @@ class OfficialTaskCreationTransactionIntegrationTest {
 
         assertEquals(tasksBefore, taskRepository.count());
         assertEquals(auditsBefore, auditLogRepository.count());
+        assertEquals(activitiesBefore, taskActivityRepository.count());
     }
 
     @Test
@@ -83,6 +98,7 @@ class OfficialTaskCreationTransactionIntegrationTest {
         ProjectEntity project = fixture("save-failure");
         long tasksBefore = taskRepository.count();
         long auditsBefore = auditLogRepository.count();
+        long activitiesBefore = taskActivityRepository.count();
         doThrow(new IllegalStateException("task save failed")).when(taskRepository).save(any());
 
         assertThrows(RuntimeException.class,
@@ -90,6 +106,26 @@ class OfficialTaskCreationTransactionIntegrationTest {
 
         assertEquals(tasksBefore, taskRepository.count());
         assertEquals(auditsBefore, auditLogRepository.count());
+        assertEquals(activitiesBefore, taskActivityRepository.count());
+        verify(taskActivityRepository, never()).save(any());
+        verify(auditLogService, never()).log(any(), any(), any(), any(), any(), any());
+    }
+
+    @Test
+    void activitySaveFailureRollsBackTaskActivityAndAudit() {
+        ProjectEntity project = fixture("activity-failure");
+        long tasksBefore = taskRepository.count();
+        long auditsBefore = auditLogRepository.count();
+        long activitiesBefore = taskActivityRepository.count();
+        doThrow(new IllegalStateException("activity save failed"))
+                .when(taskActivityRepository).save(any());
+
+        assertThrows(RuntimeException.class,
+                () -> taskService.createResearchTask(request(project.getId(), "Rolled back activity")));
+
+        assertEquals(tasksBefore, taskRepository.count());
+        assertEquals(auditsBefore, auditLogRepository.count());
+        assertEquals(activitiesBefore, taskActivityRepository.count());
         verify(auditLogService, never()).log(any(), any(), any(), any(), any(), any());
     }
 
@@ -122,5 +158,9 @@ class OfficialTaskCreationTransactionIntegrationTest {
         request.setProjectId(projectId);
         request.setTitle(title);
         return request;
+    }
+
+    private String currentUsername() {
+        return SecurityContextHolder.getContext().getAuthentication().getName();
     }
 }

@@ -20,6 +20,7 @@ import com.web.labportalbackend.research.entity.GroupMemberEntity;
 import com.web.labportalbackend.research.entity.ProjectEntity;
 import com.web.labportalbackend.research.entity.ReportEntity;
 import com.web.labportalbackend.research.entity.TaskEntity;
+import com.web.labportalbackend.research.enums.TaskAuditAction;
 import com.web.labportalbackend.research.enums.GroupRole;
 import com.web.labportalbackend.research.enums.ReportStatus;
 import com.web.labportalbackend.research.enums.TaskPriority;
@@ -30,6 +31,7 @@ import com.web.labportalbackend.research.repository.GroupRepository;
 import com.web.labportalbackend.research.repository.ProjectRepository;
 import com.web.labportalbackend.research.repository.ReportRepository;
 import com.web.labportalbackend.research.repository.TaskRepository;
+import com.web.labportalbackend.research.repository.TaskActivityRepository;
 import com.web.labportalbackend.research.security.TaskPermissionHelper;
 import com.web.labportalbackend.research.service.impl.TaskStatusUpdateService;
 import org.junit.jupiter.api.AfterEach;
@@ -65,6 +67,7 @@ class TaskStatusUpdateTransactionIntegrationTest {
     @Autowired GroupRepository groupRepository;
     @Autowired GroupMemberRepository groupMemberRepository;
     @Autowired AuditLogRepository auditLogRepository;
+    @MockitoSpyBean TaskActivityRepository taskActivityRepository;
     @Autowired SystemConfigRepository systemConfigRepository;
     @Autowired ObjectMapper objectMapper;
     @Autowired PlatformTransactionManager transactionManager;
@@ -77,13 +80,14 @@ class TaskStatusUpdateTransactionIntegrationTest {
     @AfterEach
     void clearSecurityAndSpies() {
         SecurityContextHolder.clearContext();
-        reset(taskRepository, reportRepository, auditLogService, taskPermissionHelper, systemConfigService);
+        reset(taskRepository, reportRepository, auditLogService, taskPermissionHelper, systemConfigService, taskActivityRepository);
     }
 
     @Test
     void statusAndAuditCommitTogetherThroughSpringProxy() {
         TaskEntity task = fixture("commit", TaskStatus.TODO, null);
         long auditsBefore = statusAudits(task.getId());
+        long activitiesBefore = taskActivityRepository.count();
 
         assertTrue(AopUtils.isAopProxy(taskService));
         taskService.patchResearchTaskStatus(task.getId(), request(TaskStatus.IN_PROGRESS, null));
@@ -92,6 +96,13 @@ class TaskStatusUpdateTransactionIntegrationTest {
         assertEquals(TaskStatus.IN_PROGRESS, reloaded.getStatus());
         assertEquals(10, reloaded.getProgressPercent());
         assertEquals(auditsBefore + 1, statusAudits(task.getId()));
+        assertEquals(activitiesBefore + 1, taskActivityRepository.count());
+        var activity = taskActivityRepository.findAll().stream()
+                .filter(row -> task.getId().equals(row.getTaskId())).reduce((first, second) -> second).orElseThrow();
+        assertEquals(userRepository.findByUsername(currentUsername()).orElseThrow().getId(), activity.getUserId());
+        assertEquals(TaskAuditAction.TASK_STATUS_CHANGED, activity.getAction());
+        assertEquals(snapshot(task, TaskStatus.TODO, 0, null), activity.getOldValue());
+        assertEquals(snapshot(task, TaskStatus.IN_PROGRESS, 10, null), activity.getNewValue());
         String metadata = statusAuditMetadata(task.getId());
         assertTrue(metadata.contains("\"fromStatus\":\"TODO\""), metadata);
         assertTrue(metadata.contains("\"toStatus\":\"IN_PROGRESS\""), metadata);
@@ -106,6 +117,7 @@ class TaskStatusUpdateTransactionIntegrationTest {
         task.setBlockedReason("persisted blocker");
         taskRepository.saveAndFlush(task);
         long auditsBefore = statusAudits(task.getId());
+        long activitiesBefore = taskActivityRepository.count();
         doThrow(new RuntimeException("audit unavailable"))
                 .when(auditLogService)
                 .log(any(), any(), any(), anyString(), anyLong(), anyString(), anyString());
@@ -119,6 +131,7 @@ class TaskStatusUpdateTransactionIntegrationTest {
         assertEquals("persisted blocker", reloaded.getBlockedReason());
         assertEquals(0, reloaded.getProgressPercent());
         assertEquals(auditsBefore, statusAudits(task.getId()));
+        assertEquals(activitiesBefore, taskActivityRepository.count());
         verify(taskRepository).save(any(TaskEntity.class));
     }
 
@@ -126,6 +139,7 @@ class TaskStatusUpdateTransactionIntegrationTest {
     void taskSaveFailureRollsBackAndSkipsAudit() {
         TaskEntity task = fixture("save-rollback", TaskStatus.TODO, null);
         long auditsBefore = statusAudits(task.getId());
+        long activitiesBefore = taskActivityRepository.count();
         doThrow(new IllegalStateException("save failed"))
                 .when(taskRepository).save(any(TaskEntity.class));
 
@@ -135,6 +149,8 @@ class TaskStatusUpdateTransactionIntegrationTest {
 
         assertEquals(TaskStatus.TODO, taskRepository.findById(task.getId()).orElseThrow().getStatus());
         assertEquals(auditsBefore, statusAudits(task.getId()));
+        assertEquals(activitiesBefore, taskActivityRepository.count());
+        verify(taskActivityRepository, never()).save(any());
         verify(auditLogService, never()).log(any(), any(), any(), anyString(), anyLong(), anyString(), anyString());
     }
 
@@ -143,15 +159,35 @@ class TaskStatusUpdateTransactionIntegrationTest {
         TaskEntity task = fixture("no-op", TaskStatus.TODO, null);
         var updatedAtBefore = taskRepository.findById(task.getId()).orElseThrow().getUpdatedAt();
         long auditsBefore = statusAudits(task.getId());
-        clearInvocations(taskRepository, auditLogService, taskPermissionHelper);
+        long activitiesBefore = taskActivityRepository.count();
+        clearInvocations(taskRepository, auditLogService, taskPermissionHelper, taskActivityRepository);
 
         taskService.patchResearchTaskStatus(task.getId(), request(TaskStatus.TODO, null));
 
         TaskEntity reloaded = taskRepository.findById(task.getId()).orElseThrow();
         assertEquals(updatedAtBefore, reloaded.getUpdatedAt());
         assertEquals(auditsBefore, statusAudits(task.getId()));
+        assertEquals(activitiesBefore, taskActivityRepository.count());
         verify(taskRepository, never()).save(any(TaskEntity.class));
+        verify(taskActivityRepository, never()).save(any());
         verify(auditLogService, never()).log(any(), any(), any(), anyString(), anyLong(), anyString(), anyString());
+    }
+
+    @Test
+    void activitySaveFailureRollsBackCanonicalStatusAndAudit() {
+        TaskEntity task = fixture("activity-rollback", TaskStatus.TODO, null);
+        long activitiesBefore = taskActivityRepository.count();
+        long auditsBefore = statusAudits(task.getId());
+        doThrow(new IllegalStateException("activity failed")).when(taskActivityRepository).save(any());
+
+        assertThrows(RuntimeException.class,
+                () -> taskService.patchResearchTaskStatus(task.getId(), request(TaskStatus.IN_PROGRESS, null)));
+
+        TaskEntity reloaded = taskRepository.findById(task.getId()).orElseThrow();
+        assertEquals(TaskStatus.TODO, reloaded.getStatus());
+        assertEquals(0, reloaded.getProgressPercent());
+        assertEquals(activitiesBefore, taskActivityRepository.count());
+        assertEquals(auditsBefore, statusAudits(task.getId()));
     }
 
     @Test
@@ -160,6 +196,7 @@ class TaskStatusUpdateTransactionIntegrationTest {
         task.setBlockedReason("old reason");
         taskRepository.saveAndFlush(task);
         long auditsBefore = statusAudits(task.getId());
+        long activitiesBefore = taskActivityRepository.count();
 
         taskService.patchResearchTaskStatus(
                 task.getId(), request(TaskStatus.BLOCKED, "  new reason  "));
@@ -168,6 +205,12 @@ class TaskStatusUpdateTransactionIntegrationTest {
         assertEquals(TaskStatus.BLOCKED, reloaded.getStatus());
         assertEquals("new reason", reloaded.getBlockedReason());
         assertEquals(auditsBefore + 1, statusAudits(task.getId()));
+        assertEquals(activitiesBefore + 1, taskActivityRepository.count());
+        var activity = taskActivityRepository.findAll().stream()
+                .filter(row -> task.getId().equals(row.getTaskId())).reduce((first, second) -> second).orElseThrow();
+        assertEquals(TaskAuditAction.TASK_METADATA_UPDATED, activity.getAction());
+        assertEquals(snapshot(task, TaskStatus.BLOCKED, 0, "old reason"), activity.getOldValue());
+        assertEquals(snapshot(task, TaskStatus.BLOCKED, 0, "new reason"), activity.getNewValue());
     }
 
     @Test
@@ -759,6 +802,14 @@ class TaskStatusUpdateTransactionIntegrationTest {
                 .map(log -> log.getMetadataJson())
                 .findFirst()
                 .orElseThrow();
+    }
+
+    private String snapshot(TaskEntity task, TaskStatus status, int progress, String blockedReason) {
+        String reason = blockedReason == null ? "" : ",\"blockedReason\":\"" + blockedReason + "\"";
+        return "{\"schemaVersion\":1,\"projectId\":" + task.getProjectId()
+                + ",\"title\":\"" + task.getTitle() + "\",\"status\":\"" + status
+                + "\",\"priority\":\"MEDIUM\",\"type\":\"TASK\"" + reason
+                + ",\"progressPercent\":" + progress + "}";
     }
 
     private record StudentFixture(TaskEntity task, Long actorId, Long groupId, Long membershipId) {

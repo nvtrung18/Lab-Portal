@@ -19,6 +19,7 @@ import com.web.labportalbackend.research.repository.MilestoneRepository;
 import com.web.labportalbackend.research.repository.ProjectRepository;
 import com.web.labportalbackend.research.repository.TaskRepository;
 import com.web.labportalbackend.research.service.impl.TaskMetadataPatchService;
+import com.web.labportalbackend.research.service.impl.TaskActivityRecorder;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -47,6 +48,7 @@ class TaskMetadataPatchCycleTest {
     @Mock GroupMemberRepository groupMemberRepository;
     @Mock LaboratoryRepository laboratoryRepository;
     @Mock AuditLogService auditLogService;
+    @Mock TaskActivityRecorder taskActivityRecorder;
     @InjectMocks TaskMetadataPatchService service;
 
     private TaskEntity task;
@@ -98,7 +100,7 @@ class TaskMetadataPatchCycleTest {
         assertThrows(IllegalArgumentException.class, () -> service.patch(20L, parent(6L)));
 
         verify(taskRepository, never()).save(any());
-        verifyNoInteractions(auditLogService);
+        verifyNoInteractions(auditLogService, taskActivityRecorder);
     }
 
     @Test

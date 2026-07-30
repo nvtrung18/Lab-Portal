@@ -13,6 +13,7 @@ import com.web.labportalbackend.research.repository.ReportRepository;
 import com.web.labportalbackend.research.repository.TaskRepository;
 import com.web.labportalbackend.research.security.TaskPermissionHelper;
 import com.web.labportalbackend.research.service.impl.TaskStatusUpdateService;
+import com.web.labportalbackend.research.service.impl.TaskActivityRecorder;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -43,6 +44,7 @@ class TaskStatusUpdateServiceTest {
     @Mock TaskWorkflowService taskWorkflowService;
     @Mock AuditLogService auditLogService;
     @Mock EntityManager entityManager;
+    @Mock TaskActivityRecorder taskActivityRecorder;
 
     private TaskStatusUpdateService service;
     private User manager;
@@ -52,7 +54,8 @@ class TaskStatusUpdateServiceTest {
     @BeforeEach
     void setUp() {
         service = new TaskStatusUpdateService(taskRepository, userRepository, taskPermissionHelper,
-                reportRepository, systemConfigService, taskWorkflowService, auditLogService, entityManager);
+                reportRepository, systemConfigService, taskWorkflowService, auditLogService, entityManager,
+                taskActivityRecorder);
         manager = user(2L, "manager", "LAB_MANAGER");
         initial = task(TaskStatus.TODO, 0);
         locked = task(TaskStatus.TODO, 0);
@@ -118,7 +121,7 @@ class TaskStatusUpdateServiceTest {
                 () -> service.patch(20L, request(TaskStatus.IN_PROGRESS, null)));
 
         verify(taskRepository, never()).findByIdForUpdate(anyLong());
-        verifyNoInteractions(entityManager, taskWorkflowService, auditLogService);
+        verifyNoInteractions(entityManager, taskWorkflowService, auditLogService, taskActivityRecorder);
     }
 
     @Test
@@ -136,6 +139,10 @@ class TaskStatusUpdateServiceTest {
 
     @Test
     void forwardsLockedStateAndInvokesEngineExactlyOnceThenAudits() {
+        TaskActivityRecorder.TaskSnapshot before = snapshot(1);
+        when(taskActivityRecorder.capture(same(locked))).thenReturn(before);
+        User refreshedManager = user(2L, "manager-refreshed", "LAB_MANAGER");
+        when(userRepository.findByIdForStatusAuthorization(2L)).thenReturn(Optional.of(refreshedManager));
         locked.setStatus(TaskStatus.NEEDS_REVISION);
         locked.setProgressPercent(7);
         PatchTaskStatusRequest request = request(TaskStatus.IN_PROGRESS, null);
@@ -157,8 +164,9 @@ class TaskStatusUpdateServiceTest {
         assertTrue(context.getValue().managerInScope());
         verify(entityManager).clear();
         verify(taskRepository).save(locked);
-        verify(auditLogService).log(eq(manager), any(), any(), eq("RESEARCH_TASK"), eq(20L),
+        verify(auditLogService).log(eq(refreshedManager), any(), any(), eq("RESEARCH_TASK"), eq(20L),
                 eq("Updated research task status"), contains("\"progressChanged\":true"));
+        verify(taskActivityRecorder).recordMutation(same(before), same(locked), same(refreshedManager));
         assertEquals(TaskStatus.IN_PROGRESS, locked.getStatus());
         assertEquals(10, locked.getProgressPercent());
         assertEquals(TaskStatus.TODO, initial.getStatus());
@@ -178,6 +186,7 @@ class TaskStatusUpdateServiceTest {
         verify(taskWorkflowService).evaluate(any());
         verify(taskRepository, never()).save(any());
         verifyNoInteractions(auditLogService);
+        verifyNoInteractions(taskActivityRecorder);
         assertEquals(TaskStatus.TODO, locked.getStatus());
         assertEquals(0, locked.getProgressPercent());
     }
@@ -237,6 +246,8 @@ class TaskStatusUpdateServiceTest {
 
     @Test
     void disabledDoneGateForwardsFalseWithoutReportRead() {
+        TaskActivityRecorder.TaskSnapshot before = snapshot(2);
+        when(taskActivityRecorder.capture(same(locked))).thenReturn(before);
         when(systemConfigService.getConfigForStatusAuthorization()).thenReturn(config(false));
         ArgumentCaptor<TaskWorkflowService.TaskTransitionContext> context =
                 ArgumentCaptor.forClass(TaskWorkflowService.TaskTransitionContext.class);
@@ -250,6 +261,7 @@ class TaskStatusUpdateServiceTest {
         assertFalse(context.getValue().requireApprovedReport());
         assertFalse(context.getValue().hasApprovedReport());
         verify(reportRepository, never()).findLatestApprovedForStatusAuthorization(anyLong());
+        verify(taskActivityRecorder).recordMutation(same(before), same(locked), same(manager));
     }
 
     @Test
@@ -266,6 +278,19 @@ class TaskStatusUpdateServiceTest {
         verify(taskRepository).save(locked);
         verify(auditLogService).log(eq(manager), any(), any(), eq("RESEARCH_TASK"), eq(20L),
                 any(), contains("\"blockedReasonChanged\":true"));
+    }
+
+    @Test
+    void blockedStatusForwardsCapturedSnapshotToRecorder() {
+        TaskActivityRecorder.TaskSnapshot before = snapshot(3);
+        when(taskActivityRecorder.capture(same(locked))).thenReturn(before);
+        when(taskWorkflowService.evaluate(any())).thenReturn(new TaskWorkflowService.TaskTransitionDecision(
+                TaskWorkflowService.TaskWorkflowActor.MANAGER,
+                TaskStatus.TODO, TaskStatus.BLOCKED, false, true, "Needs equipment", null));
+
+        service.patch(20L, request(TaskStatus.BLOCKED, "Needs equipment"));
+
+        verify(taskActivityRecorder).recordMutation(same(before), same(locked), same(manager));
     }
 
     @Test
@@ -380,6 +405,11 @@ class TaskStatusUpdateServiceTest {
         request.setStatus(status);
         request.setBlockedReason(reason);
         return request;
+    }
+
+    private TaskActivityRecorder.TaskSnapshot snapshot(int schemaVersion) {
+        return new TaskActivityRecorder.TaskSnapshot(schemaVersion, null, null, null, null, null,
+                "before-" + schemaVersion, null, TaskStatus.TODO, null, null, null, null, 0);
     }
 
     private TaskEntity task(TaskStatus status, int progress) {
