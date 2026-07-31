@@ -1,6 +1,7 @@
 import { apiClient } from '../../../shared/api';
 import type { Response } from '../../../shared/types';
 export { getProjectDashboardStats } from './dashboardApi';
+export * from './taskApi';
 import type {
   CreateGroupPayload,
   CreateProjectPayload,
