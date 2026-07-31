@@ -16,6 +16,8 @@ import com.web.labportalbackend.research.entity.ProjectEntity;
 import com.web.labportalbackend.research.entity.TaskProposalEntity;
 import com.web.labportalbackend.research.enums.GroupRole;
 import com.web.labportalbackend.research.enums.TaskProposalStatus;
+import com.web.labportalbackend.research.exception.TaskProposalNotificationException;
+import com.web.labportalbackend.research.port.ProposalNotificationPort;
 import com.web.labportalbackend.research.repository.GroupMemberRepository;
 import com.web.labportalbackend.research.repository.GroupRepository;
 import com.web.labportalbackend.research.repository.ProjectRepository;
@@ -32,6 +34,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -43,6 +46,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -51,6 +55,7 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.times;
 
 @SpringBootTest
 class TaskProposalReviewTransactionIntegrationTest {
@@ -67,13 +72,15 @@ class TaskProposalReviewTransactionIntegrationTest {
     @Autowired TaskActivityRepository taskActivityRepository;
     @Autowired AuditLogRepository auditLogRepository;
     @MockitoSpyBean AuditLogService auditLogService;
+    @MockitoBean ProposalNotificationPort proposalNotificationPort;
     @Autowired PlatformTransactionManager transactionManager;
     @PersistenceContext EntityManager entityManager;
 
     @AfterEach
     void clearSecurityAndSpies() {
         SecurityContextHolder.clearContext();
-        reset(userRepository, taskRepository, taskProposalRepository, auditLogService);
+        reset(userRepository, taskRepository, taskProposalRepository, auditLogService,
+                proposalNotificationPort);
     }
 
     @Test
@@ -118,6 +125,7 @@ class TaskProposalReviewTransactionIntegrationTest {
         assertTrue(reviewAudits.getFirst().getMetadataJson()
                 .contains("\"createdTaskId\":" + response.getCreatedTask().getId()));
         assertFalse(reviewAudits.getFirst().getMetadataJson().contains("Proposal title"));
+        verify(proposalNotificationPort, times(1)).publish(any());
     }
 
     @Test
@@ -145,6 +153,55 @@ class TaskProposalReviewTransactionIntegrationTest {
                 .orElseThrow();
         assertEquals("{\"decision\":\"REJECTED\"}", audit.getMetadataJson());
         assertFalse(audit.getMetadataJson().contains(proposal.getReason()));
+        verify(proposalNotificationPort, times(1)).publish(any());
+    }
+
+    @Test
+    void approvalNotificationFailureRollsBackTaskProposalAuditAndActivity() {
+        Fixture fixture = fixture("approval-notification-failure", false);
+        Counts before = counts();
+        RuntimeException portFailure = new RuntimeException("approval notification failed");
+        doThrow(portFailure).when(proposalNotificationPort).publish(any());
+
+        TaskProposalNotificationException failure = assertThrows(
+                TaskProposalNotificationException.class,
+                () -> taskProposalService.approve(fixture.proposalId())
+        );
+
+        assertSame(portFailure, failure.getCause());
+        assertCounts(before);
+        TaskProposalEntity proposal =
+                taskProposalRepository.findById(fixture.proposalId()).orElseThrow();
+        assertEquals(TaskProposalStatus.PENDING, proposal.getStatus());
+        assertNull(proposal.getReviewedById());
+        assertNull(proposal.getReviewedAt());
+        assertNull(proposal.getReason());
+        verify(proposalNotificationPort).publish(any());
+    }
+
+    @Test
+    void rejectionNotificationFailureRollsBackProposalAuditTaskAndActivity() {
+        Fixture fixture = fixture("rejection-notification-failure", true);
+        Counts before = counts();
+        RejectTaskProposalRequest request = new RejectTaskProposalRequest();
+        request.setReason("Not ready");
+        RuntimeException portFailure = new RuntimeException("rejection notification failed");
+        doThrow(portFailure).when(proposalNotificationPort).publish(any());
+
+        TaskProposalNotificationException failure = assertThrows(
+                TaskProposalNotificationException.class,
+                () -> taskProposalService.reject(fixture.proposalId(), request)
+        );
+
+        assertSame(portFailure, failure.getCause());
+        assertCounts(before);
+        TaskProposalEntity proposal =
+                taskProposalRepository.findById(fixture.proposalId()).orElseThrow();
+        assertEquals(TaskProposalStatus.PENDING, proposal.getStatus());
+        assertNull(proposal.getReviewedById());
+        assertNull(proposal.getReviewedAt());
+        assertNull(proposal.getReason());
+        verify(proposalNotificationPort).publish(any());
     }
 
     @Test
@@ -312,7 +369,8 @@ class TaskProposalReviewTransactionIntegrationTest {
                 userRepository,
                 taskRepository,
                 taskProposalRepository,
-                auditLogService
+                auditLogService,
+                proposalNotificationPort
         );
         return new Fixture(
                 actor.getId(),

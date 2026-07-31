@@ -28,7 +28,10 @@ import com.web.labportalbackend.research.enums.TaskPriority;
 import com.web.labportalbackend.research.enums.TaskProposalStatus;
 import com.web.labportalbackend.research.enums.TaskStatus;
 import com.web.labportalbackend.research.enums.TaskType;
+import com.web.labportalbackend.research.exception.TaskProposalNotificationException;
 import com.web.labportalbackend.research.exception.TaskProposalReviewConflictException;
+import com.web.labportalbackend.research.port.ProposalNotificationEvent;
+import com.web.labportalbackend.research.port.ProposalNotificationPort;
 import com.web.labportalbackend.research.repository.GroupMemberRepository;
 import com.web.labportalbackend.research.repository.GroupRepository;
 import com.web.labportalbackend.research.repository.MilestoneRepository;
@@ -70,6 +73,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 
 class TaskProposalServiceImplTest {
@@ -83,6 +87,7 @@ class TaskProposalServiceImplTest {
     private final TaskRepository taskRepository = mock(TaskRepository.class);
     private final TaskProposalRepository taskProposalRepository = mock(TaskProposalRepository.class);
     private final AuditLogService auditLogService = mock(AuditLogService.class);
+    private final ProposalNotificationPort proposalNotificationPort = mock(ProposalNotificationPort.class);
     private final EntityManager entityManager = mock(EntityManager.class);
     private ObjectMapper objectMapper;
     private TaskProposalServiceImpl service;
@@ -139,6 +144,125 @@ class TaskProposalServiceImplTest {
                 proposal.getId(),
                 "Submitted task proposal"
         );
+        ArgumentCaptor<ProposalNotificationEvent> eventCaptor =
+                ArgumentCaptor.forClass(ProposalNotificationEvent.class);
+        verify(proposalNotificationPort).publish(eventCaptor.capture());
+        ProposalNotificationEvent event = eventCaptor.getValue();
+        assertEquals(1, event.schemaVersion());
+        assertEquals(ProposalNotificationEvent.ProposalNotificationType.SUBMITTED, event.type());
+        assertEquals(proposal.getId(), event.proposalId());
+        assertEquals(fixture.actor().getId(), event.actorId());
+        assertEquals(fixture.project().getId(), event.projectId());
+        assertEquals(fixture.group().getId(), event.groupId());
+        assertEquals(List.of(), event.recipientUserIds());
+        assertNull(event.createdTaskId());
+        assertEquals(proposal.getCreatedAt(), event.occurredAt());
+    }
+
+    @Test
+    void submissionDeduplicatesAndSortsExactGroupLeadersAndUsableRoleQualifiedManager() {
+        Fixture fixture = stubValidScope(GroupRole.MEMBER, false);
+        User manager = usableUser(11L, "manager");
+        manager.addRole(new Role("LAB_MANAGER", "Lab manager"));
+        fixture.lab().setManager(manager);
+        when(groupMemberRepository.findActiveLeaderUserIdsForProposalNotification(
+                fixture.group().getId())).thenReturn(List.of(12L, manager.getId()));
+        when(taskProposalRepository.saveAndFlush(any()))
+                .thenAnswer(invocation -> saved(invocation.getArgument(0)));
+
+        service.submit(request());
+
+        ArgumentCaptor<ProposalNotificationEvent> eventCaptor =
+                ArgumentCaptor.forClass(ProposalNotificationEvent.class);
+        verify(proposalNotificationPort).publish(eventCaptor.capture());
+        assertEquals(List.of(11L, 12L), eventCaptor.getValue().recipientUserIds());
+        assertThrows(UnsupportedOperationException.class,
+                () -> eventCaptor.getValue().recipientUserIds().add(13L));
+        verify(groupMemberRepository).findActiveLeaderUserIdsForProposalNotification(
+                fixture.group().getId());
+    }
+
+    @Test
+    void submissionExcludesUnusableOrUnqualifiedManagerAndStillPublishesEmptyRecipients() {
+        Fixture fixture = stubValidScope(GroupRole.MEMBER, false);
+        User manager = usableUser(11L, "manager");
+        fixture.lab().setManager(manager);
+        when(taskProposalRepository.saveAndFlush(any()))
+                .thenAnswer(invocation -> saved(invocation.getArgument(0)));
+
+        service.submit(request());
+
+        ArgumentCaptor<ProposalNotificationEvent> eventCaptor =
+                ArgumentCaptor.forClass(ProposalNotificationEvent.class);
+        verify(proposalNotificationPort).publish(eventCaptor.capture());
+        assertEquals(List.of(), eventCaptor.getValue().recipientUserIds());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"inactive", "deleted", "suspended"})
+    void submissionExcludesUnusableRoleQualifiedManager(String state) {
+        Fixture fixture = stubValidScope(GroupRole.MEMBER, false);
+        User manager = usableUser(11L, "manager");
+        manager.addRole(new Role("LAB_MANAGER", "Lab manager"));
+        switch (state) {
+            case "inactive" -> manager.setActive(false);
+            case "deleted" -> manager.setDeleted(true);
+            case "suspended" -> manager.setStatus(UserStatus.SUSPENDED);
+            default -> throw new AssertionError("Unexpected manager state: " + state);
+        }
+        fixture.lab().setManager(manager);
+        when(taskProposalRepository.saveAndFlush(any()))
+                .thenAnswer(invocation -> saved(invocation.getArgument(0)));
+
+        service.submit(request());
+
+        ArgumentCaptor<ProposalNotificationEvent> eventCaptor =
+                ArgumentCaptor.forClass(ProposalNotificationEvent.class);
+        verify(proposalNotificationPort).publish(eventCaptor.capture());
+        assertEquals(List.of(), eventCaptor.getValue().recipientUserIds());
+    }
+
+    @Test
+    void submissionNotificationFailureIsCausePreservingAndOccursAfterFlushAndAudit() {
+        Fixture fixture = stubValidScope(GroupRole.MEMBER, false);
+        when(taskProposalRepository.saveAndFlush(any()))
+                .thenAnswer(invocation -> saved(invocation.getArgument(0)));
+        RuntimeException portFailure = new RuntimeException("notification backend unavailable");
+        doThrow(portFailure).when(proposalNotificationPort).publish(any());
+
+        TaskProposalNotificationException failure = assertThrows(
+                TaskProposalNotificationException.class,
+                () -> service.submit(request())
+        );
+
+        assertEquals(portFailure, failure.getCause());
+        RuntimeException boundaryFailure = failure;
+        assertFalse(boundaryFailure instanceof IllegalArgumentException);
+        assertFalse(boundaryFailure instanceof IllegalStateException);
+        InOrder order = inOrder(taskProposalRepository, auditLogService, proposalNotificationPort);
+        order.verify(taskProposalRepository).saveAndFlush(any());
+        order.verify(auditLogService).log(
+                fixture.actor(), AuditAction.CREATE_TASK_PROPOSAL, AuditModule.RESEARCH,
+                "TASK_PROPOSAL", 100L, "Submitted task proposal");
+        order.verify(proposalNotificationPort).publish(any());
+    }
+
+    @Test
+    void eventConstructionFailureIsWrappedWithExactCause() {
+        stubValidScope(GroupRole.MEMBER, false);
+        when(taskProposalRepository.saveAndFlush(any())).thenAnswer(invocation -> {
+            TaskProposalEntity proposal = invocation.getArgument(0);
+            proposal.setCreatedAt(Instant.parse("2026-07-30T08:00:00Z"));
+            return proposal;
+        });
+
+        TaskProposalNotificationException failure = assertThrows(
+                TaskProposalNotificationException.class,
+                () -> service.submit(request())
+        );
+
+        assertInstanceOf(NullPointerException.class, failure.getCause());
+        verifyNoInteractions(proposalNotificationPort);
     }
 
     @Test
@@ -164,6 +288,8 @@ class TaskProposalServiceImplTest {
 
         service.submit(request);
 
+        ArgumentCaptor<ProposalNotificationEvent> eventCaptor =
+                ArgumentCaptor.forClass(ProposalNotificationEvent.class);
         InOrder order = inOrder(
                 userRepository,
                 projectRepository,
@@ -173,7 +299,8 @@ class TaskProposalServiceImplTest {
                 milestoneRepository,
                 taskRepository,
                 taskProposalRepository,
-                auditLogService
+                auditLogService,
+                proposalNotificationPort
         );
         order.verify(userRepository).findByUsername("student");
         order.verify(userRepository).findByIdForStatusAuthorization(fixture.actor().getId());
@@ -187,6 +314,7 @@ class TaskProposalServiceImplTest {
         order.verify(taskProposalRepository).saveAndFlush(any());
         order.verify(auditLogService).log(
                 any(), any(), any(), any(), any(), any());
+        order.verify(proposalNotificationPort).publish(eventCaptor.capture());
     }
 
     @Test
@@ -247,7 +375,8 @@ class TaskProposalServiceImplTest {
         assertThrows(AccessDeniedException.class, () -> service.submit(request()));
 
         verifyNoInteractions(projectRepository, groupRepository, laboratoryRepository,
-                groupMemberRepository, taskProposalRepository, auditLogService);
+                groupMemberRepository, taskProposalRepository, auditLogService,
+                proposalNotificationPort);
     }
 
     @ParameterizedTest
@@ -267,7 +396,8 @@ class TaskProposalServiceImplTest {
         assertThrows(AccessDeniedException.class, () -> service.submit(request()));
 
         verifyNoInteractions(projectRepository, groupRepository, laboratoryRepository,
-                groupMemberRepository, taskProposalRepository, auditLogService);
+                groupMemberRepository, taskProposalRepository, auditLogService,
+                proposalNotificationPort);
     }
 
     @Test
@@ -320,7 +450,7 @@ class TaskProposalServiceImplTest {
         assertThrows(RuntimeException.class, () -> service.submit(submission));
 
         verify(taskProposalRepository, never()).saveAndFlush(any());
-        verifyNoInteractions(auditLogService);
+        verifyNoInteractions(auditLogService, proposalNotificationPort);
     }
 
     @ParameterizedTest
@@ -343,7 +473,7 @@ class TaskProposalServiceImplTest {
         assertThrows(ResourceNotFoundException.class, () -> service.submit(request()));
 
         verify(taskProposalRepository, never()).saveAndFlush(any());
-        verifyNoInteractions(auditLogService);
+        verifyNoInteractions(auditLogService, proposalNotificationPort);
     }
 
     @Test
@@ -359,7 +489,8 @@ class TaskProposalServiceImplTest {
         assertThrows(IllegalArgumentException.class, () -> service.submit(request()));
 
         verify(laboratoryRepository, never()).findByIdForStatusAuthorization(anyLong());
-        verifyNoInteractions(groupMemberRepository, taskProposalRepository, auditLogService);
+        verifyNoInteractions(groupMemberRepository, taskProposalRepository, auditLogService,
+                proposalNotificationPort);
     }
 
     @ParameterizedTest
@@ -380,7 +511,8 @@ class TaskProposalServiceImplTest {
         assertThrows(IllegalArgumentException.class, () -> service.submit(request()));
 
         verify(laboratoryRepository, never()).findByIdForStatusAuthorization(anyLong());
-        verifyNoInteractions(groupMemberRepository, taskProposalRepository, auditLogService);
+        verifyNoInteractions(groupMemberRepository, taskProposalRepository, auditLogService,
+                proposalNotificationPort);
     }
 
     @Test
@@ -394,7 +526,7 @@ class TaskProposalServiceImplTest {
         assertThrows(ResourceNotFoundException.class, () -> service.submit(milestoneRequest));
 
         verify(taskProposalRepository, never()).saveAndFlush(any());
-        verifyNoInteractions(auditLogService);
+        verifyNoInteractions(auditLogService, proposalNotificationPort);
     }
 
     @Test
@@ -411,7 +543,7 @@ class TaskProposalServiceImplTest {
         assertThrows(IllegalArgumentException.class, () -> service.submit(milestoneRequest));
 
         verify(taskProposalRepository, never()).saveAndFlush(any());
-        verifyNoInteractions(auditLogService);
+        verifyNoInteractions(auditLogService, proposalNotificationPort);
     }
 
     @Test
@@ -436,7 +568,7 @@ class TaskProposalServiceImplTest {
         assertThrows(IllegalArgumentException.class, () -> service.submit(milestoneRequest));
 
         verify(taskProposalRepository, never()).saveAndFlush(any());
-        verifyNoInteractions(auditLogService);
+        verifyNoInteractions(auditLogService, proposalNotificationPort);
     }
 
     @Test
@@ -450,7 +582,7 @@ class TaskProposalServiceImplTest {
         assertThrows(ResourceNotFoundException.class, () -> service.submit(parentRequest));
 
         verify(taskProposalRepository, never()).saveAndFlush(any());
-        verifyNoInteractions(auditLogService);
+        verifyNoInteractions(auditLogService, proposalNotificationPort);
     }
 
     @ParameterizedTest
@@ -470,7 +602,7 @@ class TaskProposalServiceImplTest {
         assertThrows(IllegalArgumentException.class, () -> service.submit(parentRequest));
 
         verify(taskProposalRepository, never()).saveAndFlush(any());
-        verifyNoInteractions(auditLogService);
+        verifyNoInteractions(auditLogService, proposalNotificationPort);
     }
 
     @Test
@@ -489,7 +621,7 @@ class TaskProposalServiceImplTest {
         assertInstanceOf(JsonProcessingException.class, failure.getCause());
         verify(userRepository).findByUsername("student");
         verify(userRepository, never()).findByIdForStatusAuthorization(anyLong());
-        verifyNoInteractions(taskProposalRepository, auditLogService);
+        verifyNoInteractions(taskProposalRepository, auditLogService, proposalNotificationPort);
     }
 
     @Test
@@ -548,6 +680,8 @@ class TaskProposalServiceImplTest {
         verify(taskProposalRepository, times(1))
                 .saveAndFlush(fixture.proposal());
 
+        ArgumentCaptor<ProposalNotificationEvent> eventCaptor =
+                ArgumentCaptor.forClass(ProposalNotificationEvent.class);
         InOrder order = inOrder(
                 userRepository,
                 entityManager,
@@ -557,7 +691,8 @@ class TaskProposalServiceImplTest {
                 laboratoryRepository,
                 groupMemberRepository,
                 taskRepository,
-                auditLogService
+                auditLogService,
+                proposalNotificationPort
         );
         order.verify(userRepository).findByUsername("student");
         order.verify(entityManager).clear();
@@ -579,7 +714,39 @@ class TaskProposalServiceImplTest {
                 "Approved task proposal",
                 "{\"decision\":\"APPROVED\",\"createdTaskId\":501}"
         );
+        order.verify(proposalNotificationPort).publish(eventCaptor.capture());
+        ProposalNotificationEvent event = eventCaptor.getValue();
+        assertEquals(ProposalNotificationEvent.ProposalNotificationType.APPROVED, event.type());
+        assertEquals(List.of(8L), event.recipientUserIds());
+        assertEquals(501L, event.createdTaskId());
+        assertEquals(fixture.proposal().getReviewedAt(), event.occurredAt());
         verify(entityManager).clear();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"inactive", "deleted", "suspended"})
+    void rejectionPublishesOnceWithEmptyRecipientsWhenOriginalProposerIsUnusable(String state) {
+        ReviewFixture fixture = stubReviewScope(false, TaskProposalStatus.PENDING);
+        User inactiveProposer = usableUser(fixture.proposal().getProposedById(), "inactive-proposer");
+        switch (state) {
+            case "inactive" -> inactiveProposer.setActive(false);
+            case "deleted" -> inactiveProposer.setDeleted(true);
+            case "suspended" -> inactiveProposer.setStatus(UserStatus.SUSPENDED);
+            default -> throw new AssertionError("Unexpected proposer state: " + state);
+        }
+        when(userRepository.findById(fixture.proposal().getProposedById()))
+                .thenReturn(Optional.of(inactiveProposer));
+        when(taskProposalRepository.saveAndFlush(fixture.proposal()))
+                .thenReturn(fixture.proposal());
+        RejectTaskProposalRequest request = new RejectTaskProposalRequest();
+        request.setReason("Not ready");
+
+        service.reject(fixture.proposal().getId(), request);
+
+        ArgumentCaptor<ProposalNotificationEvent> eventCaptor =
+                ArgumentCaptor.forClass(ProposalNotificationEvent.class);
+        verify(proposalNotificationPort, times(1)).publish(eventCaptor.capture());
+        assertEquals(List.of(), eventCaptor.getValue().recipientUserIds());
     }
 
     @Test
@@ -601,10 +768,16 @@ class TaskProposalServiceImplTest {
         assertNull(response.getCreatedTask());
         verify(groupMemberRepository).findActiveForStatusAuthorization(
                 fixture.group().getId(), fixture.freshActor().getId());
-        verify(taskProposalRepository, times(1))
-                .saveAndFlush(fixture.proposal());
         verifyNoInteractions(taskRepository);
-        verify(auditLogService, times(1)).log(
+        ArgumentCaptor<ProposalNotificationEvent> eventCaptor =
+                ArgumentCaptor.forClass(ProposalNotificationEvent.class);
+        InOrder order = inOrder(
+                taskProposalRepository,
+                auditLogService,
+                proposalNotificationPort
+        );
+        order.verify(taskProposalRepository).saveAndFlush(fixture.proposal());
+        order.verify(auditLogService).log(
                 fixture.freshActor(),
                 AuditAction.REVIEW_TASK_PROPOSAL,
                 AuditModule.RESEARCH,
@@ -613,6 +786,12 @@ class TaskProposalServiceImplTest {
                 "Rejected task proposal",
                 "{\"decision\":\"REJECTED\"}"
         );
+        order.verify(proposalNotificationPort).publish(eventCaptor.capture());
+        ProposalNotificationEvent event = eventCaptor.getValue();
+        assertEquals(ProposalNotificationEvent.ProposalNotificationType.REJECTED, event.type());
+        assertEquals(List.of(8L), event.recipientUserIds());
+        assertNull(event.createdTaskId());
+        assertEquals(fixture.proposal().getReviewedAt(), event.occurredAt());
     }
 
     @Test
@@ -839,7 +1018,7 @@ class TaskProposalServiceImplTest {
         order.verify(taskProposalRepository).findByIdForReview(fixture.proposal().getId());
         order.verify(userRepository).findByIdForStatusAuthorization(fixture.freshActor().getId());
         verify(taskProposalRepository, never()).saveAndFlush(any());
-        verifyNoInteractions(taskRepository, auditLogService);
+        verifyNoInteractions(taskRepository, auditLogService, proposalNotificationPort);
     }
 
     @Test
@@ -855,7 +1034,7 @@ class TaskProposalServiceImplTest {
         );
 
         verify(taskProposalRepository, never()).saveAndFlush(any());
-        verifyNoInteractions(taskRepository, auditLogService);
+        verifyNoInteractions(taskRepository, auditLogService, proposalNotificationPort);
     }
 
     @Test
@@ -868,7 +1047,7 @@ class TaskProposalServiceImplTest {
         );
 
         verify(taskProposalRepository, never()).saveAndFlush(any());
-        verifyNoInteractions(taskRepository, auditLogService);
+        verifyNoInteractions(taskRepository, auditLogService, proposalNotificationPort);
     }
 
     @Test
@@ -906,7 +1085,7 @@ class TaskProposalServiceImplTest {
         assertFalse(failure instanceof IllegalArgumentException);
         assertFalse(failure instanceof IllegalStateException);
         verify(taskProposalRepository, never()).saveAndFlush(any());
-        verifyNoInteractions(taskRepository, auditLogService);
+        verifyNoInteractions(taskRepository, auditLogService, proposalNotificationPort);
     }
 
     @Test
@@ -938,6 +1117,7 @@ class TaskProposalServiceImplTest {
                 taskRepository,
                 taskProposalRepository,
                 auditLogService,
+                proposalNotificationPort,
                 entityManager
         );
     }
@@ -953,6 +1133,7 @@ class TaskProposalServiceImplTest {
                 taskRepository,
                 taskProposalRepository,
                 auditLogService,
+                proposalNotificationPort,
                 mapper,
                 entityManager
         );
@@ -967,7 +1148,7 @@ class TaskProposalServiceImplTest {
         assertNull(fixture.proposal().getReason());
         assertNull(fixture.proposal().getReviewedAt());
         verify(taskProposalRepository, never()).saveAndFlush(any());
-        verifyNoInteractions(taskRepository, auditLogService);
+        verifyNoInteractions(taskRepository, auditLogService, proposalNotificationPort);
     }
 
     private Fixture stubValidScope(GroupRole groupRole, boolean legacyAssociation) {
@@ -1000,6 +1181,8 @@ class TaskProposalServiceImplTest {
         when(laboratoryRepository.findByIdForStatusAuthorization(lab.getId())).thenReturn(Optional.of(lab));
         when(groupMemberRepository.findActiveForStatusAuthorization(group.getId(), actor.getId()))
                 .thenReturn(Optional.of(membership));
+        when(groupMemberRepository.findActiveLeaderUserIdsForProposalNotification(group.getId()))
+                .thenReturn(List.of());
         return new Fixture(actor, lab, project, group);
     }
 
@@ -1057,6 +1240,8 @@ class TaskProposalServiceImplTest {
                 .thenReturn(Optional.of(proposal));
         when(userRepository.findByIdForStatusAuthorization(freshActor.getId()))
                 .thenReturn(Optional.of(freshActor));
+        when(userRepository.findById(proposal.getProposedById()))
+                .thenReturn(Optional.of(usableUser(proposal.getProposedById(), "proposer")));
         when(projectRepository.findByIdForStatusAuthorization(project.getId()))
                 .thenReturn(Optional.of(project));
         when(groupRepository.findByIdForStatusAuthorization(group.getId()))
@@ -1083,16 +1268,21 @@ class TaskProposalServiceImplTest {
     }
 
     private User actor() {
-        User actor = new User();
-        actor.setId(7L);
-        actor.setUsername("student");
-        actor.setEmail("student@example.test");
-        actor.setPassword("password");
-        actor.setStatus(UserStatus.ACTIVE);
-        actor.setActive(true);
-        actor.setDeleted(false);
+        User actor = usableUser(7L, "student");
         actor.addRole(new Role("STUDENT", "Student"));
         return actor;
+    }
+
+    private User usableUser(Long id, String username) {
+        User user = new User();
+        user.setId(id);
+        user.setUsername(username);
+        user.setEmail(username + "@example.test");
+        user.setPassword("password");
+        user.setStatus(UserStatus.ACTIVE);
+        user.setActive(true);
+        user.setDeleted(false);
+        return user;
     }
 
     private CreateTaskProposalRequest request() {

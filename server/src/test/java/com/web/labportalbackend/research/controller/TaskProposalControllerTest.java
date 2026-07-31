@@ -9,6 +9,7 @@ import com.web.labportalbackend.research.enums.TaskPriority;
 import com.web.labportalbackend.research.enums.TaskProposalStatus;
 import com.web.labportalbackend.research.enums.TaskStatus;
 import com.web.labportalbackend.research.enums.TaskType;
+import com.web.labportalbackend.research.exception.TaskProposalNotificationException;
 import com.web.labportalbackend.research.exception.TaskProposalReviewConflictException;
 import com.web.labportalbackend.research.service.TaskProposalService;
 import org.junit.jupiter.api.Test;
@@ -30,6 +31,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.time.Instant;
 
 import static org.hamcrest.Matchers.aMapWithSize;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -96,6 +99,24 @@ class TaskProposalControllerTest {
                 request.getProjectId().equals(20L)
                         && request.getGroupId().equals(30L)
                         && request.getTitle().equals("Proposal title")));
+    }
+
+    @Test
+    void notificationFailureUsesGenericServerErrorWithoutLeakingInternalDetails() throws Exception {
+        RuntimeException internalCause =
+                new RuntimeException("distinctive adapter recipient failure");
+        when(taskProposalService.submit(any()))
+                .thenThrow(new TaskProposalNotificationException(internalCause));
+
+        mockMvc.perform(request(VALID_BODY).with(user("student").roles("STUDENT")))
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.code").value(500))
+                .andExpect(jsonPath("$.message")
+                        .value("An unexpected error occurred. Please try again later."))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.content()
+                        .string(not(containsString("Task proposal notification failed"))))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.content()
+                        .string(not(containsString("distinctive adapter recipient failure"))));
     }
 
     @Test
