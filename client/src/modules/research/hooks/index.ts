@@ -41,6 +41,8 @@ import {
   getGroupsByTopic,
   getProjectsByGroup,
   getResearchTopicsByLab,
+  getProjectTaskBoard,
+  getProjectTaskBacklog,
 } from '../api';
 import {
   getGroupEvaluations,
@@ -73,6 +75,8 @@ import type {
   ManagerReportDecision,
   LeaderReportDecision,
   ResearchLogFilters,
+  ProjectTaskBoardResponse,
+  TaskBacklogPageResponse,
 } from '../types';
 import { updateTaskStatusInCache } from '../taskBoardHelpers';
 
@@ -86,6 +90,41 @@ function getErrorMessage(error: unknown, fallback: string) {
 
 function isValidId(value?: number | null) {
   return typeof value === 'number' && Number.isFinite(value) && value > 0;
+}
+
+function shouldRetryProjectTaskQuery(failureCount: number, error: unknown) {
+  if (axios.isAxiosError(error)) {
+    const status = error.response?.status;
+    if (status === 403 || status === 404) return false;
+    return (!status || status >= 500) && failureCount < 1;
+  }
+  return failureCount < 1;
+}
+
+export function useProjectTaskBoard(projectId?: number | null) {
+  return useQuery<ProjectTaskBoardResponse>({
+    queryKey: queryKeys.research.projectTaskBoard(projectId as number),
+    queryFn: () => getProjectTaskBoard(projectId as number),
+    enabled: isValidId(projectId),
+    retry: shouldRetryProjectTaskQuery,
+    staleTime: 30000,
+    refetchOnReconnect: true,
+    refetchOnWindowFocus: true,
+  });
+}
+
+export function useProjectTaskBacklog(projectId?: number | null, page = 0, size = 20) {
+  const boundedPage = Math.max(0, Math.floor(page));
+  const boundedSize = Math.min(100, Math.max(1, Math.floor(size)));
+  return useQuery<TaskBacklogPageResponse>({
+    queryKey: queryKeys.research.projectTaskBacklog(projectId as number, boundedPage, boundedSize),
+    queryFn: () => getProjectTaskBacklog(projectId as number, { page: boundedPage, size: boundedSize }),
+    enabled: isValidId(projectId),
+    retry: shouldRetryProjectTaskQuery,
+    staleTime: 30000,
+    refetchOnReconnect: true,
+    refetchOnWindowFocus: true,
+  });
 }
 
 export function useResearchTopicsByLab(labId?: number | null) {
