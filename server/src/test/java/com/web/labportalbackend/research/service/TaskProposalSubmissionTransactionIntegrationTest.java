@@ -13,6 +13,8 @@ import com.web.labportalbackend.research.dto.request.CreateTaskProposalRequest;
 import com.web.labportalbackend.research.entity.GroupEntity;
 import com.web.labportalbackend.research.entity.GroupMemberEntity;
 import com.web.labportalbackend.research.entity.ProjectEntity;
+import com.web.labportalbackend.research.exception.TaskProposalNotificationException;
+import com.web.labportalbackend.research.port.ProposalNotificationPort;
 import com.web.labportalbackend.research.repository.GroupMemberRepository;
 import com.web.labportalbackend.research.repository.GroupRepository;
 import com.web.labportalbackend.research.repository.ProjectRepository;
@@ -30,6 +32,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -46,6 +49,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.clearInvocations;
@@ -54,6 +58,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.times;
 
 @SpringBootTest
 class TaskProposalSubmissionTransactionIntegrationTest {
@@ -70,13 +75,15 @@ class TaskProposalSubmissionTransactionIntegrationTest {
     @Autowired TaskActivityRepository taskActivityRepository;
     @Autowired TaskRepository taskRepository;
     @MockitoSpyBean AuditLogService auditLogService;
+    @MockitoBean ProposalNotificationPort proposalNotificationPort;
     @Autowired PlatformTransactionManager transactionManager;
     @PersistenceContext EntityManager entityManager;
 
     @AfterEach
     void clearSecurityAndSpies() {
         SecurityContextHolder.clearContext();
-        reset(userRepository, taskProposalRepository, auditLogRepository, auditLogService);
+        reset(userRepository, taskProposalRepository, auditLogRepository, auditLogService,
+                proposalNotificationPort);
     }
 
     @Test
@@ -100,6 +107,25 @@ class TaskProposalSubmissionTransactionIntegrationTest {
         assertEquals(fixture.actorId(), audit.getActorId());
         assertEquals("TASK_PROPOSAL", audit.getTargetType());
         assertEquals("Submitted task proposal", audit.getDescription());
+        verify(proposalNotificationPort, times(1)).publish(any());
+    }
+
+    @Test
+    void notificationFailureAfterFlushAndAuditRollsBackProposalAuditTaskAndActivity() {
+        Fixture fixture = fixture("notification-failure");
+        Counts before = counts();
+        RuntimeException portFailure = new RuntimeException("notification port failed");
+        doThrow(portFailure).when(proposalNotificationPort).publish(any());
+
+        TaskProposalNotificationException failure = assertThrows(
+                TaskProposalNotificationException.class,
+                () -> taskProposalService.submit(request(fixture))
+        );
+
+        assertSame(portFailure, failure.getCause());
+        verify(auditLogRepository).save(any());
+        verify(proposalNotificationPort).publish(any());
+        assertCounts(before);
     }
 
     @Test
@@ -147,6 +173,7 @@ class TaskProposalSubmissionTransactionIntegrationTest {
         assertEquals(before.audits() + 2, auditLogRepository.count());
         assertEquals(before.tasks(), taskRepository.count());
         assertEquals(before.activities(), taskActivityRepository.count());
+        verify(proposalNotificationPort, times(2)).publish(any());
     }
 
     @ParameterizedTest
@@ -295,7 +322,8 @@ class TaskProposalSubmissionTransactionIntegrationTest {
                 .build();
         groupMemberRepository.save(membership);
         authenticate(actor.getUsername());
-        clearInvocations(userRepository, taskProposalRepository, auditLogService);
+        clearInvocations(userRepository, taskProposalRepository, auditLogService,
+                proposalNotificationPort);
         return new Fixture(
                 actor.getId(),
                 actor.getUsername(),

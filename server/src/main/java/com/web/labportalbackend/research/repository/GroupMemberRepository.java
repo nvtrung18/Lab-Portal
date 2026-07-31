@@ -15,6 +15,23 @@ import java.util.Optional;
 
 @Repository
 public interface GroupMemberRepository extends JpaRepository<GroupMemberEntity, Long> {
+    @Query("""
+            SELECT DISTINCT u.id
+            FROM GroupMemberEntity gm
+            JOIN gm.group g
+            JOIN gm.user u
+            WHERE g.id = :groupId
+              AND gm.role = com.web.labportalbackend.research.enums.GroupRole.LEADER
+              AND gm.active = true
+              AND gm.deleted = false
+              AND g.active = true
+              AND g.deleted = false
+              AND u.active = true
+              AND u.deleted = false
+              AND u.status = com.web.labportalbackend.common.enums.UserStatus.ACTIVE
+            """)
+    List<Long> findActiveLeaderUserIdsForProposalNotification(@Param("groupId") Long groupId);
+
     @Lock(LockModeType.PESSIMISTIC_READ)
     @Query("""
             SELECT gm

@@ -30,8 +30,11 @@ import com.web.labportalbackend.research.enums.TaskPriority;
 import com.web.labportalbackend.research.enums.TaskProposalStatus;
 import com.web.labportalbackend.research.enums.TaskStatus;
 import com.web.labportalbackend.research.enums.TaskType;
+import com.web.labportalbackend.research.exception.TaskProposalNotificationException;
 import com.web.labportalbackend.research.exception.TaskProposalReviewConflictException;
 import com.web.labportalbackend.research.mapper.TaskMapper;
+import com.web.labportalbackend.research.port.ProposalNotificationEvent;
+import com.web.labportalbackend.research.port.ProposalNotificationPort;
 import com.web.labportalbackend.research.repository.GroupMemberRepository;
 import com.web.labportalbackend.research.repository.GroupRepository;
 import com.web.labportalbackend.research.repository.MilestoneRepository;
@@ -49,8 +52,15 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.TreeSet;
+
+import static com.web.labportalbackend.research.port.ProposalNotificationEvent.ProposalNotificationType.APPROVED;
+import static com.web.labportalbackend.research.port.ProposalNotificationEvent.ProposalNotificationType.REJECTED;
+import static com.web.labportalbackend.research.port.ProposalNotificationEvent.ProposalNotificationType.SUBMITTED;
 
 @Service
 @RequiredArgsConstructor
@@ -65,6 +75,7 @@ public class TaskProposalServiceImpl implements TaskProposalService {
     private final TaskRepository taskRepository;
     private final TaskProposalRepository taskProposalRepository;
     private final AuditLogService auditLogService;
+    private final ProposalNotificationPort proposalNotificationPort;
     private final ObjectMapper objectMapper;
     private final EntityManager entityManager;
 
@@ -92,7 +103,7 @@ public class TaskProposalServiceImpl implements TaskProposalService {
                 .orElseThrow(() -> new ResourceNotFoundException("Research group", payload.groupId()));
 
         Long sharedLabId = validateProjectGroupScope(project, group);
-        laboratoryRepository.findByIdForStatusAuthorization(sharedLabId)
+        Laboratory laboratory = laboratoryRepository.findByIdForStatusAuthorization(sharedLabId)
                 .orElseThrow(() -> new ResourceNotFoundException("Laboratory", sharedLabId));
 
         GroupMemberEntity membership = groupMemberRepository
@@ -105,6 +116,7 @@ public class TaskProposalServiceImpl implements TaskProposalService {
 
         validateMilestone(payload, project, group);
         validateParent(payload, project, group);
+        List<Long> recipientUserIds = submissionRecipientUserIds(group, laboratory);
 
         TaskProposalEntity proposal = TaskProposalEntity.builder()
                 .proposedById(actor.getId())
@@ -129,6 +141,14 @@ public class TaskProposalServiceImpl implements TaskProposalService {
                 saved.getId(),
                 "Submitted task proposal"
         );
+        publishNotification(
+                SUBMITTED,
+                saved,
+                actor.getId(),
+                recipientUserIds,
+                null,
+                saved.getCreatedAt()
+        );
         return toResponse(saved, payload);
     }
 
@@ -140,6 +160,7 @@ public class TaskProposalServiceImpl implements TaskProposalService {
 
         validateReviewMilestone(payload, context.project(), context.group());
         validateReviewParent(payload, context.project(), context.group());
+        List<Long> recipientUserIds = reviewRecipientUserIds(context.proposal());
 
         TaskEntity task = TaskEntity.builder()
                 .projectId(context.project().getId())
@@ -179,6 +200,14 @@ public class TaskProposalServiceImpl implements TaskProposalService {
                         savedTask.getId()
                 ))
         );
+        publishNotification(
+                APPROVED,
+                proposal,
+                context.actor().getId(),
+                recipientUserIds,
+                savedTask.getId(),
+                reviewedAt
+        );
 
         return reviewResponse(proposal, TaskMapper.toResponse(savedTask));
     }
@@ -191,6 +220,7 @@ public class TaskProposalServiceImpl implements TaskProposalService {
     ) {
         String reason = normalizeRejectionReason(request);
         ReviewContext context = loadAuthorizedReview(proposalId);
+        List<Long> recipientUserIds = reviewRecipientUserIds(context.proposal());
 
         Instant reviewedAt = Instant.now();
         TaskProposalEntity proposal = context.proposal();
@@ -212,8 +242,63 @@ public class TaskProposalServiceImpl implements TaskProposalService {
                         null
                 ))
         );
+        publishNotification(
+                REJECTED,
+                proposal,
+                context.actor().getId(),
+                recipientUserIds,
+                null,
+                reviewedAt
+        );
 
         return reviewResponse(proposal, null);
+    }
+
+    private List<Long> submissionRecipientUserIds(
+            GroupEntity group,
+            Laboratory laboratory
+    ) {
+        TreeSet<Long> recipientUserIds = new TreeSet<>(
+                groupMemberRepository.findActiveLeaderUserIdsForProposalNotification(group.getId())
+        );
+        User manager = laboratory.getManager();
+        if (manager != null && isUsableActor(manager) && manager.hasRole("LAB_MANAGER")) {
+            recipientUserIds.add(manager.getId());
+        }
+        return new ArrayList<>(recipientUserIds);
+    }
+
+    private List<Long> reviewRecipientUserIds(TaskProposalEntity proposal) {
+        return userRepository.findById(proposal.getProposedById())
+                .filter(this::isUsableActor)
+                .map(User::getId)
+                .map(List::of)
+                .orElseGet(List::of);
+    }
+
+    private void publishNotification(
+            ProposalNotificationEvent.ProposalNotificationType type,
+            TaskProposalEntity proposal,
+            Long actorId,
+            List<Long> recipientUserIds,
+            Long createdTaskId,
+            Instant occurredAt
+    ) {
+        try {
+            proposalNotificationPort.publish(new ProposalNotificationEvent(
+                    1,
+                    type,
+                    proposal.getId(),
+                    actorId,
+                    proposal.getProjectId(),
+                    proposal.getGroupId(),
+                    recipientUserIds,
+                    createdTaskId,
+                    occurredAt
+            ));
+        } catch (RuntimeException ex) {
+            throw new TaskProposalNotificationException(ex);
+        }
     }
 
     private ReviewContext loadAuthorizedReview(Long proposalId) {
