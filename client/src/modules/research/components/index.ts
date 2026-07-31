@@ -24,6 +24,7 @@ export * from './LogPage';
 export * from './ManagerPendingReports';
 export * from './ManagerReportsList';
 export * from './ProjectPage';
+export * from './ProjectTaskBoard';
 export * from './ProductPage';
 export * from './ResearchGroupList';
 export * from './ResearchGroupDetailModal';
@@ -46,5 +47,4 @@ export * from './ReportHistoryModal';
 export * from './LatestReportSummary';
 export * from './ReportVersionItem';
 export * from './ReportCommentsModal';
-
 

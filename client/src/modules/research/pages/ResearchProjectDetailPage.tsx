@@ -5,13 +5,14 @@ import { ErrorState, LoadingState } from '../../../shared/components';
 import { LAB_MANAGER, STUDENT } from '../../../shared/constants/roles';
 import { getManagedLabId } from '../../../shared/utils/membership';
 import { useCurrentUser } from '../../user/hooks';
-import { DashboardPage, ResearchGroupList } from '../components';
+import { DashboardPage, ProjectTaskBoard, ResearchGroupList } from '../components';
 import { useResearchProject, useResearchGroupsByProject } from '../hooks';
 import { formatDate, formatPriority, formatProjectStatus, getStatusClass } from '../utils';
 
-type ProjectDetailTab = 'dashboard' | 'groups';
+type ProjectDetailTab = 'dashboard' | 'tasks' | 'groups';
 
 const DETAIL_TABS: Array<{ value: ProjectDetailTab; label: string }> = [
+  { value: 'tasks', label: 'Task board' },
   { value: 'dashboard', label: 'Tổng quan NCKH' },
   { value: 'groups', label: 'Nhóm nghiên cứu' },
 ];
@@ -160,6 +161,8 @@ export function ResearchProjectDetailPage() {
           groupRole={null}
         />
       ) : null}
+
+      {activeTab === 'tasks' ? <ProjectTaskBoard projectId={project.id} /> : null}
 
       {activeTab === 'groups' ? (
         <ResearchGroupList key={`groups-${project.id}`} project={project} canCreate={isManager} />

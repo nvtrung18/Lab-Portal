@@ -41,6 +41,9 @@ export const queryKeys = {
     studentProjects: (labId: number) => ['studentResearchProjects', labId] as const,
     project: (projectId: number) => ['researchProject', projectId] as const,
     projectStats: (projectId: number) => ['projectStats', projectId, 'overview'] as const,
+    projectTaskBoard: (projectId: number) => ['projectTaskBoard', projectId] as const,
+    projectTaskBacklog: (projectId: number, page: number, size: number) =>
+      ['projectTaskBacklog', projectId, { page, size }] as const,
     groups: (projectId: number) => ['researchGroups', projectId] as const,
     group: (groupId: number) => ['researchGroup', groupId] as const,
     groupMembers: (groupId: number) => ['researchGroupMembers', groupId] as const,
