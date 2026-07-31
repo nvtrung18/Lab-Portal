@@ -6,6 +6,19 @@ export type {
   RawStudentAttendance,
 } from './dashboard';
 
+export type {
+  InstantString,
+  LocalDateString,
+  ProjectTaskBoardResponse,
+  TaskApiResponse,
+  TaskBacklogPageResponse,
+  TaskBoardColumnResponse,
+  TaskPriority,
+  TaskResponse,
+  TaskStatus,
+  TaskType,
+} from './task';
+
 export type TopicStatus = 'RECRUITING' | 'ONGOING' | 'PAUSED' | 'COMPLETED';
 
 export type GroupStatus = 'ACTIVE' | 'PAUSED' | 'COMPLETED' | 'ARCHIVED';
