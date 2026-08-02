@@ -50,6 +50,8 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InOrder;
 import org.mockito.ArgumentCaptor;
 import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -77,6 +79,205 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 
 class TaskProposalServiceImplTest {
+
+    @Test
+    void listRejectsUnboundedPaginationBeforeActorOrRepositoryReads() {
+        assertThrows(IllegalArgumentException.class, () -> service.list(null, null, null, -1, 20));
+        assertThrows(IllegalArgumentException.class, () -> service.list(null, null, null, 0, 0));
+        assertThrows(IllegalArgumentException.class, () -> service.list(null, null, null, 0, 101));
+        assertThrows(IllegalArgumentException.class, () -> service.list(0L, null, null, 0, 20));
+        assertThrows(IllegalArgumentException.class, () -> service.list(null, -1L, null, 0, 20));
+        verifyNoInteractions(userRepository, taskProposalRepository, entityManager);
+    }
+
+    @Test
+    void listMapsDualGrantVisibilityPageAndCanReviewWithoutWriteSideEffects() {
+        Fixture fixture = stubValidScope(GroupRole.LEADER, false);
+        fixture.actor().addRole(new Role("LAB_MANAGER", "Lab manager"));
+        fixture.lab().setManager(fixture.actor());
+        GroupMemberEntity leaderMembership = GroupMemberEntity.builder()
+                .group(fixture.group())
+                .user(fixture.actor())
+                .role(GroupRole.LEADER)
+                .build();
+        when(groupMemberRepository
+                .findByUserIdAndActiveTrueAndDeletedFalseAndGroupActiveTrueAndGroupDeletedFalse(
+                        fixture.actor().getId()))
+                .thenReturn(List.of(leaderMembership));
+        List<TaskProposalEntity> visibleRows = List.of(
+                listProposal(fixture, 103L, 8L, TaskProposalStatus.PENDING),
+                listProposal(fixture, 102L, fixture.actor().getId(), TaskProposalStatus.APPROVED),
+                listProposal(fixture, 101L, 9L, TaskProposalStatus.REJECTED));
+        PageRequest request = PageRequest.of(0, 3);
+        when(taskProposalRepository.findVisibleForActor(
+                fixture.actor().getId(), fixture.project().getId(), fixture.group().getId(),
+                null, true, true, request))
+                .thenReturn(new PageImpl<>(visibleRows, request, 7));
+
+        var response = service.list(
+                fixture.project().getId(), fixture.group().getId(), null, 0, 3);
+
+        assertEquals(List.of(103L, 102L, 101L),
+                response.content().stream().map(item -> item.id()).toList());
+        assertTrue(response.content().get(0).canReview());
+        assertFalse(response.content().get(1).canReview());
+        assertFalse(response.content().get(2).canReview());
+        assertEquals(0, response.page());
+        assertEquals(3, response.size());
+        assertEquals(7, response.totalElements());
+        assertEquals(3, response.totalPages());
+        verify(taskProposalRepository, never()).saveAndFlush(any());
+        verifyNoInteractions(taskRepository, auditLogService, proposalNotificationPort);
+    }
+
+    @Test
+    void listOwnOnlyMemberVisibilityNeverGrantsReviewCapability() {
+        Fixture fixture = stubValidScope(GroupRole.MEMBER, false);
+        when(groupMemberRepository
+                .findByUserIdAndActiveTrueAndDeletedFalseAndGroupActiveTrueAndGroupDeletedFalse(
+                        fixture.actor().getId()))
+                .thenReturn(List.of());
+        TaskProposalEntity ownPending = listProposal(
+                fixture, 100L, fixture.actor().getId(), TaskProposalStatus.PENDING);
+        PageRequest request = PageRequest.of(0, 20);
+        when(taskProposalRepository.findVisibleForActor(
+                fixture.actor().getId(), fixture.project().getId(), null,
+                TaskProposalStatus.PENDING, true, false, request))
+                .thenReturn(new PageImpl<>(List.of(ownPending), request, 1));
+
+        var response = service.list(
+                fixture.project().getId(), null, TaskProposalStatus.PENDING, 0, 20);
+
+        assertEquals(1, response.content().size());
+        assertFalse(response.content().getFirst().canReview());
+        assertEquals(1, response.totalElements());
+        verify(taskProposalRepository).findVisibleForActor(
+                fixture.actor().getId(), fixture.project().getId(), null,
+                TaskProposalStatus.PENDING, true, false, request);
+        verify(taskProposalRepository, never()).saveAndFlush(any());
+        verifyNoInteractions(taskRepository, auditLogService, proposalNotificationPort);
+    }
+
+    @Test
+    void listManagerAssignmentRevocationRemovesRowsAndReviewCapabilityOnNextRead() {
+        Fixture fixture = stubValidScope(GroupRole.MEMBER, false);
+        fixture.actor().getRoles().clear();
+        fixture.actor().addRole(new Role("LAB_MANAGER", "Lab manager"));
+        fixture.lab().setManager(fixture.actor());
+        TaskProposalEntity pending = listProposal(fixture, 100L, 8L, TaskProposalStatus.PENDING);
+        PageRequest request = PageRequest.of(0, 20);
+        when(taskProposalRepository.findVisibleForActor(
+                fixture.actor().getId(), fixture.project().getId(), null,
+                null, false, true, request))
+                .thenReturn(new PageImpl<>(List.of(pending), request, 1))
+                .thenReturn(new PageImpl<>(List.of(), request, 0));
+
+        var beforeRevocation = service.list(fixture.project().getId(), null, null, 0, 20);
+        fixture.lab().setManager(null);
+        var afterRevocation = service.list(fixture.project().getId(), null, null, 0, 20);
+
+        assertTrue(beforeRevocation.content().getFirst().canReview());
+        assertTrue(afterRevocation.content().isEmpty());
+        assertEquals(0, afterRevocation.totalElements());
+        verify(taskProposalRepository, times(2)).findVisibleForActor(
+                fixture.actor().getId(), fixture.project().getId(), null,
+                null, false, true, request);
+        verify(taskProposalRepository, never()).saveAndFlush(any());
+        verifyNoInteractions(taskRepository, auditLogService, proposalNotificationPort);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "{",
+            "{\"projectId\":20,\"groupId\":30,\"milestoneId\":null,\"parentTaskId\":null,\"title\":\"A\",\"title\":\"B\",\"description\":null,\"priority\":\"MEDIUM\",\"type\":\"TASK\",\"dueDate\":null}",
+            "{\"projectId\":20,\"groupId\":30,\"milestoneId\":null,\"parentTaskId\":null,\"title\":\"Title\",\"description\":null,\"priority\":\"INVALID\",\"type\":\"TASK\",\"dueDate\":null}",
+            "{\"projectId\":999,\"groupId\":30,\"milestoneId\":null,\"parentTaskId\":null,\"title\":\"Title\",\"description\":null,\"priority\":\"MEDIUM\",\"type\":\"TASK\",\"dueDate\":null}",
+            "{\"projectId\":20,\"groupId\":30,\"milestoneId\":null,\"parentTaskId\":null,\"title\":\"Title\",\"description\":null,\"priority\":\"MEDIUM\",\"type\":\"TASK\",\"dueDate\":null,\"unknown\":true}"
+    })
+    void listFailsClosedForCorruptStoredPayloadWithoutWrites(String payloadJson) {
+        Fixture fixture = stubValidScope(GroupRole.LEADER, false);
+        GroupMemberEntity leaderMembership = GroupMemberEntity.builder()
+                .group(fixture.group())
+                .user(fixture.actor())
+                .role(GroupRole.LEADER)
+                .build();
+        when(groupMemberRepository
+                .findByUserIdAndActiveTrueAndDeletedFalseAndGroupActiveTrueAndGroupDeletedFalse(
+                        fixture.actor().getId()))
+                .thenReturn(List.of(leaderMembership));
+        TaskProposalEntity corrupt = listProposal(
+                fixture, 100L, 8L, TaskProposalStatus.PENDING);
+        corrupt.setPayloadJson(payloadJson);
+        PageRequest request = PageRequest.of(0, 20);
+        when(taskProposalRepository.findVisibleForActor(
+                fixture.actor().getId(), null, null, null, true, false, request))
+                .thenReturn(new PageImpl<>(List.of(corrupt), request, 1));
+
+        RuntimeException failure = assertThrows(
+                RuntimeException.class, () -> service.list(null, null, null, 0, 20));
+
+        assertFalse(failure instanceof IllegalArgumentException);
+        assertFalse(failure instanceof IllegalStateException);
+        verify(taskProposalRepository, never()).saveAndFlush(any());
+        verifyNoInteractions(taskRepository, auditLogService, proposalNotificationPort);
+    }
+
+    @Test
+    void listRejectsIncoherentExistingFiltersAsInvalidInput() {
+        Fixture fixture = stubValidScope(GroupRole.MEMBER, false);
+        ProjectEntity otherProject = ProjectEntity.builder()
+                .lab(fixture.lab())
+                .title("Other project")
+                .build();
+        otherProject.setId(21L);
+        fixture.group().setProject(otherProject);
+
+        assertThrows(IllegalArgumentException.class,
+                () -> service.list(fixture.project().getId(), fixture.group().getId(), null, 0, 20));
+
+        verifyNoInteractions(taskProposalRepository);
+    }
+
+    @Test
+    void listPreservesHistoricalMilestoneAndParentReferencesWithoutRevalidatingMutationScope() {
+        Fixture fixture = stubValidScope(GroupRole.LEADER, false);
+        GroupMemberEntity membership = GroupMemberEntity.builder()
+                .group(fixture.group())
+                .user(fixture.actor())
+                .role(GroupRole.LEADER)
+                .build();
+        TaskProposalEntity proposal = TaskProposalEntity.builder()
+                .proposedById(8L)
+                .projectId(fixture.project().getId())
+                .groupId(fixture.group().getId())
+                .milestoneId(40L)
+                .payloadJson("""
+                        {"projectId":20,"groupId":30,"milestoneId":40,
+                         "parentTaskId":50,"title":"Historical proposal",
+                         "description":null,"priority":"MEDIUM","type":"TASK",
+                         "dueDate":null}
+                        """)
+                .status(TaskProposalStatus.APPROVED)
+                .assistedByAi(false)
+                .build();
+        proposal.setId(100L);
+        proposal.setCreatedAt(Instant.parse("2026-07-30T08:00:00Z"));
+        proposal.setUpdatedAt(Instant.parse("2026-07-30T09:00:00Z"));
+        when(groupMemberRepository
+                .findByUserIdAndActiveTrueAndDeletedFalseAndGroupActiveTrueAndGroupDeletedFalse(
+                        fixture.actor().getId()))
+                .thenReturn(List.of(membership));
+        when(taskProposalRepository.findVisibleForActor(
+                fixture.actor().getId(), fixture.project().getId(), fixture.group().getId(),
+                null, true, false, PageRequest.of(0, 20)))
+                .thenReturn(new PageImpl<>(List.of(proposal), PageRequest.of(0, 20), 1));
+
+        var response = service.list(fixture.project().getId(), fixture.group().getId(), null, 0, 20);
+
+        assertEquals(40L, response.content().getFirst().milestoneId());
+        assertEquals(50L, response.content().getFirst().parentTaskId());
+        verifyNoInteractions(milestoneRepository, taskRepository);
+    }
 
     private final UserRepository userRepository = mock(UserRepository.class);
     private final ProjectRepository projectRepository = mock(ProjectRepository.class);
@@ -1297,6 +1498,38 @@ class TaskProposalServiceImplTest {
         proposal.setId(100L);
         proposal.setCreatedAt(Instant.parse("2026-07-30T08:00:00Z"));
         proposal.setUpdatedAt(Instant.parse("2026-07-30T08:00:00Z"));
+        return proposal;
+    }
+
+    private TaskProposalEntity listProposal(
+            Fixture fixture,
+            Long id,
+            Long proposerId,
+            TaskProposalStatus status
+    ) {
+        TaskProposalEntity proposal = TaskProposalEntity.builder()
+                .proposedById(proposerId)
+                .projectId(fixture.project().getId())
+                .groupId(fixture.group().getId())
+                .payloadJson("""
+                        {"projectId":20,"groupId":30,"milestoneId":null,
+                         "parentTaskId":null,"title":"Proposal title",
+                         "description":null,"priority":"MEDIUM","type":"TASK",
+                         "dueDate":null}
+                        """)
+                .status(status)
+                .assistedByAi(false)
+                .build();
+        proposal.setId(id);
+        proposal.setCreatedAt(Instant.parse("2026-07-30T08:00:00Z"));
+        proposal.setUpdatedAt(Instant.parse("2026-07-30T09:00:00Z"));
+        if (status != TaskProposalStatus.PENDING) {
+            proposal.setReviewedById(11L);
+            proposal.setReviewedAt(Instant.parse("2026-07-30T09:00:00Z"));
+            if (status == TaskProposalStatus.REJECTED) {
+                proposal.setReason("Needs revision");
+            }
+        }
         return proposal;
     }
 

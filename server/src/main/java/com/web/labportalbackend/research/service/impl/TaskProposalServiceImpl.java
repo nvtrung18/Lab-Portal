@@ -19,6 +19,8 @@ import com.web.labportalbackend.research.dto.request.CreateTaskProposalRequest;
 import com.web.labportalbackend.research.dto.request.RejectTaskProposalRequest;
 import com.web.labportalbackend.research.dto.response.TaskProposalResponse;
 import com.web.labportalbackend.research.dto.response.TaskProposalReviewResponse;
+import com.web.labportalbackend.research.dto.response.TaskProposalPageResponse;
+import com.web.labportalbackend.research.dto.response.TaskProposalListItemResponse;
 import com.web.labportalbackend.research.entity.GroupEntity;
 import com.web.labportalbackend.research.entity.GroupMemberEntity;
 import com.web.labportalbackend.research.entity.MilestoneEntity;
@@ -47,6 +49,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -57,6 +62,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 import static com.web.labportalbackend.research.port.ProposalNotificationEvent.ProposalNotificationType.APPROVED;
 import static com.web.labportalbackend.research.port.ProposalNotificationEvent.ProposalNotificationType.REJECTED;
@@ -254,6 +260,92 @@ public class TaskProposalServiceImpl implements TaskProposalService {
         return reviewResponse(proposal, null);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public TaskProposalPageResponse list(
+            Long projectId,
+            Long groupId,
+            TaskProposalStatus status,
+            int page,
+            int size
+    ) {
+        if (page < 0 || size < 1 || size > 100) {
+            throw new IllegalArgumentException("Page must be non-negative and size must be between 1 and 100");
+        }
+        if (projectId != null && projectId <= 0) {
+            throw new IllegalArgumentException("Project ID must be positive");
+        }
+        if (groupId != null && groupId <= 0) {
+            throw new IllegalArgumentException("Group ID must be positive");
+        }
+
+        Long actorId = resolveInitialActorId();
+        entityManager.clear();
+        User actor = userRepository.findByIdForStatusAuthorization(actorId)
+                .filter(this::isUsableActor)
+                .orElseThrow(() -> new AccessDeniedException("Authenticated user is inactive, deleted, or unavailable"));
+        if (!actor.hasRole("STUDENT") && !actor.hasRole("LAB_MANAGER")) {
+            throw new AccessDeniedException("Actor is not permitted to list task proposals");
+        }
+
+        ProjectEntity filterProject = projectId == null ? null : projectRepository
+                .findByIdForStatusAuthorization(projectId)
+                .orElseThrow(() -> new ResourceNotFoundException("Project", projectId));
+        GroupEntity filterGroup = groupId == null ? null : groupRepository
+                .findByIdForStatusAuthorization(groupId)
+                .orElseThrow(() -> new ResourceNotFoundException("Research group", groupId));
+        if (filterProject != null && filterGroup != null) {
+            validateListFilterScope(filterProject, filterGroup);
+        }
+
+        final Set<Long> ledGroupIds = actor.hasRole("STUDENT")
+                ? groupMemberRepository
+                    .findByUserIdAndActiveTrueAndDeletedFalseAndGroupActiveTrueAndGroupDeletedFalse(actorId)
+                    .stream()
+                    .filter(member -> member.getRole() == GroupRole.LEADER)
+                    .map(member -> member.getGroup().getId())
+                    .collect(Collectors.toSet())
+                : Set.of();
+
+        Pageable pageable = PageRequest.of(page, size);
+        Page<TaskProposalEntity> proposals = taskProposalRepository.findVisibleForActor(
+                actorId, projectId, groupId, status,
+                actor.hasRole("STUDENT"), actor.hasRole("LAB_MANAGER"), pageable);
+        List<TaskProposalListItemResponse> content = proposals.getContent().stream()
+                .map(proposal -> toListItem(proposal, actor, ledGroupIds))
+                .toList();
+        return new TaskProposalPageResponse(
+                content, proposals.getNumber(), proposals.getSize(),
+                proposals.getTotalElements(), proposals.getTotalPages());
+    }
+
+    private TaskProposalListItemResponse toListItem(
+            TaskProposalEntity proposal,
+            User actor,
+            Set<Long> ledGroupIds
+    ) {
+        ProjectEntity project = projectRepository.findByIdForStatusAuthorization(proposal.getProjectId())
+                .orElseThrow(() -> new TaskProposalIntegrityException("Task proposal project is unavailable"));
+        GroupEntity group = groupRepository.findByIdForStatusAuthorization(proposal.getGroupId())
+                .orElseThrow(() -> new TaskProposalIntegrityException("Task proposal group is unavailable"));
+        validateReviewProjectGroupScope(project, group);
+        ReviewContext context = new ReviewContext(proposal, actor, project, group);
+        ProposalPayload payload = deserializeAndValidatePayload(context);
+        boolean managerScope = actor.hasRole("LAB_MANAGER")
+                && project.getLab() != null
+                && project.getLab().getManager() != null
+                && Objects.equals(project.getLab().getManager().getId(), actor.getId());
+        boolean canReview = proposal.getStatus() == TaskProposalStatus.PENDING
+                && (managerScope || ledGroupIds.contains(proposal.getGroupId()));
+        return new TaskProposalListItemResponse(
+                proposal.getId(), proposal.getProposedById(), proposal.getProjectId(), proposal.getGroupId(),
+                proposal.getMilestoneId(), payload.parentTaskId(), payload.title(), payload.description(),
+                payload.priority(), payload.type(), payload.dueDate(), proposal.getAssistedByAi(),
+                proposal.getAiActionSuggestionId(), proposal.getStatus(), proposal.getReviewedById(),
+                proposal.getReason(), proposal.getReviewedAt(), proposal.getCreatedAt(), proposal.getUpdatedAt(),
+                canReview);
+    }
+
     private List<Long> submissionRecipientUserIds(
             GroupEntity group,
             Laboratory laboratory
@@ -390,6 +482,14 @@ public class TaskProposalServiceImpl implements TaskProposalService {
                     "Task proposal project and group do not share a current laboratory");
         }
         return projectLabId;
+    }
+
+    private void validateListFilterScope(ProjectEntity project, GroupEntity group) {
+        try {
+            validateReviewProjectGroupScope(project, group);
+        } catch (TaskProposalIntegrityException ex) {
+            throw new IllegalArgumentException("Invalid task proposal scope filter");
+        }
     }
 
     private ProposalPayload deserializeAndValidatePayload(ReviewContext context) {
