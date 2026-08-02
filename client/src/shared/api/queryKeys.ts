@@ -44,6 +44,9 @@ export const queryKeys = {
     projectTaskBoard: (projectId: number) => ['projectTaskBoard', projectId] as const,
     projectTaskBacklog: (projectId: number, page: number, size: number) =>
       ['projectTaskBacklog', projectId, { page, size }] as const,
+    taskProposalsRoot: ['taskProposals'] as const,
+    taskProposals: (actorId: number | null, actorScope: object, filters: object = {}) =>
+      ['taskProposals', actorId, actorScope, filters] as const,
     groups: (projectId: number) => ['researchGroups', projectId] as const,
     group: (groupId: number) => ['researchGroup', groupId] as const,
     groupMembers: (groupId: number) => ['researchGroupMembers', groupId] as const,

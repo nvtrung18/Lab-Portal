@@ -4,6 +4,8 @@ import com.web.labportalbackend.auth.security.JwtAuthenticationFilter;
 import com.web.labportalbackend.common.exception.ResourceNotFoundException;
 import com.web.labportalbackend.research.dto.response.TaskProposalResponse;
 import com.web.labportalbackend.research.dto.response.TaskProposalReviewResponse;
+import com.web.labportalbackend.research.dto.response.TaskProposalPageResponse;
+import com.web.labportalbackend.research.dto.response.TaskProposalListItemResponse;
 import com.web.labportalbackend.research.dto.response.TaskResponse;
 import com.web.labportalbackend.research.enums.TaskPriority;
 import com.web.labportalbackend.research.enums.TaskProposalStatus;
@@ -42,6 +44,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -54,6 +57,88 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 )
 @Import(TaskProposalControllerTest.MethodSecurityTestConfig.class)
 class TaskProposalControllerTest {
+
+    @Test
+    void proposalListReturnsPagedListAndDelegatesBoundedFilters() throws Exception {
+        TaskProposalListItemResponse item = new TaskProposalListItemResponse(
+                100L, 7L, 20L, 30L, null, null, "Proposal title", null,
+                TaskPriority.MEDIUM, TaskType.TASK, null, false, null,
+                TaskProposalStatus.PENDING, null, null, null,
+                Instant.parse("2026-07-30T08:00:00Z"), Instant.parse("2026-07-30T08:00:00Z"), true);
+        when(taskProposalService.list(20L, 30L, TaskProposalStatus.PENDING, 1, 10))
+                .thenReturn(new TaskProposalPageResponse(java.util.List.of(item), 1, 10, 1, 1));
+
+        mockMvc.perform(get("/api/research/task-proposals")
+                        .contextPath("/api")
+                        .param("projectId", "20")
+                        .param("groupId", "30")
+                        .param("status", "PENDING")
+                        .param("page", "1")
+                        .param("size", "10")
+                        .with(user("student").roles("STUDENT")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.page").value(1))
+                .andExpect(jsonPath("$.data.size").value(10))
+                .andExpect(jsonPath("$.data.totalElements").value(1))
+                .andExpect(jsonPath("$.data.content[0].canReview").value(true))
+                .andExpect(jsonPath("$.data.content[0].payloadJson").doesNotExist());
+        verify(taskProposalService).list(20L, 30L, TaskProposalStatus.PENDING, 1, 10);
+    }
+
+    @Test
+    void proposalListMapsInvalidScopeFilterToBadRequest() throws Exception {
+        when(taskProposalService.list(20L, 30L, null, 0, 20))
+                .thenThrow(new IllegalArgumentException("Invalid task proposal scope filter"));
+
+        mockMvc.perform(get("/api/research/task-proposals")
+                        .contextPath("/api")
+                        .param("projectId", "20")
+                        .param("groupId", "30")
+                        .with(user("student").roles("STUDENT")))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value(400))
+                .andExpect(jsonPath("$.message").value("Invalid task proposal scope filter"));
+    }
+
+    @Test
+    void proposalListUsesContractDefaultsAndDelegatesNoCallerAuthorizationFields() throws Exception {
+        when(taskProposalService.list(null, null, null, 0, 20))
+                .thenReturn(new TaskProposalPageResponse(java.util.List.of(), 0, 20, 0, 0));
+
+        mockMvc.perform(get("/api/research/task-proposals")
+                        .contextPath("/api")
+                        .with(user("student").roles("STUDENT")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.content").isEmpty())
+                .andExpect(jsonPath("$.data.page").value(0))
+                .andExpect(jsonPath("$.data.size").value(20))
+                .andExpect(jsonPath("$.data.totalElements").value(0))
+                .andExpect(jsonPath("$.data.totalPages").value(0));
+
+        verify(taskProposalService).list(null, null, null, 0, 20);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"ADMIN", "TECHNICIAN"})
+    void unsupportedSystemRolesCannotListProposals(String role) throws Exception {
+        mockMvc.perform(get("/api/research/task-proposals")
+                        .contextPath("/api")
+                        .with(user("unsupported").roles(role)))
+                .andExpect(status().isForbidden());
+
+        verifyNoInteractions(taskProposalService);
+    }
+
+    @Test
+    void malformedListStatusIsRejectedBeforeServiceDelegation() throws Exception {
+        mockMvc.perform(get("/api/research/task-proposals")
+                        .contextPath("/api")
+                        .param("status", "approved")
+                        .with(user("student").roles("STUDENT")))
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(taskProposalService);
+    }
 
     private static final String VALID_BODY = """
             {"projectId":20,"groupId":30,"title":"Proposal title"}

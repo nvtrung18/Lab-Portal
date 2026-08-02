@@ -17,6 +17,11 @@ export type {
   TaskResponse,
   TaskStatus,
   TaskType,
+  TaskProposalStatus,
+  TaskProposal,
+  TaskProposalReview,
+  TaskProposalListItem,
+  TaskProposalPageResponse,
 } from './task';
 
 export type TopicStatus = 'RECRUITING' | 'ONGOING' | 'PAUSED' | 'COMPLETED';

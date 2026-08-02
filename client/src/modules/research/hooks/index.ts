@@ -43,6 +43,10 @@ import {
   getResearchTopicsByLab,
   getProjectTaskBoard,
   getProjectTaskBacklog,
+  submitTaskProposal,
+  approveTaskProposal,
+  rejectTaskProposal,
+  getTaskProposals,
 } from '../api';
 import {
   getGroupEvaluations,
@@ -77,8 +81,14 @@ import type {
   ResearchLogFilters,
   ProjectTaskBoardResponse,
   TaskBacklogPageResponse,
+  TaskProposal,
+  TaskProposalReview,
+  TaskProposalPageResponse,
+  TaskProposalStatus,
 } from '../types';
+import type { CreateTaskProposalPayload } from '../api/taskApi';
 import { updateTaskStatusInCache } from '../taskBoardHelpers';
+import { useCurrentUser } from '../../user/hooks';
 
 function getErrorMessage(error: unknown, fallback: string) {
   if (axios.isAxiosError(error)) {
@@ -122,6 +132,79 @@ export function useProjectTaskBacklog(projectId?: number | null, page = 0, size 
     enabled: isValidId(projectId),
     retry: shouldRetryProjectTaskQuery,
     staleTime: 30000,
+    refetchOnReconnect: true,
+    refetchOnWindowFocus: true,
+  });
+}
+
+export function useSubmitTaskProposal(projectId?: number | null) {
+  const queryClient = useQueryClient();
+  return useMutation<TaskProposal, unknown, CreateTaskProposalPayload>({
+    mutationFn: submitTaskProposal,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: queryKeys.research.taskProposalsRoot });
+      await queryClient.refetchQueries({ queryKey: queryKeys.research.taskProposalsRoot, type: 'active' });
+    },
+    onError: (error) => toast.error(getErrorMessage(error, 'Unable to submit the task proposal.')),
+  });
+}
+
+export function useReviewTaskProposal() {
+  const queryClient = useQueryClient();
+  return useMutation<TaskProposalReview, unknown, { proposalId: number; decision: 'approve' | 'reject'; reason?: string }>({
+    mutationFn: ({ proposalId, decision, reason }) => decision === 'approve'
+      ? approveTaskProposal(proposalId)
+      : rejectTaskProposal(proposalId, { reason: reason ?? '' }),
+    onSuccess: async (result) => {
+      const invalidations = [
+        queryClient.invalidateQueries({ queryKey: queryKeys.research.taskProposalsRoot }),
+      ];
+      if (result.createdTask?.projectId) {
+        invalidations.push(
+          queryClient.invalidateQueries({ queryKey: queryKeys.research.projectTaskBoard(result.createdTask.projectId) }),
+          queryClient.invalidateQueries({ queryKey: ['projectTaskBacklog', result.createdTask.projectId] }),
+        );
+      }
+      if (result.createdTask?.milestoneId) {
+        invalidations.push(
+          queryClient.invalidateQueries({ queryKey: queryKeys.research.tasks(result.createdTask.milestoneId) }),
+        );
+      }
+      if (result.createdTask?.groupId) {
+        invalidations.push(
+          queryClient.invalidateQueries({ queryKey: queryKeys.research.groupTasks(result.createdTask.groupId) }),
+          queryClient.invalidateQueries({ queryKey: queryKeys.research.myTasks(result.createdTask.groupId) }),
+        );
+      }
+      await Promise.all(invalidations);
+    },
+    onError: (error) => toast.error(getErrorMessage(error, 'Unable to review the task proposal.')),
+  });
+}
+
+export function useTaskProposals(
+  projectId?: number | null,
+  page = 0,
+  size = 20,
+  status?: TaskProposalStatus,
+  groupScope: ReadonlyArray<{ groupId: number; role: string }> = [],
+) {
+  const { data: currentUser } = useCurrentUser();
+  const boundedPage = Math.max(0, Math.floor(page));
+  const boundedSize = Math.min(100, Math.max(1, Math.floor(size)));
+  const filters = { projectId: projectId ?? undefined, page: boundedPage, size: boundedSize, status };
+  const actorScope = {
+    roles: [...(currentUser?.roles ?? [])].sort(),
+    groups: groupScope
+      .map(({ groupId, role }) => ({ groupId, role }))
+      .sort((left, right) => left.groupId - right.groupId || left.role.localeCompare(right.role)),
+  };
+  return useQuery<TaskProposalPageResponse>({
+    queryKey: queryKeys.research.taskProposals(currentUser?.id ?? null, actorScope, filters),
+    queryFn: () => getTaskProposals(filters),
+    enabled: isValidId(projectId) && isValidId(currentUser?.id),
+    retry: shouldRetryProjectTaskQuery,
+    staleTime: 15000,
     refetchOnReconnect: true,
     refetchOnWindowFocus: true,
   });

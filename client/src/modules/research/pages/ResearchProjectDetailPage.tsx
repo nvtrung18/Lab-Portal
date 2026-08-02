@@ -5,16 +5,17 @@ import { ErrorState, LoadingState } from '../../../shared/components';
 import { LAB_MANAGER, STUDENT } from '../../../shared/constants/roles';
 import { getManagedLabId } from '../../../shared/utils/membership';
 import { useCurrentUser } from '../../user/hooks';
-import { DashboardPage, ProjectTaskBoard, ResearchGroupList } from '../components';
+import { DashboardPage, ProjectTaskBoard, ResearchGroupList, TaskProposalPanel } from '../components';
 import { useResearchProject, useResearchGroupsByProject } from '../hooks';
 import { formatDate, formatPriority, formatProjectStatus, getStatusClass } from '../utils';
 
-type ProjectDetailTab = 'dashboard' | 'tasks' | 'groups';
+type ProjectDetailTab = 'dashboard' | 'tasks' | 'groups' | 'proposals';
 
 const DETAIL_TABS: Array<{ value: ProjectDetailTab; label: string }> = [
   { value: 'tasks', label: 'Task board' },
   { value: 'dashboard', label: 'Tổng quan NCKH' },
   { value: 'groups', label: 'Nhóm nghiên cứu' },
+  { value: 'proposals', label: 'Task proposals' },
 ];
 
 export function ResearchProjectDetailPage() {
@@ -58,8 +59,15 @@ export function ResearchProjectDetailPage() {
   }
 
   // Resolve student group in this project
-  const studentGroup = groups.find((g) => g.members?.some((m) => m.userId === currentUser?.id));
+  const studentGroups = groups.filter((g) => g.members?.some((m) => m.userId === currentUser?.id));
+  const studentGroup = studentGroups.length === 1 ? studentGroups[0] : undefined;
   const studentGroupId = studentGroup?.id ?? null;
+  const proposalGroupScope = groups.flatMap((group) => {
+    const memberRole = group.members?.find((member) => member.userId === currentUser?.id)?.role
+      ?? group.myRole
+      ?? group.myGroupRole;
+    return memberRole ? [{ groupId: group.id, role: memberRole }] : [];
+  });
 
   return (
     <section className="space-y-6">
@@ -129,8 +137,8 @@ export function ResearchProjectDetailPage() {
       {/* Student Warning If Not In Any Group */}
       {isStudent && !studentGroup && (
         <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-center shadow-sm">
-          <h4 className="font-semibold text-red-900">Bạn chưa được phân vào nhóm nghiên cứu của đề tài này</h4>
-          <p className="mt-1 text-sm text-red-700">Vui lòng liên hệ với Lab Manager để được thêm vào nhóm.</p>
+          <h4 className="font-semibold text-red-900">{studentGroups.length > 1 ? 'Không thể xác định nhóm hiện tại' : 'Bạn chưa được phân vào nhóm nghiên cứu của đề tài này'}</h4>
+          <p className="mt-1 text-sm text-red-700">{studentGroups.length > 1 ? 'Vui lòng chọn nhóm cụ thể trước khi gửi đề xuất.' : 'Vui lòng liên hệ với Lab Manager để được thêm vào nhóm.'}</p>
         </div>
       )}
 
@@ -166,6 +174,15 @@ export function ResearchProjectDetailPage() {
 
       {activeTab === 'groups' ? (
         <ResearchGroupList key={`groups-${project.id}`} project={project} canCreate={isManager} />
+      ) : null}
+
+      {activeTab === 'proposals' ? (
+        <TaskProposalPanel
+          projectId={project.id}
+          groupId={studentGroupId}
+          groupScope={proposalGroupScope}
+          canSubmit={isStudent}
+        />
       ) : null}
     </section>
   );

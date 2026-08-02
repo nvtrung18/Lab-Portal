@@ -5,6 +5,8 @@ import com.web.labportalbackend.research.dto.request.CreateTaskProposalRequest;
 import com.web.labportalbackend.research.dto.request.RejectTaskProposalRequest;
 import com.web.labportalbackend.research.dto.response.TaskProposalResponse;
 import com.web.labportalbackend.research.dto.response.TaskProposalReviewResponse;
+import com.web.labportalbackend.research.dto.response.TaskProposalPageResponse;
+import com.web.labportalbackend.research.enums.TaskProposalStatus;
 import com.web.labportalbackend.research.service.TaskProposalService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -15,12 +17,27 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 @RestController
 @RequiredArgsConstructor
 public class TaskProposalController {
 
     private final TaskProposalService taskProposalService;
+
+    @GetMapping("/research/task-proposals")
+    @PreAuthorize("hasAnyRole('LAB_MANAGER','STUDENT')")
+    public ResponseEntity<Response<TaskProposalPageResponse>> list(
+            @RequestParam(required = false) Long projectId,
+            @RequestParam(required = false) Long groupId,
+            @RequestParam(required = false) TaskProposalStatus status,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        return ResponseEntity.ok(Response.ok("Task proposals retrieved successfully",
+                taskProposalService.list(projectId, groupId, status, page, size)));
+    }
 
     @PostMapping("/research/task-proposals")
     @PreAuthorize("""
