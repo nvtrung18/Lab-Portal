@@ -1,0 +1,10 @@
+package com.web.labportalbackend.ai.service;
+
+public enum AiQuotaDenialReason {
+    ASSISTANT_CONFIGURATION_UNAVAILABLE,
+    ASSISTANT_DISABLED,
+    QUOTA_DISABLED,
+    CONTEXT_LIMIT_EXCEEDED,
+    ASSISTANT_DAILY_LIMIT_REACHED,
+    QUOTA_DAILY_LIMIT_REACHED
+}
