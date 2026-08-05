@@ -23,6 +23,7 @@ import com.web.labportalbackend.research.entity.GroupEntity;
 import com.web.labportalbackend.research.entity.ProjectEntity;
 import com.web.labportalbackend.research.repository.GroupRepository;
 import com.web.labportalbackend.research.repository.ProjectRepository;
+import java.time.Instant;
 import java.util.Locale;
 import java.util.concurrent.atomic.AtomicLong;
 import org.junit.jupiter.api.Test;
@@ -106,10 +107,21 @@ class AiRepositoryMySqlIntegrationTest {
                 .requestedById(fixture.user().getId()).assistantKey(AiAssistantKey.LAB_ASSISTANT)
                 .actionType("CREATE_TASK").targetModule("research").targetId(fixture.project().getId())
                 .payloadJson(payload).status(AiActionSuggestionStatus.EDITED).executedById(fixture.reviewer().getId()).build());
+        Instant windowStart = Instant.parse("2026-08-05T00:00:00Z");
+        Instant windowEnd = Instant.parse("2026-08-06T00:00:00Z");
         AiUsageLogEntity usageLog = usageLogRepository.saveAndFlush(AiUsageLogEntity.builder()
                 .userId(fixture.user().getId()).assistantKey(AiAssistantKey.LAB_ASSISTANT).role("STUDENT")
                 .module("research").labId(fixture.laboratory().getId()).projectId(fixture.project().getId())
-                .groupId(fixture.group().getId()).promptTokens(12).completionTokens(34).status("SUCCESS").build());
+                .groupId(fixture.group().getId()).promptTokens(12).completionTokens(34).status("SUCCESS")
+                .createdAt(windowStart).build());
+        usageLogRepository.saveAndFlush(AiUsageLogEntity.builder()
+                .userId(fixture.user().getId()).assistantKey(AiAssistantKey.LAB_ASSISTANT).role("STUDENT")
+                .module("research").promptTokens(1).completionTokens(2).status("ERROR")
+                .createdAt(windowStart.plusSeconds(1)).build());
+        usageLogRepository.saveAndFlush(AiUsageLogEntity.builder()
+                .userId(fixture.user().getId()).assistantKey(AiAssistantKey.LAB_ASSISTANT).role("TEACHER")
+                .module("other").promptTokens(1).completionTokens(2).status("PENDING")
+                .createdAt(windowStart.plusSeconds(2)).build());
         AiQuotaConfigEntity quotaConfig = quotaConfigRepository.saveAndFlush(AiQuotaConfigEntity.builder()
                 .assistantKey(AiAssistantKey.LAB_ASSISTANT).role("STUDENT").module("research")
                 .maxRequestsPerDay(20).maxContextTokens(200).build());
@@ -135,6 +147,13 @@ class AiRepositoryMySqlIntegrationTest {
         assertEquals(AiAssistantKey.LAB_ASSISTANT, reloadedUsageLog.getAssistantKey());
         assertReducedAuditDefaults(reloadedUsageLog.getCreatedAt(), reloadedUsageLog.getActive(), reloadedUsageLog.getDeleted());
         assertTrue(quotaConfigRepository.findById(quotaConfig.getId()).orElseThrow().getEnabled());
+        assertEquals(3, usageLogRepository
+                .countByUserIdAndAssistantKeyAndCreatedAtGreaterThanEqualAndCreatedAtLessThanAndActiveTrueAndDeletedFalse(
+                        fixture.user().getId(), AiAssistantKey.LAB_ASSISTANT, windowStart, windowEnd));
+        assertEquals(2, usageLogRepository
+                .countByUserIdAndAssistantKeyAndRoleAndModuleAndCreatedAtGreaterThanEqualAndCreatedAtLessThanAndActiveTrueAndDeletedFalse(
+                        fixture.user().getId(), AiAssistantKey.LAB_ASSISTANT, "STUDENT", "research", windowStart,
+                        windowEnd));
         assertEquals("OBJECT", jdbcTemplate.queryForObject(
                 "SELECT JSON_TYPE(payload_json) FROM ai_action_suggestion WHERE id = ?", String.class, suggestion.getId()));
     }
