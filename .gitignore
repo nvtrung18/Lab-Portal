@@ -1,5 +1,4 @@
 .gitignore
-!.gitignore
 *.md
 !README.md
 !docs/decisions/P2-DECISION-01.md
@@ -11,6 +10,7 @@
 *.docx
 !docker-compose.yml
 .codegraph
+wfl
 # Docker folder
 !docker/
 !docker/**
