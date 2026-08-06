@@ -58,6 +58,29 @@ public class TaskPermissionHelper {
                         project.getId(), userId, GroupRole.MEMBER).isEmpty();
     }
 
+    /**
+     * AI-context-specific project visibility. The manager branch checks ownership
+     * of this exact active laboratory and never relies on a first-lab lookup.
+     */
+    public boolean canViewProjectContext(Long userId, ProjectEntity project) {
+        if (!hasUsableUser(userId) || project == null || project.getId() == null
+                || !Boolean.TRUE.equals(project.getActive()) || Boolean.TRUE.equals(project.getDeleted())
+                || project.getLab() == null || project.getLab().getId() == null
+                || !Boolean.TRUE.equals(project.getLab().getActive())
+                || Boolean.TRUE.equals(project.getLab().getDeleted())
+                || hasInconsistentProjectGroup(project)) {
+            return false;
+        }
+        if (isLabManager(userId)) {
+            return laboratoryRepository.existsByIdAndManagerIdAndActiveTrueAndDeletedFalse(
+                    project.getLab().getId(), userId);
+        }
+        return !groupMemberRepository.findActiveGroupIdsByProjectIdAndUserIdAndRole(
+                        project.getId(), userId, GroupRole.LEADER).isEmpty()
+                || !groupMemberRepository.findActiveGroupIdsByProjectIdAndUserIdAndRole(
+                        project.getId(), userId, GroupRole.MEMBER).isEmpty();
+    }
+
     private boolean hasInconsistentProjectGroup(ProjectEntity project) {
         GroupEntity group = project.getGroup();
         if (group == null) {
