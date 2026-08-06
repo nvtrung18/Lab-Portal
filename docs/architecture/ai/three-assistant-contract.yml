@@ -1,0 +1,260 @@
+contract:
+  title: "Three-Assistant Architecture Contract"
+  contract_version: "1.0.0"
+  status: "PROPOSED"
+  task_id: "p5a-t2-finalize-three-assistant-architecture-1af021e"
+  task_key: "P5A-T2"
+  plan_version: "1"
+  base_commit: "1af021e"
+  approval:
+    approved_plan_hash: "fb86dbb503aca5766d6795f24f8953f32552f35a16dd3ddb21068cbece1cdb10"
+    approved_by: "user"
+    approval_method: "explicit_user_message"
+    approved_at: "2026-08-06T17:05:00+07:00"
+  implementation_state: "ARCHITECTURE_ONLY"
+  compatibility_state: "PENDING_P5A_T3_TO_T8"
+
+purpose:
+  decision: "Define the three-assistant policy and cross-service trust boundary before runtime implementation."
+  scope: "Architecture contract only; this document does not enable a runtime assistant or authorize a business operation."
+  source_of_truth: "This contract supersedes the historical two-assistant roadmap from Phase 5A onward."
+
+assistant_registry:
+  shared_base_model:
+    required: true
+    policy: "Use one approved shared base model with assistant-specific profiles."
+    permission_effect: "Model choice never grants access."
+  optional_adapter_policy:
+    minimum: 0
+    maximum: 3
+    policy: "An assistant-specific adapter is optional and must be independently approved."
+    permission_effect: "Adapter choice never grants access."
+  assistants:
+    - key: "ADMIN_ASSISTANT"
+      domain: "administration"
+      actor_categories: ["ADMIN"]
+      resource_families: ["system_configuration", "audit_summary", "user_status", "administrative_drafts"]
+      tool_groups: ["admin_read", "admin_draft"]
+      default_risk: "DRAFT_ONLY"
+      profile: "admin"
+      prompt: "admin-v1"
+      retrieval_namespace: "admin"
+      evaluation_suite: "admin-assistant-v1"
+      adapter_reference: null
+      access_boundary: "ADMIN-only and scoped to authorized administrative resources."
+    - key: "LAB_ASSISTANT"
+      domain: "laboratory_operations"
+      actor_categories: ["ADMIN", "LAB_MANAGER", "STUDENT"]
+      resource_families: ["labs", "slots", "bookings", "check_in_guidance", "penalties", "complaints"]
+      tool_groups: ["lab_read", "lab_draft"]
+      default_risk: "READ_ONLY"
+      profile: "lab"
+      prompt: "lab-v1"
+      retrieval_namespace: "lab"
+      evaluation_suite: "lab-assistant-v1"
+      adapter_reference: null
+      access_boundary: "Preserve booking ownership, membership, and managed-lab limits."
+    - key: "RESEARCH_ASSISTANT"
+      domain: "research"
+      actor_categories: ["ADMIN", "LAB_MANAGER", "STUDENT"]
+      resource_families: ["projects", "groups", "milestones", "tasks", "reports", "research_logs", "suggestions"]
+      tool_groups: ["research_read", "research_draft"]
+      default_risk: "DRAFT_ONLY"
+      profile: "research"
+      prompt: "research-v1"
+      retrieval_namespace: "research"
+      evaluation_suite: "research-assistant-v1"
+      adapter_reference: null
+      access_boundary: "Resolve SELF, ASSIGNED, GROUP_WHEN_ALLOWED, or EXPLICIT_GRANT; never grant default student whole-project access."
+
+identity_and_authorization:
+  system_roles: ["ADMIN", "LAB_MANAGER", "STUDENT"]
+  research_membership_roles: ["LEADER", "MEMBER"]
+  membership_role_rule: "LEADER and MEMBER are research membership roles, never global security roles."
+  client_assistant_key: "Untrusted routing hint only; it cannot add access."
+  effective_permission: "assistant domain AND actor role AND resource scope AND existing business permission AND explicit grant AND action-risk policy"
+  non_escalation_inputs: ["roles", "profiles", "models", "prompts", "retrieval", "confidence"]
+  authorization_timing:
+    - "Spring authorizes before authorized context is built."
+    - "Spring re-authorizes immediately before every write."
+    - "Revoked membership or explicit grants deny execution."
+  research_scope_modes: ["SELF", "ASSIGNED", "GROUP_WHEN_ALLOWED", "EXPLICIT_GRANT"]
+  explicit_grants:
+    mvp_state: "NO_ADDITIONAL_GRANT"
+    implementation_rule: "No table, service, or schema is implied by this contract."
+
+prohibited_capabilities:
+  cross_domain_and_scope:
+    - "Cross-user booking data."
+    - "Default student access to an entire research project."
+  operational_actions:
+    - "Manual check-in."
+    - "Penalty changes."
+    - "Permission changes."
+    - "Autonomous approvals."
+    - "Official autonomous writes."
+  administrative_actions:
+    - "Admin grants."
+    - "Secrets access or disclosure."
+    - "Audit-data deletion."
+    - "Business-data deletion."
+    - "Migrations."
+  excluded_tool_target: "The deprecated BookingServiceImpl#cancelBooking(Long) overload is never a tool target."
+
+service_trust_boundary:
+  spring_owns:
+    - "Authentication and JWT handling."
+    - "Scope resolution, quotas, and authorized context construction."
+    - "Tool projection, validation, confirmation, approval, transactions, and execution."
+    - "Audit logging and official writes."
+    - "Authorization and re-authorization decisions."
+  python_owns:
+    - "Assistant profiles, prompts, models, adapters, inference, and structured output."
+    - "Output schema validation and safe error responses."
+  python_forbidden:
+    - "JWT handling."
+    - "Business database access, repositories, or SQL."
+    - "Broad self-filtered data retrieval."
+    - "Arbitrary Spring calls."
+    - "Official writes."
+    - "Confirmation or approval decisions."
+    - "Authorization decisions."
+
+authorized_context_contract:
+  builder: "Spring"
+  properties: ["typed", "bounded", "sanitized", "assistant_and_domain_isolated", "history_isolated"]
+  includes:
+    - "request metadata and request ID"
+    - "resolved assistant and actor"
+    - "authorized resource scope and resource references"
+    - "approved context data"
+    - "allowed tool schemas and action policy"
+    - "conversation identity"
+    - "profile, prompt, and context versions"
+    - "freshness semantics"
+  excludes: ["secrets", "unnecessary PII", "private data outside scope", "chain-of-thought"]
+  invariants:
+    - "Assistant, domain, history, and context mixing is prohibited."
+    - "Stale context cannot authorize a write."
+    - "Every data read is authorized before context leaves Spring."
+
+internal_contracts:
+  active_phase_5_compatibility:
+    state: "ACTIVE_INTERNAL_COMPATIBILITY"
+    request_contract:
+      method: "POST"
+      required_headers: ["X-Internal-Service-Token"]
+      optional_headers: ["X-Request-Id"]
+      request_id_rule: "Send X-Request-Id only when a nonblank request ID is available."
+    routes:
+      - route: "/v1/assistants/chat"
+        method: "POST"
+        response_schema: "CURRENT_CAMEL_CASE_CHAT_RESPONSE"
+        required_fields: ["assistantKey", "answer", "promptTokens", "completionTokens", "metadata"]
+      - route: "/v1/research/suggestions"
+        method: "POST"
+        response_schema: "CURRENT_CAMEL_CASE_SUGGESTION_RESPONSE"
+        required_fields: ["assistantKey", "actionType", "schemaVersion", "payload", "confidence", "explanation"]
+  future_normalized_contracts:
+    state: "FUTURE_INTERNAL_ONLY"
+    migration_rule: "These routes and schemas do not replace the active Phase 5 compatibility contract until a later adapter or migration is implemented."
+    routes:
+      - route: "/v1/assistants/tool-request"
+        state: "FUTURE_INTERNAL"
+        schema: "NORMALIZED_TOOL_REQUEST_SCHEMA"
+      - route: "/v1/assistants/suggestions"
+        state: "FUTURE_INTERNAL_NORMALIZED"
+        schema: "NORMALIZED_SUGGESTIONS_SCHEMA"
+    normalized_tool_request_schema:
+      required_fields: ["assistant", "answer_or_structured_result", "schema_version", "model_version", "prompt_version", "usage", "tool_requests", "warnings", "request_id"]
+      optional_fields: ["nullable_adapter_version", "citations"]
+  model_output: "Untrusted; it is never directly executable."
+
+tool_contract:
+  policy: "Versioned allowlist only."
+  definition_fields: ["name", "group", "domain", "input", "output", "risk", "capability", "resources", "idempotency", "confirmation", "approval", "audit", "version"]
+  resolution: "Spring resolves and authorizes every resource reference."
+  rejection_rules:
+    - "Unknown tools fail closed."
+    - "Unknown arguments fail closed."
+    - "Arbitrary endpoints, classes, methods, repositories, and SQL are prohibited."
+
+action_risk_and_lifecycle:
+  risk_levels: ["READ_ONLY", "DRAFT_ONLY", "CONFIRM_REQUIRED", "APPROVAL_REQUIRED", "PROHIBITED"]
+  mutation_policy: "Every mutation requires confirmation and re-authorization immediately before execution."
+  sensitive_operation_policy: "A policy-selected approver is required for sensitive operations."
+  prohibited_policy: "PROHIBITED is never downgraded."
+  proposed_lifecycle:
+    states: ["SUGGESTED", "AWAITING_CONFIRMATION", "CONFIRMED", "AWAITING_APPROVAL", "APPROVED", "REJECTED", "EXECUTING", "EXECUTED", "FAILED", "EXPIRED", "CANCELLED"]
+    persistence_compatibility: "Pending P5A-T7; this lifecycle is proposed and not a claim about current persistence."
+
+audit_and_failure_policy:
+  audit_fields: ["actor", "assistant", "domain", "action", "resource", "risk", "model", "adapter", "prompt", "request", "confirmation", "approval", "execution", "result", "failure", "time"]
+  audit_exclusions: ["secrets", "chain-of-thought"]
+  fail_closed_on: ["authorization denial", "stale context", "unknown tool", "expired action", "failed re-authorization", "gateway failure"]
+
+phase_5_reuse_and_gaps:
+  reusable_evidence:
+    - "Phase 5 persistence, including V59__ai_core.sql, is the historical baseline and is never edited by this task."
+    - "Quota and assistant configuration service behavior is reusable."
+    - "Provider-neutral internal gateway behavior is reusable."
+    - "Research authorized context builder behavior is reusable."
+    - "Suggestion payload validation behavior is reusable."
+    - "P5A-T1 recorded 54 focused tests passing at base commit 1af021e."
+  known_compatibility_gaps:
+    - "Current assistant keys include LAB_ASSISTANT and RESEARCH_ASSISTANT only; ADMIN_ASSISTANT is architecture-defined but not implemented."
+    - "Admin and Lab domain context builders remain future work."
+    - "The research-specific suggestion route remains a compatibility endpoint until normalized contracts are implemented."
+    - "Persistence compatibility must be assessed without editing V59."
+
+non_goals:
+  - "No Java, Python, frontend, test, migration, configuration, dependency, or .gitignore changes."
+  - "No runtime assistant registration, capability resolver, context builder, tool execution engine, or grant persistence."
+  - "No model training, production inference, RAG implementation, or assistant MVP rollout."
+  - "No retroactive redesign of historical Phase 0 through Phase 5 documents or migrations."
+
+security_invariants:
+  - "Assistant selection is resolved by Spring from authenticated actor, resource, quota, capability, and action policy."
+  - "An untrusted client key, model, adapter, profile, prompt, retrieval result, or confidence value cannot increase access."
+  - "Python receives only Spring-authorized, bounded context and allowed tool schemas."
+  - "No model output, suggestion, or tool request creates official data without Spring validation, confirmation, required approval, transaction handling, and execution-time re-authorization."
+  - "Cross-domain, cross-user, cross-lab, cross-group, and revoked-access attempts must deny by default."
+
+traceability:
+  - task: "P5A-T3"
+    deliverable: "Assistant registry semantics"
+    contract_support: ["assistant_registry", "identity_and_authorization", "phase_5_reuse_and_gaps"]
+    acceptance_boundary: "Registry metadata supports all three assistants without granting access."
+  - task: "P5A-T4"
+    deliverable: "Capability resolver"
+    contract_support: ["identity_and_authorization", "security_invariants"]
+    acceptance_boundary: "Effective capability is the stated intersection; key tampering cannot increase access."
+  - task: "P5A-T5"
+    deliverable: "Domain context builders"
+    contract_support: ["authorized_context_contract", "assistant_registry"]
+    acceptance_boundary: "Unauthorized data never reaches Python and assistant contexts remain isolated."
+  - task: "P5A-T6"
+    deliverable: "Tool registry and action policy"
+    contract_support: ["tool_contract", "action_risk_and_lifecycle", "prohibited_capabilities"]
+    acceptance_boundary: "Unknown or prohibited tools and arbitrary service paths are rejected."
+  - task: "P5A-T7"
+    deliverable: "Persistence compatibility"
+    contract_support: ["action_risk_and_lifecycle", "phase_5_reuse_and_gaps"]
+    acceptance_boundary: "Assess metadata compatibility without editing V59; retain the lifecycle as proposed until compatible persistence exists."
+  - task: "P5A-T8"
+    deliverable: "Authorization regression tests"
+    contract_support: ["security_invariants", "identity_and_authorization", "authorized_context_contract"]
+    acceptance_boundary: "Cross-domain, cross-scope, grant, assistant-key, tool, stale-context, and revoked-access regressions deny execution."
+
+rollback:
+  authority: "User or product owner"
+  triggers: ["security ambiguity", "compatibility error", "malformed or ignored file", "validation or review failure", "withdrawal"]
+  ordered_steps:
+    - "Preserve contract hashes and findings, then pause downstream work."
+    - "Restore the prior exact file or remove only this new YAML with authorization."
+    - "Never reset, clean, or force-push."
+    - "Halt or roll back later consumers first and pin compatible contract versions."
+    - "Record superseded handoffs and validate the exact target state."
+  side_effects: "No schema, data, configuration, runtime, or compensation backup exists because this contract is documentation-only."
+  success_criteria: ["target path is unignored", "no executable diff exists", "scope is validated", "rollback handoffs are recorded"]
+  residual_risk: "External copies may persist; notify their owners and require a new HIGH plan and review for any replacement."
