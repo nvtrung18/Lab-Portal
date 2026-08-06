@@ -163,6 +163,65 @@ class TaskPermissionHelperTest {
     }
 
     @Test
+    void contextVisibilityUsesExactManagedLabWithoutFirstLabLookup() {
+        User manager = user(2L, "LAB_MANAGER");
+        ProjectEntity secondLabProject = ProjectEntity.builder().lab(lab(2L)).build();
+        secondLabProject.setId(50L);
+        when(userRepository.findById(2L)).thenReturn(Optional.of(manager));
+        when(laboratoryRepository.existsByIdAndManagerIdAndActiveTrueAndDeletedFalse(2L, 2L)).thenReturn(true);
+
+        assertTrue(helper.canViewProjectContext(2L, secondLabProject));
+
+        verify(laboratoryRepository).existsByIdAndManagerIdAndActiveTrueAndDeletedFalse(2L, 2L);
+        verify(laboratoryRepository, never()).findFirstByManagerIdAndDeletedFalse(2L);
+    }
+
+    @Test
+    void contextVisibilityDeniesManagerForDifferentLab() {
+        User manager = user(2L, "LAB_MANAGER");
+        ProjectEntity otherLabProject = ProjectEntity.builder().lab(lab(2L)).build();
+        otherLabProject.setId(50L);
+        when(userRepository.findById(2L)).thenReturn(Optional.of(manager));
+        when(laboratoryRepository.existsByIdAndManagerIdAndActiveTrueAndDeletedFalse(2L, 2L)).thenReturn(false);
+
+        assertFalse(helper.canViewProjectContext(2L, otherLabProject));
+        verify(laboratoryRepository, never()).findFirstByManagerIdAndDeletedFalse(2L);
+    }
+
+    @Test
+    void contextVisibilityAllowsOnlyActiveLeaderOrMemberGroups() {
+        User student = user(7L, "STUDENT");
+        ProjectEntity project = ProjectEntity.builder().lab(lab(1L)).build();
+        project.setId(50L);
+        when(userRepository.findById(7L)).thenReturn(Optional.of(student));
+        when(groupMemberRepository.findActiveGroupIdsByProjectIdAndUserIdAndRole(50L, 7L, GroupRole.LEADER))
+                .thenReturn(List.of());
+        when(groupMemberRepository.findActiveGroupIdsByProjectIdAndUserIdAndRole(50L, 7L, GroupRole.MEMBER))
+                .thenReturn(List.of(100L));
+
+        assertTrue(helper.canViewProjectContext(7L, project));
+    }
+
+    @Test
+    void contextVisibilityFailsClosedForInactiveProjectOrIncoherentGroup() {
+        User student = user(7L, "STUDENT");
+        ProjectEntity project = ProjectEntity.builder().lab(lab(1L)).build();
+        project.setId(50L);
+        when(userRepository.findById(7L)).thenReturn(Optional.of(student));
+
+        project.setActive(false);
+        assertFalse(helper.canViewProjectContext(7L, project));
+
+        project.setActive(true);
+        GroupEntity mismatchedGroup = group(lab(2L));
+        mismatchedGroup.setId(100L);
+        project.setGroup(mismatchedGroup);
+        assertFalse(helper.canViewProjectContext(7L, project));
+        verify(groupMemberRepository, never())
+                .findActiveGroupIdsByProjectIdAndUserIdAndRole(50L, 7L, GroupRole.LEADER);
+    }
+
+    @Test
     void projectBoardFailsClosedForInactiveUserOrMissingOwnership() {
         User inactive = user(7L, "STUDENT");
         inactive.setActive(false);
