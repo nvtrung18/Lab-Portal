@@ -39,6 +39,11 @@ app:
 jwt:
   secret: ${JWT_SECRET}
 
+ai:
+  gateway:
+    base-url: ${AI_GATEWAY_BASE_URL}
+    internal-service-token: ${AI_INTERNAL_SERVICE_TOKEN}
+
 logging:
   level:
     root: INFO

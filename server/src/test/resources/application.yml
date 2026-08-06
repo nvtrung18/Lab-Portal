@@ -25,3 +25,8 @@ jwt:
   secret: dGhpc0lzQVN1cGVyU2VjcmV0S2V5Rm9yTGFiUG9ydGFsQXBwbGljYXRpb24yMDI2IQ==
   access-token-expiration: 86400000
   refresh-token-expiration: 604800000
+
+ai:
+  gateway:
+    base-url: http://ai-gateway.test.invalid
+    internal-service-token: test-internal-service-token
