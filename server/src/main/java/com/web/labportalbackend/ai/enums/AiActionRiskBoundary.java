@@ -1,0 +1,7 @@
+package com.web.labportalbackend.ai.enums;
+
+public enum AiActionRiskBoundary {
+    READ_ONLY,
+    DRAFT_ONLY,
+    PROHIBITED
+}
