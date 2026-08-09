@@ -119,8 +119,6 @@ public interface GroupMemberRepository extends JpaRepository<GroupMemberEntity, 
             SELECT DISTINCT g.id
             FROM GroupMemberEntity gm
             JOIN gm.group g
-            LEFT JOIN g.project gp
-            LEFT JOIN ProjectEntity p ON p.group.id = g.id
             WHERE gm.user.id = :userId
               AND gm.user.active = true
               AND gm.user.deleted = false
@@ -129,8 +127,12 @@ public interface GroupMemberRepository extends JpaRepository<GroupMemberEntity, 
               AND gm.deleted = false
               AND g.active = true
               AND g.deleted = false
-              AND ((gp.id = :projectId AND gp.active = true AND gp.deleted = false AND gp.lab.id = g.lab.id)
-                   OR (p.id = :projectId AND p.active = true AND p.deleted = false AND p.lab.id = g.lab.id))
+              AND EXISTS (SELECT p.id FROM ProjectEntity p JOIN p.lab l
+                          WHERE p.id = :projectId AND p.active = true AND p.deleted = false
+                            AND l.active = true AND l.deleted = false AND l.id = g.lab.id
+                            AND (g.project.id = p.id OR p.group.id = g.id)
+                            AND (g.project IS NULL OR g.project.id = p.id)
+                            AND (p.group IS NULL OR p.group.id = g.id))
             """)
     List<Long> findActiveGroupIdsByProjectIdAndUserIdAndRole(
             @Param("projectId") Long projectId,

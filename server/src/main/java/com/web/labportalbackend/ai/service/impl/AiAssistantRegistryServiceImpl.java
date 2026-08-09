@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
@@ -24,6 +25,7 @@ public class AiAssistantRegistryServiceImpl implements AiAssistantRegistry {
     private final AiAssistantConfigRepository assistantConfigRepository;
     private final Map<AiAssistantKey, AiAssistantProfile> profiles;
 
+    @Autowired
     public AiAssistantRegistryServiceImpl(AiAssistantConfigRepository assistantConfigRepository) {
         this(assistantConfigRepository, defaultCatalog());
     }

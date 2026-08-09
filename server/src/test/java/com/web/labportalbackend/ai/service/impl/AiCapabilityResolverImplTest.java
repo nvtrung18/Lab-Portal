@@ -7,6 +7,9 @@ import static com.web.labportalbackend.ai.enums.AiCapabilityDenialReason.ASSISTA
 import static com.web.labportalbackend.ai.enums.AiCapabilityDenialReason.ASSISTANT_MISCONFIGURED;
 import static com.web.labportalbackend.ai.enums.AiCapabilityDenialReason.DOMAIN_MISMATCH;
 import static com.web.labportalbackend.ai.enums.AiCapabilityDenialReason.MALFORMED_REQUEST;
+import static com.web.labportalbackend.ai.enums.AiCapabilityDenialReason.NOT_GROUP_MEMBER;
+import static com.web.labportalbackend.ai.enums.AiCapabilityDenialReason.NOT_LAB_MEMBER;
+import static com.web.labportalbackend.ai.enums.AiCapabilityDenialReason.NOT_MANAGED_LAB;
 import static com.web.labportalbackend.ai.enums.AiCapabilityDenialReason.PROHIBITED_ACTION;
 import static com.web.labportalbackend.ai.enums.AiCapabilityDenialReason.RESOURCE_REQUIRED;
 import static com.web.labportalbackend.ai.enums.AiCapabilityDenialReason.RESOURCE_TYPE_MISMATCH;
@@ -23,6 +26,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.clearInvocations;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -63,6 +67,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mock;
+import org.mockito.InOrder;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -177,16 +182,17 @@ class AiCapabilityResolverImplTest {
                 List.of(adminAdapter, labAdapter, researchAdapter));
         User admin = activeUser(1L, "admin", "ADMIN");
         authenticate(admin);
+        AiCapabilityRequest request = request(AiAssistantKey.ADMIN_ASSISTANT, 1L,
+                AiCapability.ADMIN_SYSTEM_SUMMARY, AiResourceType.SYSTEM, null, AiRequestedAction.READ);
+        when(adminAdapter.evaluate(admin, request, AiAssistantSystemRole.ADMIN)).thenReturn(
+                AiCapabilityPermissionAdapter.Evaluation.allowed(
+                        new AiCapabilityDecision.ResolvedResource(AiResourceType.SYSTEM, null,
+                                null, null, null, null, AiResourceScope.EXISTING_BUSINESS_PERMISSION), Set.of()));
 
-        AiCapabilityDecision decision = realRegistryResolver.resolve(request(
-                AiAssistantKey.ADMIN_ASSISTANT, 1L, AiCapability.ADMIN_SYSTEM_SUMMARY,
-                AiResourceType.SYSTEM, null, AiRequestedAction.READ));
+        AiCapabilityDecision decision = realRegistryResolver.resolve(request);
 
         assertDenied(decision, ASSISTANT_DISABLED);
-        verifyNoInteractions(configRepository);
-        verify(adminAdapter, never()).evaluate(admin, request(
-                AiAssistantKey.ADMIN_ASSISTANT, 1L, AiCapability.ADMIN_SYSTEM_SUMMARY,
-                AiResourceType.SYSTEM, null, AiRequestedAction.READ));
+        verify(adminAdapter).evaluate(admin, request, AiAssistantSystemRole.ADMIN);
     }
 
     static Stream<Arguments> crossDomainRequests() {
@@ -209,8 +215,7 @@ class AiCapabilityResolverImplTest {
             AiCapability capability, AiResourceType resourceType, Long resourceId, AiRequestedAction action) {
         User actor = activeUser(7L, "actor", role);
         authenticate(actor);
-        stubAvailable(key, domain, systemRole);
-
+        when(registry.getProfile(key)).thenReturn(profile(key, domain, systemRole));
         AiCapabilityDecision decision = resolver.resolve(request(
                 key, 7L, capability, resourceType, resourceId, action));
 
@@ -278,10 +283,11 @@ class AiCapabilityResolverImplTest {
     void adapterExceptionAndMalformedResultFailClosedWithoutLeakingDetails() {
         User student = activeUser(7L, "student", "STUDENT");
         authenticate(student);
-        stubAvailable(AiAssistantKey.LAB_ASSISTANT, AiAssistantDomain.LAB, AiAssistantSystemRole.STUDENT);
+        when(registry.getProfile(AiAssistantKey.LAB_ASSISTANT)).thenReturn(profile(
+                AiAssistantKey.LAB_ASSISTANT, AiAssistantDomain.LAB, AiAssistantSystemRole.STUDENT));
         AiCapabilityRequest request = request(AiAssistantKey.LAB_ASSISTANT, 7L,
                 AiCapability.LAB_POLICY_READ, AiResourceType.LABORATORY, 10L, AiRequestedAction.READ);
-        when(labAdapter.evaluate(student, request))
+        when(labAdapter.evaluate(student, request, AiAssistantSystemRole.STUDENT))
                 .thenThrow(new IllegalStateException("private database detail"))
                 .thenReturn(null);
 
@@ -297,7 +303,7 @@ class AiCapabilityResolverImplTest {
         stubAvailable(AiAssistantKey.LAB_ASSISTANT, AiAssistantDomain.LAB, AiAssistantSystemRole.STUDENT);
         AiCapabilityRequest request = request(AiAssistantKey.LAB_ASSISTANT, 7L,
                 AiCapability.LAB_POLICY_READ, AiResourceType.LABORATORY, 10L, AiRequestedAction.READ);
-        when(labAdapter.evaluate(student, request)).thenReturn(AiCapabilityPermissionAdapter.Evaluation.allowed(
+        when(labAdapter.evaluate(student, request, AiAssistantSystemRole.STUDENT)).thenReturn(AiCapabilityPermissionAdapter.Evaluation.allowed(
                 new AiCapabilityDecision.ResolvedResource(AiResourceType.LABORATORY, 10L,
                         10L, null, null, null, AiResourceScope.EXISTING_BUSINESS_PERMISSION),
                 Set.of(AiCapabilityEvidence.DERIVED_RESOURCE, AiCapabilityEvidence.EXISTING_PERMISSION)));
@@ -305,10 +311,215 @@ class AiCapabilityResolverImplTest {
         AiCapabilityDecision decision = resolver.requireAllowed(request);
 
         assertTrue(decision.allowed());
+        assertEquals(student.getId(), decision.acceptedActorId());
         assertTrue(decision.evidence().contains(AiCapabilityEvidence.NO_ADDITIONAL_GRANT));
         assertTrue(decision.evidence().contains(AiCapabilityEvidence.REGISTRY_PROFILE));
         assertThrows(UnsupportedOperationException.class,
                 () -> decision.evidence().add(AiCapabilityEvidence.MANAGED_LAB));
+    }
+
+    @Test
+    void selectedRoleResolverCarriesReverseCanonicalGroupProject() {
+        User student = activeUser(7L, "student", "STUDENT");
+        authenticate(student);
+        stubAvailable(AiAssistantKey.RESEARCH_ASSISTANT, AiAssistantDomain.RESEARCH,
+                AiAssistantSystemRole.STUDENT);
+        AiCapabilityRequest request = request(AiAssistantKey.RESEARCH_ASSISTANT, 7L,
+                AiCapability.RESEARCH_GROUP_SUMMARY, AiResourceType.GROUP, 30L, AiRequestedAction.READ);
+        when(researchAdapter.evaluate(student, request, AiAssistantSystemRole.STUDENT)).thenReturn(
+                AiCapabilityPermissionAdapter.Evaluation.allowed(
+                        new AiCapabilityDecision.ResolvedResource(AiResourceType.GROUP, 30L,
+                                10L, 20L, 30L, null, AiResourceScope.GROUP_MEMBER),
+                        Set.of(AiCapabilityEvidence.GROUP_MEMBERSHIP)));
+
+        AiCapabilityDecision decision = resolver.requireAllowed(request);
+
+        assertEquals(AiAssistantSystemRole.STUDENT, decision.selectedSystemRole());
+        assertEquals(20L, decision.resolvedResource().projectId());
+        assertEquals(30L, decision.resolvedResource().groupId());
+    }
+
+    @Test
+    void labSlotUsesStudentFirstWhenBothCandidateRolesAreAllowed() {
+        User actor = activeUser(7L, "dual-role", "STUDENT", "LAB_MANAGER");
+        authenticate(actor);
+        AiAssistantProfile profile = stubProfile(AiAssistantKey.LAB_ASSISTANT, AiAssistantDomain.LAB,
+                AiAssistantSystemRole.STUDENT, AiAssistantSystemRole.LAB_MANAGER);
+        stubAvailable(AiAssistantKey.LAB_ASSISTANT, profile, AiAssistantSystemRole.STUDENT);
+        AiCapabilityRequest request = requestFor(AiCapability.LAB_SLOT_READ);
+        when(labAdapter.evaluate(actor, request, AiAssistantSystemRole.STUDENT))
+                .thenReturn(allowedEvaluation(AiCapability.LAB_SLOT_READ));
+
+        AiCapabilityDecision decision = resolver.resolve(request);
+
+        assertAllowedWithRole(decision, AiAssistantSystemRole.STUDENT);
+        verify(labAdapter, never()).evaluate(actor, request, AiAssistantSystemRole.LAB_MANAGER);
+        verify(registry).getAvailableProfile(AiAssistantKey.LAB_ASSISTANT, AiAssistantSystemRole.STUDENT);
+        verify(registry, never()).getAvailableProfile(AiAssistantKey.LAB_ASSISTANT,
+                AiAssistantSystemRole.LAB_MANAGER);
+    }
+
+    @Test
+    void labSlotFallsBackToManagerOnlyAfterStudentPolicyDenial() {
+        User actor = activeUser(7L, "dual-role", "STUDENT", "LAB_MANAGER");
+        authenticate(actor);
+        AiAssistantProfile profile = stubProfile(AiAssistantKey.LAB_ASSISTANT, AiAssistantDomain.LAB,
+                AiAssistantSystemRole.STUDENT, AiAssistantSystemRole.LAB_MANAGER);
+        stubAvailable(AiAssistantKey.LAB_ASSISTANT, profile, AiAssistantSystemRole.LAB_MANAGER);
+        AiCapabilityRequest request = requestFor(AiCapability.LAB_SLOT_READ);
+        when(labAdapter.evaluate(actor, request, AiAssistantSystemRole.STUDENT))
+                .thenReturn(AiCapabilityPermissionAdapter.Evaluation.denied(NOT_LAB_MEMBER));
+        when(labAdapter.evaluate(actor, request, AiAssistantSystemRole.LAB_MANAGER))
+                .thenReturn(allowedEvaluation(AiCapability.LAB_SLOT_READ));
+
+        AiCapabilityDecision decision = resolver.resolve(request);
+
+        assertAllowedWithRole(decision, AiAssistantSystemRole.LAB_MANAGER);
+        InOrder order = inOrder(labAdapter);
+        order.verify(labAdapter).evaluate(actor, request, AiAssistantSystemRole.STUDENT);
+        order.verify(labAdapter).evaluate(actor, request, AiAssistantSystemRole.LAB_MANAGER);
+        verify(registry).getAvailableProfile(AiAssistantKey.LAB_ASSISTANT, AiAssistantSystemRole.LAB_MANAGER);
+        verify(registry, never()).getAvailableProfile(AiAssistantKey.LAB_ASSISTANT,
+                AiAssistantSystemRole.STUDENT);
+    }
+
+    @Test
+    void researchProjectUsesManagerFirstAndCanFallBackToStudentAfterManagerDenial() {
+        User actor = activeUser(7L, "dual-role", "STUDENT", "LAB_MANAGER");
+        authenticate(actor);
+        AiAssistantProfile profile = stubProfile(AiAssistantKey.RESEARCH_ASSISTANT, AiAssistantDomain.RESEARCH,
+                AiAssistantSystemRole.STUDENT, AiAssistantSystemRole.LAB_MANAGER);
+        stubAvailable(AiAssistantKey.RESEARCH_ASSISTANT, profile, AiAssistantSystemRole.STUDENT);
+        AiCapabilityRequest request = requestFor(AiCapability.RESEARCH_PROJECT_SUMMARY);
+        when(researchAdapter.evaluate(actor, request, AiAssistantSystemRole.LAB_MANAGER))
+                .thenReturn(AiCapabilityPermissionAdapter.Evaluation.denied(NOT_MANAGED_LAB));
+        when(researchAdapter.evaluate(actor, request, AiAssistantSystemRole.STUDENT))
+                .thenReturn(allowedEvaluation(AiCapability.RESEARCH_PROJECT_SUMMARY));
+
+        AiCapabilityDecision decision = resolver.resolve(request);
+
+        assertAllowedWithRole(decision, AiAssistantSystemRole.STUDENT);
+        InOrder order = inOrder(researchAdapter);
+        order.verify(researchAdapter).evaluate(actor, request, AiAssistantSystemRole.LAB_MANAGER);
+        order.verify(researchAdapter).evaluate(actor, request, AiAssistantSystemRole.STUDENT);
+    }
+
+    @Test
+    void researchProjectRecordsManagerWhenTheManagerBranchAllows() {
+        User actor = activeUser(7L, "dual-role", "STUDENT", "LAB_MANAGER");
+        authenticate(actor);
+        AiAssistantProfile profile = stubProfile(AiAssistantKey.RESEARCH_ASSISTANT, AiAssistantDomain.RESEARCH,
+                AiAssistantSystemRole.STUDENT, AiAssistantSystemRole.LAB_MANAGER);
+        stubAvailable(AiAssistantKey.RESEARCH_ASSISTANT, profile, AiAssistantSystemRole.LAB_MANAGER);
+        AiCapabilityRequest request = requestFor(AiCapability.RESEARCH_PROJECT_SUMMARY);
+        when(researchAdapter.evaluate(actor, request, AiAssistantSystemRole.LAB_MANAGER))
+                .thenReturn(allowedEvaluation(AiCapability.RESEARCH_PROJECT_SUMMARY));
+
+        AiCapabilityDecision decision = resolver.resolve(request);
+
+        assertAllowedWithRole(decision, AiAssistantSystemRole.LAB_MANAGER);
+        verify(researchAdapter, never()).evaluate(actor, request, AiAssistantSystemRole.STUDENT);
+    }
+
+    static Stream<AiCapability> studentFirstResearchCapabilities() {
+        return Stream.of(AiCapability.RESEARCH_GROUP_SUMMARY, AiCapability.RESEARCH_ASSIGNED_TASK_READ,
+                AiCapability.RESEARCH_TASK_SUGGESTION_DRAFT, AiCapability.RESEARCH_REPORT_REVIEW_DRAFT);
+    }
+
+    @ParameterizedTest(name = "{0} uses student first and falls back to manager only after denial")
+    @MethodSource("studentFirstResearchCapabilities")
+    void studentFirstResearchCapabilitiesRecordStudentThenManagerFallback(AiCapability capability) {
+        User actor = activeUser(7L, "dual-role", "STUDENT", "LAB_MANAGER");
+        authenticate(actor);
+        AiAssistantProfile profile = stubProfile(AiAssistantKey.RESEARCH_ASSISTANT, AiAssistantDomain.RESEARCH,
+                AiAssistantSystemRole.STUDENT, AiAssistantSystemRole.LAB_MANAGER);
+        stubAvailable(AiAssistantKey.RESEARCH_ASSISTANT, profile, AiAssistantSystemRole.LAB_MANAGER);
+        AiCapabilityRequest request = requestFor(capability);
+        when(researchAdapter.evaluate(actor, request, AiAssistantSystemRole.STUDENT))
+                .thenReturn(AiCapabilityPermissionAdapter.Evaluation.denied(NOT_GROUP_MEMBER));
+        when(researchAdapter.evaluate(actor, request, AiAssistantSystemRole.LAB_MANAGER))
+                .thenReturn(allowedEvaluation(capability));
+
+        AiCapabilityDecision decision = resolver.resolve(request);
+
+        assertAllowedWithRole(decision, AiAssistantSystemRole.LAB_MANAGER);
+        InOrder order = inOrder(researchAdapter);
+        order.verify(researchAdapter).evaluate(actor, request, AiAssistantSystemRole.STUDENT);
+        order.verify(researchAdapter).evaluate(actor, request, AiAssistantSystemRole.LAB_MANAGER);
+    }
+
+    @ParameterizedTest(name = "{0} records Student when its first branch allows")
+    @MethodSource("studentFirstResearchCapabilities")
+    void studentFirstResearchCapabilitiesRecordStudentWithoutManagerFallback(AiCapability capability) {
+        User actor = activeUser(7L, "dual-role", "STUDENT", "LAB_MANAGER");
+        authenticate(actor);
+        AiAssistantProfile profile = stubProfile(AiAssistantKey.RESEARCH_ASSISTANT, AiAssistantDomain.RESEARCH,
+                AiAssistantSystemRole.STUDENT, AiAssistantSystemRole.LAB_MANAGER);
+        stubAvailable(AiAssistantKey.RESEARCH_ASSISTANT, profile, AiAssistantSystemRole.STUDENT);
+        AiCapabilityRequest request = requestFor(capability);
+        when(researchAdapter.evaluate(actor, request, AiAssistantSystemRole.STUDENT))
+                .thenReturn(allowedEvaluation(capability));
+
+        AiCapabilityDecision decision = resolver.resolve(request);
+
+        assertAllowedWithRole(decision, AiAssistantSystemRole.STUDENT);
+        verify(researchAdapter, never()).evaluate(actor, request, AiAssistantSystemRole.LAB_MANAGER);
+    }
+
+    @Test
+    void allowedStudentBranchDoesNotFallBackWhenItsRegistryAvailabilityFails() {
+        User actor = activeUser(7L, "dual-role", "STUDENT", "LAB_MANAGER");
+        authenticate(actor);
+        AiAssistantProfile profile = profile(AiAssistantKey.LAB_ASSISTANT, AiAssistantDomain.LAB,
+                AiAssistantSystemRole.STUDENT, AiAssistantSystemRole.LAB_MANAGER);
+        when(registry.getProfile(AiAssistantKey.LAB_ASSISTANT)).thenReturn(profile);
+        when(labAdapter.evaluate(actor, requestFor(AiCapability.LAB_SLOT_READ), AiAssistantSystemRole.STUDENT))
+                .thenReturn(allowedEvaluation(AiCapability.LAB_SLOT_READ));
+        when(registry.getAvailableProfile(AiAssistantKey.LAB_ASSISTANT, AiAssistantSystemRole.STUDENT))
+                .thenThrow(new AiAssistantRegistryException(AiAssistantRegistryFailure.ASSISTANT_UNAVAILABLE));
+
+        AiCapabilityRequest request = requestFor(AiCapability.LAB_SLOT_READ);
+        AiCapabilityDecision decision = resolver.resolve(request);
+
+        assertDenied(decision, ASSISTANT_DISABLED);
+        verify(labAdapter).evaluate(actor, request, AiAssistantSystemRole.STUDENT);
+        verify(labAdapter, never()).evaluate(actor, request, AiAssistantSystemRole.LAB_MANAGER);
+        verify(registry, never()).getAvailableProfile(AiAssistantKey.LAB_ASSISTANT,
+                AiAssistantSystemRole.LAB_MANAGER);
+    }
+
+    @Test
+    void pureAdminIsAllowedOnlyForTheExplicitLabPolicyException() {
+        User actor = activeUser(7L, "admin", "ADMIN");
+        authenticate(actor);
+        stubAvailable(AiAssistantKey.LAB_ASSISTANT, AiAssistantDomain.LAB, AiAssistantSystemRole.ADMIN);
+        AiCapabilityRequest request = requestFor(AiCapability.LAB_POLICY_READ);
+        when(labAdapter.evaluate(actor, request, AiAssistantSystemRole.ADMIN))
+                .thenReturn(allowedEvaluation(AiCapability.LAB_POLICY_READ));
+
+        AiCapabilityDecision decision = resolver.resolve(request);
+
+        assertAllowedWithRole(decision, AiAssistantSystemRole.ADMIN);
+    }
+
+    static Stream<AiCapability> adminProhibitedLabAndResearchCapabilities() {
+        return Stream.of(AiCapability.values())
+                .filter(capability -> capability.domain() != AiAssistantDomain.ADMIN)
+                .filter(capability -> capability != AiCapability.LAB_POLICY_READ);
+    }
+
+    @ParameterizedTest(name = "pure Admin is denied for {0}")
+    @MethodSource("adminProhibitedLabAndResearchCapabilities")
+    void pureAdminCannotEnterProhibitedLabOrResearchFamilies(AiCapability capability) {
+        User actor = activeUser(7L, "admin", "ADMIN");
+        authenticate(actor);
+        AiAssistantKey key = assistantKey(capability.domain());
+        when(registry.getProfile(key)).thenReturn(profile(key, capability.domain(), AiAssistantSystemRole.ADMIN));
+
+        AiCapabilityDecision decision = resolver.resolve(requestFor(capability));
+
+        assertDenied(decision, ROLE_NOT_ALLOWED);
+        verifyNoInteractions(adminAdapter, labAdapter, researchAdapter);
     }
 
     @Test
@@ -340,15 +551,26 @@ class AiCapabilityResolverImplTest {
         verifyNoInteractions(adminAdapter, labAdapter, researchAdapter);
     }
 
-    private void stubAvailable(AiAssistantKey key, AiAssistantDomain domain, AiAssistantSystemRole role) {
-        AiAssistantProfile profile = profile(key, domain, role);
+    private void stubAvailable(AiAssistantKey key, AiAssistantDomain domain, AiAssistantSystemRole... roles) {
+        AiAssistantProfile profile = stubProfile(key, domain, roles);
+        when(registry.getAvailableProfile(key, roles[0])).thenReturn(profile);
+    }
+
+    private AiAssistantProfile stubProfile(AiAssistantKey key, AiAssistantDomain domain,
+                                            AiAssistantSystemRole... roles) {
+        AiAssistantProfile profile = profile(key, domain, roles);
         when(registry.getProfile(key)).thenReturn(profile);
+        return profile;
+    }
+
+    private void stubAvailable(AiAssistantKey key, AiAssistantProfile profile,
+                               AiAssistantSystemRole role) {
         when(registry.getAvailableProfile(key, role)).thenReturn(profile);
     }
 
     private static AiAssistantProfile profile(AiAssistantKey key, AiAssistantDomain domain,
-                                              AiAssistantSystemRole role) {
-        return new AiAssistantProfile(key, domain, true, Set.of(role),
+                                              AiAssistantSystemRole... roles) {
+        return new AiAssistantProfile(key, domain, true, Set.of(roles),
                 "profile", "prompt-v1", null, domain.name().toLowerCase(),
                 AiQuotaPolicyReference.AI_CONFIG_QUOTA,
                 Set.of(domain == AiAssistantDomain.LAB ? AiAssistantToolGroup.LAB_READ : AiAssistantToolGroup.RESEARCH_READ),
@@ -379,6 +601,38 @@ class AiCapabilityResolverImplTest {
         return raw(key, actorId, capability, resource(type, resourceId), null, action);
     }
 
+    private static AiCapabilityRequest requestFor(AiCapability capability) {
+        AiCapabilityRequest.ResourceReference parent = capability.parentResourceType() == null ? null
+                : resource(capability.parentResourceType(), 20L);
+        return raw(assistantKey(capability.domain()), 7L, capability,
+                resource(capability.resourceType(), 10L), parent, capability.action());
+    }
+
+    private static AiAssistantKey assistantKey(AiAssistantDomain domain) {
+        return switch (domain) {
+            case ADMIN -> AiAssistantKey.ADMIN_ASSISTANT;
+            case LAB -> AiAssistantKey.LAB_ASSISTANT;
+            case RESEARCH -> AiAssistantKey.RESEARCH_ASSISTANT;
+        };
+    }
+
+    private static AiCapabilityPermissionAdapter.Evaluation allowedEvaluation(AiCapability capability) {
+        return AiCapabilityPermissionAdapter.Evaluation.allowed(
+                new AiCapabilityDecision.ResolvedResource(capability.resourceType(), 10L, 10L,
+                        capability.domain() == AiAssistantDomain.RESEARCH ? 20L : null,
+                        capability == AiCapability.RESEARCH_GROUP_SUMMARY ? 10L : null,
+                        capability.resourceType() == AiResourceType.TASK ? 10L : null,
+                        AiResourceScope.EXISTING_BUSINESS_PERMISSION), Set.of());
+    }
+
+    private static void assertAllowedWithRole(AiCapabilityDecision decision,
+                                              AiAssistantSystemRole selectedRole) {
+        assertTrue(decision.allowed());
+        assertEquals(7L, decision.acceptedActorId());
+        assertEquals(selectedRole, decision.selectedSystemRole());
+        assertNull(decision.denialReason());
+    }
+
     private static AiCapabilityRequest raw(AiAssistantKey key, Long actorId, AiCapability capability,
                                            AiCapabilityRequest.ResourceReference resource,
                                            AiCapabilityRequest.ResourceReference parent,
@@ -393,6 +647,8 @@ class AiCapabilityResolverImplTest {
     private static void assertDenied(AiCapabilityDecision decision,
                                      com.web.labportalbackend.ai.enums.AiCapabilityDenialReason reason) {
         assertFalse(decision.allowed());
+        assertNull(decision.acceptedActorId());
+        assertNull(decision.selectedSystemRole());
         assertEquals(reason, decision.denialReason());
         assertNull(decision.resolvedResource());
         assertTrue(decision.evidence().isEmpty());

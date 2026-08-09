@@ -1,6 +1,7 @@
 package com.web.labportalbackend.lab.repository;
 
 import com.web.labportalbackend.common.enums.LabStatus;
+import com.web.labportalbackend.ai.context.AiLabContext;
 import com.web.labportalbackend.lab.entity.Laboratory;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -62,4 +63,31 @@ public interface LaboratoryRepository extends JpaRepository<Laboratory, Long> {
 
     @Query("SELECT COUNT(l) FROM Laboratory l WHERE l.manager IS NULL AND l.deleted = false")
     long countWithoutManager();
+
+    @Query("""
+            SELECT new com.web.labportalbackend.ai.context.AiLabContext$Laboratory(l.id, l.labName, l.status)
+            FROM Laboratory l
+            WHERE l.id = :labId AND l.active = true AND l.deleted = false
+              AND EXISTS (SELECT u.id FROM User u WHERE u.id = :actorId AND u.active = true
+                          AND u.deleted = false AND u.status = com.web.labportalbackend.common.enums.UserStatus.ACTIVE)
+              AND EXISTS (SELECT r.id FROM User roleActor JOIN roleActor.roles r
+                          WHERE roleActor.id = :actorId AND r.name = :selectedRoleName)
+            """)
+    Optional<AiLabContext.Laboratory> findAiContextLaboratory(
+            @Param("actorId") Long actorId, @Param("labId") Long labId,
+            @Param("selectedRoleName") String selectedRoleName);
+
+    /** Authorization anchor for managed-lab aggregates, which otherwise return zero counts. */
+    @Query("""
+            SELECT COUNT(l) > 0
+            FROM Laboratory l JOIN l.manager m
+            WHERE l.id = :labId AND m.id = :actorId
+              AND l.active = true AND l.deleted = false
+              AND m.active = true AND m.deleted = false
+              AND m.status = com.web.labportalbackend.common.enums.UserStatus.ACTIVE
+              AND EXISTS (SELECT r.id FROM User roleActor JOIN roleActor.roles r
+                          WHERE roleActor.id = :actorId AND r.name = :selectedRoleName)
+            """)
+    boolean existsAiContextManagedLab(@Param("actorId") Long actorId, @Param("labId") Long labId,
+                                      @Param("selectedRoleName") String selectedRoleName);
 }

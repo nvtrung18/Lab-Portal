@@ -12,6 +12,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.web.labportalbackend.ai.enums.AiAssistantKey;
+import com.web.labportalbackend.ai.enums.AiAssistantSystemRole;
 import com.web.labportalbackend.ai.enums.AiCapability;
 import com.web.labportalbackend.ai.enums.AiRequestedAction;
 import com.web.labportalbackend.ai.enums.AiResourceType;
@@ -37,13 +38,13 @@ class AiAdminCapabilityPermissionAdapterTest {
     void allowsAdminGlobalReadWithoutReadingSensitiveData() {
         assertTrue(adapter.evaluate(user(1L, "ADMIN"), request(
                 AiCapability.ADMIN_SYSTEM_SUMMARY, AiResourceType.SYSTEM, null,
-                AiRequestedAction.READ)).allowed());
+                AiRequestedAction.READ), AiAssistantSystemRole.ADMIN).allowed());
         assertTrue(adapter.evaluate(user(1L, "ADMIN"), request(
                 AiCapability.ADMIN_AUDIT_SUMMARY, AiResourceType.AUDIT_LOG, null,
-                AiRequestedAction.READ)).allowed());
+                AiRequestedAction.READ), AiAssistantSystemRole.ADMIN).allowed());
         assertTrue(adapter.evaluate(user(1L, "ADMIN"), request(
                 AiCapability.ADMIN_CONFIG_DRAFT, AiResourceType.SYSTEM_CONFIG, null,
-                AiRequestedAction.DRAFT)).allowed());
+                AiRequestedAction.DRAFT), AiAssistantSystemRole.ADMIN).allowed());
 
         verifyNoInteractions(userRepository);
     }
@@ -51,7 +52,7 @@ class AiAdminCapabilityPermissionAdapterTest {
     @Test
     void deniesNonAdminBeforeTargetLookup() {
         AiCapabilityPermissionAdapter.Evaluation result = adapter.evaluate(user(2L, "STUDENT"), request(
-                AiCapability.ADMIN_USER_STATUS_LOOKUP, AiResourceType.USER_ACCOUNT, 9L, AiRequestedAction.READ));
+                AiCapability.ADMIN_USER_STATUS_LOOKUP, AiResourceType.USER_ACCOUNT, 9L, AiRequestedAction.READ), AiAssistantSystemRole.STUDENT);
 
         assertDenied(result, ROLE_NOT_ALLOWED);
         verifyNoInteractions(userRepository);
@@ -68,26 +69,26 @@ class AiAdminCapabilityPermissionAdapterTest {
 
         assertTrue(adapter.evaluate(user(1L, "ADMIN"), request(
                 AiCapability.ADMIN_ACCOUNT_ACTION_DRAFT, AiResourceType.USER_ACCOUNT, 9L,
-                AiRequestedAction.DRAFT)).allowed());
+                AiRequestedAction.DRAFT), AiAssistantSystemRole.ADMIN).allowed());
         AiCapabilityPermissionAdapter.Evaluation adminTarget = adapter.evaluate(user(1L, "ADMIN"), request(
                 AiCapability.ADMIN_ACCOUNT_ACTION_DRAFT, AiResourceType.USER_ACCOUNT, 10L,
-                AiRequestedAction.DRAFT));
+                AiRequestedAction.DRAFT), AiAssistantSystemRole.ADMIN);
         assertDenied(adminTarget, PRIVATE_RESOURCE);
         assertDenied(adapter.evaluate(user(1L, "ADMIN"), request(
                 AiCapability.ADMIN_USER_STATUS_LOOKUP, AiResourceType.USER_ACCOUNT, 11L,
-                AiRequestedAction.READ)), RESOURCE_UNAVAILABLE);
+                AiRequestedAction.READ), AiAssistantSystemRole.ADMIN), RESOURCE_UNAVAILABLE);
         assertDenied(adapter.evaluate(user(1L, "ADMIN"), request(
                 AiCapability.ADMIN_USER_STATUS_LOOKUP, AiResourceType.USER_ACCOUNT, 12L,
-                AiRequestedAction.READ)), RESOURCE_UNAVAILABLE);
+                AiRequestedAction.READ), AiAssistantSystemRole.ADMIN), RESOURCE_UNAVAILABLE);
         assertDenied(adapter.evaluate(user(1L, "ADMIN"), request(
                 AiCapability.ADMIN_USER_STATUS_LOOKUP, AiResourceType.USER_ACCOUNT, 13L,
-                AiRequestedAction.READ)), RESOURCE_UNAVAILABLE);
+                AiRequestedAction.READ), AiAssistantSystemRole.ADMIN), RESOURCE_UNAVAILABLE);
     }
 
     @Test
     void rejectsCrossDomainCapabilityBeforeAnyAdminResourceLookup() {
         AiCapabilityPermissionAdapter.Evaluation result = adapter.evaluate(user(1L, "ADMIN"), request(
-                AiCapability.LAB_POLICY_READ, AiResourceType.LABORATORY, 10L, AiRequestedAction.READ));
+                AiCapability.LAB_POLICY_READ, AiResourceType.LABORATORY, 10L, AiRequestedAction.READ), AiAssistantSystemRole.ADMIN);
 
         assertDenied(result, DOMAIN_MISMATCH);
         verifyNoInteractions(userRepository);

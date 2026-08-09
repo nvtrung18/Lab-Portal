@@ -1,0 +1,87 @@
+package com.web.labportalbackend.ai.context.impl;
+
+import com.web.labportalbackend.ai.context.AiContextReadDeniedException;
+import com.web.labportalbackend.ai.context.AiDomainContext;
+import com.web.labportalbackend.ai.context.AiDomainContextBuilder;
+import com.web.labportalbackend.ai.context.AiLabContext;
+import com.web.labportalbackend.ai.context.TrustedContextInput;
+import com.web.labportalbackend.ai.enums.AiAssistantDomain;
+import com.web.labportalbackend.ai.enums.AiCapability;
+import com.web.labportalbackend.ai.enums.AiResourceScope;
+import com.web.labportalbackend.booking.repository.BookingRepository;
+import com.web.labportalbackend.booking.repository.TimeSlotRepository;
+import com.web.labportalbackend.lab.repository.LaboratoryRepository;
+import java.util.Set;
+import org.springframework.stereotype.Component;
+
+@Component
+public class AiLabAssistantContextBuilder implements AiDomainContextBuilder {
+
+    private final LaboratoryRepository laboratoryRepository;
+    private final TimeSlotRepository timeSlotRepository;
+    private final BookingRepository bookingRepository;
+
+    public AiLabAssistantContextBuilder(LaboratoryRepository laboratoryRepository,
+                                        TimeSlotRepository timeSlotRepository,
+                                        BookingRepository bookingRepository) {
+        this.laboratoryRepository = laboratoryRepository;
+        this.timeSlotRepository = timeSlotRepository;
+        this.bookingRepository = bookingRepository;
+    }
+
+    @Override public AiAssistantDomain domain() { return AiAssistantDomain.LAB; }
+
+    @Override
+    public AiDomainContext build(TrustedContextInput input) {
+        if (input.decision().domain() != domain() || input.decision().resolvedResource().labId() == null) {
+            throw new AiContextReadDeniedException();
+        }
+        AiCapability capability = input.decision().capability();
+        String selectedRoleName = input.decision().selectedSystemRole().name();
+        Long labId = input.decision().resolvedResource().labId();
+        boolean managedScope = input.decision().resolvedResource().effectiveScope() == AiResourceScope.MANAGED_LAB;
+        if (managedScope && !laboratoryRepository.existsAiContextManagedLab(input.actorId(), labId, selectedRoleName)) {
+            throw new AiContextReadDeniedException();
+        }
+        AiLabContext.Laboratory lab = laboratoryRepository.findAiContextLaboratory(input.actorId(), labId, selectedRoleName)
+                .orElseThrow(AiContextReadDeniedException::new);
+        AiLabContext.Slot slot = null;
+        AiLabContext.OwnBooking booking = null;
+        AiLabContext.ManagedSummary managedSummary = null;
+        if (Set.of(AiCapability.LAB_SLOT_READ, AiCapability.LAB_BOOKING_DRAFT).contains(capability)) {
+            boolean draft = capability == AiCapability.LAB_BOOKING_DRAFT;
+            slot = timeSlotRepository.findAiContextSlot(input.actorId(), labId,
+                    input.decision().resolvedResource().id(), managedScope, draft, input.builtAt(), selectedRoleName)
+                    .orElseThrow(AiContextReadDeniedException::new);
+        } else if (capability == AiCapability.LAB_OWN_BOOKING_READ) {
+            booking = bookingRepository.findAiContextOwnBooking(input.actorId(), labId,
+                    input.decision().resolvedResource().id(), selectedRoleName)
+                    .orElseThrow(AiContextReadDeniedException::new);
+        } else if (capability == AiCapability.LAB_CHECKIN_GUIDANCE) {
+            var snapshot = input.decision().checkinGuidancePolicySnapshot();
+            if (snapshot == null) {
+                throw new AiContextReadDeniedException();
+            }
+            booking = bookingRepository.findAiContextCheckinBooking(input.actorId(), labId,
+                    input.decision().resolvedResource().id(), input.builtAt(), snapshot.endInclusive(), selectedRoleName)
+                    .orElseThrow(AiContextReadDeniedException::new);
+        } else if (capability == AiCapability.LAB_MANAGED_SUMMARY) {
+            if (!managedScope) {
+                throw new AiContextReadDeniedException();
+            }
+            managedSummary = new AiLabContext.ManagedSummary(
+                    timeSlotRepository.countAiContextManagedSlots(input.actorId(), labId, selectedRoleName),
+                    bookingRepository.countAiContextManagedBookings(input.actorId(), labId, selectedRoleName));
+        }
+        return new AiLabContext(lab, slot, booking, managedSummary,
+                capability.action().name().equals("DRAFT"), policyOrDraftEligibilityLabel(capability));
+    }
+
+    private static String policyOrDraftEligibilityLabel(AiCapability capability) {
+        return switch (capability) {
+            case LAB_POLICY_READ -> "POLICY_INFORMATION_ONLY";
+            case LAB_BOOKING_DRAFT -> "DRAFT_ONLY_NO_BOOKING_WRITE";
+            default -> null;
+        };
+    }
+}

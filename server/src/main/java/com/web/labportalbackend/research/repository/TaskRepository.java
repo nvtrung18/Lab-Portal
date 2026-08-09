@@ -1,6 +1,7 @@
 package com.web.labportalbackend.research.repository;
 
 import com.web.labportalbackend.research.entity.TaskEntity;
+import com.web.labportalbackend.ai.service.AiResearchContext;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -389,4 +390,74 @@ public interface TaskRepository extends JpaRepository<TaskEntity, Long> {
               AND t.active = true
             """)
     Optional<TaskEntity> findByIdForUpdate(@Param("id") Long id);
+
+    @Query("""
+            SELECT new com.web.labportalbackend.ai.service.AiResearchContext$Task(
+                t.id, t.title, t.status, t.priority, t.type, t.dueDate, t.deadline, t.progressPercent)
+            FROM TaskEntity t JOIN ProjectEntity p ON p.id = t.projectId JOIN p.lab l
+            JOIN GroupEntity g ON g.id = t.groupId JOIN MilestoneEntity m ON m.id = t.milestoneId
+            WHERE t.projectId = :projectId AND t.active = true AND t.deleted = false
+              AND p.active = true AND p.deleted = false AND l.active = true AND l.deleted = false
+              AND g.active = true AND g.deleted = false AND g.lab.id = l.id
+              AND (g.project.id = p.id OR p.group.id = g.id)
+              AND (g.project IS NULL OR g.project.id = p.id)
+              AND (p.group IS NULL OR p.group.id = g.id)
+              AND m.active = true AND m.deleted = false AND m.project.id = p.id AND m.group.id = g.id
+              AND (:selectedGroupId IS NULL OR g.id = :selectedGroupId)
+              AND (:selectedTaskId IS NULL OR t.id = :selectedTaskId)
+              AND (:selectedReportId IS NULL OR EXISTS (SELECT r.id FROM ReportEntity r
+                                                        JOIN GroupEntity rg ON rg.id = r.groupId
+                                                        JOIN MilestoneEntity rm ON rm.id = r.milestoneId
+                                                        WHERE r.id = :selectedReportId AND r.taskId = t.id
+                                                          AND r.projectId = p.id AND r.active = true AND r.deleted = false
+                                                          AND rg.active = true AND rg.deleted = false AND rg.lab.id = l.id
+                                                          AND (rg.project.id = p.id OR p.group.id = rg.id)
+                                                          AND (rg.project IS NULL OR rg.project.id = p.id)
+                                                          AND (p.group IS NULL OR p.group.id = rg.id)
+                                                          AND rm.active = true AND rm.deleted = false AND rm.project.id = p.id
+                                                          AND rm.group.id = rg.id
+                                                          AND t.milestoneId = rm.id AND t.groupId = rg.id))
+              AND EXISTS (SELECT r.id FROM User roleActor JOIN roleActor.roles r
+                          WHERE roleActor.id = :actorId AND r.name = :selectedRoleName)
+              AND ((:selectedRoleName = 'LAB_MANAGER' AND l.manager.id = :actorId)
+                   OR (:selectedRoleName = 'STUDENT' AND (t.assigneeId = :actorId
+                   OR EXISTS (SELECT gm.id FROM GroupMemberEntity gm WHERE gm.group.id = g.id
+                              AND gm.user.id = :actorId AND gm.active = true AND gm.deleted = false
+                              AND (gm.role = com.web.labportalbackend.research.enums.GroupRole.LEADER
+                                   OR gm.role = com.web.labportalbackend.research.enums.GroupRole.MEMBER)))))
+              AND EXISTS (SELECT a.id FROM User a WHERE a.id = :actorId AND a.active = true
+                          AND a.deleted = false AND a.status = com.web.labportalbackend.common.enums.UserStatus.ACTIVE)
+            ORDER BY CASE WHEN t.dueDate IS NULL THEN 1 ELSE 0 END, t.dueDate ASC, t.createdAt ASC, t.id ASC
+            """)
+    List<AiResearchContext.Task> findAiContextTasks(@Param("actorId") Long actorId,
+                                                     @Param("projectId") Long projectId,
+                                                     @Param("selectedGroupId") Long selectedGroupId,
+                                                     @Param("selectedTaskId") Long selectedTaskId,
+                                                     @Param("selectedReportId") Long selectedReportId,
+                                                     org.springframework.data.domain.Pageable pageable,
+                                                     @Param("selectedRoleName") String selectedRoleName);
+
+    @Query("""
+            SELECT COUNT(t) > 0 FROM TaskEntity t JOIN ProjectEntity p ON p.id = t.projectId
+            JOIN p.lab l JOIN GroupEntity g ON g.id = t.groupId JOIN MilestoneEntity m ON m.id = t.milestoneId
+            WHERE t.id = :taskId AND t.projectId = :projectId AND t.active = true AND t.deleted = false
+              AND p.active = true AND p.deleted = false AND l.active = true AND l.deleted = false
+              AND g.active = true AND g.deleted = false AND g.lab.id = l.id
+              AND (g.project.id = p.id OR p.group.id = g.id)
+              AND (g.project IS NULL OR g.project.id = p.id)
+              AND (p.group IS NULL OR p.group.id = g.id)
+              AND m.active = true AND m.deleted = false AND m.project.id = p.id AND m.group.id = g.id
+              AND EXISTS (SELECT r.id FROM User roleActor JOIN roleActor.roles r
+                          WHERE roleActor.id = :actorId AND r.name = :selectedRoleName)
+              AND ((:selectedRoleName = 'LAB_MANAGER' AND l.manager.id = :actorId)
+                   OR (:selectedRoleName = 'STUDENT' AND (t.assigneeId = :actorId
+                   OR EXISTS (SELECT gm.id FROM GroupMemberEntity gm WHERE gm.group.id = g.id
+                              AND gm.user.id = :actorId AND gm.active = true AND gm.deleted = false
+                              AND (gm.role = com.web.labportalbackend.research.enums.GroupRole.LEADER
+                                   OR gm.role = com.web.labportalbackend.research.enums.GroupRole.MEMBER)))))
+              AND EXISTS (SELECT a.id FROM User a WHERE a.id = :actorId AND a.active = true
+                          AND a.deleted = false AND a.status = com.web.labportalbackend.common.enums.UserStatus.ACTIVE)
+            """)
+    boolean existsAiContextTask(@Param("actorId") Long actorId, @Param("projectId") Long projectId,
+                                @Param("taskId") Long taskId, @Param("selectedRoleName") String selectedRoleName);
 }

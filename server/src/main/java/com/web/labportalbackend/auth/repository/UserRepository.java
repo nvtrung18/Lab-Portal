@@ -1,6 +1,7 @@
 package com.web.labportalbackend.auth.repository;
 
 import com.web.labportalbackend.auth.entity.User;
+import com.web.labportalbackend.ai.context.AiAdminContext;
 import com.web.labportalbackend.common.enums.UserStatus;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -68,4 +69,41 @@ public interface UserRepository extends JpaRepository<User, Long> {
               )
             """)
     long countUnassignedManagers();
+
+    @Query("""
+            SELECT new com.web.labportalbackend.ai.context.AiAdminContext$SystemSummary(
+                COALESCE(SUM(CASE WHEN u.status = com.web.labportalbackend.common.enums.UserStatus.ACTIVE
+                                  AND u.active = true THEN 1 ELSE 0 END), 0), COUNT(u))
+            FROM User u
+            WHERE u.deleted = false
+              AND EXISTS (SELECT a.id FROM User a JOIN a.roles ar
+                          WHERE a.id = :actorId AND a.active = true AND a.deleted = false
+                            AND a.status = com.web.labportalbackend.common.enums.UserStatus.ACTIVE
+                            AND ar.name = 'ADMIN')
+            """)
+    AiAdminContext.SystemSummary findAiContextSystemSummary(@Param("actorId") Long actorId);
+
+    /** Authorization anchor for context aggregates, which otherwise return a zero row. */
+    @Query("""
+            SELECT COUNT(a) > 0
+            FROM User a JOIN a.roles ar
+            WHERE a.id = :actorId AND a.active = true AND a.deleted = false
+              AND a.status = com.web.labportalbackend.common.enums.UserStatus.ACTIVE
+              AND ar.name = 'ADMIN'
+            """)
+    boolean existsAiContextAdminActor(@Param("actorId") Long actorId);
+
+    @Query("""
+            SELECT new com.web.labportalbackend.ai.context.AiAdminContext$TargetUser(t.id, t.status, t.active)
+            FROM User t
+            WHERE t.id = :targetId AND t.deleted = false
+              AND NOT EXISTS (SELECT tr.id FROM User tu JOIN tu.roles tr
+                              WHERE tu.id = t.id AND tr.name = 'ADMIN')
+              AND EXISTS (SELECT a.id FROM User a JOIN a.roles ar
+                          WHERE a.id = :actorId AND a.active = true AND a.deleted = false
+                            AND a.status = com.web.labportalbackend.common.enums.UserStatus.ACTIVE
+                            AND ar.name = 'ADMIN')
+            """)
+    Optional<AiAdminContext.TargetUser> findAiContextTarget(
+            @Param("actorId") Long actorId, @Param("targetId") Long targetId);
 }

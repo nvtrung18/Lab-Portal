@@ -81,21 +81,10 @@ public class AiCapabilityResolverImpl implements AiCapabilityResolver {
                     AiCapabilityDenialReason.ACTOR_MISMATCH, request.capability().riskBoundary());
         }
 
-        AiAssistantProfile profile;
-        AiAssistantSystemRole selectedRole;
+        AiAssistantProfile catalogProfile;
         try {
-            AiAssistantProfile catalogProfile = registry.getProfile(request.assistantKey());
+            catalogProfile = registry.getProfile(request.assistantKey());
             if (!validProfileIdentity(catalogProfile, request.assistantKey())) {
-                return denied(request, AiCapabilityDecisionReason.DENIED_BY_REGISTRY,
-                        AiCapabilityDenialReason.ASSISTANT_MISCONFIGURED, request.capability().riskBoundary());
-            }
-            selectedRole = selectRole(actor, catalogProfile.allowedSystemRoles());
-            if (selectedRole == null) {
-                return denied(request, AiCapabilityDecisionReason.DENIED_BY_REGISTRY,
-                        AiCapabilityDenialReason.ROLE_NOT_ALLOWED, request.capability().riskBoundary());
-            }
-            profile = registry.getAvailableProfile(request.assistantKey(), selectedRole);
-            if (!validProfileIdentity(profile, request.assistantKey()) || profile.domain() != catalogProfile.domain()) {
                 return denied(request, AiCapabilityDecisionReason.DENIED_BY_REGISTRY,
                         AiCapabilityDenialReason.ASSISTANT_MISCONFIGURED, request.capability().riskBoundary());
             }
@@ -107,25 +96,58 @@ public class AiCapabilityResolverImpl implements AiCapabilityResolver {
                     AiCapabilityDenialReason.ASSISTANT_MISCONFIGURED, request.capability().riskBoundary());
         }
 
-        if (request.capability().domain() != profile.domain()) {
+        if (request.capability().domain() != catalogProfile.domain()) {
             return denied(request, AiCapabilityDecisionReason.DENIED_BY_DOMAIN,
                     AiCapabilityDenialReason.DOMAIN_MISMATCH, request.capability().riskBoundary());
         }
 
-        AiCapabilityPermissionAdapter.Evaluation evaluation;
-        try {
-            evaluation = adapters.get(profile.domain()).evaluate(actor, request);
-        } catch (RuntimeException ex) {
-            evaluation = AiCapabilityPermissionAdapter.Evaluation.denied(
-                    AiCapabilityDenialReason.RESOURCE_UNAVAILABLE);
+        AiCapabilityPermissionAdapter adapter = adapters.get(catalogProfile.domain());
+        AiCapabilityPermissionAdapter.Evaluation evaluation = null;
+        AiAssistantSystemRole selectedRole = null;
+        AiCapabilityDenialReason firstDenial = AiCapabilityDenialReason.ROLE_NOT_ALLOWED;
+        for (AiAssistantSystemRole candidate : candidates(request, catalogProfile.allowedSystemRoles())) {
+            if (!actor.hasRole(candidate.name())) {
+                continue;
+            }
+            AiCapabilityPermissionAdapter.Evaluation candidateEvaluation;
+            try {
+                candidateEvaluation = adapter.evaluate(actor, request, candidate);
+            } catch (RuntimeException ex) {
+                candidateEvaluation = AiCapabilityPermissionAdapter.Evaluation.denied(
+                        AiCapabilityDenialReason.RESOURCE_UNAVAILABLE);
+            }
+            if (candidateEvaluation == null || (!candidateEvaluation.allowed()
+                    && candidateEvaluation.denialReason() == null)) {
+                firstDenial = AiCapabilityDenialReason.RESOURCE_UNAVAILABLE;
+                continue;
+            }
+            if (!candidateEvaluation.allowed()) {
+                if (firstDenial == AiCapabilityDenialReason.ROLE_NOT_ALLOWED) {
+                    firstDenial = candidateEvaluation.denialReason();
+                }
+                continue;
+            }
+            try {
+                AiAssistantProfile available = registry.getAvailableProfile(request.assistantKey(), candidate);
+                if (!validProfileIdentity(available, request.assistantKey())
+                        || available.domain() != catalogProfile.domain()) {
+                    return denied(request, AiCapabilityDecisionReason.DENIED_BY_REGISTRY,
+                            AiCapabilityDenialReason.ASSISTANT_MISCONFIGURED, request.capability().riskBoundary());
+                }
+            } catch (AiAssistantRegistryException ex) {
+                return denied(request, AiCapabilityDecisionReason.DENIED_BY_REGISTRY,
+                        mapRegistryFailure(ex.failure()), request.capability().riskBoundary());
+            } catch (RuntimeException ex) {
+                return denied(request, AiCapabilityDecisionReason.DENIED_BY_REGISTRY,
+                        AiCapabilityDenialReason.ASSISTANT_MISCONFIGURED, request.capability().riskBoundary());
+            }
+            selectedRole = candidate;
+            evaluation = candidateEvaluation;
+            break;
         }
-        if (evaluation == null || (!evaluation.allowed() && evaluation.denialReason() == null)) {
+        if (evaluation == null) {
             return denied(request, AiCapabilityDecisionReason.DENIED_BY_RESOURCE_POLICY,
-                    AiCapabilityDenialReason.RESOURCE_UNAVAILABLE, request.capability().riskBoundary());
-        }
-        if (!evaluation.allowed()) {
-            return denied(request, AiCapabilityDecisionReason.DENIED_BY_RESOURCE_POLICY,
-                    evaluation.denialReason(), request.capability().riskBoundary());
+                    firstDenial, request.capability().riskBoundary());
         }
 
         EnumSet<AiCapabilityEvidence> evidence = EnumSet.of(
@@ -136,9 +158,9 @@ public class AiCapabilityResolverImpl implements AiCapabilityResolver {
                 AiCapabilityEvidence.NO_ADDITIONAL_GRANT,
                 AiCapabilityEvidence.ACTION_RISK_BOUNDARY);
         evidence.addAll(evaluation.evidence());
-        return new AiCapabilityDecision(true, request.assistantKey(), profile.domain(), request.capability(),
+        return new AiCapabilityDecision(true, actor.getId(), selectedRole, request.assistantKey(), catalogProfile.domain(), request.capability(),
                 evaluation.resolvedResource(), AiCapabilityDecisionReason.ALLOWED_BY_EFFECTIVE_PERMISSION,
-                null, request.capability().riskBoundary(), evidence);
+                null, request.capability().riskBoundary(), evidence, evaluation.checkinGuidancePolicySnapshot());
     }
 
     @Override
@@ -232,16 +254,25 @@ public class AiCapabilityResolverImpl implements AiCapabilityResolver {
                 && actor.getStatus() == UserStatus.ACTIVE;
     }
 
-    private static AiAssistantSystemRole selectRole(User actor, Set<AiAssistantSystemRole> allowedRoles) {
-        if (allowedRoles == null) {
-            return null;
+    private static List<AiAssistantSystemRole> candidates(AiCapabilityRequest request,
+                                                            Set<AiAssistantSystemRole> allowedRoles) {
+        if (allowedRoles == null || request == null || request.capability() == null) {
+            return List.of();
         }
-        for (AiAssistantSystemRole role : AiAssistantSystemRole.values()) {
-            if (allowedRoles.contains(role) && actor.hasRole(role.name())) {
-                return role;
-            }
-        }
-        return null;
+        List<AiAssistantSystemRole> ordered = switch (request.capability()) {
+            case LAB_POLICY_READ -> List.of(AiAssistantSystemRole.STUDENT, AiAssistantSystemRole.LAB_MANAGER,
+                    AiAssistantSystemRole.ADMIN);
+            case LAB_SLOT_READ, RESEARCH_GROUP_SUMMARY, RESEARCH_ASSIGNED_TASK_READ,
+                    RESEARCH_TASK_SUGGESTION_DRAFT, RESEARCH_REPORT_REVIEW_DRAFT ->
+                    List.of(AiAssistantSystemRole.STUDENT, AiAssistantSystemRole.LAB_MANAGER);
+            case RESEARCH_PROJECT_SUMMARY ->
+                    List.of(AiAssistantSystemRole.LAB_MANAGER, AiAssistantSystemRole.STUDENT);
+            case LAB_OWN_BOOKING_READ, LAB_BOOKING_DRAFT, LAB_CHECKIN_GUIDANCE,
+                    RESEARCH_TASK_PROPOSAL_DRAFT -> List.of(AiAssistantSystemRole.STUDENT);
+            case LAB_MANAGED_SUMMARY -> List.of(AiAssistantSystemRole.LAB_MANAGER);
+            default -> List.of(AiAssistantSystemRole.ADMIN);
+        };
+        return ordered.stream().filter(allowedRoles::contains).toList();
     }
 
     private static boolean validProfileIdentity(AiAssistantProfile profile,
@@ -271,10 +302,10 @@ public class AiCapabilityResolverImpl implements AiCapabilityResolver {
                                                AiCapabilityDecisionReason decisionReason,
                                                AiCapabilityDenialReason denialReason,
                                                AiActionRiskBoundary riskBoundary) {
-        return new AiCapabilityDecision(false,
+        return new AiCapabilityDecision(false, null, null,
                 request == null ? null : request.assistantKey(),
                 request == null || request.capability() == null ? null : request.capability().domain(),
                 request == null ? null : request.capability(),
-                null, decisionReason, denialReason, riskBoundary, Set.of());
+                null, decisionReason, denialReason, riskBoundary, Set.of(), null);
     }
 }
