@@ -1,6 +1,7 @@
 package com.web.labportalbackend.booking.repository;
 
 import com.web.labportalbackend.booking.entity.TimeSlot;
+import com.web.labportalbackend.ai.context.AiLabContext;
 import com.web.labportalbackend.common.enums.TimeSlotStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
@@ -140,5 +141,46 @@ public interface TimeSlotRepository extends JpaRepository<TimeSlot, Long> {
             @Param("startOfDay") Instant startOfDay,
             @Param("startOfNextDay") Instant startOfNextDay
     );
-}
 
+    @Query("""
+            SELECT new com.web.labportalbackend.ai.context.AiLabContext$Slot(ts.id, ts.startTime, ts.endTime, ts.status)
+            FROM TimeSlot ts JOIN ts.lab l
+            WHERE ts.id = :slotId AND l.id = :labId
+              AND ts.active = true AND ts.deleted = false AND l.active = true AND l.deleted = false
+              AND EXISTS (SELECT u.id FROM User u WHERE u.id = :actorId AND u.active = true
+                          AND u.deleted = false AND u.status = com.web.labportalbackend.common.enums.UserStatus.ACTIVE)
+              AND EXISTS (SELECT r.id FROM User roleActor JOIN roleActor.roles r
+                          WHERE roleActor.id = :actorId AND r.name = :selectedRoleName)
+              AND ((:managed = true AND l.manager.id = :actorId
+                   AND EXISTS (SELECT r.id FROM User roleActor JOIN roleActor.roles r
+                               WHERE roleActor.id = :actorId AND r.name = :selectedRoleName))
+                   OR (:managed = false AND EXISTS (SELECT m.id FROM Membership m
+                                                    WHERE m.user.id = :actorId AND m.laboratory.id = l.id
+                                                      AND m.active = true AND m.deleted = false)))
+              AND (:draft = false OR (ts.status = com.web.labportalbackend.common.enums.TimeSlotStatus.AVAILABLE
+                                      AND ts.startTime > :now
+                                      AND NOT EXISTS (SELECT b.id FROM Booking b WHERE b.user.id = :actorId
+                                                      AND b.timeSlot.id = ts.id AND b.active = true AND b.deleted = false
+                                                      AND b.status NOT IN (com.web.labportalbackend.common.enums.BookingStatus.CANCELLED,
+                                                                           com.web.labportalbackend.common.enums.BookingStatus.CANCELLED_BY_STUDENT,
+                                                                           com.web.labportalbackend.common.enums.BookingStatus.CANCELLED_BY_MANAGER,
+                                                                           com.web.labportalbackend.common.enums.BookingStatus.REJECTED))))
+            """)
+    Optional<AiLabContext.Slot> findAiContextSlot(
+            @Param("actorId") Long actorId, @Param("labId") Long labId,
+            @Param("slotId") Long slotId, @Param("managed") boolean managed,
+            @Param("draft") boolean draft, @Param("now") Instant now,
+            @Param("selectedRoleName") String selectedRoleName);
+
+    @Query("""
+            SELECT COUNT(ts) FROM TimeSlot ts JOIN ts.lab l
+            WHERE l.id = :labId AND l.manager.id = :actorId AND l.active = true AND l.deleted = false
+              AND ts.active = true AND ts.deleted = false
+              AND EXISTS (SELECT u.id FROM User u WHERE u.id = :actorId AND u.active = true
+                          AND u.deleted = false AND u.status = com.web.labportalbackend.common.enums.UserStatus.ACTIVE)
+              AND EXISTS (SELECT r.id FROM User roleActor JOIN roleActor.roles r
+                          WHERE roleActor.id = :actorId AND r.name = :selectedRoleName)
+            """)
+    long countAiContextManagedSlots(@Param("actorId") Long actorId, @Param("labId") Long labId,
+                                    @Param("selectedRoleName") String selectedRoleName);
+}

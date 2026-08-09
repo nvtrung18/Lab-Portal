@@ -1,6 +1,7 @@
 package com.web.labportalbackend.ai.security.impl;
 
 import com.web.labportalbackend.ai.enums.AiAssistantDomain;
+import com.web.labportalbackend.ai.enums.AiAssistantSystemRole;
 import com.web.labportalbackend.ai.enums.AiCapability;
 import com.web.labportalbackend.ai.enums.AiCapabilityDenialReason;
 import com.web.labportalbackend.ai.enums.AiCapabilityEvidence;
@@ -29,8 +30,8 @@ public class AiAdminCapabilityPermissionAdapter implements AiCapabilityPermissio
     }
 
     @Override
-    public Evaluation evaluate(User actor, AiCapabilityRequest request) {
-        if (actor == null || !actor.hasRole("ADMIN")) {
+    public Evaluation evaluate(User actor, AiCapabilityRequest request, AiAssistantSystemRole selectedSystemRole) {
+        if (selectedSystemRole != AiAssistantSystemRole.ADMIN || actor == null || !actor.hasRole("ADMIN")) {
             return Evaluation.denied(AiCapabilityDenialReason.ROLE_NOT_ALLOWED);
         }
         try {

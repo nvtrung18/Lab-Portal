@@ -3,16 +3,20 @@ package com.web.labportalbackend.ai.service;
 import com.web.labportalbackend.ai.enums.AiActionRiskBoundary;
 import com.web.labportalbackend.ai.enums.AiAssistantDomain;
 import com.web.labportalbackend.ai.enums.AiAssistantKey;
+import com.web.labportalbackend.ai.enums.AiAssistantSystemRole;
 import com.web.labportalbackend.ai.enums.AiCapability;
 import com.web.labportalbackend.ai.enums.AiCapabilityDecisionReason;
 import com.web.labportalbackend.ai.enums.AiCapabilityDenialReason;
 import com.web.labportalbackend.ai.enums.AiCapabilityEvidence;
 import com.web.labportalbackend.ai.enums.AiResourceScope;
 import com.web.labportalbackend.ai.enums.AiResourceType;
+import java.time.Instant;
 import java.util.Set;
 
 public record AiCapabilityDecision(
         boolean allowed,
+        Long acceptedActorId,
+        AiAssistantSystemRole selectedSystemRole,
         AiAssistantKey assistantKey,
         AiAssistantDomain domain,
         AiCapability capability,
@@ -20,7 +24,8 @@ public record AiCapabilityDecision(
         AiCapabilityDecisionReason decisionReason,
         AiCapabilityDenialReason denialReason,
         AiActionRiskBoundary riskBoundary,
-        Set<AiCapabilityEvidence> evidence) {
+        Set<AiCapabilityEvidence> evidence,
+        CheckinGuidancePolicySnapshot checkinGuidancePolicySnapshot) {
 
     public AiCapabilityDecision {
         if (decisionReason == null) {
@@ -29,7 +34,40 @@ public record AiCapabilityDecision(
         if (allowed == (denialReason != null)) {
             throw new IllegalArgumentException("allowed and denialReason are inconsistent");
         }
+        if (allowed && (acceptedActorId == null || acceptedActorId <= 0)) {
+            throw new IllegalArgumentException("allowed decision requires an accepted actor ID");
+        }
+        if (allowed && selectedSystemRole == null) {
+            throw new IllegalArgumentException("allowed decision requires a selected system role");
+        }
+        if (!allowed && selectedSystemRole != null) {
+            throw new IllegalArgumentException("denied decision must not contain a selected system role");
+        }
+        if (!allowed && acceptedActorId != null) {
+            throw new IllegalArgumentException("denied decision must not contain an accepted actor ID");
+        }
+        if (allowed && resolvedResource == null) {
+            throw new IllegalArgumentException("allowed decision requires a resolved resource");
+        }
+        boolean checkinGuidance = capability == AiCapability.LAB_CHECKIN_GUIDANCE;
+        if (checkinGuidance && allowed && checkinGuidancePolicySnapshot == null) {
+            throw new IllegalArgumentException("allowed check-in guidance requires a policy snapshot");
+        }
+        if (checkinGuidance && !allowed && checkinGuidancePolicySnapshot != null) {
+            throw new IllegalArgumentException("denied check-in guidance must not contain a policy snapshot");
+        }
+        if (!checkinGuidance && checkinGuidancePolicySnapshot != null) {
+            throw new IllegalArgumentException("only check-in guidance may contain a policy snapshot");
+        }
         evidence = evidence == null ? Set.of() : Set.copyOf(evidence);
+    }
+
+    public record CheckinGuidancePolicySnapshot(Instant endInclusive) {
+        public CheckinGuidancePolicySnapshot {
+            if (endInclusive == null) {
+                throw new IllegalArgumentException("check-in guidance end is required");
+            }
+        }
     }
 
     public record ResolvedResource(

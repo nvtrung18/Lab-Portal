@@ -1,6 +1,7 @@
 package com.web.labportalbackend.ai.security.impl;
 
 import com.web.labportalbackend.ai.enums.AiAssistantDomain;
+import com.web.labportalbackend.ai.enums.AiAssistantSystemRole;
 import com.web.labportalbackend.ai.enums.AiCapabilityDenialReason;
 import com.web.labportalbackend.ai.enums.AiCapabilityEvidence;
 import com.web.labportalbackend.ai.enums.AiResourceScope;
@@ -22,6 +23,7 @@ import com.web.labportalbackend.research.repository.ProjectRepository;
 import com.web.labportalbackend.research.repository.ReportRepository;
 import com.web.labportalbackend.research.repository.TaskRepository;
 import com.web.labportalbackend.research.security.TaskPermissionHelper;
+import java.util.List;
 import java.util.Set;
 import org.springframework.stereotype.Component;
 
@@ -58,15 +60,15 @@ public class AiResearchCapabilityPermissionAdapter implements AiCapabilityPermis
     }
 
     @Override
-    public Evaluation evaluate(User actor, AiCapabilityRequest request) {
+    public Evaluation evaluate(User actor, AiCapabilityRequest request, AiAssistantSystemRole selectedSystemRole) {
         try {
             return switch (request.capability()) {
-                case RESEARCH_PROJECT_SUMMARY -> projectSummary(actor, request);
-                case RESEARCH_GROUP_SUMMARY -> groupSummary(actor, request);
-                case RESEARCH_ASSIGNED_TASK_READ -> assignedTask(actor, request);
-                case RESEARCH_TASK_PROPOSAL_DRAFT -> proposalDraft(actor, request);
-                case RESEARCH_TASK_SUGGESTION_DRAFT -> taskSuggestion(actor, request);
-                case RESEARCH_REPORT_REVIEW_DRAFT -> reportReview(actor, request);
+                case RESEARCH_PROJECT_SUMMARY -> projectSummary(actor, request, selectedSystemRole);
+                case RESEARCH_GROUP_SUMMARY -> groupSummary(actor, request, selectedSystemRole);
+                case RESEARCH_ASSIGNED_TASK_READ -> taskRead(actor, request, selectedSystemRole);
+                case RESEARCH_TASK_PROPOSAL_DRAFT -> proposalDraft(actor, request, selectedSystemRole);
+                case RESEARCH_TASK_SUGGESTION_DRAFT -> taskSuggestion(actor, request, selectedSystemRole);
+                case RESEARCH_REPORT_REVIEW_DRAFT -> reportReview(actor, request, selectedSystemRole);
                 default -> Evaluation.denied(AiCapabilityDenialReason.DOMAIN_MISMATCH);
             };
         } catch (RuntimeException ex) {
@@ -74,12 +76,15 @@ public class AiResearchCapabilityPermissionAdapter implements AiCapabilityPermis
         }
     }
 
-    private Evaluation projectSummary(User actor, AiCapabilityRequest request) {
+    private Evaluation projectSummary(User actor, AiCapabilityRequest request, AiAssistantSystemRole role) {
         ProjectEntity project = activeProject(request.resource().id());
         if (project == null) {
             return unavailable();
         }
-        if (!taskPermissionHelper.canViewProjectContext(actor.getId(), project)) {
+        boolean permitted = role == AiAssistantSystemRole.LAB_MANAGER
+                ? laboratoryRepository.existsByIdAndManagerIdAndActiveTrueAndDeletedFalse(project.getLab().getId(), actor.getId())
+                : role == AiAssistantSystemRole.STUDENT && canStudentViewProjectContext(actor.getId(), project);
+        if (!permitted) {
             return Evaluation.denied(AiCapabilityDenialReason.RESOURCE_OUT_OF_SCOPE);
         }
         return allow(AiResourceType.PROJECT, project.getId(), project.getLab().getId(), project.getId(),
@@ -87,39 +92,43 @@ public class AiResearchCapabilityPermissionAdapter implements AiCapabilityPermis
                 AiCapabilityEvidence.EXISTING_PERMISSION);
     }
 
-    private Evaluation groupSummary(User actor, AiCapabilityRequest request) {
+    private Evaluation groupSummary(User actor, AiCapabilityRequest request, AiAssistantSystemRole role) {
         GroupEntity group = activeGroup(request.resource().id());
         if (group == null) {
             return unavailable();
         }
+        ProjectEntity project = resolveGroupProject(group);
+        if (project == null) {
+            return Evaluation.denied(AiCapabilityDenialReason.RESOURCE_OUT_OF_SCOPE);
+        }
         Long labId = group.getLab().getId();
-        if (actor.hasRole("STUDENT")) {
-            GroupRole role = groupMemberRepository.findActiveRoleByGroupIdAndUserId(group.getId(), actor.getId())
+        if (role == AiAssistantSystemRole.STUDENT) {
+            GroupRole memberRole = groupMemberRepository.findActiveRoleByGroupIdAndUserId(group.getId(), actor.getId())
                     .orElse(null);
-            if (role != null) {
-                AiResourceScope scope = role == GroupRole.LEADER
+            if (memberRole != null) {
+                AiResourceScope scope = memberRole == GroupRole.LEADER
                         ? AiResourceScope.GROUP_LEADER : AiResourceScope.GROUP_MEMBER;
-                return allow(AiResourceType.GROUP, group.getId(), labId, projectId(group), group.getId(), null,
-                        scope, role == GroupRole.LEADER
+                return allow(AiResourceType.GROUP, group.getId(), labId, project.getId(), group.getId(), null,
+                        scope, memberRole == GroupRole.LEADER
                                 ? AiCapabilityEvidence.GROUP_LEADERSHIP : AiCapabilityEvidence.GROUP_MEMBERSHIP);
             }
         }
-        if (actor.hasRole("LAB_MANAGER")) {
+        if (role == AiAssistantSystemRole.LAB_MANAGER) {
             if (laboratoryRepository.existsByIdAndManagerIdAndActiveTrueAndDeletedFalse(labId, actor.getId())) {
-                return allow(AiResourceType.GROUP, group.getId(), labId, projectId(group), group.getId(), null,
+                return allow(AiResourceType.GROUP, group.getId(), labId, project.getId(), group.getId(), null,
                         AiResourceScope.MANAGED_LAB, AiCapabilityEvidence.MANAGED_LAB);
             }
         }
-        if (actor.hasRole("STUDENT")) {
+        if (role == AiAssistantSystemRole.STUDENT) {
             return Evaluation.denied(AiCapabilityDenialReason.NOT_GROUP_MEMBER);
         }
-        if (actor.hasRole("LAB_MANAGER")) {
+        if (role == AiAssistantSystemRole.LAB_MANAGER) {
             return Evaluation.denied(AiCapabilityDenialReason.NOT_MANAGED_LAB);
         }
         return Evaluation.denied(AiCapabilityDenialReason.ROLE_NOT_ALLOWED);
     }
 
-    private Evaluation assignedTask(User actor, AiCapabilityRequest request) {
+    private Evaluation taskRead(User actor, AiCapabilityRequest request, AiAssistantSystemRole role) {
         TaskEntity task = activeTask(request.resource().id());
         if (task == null) {
             return unavailable();
@@ -128,17 +137,37 @@ public class AiResearchCapabilityPermissionAdapter implements AiCapabilityPermis
         if (scope == null) {
             return Evaluation.denied(AiCapabilityDenialReason.RESOURCE_OUT_OF_SCOPE);
         }
-        if (!taskPermissionHelper.canViewTask(actor.getId(), scope.task())) {
+        if (role == AiAssistantSystemRole.LAB_MANAGER
+                && laboratoryRepository.existsByIdAndManagerIdAndActiveTrueAndDeletedFalse(
+                        scope.group().getLab().getId(), actor.getId())) {
+            return allowTask(scope, AiResourceScope.MANAGED_LAB, AiCapabilityEvidence.MANAGED_LAB);
+        }
+        if (role != AiAssistantSystemRole.STUDENT || !taskPermissionHelper.canViewTask(actor.getId(), scope.task())) {
             return Evaluation.denied(AiCapabilityDenialReason.RESOURCE_OUT_OF_SCOPE);
         }
-        if (!taskPermissionHelper.isTaskAssignee(actor.getId(), scope.task())) {
-            return Evaluation.denied(AiCapabilityDenialReason.NOT_ASSIGNED);
+        if (taskPermissionHelper.isTaskAssignee(actor.getId(), scope.task())) {
+            return allowTask(scope, AiResourceScope.ASSIGNED, AiCapabilityEvidence.ASSIGNMENT);
         }
-        return allowTask(scope, AiResourceScope.ASSIGNED, AiCapabilityEvidence.ASSIGNMENT);
+        GroupRole memberRole = groupMemberRepository.findActiveRoleByGroupIdAndUserId(scope.group().getId(), actor.getId())
+                .orElse(null);
+        if (memberRole == GroupRole.MEMBER) {
+            return allowTask(scope, AiResourceScope.GROUP_MEMBER, AiCapabilityEvidence.GROUP_MEMBERSHIP);
+        }
+        if (memberRole == GroupRole.LEADER) {
+            return allowTask(scope, AiResourceScope.GROUP_LEADER, AiCapabilityEvidence.GROUP_LEADERSHIP);
+        }
+        return Evaluation.denied(AiCapabilityDenialReason.RESOURCE_OUT_OF_SCOPE);
     }
 
-    private Evaluation proposalDraft(User actor, AiCapabilityRequest request) {
-        if (!actor.hasRole("STUDENT") || actor.getRoles() == null || actor.getRoles().size() != 1) {
+    private boolean canStudentViewProjectContext(Long actorId, ProjectEntity project) {
+        return !groupMemberRepository.findActiveGroupIdsByProjectIdAndUserIdAndRole(
+                        project.getId(), actorId, GroupRole.LEADER).isEmpty()
+                || !groupMemberRepository.findActiveGroupIdsByProjectIdAndUserIdAndRole(
+                        project.getId(), actorId, GroupRole.MEMBER).isEmpty();
+    }
+
+    private Evaluation proposalDraft(User actor, AiCapabilityRequest request, AiAssistantSystemRole role) {
+        if (role != AiAssistantSystemRole.STUDENT || !actor.hasRole("STUDENT") || actor.getRoles() == null || actor.getRoles().size() != 1) {
             return Evaluation.denied(AiCapabilityDenialReason.ROLE_NOT_ALLOWED);
         }
         ProjectEntity project = activeProject(request.parentResource().id());
@@ -149,18 +178,18 @@ public class AiResearchCapabilityPermissionAdapter implements AiCapabilityPermis
         if (!coherent(project, group)) {
             return Evaluation.denied(AiCapabilityDenialReason.RESOURCE_OUT_OF_SCOPE);
         }
-        GroupRole role = groupMemberRepository.findActiveRoleByGroupIdAndUserId(group.getId(), actor.getId())
+        GroupRole memberRole = groupMemberRepository.findActiveRoleByGroupIdAndUserId(group.getId(), actor.getId())
                 .orElse(null);
-        if (role != GroupRole.MEMBER && role != GroupRole.LEADER) {
+        if (memberRole != GroupRole.MEMBER && memberRole != GroupRole.LEADER) {
             return Evaluation.denied(AiCapabilityDenialReason.NOT_GROUP_MEMBER);
         }
         return allow(AiResourceType.GROUP, group.getId(), group.getLab().getId(), project.getId(), group.getId(),
-                null, role == GroupRole.LEADER ? AiResourceScope.GROUP_LEADER : AiResourceScope.GROUP_MEMBER,
-                role == GroupRole.LEADER
+                null, memberRole == GroupRole.LEADER ? AiResourceScope.GROUP_LEADER : AiResourceScope.GROUP_MEMBER,
+                memberRole == GroupRole.LEADER
                         ? AiCapabilityEvidence.GROUP_LEADERSHIP : AiCapabilityEvidence.GROUP_MEMBERSHIP);
     }
 
-    private Evaluation taskSuggestion(User actor, AiCapabilityRequest request) {
+    private Evaluation taskSuggestion(User actor, AiCapabilityRequest request, AiAssistantSystemRole role) {
         TaskEntity task = activeTask(request.resource().id());
         if (task == null) {
             return unavailable();
@@ -169,20 +198,26 @@ public class AiResearchCapabilityPermissionAdapter implements AiCapabilityPermis
         if (scope == null) {
             return Evaluation.denied(AiCapabilityDenialReason.RESOURCE_OUT_OF_SCOPE);
         }
-        if (!taskPermissionHelper.canViewTask(actor.getId(), scope.task())) {
+        if (role == AiAssistantSystemRole.LAB_MANAGER
+                && laboratoryRepository.existsByIdAndManagerIdAndActiveTrueAndDeletedFalse(
+                        scope.group().getLab().getId(), actor.getId())) {
+            return allowTask(scope, AiResourceScope.MANAGED_LAB, AiCapabilityEvidence.MANAGED_LAB);
+        }
+        if (role != AiAssistantSystemRole.STUDENT || !taskPermissionHelper.canViewTask(actor.getId(), scope.task())) {
             return Evaluation.denied(AiCapabilityDenialReason.RESOURCE_OUT_OF_SCOPE);
         }
         if (taskPermissionHelper.isTaskAssignee(actor.getId(), scope.task())) {
             return allowTask(scope, AiResourceScope.ASSIGNED, AiCapabilityEvidence.ASSIGNMENT);
         }
-        if (!taskPermissionHelper.canManageTask(actor.getId(), scope.task())) {
-            return Evaluation.denied(AiCapabilityDenialReason.RESOURCE_OUT_OF_SCOPE);
+        GroupRole memberRole = groupMemberRepository.findActiveRoleByGroupIdAndUserId(
+                scope.group().getId(), actor.getId()).orElse(null);
+        if (memberRole == GroupRole.LEADER) {
+            return allowTask(scope, AiResourceScope.GROUP_LEADER, AiCapabilityEvidence.GROUP_LEADERSHIP);
         }
-        return allowTask(scope, AiResourceScope.EXISTING_BUSINESS_PERMISSION,
-                AiCapabilityEvidence.EXISTING_PERMISSION);
+        return Evaluation.denied(AiCapabilityDenialReason.RESOURCE_OUT_OF_SCOPE);
     }
 
-    private Evaluation reportReview(User actor, AiCapabilityRequest request) {
+    private Evaluation reportReview(User actor, AiCapabilityRequest request, AiAssistantSystemRole role) {
         ReportEntity report = reportRepository.findById(request.resource().id())
                 .filter(value -> Boolean.TRUE.equals(value.getActive()))
                 .filter(value -> !Boolean.TRUE.equals(value.getDeleted()))
@@ -205,26 +240,26 @@ public class AiResearchCapabilityPermissionAdapter implements AiCapabilityPermis
                 return Evaluation.denied(AiCapabilityDenialReason.RESOURCE_OUT_OF_SCOPE);
             }
         }
-        if (actor.hasRole("STUDENT")) {
-            GroupRole role = groupMemberRepository.findActiveRoleByGroupIdAndUserId(group.getId(), actor.getId())
+        if (role == AiAssistantSystemRole.STUDENT) {
+            GroupRole memberRole = groupMemberRepository.findActiveRoleByGroupIdAndUserId(group.getId(), actor.getId())
                     .orElse(null);
-            if (role == GroupRole.LEADER && !actor.getId().equals(report.getSubmittedById())) {
+            if (memberRole == GroupRole.LEADER && !actor.getId().equals(report.getSubmittedById())) {
                 return allow(AiResourceType.REPORT, report.getId(), group.getLab().getId(), project.getId(),
                         group.getId(), taskId, AiResourceScope.GROUP_LEADER,
                         AiCapabilityEvidence.GROUP_LEADERSHIP);
             }
         }
-        if (actor.hasRole("LAB_MANAGER")) {
+        if (role == AiAssistantSystemRole.LAB_MANAGER) {
             if (laboratoryRepository.existsByIdAndManagerIdAndActiveTrueAndDeletedFalse(
                     group.getLab().getId(), actor.getId())) {
                 return allow(AiResourceType.REPORT, report.getId(), group.getLab().getId(), project.getId(),
                         group.getId(), taskId, AiResourceScope.MANAGED_LAB, AiCapabilityEvidence.MANAGED_LAB);
             }
         }
-        if (actor.hasRole("STUDENT")) {
+        if (role == AiAssistantSystemRole.STUDENT) {
             return Evaluation.denied(AiCapabilityDenialReason.NOT_GROUP_LEADER);
         }
-        if (actor.hasRole("LAB_MANAGER")) {
+        if (role == AiAssistantSystemRole.LAB_MANAGER) {
             return Evaluation.denied(AiCapabilityDenialReason.NOT_MANAGED_LAB);
         }
         return Evaluation.denied(AiCapabilityDenialReason.ROLE_NOT_ALLOWED);
@@ -260,6 +295,17 @@ public class AiResearchCapabilityPermissionAdapter implements AiCapabilityPermis
                 ? new TaskScope(task, project, group) : null;
     }
 
+    private ProjectEntity resolveGroupProject(GroupEntity group) {
+        if (group.getProject() != null) {
+            ProjectEntity project = activeProject(group.getProject().getId());
+            return project != null && coherent(project, group) ? project : null;
+        }
+        List<ProjectEntity> projects = projectRepository.findByGroupIdAndDeletedFalseAndActiveTrue(group.getId()).stream()
+                .filter(project -> coherent(project, group))
+                .toList();
+        return projects.size() == 1 ? projects.get(0) : null;
+    }
+
     private static boolean coherent(ProjectEntity project, GroupEntity group) {
         if (project.getId() == null || group.getId() == null || !usableLab(project.getLab())
                 || !usableLab(group.getLab()) || !project.getLab().getId().equals(group.getLab().getId())) {
@@ -277,10 +323,6 @@ public class AiResearchCapabilityPermissionAdapter implements AiCapabilityPermis
     private static boolean usableLab(Laboratory lab) {
         return lab != null && lab.getId() != null && Boolean.TRUE.equals(lab.getActive())
                 && !Boolean.TRUE.equals(lab.getDeleted());
-    }
-
-    private static Long projectId(GroupEntity group) {
-        return group.getProject() == null ? null : group.getProject().getId();
     }
 
     private static Evaluation allowTask(TaskScope scope, AiResourceScope resourceScope,

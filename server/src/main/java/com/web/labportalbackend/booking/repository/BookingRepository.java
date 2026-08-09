@@ -1,6 +1,7 @@
 package com.web.labportalbackend.booking.repository;
 
 import com.web.labportalbackend.booking.entity.Booking;
+import com.web.labportalbackend.ai.context.AiLabContext;
 import com.web.labportalbackend.common.enums.BookingStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -136,5 +137,55 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
             @Param("startOfNextDay") Instant startOfNextDay,
             @Param("statuses") List<BookingStatus> statuses
     );
-}
 
+    @Query("""
+            SELECT new com.web.labportalbackend.ai.context.AiLabContext$OwnBooking(
+                b.id, b.status,
+                new com.web.labportalbackend.ai.context.AiLabContext$Slot(ts.id, ts.startTime, ts.endTime, ts.status))
+            FROM Booking b JOIN b.lab l JOIN b.timeSlot ts
+            WHERE b.id = :bookingId AND b.user.id = :actorId AND b.lab.id = :labId AND ts.lab.id = l.id
+              AND b.active = true AND b.deleted = false AND l.active = true AND l.deleted = false
+              AND ts.active = true AND ts.deleted = false
+              AND EXISTS (SELECT u.id FROM User u WHERE u.id = :actorId AND u.active = true
+                          AND u.deleted = false AND u.status = com.web.labportalbackend.common.enums.UserStatus.ACTIVE)
+              AND EXISTS (SELECT r.id FROM User roleActor JOIN roleActor.roles r
+                          WHERE roleActor.id = :actorId AND r.name = :selectedRoleName)
+            """)
+    java.util.Optional<AiLabContext.OwnBooking> findAiContextOwnBooking(
+            @Param("actorId") Long actorId, @Param("labId") Long labId, @Param("bookingId") Long bookingId,
+            @Param("selectedRoleName") String selectedRoleName);
+
+    @Query("""
+            SELECT new com.web.labportalbackend.ai.context.AiLabContext$OwnBooking(
+                b.id, b.status,
+                new com.web.labportalbackend.ai.context.AiLabContext$Slot(ts.id, ts.startTime, ts.endTime, ts.status))
+            FROM Booking b JOIN b.lab l JOIN b.timeSlot ts
+            WHERE b.id = :bookingId AND b.user.id = :actorId AND b.lab.id = :labId AND ts.lab.id = l.id
+              AND b.active = true AND b.deleted = false AND l.active = true AND l.deleted = false
+              AND ts.active = true AND ts.deleted = false
+              AND b.status = com.web.labportalbackend.common.enums.BookingStatus.APPROVED
+              AND ts.status <> com.web.labportalbackend.common.enums.TimeSlotStatus.CANCELLED
+              AND b.startTime <= :readAt AND :readAt <= :endInclusive
+              AND EXISTS (SELECT u.id FROM User u WHERE u.id = :actorId AND u.active = true
+                          AND u.deleted = false AND u.status = com.web.labportalbackend.common.enums.UserStatus.ACTIVE)
+              AND EXISTS (SELECT r.id FROM User roleActor JOIN roleActor.roles r
+                          WHERE roleActor.id = :actorId AND r.name = :selectedRoleName)
+            """)
+    java.util.Optional<AiLabContext.OwnBooking> findAiContextCheckinBooking(
+            @Param("actorId") Long actorId, @Param("labId") Long labId, @Param("bookingId") Long bookingId,
+            @Param("readAt") Instant readAt, @Param("endInclusive") Instant endInclusive,
+            @Param("selectedRoleName") String selectedRoleName);
+
+    @Query("""
+            SELECT COUNT(b)
+            FROM Booking b JOIN b.lab l
+            WHERE l.id = :labId AND l.manager.id = :actorId AND l.active = true AND l.deleted = false
+              AND b.active = true AND b.deleted = false
+              AND EXISTS (SELECT u.id FROM User u WHERE u.id = :actorId AND u.active = true
+                          AND u.deleted = false AND u.status = com.web.labportalbackend.common.enums.UserStatus.ACTIVE)
+              AND EXISTS (SELECT r.id FROM User roleActor JOIN roleActor.roles r
+                          WHERE roleActor.id = :actorId AND r.name = :selectedRoleName)
+            """)
+    long countAiContextManagedBookings(@Param("actorId") Long actorId, @Param("labId") Long labId,
+                                       @Param("selectedRoleName") String selectedRoleName);
+}

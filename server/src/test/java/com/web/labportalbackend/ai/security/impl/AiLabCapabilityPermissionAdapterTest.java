@@ -19,6 +19,7 @@ import static org.mockito.Mockito.when;
 import com.web.labportalbackend.admin.systemconfig.dto.SystemConfigResponse;
 import com.web.labportalbackend.admin.systemconfig.service.SystemConfigService;
 import com.web.labportalbackend.ai.enums.AiAssistantKey;
+import com.web.labportalbackend.ai.enums.AiAssistantSystemRole;
 import com.web.labportalbackend.ai.enums.AiCapability;
 import com.web.labportalbackend.ai.enums.AiRequestedAction;
 import com.web.labportalbackend.ai.enums.AiResourceType;
@@ -73,12 +74,12 @@ class AiLabCapabilityPermissionAdapterTest {
         when(laboratoryRepository.findById(10L)).thenReturn(Optional.of(lab));
 
         assertTrue(adapter.evaluate(user(7L, "STUDENT"), request(
-                AiCapability.LAB_POLICY_READ, AiResourceType.LABORATORY, 10L, AiRequestedAction.READ)).allowed());
+                AiCapability.LAB_POLICY_READ, AiResourceType.LABORATORY, 10L, AiRequestedAction.READ), AiAssistantSystemRole.STUDENT).allowed());
 
         lab.setDeleted(true);
         assertDenied(adapter.evaluate(user(7L, "STUDENT"), request(
                 AiCapability.LAB_POLICY_READ, AiResourceType.LABORATORY, 10L,
-                AiRequestedAction.READ)), RESOURCE_UNAVAILABLE);
+                AiRequestedAction.READ), AiAssistantSystemRole.STUDENT), RESOURCE_UNAVAILABLE);
     }
 
     @Test
@@ -94,14 +95,14 @@ class AiLabCapabilityPermissionAdapterTest {
                 .thenReturn(true);
 
         assertTrue(adapter.evaluate(user(7L, "STUDENT"), request(
-                AiCapability.LAB_SLOT_READ, AiResourceType.TIME_SLOT, 20L, AiRequestedAction.READ)).allowed());
+                AiCapability.LAB_SLOT_READ, AiResourceType.TIME_SLOT, 20L, AiRequestedAction.READ), AiAssistantSystemRole.STUDENT).allowed());
         assertTrue(adapter.evaluate(user(8L, "LAB_MANAGER"), request(
-                AiCapability.LAB_SLOT_READ, AiResourceType.TIME_SLOT, 20L, AiRequestedAction.READ)).allowed());
+                AiCapability.LAB_SLOT_READ, AiResourceType.TIME_SLOT, 20L, AiRequestedAction.READ), AiAssistantSystemRole.LAB_MANAGER).allowed());
         assertTrue(adapter.evaluate(user(7L, "STUDENT", "LAB_MANAGER"), request(
-                AiCapability.LAB_SLOT_READ, AiResourceType.TIME_SLOT, 20L, AiRequestedAction.READ)).allowed());
+                AiCapability.LAB_SLOT_READ, AiResourceType.TIME_SLOT, 20L, AiRequestedAction.READ), AiAssistantSystemRole.LAB_MANAGER).allowed());
         assertDenied(adapter.evaluate(user(1L, "ADMIN"), request(
                 AiCapability.LAB_SLOT_READ, AiResourceType.TIME_SLOT, 20L,
-                AiRequestedAction.READ)), ROLE_NOT_ALLOWED);
+                AiRequestedAction.READ), AiAssistantSystemRole.ADMIN), ROLE_NOT_ALLOWED);
     }
 
     @Test
@@ -113,10 +114,10 @@ class AiLabCapabilityPermissionAdapterTest {
 
         assertTrue(adapter.evaluate(user(7L, "STUDENT"), request(
                 AiCapability.LAB_OWN_BOOKING_READ, AiResourceType.BOOKING, 30L,
-                AiRequestedAction.READ)).allowed());
+                AiRequestedAction.READ), AiAssistantSystemRole.STUDENT).allowed());
         assertDenied(adapter.evaluate(user(8L, "STUDENT"), request(
                 AiCapability.LAB_OWN_BOOKING_READ, AiResourceType.BOOKING, 30L,
-                AiRequestedAction.READ)), NOT_OWNER);
+                AiRequestedAction.READ), AiAssistantSystemRole.STUDENT), NOT_OWNER);
     }
 
     @Test
@@ -128,10 +129,10 @@ class AiLabCapabilityPermissionAdapterTest {
 
         assertTrue(adapter.evaluate(user(8L, "LAB_MANAGER"), request(
                 AiCapability.LAB_MANAGED_SUMMARY, AiResourceType.LABORATORY, 10L,
-                AiRequestedAction.READ)).allowed());
+                AiRequestedAction.READ), AiAssistantSystemRole.LAB_MANAGER).allowed());
         assertDenied(adapter.evaluate(user(9L, "LAB_MANAGER"), request(
                 AiCapability.LAB_MANAGED_SUMMARY, AiResourceType.LABORATORY, 10L,
-                AiRequestedAction.READ)), NOT_MANAGED_LAB);
+                AiRequestedAction.READ), AiAssistantSystemRole.LAB_MANAGER), NOT_MANAGED_LAB);
     }
 
     @Test
@@ -145,12 +146,12 @@ class AiLabCapabilityPermissionAdapterTest {
 
         assertTrue(adapter.evaluate(user(7L, "STUDENT"), request(
                 AiCapability.LAB_BOOKING_DRAFT, AiResourceType.TIME_SLOT, 20L,
-                AiRequestedAction.DRAFT)).allowed());
+                AiRequestedAction.DRAFT), AiAssistantSystemRole.STUDENT).allowed());
 
         when(bookingRepository.existsActiveBookingByUserAndSlot(7L, 20L)).thenReturn(true);
         assertDenied(adapter.evaluate(user(7L, "STUDENT"), request(
                 AiCapability.LAB_BOOKING_DRAFT, AiResourceType.TIME_SLOT, 20L,
-                AiRequestedAction.DRAFT)), RESOURCE_OUT_OF_SCOPE);
+                AiRequestedAction.DRAFT), AiAssistantSystemRole.STUDENT), RESOURCE_OUT_OF_SCOPE);
     }
 
     @Test
@@ -161,10 +162,10 @@ class AiLabCapabilityPermissionAdapterTest {
 
         assertDenied(adapter.evaluate(user(8L, "LAB_MANAGER"), request(
                 AiCapability.LAB_BOOKING_DRAFT, AiResourceType.TIME_SLOT, 20L,
-                AiRequestedAction.DRAFT)), ROLE_NOT_ALLOWED);
+                AiRequestedAction.DRAFT), AiAssistantSystemRole.LAB_MANAGER), ROLE_NOT_ALLOWED);
         assertDenied(adapter.evaluate(user(7L, "STUDENT"), request(
                 AiCapability.LAB_BOOKING_DRAFT, AiResourceType.TIME_SLOT, 20L,
-                AiRequestedAction.DRAFT)), NOT_LAB_MEMBER);
+                AiRequestedAction.DRAFT), AiAssistantSystemRole.STUDENT), NOT_LAB_MEMBER);
 
         when(membershipRepository.existsByUserIdAndLaboratoryIdAndActiveTrueAndDeletedFalse(7L, 10L))
                 .thenReturn(true);
@@ -172,11 +173,11 @@ class AiLabCapabilityPermissionAdapterTest {
         slot.setStatus(TimeSlotStatus.FULL);
         assertDenied(adapter.evaluate(user(7L, "STUDENT"), request(
                 AiCapability.LAB_BOOKING_DRAFT, AiResourceType.TIME_SLOT, 20L,
-                AiRequestedAction.DRAFT)), RESOURCE_OUT_OF_SCOPE);
+                AiRequestedAction.DRAFT), AiAssistantSystemRole.STUDENT), RESOURCE_OUT_OF_SCOPE);
         slot.setStatus(TimeSlotStatus.AVAILABLE);
         assertDenied(adapter.evaluate(user(7L, "STUDENT"), request(
                 AiCapability.LAB_BOOKING_DRAFT, AiResourceType.TIME_SLOT, 20L,
-                AiRequestedAction.DRAFT)), RESOURCE_OUT_OF_SCOPE);
+                AiRequestedAction.DRAFT), AiAssistantSystemRole.STUDENT), RESOURCE_OUT_OF_SCOPE);
     }
 
     @Test
@@ -190,14 +191,14 @@ class AiLabCapabilityPermissionAdapterTest {
 
         assertTrue(adapter.evaluate(user(7L, "STUDENT"), request(
                 AiCapability.LAB_BOOKING_DRAFT, AiResourceType.TIME_SLOT, 20L,
-                AiRequestedAction.DRAFT)).allowed());
+                AiRequestedAction.DRAFT), AiAssistantSystemRole.STUDENT).allowed());
         assertDenied(adapter.evaluate(user(7L, "STUDENT"), request(
                 AiCapability.LAB_BOOKING_DRAFT, AiResourceType.TIME_SLOT, 20L,
-                AiRequestedAction.DRAFT)), RESOURCE_OUT_OF_SCOPE);
+                AiRequestedAction.DRAFT), AiAssistantSystemRole.STUDENT), RESOURCE_OUT_OF_SCOPE);
     }
 
     @Test
-    void checkinGuidanceEnforcesOwnerApprovedCoherentNonCancelledHalfOpenWindow() {
+    void checkinGuidanceEnforcesOwnerApprovedCoherentNonCancelledInclusiveWindow() {
         User owner = user(7L, "STUDENT");
         Laboratory lab = lab(10L, LabStatus.AVAILABLE);
         TimeSlot slot = slot(20L, lab, NOW.minusSeconds(60));
@@ -206,24 +207,24 @@ class AiLabCapabilityPermissionAdapterTest {
         when(systemConfigService.getConfig()).thenReturn(config(true, 15));
 
         assertTrue(adapter.evaluate(owner, request(AiCapability.LAB_CHECKIN_GUIDANCE,
-                AiResourceType.BOOKING, 30L, AiRequestedAction.READ)).allowed());
+                AiResourceType.BOOKING, 30L, AiRequestedAction.READ), AiAssistantSystemRole.STUDENT).allowed());
 
         assertDenied(adapter.evaluate(user(8L, "STUDENT"), request(
                 AiCapability.LAB_CHECKIN_GUIDANCE, AiResourceType.BOOKING, 30L,
-                AiRequestedAction.READ)), NOT_OWNER);
+                AiRequestedAction.READ), AiAssistantSystemRole.STUDENT), NOT_OWNER);
         booking.setStatus(BookingStatus.CHECKED_IN);
         assertDenied(adapter.evaluate(owner, request(
                 AiCapability.LAB_CHECKIN_GUIDANCE, AiResourceType.BOOKING, 30L,
-                AiRequestedAction.READ)), RESOURCE_OUT_OF_SCOPE);
+                AiRequestedAction.READ), AiAssistantSystemRole.STUDENT), RESOURCE_OUT_OF_SCOPE);
         booking.setStatus(BookingStatus.APPROVED);
         slot.setStatus(TimeSlotStatus.CANCELLED);
         assertDenied(adapter.evaluate(owner, request(
                 AiCapability.LAB_CHECKIN_GUIDANCE, AiResourceType.BOOKING, 30L,
-                AiRequestedAction.READ)), RESOURCE_OUT_OF_SCOPE);
+                AiRequestedAction.READ), AiAssistantSystemRole.STUDENT), RESOURCE_OUT_OF_SCOPE);
     }
 
     @Test
-    void checkinGuidanceDeniesBeforeStartAndAtConfiguredEndBoundary() {
+    void checkinGuidanceDeniesBeforeStartAndAcceptsConfiguredEndBoundaryWithSnapshot() {
         User owner = user(7L, "STUDENT");
         Laboratory lab = lab(10L, LabStatus.AVAILABLE);
         TimeSlot slot = slot(20L, lab, NOW.plusSeconds(1));
@@ -232,14 +233,15 @@ class AiLabCapabilityPermissionAdapterTest {
 
         assertDenied(adapter.evaluate(owner, request(
                 AiCapability.LAB_CHECKIN_GUIDANCE, AiResourceType.BOOKING, 30L,
-                AiRequestedAction.READ)), RESOURCE_OUT_OF_SCOPE);
-
+                AiRequestedAction.READ), AiAssistantSystemRole.STUDENT), RESOURCE_OUT_OF_SCOPE);
         booking.setStartTime(NOW.minusSeconds(900));
         slot.setStartTime(booking.getStartTime());
         when(systemConfigService.getConfig()).thenReturn(config(true, 15));
-        assertDenied(adapter.evaluate(owner, request(
+        AiCapabilityPermissionAdapter.Evaluation evaluation = adapter.evaluate(owner, request(
                 AiCapability.LAB_CHECKIN_GUIDANCE, AiResourceType.BOOKING, 30L,
-                AiRequestedAction.READ)), RESOURCE_OUT_OF_SCOPE);
+                AiRequestedAction.READ), AiAssistantSystemRole.STUDENT);
+        assertTrue(evaluation.allowed());
+        assertEquals(NOW, evaluation.checkinGuidancePolicySnapshot().endInclusive());
     }
 
     @Test
@@ -256,7 +258,7 @@ class AiLabCapabilityPermissionAdapterTest {
         for (long id = 10L; id <= 13L; id++) {
             assertDenied(adapter.evaluate(user(7L, "STUDENT"), request(
                     AiCapability.LAB_POLICY_READ, AiResourceType.LABORATORY, id,
-                    AiRequestedAction.READ)), RESOURCE_UNAVAILABLE);
+                    AiRequestedAction.READ), AiAssistantSystemRole.STUDENT), RESOURCE_UNAVAILABLE);
         }
         verifyNoInteractions(membershipRepository, timeSlotRepository, bookingRepository, systemConfigService);
     }
@@ -265,7 +267,7 @@ class AiLabCapabilityPermissionAdapterTest {
     void slotDenialsAreRedactedAndStopAtTheFirstDeterminableBoundary() {
         assertDenied(adapter.evaluate(user(7L, "STUDENT"), request(
                 AiCapability.LAB_SLOT_READ, AiResourceType.TIME_SLOT, 20L,
-                AiRequestedAction.READ)), RESOURCE_UNAVAILABLE);
+                AiRequestedAction.READ), AiAssistantSystemRole.STUDENT), RESOURCE_UNAVAILABLE);
         verifyNoInteractions(membershipRepository, laboratoryRepository, bookingRepository, systemConfigService);
 
         clearInvocations(timeSlotRepository, membershipRepository, laboratoryRepository,
@@ -275,7 +277,7 @@ class AiLabCapabilityPermissionAdapterTest {
         when(timeSlotRepository.findActiveById(20L)).thenReturn(Optional.of(inactive));
         assertDenied(adapter.evaluate(user(7L, "STUDENT"), request(
                 AiCapability.LAB_SLOT_READ, AiResourceType.TIME_SLOT, 20L,
-                AiRequestedAction.READ)), RESOURCE_UNAVAILABLE);
+                AiRequestedAction.READ), AiAssistantSystemRole.STUDENT), RESOURCE_UNAVAILABLE);
         verifyNoInteractions(membershipRepository, laboratoryRepository, bookingRepository, systemConfigService);
 
         clearInvocations(timeSlotRepository, membershipRepository, laboratoryRepository,
@@ -284,7 +286,7 @@ class AiLabCapabilityPermissionAdapterTest {
         when(timeSlotRepository.findActiveById(20L)).thenReturn(Optional.of(active));
         assertDenied(adapter.evaluate(user(7L, "STUDENT"), request(
                 AiCapability.LAB_SLOT_READ, AiResourceType.TIME_SLOT, 20L,
-                AiRequestedAction.READ)), NOT_LAB_MEMBER);
+                AiRequestedAction.READ), AiAssistantSystemRole.STUDENT), NOT_LAB_MEMBER);
         verify(laboratoryRepository, never())
                 .existsByIdAndManagerIdAndActiveTrueAndDeletedFalse(10L, 7L);
         verifyNoInteractions(bookingRepository, systemConfigService);
@@ -293,14 +295,14 @@ class AiLabCapabilityPermissionAdapterTest {
                 bookingRepository, systemConfigService);
         assertDenied(adapter.evaluate(user(8L, "LAB_MANAGER"), request(
                 AiCapability.LAB_SLOT_READ, AiResourceType.TIME_SLOT, 20L,
-                AiRequestedAction.READ)), NOT_MANAGED_LAB);
+                AiRequestedAction.READ), AiAssistantSystemRole.LAB_MANAGER), NOT_MANAGED_LAB);
         verifyNoInteractions(membershipRepository, bookingRepository, systemConfigService);
 
         clearInvocations(timeSlotRepository, membershipRepository, laboratoryRepository,
                 bookingRepository, systemConfigService);
         assertDenied(adapter.evaluate(user(1L, "ADMIN"), request(
                 AiCapability.LAB_SLOT_READ, AiResourceType.TIME_SLOT, 20L,
-                AiRequestedAction.READ)), ROLE_NOT_ALLOWED);
+                AiRequestedAction.READ), AiAssistantSystemRole.ADMIN), ROLE_NOT_ALLOWED);
         verifyNoInteractions(membershipRepository, laboratoryRepository, bookingRepository, systemConfigService);
     }
 
@@ -314,13 +316,13 @@ class AiLabCapabilityPermissionAdapterTest {
 
         assertTrue(adapter.evaluate(user(7L, "STUDENT"), request(
                 AiCapability.LAB_BOOKING_DRAFT, AiResourceType.TIME_SLOT, 20L,
-                AiRequestedAction.DRAFT)).allowed());
+                AiRequestedAction.DRAFT), AiAssistantSystemRole.STUDENT).allowed());
         clearInvocations(timeSlotRepository, membershipRepository, bookingRepository,
                 laboratoryRepository, systemConfigService);
 
         assertDenied(adapter.evaluate(user(7L, "STUDENT"), request(
                 AiCapability.LAB_BOOKING_DRAFT, AiResourceType.TIME_SLOT, 20L,
-                AiRequestedAction.DRAFT)), NOT_LAB_MEMBER);
+                AiRequestedAction.DRAFT), AiAssistantSystemRole.STUDENT), NOT_LAB_MEMBER);
         verifyNoInteractions(systemConfigService, bookingRepository, laboratoryRepository);
     }
 
@@ -332,21 +334,21 @@ class AiLabCapabilityPermissionAdapterTest {
 
         assertDenied(adapter.evaluate(user(8L, "LAB_MANAGER"), request(
                 AiCapability.LAB_BOOKING_DRAFT, AiResourceType.TIME_SLOT, 20L,
-                AiRequestedAction.DRAFT)), ROLE_NOT_ALLOWED);
+                AiRequestedAction.DRAFT), AiAssistantSystemRole.LAB_MANAGER), ROLE_NOT_ALLOWED);
         verifyNoInteractions(timeSlotRepository, membershipRepository, laboratoryRepository,
                 bookingRepository, systemConfigService);
 
         clearInvocations(timeSlotRepository, membershipRepository, laboratoryRepository,
                 bookingRepository, systemConfigService);
         assertDenied(adapter.evaluate(student, request(AiCapability.LAB_BOOKING_DRAFT,
-                AiResourceType.TIME_SLOT, 20L, AiRequestedAction.DRAFT)), RESOURCE_UNAVAILABLE);
+                AiResourceType.TIME_SLOT, 20L, AiRequestedAction.DRAFT), AiAssistantSystemRole.STUDENT), RESOURCE_UNAVAILABLE);
         verifyNoInteractions(membershipRepository, laboratoryRepository, bookingRepository, systemConfigService);
 
         clearInvocations(timeSlotRepository, membershipRepository, laboratoryRepository,
                 bookingRepository, systemConfigService);
         when(timeSlotRepository.findActiveById(20L)).thenReturn(Optional.of(slot));
         assertDenied(adapter.evaluate(student, request(AiCapability.LAB_BOOKING_DRAFT,
-                AiResourceType.TIME_SLOT, 20L, AiRequestedAction.DRAFT)), NOT_LAB_MEMBER);
+                AiResourceType.TIME_SLOT, 20L, AiRequestedAction.DRAFT), AiAssistantSystemRole.STUDENT), NOT_LAB_MEMBER);
         verifyNoInteractions(laboratoryRepository, bookingRepository, systemConfigService);
 
         clearInvocations(timeSlotRepository, membershipRepository, laboratoryRepository,
@@ -355,7 +357,7 @@ class AiLabCapabilityPermissionAdapterTest {
                 .thenReturn(true);
         slot.setStatus(TimeSlotStatus.FULL);
         assertDenied(adapter.evaluate(student, request(AiCapability.LAB_BOOKING_DRAFT,
-                AiResourceType.TIME_SLOT, 20L, AiRequestedAction.DRAFT)), RESOURCE_OUT_OF_SCOPE);
+                AiResourceType.TIME_SLOT, 20L, AiRequestedAction.DRAFT), AiAssistantSystemRole.STUDENT), RESOURCE_OUT_OF_SCOPE);
         verifyNoInteractions(laboratoryRepository, bookingRepository, systemConfigService);
 
         clearInvocations(timeSlotRepository, membershipRepository, laboratoryRepository,
@@ -363,7 +365,7 @@ class AiLabCapabilityPermissionAdapterTest {
         slot.setStatus(TimeSlotStatus.AVAILABLE);
         when(systemConfigService.getConfig()).thenReturn(null);
         assertDenied(adapter.evaluate(student, request(AiCapability.LAB_BOOKING_DRAFT,
-                AiResourceType.TIME_SLOT, 20L, AiRequestedAction.DRAFT)), RESOURCE_UNAVAILABLE);
+                AiResourceType.TIME_SLOT, 20L, AiRequestedAction.DRAFT), AiAssistantSystemRole.STUDENT), RESOURCE_UNAVAILABLE);
         verifyNoInteractions(laboratoryRepository, bookingRepository);
 
         clearInvocations(timeSlotRepository, membershipRepository, laboratoryRepository,
@@ -371,7 +373,7 @@ class AiLabCapabilityPermissionAdapterTest {
         lab.setStatus(LabStatus.MAINTENANCE);
         when(systemConfigService.getConfig()).thenReturn(config(true, 15));
         assertDenied(adapter.evaluate(student, request(AiCapability.LAB_BOOKING_DRAFT,
-                AiResourceType.TIME_SLOT, 20L, AiRequestedAction.DRAFT)), RESOURCE_OUT_OF_SCOPE);
+                AiResourceType.TIME_SLOT, 20L, AiRequestedAction.DRAFT), AiAssistantSystemRole.STUDENT), RESOURCE_OUT_OF_SCOPE);
         verifyNoInteractions(laboratoryRepository, bookingRepository);
 
         clearInvocations(timeSlotRepository, membershipRepository, laboratoryRepository,
@@ -379,7 +381,7 @@ class AiLabCapabilityPermissionAdapterTest {
         lab.setStatus(LabStatus.AVAILABLE);
         slot.setStartTime(NOW);
         assertDenied(adapter.evaluate(student, request(AiCapability.LAB_BOOKING_DRAFT,
-                AiResourceType.TIME_SLOT, 20L, AiRequestedAction.DRAFT)), RESOURCE_OUT_OF_SCOPE);
+                AiResourceType.TIME_SLOT, 20L, AiRequestedAction.DRAFT), AiAssistantSystemRole.STUDENT), RESOURCE_OUT_OF_SCOPE);
         verifyNoInteractions(laboratoryRepository, bookingRepository);
 
         clearInvocations(timeSlotRepository, membershipRepository, laboratoryRepository,
@@ -387,7 +389,7 @@ class AiLabCapabilityPermissionAdapterTest {
         slot.setStartTime(NOW.plusSeconds(3600));
         when(bookingRepository.existsActiveBookingByUserAndSlot(7L, 20L)).thenReturn(true);
         assertDenied(adapter.evaluate(student, request(AiCapability.LAB_BOOKING_DRAFT,
-                AiResourceType.TIME_SLOT, 20L, AiRequestedAction.DRAFT)), RESOURCE_OUT_OF_SCOPE);
+                AiResourceType.TIME_SLOT, 20L, AiRequestedAction.DRAFT), AiAssistantSystemRole.STUDENT), RESOURCE_OUT_OF_SCOPE);
         verifyNoInteractions(laboratoryRepository);
     }
 
@@ -400,14 +402,14 @@ class AiLabCapabilityPermissionAdapterTest {
 
         assertDenied(adapter.evaluate(user(8L, "LAB_MANAGER"), request(
                 AiCapability.LAB_CHECKIN_GUIDANCE, AiResourceType.BOOKING, 30L,
-                AiRequestedAction.READ)), ROLE_NOT_ALLOWED);
+                AiRequestedAction.READ), AiAssistantSystemRole.LAB_MANAGER), ROLE_NOT_ALLOWED);
         verifyNoInteractions(bookingRepository, timeSlotRepository, membershipRepository,
                 laboratoryRepository, systemConfigService);
 
         clearInvocations(bookingRepository, timeSlotRepository, membershipRepository,
                 laboratoryRepository, systemConfigService);
         assertDenied(adapter.evaluate(owner, request(AiCapability.LAB_CHECKIN_GUIDANCE,
-                AiResourceType.BOOKING, 30L, AiRequestedAction.READ)), RESOURCE_UNAVAILABLE);
+                AiResourceType.BOOKING, 30L, AiRequestedAction.READ), AiAssistantSystemRole.STUDENT), RESOURCE_UNAVAILABLE);
         verifyNoInteractions(timeSlotRepository, membershipRepository, laboratoryRepository, systemConfigService);
 
         clearInvocations(bookingRepository, timeSlotRepository, membershipRepository,
@@ -415,14 +417,14 @@ class AiLabCapabilityPermissionAdapterTest {
         when(bookingRepository.findById(30L)).thenReturn(Optional.of(booking));
         assertDenied(adapter.evaluate(user(8L, "STUDENT"), request(
                 AiCapability.LAB_CHECKIN_GUIDANCE, AiResourceType.BOOKING, 30L,
-                AiRequestedAction.READ)), NOT_OWNER);
+                AiRequestedAction.READ), AiAssistantSystemRole.STUDENT), NOT_OWNER);
         verifyNoInteractions(timeSlotRepository, membershipRepository, laboratoryRepository, systemConfigService);
 
         clearInvocations(bookingRepository, timeSlotRepository, membershipRepository,
                 laboratoryRepository, systemConfigService);
         booking.setTimeSlot(null);
         assertDenied(adapter.evaluate(owner, request(AiCapability.LAB_CHECKIN_GUIDANCE,
-                AiResourceType.BOOKING, 30L, AiRequestedAction.READ)), RESOURCE_UNAVAILABLE);
+                AiResourceType.BOOKING, 30L, AiRequestedAction.READ), AiAssistantSystemRole.STUDENT), RESOURCE_UNAVAILABLE);
         verifyNoInteractions(timeSlotRepository, membershipRepository, laboratoryRepository, systemConfigService);
 
         clearInvocations(bookingRepository, timeSlotRepository, membershipRepository,
@@ -430,7 +432,7 @@ class AiLabCapabilityPermissionAdapterTest {
         booking.setTimeSlot(slot);
         booking.setStatus(BookingStatus.COMPLETED);
         assertDenied(adapter.evaluate(owner, request(AiCapability.LAB_CHECKIN_GUIDANCE,
-                AiResourceType.BOOKING, 30L, AiRequestedAction.READ)), RESOURCE_OUT_OF_SCOPE);
+                AiResourceType.BOOKING, 30L, AiRequestedAction.READ), AiAssistantSystemRole.STUDENT), RESOURCE_OUT_OF_SCOPE);
         verifyNoInteractions(timeSlotRepository, membershipRepository, laboratoryRepository, systemConfigService);
 
         clearInvocations(bookingRepository, timeSlotRepository, membershipRepository,
@@ -438,7 +440,7 @@ class AiLabCapabilityPermissionAdapterTest {
         booking.setStatus(BookingStatus.APPROVED);
         slot.setStatus(TimeSlotStatus.CANCELLED);
         assertDenied(adapter.evaluate(owner, request(AiCapability.LAB_CHECKIN_GUIDANCE,
-                AiResourceType.BOOKING, 30L, AiRequestedAction.READ)), RESOURCE_OUT_OF_SCOPE);
+                AiResourceType.BOOKING, 30L, AiRequestedAction.READ), AiAssistantSystemRole.STUDENT), RESOURCE_OUT_OF_SCOPE);
         verifyNoInteractions(timeSlotRepository, membershipRepository, laboratoryRepository, systemConfigService);
 
         clearInvocations(bookingRepository, timeSlotRepository, membershipRepository,
@@ -446,7 +448,7 @@ class AiLabCapabilityPermissionAdapterTest {
         slot.setStatus(TimeSlotStatus.AVAILABLE);
         booking.setStartTime(NOW.plusSeconds(1));
         assertDenied(adapter.evaluate(owner, request(AiCapability.LAB_CHECKIN_GUIDANCE,
-                AiResourceType.BOOKING, 30L, AiRequestedAction.READ)), RESOURCE_OUT_OF_SCOPE);
+                AiResourceType.BOOKING, 30L, AiRequestedAction.READ), AiAssistantSystemRole.STUDENT), RESOURCE_OUT_OF_SCOPE);
         verifyNoInteractions(timeSlotRepository, membershipRepository, laboratoryRepository, systemConfigService);
 
         clearInvocations(bookingRepository, timeSlotRepository, membershipRepository,
@@ -454,14 +456,14 @@ class AiLabCapabilityPermissionAdapterTest {
         booking.setStartTime(NOW.minusSeconds(60));
         when(systemConfigService.getConfig()).thenReturn(null);
         assertDenied(adapter.evaluate(owner, request(AiCapability.LAB_CHECKIN_GUIDANCE,
-                AiResourceType.BOOKING, 30L, AiRequestedAction.READ)), RESOURCE_UNAVAILABLE);
+                AiResourceType.BOOKING, 30L, AiRequestedAction.READ), AiAssistantSystemRole.STUDENT), RESOURCE_UNAVAILABLE);
         verifyNoInteractions(timeSlotRepository, membershipRepository, laboratoryRepository);
 
         clearInvocations(bookingRepository, timeSlotRepository, membershipRepository,
                 laboratoryRepository, systemConfigService);
         when(systemConfigService.getConfig()).thenReturn(config(true, 1));
-        assertDenied(adapter.evaluate(owner, request(AiCapability.LAB_CHECKIN_GUIDANCE,
-                AiResourceType.BOOKING, 30L, AiRequestedAction.READ)), RESOURCE_OUT_OF_SCOPE);
+        assertTrue(adapter.evaluate(owner, request(AiCapability.LAB_CHECKIN_GUIDANCE,
+                AiResourceType.BOOKING, 30L, AiRequestedAction.READ), AiAssistantSystemRole.STUDENT).allowed());
         verifyNoInteractions(timeSlotRepository, membershipRepository, laboratoryRepository);
     }
 
@@ -475,7 +477,7 @@ class AiLabCapabilityPermissionAdapterTest {
 
         assertDenied(adapter.evaluate(user(7L, "STUDENT"), request(
                 AiCapability.LAB_BOOKING_DRAFT, AiResourceType.TIME_SLOT, 20L,
-                AiRequestedAction.DRAFT)), RESOURCE_UNAVAILABLE);
+                AiRequestedAction.DRAFT), AiAssistantSystemRole.STUDENT), RESOURCE_UNAVAILABLE);
         verify(bookingRepository, never()).existsActiveBookingByUserAndSlot(7L, 20L);
         verifyNoInteractions(laboratoryRepository);
     }
@@ -486,7 +488,7 @@ class AiLabCapabilityPermissionAdapterTest {
 
         AiCapabilityPermissionAdapter.Evaluation result = adapter.evaluate(user(7L, "STUDENT"), request(
                 AiCapability.LAB_BOOKING_DRAFT, AiResourceType.TIME_SLOT, 20L,
-                AiRequestedAction.DRAFT));
+                AiRequestedAction.DRAFT), AiAssistantSystemRole.STUDENT);
 
         assertDenied(result, RESOURCE_UNAVAILABLE);
     }

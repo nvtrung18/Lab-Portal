@@ -1,6 +1,7 @@
 package com.web.labportalbackend.ai.security;
 
 import com.web.labportalbackend.ai.enums.AiAssistantDomain;
+import com.web.labportalbackend.ai.enums.AiAssistantSystemRole;
 import com.web.labportalbackend.ai.enums.AiCapabilityDenialReason;
 import com.web.labportalbackend.ai.enums.AiCapabilityEvidence;
 import com.web.labportalbackend.ai.service.AiCapabilityDecision;
@@ -12,13 +13,15 @@ public interface AiCapabilityPermissionAdapter {
 
     AiAssistantDomain domain();
 
-    Evaluation evaluate(User actor, AiCapabilityRequest request);
+    /** The resolver supplies the only role this evaluation may authorize. */
+    Evaluation evaluate(User actor, AiCapabilityRequest request, AiAssistantSystemRole selectedSystemRole);
 
     record Evaluation(
             boolean allowed,
             AiCapabilityDecision.ResolvedResource resolvedResource,
             AiCapabilityDenialReason denialReason,
-            Set<AiCapabilityEvidence> evidence) {
+            Set<AiCapabilityEvidence> evidence,
+            AiCapabilityDecision.CheckinGuidancePolicySnapshot checkinGuidancePolicySnapshot) {
 
         public Evaluation {
             if (allowed == (denialReason != null)) {
@@ -32,11 +35,17 @@ public interface AiCapabilityPermissionAdapter {
 
         public static Evaluation allowed(AiCapabilityDecision.ResolvedResource resource,
                                          Set<AiCapabilityEvidence> evidence) {
-            return new Evaluation(true, resource, null, evidence);
+            return new Evaluation(true, resource, null, evidence, null);
+        }
+
+        public static Evaluation allowed(AiCapabilityDecision.ResolvedResource resource,
+                                         Set<AiCapabilityEvidence> evidence,
+                                         AiCapabilityDecision.CheckinGuidancePolicySnapshot snapshot) {
+            return new Evaluation(true, resource, null, evidence, snapshot);
         }
 
         public static Evaluation denied(AiCapabilityDenialReason reason) {
-            return new Evaluation(false, null, reason, Set.of());
+            return new Evaluation(false, null, reason, Set.of(), null);
         }
     }
 }

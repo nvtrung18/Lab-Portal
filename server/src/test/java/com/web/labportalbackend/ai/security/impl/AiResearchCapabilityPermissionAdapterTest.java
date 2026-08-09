@@ -1,6 +1,5 @@
 package com.web.labportalbackend.ai.security.impl;
 
-import static com.web.labportalbackend.ai.enums.AiCapabilityDenialReason.NOT_ASSIGNED;
 import static com.web.labportalbackend.ai.enums.AiCapabilityDenialReason.NOT_GROUP_LEADER;
 import static com.web.labportalbackend.ai.enums.AiCapabilityDenialReason.NOT_GROUP_MEMBER;
 import static com.web.labportalbackend.ai.enums.AiCapabilityDenialReason.RESOURCE_OUT_OF_SCOPE;
@@ -13,6 +12,7 @@ import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.verifyNoInteractions;
 
 import com.web.labportalbackend.ai.enums.AiAssistantKey;
+import com.web.labportalbackend.ai.enums.AiAssistantSystemRole;
 import com.web.labportalbackend.ai.enums.AiCapability;
 import com.web.labportalbackend.ai.enums.AiRequestedAction;
 import com.web.labportalbackend.ai.enums.AiResourceType;
@@ -33,6 +33,7 @@ import com.web.labportalbackend.research.repository.ProjectRepository;
 import com.web.labportalbackend.research.repository.ReportRepository;
 import com.web.labportalbackend.research.repository.TaskRepository;
 import com.web.labportalbackend.research.security.TaskPermissionHelper;
+import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -66,54 +67,126 @@ class AiResearchCapabilityPermissionAdapterTest {
     }
 
     @Test
-    void projectSummaryDelegatesToExistingPermissionHelper() {
+    void projectSummaryUsesCurrentStudentMembership() {
         User student = user(7L, "STUDENT");
         when(projectRepository.findByIdAndDeletedFalseAndActiveTrue(20L)).thenReturn(Optional.of(project));
-        when(taskPermissionHelper.canViewProjectContext(7L, project)).thenReturn(true);
+        when(groupMemberRepository.findActiveGroupIdsByProjectIdAndUserIdAndRole(20L, 7L, GroupRole.LEADER))
+                .thenReturn(java.util.List.of());
+        when(groupMemberRepository.findActiveGroupIdsByProjectIdAndUserIdAndRole(20L, 7L, GroupRole.MEMBER))
+                .thenReturn(java.util.List.of(30L));
 
         assertTrue(adapter.evaluate(student, request(AiCapability.RESEARCH_PROJECT_SUMMARY,
-                AiResourceType.PROJECT, 20L, null, AiRequestedAction.READ)).allowed());
+                AiResourceType.PROJECT, 20L, null, AiRequestedAction.READ), AiAssistantSystemRole.STUDENT).allowed());
 
-        when(taskPermissionHelper.canViewProjectContext(7L, project)).thenReturn(false);
+        when(groupMemberRepository.findActiveGroupIdsByProjectIdAndUserIdAndRole(20L, 7L, GroupRole.MEMBER))
+                .thenReturn(java.util.List.of());
         assertEquals(RESOURCE_OUT_OF_SCOPE, adapter.evaluate(student, request(
                 AiCapability.RESEARCH_PROJECT_SUMMARY, AiResourceType.PROJECT, 20L, null,
-                AiRequestedAction.READ)).denialReason());
+                AiRequestedAction.READ), AiAssistantSystemRole.STUDENT).denialReason());
+    }
+
+    @Test
+    void studentProjectSummaryUsesMembershipForDualRoleActor() {
+        User dualRoleActor = user(7L, "STUDENT", "LAB_MANAGER");
+        when(projectRepository.findByIdAndDeletedFalseAndActiveTrue(20L)).thenReturn(Optional.of(project));
+        when(groupMemberRepository.findActiveGroupIdsByProjectIdAndUserIdAndRole(20L, 7L, GroupRole.LEADER))
+                .thenReturn(java.util.List.of());
+        when(groupMemberRepository.findActiveGroupIdsByProjectIdAndUserIdAndRole(20L, 7L, GroupRole.MEMBER))
+                .thenReturn(java.util.List.of(30L));
+
+        assertTrue(adapter.evaluate(dualRoleActor, request(AiCapability.RESEARCH_PROJECT_SUMMARY,
+                AiResourceType.PROJECT, 20L, null, AiRequestedAction.READ), AiAssistantSystemRole.STUDENT).allowed());
+
+        verifyNoInteractions(taskPermissionHelper, laboratoryRepository);
     }
 
     @Test
     void groupSummaryUsesFreshMembershipAndDeniesAdminBypass() {
         when(groupRepository.findByIdAndDeletedFalseAndActiveTrue(30L)).thenReturn(Optional.of(group));
+        when(projectRepository.findByIdAndDeletedFalseAndActiveTrue(20L)).thenReturn(Optional.of(project));
         when(groupMemberRepository.findActiveRoleByGroupIdAndUserId(30L, 7L))
                 .thenReturn(Optional.of(GroupRole.MEMBER), Optional.empty());
         when(laboratoryRepository.existsByIdAndManagerIdAndActiveTrueAndDeletedFalse(10L, 7L))
                 .thenReturn(true);
 
         assertTrue(adapter.evaluate(user(7L, "STUDENT"), request(AiCapability.RESEARCH_GROUP_SUMMARY,
-                AiResourceType.GROUP, 30L, null, AiRequestedAction.READ)).allowed());
+                AiResourceType.GROUP, 30L, null, AiRequestedAction.READ), AiAssistantSystemRole.STUDENT).allowed());
         assertEquals(NOT_GROUP_MEMBER, adapter.evaluate(user(7L, "STUDENT"), request(
                 AiCapability.RESEARCH_GROUP_SUMMARY, AiResourceType.GROUP, 30L, null,
-                AiRequestedAction.READ)).denialReason());
+                AiRequestedAction.READ), AiAssistantSystemRole.STUDENT).denialReason());
         assertTrue(adapter.evaluate(user(7L, "STUDENT", "LAB_MANAGER"), request(
                 AiCapability.RESEARCH_GROUP_SUMMARY, AiResourceType.GROUP, 30L, null,
-                AiRequestedAction.READ)).allowed());
+                AiRequestedAction.READ), AiAssistantSystemRole.LAB_MANAGER).allowed());
         assertEquals(ROLE_NOT_ALLOWED, adapter.evaluate(user(1L, "ADMIN"), request(
                 AiCapability.RESEARCH_GROUP_SUMMARY, AiResourceType.GROUP, 30L, null,
-                AiRequestedAction.READ)).denialReason());
+                AiRequestedAction.READ), AiAssistantSystemRole.ADMIN).denialReason());
     }
 
     @Test
-    void assignedTaskRequiresCoherentScopeExistingVisibilityAndExactAssignment() {
+    void groupSummaryCarriesProjectFromCoherentReverseCanonicalRelation() {
+        group.setProject(null);
+        project.setGroup(group);
+        when(groupRepository.findByIdAndDeletedFalseAndActiveTrue(30L)).thenReturn(Optional.of(group));
+        when(projectRepository.findByGroupIdAndDeletedFalseAndActiveTrue(30L)).thenReturn(List.of(project));
+        when(groupMemberRepository.findActiveRoleByGroupIdAndUserId(30L, 7L))
+                .thenReturn(Optional.of(GroupRole.MEMBER));
+
+        AiCapabilityPermissionAdapter.Evaluation result = adapter.evaluate(user(7L, "STUDENT"), request(
+                AiCapability.RESEARCH_GROUP_SUMMARY, AiResourceType.GROUP, 30L, null,
+                AiRequestedAction.READ), AiAssistantSystemRole.STUDENT);
+
+        assertTrue(result.allowed());
+        assertEquals(20L, result.resolvedResource().projectId());
+
+        project.setLab(lab(11L));
+        AiCapabilityPermissionAdapter.Evaluation incoherent = adapter.evaluate(user(7L, "STUDENT"), request(
+                AiCapability.RESEARCH_GROUP_SUMMARY, AiResourceType.GROUP, 30L, null,
+                AiRequestedAction.READ), AiAssistantSystemRole.STUDENT);
+
+        assertFalse(incoherent.allowed());
+        assertEquals(RESOURCE_OUT_OF_SCOPE, incoherent.denialReason());
+    }
+
+    @Test
+    void groupSummaryFailsClosedForAmbiguousReverseCanonicalProjects() {
+        group.setProject(null);
+        ProjectEntity secondProject = project(21L, lab);
+        project.setGroup(group);
+        secondProject.setGroup(group);
+        when(groupRepository.findByIdAndDeletedFalseAndActiveTrue(30L)).thenReturn(Optional.of(group));
+        when(projectRepository.findByGroupIdAndDeletedFalseAndActiveTrue(30L))
+                .thenReturn(List.of(project, secondProject));
+
+        AiCapabilityPermissionAdapter.Evaluation result = adapter.evaluate(user(7L, "STUDENT"), request(
+                AiCapability.RESEARCH_GROUP_SUMMARY, AiResourceType.GROUP, 30L, null,
+                AiRequestedAction.READ), AiAssistantSystemRole.STUDENT);
+
+        assertFalse(result.allowed());
+        assertEquals(RESOURCE_OUT_OF_SCOPE, result.denialReason());
+        verifyNoInteractions(groupMemberRepository);
+    }
+
+    @Test
+    void activeGroupMemberMayReadButCannotDraftAnUnassignedCanonicalGroupTask() {
         User student = user(7L, "STUDENT");
-        TaskEntity task = task(40L, 20L, 30L, 7L);
+        TaskEntity task = task(40L, 20L, 30L, 8L);
         stubTaskScope(task);
         when(taskPermissionHelper.canViewTask(7L, task)).thenReturn(true);
-        when(taskPermissionHelper.isTaskAssignee(7L, task)).thenReturn(true, false);
+        when(taskPermissionHelper.isTaskAssignee(7L, task)).thenReturn(false);
+        when(groupMemberRepository.findActiveRoleByGroupIdAndUserId(30L, 7L))
+                .thenReturn(Optional.of(GroupRole.MEMBER));
 
-        assertTrue(adapter.evaluate(student, request(AiCapability.RESEARCH_ASSIGNED_TASK_READ,
-                AiResourceType.TASK, 40L, null, AiRequestedAction.READ)).allowed());
-        assertEquals(NOT_ASSIGNED, adapter.evaluate(student, request(
-                AiCapability.RESEARCH_ASSIGNED_TASK_READ, AiResourceType.TASK, 40L, null,
-                AiRequestedAction.READ)).denialReason());
+        AiCapabilityPermissionAdapter.Evaluation read = adapter.evaluate(student, request(
+                AiCapability.RESEARCH_ASSIGNED_TASK_READ, AiResourceType.TASK, 40L, null, AiRequestedAction.READ), AiAssistantSystemRole.STUDENT);
+        AiCapabilityPermissionAdapter.Evaluation draft = adapter.evaluate(student, request(
+                AiCapability.RESEARCH_TASK_SUGGESTION_DRAFT, AiResourceType.TASK, 40L, null,
+                AiRequestedAction.DRAFT), AiAssistantSystemRole.STUDENT);
+
+        assertTrue(read.allowed());
+        assertEquals(com.web.labportalbackend.ai.enums.AiResourceScope.GROUP_MEMBER,
+                read.resolvedResource().effectiveScope());
+        assertFalse(draft.allowed());
+        assertEquals(RESOURCE_OUT_OF_SCOPE, draft.denialReason());
     }
 
     @Test
@@ -126,7 +199,7 @@ class AiResearchCapabilityPermissionAdapterTest {
 
         AiCapabilityPermissionAdapter.Evaluation result = adapter.evaluate(user(7L, "STUDENT"), request(
                 AiCapability.RESEARCH_ASSIGNED_TASK_READ, AiResourceType.TASK, 40L, null,
-                AiRequestedAction.READ));
+                AiRequestedAction.READ), AiAssistantSystemRole.STUDENT);
 
         assertFalse(result.allowed());
         assertEquals(RESOURCE_OUT_OF_SCOPE, result.denialReason());
@@ -152,19 +225,19 @@ class AiResearchCapabilityPermissionAdapterTest {
 
         assertTrue(adapter.evaluate(student, request(AiCapability.RESEARCH_TASK_PROPOSAL_DRAFT,
                 AiResourceType.GROUP, 30L, parent(AiResourceType.PROJECT, 20L),
-                AiRequestedAction.DRAFT)).allowed());
+                AiRequestedAction.DRAFT), AiAssistantSystemRole.STUDENT).allowed());
         group.setProject(project(21L, lab));
         assertEquals(RESOURCE_OUT_OF_SCOPE, adapter.evaluate(student, request(
                 AiCapability.RESEARCH_TASK_PROPOSAL_DRAFT, AiResourceType.GROUP, 30L,
-                parent(AiResourceType.PROJECT, 20L), AiRequestedAction.DRAFT)).denialReason());
+                parent(AiResourceType.PROJECT, 20L), AiRequestedAction.DRAFT), AiAssistantSystemRole.STUDENT).denialReason());
         group.setProject(project);
         assertEquals(NOT_GROUP_MEMBER, adapter.evaluate(student, request(
                 AiCapability.RESEARCH_TASK_PROPOSAL_DRAFT, AiResourceType.GROUP, 30L,
-                parent(AiResourceType.PROJECT, 20L), AiRequestedAction.DRAFT)).denialReason());
+                parent(AiResourceType.PROJECT, 20L), AiRequestedAction.DRAFT), AiAssistantSystemRole.STUDENT).denialReason());
 
         assertEquals(ROLE_NOT_ALLOWED, adapter.evaluate(user(8L, "STUDENT", "LAB_MANAGER"), request(
                 AiCapability.RESEARCH_TASK_PROPOSAL_DRAFT, AiResourceType.GROUP, 30L,
-                parent(AiResourceType.PROJECT, 20L), AiRequestedAction.DRAFT)).denialReason());
+                parent(AiResourceType.PROJECT, 20L), AiRequestedAction.DRAFT), AiAssistantSystemRole.STUDENT).denialReason());
     }
 
     @Test
@@ -174,13 +247,14 @@ class AiResearchCapabilityPermissionAdapterTest {
         stubTaskScope(task);
         when(taskPermissionHelper.canViewTask(7L, task)).thenReturn(true);
         when(taskPermissionHelper.isTaskAssignee(7L, task)).thenReturn(false);
-        when(taskPermissionHelper.canManageTask(7L, task)).thenReturn(true, false);
+        when(groupMemberRepository.findActiveRoleByGroupIdAndUserId(30L, 7L))
+                .thenReturn(Optional.of(GroupRole.LEADER), Optional.empty());
 
         assertTrue(adapter.evaluate(student, request(AiCapability.RESEARCH_TASK_SUGGESTION_DRAFT,
-                AiResourceType.TASK, 40L, null, AiRequestedAction.DRAFT)).allowed());
+                AiResourceType.TASK, 40L, null, AiRequestedAction.DRAFT), AiAssistantSystemRole.STUDENT).allowed());
         assertEquals(RESOURCE_OUT_OF_SCOPE, adapter.evaluate(student, request(
                 AiCapability.RESEARCH_TASK_SUGGESTION_DRAFT, AiResourceType.TASK, 40L, null,
-                AiRequestedAction.DRAFT)).denialReason());
+                AiRequestedAction.DRAFT), AiAssistantSystemRole.STUDENT).denialReason());
     }
 
     @Test
@@ -205,21 +279,21 @@ class AiResearchCapabilityPermissionAdapterTest {
                 .thenReturn(true);
 
         assertTrue(adapter.evaluate(leader, request(AiCapability.RESEARCH_REPORT_REVIEW_DRAFT,
-                AiResourceType.REPORT, 60L, null, AiRequestedAction.DRAFT)).allowed());
+                AiResourceType.REPORT, 60L, null, AiRequestedAction.DRAFT), AiAssistantSystemRole.STUDENT).allowed());
         group.setProject(project(21L, lab));
         assertEquals(RESOURCE_OUT_OF_SCOPE, adapter.evaluate(leader, request(
                 AiCapability.RESEARCH_REPORT_REVIEW_DRAFT, AiResourceType.REPORT, 60L, null,
-                AiRequestedAction.DRAFT)).denialReason());
+                AiRequestedAction.DRAFT), AiAssistantSystemRole.STUDENT).denialReason());
         group.setProject(project);
         assertEquals(NOT_GROUP_LEADER, adapter.evaluate(leader, request(
                 AiCapability.RESEARCH_REPORT_REVIEW_DRAFT, AiResourceType.REPORT, 60L, null,
-                AiRequestedAction.DRAFT)).denialReason());
+                AiRequestedAction.DRAFT), AiAssistantSystemRole.STUDENT).denialReason());
         assertTrue(adapter.evaluate(user(9L, "LAB_MANAGER"), request(
                 AiCapability.RESEARCH_REPORT_REVIEW_DRAFT, AiResourceType.REPORT, 60L, null,
-                AiRequestedAction.DRAFT)).allowed());
+                AiRequestedAction.DRAFT), AiAssistantSystemRole.LAB_MANAGER).allowed());
         assertTrue(adapter.evaluate(user(7L, "STUDENT", "LAB_MANAGER"), request(
                 AiCapability.RESEARCH_REPORT_REVIEW_DRAFT, AiResourceType.REPORT, 60L, null,
-                AiRequestedAction.DRAFT)).allowed());
+                AiRequestedAction.DRAFT), AiAssistantSystemRole.LAB_MANAGER).allowed());
     }
 
     private void stubTaskScope(TaskEntity task) {
@@ -234,7 +308,7 @@ class AiResearchCapabilityPermissionAdapterTest {
         AiCapabilityPermissionAdapter.Evaluation result = adapter.evaluate(user(7L, "STUDENT"),
                 request(capability, AiResourceType.TASK, 40L, null,
                         capability == AiCapability.RESEARCH_ASSIGNED_TASK_READ
-                                ? AiRequestedAction.READ : AiRequestedAction.DRAFT));
+                                ? AiRequestedAction.READ : AiRequestedAction.DRAFT), AiAssistantSystemRole.STUDENT);
 
         assertFalse(result.allowed(), scenario);
         assertEquals(RESOURCE_UNAVAILABLE, result.denialReason(), scenario);

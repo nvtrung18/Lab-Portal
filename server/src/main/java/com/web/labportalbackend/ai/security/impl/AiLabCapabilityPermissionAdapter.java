@@ -3,6 +3,7 @@ package com.web.labportalbackend.ai.security.impl;
 import com.web.labportalbackend.admin.systemconfig.dto.SystemConfigResponse;
 import com.web.labportalbackend.admin.systemconfig.service.SystemConfigService;
 import com.web.labportalbackend.ai.enums.AiAssistantDomain;
+import com.web.labportalbackend.ai.enums.AiAssistantSystemRole;
 import com.web.labportalbackend.ai.enums.AiCapabilityDenialReason;
 import com.web.labportalbackend.ai.enums.AiCapabilityEvidence;
 import com.web.labportalbackend.ai.enums.AiResourceScope;
@@ -68,15 +69,15 @@ public class AiLabCapabilityPermissionAdapter implements AiCapabilityPermissionA
     }
 
     @Override
-    public Evaluation evaluate(User actor, AiCapabilityRequest request) {
+    public Evaluation evaluate(User actor, AiCapabilityRequest request, AiAssistantSystemRole selectedSystemRole) {
         try {
             return switch (request.capability()) {
-                case LAB_POLICY_READ -> policyRead(request);
-                case LAB_SLOT_READ -> slotRead(actor, request);
-                case LAB_OWN_BOOKING_READ -> ownBookingRead(actor, request);
-                case LAB_MANAGED_SUMMARY -> managedSummary(actor, request);
-                case LAB_BOOKING_DRAFT -> bookingDraft(actor, request);
-                case LAB_CHECKIN_GUIDANCE -> checkinGuidance(actor, request);
+                case LAB_POLICY_READ -> policyRead(request, selectedSystemRole);
+                case LAB_SLOT_READ -> slotRead(actor, request, selectedSystemRole);
+                case LAB_OWN_BOOKING_READ -> ownBookingRead(actor, request, selectedSystemRole);
+                case LAB_MANAGED_SUMMARY -> managedSummary(actor, request, selectedSystemRole);
+                case LAB_BOOKING_DRAFT -> bookingDraft(actor, request, selectedSystemRole);
+                case LAB_CHECKIN_GUIDANCE -> checkinGuidance(actor, request, selectedSystemRole);
                 default -> Evaluation.denied(AiCapabilityDenialReason.DOMAIN_MISMATCH);
             };
         } catch (RuntimeException ex) {
@@ -84,7 +85,11 @@ public class AiLabCapabilityPermissionAdapter implements AiCapabilityPermissionA
         }
     }
 
-    private Evaluation policyRead(AiCapabilityRequest request) {
+    private Evaluation policyRead(AiCapabilityRequest request, AiAssistantSystemRole role) {
+        if (role != AiAssistantSystemRole.STUDENT && role != AiAssistantSystemRole.LAB_MANAGER
+                && role != AiAssistantSystemRole.ADMIN) {
+            return Evaluation.denied(AiCapabilityDenialReason.ROLE_NOT_ALLOWED);
+        }
         Laboratory lab = activeLab(request.resource().id());
         if (lab == null) {
             return unavailable();
@@ -93,37 +98,37 @@ public class AiLabCapabilityPermissionAdapter implements AiCapabilityPermissionA
                 AiCapabilityEvidence.EXISTING_PERMISSION);
     }
 
-    private Evaluation slotRead(User actor, AiCapabilityRequest request) {
+    private Evaluation slotRead(User actor, AiCapabilityRequest request, AiAssistantSystemRole role) {
         TimeSlot slot = activeSlot(request.resource().id());
         Laboratory lab = slot == null ? null : usableLab(slot.getLab());
         if (slot == null || lab == null) {
             return unavailable();
         }
-        if (hasRole(actor, "STUDENT")) {
+        if (role == AiAssistantSystemRole.STUDENT) {
             if (membershipRepository.existsByUserIdAndLaboratoryIdAndActiveTrueAndDeletedFalse(
                     actor.getId(), lab.getId())) {
                 return allow(AiResourceType.TIME_SLOT, slot.getId(), lab.getId(), AiResourceScope.LAB_MEMBER,
                         AiCapabilityEvidence.LAB_MEMBERSHIP);
             }
         }
-        if (hasRole(actor, "LAB_MANAGER")) {
+        if (role == AiAssistantSystemRole.LAB_MANAGER) {
             if (laboratoryRepository.existsByIdAndManagerIdAndActiveTrueAndDeletedFalse(
                     lab.getId(), actor.getId())) {
                 return allow(AiResourceType.TIME_SLOT, slot.getId(), lab.getId(), AiResourceScope.MANAGED_LAB,
                         AiCapabilityEvidence.MANAGED_LAB);
             }
         }
-        if (hasRole(actor, "STUDENT")) {
+        if (role == AiAssistantSystemRole.STUDENT) {
             return Evaluation.denied(AiCapabilityDenialReason.NOT_LAB_MEMBER);
         }
-        if (hasRole(actor, "LAB_MANAGER")) {
+        if (role == AiAssistantSystemRole.LAB_MANAGER) {
             return Evaluation.denied(AiCapabilityDenialReason.NOT_MANAGED_LAB);
         }
         return Evaluation.denied(AiCapabilityDenialReason.ROLE_NOT_ALLOWED);
     }
 
-    private Evaluation ownBookingRead(User actor, AiCapabilityRequest request) {
-        if (!hasRole(actor, "STUDENT")) {
+    private Evaluation ownBookingRead(User actor, AiCapabilityRequest request, AiAssistantSystemRole role) {
+        if (role != AiAssistantSystemRole.STUDENT) {
             return Evaluation.denied(AiCapabilityDenialReason.ROLE_NOT_ALLOWED);
         }
         Booking booking = bookingRepository.findById(request.resource().id())
@@ -140,8 +145,8 @@ public class AiLabCapabilityPermissionAdapter implements AiCapabilityPermissionA
                 AiCapabilityEvidence.OWNERSHIP);
     }
 
-    private Evaluation managedSummary(User actor, AiCapabilityRequest request) {
-        if (!hasRole(actor, "LAB_MANAGER")) {
+    private Evaluation managedSummary(User actor, AiCapabilityRequest request, AiAssistantSystemRole role) {
+        if (role != AiAssistantSystemRole.LAB_MANAGER) {
             return Evaluation.denied(AiCapabilityDenialReason.ROLE_NOT_ALLOWED);
         }
         Laboratory lab = activeLab(request.resource().id());
@@ -155,8 +160,8 @@ public class AiLabCapabilityPermissionAdapter implements AiCapabilityPermissionA
                 AiCapabilityEvidence.MANAGED_LAB);
     }
 
-    private Evaluation bookingDraft(User actor, AiCapabilityRequest request) {
-        if (!hasRole(actor, "STUDENT")) {
+    private Evaluation bookingDraft(User actor, AiCapabilityRequest request, AiAssistantSystemRole role) {
+        if (role != AiAssistantSystemRole.STUDENT) {
             return Evaluation.denied(AiCapabilityDenialReason.ROLE_NOT_ALLOWED);
         }
         TimeSlot slot = activeSlot(request.resource().id());
@@ -192,8 +197,8 @@ public class AiLabCapabilityPermissionAdapter implements AiCapabilityPermissionA
                         AiCapabilityEvidence.EXISTING_PERMISSION));
     }
 
-    private Evaluation checkinGuidance(User actor, AiCapabilityRequest request) {
-        if (!hasRole(actor, "STUDENT")) {
+    private Evaluation checkinGuidance(User actor, AiCapabilityRequest request, AiAssistantSystemRole role) {
+        if (role != AiAssistantSystemRole.STUDENT) {
             return Evaluation.denied(AiCapabilityDenialReason.ROLE_NOT_ALLOWED);
         }
         Booking booking = bookingRepository.findById(request.resource().id())
@@ -224,16 +229,17 @@ public class AiLabCapabilityPermissionAdapter implements AiCapabilityPermissionA
         if (config == null || config.booking() == null || config.booking().checkinWindowMinutes() <= 0) {
             return unavailable();
         }
-        Instant effectiveEnd = booking.getStartTime()
+        Instant endInclusive = booking.getStartTime()
                 .plus(Duration.ofMinutes(config.booking().checkinWindowMinutes()));
-        if (!evaluatedAt.isBefore(effectiveEnd)) {
+        if (evaluatedAt.isAfter(endInclusive)) {
             return Evaluation.denied(AiCapabilityDenialReason.RESOURCE_OUT_OF_SCOPE);
         }
         return Evaluation.allowed(new AiCapabilityDecision.ResolvedResource(
                         AiResourceType.BOOKING, booking.getId(), lab.getId(), null, null, null,
                         AiResourceScope.SELF),
                 Set.of(AiCapabilityEvidence.DERIVED_RESOURCE, AiCapabilityEvidence.OWNERSHIP,
-                        AiCapabilityEvidence.EXISTING_PERMISSION));
+                        AiCapabilityEvidence.EXISTING_PERMISSION),
+                new AiCapabilityDecision.CheckinGuidancePolicySnapshot(endInclusive));
     }
 
     private Laboratory activeLab(Long labId) {
@@ -250,10 +256,6 @@ public class AiLabCapabilityPermissionAdapter implements AiCapabilityPermissionA
     private Laboratory usableLab(Laboratory lab) {
         return lab != null && lab.getId() != null && Boolean.TRUE.equals(lab.getActive())
                 && !Boolean.TRUE.equals(lab.getDeleted()) ? lab : null;
-    }
-
-    private static boolean hasRole(User user, String role) {
-        return user != null && user.getId() != null && user.hasRole(role);
     }
 
     private static Evaluation unavailable() {
