@@ -23,6 +23,9 @@ import com.web.labportalbackend.ai.enums.AiResourceType;
 import com.web.labportalbackend.ai.service.AiCapabilityDecision;
 import com.web.labportalbackend.ai.service.AiCapabilityRequest;
 import com.web.labportalbackend.ai.service.AiCapabilityResolver;
+import com.web.labportalbackend.ai.service.AiAuthorizedToolPolicy;
+import com.web.labportalbackend.ai.service.AiToolPolicyResolver;
+import com.web.labportalbackend.ai.service.impl.AiToolRegistryServiceImpl;
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Set;
@@ -38,15 +41,17 @@ class AiContextFacadeImplTest {
         AiDomainContextBuilder lab = builder(AiAssistantDomain.LAB);
         AiDomainContextBuilder research = builder(AiAssistantDomain.RESEARCH);
         AiCapabilityRequest request = request();
-        when(resolver.requireAllowed(request)).thenReturn(allowed());
+        AiCapabilityDecision decision = allowed();
+        when(resolver.requireAllowed(request)).thenReturn(decision);
         when(lab.build(org.mockito.ArgumentMatchers.any())).thenReturn(context());
-        AiContextFreshReadExecutor executor = new AiContextFreshReadExecutor(resolver,
+        AiContextFreshReadExecutor executor = new AiContextFreshReadExecutor(resolver, policyResolver(decision),
                 List.of(admin, lab, research));
         AiContextFacadeImpl facade = new AiContextFacadeImpl(resolver, executor);
 
         AiAuthorizedContext result = facade.build(new AiContextBuildRequest(request, "request-1"));
 
         assertEquals("request-1", result.requestId());
+        assertEquals(AiCapability.LAB_POLICY_READ, result.toolPolicy().descriptor().capability());
         verify(resolver, org.mockito.Mockito.times(2)).requireAllowed(request);
         verify(lab).build(org.mockito.ArgumentMatchers.argThat(input -> input.actorId().equals(7L)));
     }
@@ -65,7 +70,8 @@ class AiContextFacadeImplTest {
                 AiActionRiskBoundary.READ_ONLY, Set.of(), null);
         when(resolver.requireAllowed(request)).thenReturn(invalid);
         AiContextFacadeImpl facade = new AiContextFacadeImpl(resolver,
-                new AiContextFreshReadExecutor(resolver, List.of(admin, lab, research)));
+                new AiContextFreshReadExecutor(resolver, mock(AiToolPolicyResolver.class),
+                        List.of(admin, lab, research)));
 
         assertThrows(AiContextReadDeniedException.class,
                 () -> facade.build(new AiContextBuildRequest(request, "request-1")));
@@ -85,6 +91,13 @@ class AiContextFacadeImplTest {
         AiDomainContextBuilder builder = mock(AiDomainContextBuilder.class);
         when(builder.domain()).thenReturn(domain);
         return builder;
+    }
+
+    private static AiToolPolicyResolver policyResolver(AiCapabilityDecision decision) {
+        AiToolPolicyResolver resolver = mock(AiToolPolicyResolver.class);
+        when(resolver.resolve(decision)).thenReturn(
+                new AiAuthorizedToolPolicy(new AiToolRegistryServiceImpl().get(decision.capability())));
+        return resolver;
     }
 
     private static AiCapabilityRequest request() {

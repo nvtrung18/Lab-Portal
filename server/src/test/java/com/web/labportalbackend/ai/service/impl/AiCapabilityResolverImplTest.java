@@ -573,7 +573,11 @@ class AiCapabilityResolverImplTest {
         return new AiAssistantProfile(key, domain, true, Set.of(roles),
                 "profile", "prompt-v1", null, domain.name().toLowerCase(),
                 AiQuotaPolicyReference.AI_CONFIG_QUOTA,
-                Set.of(domain == AiAssistantDomain.LAB ? AiAssistantToolGroup.LAB_READ : AiAssistantToolGroup.RESEARCH_READ),
+                Set.of(switch (domain) {
+                    case ADMIN -> AiAssistantToolGroup.ADMIN_READ;
+                    case LAB -> AiAssistantToolGroup.LAB_READ;
+                    case RESEARCH -> AiAssistantToolGroup.RESEARCH_READ;
+                }),
                 "suite-v1");
     }
 

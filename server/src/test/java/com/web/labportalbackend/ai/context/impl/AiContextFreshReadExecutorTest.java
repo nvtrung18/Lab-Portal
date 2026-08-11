@@ -23,7 +23,12 @@ import com.web.labportalbackend.ai.enums.AiResourceType;
 import com.web.labportalbackend.ai.service.AiCapabilityDecision;
 import com.web.labportalbackend.ai.service.AiCapabilityRequest;
 import com.web.labportalbackend.ai.service.AiCapabilityResolver;
+import com.web.labportalbackend.ai.service.AiAuthorizedToolPolicy;
+import com.web.labportalbackend.ai.service.AiToolPolicyDeniedException;
+import com.web.labportalbackend.ai.service.AiToolPolicyDenialReason;
+import com.web.labportalbackend.ai.service.AiToolPolicyResolver;
 import com.web.labportalbackend.ai.service.AiResearchContext;
+import com.web.labportalbackend.ai.service.impl.AiToolRegistryServiceImpl;
 import com.web.labportalbackend.research.enums.ProjectStatus;
 import java.lang.reflect.Method;
 import java.util.List;
@@ -44,7 +49,7 @@ class AiContextFreshReadExecutorTest {
         AiCapabilityRequest request = request();
         AiCapabilityDecision preflight = allowed(7L);
         when(resolver.requireAllowed(request)).thenReturn(allowed(8L));
-        AiContextFreshReadExecutor executor = new AiContextFreshReadExecutor(resolver,
+        AiContextFreshReadExecutor executor = new AiContextFreshReadExecutor(resolver, mock(AiToolPolicyResolver.class),
                 List.of(admin, lab, research));
 
         assertThrows(AiContextReadDeniedException.class,
@@ -62,7 +67,7 @@ class AiContextFreshReadExecutorTest {
         AiCapabilityRequest request = request();
         AiCapabilityDecision preliminary = allowed(7L, AiAssistantSystemRole.STUDENT);
         when(resolver.requireAllowed(request)).thenReturn(allowed(7L, AiAssistantSystemRole.LAB_MANAGER));
-        AiContextFreshReadExecutor executor = new AiContextFreshReadExecutor(resolver,
+        AiContextFreshReadExecutor executor = new AiContextFreshReadExecutor(resolver, mock(AiToolPolicyResolver.class),
                 List.of(admin, lab, research));
 
         assertThrows(AiContextReadDeniedException.class,
@@ -81,12 +86,13 @@ class AiContextFreshReadExecutorTest {
         AiCapabilityDecision current = allowed(7L);
         when(resolver.requireAllowed(request)).thenReturn(current);
         when(lab.build(org.mockito.ArgumentMatchers.any())).thenReturn(context());
-        AiContextFreshReadExecutor executor = new AiContextFreshReadExecutor(resolver,
+        AiContextFreshReadExecutor executor = new AiContextFreshReadExecutor(resolver, policyResolver(current),
                 List.of(admin, lab, research));
 
         var result = executor.execute(current, request, "request-1");
 
         assertEquals(10L, result.resource().labId());
+        assertEquals(AiCapability.LAB_POLICY_READ, result.toolPolicy().descriptor().capability());
         verify(lab).build(org.mockito.ArgumentMatchers.argThat(input -> input.decision() == current));
     }
 
@@ -100,7 +106,7 @@ class AiContextFreshReadExecutorTest {
         AiCapabilityDecision current = allowedResearchGroup();
         when(resolver.requireAllowed(request)).thenReturn(current);
         when(research.build(org.mockito.ArgumentMatchers.any())).thenReturn(researchContext());
-        AiContextFreshReadExecutor executor = new AiContextFreshReadExecutor(resolver,
+        AiContextFreshReadExecutor executor = new AiContextFreshReadExecutor(resolver, policyResolver(current),
                 List.of(admin, lab, research));
 
         var result = executor.execute(current, request, "request-1");
@@ -129,6 +135,51 @@ class AiContextFreshReadExecutorTest {
         return builder;
     }
 
+    @Test
+    void malformedCurrentProjectIdentityFailsBeforeAnyBuilderRead() {
+        AiCapabilityResolver resolver = mock(AiCapabilityResolver.class);
+        AiDomainContextBuilder admin = builder(AiAssistantDomain.ADMIN);
+        AiDomainContextBuilder lab = builder(AiAssistantDomain.LAB);
+        AiDomainContextBuilder research = builder(AiAssistantDomain.RESEARCH);
+        AiCapabilityRequest request = researchProjectRequest();
+        AiCapabilityDecision malformed = malformedResearchProject();
+        when(resolver.requireAllowed(request)).thenReturn(malformed);
+        AiContextFreshReadExecutor executor = new AiContextFreshReadExecutor(resolver, mock(AiToolPolicyResolver.class),
+                List.of(admin, lab, research));
+
+        assertThrows(AiContextReadDeniedException.class,
+                () -> executor.execute(malformed, request, "request-1"));
+
+        verify(research, never()).build(org.mockito.ArgumentMatchers.any());
+    }
+
+    @Test
+    void policyDenialFailsBeforeAnyBuilderRead() {
+        AiCapabilityResolver resolver = mock(AiCapabilityResolver.class);
+        AiToolPolicyResolver policyResolver = mock(AiToolPolicyResolver.class);
+        AiDomainContextBuilder admin = builder(AiAssistantDomain.ADMIN);
+        AiDomainContextBuilder lab = builder(AiAssistantDomain.LAB);
+        AiDomainContextBuilder research = builder(AiAssistantDomain.RESEARCH);
+        AiCapabilityRequest request = request();
+        AiCapabilityDecision current = allowed(7L);
+        when(resolver.requireAllowed(request)).thenReturn(current);
+        when(policyResolver.resolve(current)).thenThrow(new AiToolPolicyDeniedException(AiToolPolicyDenialReason.RESOURCE_MISMATCH));
+        AiContextFreshReadExecutor executor = new AiContextFreshReadExecutor(resolver, policyResolver,
+                List.of(admin, lab, research));
+
+        assertThrows(AiContextReadDeniedException.class,
+                () -> executor.execute(current, request, "request-1"));
+
+        verify(lab, never()).build(org.mockito.ArgumentMatchers.any());
+    }
+
+    private static AiToolPolicyResolver policyResolver(AiCapabilityDecision decision) {
+        AiToolPolicyResolver resolver = mock(AiToolPolicyResolver.class);
+        when(resolver.resolve(decision)).thenReturn(
+                new AiAuthorizedToolPolicy(new AiToolRegistryServiceImpl().get(decision.capability())));
+        return resolver;
+    }
+
     private static AiCapabilityRequest request() {
         return new AiCapabilityRequest(AiAssistantKey.LAB_ASSISTANT, 7L, AiCapability.LAB_POLICY_READ,
                 new AiCapabilityRequest.ResourceReference(AiResourceType.LABORATORY, 10L), null,
@@ -139,6 +190,13 @@ class AiContextFreshReadExecutorTest {
         return new AiCapabilityRequest(AiAssistantKey.RESEARCH_ASSISTANT, 7L,
                 AiCapability.RESEARCH_GROUP_SUMMARY,
                 new AiCapabilityRequest.ResourceReference(AiResourceType.GROUP, 30L), null,
+                AiRequestedAction.READ);
+    }
+
+    private static AiCapabilityRequest researchProjectRequest() {
+        return new AiCapabilityRequest(AiAssistantKey.RESEARCH_ASSISTANT, 7L,
+                AiCapability.RESEARCH_PROJECT_SUMMARY,
+                new AiCapabilityRequest.ResourceReference(AiResourceType.PROJECT, 20L), null,
                 AiRequestedAction.READ);
     }
 
@@ -161,6 +219,16 @@ class AiContextFreshReadExecutorTest {
                 AiCapability.RESEARCH_GROUP_SUMMARY,
                 new AiCapabilityDecision.ResolvedResource(AiResourceType.GROUP, 30L, 10L,
                         20L, 30L, null, AiResourceScope.GROUP_MEMBER),
+                AiCapabilityDecisionReason.ALLOWED_BY_EFFECTIVE_PERMISSION, null,
+                AiActionRiskBoundary.READ_ONLY, Set.of(), null);
+    }
+
+    private static AiCapabilityDecision malformedResearchProject() {
+        return new AiCapabilityDecision(true, 7L, AiAssistantSystemRole.STUDENT,
+                AiAssistantKey.RESEARCH_ASSISTANT, AiAssistantDomain.RESEARCH,
+                AiCapability.RESEARCH_PROJECT_SUMMARY,
+                new AiCapabilityDecision.ResolvedResource(AiResourceType.PROJECT, 10L, 1L,
+                        20L, null, null, AiResourceScope.EXISTING_BUSINESS_PERMISSION),
                 AiCapabilityDecisionReason.ALLOWED_BY_EFFECTIVE_PERMISSION, null,
                 AiActionRiskBoundary.READ_ONLY, Set.of(), null);
     }

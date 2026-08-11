@@ -80,7 +80,7 @@ public class MilestoneServiceImpl implements MilestoneService {
         }
 
         User assignedStudent = resolveAssignedStudent(request.getAssignedToStudentId(), project);
-        if (assignedStudent != null) {
+        if (assignedStudent != null && group != null) {
             boolean activeInGroup = groupMemberRepository.existsByGroupIdAndUserIdAndActiveTrueAndDeletedFalse(
                     group.getId(),
                     assignedStudent.getId()
