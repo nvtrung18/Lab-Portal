@@ -137,6 +137,34 @@ class MilestoneServiceImplTest {
         assertEquals(12L, response.getAssignedToStudentId());
         assertEquals("https://github.com/uet/survey", response.getEvidenceUrl());
         assertEquals("Ưu tiên so sánh mô hình theo độ chính xác.", response.getManagerComment());
+        verify(groupMemberRepository, never())
+                .existsByGroupIdAndUserIdAndActiveTrueAndDeletedFalse(any(), any());
+    }
+
+    @Test
+    void createMilestone_deniesAssigneeWhoIsNotActiveInResolvedGroup() {
+        User manager = authenticate("manager", "LAB_MANAGER");
+        Laboratory lab = lab(1L);
+        ProjectEntity project = project(10L, lab, ProjectStatus.ONGOING);
+        GroupEntity group = GroupEntity.builder().project(project).build();
+        group.setId(26L);
+        project.setGroup(group);
+        User student = student(12L);
+        CreateMilestoneRequest request = request(10L);
+        request.setAssignedToStudentId(12L);
+
+        when(projectRepository.findByIdAndDeletedFalseAndActiveTrue(10L)).thenReturn(Optional.of(project));
+        when(laboratoryRepository.findFirstByManagerIdAndDeletedFalse(manager.getId())).thenReturn(Optional.of(lab));
+        when(userRepository.findById(12L)).thenReturn(Optional.of(student));
+        when(membershipRepository.existsByUserIdAndLaboratoryIdAndActiveTrueAndDeletedFalse(12L, 1L))
+                .thenReturn(true);
+        when(groupMemberRepository.existsActiveMemberByProjectIdAndUserId(10L, 12L)).thenReturn(false);
+        when(groupMemberRepository.existsByGroupIdAndUserIdAndActiveTrueAndDeletedFalse(26L, 12L))
+                .thenReturn(false);
+
+        assertThrows(AccessDeniedException.class, () -> milestoneService.createMilestone(request));
+
+        verify(milestoneRepository, never()).save(any());
     }
 
     @Test

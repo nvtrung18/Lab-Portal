@@ -24,8 +24,14 @@ public record AiAssistantProfile(
         if (key == null || domain == null || quotaPolicyReference == null) {
             throw new IllegalArgumentException("assistant profile identifiers are required");
         }
+        if (!key.matchesDomain(domain)) {
+            throw new IllegalArgumentException("assistant key and domain must match");
+        }
         allowedSystemRoles = immutableNonEmptySet(allowedSystemRoles, "allowedSystemRoles");
         toolGroups = immutableNonEmptySet(toolGroups, "toolGroups");
+        if (toolGroups.stream().anyMatch(group -> !group.belongsTo(domain))) {
+            throw new IllegalArgumentException("tool groups must belong to the assistant domain");
+        }
         requireNonBlank(modelProfile, "modelProfile");
         requireNonBlank(promptVersion, "promptVersion");
         if (adapterReference != null) {

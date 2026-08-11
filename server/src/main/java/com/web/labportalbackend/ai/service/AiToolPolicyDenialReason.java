@@ -1,0 +1,13 @@
+package com.web.labportalbackend.ai.service;
+
+public enum AiToolPolicyDenialReason {
+    MALFORMED_DECISION,
+    UNKNOWN_TOOL,
+    SCHEMA_MISMATCH,
+    ARGUMENT_MISMATCH,
+    TOOL_CAPABILITY_MISMATCH,
+    RESOURCE_MISMATCH,
+    PROFILE_MISCONFIGURED,
+    PROFILE_DISABLED,
+    TOOL_GROUP_NOT_ALLOWED
+}

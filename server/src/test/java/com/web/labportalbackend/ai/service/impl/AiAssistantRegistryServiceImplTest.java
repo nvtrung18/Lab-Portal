@@ -137,15 +137,13 @@ class AiAssistantRegistryServiceImplTest {
         List<AiAssistantProfile> defaultCatalog = AiAssistantRegistryServiceImpl.defaultCatalog();
         AiAssistantProfile duplicateLab = defaultCatalog.get(1);
         List<AiAssistantProfile> duplicateCatalog = List.of(defaultCatalog.get(0), duplicateLab, duplicateLab);
-        List<AiAssistantProfile> malformedCatalog = List.of(defaultCatalog.get(0), defaultCatalog.get(1),
-                new AiAssistantProfile(AiAssistantKey.RESEARCH_ASSISTANT, AiAssistantDomain.LAB, true,
-                        Set.of(AiAssistantSystemRole.ADMIN), "research", "research-v1", null, "research",
-                        AiQuotaPolicyReference.AI_CONFIG_QUOTA,
-                        Set.of(AiAssistantToolGroup.RESEARCH_READ, AiAssistantToolGroup.RESEARCH_DRAFT),
-                        "research-assistant-v1"));
-
         assertMalformed(duplicateCatalog);
-        assertMalformed(malformedCatalog);
+        assertThrows(IllegalArgumentException.class, () -> new AiAssistantProfile(
+                AiAssistantKey.RESEARCH_ASSISTANT, AiAssistantDomain.LAB, true,
+                Set.of(AiAssistantSystemRole.ADMIN), "research", "research-v1", null, "research",
+                AiQuotaPolicyReference.AI_CONFIG_QUOTA,
+                Set.of(AiAssistantToolGroup.RESEARCH_READ, AiAssistantToolGroup.RESEARCH_DRAFT),
+                "research-assistant-v1"));
     }
 
     private void assertUnavailable(AiAssistantKey key) {

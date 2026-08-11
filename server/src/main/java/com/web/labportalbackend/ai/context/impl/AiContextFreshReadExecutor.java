@@ -10,6 +10,9 @@ import com.web.labportalbackend.ai.service.AiCapabilityDecision;
 import com.web.labportalbackend.ai.service.AiCapabilityDeniedException;
 import com.web.labportalbackend.ai.service.AiCapabilityRequest;
 import com.web.labportalbackend.ai.service.AiCapabilityResolver;
+import com.web.labportalbackend.ai.service.AiAuthorizedToolPolicy;
+import com.web.labportalbackend.ai.service.AiToolPolicyDeniedException;
+import com.web.labportalbackend.ai.service.AiToolPolicyResolver;
 import java.time.Clock;
 import java.util.EnumMap;
 import java.util.List;
@@ -31,22 +34,26 @@ public class AiContextFreshReadExecutor {
     private static final String CONTEXT_VERSION = "P5A-T5-v1";
 
     private final AiCapabilityResolver capabilityResolver;
+    private final AiToolPolicyResolver toolPolicyResolver;
     private final Map<AiAssistantDomain, AiDomainContextBuilder> builders;
     private final Clock clock;
 
     @Autowired
     public AiContextFreshReadExecutor(AiCapabilityResolver capabilityResolver,
+                                      AiToolPolicyResolver toolPolicyResolver,
                                       List<AiDomainContextBuilder> builders) {
-        this(capabilityResolver, builders, Clock.systemUTC());
+        this(capabilityResolver, toolPolicyResolver, builders, Clock.systemUTC());
     }
 
     AiContextFreshReadExecutor(AiCapabilityResolver capabilityResolver,
+                               AiToolPolicyResolver toolPolicyResolver,
                                List<AiDomainContextBuilder> builders,
                                Clock clock) {
-        if (capabilityResolver == null || clock == null) {
-            throw new IllegalArgumentException("resolver and clock are required");
+        if (capabilityResolver == null || toolPolicyResolver == null || clock == null) {
+            throw new IllegalArgumentException("resolvers and clock are required");
         }
         this.capabilityResolver = capabilityResolver;
+        this.toolPolicyResolver = toolPolicyResolver;
         this.builders = validatedBuilders(builders);
         this.clock = clock;
     }
@@ -67,6 +74,12 @@ public class AiContextFreshReadExecutor {
         if (!isValidDecision(current, request) || !sameAuthority(preliminary, current)) {
             throw new AiContextReadDeniedException();
         }
+        AiAuthorizedToolPolicy policy;
+        try {
+            policy = toolPolicyResolver.resolve(current);
+        } catch (AiToolPolicyDeniedException exception) {
+            throw new AiContextReadDeniedException();
+        }
         AiDomainContextBuilder builder = builders.get(current.domain());
         if (builder == null) {
             throw new AiContextReadDeniedException();
@@ -74,7 +87,7 @@ public class AiContextFreshReadExecutor {
         TrustedContextInput input = new TrustedContextInput(current, current.acceptedActorId(), requestId,
                 clock.instant());
         return new AiAuthorizedContext(requestId, current.assistantKey(), current.domain(), current.capability(),
-                current.resolvedResource(), CONTEXT_VERSION, input.builtAt(),
+                current.resolvedResource(), policy, CONTEXT_VERSION, input.builtAt(),
                 AiAuthorizedContext.Freshness.LIVE_READ_NO_CACHE, builder.build(input));
     }
 
@@ -86,6 +99,7 @@ public class AiContextFreshReadExecutor {
                 && decision.riskBoundary() == decision.capability().riskBoundary()
                 && decision.resolvedResource() != null
                 && decision.resolvedResource().type() == decision.capability().resourceType()
+                && decision.resolvedResource().hasValidIdentityShape()
                 && decision.denialReason() == null
                 && decision.decisionReason() == AiCapabilityDecisionReason.ALLOWED_BY_EFFECTIVE_PERMISSION;
     }

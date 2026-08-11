@@ -84,5 +84,39 @@ public record AiCapabilityDecision(
                 throw new IllegalArgumentException("resolved resource type and scope are required");
             }
         }
+
+        /**
+         * The permission adapters construct this identity from authoritative persistence data.
+         * Keep the shape check here so every consumer rejects a malformed identity consistently.
+         */
+        public boolean hasValidIdentityShape() {
+            if (effectiveScope == AiResourceScope.GLOBAL) {
+                return isGlobal() && id == null && labId == null && projectId == null
+                        && groupId == null && taskId == null;
+            }
+            if (!positive(id)) {
+                return false;
+            }
+            return switch (type) {
+                case SYSTEM, AUDIT_LOG, SYSTEM_CONFIG -> false;
+                case USER_ACCOUNT -> labId == null && projectId == null && groupId == null && taskId == null;
+                case LABORATORY -> id.equals(labId) && projectId == null && groupId == null && taskId == null;
+                case TIME_SLOT, BOOKING -> positive(labId) && projectId == null && groupId == null && taskId == null;
+                case PROJECT -> positive(labId) && id.equals(projectId) && groupId == null && taskId == null;
+                case GROUP -> positive(labId) && positive(projectId) && id.equals(groupId) && taskId == null;
+                case TASK -> positive(labId) && positive(projectId) && positive(groupId) && id.equals(taskId);
+                case REPORT -> positive(labId) && positive(projectId) && positive(groupId)
+                        && (taskId == null || positive(taskId));
+            };
+        }
+
+        private boolean isGlobal() {
+            return type == AiResourceType.SYSTEM || type == AiResourceType.AUDIT_LOG
+                    || type == AiResourceType.SYSTEM_CONFIG;
+        }
+
+        private static boolean positive(Long value) {
+            return value != null && value > 0;
+        }
     }
 }
