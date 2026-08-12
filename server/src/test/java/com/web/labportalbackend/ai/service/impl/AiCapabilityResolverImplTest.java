@@ -235,6 +235,21 @@ class AiCapabilityResolverImplTest {
         verifyNoInteractions(adminAdapter, labAdapter, researchAdapter);
     }
 
+    @Test
+    void deniesAdminMutationBeforeAdminRoleCanAuthorizeIt() {
+        User admin = activeUser(7L, "admin", "ADMIN");
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(admin.getUsername(), null, List.of()));
+
+        AiCapabilityDecision decision = resolver.resolve(request(
+                AiAssistantKey.ADMIN_ASSISTANT, 7L, AiCapability.ADMIN_SYSTEM_SUMMARY,
+                AiResourceType.SYSTEM, null, AiRequestedAction.MUTATION));
+
+        assertDenied(decision, PROHIBITED_ACTION);
+        assertEquals(AiActionRiskBoundary.PROHIBITED, decision.riskBoundary());
+        verifyNoInteractions(userRepository, registry, adminAdapter, labAdapter, researchAdapter);
+    }
+
     static Stream<Arguments> registryFailures() {
         return Stream.of(
                 Arguments.of(AiAssistantRegistryFailure.UNKNOWN_ASSISTANT, UNKNOWN_ASSISTANT),
