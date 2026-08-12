@@ -1,7 +1,11 @@
 package com.web.labportalbackend.ai.entity;
 
 import com.web.labportalbackend.ai.enums.AiActionSuggestionStatus;
+import com.web.labportalbackend.ai.enums.AiActionConfirmationStatus;
+import com.web.labportalbackend.ai.enums.AiActionExecutionStatus;
+import com.web.labportalbackend.ai.enums.AiActionRiskBoundary;
 import com.web.labportalbackend.ai.enums.AiAssistantKey;
+import com.web.labportalbackend.ai.enums.AiResourceType;
 import com.web.labportalbackend.common.entity.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -67,4 +71,32 @@ public class AiActionSuggestionEntity extends BaseEntity {
 
     @Column(name = "executed_at")
     private Instant executedAt;
+
+    @Column(name = "model_version", length = 100)
+    private String modelVersion;
+
+    @Column(name = "adapter_version", length = 255)
+    private String adapterVersion;
+
+    @Column(name = "prompt_version", length = 100)
+    private String promptVersion;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "resource_type", length = 50)
+    private AiResourceType resourceType;
+
+    @Column(name = "resource_id")
+    private Long resourceId;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "action_risk_level", length = 30)
+    private AiActionRiskBoundary actionRiskLevel;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "confirmation_status", length = 30)
+    private AiActionConfirmationStatus confirmationStatus;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "execution_status", length = 30)
+    private AiActionExecutionStatus executionStatus;
 }

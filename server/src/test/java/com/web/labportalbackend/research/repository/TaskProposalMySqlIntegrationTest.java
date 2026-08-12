@@ -9,6 +9,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
@@ -34,7 +35,7 @@ import com.web.labportalbackend.research.entity.TaskProposalEntity;
 import com.web.labportalbackend.research.enums.TaskProposalStatus;
 import com.web.labportalbackend.research.enums.TaskType;
 
-/** Opt-in MySQL/Flyway evidence for the V58 task-proposal schema contract. */
+/** Opt-in MySQL/Flyway evidence for the task-proposal and AI schema contracts. */
 @SpringBootTest
 @EnabledIfEnvironmentVariable(named = "LAB_PORTAL_MYSQL_IT", matches = "(?i:true)")
 class TaskProposalMySqlIntegrationTest {
@@ -194,10 +195,10 @@ class TaskProposalMySqlIntegrationTest {
 
     @Test
     @Transactional
-    void v59CreatesAiCoreWithRequiredMysqlContract() {
+    void v60CreatesAiCoreWithRequiredMysqlContract() {
         assertEquals(1, jdbcTemplate.queryForObject("""
                 SELECT COUNT(*) FROM flyway_schema_history
-                WHERE version = '59' AND success = 1
+                WHERE version = '60' AND success = 1
                 """, Integer.class));
         Set<String> aiTables = Set.of("ai_conversation", "ai_assistant_config", "ai_message", "ai_action_suggestion",
                 "ai_usage_log", "ai_quota_config");
@@ -237,9 +238,17 @@ class TaskProposalMySqlIntegrationTest {
                 Map.entry("target_module", "varchar(100)"), Map.entry("target_id", "bigint"),
                 Map.entry("payload_json", "json"), Map.entry("status", "varchar(20)"),
                 Map.entry("executed_by", "bigint"), Map.entry("rejected_reason", "text"),
+                Map.entry("model_version", "varchar(100)"), Map.entry("adapter_version", "varchar(255)"),
+                Map.entry("prompt_version", "varchar(100)"), Map.entry("resource_type", "varchar(50)"),
+                Map.entry("resource_id", "bigint"), Map.entry("action_risk_level", "varchar(30)"),
+                Map.entry("confirmation_status", "varchar(30)"), Map.entry("execution_status", "varchar(30)"),
                 Map.entry("executed_at", "timestamp(6)"), Map.entry("created_at", "timestamp(6)"),
                 Map.entry("updated_at", "timestamp(6)"), Map.entry("active", "tinyint(1)"),
-                Map.entry("deleted", "tinyint(1)")), Set.of("target_id", "executed_by", "rejected_reason", "executed_at"),
+                Map.entry("deleted", "tinyint(1)")), Set.of("target_id", "executed_by", "rejected_reason",
+                "model_version", "adapter_version", "prompt_version", "resource_type", "resource_id",
+                "action_risk_level", "confirmation_status", "execution_status", "executed_at"),
+                Set.of("model_version", "adapter_version", "prompt_version", "resource_type", "resource_id",
+                        "action_risk_level", "confirmation_status", "execution_status"),
                 Map.of("status", "PENDING", "active", "1", "deleted", "0", "created_at", "CURRENT_TIMESTAMP(6)",
                         "updated_at", "CURRENT_TIMESTAMP(6)"), true));
         assertTableContract("ai_usage_log", new TableContract(Map.ofEntries(
@@ -292,7 +301,9 @@ class TaskProposalMySqlIntegrationTest {
                 "chk_ai_assistant_config_context", "CHECK"));
         assertConstraintTypes("ai_message", Map.of("chk_ai_message_role", "CHECK"));
         assertConstraintTypes("ai_action_suggestion", Map.of("chk_ai_action_suggestion_assistant_key", "CHECK",
-                "chk_ai_action_suggestion_status", "CHECK"));
+                "chk_ai_action_suggestion_status", "CHECK", "chk_ai_action_suggestion_resource_type", "CHECK",
+                "chk_ai_action_suggestion_risk_level", "CHECK", "chk_ai_action_suggestion_confirmation_status", "CHECK",
+                "chk_ai_action_suggestion_execution_status", "CHECK"));
         assertConstraintTypes("ai_usage_log", Map.of("chk_ai_usage_log_assistant_key", "CHECK",
                 "chk_ai_usage_log_prompt_tokens", "CHECK", "chk_ai_usage_log_completion_tokens", "CHECK"));
         assertConstraintTypes("ai_quota_config", Map.of("uk_ai_quota_config_assistant_role_module", "UNIQUE",
@@ -454,6 +465,8 @@ class TaskProposalMySqlIntegrationTest {
         assertEquals("auto_increment", actualColumns.get("id").get("extra"));
         contract.defaults().forEach((column, expectedDefault) ->
             assertEquals(expectedDefault, actualColumns.get(column).get("default")));
+        contract.nullDefaultColumns().forEach(column ->
+                assertNull(actualColumns.get(column).get("default"), column + " must have SQL DEFAULT NULL"));
         if (contract.updatedAtHasOnUpdate()) {
             assertTrue(actualColumns.get("updated_at").get("extra").toLowerCase(Locale.ROOT)
                     .contains("on update current_timestamp(6)"));
@@ -481,11 +494,14 @@ class TaskProposalMySqlIntegrationTest {
                 WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?
                 """, resultSet -> {
             Map<String, Map<String, String>> result = new java.util.HashMap<>();
-            while (resultSet.next())
-                result.put(resultSet.getString("COLUMN_NAME"), Map.of(
-                        "type", resultSet.getString("COLUMN_TYPE"), "nullable", resultSet.getString("IS_NULLABLE"),
-                        "default", String.valueOf(resultSet.getString("COLUMN_DEFAULT")), "extra",
-                        resultSet.getString("EXTRA")));
+            while (resultSet.next()) {
+                Map<String, String> column = new java.util.HashMap<>();
+                column.put("type", resultSet.getString("COLUMN_TYPE"));
+                column.put("nullable", resultSet.getString("IS_NULLABLE"));
+                column.put("default", resultSet.getString("COLUMN_DEFAULT"));
+                column.put("extra", resultSet.getString("EXTRA"));
+                result.put(resultSet.getString("COLUMN_NAME"), column);
+            }
             return result;
         }, tableName);
     }
@@ -598,6 +614,11 @@ class TaskProposalMySqlIntegrationTest {
     }
 
     private record TableContract(Map<String, String> columnTypes, Set<String> nullableColumns,
-            Map<String, String> defaults, boolean updatedAtHasOnUpdate) {
+            Set<String> nullDefaultColumns, Map<String, String> defaults, boolean updatedAtHasOnUpdate) {
+
+        private TableContract(Map<String, String> columnTypes, Set<String> nullableColumns,
+                Map<String, String> defaults, boolean updatedAtHasOnUpdate) {
+            this(columnTypes, nullableColumns, Set.of(), defaults, updatedAtHasOnUpdate);
+        }
     }
 }

@@ -13,8 +13,12 @@ import com.web.labportalbackend.ai.entity.AiMessageEntity;
 import com.web.labportalbackend.ai.entity.AiQuotaConfigEntity;
 import com.web.labportalbackend.ai.entity.AiUsageLogEntity;
 import com.web.labportalbackend.ai.enums.AiActionSuggestionStatus;
+import com.web.labportalbackend.ai.enums.AiActionConfirmationStatus;
+import com.web.labportalbackend.ai.enums.AiActionExecutionStatus;
+import com.web.labportalbackend.ai.enums.AiActionRiskBoundary;
 import com.web.labportalbackend.ai.enums.AiAssistantKey;
 import com.web.labportalbackend.ai.enums.AiMessageRole;
+import com.web.labportalbackend.ai.enums.AiResourceType;
 import com.web.labportalbackend.auth.entity.User;
 import com.web.labportalbackend.auth.repository.UserRepository;
 import com.web.labportalbackend.lab.entity.Laboratory;
@@ -35,7 +39,7 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.transaction.annotation.Transactional;
 
-/** Opt-in MySQL/Flyway evidence for the V59 AI JPA mapping contract. */
+/** Opt-in MySQL/Flyway evidence for the AI persistence mapping contract. */
 @SpringBootTest
 @EnabledIfEnvironmentVariable(named = "LAB_PORTAL_MYSQL_IT", matches = "(?i:true)")
 class AiRepositoryMySqlIntegrationTest {
@@ -86,10 +90,10 @@ class AiRepositoryMySqlIntegrationTest {
 
     @Test
     @Transactional
-    void repositoriesPersistAndReloadV59AiMappings() throws Exception {
+    void repositoriesPersistAndReloadAiPersistenceCompatibilityMappings() throws Exception {
         assertEquals(1, jdbcTemplate.queryForObject("""
                 SELECT COUNT(*) FROM flyway_schema_history
-                WHERE version = '59' AND success = 1
+                WHERE version = '60' AND success = 1
                 """, Integer.class));
         Fixture fixture = fixture();
         String payload = "{\"title\":\"Synthetic AI action\",\"priority\":\"MEDIUM\"}";
@@ -106,7 +110,12 @@ class AiRepositoryMySqlIntegrationTest {
         AiActionSuggestionEntity suggestion = actionSuggestionRepository.saveAndFlush(AiActionSuggestionEntity.builder()
                 .requestedById(fixture.user().getId()).assistantKey(AiAssistantKey.LAB_ASSISTANT)
                 .actionType("CREATE_TASK").targetModule("research").targetId(fixture.project().getId())
-                .payloadJson(payload).status(AiActionSuggestionStatus.EDITED).executedById(fixture.reviewer().getId()).build());
+                .payloadJson(payload).status(AiActionSuggestionStatus.EDITED).executedById(fixture.reviewer().getId())
+                .modelVersion("model-v1").adapterVersion("adapter-v1").promptVersion("prompt-v1")
+                .resourceType(AiResourceType.PROJECT).resourceId(fixture.project().getId())
+                .actionRiskLevel(AiActionRiskBoundary.CONFIRM_REQUIRED)
+                .confirmationStatus(AiActionConfirmationStatus.CONFIRMED)
+                .executionStatus(AiActionExecutionStatus.NOT_REQUESTED).build());
         Instant windowStart = Instant.parse("2026-08-05T00:00:00Z");
         Instant windowEnd = Instant.parse("2026-08-06T00:00:00Z");
         AiUsageLogEntity usageLog = usageLogRepository.saveAndFlush(AiUsageLogEntity.builder()
@@ -142,6 +151,14 @@ class AiRepositoryMySqlIntegrationTest {
         assertEquals(AiActionSuggestionStatus.EDITED, reloadedSuggestion.getStatus());
         assertEquals("EDITED", jdbcTemplate.queryForObject(
                 "SELECT status FROM ai_action_suggestion WHERE id = ?", String.class, suggestion.getId()));
+        assertEquals("model-v1", reloadedSuggestion.getModelVersion());
+        assertEquals("adapter-v1", reloadedSuggestion.getAdapterVersion());
+        assertEquals("prompt-v1", reloadedSuggestion.getPromptVersion());
+        assertEquals(AiResourceType.PROJECT, reloadedSuggestion.getResourceType());
+        assertEquals(fixture.project().getId(), reloadedSuggestion.getResourceId());
+        assertEquals(AiActionRiskBoundary.CONFIRM_REQUIRED, reloadedSuggestion.getActionRiskLevel());
+        assertEquals(AiActionConfirmationStatus.CONFIRMED, reloadedSuggestion.getConfirmationStatus());
+        assertEquals(AiActionExecutionStatus.NOT_REQUESTED, reloadedSuggestion.getExecutionStatus());
         assertEquals(OBJECT_MAPPER.readTree(payload), OBJECT_MAPPER.readTree(reloadedSuggestion.getPayloadJson()));
         AiUsageLogEntity reloadedUsageLog = usageLogRepository.findById(usageLog.getId()).orElseThrow();
         assertEquals(AiAssistantKey.LAB_ASSISTANT, reloadedUsageLog.getAssistantKey());
@@ -156,6 +173,37 @@ class AiRepositoryMySqlIntegrationTest {
                         windowEnd));
         assertEquals("OBJECT", jdbcTemplate.queryForObject(
                 "SELECT JSON_TYPE(payload_json) FROM ai_action_suggestion WHERE id = ?", String.class, suggestion.getId()));
+    }
+
+    @Test
+    @Transactional
+    void everyAssistantKeyRoundTripsThroughEachKeyOwningJpaMapping() {
+        Fixture fixture = fixture();
+
+        for (AiAssistantKey key : AiAssistantKey.values()) {
+            AiConversationEntity conversation = conversationRepository.saveAndFlush(AiConversationEntity.builder()
+                    .userId(fixture.user().getId()).assistantKey(key).moduleContext("catalog")
+                    .title("catalog " + key).build());
+            AiAssistantConfigEntity config = assistantConfigRepository.saveAndFlush(AiAssistantConfigEntity.builder()
+                    .assistantKey(key).systemPromptKey("catalog-" + key).maxRequestsPerDay(1).maxContextTokens(1).build());
+            AiActionSuggestionEntity suggestion = actionSuggestionRepository.saveAndFlush(AiActionSuggestionEntity.builder()
+                    .requestedById(fixture.user().getId()).assistantKey(key).actionType("CATALOG_CHECK")
+                    .targetModule("catalog").payloadJson("{\"key\":\"" + key + "\"}").build());
+            AiUsageLogEntity usage = usageLogRepository.saveAndFlush(AiUsageLogEntity.builder()
+                    .userId(fixture.user().getId()).assistantKey(key).role("STUDENT").module("catalog")
+                    .status("SUCCESS").build());
+            AiQuotaConfigEntity quota = quotaConfigRepository.saveAndFlush(AiQuotaConfigEntity.builder()
+                    .assistantKey(key).role("STUDENT").module("catalog-" + key).maxRequestsPerDay(1)
+                    .maxContextTokens(1).build());
+
+            entityManager.clear();
+
+            assertEquals(key, conversationRepository.findById(conversation.getId()).orElseThrow().getAssistantKey());
+            assertEquals(key, assistantConfigRepository.findById(config.getId()).orElseThrow().getAssistantKey());
+            assertEquals(key, actionSuggestionRepository.findById(suggestion.getId()).orElseThrow().getAssistantKey());
+            assertEquals(key, usageLogRepository.findById(usage.getId()).orElseThrow().getAssistantKey());
+            assertEquals(key, quotaConfigRepository.findById(quota.getId()).orElseThrow().getAssistantKey());
+        }
     }
 
     private static void assertReducedAuditDefaults(java.time.Instant createdAt, Boolean active, Boolean deleted) {
