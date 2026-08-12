@@ -173,6 +173,30 @@ class AiContextFreshReadExecutorTest {
         verify(lab, never()).build(org.mockito.ArgumentMatchers.any());
     }
 
+    @Test
+    void persistedRiskMetadataCannotOverrideTheFreshCapabilityRiskBoundary() {
+        AiCapabilityResolver resolver = mock(AiCapabilityResolver.class);
+        AiDomainContextBuilder admin = builder(AiAssistantDomain.ADMIN);
+        AiDomainContextBuilder lab = builder(AiAssistantDomain.LAB);
+        AiDomainContextBuilder research = builder(AiAssistantDomain.RESEARCH);
+        AiCapabilityRequest request = request();
+        AiCapabilityDecision storedMetadataDecision = new AiCapabilityDecision(true, 7L,
+                AiAssistantSystemRole.STUDENT, AiAssistantKey.LAB_ASSISTANT, AiAssistantDomain.LAB,
+                AiCapability.LAB_POLICY_READ,
+                new AiCapabilityDecision.ResolvedResource(AiResourceType.LABORATORY, 10L, 10L,
+                        null, null, null, AiResourceScope.EXISTING_BUSINESS_PERMISSION),
+                AiCapabilityDecisionReason.ALLOWED_BY_EFFECTIVE_PERMISSION, null,
+                AiActionRiskBoundary.CONFIRM_REQUIRED, Set.of(), null);
+        AiContextFreshReadExecutor executor = new AiContextFreshReadExecutor(resolver, mock(AiToolPolicyResolver.class),
+                List.of(admin, lab, research));
+
+        assertThrows(AiContextReadDeniedException.class,
+                () -> executor.execute(storedMetadataDecision, request, "request-1"));
+
+        verify(resolver, never()).requireAllowed(request);
+        verify(lab, never()).build(org.mockito.ArgumentMatchers.any());
+    }
+
     private static AiToolPolicyResolver policyResolver(AiCapabilityDecision decision) {
         AiToolPolicyResolver resolver = mock(AiToolPolicyResolver.class);
         when(resolver.resolve(decision)).thenReturn(
