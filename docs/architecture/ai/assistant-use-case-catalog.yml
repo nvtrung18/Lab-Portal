@@ -1,0 +1,552 @@
+catalog:
+  title: "Assistant Use-Case Catalog"
+  catalog_version: "1.0.0"
+  status: "DOCUMENTATION_ONLY"
+  task_id: "P6-T1-20260812"
+  plan_version: "2"
+  plan_hash: "89057e3499f4d19b91909a4182aa0da505e69cd19a9ae2492923ce262f1963d5"
+  purpose: "Describe the fixed current assistant capability catalog and downstream planning inputs without enabling runtime behavior."
+  compatibility: "Additive documentation only. Source code and three-assistant-contract.yml remain authoritative; this file is not a parser input, permission authority, or tool executor."
+
+source_authority:
+  runtime_catalog: "server/src/main/java/com/web/labportalbackend/ai/enums/AiCapability.java"
+  tool_mapping: "server/src/main/java/com/web/labportalbackend/ai/service/impl/AiToolRegistryServiceImpl.java"
+  architecture_contract: "docs/architecture/ai/three-assistant-contract.yml"
+  current_runtime_statement: "AiToolRegistryServiceImpl is fixed metadata only. Capability resolution, resource scope, profile availability, and fresh authorization remain Spring-owned."
+  trust_boundary: "Client assistant key, model, prompt, adapter, retrieval metadata, confidence, and model output are untrusted and cannot add access."
+
+controlled_vocabulary:
+  assistant_keys: ["ADMIN_ASSISTANT", "LAB_ASSISTANT", "RESEARCH_ASSISTANT"]
+  system_roles: ["ADMIN", "LAB_MANAGER", "STUDENT"]
+  research_scope_qualifiers: ["LEADER", "MEMBER"]
+  current_action_risks: ["READ_ONLY", "DRAFT_ONLY"]
+  future_or_boundary_risks: ["CONFIRM_REQUIRED", "APPROVAL_REQUIRED", "PROHIBITED"]
+  runtime_availability:
+    CATALOG_DISABLED: "Architecture-defined and role-eligible, but not currently available from the runtime catalog."
+    CONDITIONALLY_AVAILABLE: "Availability still requires active configuration, role eligibility, and adapter/resource-scope resolution."
+  current_failure_vocabulary: ["DENY", "SAFE_REFUSAL", "NO_CONTEXT", "DRAFT_ONLY"]
+  future_boundary_vocabulary: ["REQUIRE_CONFIRMATION", "REQUIRE_APPROVAL", "PROHIBITED"]
+  output_types: ["SUMMARY", "LOOKUP", "GUIDANCE", "NON_OFFICIAL_STRUCTURED_DRAFT"]
+
+use_cases:
+  - id: "ADMIN_UC_001"
+    assistantKey: "ADMIN_ASSISTANT"
+    name: "System status summary"
+    goal: "Summarize an authorized system-status projection."
+    actors: ["ADMIN"]
+    runtimeAvailability: "CATALOG_DISABLED"
+    resourceScope: "Authorized system-summary context only."
+    inputs: ["Resolved assistant", "Authenticated actor", "Authorized system-status context"]
+    trustedDataSources: ["Spring-authorized bounded system-status projection", "Approved tool result"]
+    requiredCapabilities: ["ADMIN_SYSTEM_SUMMARY"]
+    allowedToolGroups: ["ADMIN_READ"]
+    outputType: "SUMMARY"
+    actionRisk: "READ_ONLY"
+    confirmationRequired: false
+    approvalRequired: false
+    freshReauthorizationRequired: true
+    failureBehavior: ["DENY", "SAFE_REFUSAL", "NO_CONTEXT"]
+    safeRefusalBehavior: "Refuse without disclosing unavailable system details, secrets, or authorization metadata."
+    metrics: ["AUTHORIZATION_CORRECTNESS", "CONTEXT_GROUNDEDNESS", "SAFE_REFUSAL_ACCURACY"]
+    nonGoals: ["Configuration mutation", "Operational command", "Secrets access", "Claiming current Admin availability"]
+    dependencies: ["Spring capability resolution", "Fresh read-only authorization", "Bounded authorized context"]
+    futureEvaluationTags: ["FUNCTIONAL", "AUTHORIZATION", "SAFE_REFUSAL", "MISSING_CONTEXT"]
+    laterMvp: "P10C_ADMIN"
+    sourceAuthority: ["AiCapability.ADMIN_SYSTEM_SUMMARY", "CANONICAL_CATALOG: ADMIN_SYSTEM_SUMMARY -> ADMIN_READ", "three-assistant-contract.yml: assistant_registry"]
+    notes: "Admin is architecture-eligible only; catalog-disabled is not a permission grant or an invocation claim."
+
+  - id: "ADMIN_UC_002"
+    assistantKey: "ADMIN_ASSISTANT"
+    name: "Audit summary"
+    goal: "Summarize an authorized audit-summary projection with minimization."
+    actors: ["ADMIN"]
+    runtimeAvailability: "CATALOG_DISABLED"
+    resourceScope: "Authorized audit-summary projection only."
+    inputs: ["Resolved assistant", "Authenticated actor", "Authorized audit-summary context"]
+    trustedDataSources: ["Spring-authorized bounded audit-summary projection", "Approved tool result"]
+    requiredCapabilities: ["ADMIN_AUDIT_SUMMARY"]
+    allowedToolGroups: ["ADMIN_READ"]
+    outputType: "SUMMARY"
+    actionRisk: "READ_ONLY"
+    confirmationRequired: false
+    approvalRequired: false
+    freshReauthorizationRequired: true
+    failureBehavior: ["DENY", "SAFE_REFUSAL", "NO_CONTEXT"]
+    safeRefusalBehavior: "Refuse without exposing raw audit records, hidden resources, or audit-access metadata."
+    metrics: ["AUTHORIZATION_CORRECTNESS", "TOOL_ROUTING_CORRECTNESS", "HALLUCINATED_RESOURCE_RATE"]
+    nonGoals: ["Raw audit export", "Audit deletion", "Hidden-data disclosure", "Current executor claim"]
+    dependencies: ["Spring capability resolution", "Fresh read-only authorization", "Bounded authorized context"]
+    futureEvaluationTags: ["FUNCTIONAL", "AUTHORIZATION", "SAFE_REFUSAL", "TOOL_ROUTING"]
+    laterMvp: "P10C_ADMIN"
+    sourceAuthority: ["AiCapability.ADMIN_AUDIT_SUMMARY", "CANONICAL_CATALOG: ADMIN_AUDIT_SUMMARY -> ADMIN_READ", "three-assistant-contract.yml: prohibited_capabilities"]
+    notes: "Audit data remains minimized and source-authorized; this row does not add an export path."
+
+  - id: "ADMIN_UC_003"
+    assistantKey: "ADMIN_ASSISTANT"
+    name: "User-status lookup"
+    goal: "Return a bounded status lookup for an authorized user reference."
+    actors: ["ADMIN"]
+    runtimeAvailability: "CATALOG_DISABLED"
+    resourceScope: "Resolved authorized user reference only."
+    inputs: ["Resolved assistant", "Authenticated actor", "Authorized user reference"]
+    trustedDataSources: ["Spring-authorized bounded user-status projection", "Approved tool result"]
+    requiredCapabilities: ["ADMIN_USER_STATUS_LOOKUP"]
+    allowedToolGroups: ["ADMIN_READ"]
+    outputType: "LOOKUP"
+    actionRisk: "READ_ONLY"
+    confirmationRequired: false
+    approvalRequired: false
+    freshReauthorizationRequired: true
+    failureBehavior: ["DENY", "SAFE_REFUSAL", "NO_CONTEXT"]
+    safeRefusalBehavior: "Refuse without confirming user existence, membership, private fields, or access-policy detail."
+    metrics: ["AUTHORIZATION_CORRECTNESS", "FUNCTIONAL_CORRECTNESS", "SAFE_REFUSAL_ACCURACY"]
+    nonGoals: ["Account modification", "Credential access", "Broad user dump", "Runtime availability claim"]
+    dependencies: ["Spring capability resolution", "Fresh read-only authorization", "Bounded authorized context"]
+    futureEvaluationTags: ["FUNCTIONAL", "AUTHORIZATION", "SAFE_REFUSAL", "MISSING_CONTEXT"]
+    laterMvp: "P10C_ADMIN"
+    sourceAuthority: ["AiCapability.ADMIN_USER_STATUS_LOOKUP", "CANONICAL_CATALOG: ADMIN_USER_STATUS_LOOKUP -> ADMIN_READ", "three-assistant-contract.yml: authorized_context_contract"]
+    notes: "PII minimization and exact field selection are future data-governance decisions."
+
+  - id: "ADMIN_UC_004"
+    assistantKey: "ADMIN_ASSISTANT"
+    name: "Configuration-change draft"
+    goal: "Produce a non-official configuration-change draft template without asserting current configuration-policy data."
+    actors: ["ADMIN"]
+    runtimeAvailability: "CATALOG_DISABLED"
+    resourceScope: "Source-limited: current context supplies no configuration or policy projection."
+    inputs: ["Resolved assistant", "Authenticated actor", "Draft request"]
+    trustedDataSources: ["Spring-authorized bounded system-summary context", "Approved tool result"]
+    requiredCapabilities: ["ADMIN_CONFIG_DRAFT"]
+    allowedToolGroups: ["ADMIN_DRAFT"]
+    outputType: "NON_OFFICIAL_STRUCTURED_DRAFT"
+    actionRisk: "DRAFT_ONLY"
+    confirmationRequired: false
+    approvalRequired: false
+    freshReauthorizationRequired: true
+    failureBehavior: ["DENY", "SAFE_REFUSAL", "NO_CONTEXT", "DRAFT_ONLY"]
+    safeRefusalBehavior: "Refuse without revealing configuration values, secrets, or whether a protected setting exists."
+    metrics: ["STRUCTURED_OUTPUT_VALIDITY", "REQUIRED_FIELD_COMPLETENESS", "HUMAN_USEFULNESS"]
+    nonGoals: ["Configuration write", "Confirmation", "Approval", "Deployment", "Executor"]
+    dependencies: ["Spring capability resolution", "Fresh read-only authorization", "Human review outside this catalog"]
+    futureEvaluationTags: ["STRUCTURED_OUTPUT", "AUTHORIZATION", "SAFE_REFUSAL", "HUMAN_EVAL"]
+    laterMvp: "P10C_ADMIN"
+    sourceAuthority: ["AiCapability.ADMIN_CONFIG_DRAFT", "CANONICAL_CATALOG: ADMIN_CONFIG_DRAFT -> ADMIN_DRAFT", "AiAdminAssistantContextBuilder.build: no configuration or policy projection", "three-assistant-contract.yml: service_trust_boundary"]
+    notes: "Configuration-policy content is FUTURE_SOURCE_LIMITED until a separately approved bounded projection exists; a draft cannot create a configuration request, official change, or execution path."
+
+  - id: "ADMIN_UC_005"
+    assistantKey: "ADMIN_ASSISTANT"
+    name: "Account-action draft"
+    goal: "Produce a non-official account-action draft from authorized target-user status context."
+    actors: ["ADMIN"]
+    runtimeAvailability: "CATALOG_DISABLED"
+    resourceScope: "Authorized target-user status context only; account-policy content is source-limited."
+    inputs: ["Resolved assistant", "Authenticated actor", "Authorized user reference", "Draft request"]
+    trustedDataSources: ["Spring-authorized bounded account-status context", "Approved tool result"]
+    requiredCapabilities: ["ADMIN_ACCOUNT_ACTION_DRAFT"]
+    allowedToolGroups: ["ADMIN_DRAFT"]
+    outputType: "NON_OFFICIAL_STRUCTURED_DRAFT"
+    actionRisk: "DRAFT_ONLY"
+    confirmationRequired: false
+    approvalRequired: false
+    freshReauthorizationRequired: true
+    failureBehavior: ["DENY", "SAFE_REFUSAL", "NO_CONTEXT", "DRAFT_ONLY"]
+    safeRefusalBehavior: "Refuse without confirming user existence, authorization state, or protected account metadata."
+    metrics: ["STRUCTURED_OUTPUT_VALIDITY", "HUMAN_USEFULNESS", "UNSUPPORTED_CLAIM_RATE"]
+    nonGoals: ["Grant or revoke", "Account action", "Official write", "Executor"]
+    dependencies: ["Spring capability resolution", "Fresh read-only authorization", "Human review outside this catalog"]
+    futureEvaluationTags: ["STRUCTURED_OUTPUT", "AUTHORIZATION", "SAFE_REFUSAL", "HUMAN_EVAL"]
+    laterMvp: "P10C_ADMIN"
+    sourceAuthority: ["AiCapability.ADMIN_ACCOUNT_ACTION_DRAFT", "CANONICAL_CATALOG: ADMIN_ACCOUNT_ACTION_DRAFT -> ADMIN_DRAFT", "AiAdminAssistantContextBuilder.build: target-user projection only", "three-assistant-contract.yml: prohibited_capabilities"]
+    notes: "Account-policy content is FUTURE_SOURCE_LIMITED; administrative eligibility never grants universal account authority."
+
+  - id: "LAB_UC_001"
+    assistantKey: "LAB_ASSISTANT"
+    name: "Policy Q&A"
+    goal: "Provide guidance from authorized lab-policy context."
+    actors: ["ADMIN", "LAB_MANAGER", "STUDENT"]
+    runtimeAvailability: "CONDITIONALLY_AVAILABLE"
+    resourceScope: "Actor- and lab-scoped policy context only."
+    inputs: ["Resolved assistant", "Authenticated actor", "Authorized lab reference", "Question"]
+    trustedDataSources: ["Spring-authorized bounded lab-policy context", "Approved tool result"]
+    requiredCapabilities: ["LAB_POLICY_READ"]
+    allowedToolGroups: ["LAB_READ"]
+    outputType: "GUIDANCE"
+    actionRisk: "READ_ONLY"
+    confirmationRequired: false
+    approvalRequired: false
+    freshReauthorizationRequired: true
+    failureBehavior: ["DENY", "SAFE_REFUSAL", "NO_CONTEXT"]
+    safeRefusalBehavior: "Refuse without disclosing policy context from another lab or protected metadata."
+    metrics: ["CONTEXT_GROUNDEDNESS", "SAFE_REFUSAL_ACCURACY", "FUNCTIONAL_CORRECTNESS"]
+    nonGoals: ["Policy change", "Cross-lab disclosure", "Assumed RAG"]
+    dependencies: ["Spring capability resolution", "Fresh read-only authorization", "Bounded authorized context"]
+    futureEvaluationTags: ["FUNCTIONAL", "SAFE_REFUSAL", "MISSING_CONTEXT", "PROMPT_INJECTION"]
+    laterMvp: "P10B_LAB"
+    sourceAuthority: ["AiCapability.LAB_POLICY_READ", "CANONICAL_CATALOG: LAB_POLICY_READ -> LAB_READ", "three-assistant-contract.yml: assistant_registry"]
+    notes: "RAG is optional and false for the MVP; no retrieval namespace is required."
+
+  - id: "LAB_UC_002"
+    assistantKey: "LAB_ASSISTANT"
+    name: "Slot availability"
+    goal: "Lookup availability for an authorized laboratory slot reference."
+    actors: ["ADMIN", "LAB_MANAGER", "STUDENT"]
+    runtimeAvailability: "CONDITIONALLY_AVAILABLE"
+    resourceScope: "Authorized laboratory and slot reference only."
+    inputs: ["Resolved assistant", "Authenticated actor", "Authorized lab reference", "Authorized slot reference"]
+    trustedDataSources: ["Spring-authorized bounded lab and slot projection", "Approved tool result"]
+    requiredCapabilities: ["LAB_SLOT_READ"]
+    allowedToolGroups: ["LAB_READ"]
+    outputType: "LOOKUP"
+    actionRisk: "READ_ONLY"
+    confirmationRequired: false
+    approvalRequired: false
+    freshReauthorizationRequired: true
+    failureBehavior: ["DENY", "SAFE_REFUSAL", "NO_CONTEXT"]
+    safeRefusalBehavior: "Refuse without revealing hidden slots, lab membership, or reservation metadata."
+    metrics: ["TOOL_ROUTING_CORRECTNESS", "AUTHORIZATION_CORRECTNESS", "HALLUCINATED_RESOURCE_RATE"]
+    nonGoals: ["Booking creation", "Booking change", "Hidden-slot disclosure"]
+    dependencies: ["Spring capability resolution", "Fresh read-only authorization", "Bounded authorized context"]
+    futureEvaluationTags: ["FUNCTIONAL", "TOOL_ROUTING", "AUTHORIZATION", "SAFE_REFUSAL"]
+    laterMvp: "P10B_LAB"
+    sourceAuthority: ["AiCapability.LAB_SLOT_READ", "CANONICAL_CATALOG: LAB_SLOT_READ -> LAB_READ", "three-assistant-contract.yml: prohibited_capabilities"]
+    notes: "Availability is scoped by the domain adapter and does not expose an unrestricted slot inventory."
+
+  - id: "LAB_UC_003"
+    assistantKey: "LAB_ASSISTANT"
+    name: "Own-booking lookup"
+    goal: "Lookup a booking only when the actor owns the resolved booking."
+    actors: ["ADMIN", "LAB_MANAGER", "STUDENT"]
+    runtimeAvailability: "CONDITIONALLY_AVAILABLE"
+    resourceScope: "Actor-owned resolved booking only."
+    inputs: ["Resolved assistant", "Authenticated actor", "Authorized booking reference"]
+    trustedDataSources: ["Spring-authorized bounded booking projection", "Approved tool result"]
+    requiredCapabilities: ["LAB_OWN_BOOKING_READ"]
+    allowedToolGroups: ["LAB_READ"]
+    outputType: "LOOKUP"
+    actionRisk: "READ_ONLY"
+    confirmationRequired: false
+    approvalRequired: false
+    freshReauthorizationRequired: true
+    failureBehavior: ["DENY", "SAFE_REFUSAL", "NO_CONTEXT"]
+    safeRefusalBehavior: "Refuse without confirming another user's booking existence, status, or private metadata."
+    metrics: ["SAFE_REFUSAL_ACCURACY", "AUTHORIZATION_CORRECTNESS", "FUNCTIONAL_CORRECTNESS"]
+    nonGoals: ["Other-user booking data", "Cancellation", "Modification"]
+    dependencies: ["Spring capability resolution", "Fresh read-only authorization", "Ownership validation"]
+    futureEvaluationTags: ["FUNCTIONAL", "TOOL_ROUTING", "AUTHORIZATION", "SAFE_REFUSAL"]
+    laterMvp: "P10B_LAB"
+    sourceAuthority: ["AiCapability.LAB_OWN_BOOKING_READ", "CANONICAL_CATALOG: LAB_OWN_BOOKING_READ -> LAB_READ", "three-assistant-contract.yml: prohibited_capabilities"]
+    notes: "This catalog does not relax ownership or create a booking-management route."
+
+  - id: "LAB_UC_004"
+    assistantKey: "LAB_ASSISTANT"
+    name: "Managed-lab summary"
+    goal: "Summarize an authorized managed-lab projection."
+    actors: ["ADMIN", "LAB_MANAGER"]
+    runtimeAvailability: "CONDITIONALLY_AVAILABLE"
+    resourceScope: "Managed laboratory only when the adapter permits it."
+    inputs: ["Resolved assistant", "Authenticated actor", "Authorized managed-lab reference"]
+    trustedDataSources: ["Spring-authorized bounded managed-lab projection", "Approved tool result"]
+    requiredCapabilities: ["LAB_MANAGED_SUMMARY"]
+    allowedToolGroups: ["LAB_READ"]
+    outputType: "SUMMARY"
+    actionRisk: "READ_ONLY"
+    confirmationRequired: false
+    approvalRequired: false
+    freshReauthorizationRequired: true
+    failureBehavior: ["DENY", "SAFE_REFUSAL", "NO_CONTEXT"]
+    safeRefusalBehavior: "Refuse without revealing unmanaged-lab resources, private user detail, or management-policy metadata."
+    metrics: ["AUTHORIZATION_CORRECTNESS", "CONTEXT_GROUNDEDNESS", "SAFE_REFUSAL_ACCURACY"]
+    nonGoals: ["Unmanaged-lab detail", "Penalty action", "Private user disclosure"]
+    dependencies: ["Spring capability resolution", "Fresh read-only authorization", "Managed-lab validation"]
+    futureEvaluationTags: ["FUNCTIONAL", "TOOL_ROUTING", "AUTHORIZATION", "SAFE_REFUSAL"]
+    laterMvp: "P10B_LAB"
+    sourceAuthority: ["AiCapability.LAB_MANAGED_SUMMARY", "CANONICAL_CATALOG: LAB_MANAGED_SUMMARY -> LAB_READ", "three-assistant-contract.yml: assistant_registry"]
+    notes: "LAB_MANAGER is a system role; managed-lab access remains an adapter decision."
+
+  - id: "LAB_UC_005"
+    assistantKey: "LAB_ASSISTANT"
+    name: "Booking draft"
+    goal: "Produce a non-official structured booking draft from authorized laboratory and slot context."
+    actors: ["ADMIN", "LAB_MANAGER", "STUDENT"]
+    runtimeAvailability: "CONDITIONALLY_AVAILABLE"
+    resourceScope: "Authorized laboratory and slot context only; no booking or own-booking projection is supplied for this capability."
+    inputs: ["Resolved assistant", "Authenticated actor", "Authorized lab and slot context", "Draft request"]
+    trustedDataSources: ["Spring-authorized bounded laboratory and slot context", "Approved tool result"]
+    requiredCapabilities: ["LAB_BOOKING_DRAFT"]
+    allowedToolGroups: ["LAB_DRAFT"]
+    outputType: "NON_OFFICIAL_STRUCTURED_DRAFT"
+    actionRisk: "DRAFT_ONLY"
+    confirmationRequired: false
+    approvalRequired: false
+    freshReauthorizationRequired: true
+    failureBehavior: ["DENY", "SAFE_REFUSAL", "NO_CONTEXT", "DRAFT_ONLY"]
+    safeRefusalBehavior: "Refuse without exposing hidden-slot, conflict, or other-user booking information."
+    metrics: ["STRUCTURED_OUTPUT_VALIDITY", "REQUIRED_FIELD_COMPLETENESS", "HUMAN_USEFULNESS"]
+    nonGoals: ["Submission", "Reservation", "Conflict override", "Confirmation", "Approval", "Write"]
+    dependencies: ["Spring capability resolution", "Fresh read-only authorization", "Human review outside this catalog"]
+    futureEvaluationTags: ["STRUCTURED_OUTPUT", "AUTHORIZATION", "SAFE_REFUSAL", "HUMAN_EVAL"]
+    laterMvp: "P10B_LAB"
+    sourceAuthority: ["AiCapability.LAB_BOOKING_DRAFT", "CANONICAL_CATALOG: LAB_BOOKING_DRAFT -> LAB_DRAFT", "AiLabAssistantContextBuilder.build: laboratory and slot projection only", "three-assistant-contract.yml: action_risk_and_lifecycle"]
+    notes: "A booking draft is neither an execution request nor a reservation; booking and own-booking context are not projected for this capability."
+
+  - id: "LAB_UC_006"
+    assistantKey: "LAB_ASSISTANT"
+    name: "Check-in guidance"
+    goal: "Provide guidance from an authorized booking and check-in policy snapshot."
+    actors: ["ADMIN", "LAB_MANAGER", "STUDENT"]
+    runtimeAvailability: "CONDITIONALLY_AVAILABLE"
+    resourceScope: "Authorized booking and check-in policy snapshot only."
+    inputs: ["Resolved assistant", "Authenticated actor", "Authorized booking reference", "Authorized policy snapshot"]
+    trustedDataSources: ["Spring-authorized bounded booking and check-in policy context", "Approved tool result"]
+    requiredCapabilities: ["LAB_CHECKIN_GUIDANCE"]
+    allowedToolGroups: ["LAB_READ"]
+    outputType: "GUIDANCE"
+    actionRisk: "READ_ONLY"
+    confirmationRequired: false
+    approvalRequired: false
+    freshReauthorizationRequired: true
+    failureBehavior: ["DENY", "SAFE_REFUSAL", "NO_CONTEXT"]
+    safeRefusalBehavior: "Refuse without revealing another user's booking, attendance, or policy-exception metadata."
+    metrics: ["FUNCTIONAL_CORRECTNESS", "SAFE_REFUSAL_ACCURACY", "CONTEXT_GROUNDEDNESS"]
+    nonGoals: ["Manual check-in", "Attendance-state change", "Policy override"]
+    dependencies: ["Spring capability resolution", "Fresh read-only authorization", "Bounded authorized context"]
+    futureEvaluationTags: ["FUNCTIONAL", "AUTHORIZATION", "MISSING_CONTEXT", "SAFE_REFUSAL"]
+    laterMvp: "P10B_LAB"
+    sourceAuthority: ["AiCapability.LAB_CHECKIN_GUIDANCE", "CANONICAL_CATALOG: LAB_CHECKIN_GUIDANCE -> LAB_READ", "three-assistant-contract.yml: prohibited_capabilities"]
+    notes: "Guidance does not change attendance state or create an operational action."
+
+  - id: "RESEARCH_UC_001"
+    assistantKey: "RESEARCH_ASSISTANT"
+    name: "Project progress summary"
+    goal: "Summarize a project only after current role and scope resolution."
+    actors: ["ADMIN", "LAB_MANAGER", "STUDENT"]
+    runtimeAvailability: "CONDITIONALLY_AVAILABLE"
+    resourceScope: "Resolved project with current role and scope decision; no default student whole-project access."
+    inputs: ["Resolved assistant", "Authenticated actor", "Authorized project reference"]
+    trustedDataSources: ["Spring-authorized bounded project projection", "Approved tool result"]
+    requiredCapabilities: ["RESEARCH_PROJECT_SUMMARY"]
+    allowedToolGroups: ["RESEARCH_READ"]
+    outputType: "SUMMARY"
+    actionRisk: "READ_ONLY"
+    confirmationRequired: false
+    approvalRequired: false
+    freshReauthorizationRequired: true
+    failureBehavior: ["DENY", "SAFE_REFUSAL", "NO_CONTEXT"]
+    safeRefusalBehavior: "Refuse without confirming project existence, membership, scope, or cross-project data."
+    metrics: ["AUTHORIZATION_CORRECTNESS", "SAFE_REFUSAL_ACCURACY", "CONTEXT_GROUNDEDNESS"]
+    nonGoals: ["Default student whole-project access", "Project update", "Cross-project read"]
+    dependencies: ["Spring capability resolution", "Fresh read-only authorization", "Project-scope validation"]
+    futureEvaluationTags: ["FUNCTIONAL", "TOOL_ROUTING", "AUTHORIZATION", "CROSS_DOMAIN", "SAFE_REFUSAL"]
+    laterMvp: "P10A_RESEARCH"
+    sourceAuthority: ["AiCapability.RESEARCH_PROJECT_SUMMARY", "CANONICAL_CATALOG: RESEARCH_PROJECT_SUMMARY -> RESEARCH_READ", "three-assistant-contract.yml: identity_and_authorization"]
+    notes: "Membership roles are scope qualifiers, not system roles and not a permission expansion."
+
+  - id: "RESEARCH_UC_002"
+    assistantKey: "RESEARCH_ASSISTANT"
+    name: "Group progress summary"
+    goal: "Summarize a resolved group only where membership and scope permit it."
+    actors: ["ADMIN", "LAB_MANAGER", "STUDENT"]
+    runtimeAvailability: "CONDITIONALLY_AVAILABLE"
+    resourceScope: "Resolved group only when membership and scope permit it."
+    inputs: ["Resolved assistant", "Authenticated actor", "Authorized group reference"]
+    trustedDataSources: ["Spring-authorized bounded group projection", "Approved tool result"]
+    requiredCapabilities: ["RESEARCH_GROUP_SUMMARY"]
+    allowedToolGroups: ["RESEARCH_READ"]
+    outputType: "SUMMARY"
+    actionRisk: "READ_ONLY"
+    confirmationRequired: false
+    approvalRequired: false
+    freshReauthorizationRequired: true
+    failureBehavior: ["DENY", "SAFE_REFUSAL", "NO_CONTEXT"]
+    safeRefusalBehavior: "Refuse without confirming group existence, membership, private work, or cross-group relationships."
+    metrics: ["AUTHORIZATION_CORRECTNESS", "HALLUCINATED_RESOURCE_RATE", "SAFE_REFUSAL_ACCURACY"]
+    nonGoals: ["Cross-group private read", "Membership change", "Project-wide fallback"]
+    dependencies: ["Spring capability resolution", "Fresh read-only authorization", "Group-membership validation"]
+    futureEvaluationTags: ["FUNCTIONAL", "TOOL_ROUTING", "AUTHORIZATION", "CROSS_DOMAIN", "SAFE_REFUSAL"]
+    laterMvp: "P10A_RESEARCH"
+    sourceAuthority: ["AiCapability.RESEARCH_GROUP_SUMMARY", "CANONICAL_CATALOG: RESEARCH_GROUP_SUMMARY -> RESEARCH_READ", "three-assistant-contract.yml: identity_and_authorization"]
+    notes: "Allowed group context is source-limited to a resolved group and must not become a project-wide fallback."
+
+  - id: "RESEARCH_UC_003"
+    assistantKey: "RESEARCH_ASSISTANT"
+    name: "Assigned-task lookup"
+    goal: "Lookup a resolved task assigned to the actor or otherwise authorized by the adapter."
+    actors: ["ADMIN", "LAB_MANAGER", "STUDENT"]
+    runtimeAvailability: "CONDITIONALLY_AVAILABLE"
+    resourceScope: "Resolved task assigned or otherwise authorized by the domain adapter."
+    inputs: ["Resolved assistant", "Authenticated actor", "Authorized task reference"]
+    trustedDataSources: ["Spring-authorized bounded task projection", "Approved tool result"]
+    requiredCapabilities: ["RESEARCH_ASSIGNED_TASK_READ"]
+    allowedToolGroups: ["RESEARCH_READ"]
+    outputType: "LOOKUP"
+    actionRisk: "READ_ONLY"
+    confirmationRequired: false
+    approvalRequired: false
+    freshReauthorizationRequired: true
+    failureBehavior: ["DENY", "SAFE_REFUSAL", "NO_CONTEXT"]
+    safeRefusalBehavior: "Refuse without confirming arbitrary task existence, assignment, or cross-group detail."
+    metrics: ["AUTHORIZATION_CORRECTNESS", "FUNCTIONAL_CORRECTNESS", "SAFE_REFUSAL_ACCURACY"]
+    nonGoals: ["Arbitrary task browse", "Task update", "Cross-group read"]
+    dependencies: ["Spring capability resolution", "Fresh read-only authorization", "Assignment or adapter authorization"]
+    futureEvaluationTags: ["FUNCTIONAL", "TOOL_ROUTING", "AUTHORIZATION", "CROSS_DOMAIN", "SAFE_REFUSAL"]
+    laterMvp: "P10A_RESEARCH"
+    sourceAuthority: ["AiCapability.RESEARCH_ASSIGNED_TASK_READ", "CANONICAL_CATALOG: RESEARCH_ASSIGNED_TASK_READ -> RESEARCH_READ", "three-assistant-contract.yml: identity_and_authorization"]
+    notes: "Assignment is verified by Spring; the model cannot infer it from task identifiers."
+
+  - id: "RESEARCH_UC_004"
+    assistantKey: "RESEARCH_ASSISTANT"
+    name: "Task-proposal draft"
+    goal: "Produce a non-official task proposal draft from authorized project and group context."
+    actors: ["ADMIN", "LAB_MANAGER", "STUDENT"]
+    runtimeAvailability: "CONDITIONALLY_AVAILABLE"
+    resourceScope: "Authorized group with resolved parent project context."
+    inputs: ["Resolved assistant", "Authenticated actor", "Authorized project and group references", "Draft request"]
+    trustedDataSources: ["Spring-authorized bounded project, group, and task context", "Approved tool result"]
+    requiredCapabilities: ["RESEARCH_TASK_PROPOSAL_DRAFT"]
+    allowedToolGroups: ["RESEARCH_DRAFT"]
+    outputType: "NON_OFFICIAL_STRUCTURED_DRAFT"
+    actionRisk: "DRAFT_ONLY"
+    confirmationRequired: false
+    approvalRequired: false
+    freshReauthorizationRequired: true
+    failureBehavior: ["DENY", "SAFE_REFUSAL", "NO_CONTEXT", "DRAFT_ONLY"]
+    safeRefusalBehavior: "Refuse without exposing private project, group, task, or membership context."
+    metrics: ["STRUCTURED_OUTPUT_VALIDITY", "REQUIRED_FIELD_COMPLETENESS", "HUMAN_USEFULNESS"]
+    nonGoals: ["Task creation", "Assignment", "Confirmation", "Approval", "Official write"]
+    dependencies: ["Spring capability resolution", "Fresh read-only authorization", "Parent-project scope validation", "Human review outside this catalog"]
+    futureEvaluationTags: ["STRUCTURED_OUTPUT", "AUTHORIZATION", "CROSS_DOMAIN", "SAFE_REFUSAL", "HUMAN_EVAL"]
+    laterMvp: "P10A_RESEARCH"
+    sourceAuthority: ["AiCapability.RESEARCH_TASK_PROPOSAL_DRAFT", "CANONICAL_CATALOG: RESEARCH_TASK_PROPOSAL_DRAFT -> RESEARCH_DRAFT", "three-assistant-contract.yml: action_risk_and_lifecycle"]
+    notes: "The required group parent project is a source-backed context constraint, not an execution prerequisite."
+
+  - id: "RESEARCH_UC_005"
+    assistantKey: "RESEARCH_ASSISTANT"
+    name: "Task-suggestion draft"
+    goal: "Produce a non-official task suggestion draft from authorized task context."
+    actors: ["ADMIN", "LAB_MANAGER", "STUDENT"]
+    runtimeAvailability: "CONDITIONALLY_AVAILABLE"
+    resourceScope: "Authorized project, group, and task context only."
+    inputs: ["Resolved assistant", "Authenticated actor", "Authorized task reference", "Draft request"]
+    trustedDataSources: ["Spring-authorized bounded project, group, and task context", "Approved tool result"]
+    requiredCapabilities: ["RESEARCH_TASK_SUGGESTION_DRAFT"]
+    allowedToolGroups: ["RESEARCH_DRAFT"]
+    outputType: "NON_OFFICIAL_STRUCTURED_DRAFT"
+    actionRisk: "DRAFT_ONLY"
+    confirmationRequired: false
+    approvalRequired: false
+    freshReauthorizationRequired: true
+    failureBehavior: ["DENY", "SAFE_REFUSAL", "NO_CONTEXT", "DRAFT_ONLY"]
+    safeRefusalBehavior: "Refuse without revealing private task, group, membership, or prioritization metadata."
+    metrics: ["STRUCTURED_OUTPUT_VALIDITY", "HUMAN_USEFULNESS", "UNSUPPORTED_CLAIM_RATE"]
+    nonGoals: ["Autonomous prioritization", "Task mutation", "Scope expansion"]
+    dependencies: ["Spring capability resolution", "Fresh read-only authorization", "Human review outside this catalog"]
+    futureEvaluationTags: ["STRUCTURED_OUTPUT", "AUTHORIZATION", "CROSS_DOMAIN", "SAFE_REFUSAL", "HUMAN_EVAL"]
+    laterMvp: "P10A_RESEARCH"
+    sourceAuthority: ["AiCapability.RESEARCH_TASK_SUGGESTION_DRAFT", "CANONICAL_CATALOG: RESEARCH_TASK_SUGGESTION_DRAFT -> RESEARCH_DRAFT", "three-assistant-contract.yml: service_trust_boundary"]
+    notes: "Suggestions are drafts and do not alter task priority, assignment, or ownership."
+
+  - id: "RESEARCH_UC_006"
+    assistantKey: "RESEARCH_ASSISTANT"
+    name: "Report-review draft"
+    goal: "Produce a non-official report-review draft from an authorized report reference; report content is source-limited."
+    actors: ["ADMIN", "LAB_MANAGER", "STUDENT"]
+    runtimeAvailability: "CONDITIONALLY_AVAILABLE"
+    resourceScope: "Authorized report reference/existence with resolved project and group context and bounded milestone metadata only; report content is not currently projected."
+    inputs: ["Resolved assistant", "Authenticated actor", "Authorized report reference", "Draft request"]
+    trustedDataSources: ["Spring-authorized report existence check", "Spring-authorized bounded project, group, task, and milestone metadata context", "Approved tool result"]
+    requiredCapabilities: ["RESEARCH_REPORT_REVIEW_DRAFT"]
+    allowedToolGroups: ["RESEARCH_DRAFT"]
+    outputType: "NON_OFFICIAL_STRUCTURED_DRAFT"
+    actionRisk: "DRAFT_ONLY"
+    confirmationRequired: false
+    approvalRequired: false
+    freshReauthorizationRequired: true
+    failureBehavior: ["DENY", "SAFE_REFUSAL", "NO_CONTEXT", "DRAFT_ONLY"]
+    safeRefusalBehavior: "Refuse without revealing report existence, grading/status detail, or private group context."
+    metrics: ["CONTEXT_GROUNDEDNESS", "STRUCTURED_OUTPUT_VALIDITY", "HUMAN_USEFULNESS"]
+    nonGoals: ["Report approval", "Report rejection", "Grade or status change", "Official write"]
+    dependencies: ["Spring capability resolution", "Fresh read-only authorization", "Human review outside this catalog"]
+    futureEvaluationTags: ["STRUCTURED_OUTPUT", "AUTHORIZATION", "CROSS_DOMAIN", "SAFE_REFUSAL", "HUMAN_EVAL"]
+    laterMvp: "P10A_RESEARCH"
+    sourceAuthority: ["AiCapability.RESEARCH_REPORT_REVIEW_DRAFT", "CANONICAL_CATALOG: RESEARCH_REPORT_REVIEW_DRAFT -> RESEARCH_DRAFT", "AiResearchAssistantContextBuilder.requireSelectedCurrent: report existence check; build: no report-content projection", "three-assistant-contract.yml: prohibited_capabilities"]
+    notes: "Report content is FUTURE_SOURCE_LIMITED; a report review is draft-only, and autonomous approval, rejection, and official writes are prohibited."
+
+future_lifecycle_and_boundaries:
+  current_state: "FUTURE_POLICY_ONLY; no current capability, tool group, executor, persistence, approver, authorization expansion, or transaction implementation is represented here."
+  entries:
+    - assistantKey: "RESEARCH_ASSISTANT"
+      action: "Official task creation when later business policy permits it"
+      possibleActionRisks: ["CONFIRM_REQUIRED", "APPROVAL_REQUIRED"]
+      status: "FUTURE_POLICY_ONLY"
+      requiredCapabilities: []
+      allowedToolGroups: []
+      boundary: "Requires separately approved Spring confirmation, approval, transaction design, and fresh authorization before any execution."
+    - assistantKey: "LAB_ASSISTANT"
+      action: "Booking mutation when later business policy permits it"
+      possibleActionRisks: ["CONFIRM_REQUIRED", "APPROVAL_REQUIRED"]
+      status: "FUTURE_POLICY_ONLY"
+      requiredCapabilities: []
+      allowedToolGroups: []
+      boundary: "No booking executor or approval flow is added; any future mutation requires separately approved Spring controls."
+
+prohibited_boundaries:
+  policy: "PROHIBITED is a denial boundary only and is never downgraded. No entry below is a current use case or tool definition."
+  entries:
+    - { assistantKey: "RESEARCH_ASSISTANT", action: "Report approval or rejection", reason: "Official autonomous approval/write is forbidden; current report output is draft-only." }
+    - { assistantKey: "RESEARCH_ASSISTANT", action: "Permission grant or membership change", reason: "Authorization and grants remain Spring and business-policy owned." }
+    - { assistantKey: "RESEARCH_ASSISTANT", action: "Cross-group private read", reason: "Resolved group/project scope forbids default student whole-project access." }
+    - { assistantKey: "LAB_ASSISTANT", action: "Manual check-in", reason: "Current metadata permits guidance only; attendance change is operational." }
+    - { assistantKey: "LAB_ASSISTANT", action: "Penalty application or change", reason: "Operational business mutation is prohibited." }
+    - { assistantKey: "LAB_ASSISTANT", action: "Permission change", reason: "The assistant cannot modify roles, ownership, or scope." }
+    - { assistantKey: "LAB_ASSISTANT", action: "Other-user private booking or complaint data", reason: "Own-booking and managed-lab boundaries do not authorize cross-user private reads." }
+    - { assistantKey: "ADMIN_ASSISTANT", action: "Grant Admin or alter roles", reason: "Architecture eligibility is not universal administrative authority." }
+    - { assistantKey: "ADMIN_ASSISTANT", action: "Delete audit data", reason: "Audit deletion is prohibited." }
+    - { assistantKey: "ADMIN_ASSISTANT", action: "Modify or disclose secrets", reason: "Secrets never enter authorized context or output." }
+    - { assistantKey: "ADMIN_ASSISTANT", action: "Run a migration", reason: "Deployment and schema work are outside assistant and P6-T1 scope." }
+    - { assistantKey: "ADMIN_ASSISTANT", action: "Delete arbitrary business data", reason: "Destructive official writes are prohibited." }
+
+downstream_traceability:
+  scope_statement: "Planning input only: this section creates no dataset, evaluation runner, training, model selection, RAG implementation, or MVP implementation."
+  P6_T2_data_governance:
+    ADMIN_UC_001: "System-status classification, owner, retention, and PII review."
+    ADMIN_UC_002: "Audit-data sensitivity, minimization, and access owner."
+    ADMIN_UC_003: "User-status PII classification and minimization."
+    ADMIN_UC_004_to_005: "Configuration-policy and account-policy inputs are source-limited: current context backs only system-summary or target-user-status projections; record future source/owner requirements and no-secret handling."
+    LAB_UC_001: "Policy-knowledge classification and owner."
+    LAB_UC_002_to_004: "Lab, slot, booking metadata, and managed-lab privacy classification."
+    LAB_UC_005: "Booking-draft schema and only laboratory/slot source-backed context attributes; booking and own-booking context require a separately approved projection."
+    LAB_UC_006: "Check-in-policy snapshot classification and freshness need."
+    RESEARCH_UC_001_to_003: "Project, group, task metadata plus membership and scope classification."
+    RESEARCH_UC_004_to_006: "Project, group, task, and bounded milestone metadata draft inputs plus report reference/existence only; report content is source-limited pending a separately approved projection, schema, sensitivity, and owner."
+  P6_T3_dataset_domains:
+    ADMIN_UC_001_to_005: ["admin-assistant", "shared"]
+    LAB_UC_001_to_006: ["lab-assistant", "shared"]
+    RESEARCH_UC_001_to_006: ["research-assistant", "shared"]
+  P6_T4_evaluation_tags: "Each current row carries futureEvaluationTags; dimensions are measurable categories, not numerical thresholds."
+  P10_mvp_mapping:
+    P10A_RESEARCH:
+      useCases: ["RESEARCH_UC_001", "RESEARCH_UC_002", "RESEARCH_UC_003", "RESEARCH_UC_004", "RESEARCH_UC_005", "RESEARCH_UC_006"]
+      sourceLimitedTraceability:
+        allowed_group_context: "COVERED_BY_CURRENT_SOURCE: only resolved GROUP_WHEN_ALLOWED or otherwise adapter-authorized group context; no default student whole-project access."
+        overdue_and_blocked_tasks: "SOURCE_LIMITED: current AiCapability inventory supplies no overdue/blocked task capability or status semantics. P10A may define them only through a separately approved source and authorization design."
+    P10B_LAB:
+      useCases: ["LAB_UC_001", "LAB_UC_002", "LAB_UC_003", "LAB_UC_004", "LAB_UC_005", "LAB_UC_006"]
+    P10C_ADMIN:
+      useCases: ["ADMIN_UC_001", "ADMIN_UC_002", "ADMIN_UC_003", "ADMIN_UC_004", "ADMIN_UC_005"]
+
+mvp_and_rag_boundary:
+  mvp_context: "Only Spring-authorized bounded context, approved existing business-service or tool results, or safe refusal when context is absent or unauthorized."
+  false_for_mvp: ["Retrieval namespace requirement", "Document chunks", "Vector index", "Citation requirement", "Model inference implementation", "Unfiltered corpus"]
+  P11_RAG: "Optional future authorized retrieval only; it requires a separate compatibility and security design."
+
+review_checklist:
+  - "YAML parses and the file is tracked at this canonical path."
+  - "Exactly three assistant keys and exactly seventeen unique current IDs exist."
+  - "Every current capability appears once with its exact fixed tool group and READ_ONLY or DRAFT_ONLY risk."
+  - "Every current row includes all required fields and false confirmation/approval flags."
+  - "freshReauthorizationRequired means current read-only reauthorization before context/tool-policy projection, not a write-execution promise."
+  - "Admin remains CATALOG_DISABLED; Lab and Research remain CONDITIONALLY_AVAILABLE."
+  - "Safe refusals avoid unauthorized resource existence, membership, audit detail, private booking data, secrets, and protected metadata."
+  - "Future lifecycle entries contain no current capabilities, tool groups, executor, persistence, or approver claims."
+  - "P10A allowed-group context is covered-by-source and overdue/blocked task traceability is explicitly source-limited."
+  - "P11 RAG is optional and false for MVP; no dataset, evaluation, training, model, or runtime work is implied."
