@@ -1,0 +1,445 @@
+contract:
+  contract_version: "1.0.0"
+  schema_version: "1.0.0"
+  title: "AI Dataset Data Governance Contract"
+  description: "Declarative, fail-closed governance authority for future controlled dataset artifacts; not a runtime permission, export tool, parser input, or authorization replacement."
+  source_authorities:
+    - document: docs/architecture/ai/assistant-use-case-catalog.yml
+      version: "1.0.0"
+      reference: P6-T1
+    - document: docs/architecture/ai/three-assistant-contract.yml
+      reference: P5A
+  compatibility:
+    additive_documentation_only: true
+    runtime_permission_authority: false
+    export_or_parser_authority: false
+    spring_authorization_replacement: false
+    released_evidence_requires: [contract_version, schema_version, dataset_id, dataset_version]
+    amendment_rule: "A governance amendment creates a new governance version and never edits prior recorded evidence."
+    fail_closed_rule: "Absent, unknown, expired, revoked, rejected, denied, withdrawn, invalidated, quarantined, or incompatible evidence denies use and quarantines the candidate pending controlled disposition."
+  controlled_vocabulary:
+    assistant_keys: [ADMIN_ASSISTANT, LAB_ASSISTANT, RESEARCH_ASSISTANT]
+    partitions: [ADMIN_ASSISTANT, LAB_ASSISTANT, RESEARCH_ASSISTANT, SHARED]
+    visibility: [ADMIN_ASSISTANT_ONLY, LAB_ASSISTANT_ONLY, RESEARCH_ASSISTANT_ONLY, SHARED]
+    classifications: [PUBLIC, INTERNAL, SENSITIVE, RESTRICTED]
+    use_decisions: [NO_DATASET_NEEDED, SYNTHETIC_ONLY, ELIGIBLE_AFTER_APPROVAL, PROHIBITED, DEFERRED]
+    purposes: [TRAINING, EVALUATION, BENCHMARK, HUMAN_EVALUATION, DEVELOPMENT_TEST]
+    model_development_purposes: [TRAINING, EVALUATION, BENCHMARK, HUMAN_EVALUATION, DEVELOPMENT_TEST]
+    model_development_operations: [TRAINING, ADAPTER_FINE_TUNING, EVALUATION, BENCHMARK, HUMAN_EVALUATION, DEVELOPMENT_TEST]
+    approval_statuses: [PENDING, APPROVED, REJECTED, EXPIRED, REVOKED]
+    source_permission_statuses: [NOT_ASSESSED, VERIFIED, DENIED, EXPIRED, WITHDRAWN]
+    lifecycle_statuses: [DRAFT, PENDING_APPROVAL, APPROVED, FROZEN, SUPERSEDED, EXPIRED, REVOKED, QUARANTINED, REJECTED]
+    freeze_statuses: [NOT_REQUIRED, PENDING_FREEZE, FROZEN, INVALIDATED]
+    retention_classes: [SOURCE_GOVERNED, APPROVAL_BOUND, FROZEN_EVALUATION, EPHEMERAL_DEVELOPMENT, QUARANTINE_UNTIL_DISPOSITION]
+    disposition_actions: [RETAIN, DELETE, QUARANTINE, SUPERSEDE]
+    provenance_types: [INTERNAL_SANITIZED, SYNTHETIC, EXTERNAL_PUBLIC, HUMAN_AUTHORED]
+    split_labels: [UNSPLIT, TRAIN, VALIDATION, EVALUATION, BENCHMARK, HUMAN_EVALUATION]
+    deduplication_dispositions: [NO_CANDIDATE_OVERLAP, DUPLICATES_REMOVED, OVERLAP_APPROVED_NOT_FOR_TRAIN_EVAL, REJECTED]
+    sanitization_dispositions: [SANITIZED_DERIVATIVE_REQUIRED, SYNTHETIC_GENERATION_ONLY, DEFERRED_NO_EXPORT]
+    field_decisions: [REMOVE, MASK, GENERALIZE, PSEUDONYMIZE, AGGREGATE, DERIVE, SYNTHETIC_REPLACE, QUARANTINE]
+    source_data_owners: [ADMINISTRATION_DOMAIN_DATA_OWNER, LABORATORY_OPERATIONS_DOMAIN_DATA_OWNER, RESEARCH_GOVERNANCE_DOMAIN_DATA_OWNER, CROSS_DOMAIN_SANITIZED_DATA_OWNER]
+    dataset_stewards: [ADMINISTRATION_DATASET_STEWARD, LABORATORY_OPERATIONS_DATASET_STEWARD, RESEARCH_GOVERNANCE_DATASET_STEWARD, CROSS_DOMAIN_SANITIZED_DATASET_STEWARD]
+    approval_authorities: [ADMINISTRATION_DATA_GOVERNANCE_APPROVAL_AUTHORITY, LABORATORY_OPERATIONS_DATA_GOVERNANCE_APPROVAL_AUTHORITY, RESEARCH_GOVERNANCE_DATA_GOVERNANCE_APPROVAL_AUTHORITY, CROSS_DOMAIN_DATA_GOVERNANCE_APPROVAL_AUTHORITY]
+  governance_rules:
+    policy_field_rule: "Policy-bearing values are controlled-vocabulary scalars; free text is limited to named reason, reference, description, uri, or notes fields."
+    shared_rule: "SHARED is only a partition or visibility value for a separately approved sanitized derived subset; it is never an assistant key or P6-T1 row."
+    release_rule: "Use requires VERIFIED source permission, APPROVED approval, APPROVED or FROZEN lifecycle, compatible decision/purpose/state, and complete integrity and lineage evidence."
+    frozen_rule: "A FROZEN evaluation, benchmark, or human-evaluation artifact is not eligible for TRAINING."
+    evaluation_freeze_before_training_rule: "TRAINING requires a machine-readable prerequisite that resolves to a separate approved EVALUATION artifact with FROZEN lifecycle and freeze status and the FROZEN_EVALUATION lifecycle/purpose retention override, plus matching dataset ID/version/checksum and approval reference; otherwise retention is category-derived and APPROVED or NOT_REQUIRED evaluation evidence is insufficient."
+    operation_rule: "Each model-development export declares exactly one approved controlled purpose and operation in both card and manifest; ADAPTER_FINE_TUNING maps only to TRAINING."
+    sanitization_rule: "SANITIZED_DERIVATIVE_REQUIRED requires ELIGIBLE_AFTER_APPROVAL and INTERNAL_SANITIZED; SYNTHETIC_GENERATION_ONLY requires SYNTHETIC_ONLY and SYNTHETIC; DEFERRED_NO_EXPORT requires DEFERRED and no permitted purpose."
+    offline_boundary: "Offline model-development work has no direct production database query, traffic capture, raw business-data transfer, or external AI-provider upload absent a future approved controlled contract."
+  data_handling:
+    minimization: "PUBLIC still requires provenance/license and purpose approval. INTERNAL remains in its assistant domain unless an approved sanitized shared subset exists. SENSITIVE is never raw-export eligible."
+    prohibited_data: [PASSWORDS, PASSWORD_HASHES, REFRESH_TOKENS, API_KEYS, DATABASE_CREDENTIALS, SMTP_CREDENTIALS, CLOUD_CREDENTIALS, SESSION_TOKENS, OTP_SECRETS, ENCRYPTION_KEYS, AUTHENTICATION_AUTHORIZATION_ARTIFACTS, RAW_CONFIGURATION_VALUES, RAW_AUDIT_RECORDS, RAW_CONVERSATION_REPORT_LOG_BODIES, RAW_FACE_DATA_OR_EMBEDDINGS, FULL_USER_INVENTORIES, UNAPPROVED_RAW_BUSINESS_EXPORTS]
+    sanitization_record:
+      required_fields: [category_id, field_decision, transform_reference, reviewer_reference, result_reference, residual_risk_reference]
+      decision_compatibility:
+        SANITIZED_DERIVATIVE_REQUIRED: [REMOVE, MASK, GENERALIZE, PSEUDONYMIZE, AGGREGATE, DERIVE]
+        SYNTHETIC_GENERATION_ONLY: [SYNTHETIC_REPLACE]
+        DEFERRED_NO_EXPORT: [QUARANTINE]
+    pseudonymization_rule: "Pseudonymization never permits consumer reidentification."
+  data_governance_matrix:
+    - {category_id: CAT_ADMIN_SYSTEM_STATUS, display_label: Admin system status, source_partition: ADMIN_ASSISTANT, source_data_owner: ADMINISTRATION_DOMAIN_DATA_OWNER, dataset_steward: ADMINISTRATION_DATASET_STEWARD, approval_authority: ADMINISTRATION_DATA_GOVERNANCE_APPROVAL_AUTHORITY, classification: INTERNAL, use_decision: ELIGIBLE_AFTER_APPROVAL, permitted_purposes: [TRAINING, EVALUATION, BENCHMARK, HUMAN_EVALUATION, DEVELOPMENT_TEST], prohibited_purposes: [], retention_class: APPROVAL_BOUND, visibility: ADMIN_ASSISTANT_ONLY, sanitization_disposition: SANITIZED_DERIVATIVE_REQUIRED, use_case_ids: [ADMIN_UC_001]}
+    - {category_id: CAT_ADMIN_AUDIT_SUMMARY, display_label: Admin audit summary, source_partition: ADMIN_ASSISTANT, source_data_owner: ADMINISTRATION_DOMAIN_DATA_OWNER, dataset_steward: ADMINISTRATION_DATASET_STEWARD, approval_authority: ADMINISTRATION_DATA_GOVERNANCE_APPROVAL_AUTHORITY, classification: SENSITIVE, use_decision: ELIGIBLE_AFTER_APPROVAL, permitted_purposes: [TRAINING, EVALUATION, BENCHMARK, HUMAN_EVALUATION, DEVELOPMENT_TEST], prohibited_purposes: [], retention_class: APPROVAL_BOUND, visibility: ADMIN_ASSISTANT_ONLY, sanitization_disposition: SANITIZED_DERIVATIVE_REQUIRED, use_case_ids: [ADMIN_UC_002]}
+    - {category_id: CAT_IDENTITY_USER_STATUS, display_label: Identity user status, source_partition: ADMIN_ASSISTANT, source_data_owner: ADMINISTRATION_DOMAIN_DATA_OWNER, dataset_steward: ADMINISTRATION_DATASET_STEWARD, approval_authority: ADMINISTRATION_DATA_GOVERNANCE_APPROVAL_AUTHORITY, classification: SENSITIVE, use_decision: ELIGIBLE_AFTER_APPROVAL, permitted_purposes: [TRAINING, EVALUATION, BENCHMARK, HUMAN_EVALUATION, DEVELOPMENT_TEST], prohibited_purposes: [], retention_class: APPROVAL_BOUND, visibility: ADMIN_ASSISTANT_ONLY, sanitization_disposition: SANITIZED_DERIVATIVE_REQUIRED, use_case_ids: [ADMIN_UC_003, ADMIN_UC_005]}
+    - {category_id: CAT_ADMIN_DRAFT_TEMPLATE, display_label: Admin draft template, source_partition: ADMIN_ASSISTANT, source_data_owner: ADMINISTRATION_DOMAIN_DATA_OWNER, dataset_steward: ADMINISTRATION_DATASET_STEWARD, approval_authority: ADMINISTRATION_DATA_GOVERNANCE_APPROVAL_AUTHORITY, classification: INTERNAL, use_decision: SYNTHETIC_ONLY, permitted_purposes: [TRAINING, EVALUATION, BENCHMARK, HUMAN_EVALUATION, DEVELOPMENT_TEST], prohibited_purposes: [], retention_class: EPHEMERAL_DEVELOPMENT, visibility: ADMIN_ASSISTANT_ONLY, sanitization_disposition: SYNTHETIC_GENERATION_ONLY, use_case_ids: [ADMIN_UC_004]}
+    - {category_id: CAT_ADMIN_ACCOUNT_POLICY_SYNTHETIC, display_label: Admin account policy synthetic, source_partition: ADMIN_ASSISTANT, source_data_owner: ADMINISTRATION_DOMAIN_DATA_OWNER, dataset_steward: ADMINISTRATION_DATASET_STEWARD, approval_authority: ADMINISTRATION_DATA_GOVERNANCE_APPROVAL_AUTHORITY, classification: INTERNAL, use_decision: SYNTHETIC_ONLY, permitted_purposes: [TRAINING, EVALUATION, BENCHMARK, HUMAN_EVALUATION, DEVELOPMENT_TEST], prohibited_purposes: [], retention_class: EPHEMERAL_DEVELOPMENT, visibility: ADMIN_ASSISTANT_ONLY, sanitization_disposition: SYNTHETIC_GENERATION_ONLY, use_case_ids: [ADMIN_UC_005]}
+    - {category_id: CAT_LAB_POLICY_GUIDANCE, display_label: Lab policy guidance, source_partition: LAB_ASSISTANT, source_data_owner: LABORATORY_OPERATIONS_DOMAIN_DATA_OWNER, dataset_steward: LABORATORY_OPERATIONS_DATASET_STEWARD, approval_authority: LABORATORY_OPERATIONS_DATA_GOVERNANCE_APPROVAL_AUTHORITY, classification: INTERNAL, use_decision: ELIGIBLE_AFTER_APPROVAL, permitted_purposes: [TRAINING, EVALUATION, BENCHMARK, HUMAN_EVALUATION, DEVELOPMENT_TEST], prohibited_purposes: [], retention_class: APPROVAL_BOUND, visibility: LAB_ASSISTANT_ONLY, sanitization_disposition: SANITIZED_DERIVATIVE_REQUIRED, use_case_ids: [LAB_UC_001]}
+    - {category_id: CAT_LAB_SLOT_AVAILABILITY, display_label: Lab slot availability, source_partition: LAB_ASSISTANT, source_data_owner: LABORATORY_OPERATIONS_DOMAIN_DATA_OWNER, dataset_steward: LABORATORY_OPERATIONS_DATASET_STEWARD, approval_authority: LABORATORY_OPERATIONS_DATA_GOVERNANCE_APPROVAL_AUTHORITY, classification: SENSITIVE, use_decision: ELIGIBLE_AFTER_APPROVAL, permitted_purposes: [TRAINING, EVALUATION, BENCHMARK, HUMAN_EVALUATION, DEVELOPMENT_TEST], prohibited_purposes: [], retention_class: APPROVAL_BOUND, visibility: LAB_ASSISTANT_ONLY, sanitization_disposition: SANITIZED_DERIVATIVE_REQUIRED, use_case_ids: [LAB_UC_002, LAB_UC_005]}
+    - {category_id: CAT_BOOKING_OWNERSHIP, display_label: Booking ownership synthetic, source_partition: LAB_ASSISTANT, source_data_owner: LABORATORY_OPERATIONS_DOMAIN_DATA_OWNER, dataset_steward: LABORATORY_OPERATIONS_DATASET_STEWARD, approval_authority: LABORATORY_OPERATIONS_DATA_GOVERNANCE_APPROVAL_AUTHORITY, classification: SENSITIVE, use_decision: SYNTHETIC_ONLY, permitted_purposes: [TRAINING, EVALUATION, BENCHMARK, HUMAN_EVALUATION, DEVELOPMENT_TEST], prohibited_purposes: [], retention_class: EPHEMERAL_DEVELOPMENT, visibility: LAB_ASSISTANT_ONLY, sanitization_disposition: SYNTHETIC_GENERATION_ONLY, use_case_ids: [LAB_UC_003]}
+    - {category_id: CAT_LAB_MANAGED_SUMMARY, display_label: Lab managed summary, source_partition: LAB_ASSISTANT, source_data_owner: LABORATORY_OPERATIONS_DOMAIN_DATA_OWNER, dataset_steward: LABORATORY_OPERATIONS_DATASET_STEWARD, approval_authority: LABORATORY_OPERATIONS_DATA_GOVERNANCE_APPROVAL_AUTHORITY, classification: SENSITIVE, use_decision: ELIGIBLE_AFTER_APPROVAL, permitted_purposes: [TRAINING, EVALUATION, BENCHMARK, HUMAN_EVALUATION, DEVELOPMENT_TEST], prohibited_purposes: [], retention_class: APPROVAL_BOUND, visibility: LAB_ASSISTANT_ONLY, sanitization_disposition: SANITIZED_DERIVATIVE_REQUIRED, use_case_ids: [LAB_UC_004]}
+    - {category_id: CAT_SYNTHETIC_LAB_BOOKING_DRAFT, display_label: Synthetic lab booking draft, source_partition: LAB_ASSISTANT, source_data_owner: LABORATORY_OPERATIONS_DOMAIN_DATA_OWNER, dataset_steward: LABORATORY_OPERATIONS_DATASET_STEWARD, approval_authority: LABORATORY_OPERATIONS_DATA_GOVERNANCE_APPROVAL_AUTHORITY, classification: INTERNAL, use_decision: SYNTHETIC_ONLY, permitted_purposes: [TRAINING, EVALUATION, BENCHMARK, HUMAN_EVALUATION, DEVELOPMENT_TEST], prohibited_purposes: [], retention_class: EPHEMERAL_DEVELOPMENT, visibility: LAB_ASSISTANT_ONLY, sanitization_disposition: SYNTHETIC_GENERATION_ONLY, use_case_ids: [LAB_UC_005]}
+    - {category_id: CAT_CHECKIN_POLICY, display_label: Checkin policy, source_partition: LAB_ASSISTANT, source_data_owner: LABORATORY_OPERATIONS_DOMAIN_DATA_OWNER, dataset_steward: LABORATORY_OPERATIONS_DATASET_STEWARD, approval_authority: LABORATORY_OPERATIONS_DATA_GOVERNANCE_APPROVAL_AUTHORITY, classification: INTERNAL, use_decision: ELIGIBLE_AFTER_APPROVAL, permitted_purposes: [TRAINING, EVALUATION, BENCHMARK, HUMAN_EVALUATION, DEVELOPMENT_TEST], prohibited_purposes: [], retention_class: APPROVAL_BOUND, visibility: LAB_ASSISTANT_ONLY, sanitization_disposition: SANITIZED_DERIVATIVE_REQUIRED, use_case_ids: [LAB_UC_006]}
+    - {category_id: CAT_RESEARCH_PROJECT_PROGRESS, display_label: Research project progress, source_partition: RESEARCH_ASSISTANT, source_data_owner: RESEARCH_GOVERNANCE_DOMAIN_DATA_OWNER, dataset_steward: RESEARCH_GOVERNANCE_DATASET_STEWARD, approval_authority: RESEARCH_GOVERNANCE_DATA_GOVERNANCE_APPROVAL_AUTHORITY, classification: SENSITIVE, use_decision: ELIGIBLE_AFTER_APPROVAL, permitted_purposes: [TRAINING, EVALUATION, BENCHMARK, HUMAN_EVALUATION, DEVELOPMENT_TEST], prohibited_purposes: [], retention_class: APPROVAL_BOUND, visibility: RESEARCH_ASSISTANT_ONLY, sanitization_disposition: SANITIZED_DERIVATIVE_REQUIRED, use_case_ids: [RESEARCH_UC_001]}
+    - {category_id: CAT_RESEARCH_GROUP_PROGRESS, display_label: Research group progress, source_partition: RESEARCH_ASSISTANT, source_data_owner: RESEARCH_GOVERNANCE_DOMAIN_DATA_OWNER, dataset_steward: RESEARCH_GOVERNANCE_DATASET_STEWARD, approval_authority: RESEARCH_GOVERNANCE_DATA_GOVERNANCE_APPROVAL_AUTHORITY, classification: SENSITIVE, use_decision: ELIGIBLE_AFTER_APPROVAL, permitted_purposes: [TRAINING, EVALUATION, BENCHMARK, HUMAN_EVALUATION, DEVELOPMENT_TEST], prohibited_purposes: [], retention_class: APPROVAL_BOUND, visibility: RESEARCH_ASSISTANT_ONLY, sanitization_disposition: SANITIZED_DERIVATIVE_REQUIRED, use_case_ids: [RESEARCH_UC_002]}
+    - {category_id: CAT_RESEARCH_ASSIGNED_TASK, display_label: Research assigned task synthetic, source_partition: RESEARCH_ASSISTANT, source_data_owner: RESEARCH_GOVERNANCE_DOMAIN_DATA_OWNER, dataset_steward: RESEARCH_GOVERNANCE_DATASET_STEWARD, approval_authority: RESEARCH_GOVERNANCE_DATA_GOVERNANCE_APPROVAL_AUTHORITY, classification: SENSITIVE, use_decision: SYNTHETIC_ONLY, permitted_purposes: [TRAINING, EVALUATION, BENCHMARK, HUMAN_EVALUATION, DEVELOPMENT_TEST], prohibited_purposes: [], retention_class: EPHEMERAL_DEVELOPMENT, visibility: RESEARCH_ASSISTANT_ONLY, sanitization_disposition: SYNTHETIC_GENERATION_ONLY, use_case_ids: [RESEARCH_UC_003]}
+    - {category_id: CAT_RESEARCH_DRAFT_CONTEXT, display_label: Research draft context synthetic, source_partition: RESEARCH_ASSISTANT, source_data_owner: RESEARCH_GOVERNANCE_DOMAIN_DATA_OWNER, dataset_steward: RESEARCH_GOVERNANCE_DATASET_STEWARD, approval_authority: RESEARCH_GOVERNANCE_DATA_GOVERNANCE_APPROVAL_AUTHORITY, classification: SENSITIVE, use_decision: SYNTHETIC_ONLY, permitted_purposes: [TRAINING, EVALUATION, BENCHMARK, HUMAN_EVALUATION, DEVELOPMENT_TEST], prohibited_purposes: [], retention_class: EPHEMERAL_DEVELOPMENT, visibility: RESEARCH_ASSISTANT_ONLY, sanitization_disposition: SYNTHETIC_GENERATION_ONLY, use_case_ids: [RESEARCH_UC_004, RESEARCH_UC_005]}
+    - {category_id: CAT_RESEARCH_REPORT_METADATA, display_label: Research report metadata, source_partition: RESEARCH_ASSISTANT, source_data_owner: RESEARCH_GOVERNANCE_DOMAIN_DATA_OWNER, dataset_steward: RESEARCH_GOVERNANCE_DATASET_STEWARD, approval_authority: RESEARCH_GOVERNANCE_DATA_GOVERNANCE_APPROVAL_AUTHORITY, classification: SENSITIVE, use_decision: DEFERRED, permitted_purposes: [], prohibited_purposes: [TRAINING, EVALUATION, BENCHMARK, HUMAN_EVALUATION, DEVELOPMENT_TEST], retention_class: QUARANTINE_UNTIL_DISPOSITION, visibility: RESEARCH_ASSISTANT_ONLY, sanitization_disposition: DEFERRED_NO_EXPORT, use_case_ids: [RESEARCH_UC_006]}
+    - {category_id: CAT_SHARED_SANITIZED_POLICY, display_label: Shared sanitized policy, source_partition: SHARED, source_data_owner: CROSS_DOMAIN_SANITIZED_DATA_OWNER, dataset_steward: CROSS_DOMAIN_SANITIZED_DATASET_STEWARD, approval_authority: CROSS_DOMAIN_DATA_GOVERNANCE_APPROVAL_AUTHORITY, classification: INTERNAL, use_decision: ELIGIBLE_AFTER_APPROVAL, permitted_purposes: [TRAINING, EVALUATION, BENCHMARK, HUMAN_EVALUATION, DEVELOPMENT_TEST], prohibited_purposes: [], retention_class: APPROVAL_BOUND, visibility: SHARED, sanitization_disposition: SANITIZED_DERIVATIVE_REQUIRED, intentional_justification: "Intentional shared category for separately approved sanitized derivatives; it does not expand P6-T1 source authority."}
+  p6_t1_traceability_matrix:
+    - {use_case_id: ADMIN_UC_001, assistant_key: ADMIN_ASSISTANT, category_ids: [CAT_ADMIN_SYSTEM_STATUS]}
+    - {use_case_id: ADMIN_UC_002, assistant_key: ADMIN_ASSISTANT, category_ids: [CAT_ADMIN_AUDIT_SUMMARY]}
+    - {use_case_id: ADMIN_UC_003, assistant_key: ADMIN_ASSISTANT, category_ids: [CAT_IDENTITY_USER_STATUS]}
+    - {use_case_id: ADMIN_UC_004, assistant_key: ADMIN_ASSISTANT, category_ids: [CAT_ADMIN_DRAFT_TEMPLATE]}
+    - {use_case_id: ADMIN_UC_005, assistant_key: ADMIN_ASSISTANT, category_ids: [CAT_IDENTITY_USER_STATUS, CAT_ADMIN_ACCOUNT_POLICY_SYNTHETIC]}
+    - {use_case_id: LAB_UC_001, assistant_key: LAB_ASSISTANT, category_ids: [CAT_LAB_POLICY_GUIDANCE]}
+    - {use_case_id: LAB_UC_002, assistant_key: LAB_ASSISTANT, category_ids: [CAT_LAB_SLOT_AVAILABILITY]}
+    - {use_case_id: LAB_UC_003, assistant_key: LAB_ASSISTANT, category_ids: [CAT_BOOKING_OWNERSHIP]}
+    - {use_case_id: LAB_UC_004, assistant_key: LAB_ASSISTANT, category_ids: [CAT_LAB_MANAGED_SUMMARY]}
+    - {use_case_id: LAB_UC_005, assistant_key: LAB_ASSISTANT, category_ids: [CAT_LAB_SLOT_AVAILABILITY, CAT_SYNTHETIC_LAB_BOOKING_DRAFT]}
+    - {use_case_id: LAB_UC_006, assistant_key: LAB_ASSISTANT, category_ids: [CAT_CHECKIN_POLICY]}
+    - {use_case_id: RESEARCH_UC_001, assistant_key: RESEARCH_ASSISTANT, category_ids: [CAT_RESEARCH_PROJECT_PROGRESS]}
+    - {use_case_id: RESEARCH_UC_002, assistant_key: RESEARCH_ASSISTANT, category_ids: [CAT_RESEARCH_GROUP_PROGRESS]}
+    - {use_case_id: RESEARCH_UC_003, assistant_key: RESEARCH_ASSISTANT, category_ids: [CAT_RESEARCH_ASSIGNED_TASK]}
+    - {use_case_id: RESEARCH_UC_004, assistant_key: RESEARCH_ASSISTANT, category_ids: [CAT_RESEARCH_DRAFT_CONTEXT]}
+    - {use_case_id: RESEARCH_UC_005, assistant_key: RESEARCH_ASSISTANT, category_ids: [CAT_RESEARCH_DRAFT_CONTEXT]}
+    - {use_case_id: RESEARCH_UC_006, assistant_key: RESEARCH_ASSISTANT, category_ids: [CAT_RESEARCH_REPORT_METADATA]}
+  dataset_card_contract:
+    required_fields: [dataset_id, dataset_version, contract_version, schema_version, title, description, assistant_key, partition, visibility, category_ids, classification, use_decision, permitted_purposes, prohibited_purposes, approved_purposes, model_development_purpose, model_development_operation, source_data_owner, dataset_steward, approval_authority, source_permission_references, source_permission_status, approval_references, approval_status, lifecycle_status, freeze_status, retention, sanitization, provenance, lineage, integrity, split, deduplication, limitations_and_bias, created_at_reference, revocation_reference]
+    conditional_required_fields:
+      evaluation_freeze_before_training:
+        when:
+          model_development_purpose: TRAINING
+        fields: [evaluation_freeze_prerequisite]
+      shared:
+        when:
+          partition_or_visibility: SHARED
+        fields: [contributing_category_ids, contributing_source_data_owners, contributing_approval_authorities, contributing_source_permission_references, contributing_approval_references, consumer_assistant_keys]
+  dataset_manifest_contract:
+    required_fields: [dataset_id, dataset_version, contract_version, schema_version, assistant_key, partition, visibility, category_ids, classification, use_decision, permitted_purposes, prohibited_purposes, approved_purposes, model_development_purpose, model_development_operation, source_data_owner, dataset_steward, approval_authority, source_permission_references, source_permission_status, approval_references, approval_status, lifecycle_status, freeze_status, retention, sanitization, provenance, lineage, integrity, split, deduplication, checksum, checksum_algorithm, manifest_created_at_reference, card_reference, revocation_reference]
+    conditional_required_fields:
+      evaluation_freeze_before_training:
+        when:
+          model_development_purpose: TRAINING
+        fields: [evaluation_freeze_prerequisite]
+      shared:
+        when:
+          partition_or_visibility: SHARED
+        fields: [contributing_category_ids, contributing_source_data_owners, contributing_approval_authorities, contributing_source_permission_references, contributing_approval_references, consumer_assistant_keys]
+  validation_fixtures:
+    approved_domain_export:
+      card: &domain_card
+        dataset_id: governed-domain-fixture
+        dataset_version: fixture-v1
+        contract_version: "1.0.0"
+        schema_version: "1.0.0"
+        title: Field-only domain fixture
+        description: No dataset records or samples.
+        assistant_key: ADMIN_ASSISTANT
+        partition: ADMIN_ASSISTANT
+        visibility: ADMIN_ASSISTANT_ONLY
+        category_ids: [CAT_ADMIN_SYSTEM_STATUS]
+        classification: INTERNAL
+        use_decision: ELIGIBLE_AFTER_APPROVAL
+        permitted_purposes: [TRAINING, EVALUATION, BENCHMARK, HUMAN_EVALUATION, DEVELOPMENT_TEST]
+        prohibited_purposes: []
+        approved_purposes: [TRAINING]
+        model_development_purpose: TRAINING
+        model_development_operation: TRAINING
+        source_data_owner: ADMINISTRATION_DOMAIN_DATA_OWNER
+        dataset_steward: ADMINISTRATION_DATASET_STEWARD
+        approval_authority: ADMINISTRATION_DATA_GOVERNANCE_APPROVAL_AUTHORITY
+        source_permission_references: [source-permission-reference]
+        source_permission_status: VERIFIED
+        approval_references: [approval-reference]
+        approval_status: APPROVED
+        lifecycle_status: APPROVED
+        freeze_status: NOT_REQUIRED
+        retention: &approved_retention {retention_class: APPROVAL_BOUND, trigger_reference: retention-trigger-reference, evidence_reference: retention-evidence-reference, start_reference: retention-start-reference, recheck_or_expiry_reference: retention-recheck-reference, disposition_action: DELETE, disposition_owner: disposition-owner-role}
+        sanitization: {disposition: SANITIZED_DERIVATIVE_REQUIRED, field_decisions: [{category_id: CAT_ADMIN_SYSTEM_STATUS, field_decision: MASK, transform_reference: transform-reference, reviewer_reference: reviewer-reference, result_reference: sanitization-result-reference, residual_risk_reference: residual-risk-reference}], transform_reference: transform-reference, reviewer_reference: reviewer-reference, result_reference: sanitization-result-reference, residual_risk_reference: residual-risk-reference}
+        provenance: &internal_sanitized {type: INTERNAL_SANITIZED}
+        lineage: &lineage {source_references: [source-reference], transform_references: [transform-reference]}
+        integrity: &integrity {checksum: checksum-reference, checksum_algorithm: checksum-algorithm-reference, verified_at_reference: integrity-verification-reference}
+        split: &training_split {label: TRAIN}
+        deduplication: &deduplicated {disposition: DUPLICATES_REMOVED}
+        evaluation_freeze_prerequisite: {evaluation_dataset_id: governed-frozen-evaluation-fixture, evaluation_dataset_version: fixture-v1, evaluation_purpose: EVALUATION, evaluation_lifecycle_status: FROZEN, evaluation_freeze_status: FROZEN, evaluation_integrity_checksum: frozen-evaluation-checksum-reference, evaluation_approval_reference: evaluation-approval-reference}
+        limitations_and_bias: limitations-and-bias-reference
+        created_at_reference: created-at-reference
+        revocation_reference: revocation-reference
+      manifest: &domain_manifest
+        dataset_id: governed-domain-fixture
+        dataset_version: fixture-v1
+        contract_version: "1.0.0"
+        schema_version: "1.0.0"
+        assistant_key: ADMIN_ASSISTANT
+        partition: ADMIN_ASSISTANT
+        visibility: ADMIN_ASSISTANT_ONLY
+        category_ids: [CAT_ADMIN_SYSTEM_STATUS]
+        classification: INTERNAL
+        use_decision: ELIGIBLE_AFTER_APPROVAL
+        permitted_purposes: [TRAINING, EVALUATION, BENCHMARK, HUMAN_EVALUATION, DEVELOPMENT_TEST]
+        prohibited_purposes: []
+        approved_purposes: [TRAINING]
+        model_development_purpose: TRAINING
+        model_development_operation: TRAINING
+        source_data_owner: ADMINISTRATION_DOMAIN_DATA_OWNER
+        dataset_steward: ADMINISTRATION_DATASET_STEWARD
+        approval_authority: ADMINISTRATION_DATA_GOVERNANCE_APPROVAL_AUTHORITY
+        source_permission_references: [source-permission-reference]
+        source_permission_status: VERIFIED
+        approval_references: [approval-reference]
+        approval_status: APPROVED
+        lifecycle_status: APPROVED
+        freeze_status: NOT_REQUIRED
+        retention: *approved_retention
+        sanitization: {disposition: SANITIZED_DERIVATIVE_REQUIRED, field_decisions: [{category_id: CAT_ADMIN_SYSTEM_STATUS, field_decision: MASK, transform_reference: transform-reference, reviewer_reference: reviewer-reference, result_reference: sanitization-result-reference, residual_risk_reference: residual-risk-reference}], transform_reference: transform-reference, reviewer_reference: reviewer-reference, result_reference: sanitization-result-reference, residual_risk_reference: residual-risk-reference}
+        provenance: *internal_sanitized
+        lineage: *lineage
+        integrity: *integrity
+        split: *training_split
+        deduplication: *deduplicated
+        checksum: checksum-reference
+        checksum_algorithm: checksum-algorithm-reference
+        manifest_created_at_reference: manifest-created-at-reference
+        card_reference: card-reference
+        revocation_reference: revocation-reference
+        evaluation_freeze_prerequisite: {evaluation_dataset_id: governed-frozen-evaluation-fixture, evaluation_dataset_version: fixture-v1, evaluation_purpose: EVALUATION, evaluation_lifecycle_status: FROZEN, evaluation_freeze_status: FROZEN, evaluation_integrity_checksum: frozen-evaluation-checksum-reference, evaluation_approval_reference: evaluation-approval-reference}
+    approved_frozen_evaluation_export:
+      card:
+        dataset_id: governed-frozen-evaluation-fixture
+        dataset_version: fixture-v1
+        contract_version: "1.0.0"
+        schema_version: "1.0.0"
+        title: Field-only frozen evaluation fixture
+        description: No dataset records or samples.
+        assistant_key: ADMIN_ASSISTANT
+        partition: ADMIN_ASSISTANT
+        visibility: ADMIN_ASSISTANT_ONLY
+        category_ids: [CAT_ADMIN_SYSTEM_STATUS]
+        classification: INTERNAL
+        use_decision: ELIGIBLE_AFTER_APPROVAL
+        permitted_purposes: [TRAINING, EVALUATION, BENCHMARK, HUMAN_EVALUATION, DEVELOPMENT_TEST]
+        prohibited_purposes: []
+        approved_purposes: [EVALUATION]
+        model_development_purpose: EVALUATION
+        model_development_operation: EVALUATION
+        source_data_owner: ADMINISTRATION_DOMAIN_DATA_OWNER
+        dataset_steward: ADMINISTRATION_DATASET_STEWARD
+        approval_authority: ADMINISTRATION_DATA_GOVERNANCE_APPROVAL_AUTHORITY
+        source_permission_references: [source-permission-reference]
+        source_permission_status: VERIFIED
+        approval_references: [evaluation-approval-reference]
+        approval_status: APPROVED
+        lifecycle_status: FROZEN
+        freeze_status: FROZEN
+        retention: {retention_class: FROZEN_EVALUATION, trigger_reference: retention-trigger-reference, evidence_reference: retention-evidence-reference, start_reference: retention-start-reference, recheck_or_expiry_reference: retention-recheck-reference, disposition_action: RETAIN, disposition_owner: disposition-owner-role}
+        sanitization: {disposition: SANITIZED_DERIVATIVE_REQUIRED, field_decisions: [{category_id: CAT_ADMIN_SYSTEM_STATUS, field_decision: MASK, transform_reference: transform-reference, reviewer_reference: reviewer-reference, result_reference: sanitization-result-reference, residual_risk_reference: residual-risk-reference}], transform_reference: transform-reference, reviewer_reference: reviewer-reference, result_reference: sanitization-result-reference, residual_risk_reference: residual-risk-reference}
+        provenance: {type: INTERNAL_SANITIZED}
+        lineage: {source_references: [source-reference], transform_references: [transform-reference]}
+        integrity: {checksum: frozen-evaluation-checksum-reference, checksum_algorithm: checksum-algorithm-reference, verified_at_reference: integrity-verification-reference}
+        split: {label: EVALUATION}
+        deduplication: {disposition: DUPLICATES_REMOVED}
+        limitations_and_bias: limitations-and-bias-reference
+        created_at_reference: created-at-reference
+        revocation_reference: revocation-reference
+      manifest:
+        dataset_id: governed-frozen-evaluation-fixture
+        dataset_version: fixture-v1
+        contract_version: "1.0.0"
+        schema_version: "1.0.0"
+        assistant_key: ADMIN_ASSISTANT
+        partition: ADMIN_ASSISTANT
+        visibility: ADMIN_ASSISTANT_ONLY
+        category_ids: [CAT_ADMIN_SYSTEM_STATUS]
+        classification: INTERNAL
+        use_decision: ELIGIBLE_AFTER_APPROVAL
+        permitted_purposes: [TRAINING, EVALUATION, BENCHMARK, HUMAN_EVALUATION, DEVELOPMENT_TEST]
+        prohibited_purposes: []
+        approved_purposes: [EVALUATION]
+        model_development_purpose: EVALUATION
+        model_development_operation: EVALUATION
+        source_data_owner: ADMINISTRATION_DOMAIN_DATA_OWNER
+        dataset_steward: ADMINISTRATION_DATASET_STEWARD
+        approval_authority: ADMINISTRATION_DATA_GOVERNANCE_APPROVAL_AUTHORITY
+        source_permission_references: [source-permission-reference]
+        source_permission_status: VERIFIED
+        approval_references: [evaluation-approval-reference]
+        approval_status: APPROVED
+        lifecycle_status: FROZEN
+        freeze_status: FROZEN
+        retention: {retention_class: FROZEN_EVALUATION, trigger_reference: retention-trigger-reference, evidence_reference: retention-evidence-reference, start_reference: retention-start-reference, recheck_or_expiry_reference: retention-recheck-reference, disposition_action: RETAIN, disposition_owner: disposition-owner-role}
+        sanitization: {disposition: SANITIZED_DERIVATIVE_REQUIRED, field_decisions: [{category_id: CAT_ADMIN_SYSTEM_STATUS, field_decision: MASK, transform_reference: transform-reference, reviewer_reference: reviewer-reference, result_reference: sanitization-result-reference, residual_risk_reference: residual-risk-reference}], transform_reference: transform-reference, reviewer_reference: reviewer-reference, result_reference: sanitization-result-reference, residual_risk_reference: residual-risk-reference}
+        provenance: {type: INTERNAL_SANITIZED}
+        lineage: {source_references: [source-reference], transform_references: [transform-reference]}
+        integrity: {checksum: frozen-evaluation-checksum-reference, checksum_algorithm: checksum-algorithm-reference, verified_at_reference: integrity-verification-reference}
+        split: {label: EVALUATION}
+        deduplication: {disposition: DUPLICATES_REMOVED}
+        checksum: frozen-evaluation-checksum-reference
+        checksum_algorithm: checksum-algorithm-reference
+        manifest_created_at_reference: manifest-created-at-reference
+        card_reference: card-reference
+        revocation_reference: revocation-reference
+    approved_adapter_training_export:
+      card: &adapter_card
+        dataset_id: governed-adapter-fixture
+        dataset_version: fixture-v1
+        contract_version: "1.0.0"
+        schema_version: "1.0.0"
+        title: Field-only adapter training fixture
+        description: No dataset records or samples.
+        assistant_key: RESEARCH_ASSISTANT
+        partition: RESEARCH_ASSISTANT
+        visibility: RESEARCH_ASSISTANT_ONLY
+        category_ids: [CAT_RESEARCH_ASSIGNED_TASK]
+        classification: SENSITIVE
+        use_decision: SYNTHETIC_ONLY
+        permitted_purposes: [TRAINING, EVALUATION, BENCHMARK, HUMAN_EVALUATION, DEVELOPMENT_TEST]
+        prohibited_purposes: []
+        approved_purposes: [TRAINING]
+        model_development_purpose: TRAINING
+        model_development_operation: ADAPTER_FINE_TUNING
+        source_data_owner: RESEARCH_GOVERNANCE_DOMAIN_DATA_OWNER
+        dataset_steward: RESEARCH_GOVERNANCE_DATASET_STEWARD
+        approval_authority: RESEARCH_GOVERNANCE_DATA_GOVERNANCE_APPROVAL_AUTHORITY
+        source_permission_references: [source-permission-reference]
+        source_permission_status: VERIFIED
+        approval_references: [approval-reference]
+        approval_status: APPROVED
+        lifecycle_status: APPROVED
+        freeze_status: NOT_REQUIRED
+        retention: &ephemeral_retention {retention_class: EPHEMERAL_DEVELOPMENT, trigger_reference: retention-trigger-reference, evidence_reference: retention-evidence-reference, start_reference: retention-start-reference, recheck_or_expiry_reference: retention-recheck-reference, disposition_action: DELETE, disposition_owner: disposition-owner-role}
+        sanitization: {disposition: SYNTHETIC_GENERATION_ONLY, field_decisions: [{category_id: CAT_RESEARCH_ASSIGNED_TASK, field_decision: SYNTHETIC_REPLACE, transform_reference: transform-reference, reviewer_reference: reviewer-reference, result_reference: sanitization-result-reference, residual_risk_reference: residual-risk-reference}], transform_reference: transform-reference, reviewer_reference: reviewer-reference, result_reference: sanitization-result-reference, residual_risk_reference: residual-risk-reference}
+        provenance: &synthetic_provenance {type: SYNTHETIC}
+        lineage: *lineage
+        integrity: *integrity
+        split: *training_split
+        deduplication: *deduplicated
+        evaluation_freeze_prerequisite: {evaluation_dataset_id: governed-frozen-evaluation-fixture, evaluation_dataset_version: fixture-v1, evaluation_purpose: EVALUATION, evaluation_lifecycle_status: FROZEN, evaluation_freeze_status: FROZEN, evaluation_integrity_checksum: frozen-evaluation-checksum-reference, evaluation_approval_reference: evaluation-approval-reference}
+        limitations_and_bias: limitations-and-bias-reference
+        created_at_reference: created-at-reference
+        revocation_reference: revocation-reference
+      manifest:
+        dataset_id: governed-adapter-fixture
+        dataset_version: fixture-v1
+        contract_version: "1.0.0"
+        schema_version: "1.0.0"
+        assistant_key: RESEARCH_ASSISTANT
+        partition: RESEARCH_ASSISTANT
+        visibility: RESEARCH_ASSISTANT_ONLY
+        category_ids: [CAT_RESEARCH_ASSIGNED_TASK]
+        classification: SENSITIVE
+        use_decision: SYNTHETIC_ONLY
+        permitted_purposes: [TRAINING, EVALUATION, BENCHMARK, HUMAN_EVALUATION, DEVELOPMENT_TEST]
+        prohibited_purposes: []
+        approved_purposes: [TRAINING]
+        model_development_purpose: TRAINING
+        model_development_operation: ADAPTER_FINE_TUNING
+        source_data_owner: RESEARCH_GOVERNANCE_DOMAIN_DATA_OWNER
+        dataset_steward: RESEARCH_GOVERNANCE_DATASET_STEWARD
+        approval_authority: RESEARCH_GOVERNANCE_DATA_GOVERNANCE_APPROVAL_AUTHORITY
+        source_permission_references: [source-permission-reference]
+        source_permission_status: VERIFIED
+        approval_references: [approval-reference]
+        approval_status: APPROVED
+        lifecycle_status: APPROVED
+        freeze_status: NOT_REQUIRED
+        retention: *ephemeral_retention
+        sanitization: {disposition: SYNTHETIC_GENERATION_ONLY, field_decisions: [{category_id: CAT_RESEARCH_ASSIGNED_TASK, field_decision: SYNTHETIC_REPLACE, transform_reference: transform-reference, reviewer_reference: reviewer-reference, result_reference: sanitization-result-reference, residual_risk_reference: residual-risk-reference}], transform_reference: transform-reference, reviewer_reference: reviewer-reference, result_reference: sanitization-result-reference, residual_risk_reference: residual-risk-reference}
+        provenance: *synthetic_provenance
+        lineage: *lineage
+        integrity: *integrity
+        split: *training_split
+        deduplication: *deduplicated
+        checksum: checksum-reference
+        checksum_algorithm: checksum-algorithm-reference
+        manifest_created_at_reference: manifest-created-at-reference
+        card_reference: card-reference
+        revocation_reference: revocation-reference
+        evaluation_freeze_prerequisite: {evaluation_dataset_id: governed-frozen-evaluation-fixture, evaluation_dataset_version: fixture-v1, evaluation_purpose: EVALUATION, evaluation_lifecycle_status: FROZEN, evaluation_freeze_status: FROZEN, evaluation_integrity_checksum: frozen-evaluation-checksum-reference, evaluation_approval_reference: evaluation-approval-reference}
+    approved_shared_export:
+      card: &shared_card
+        dataset_id: governed-shared-fixture
+        dataset_version: fixture-v1
+        contract_version: "1.0.0"
+        schema_version: "1.0.0"
+        title: Field-only shared fixture
+        description: No dataset records or samples.
+        assistant_key: ADMIN_ASSISTANT
+        partition: SHARED
+        visibility: SHARED
+        category_ids: [CAT_SHARED_SANITIZED_POLICY]
+        classification: INTERNAL
+        use_decision: ELIGIBLE_AFTER_APPROVAL
+        permitted_purposes: [TRAINING, EVALUATION, BENCHMARK, HUMAN_EVALUATION, DEVELOPMENT_TEST]
+        prohibited_purposes: []
+        approved_purposes: [TRAINING]
+        model_development_purpose: TRAINING
+        model_development_operation: TRAINING
+        source_data_owner: CROSS_DOMAIN_SANITIZED_DATA_OWNER
+        dataset_steward: CROSS_DOMAIN_SANITIZED_DATASET_STEWARD
+        approval_authority: CROSS_DOMAIN_DATA_GOVERNANCE_APPROVAL_AUTHORITY
+        source_permission_references: [source-permission-reference]
+        source_permission_status: VERIFIED
+        approval_references: [approval-reference]
+        approval_status: APPROVED
+        lifecycle_status: APPROVED
+        freeze_status: NOT_REQUIRED
+        retention: *approved_retention
+        sanitization: {disposition: SANITIZED_DERIVATIVE_REQUIRED, field_decisions: [{category_id: CAT_SHARED_SANITIZED_POLICY, field_decision: GENERALIZE, transform_reference: transform-reference, reviewer_reference: reviewer-reference, result_reference: sanitization-result-reference, residual_risk_reference: residual-risk-reference}], transform_reference: transform-reference, reviewer_reference: reviewer-reference, result_reference: sanitization-result-reference, residual_risk_reference: residual-risk-reference}
+        provenance: *internal_sanitized
+        lineage: *lineage
+        integrity: *integrity
+        split: *training_split
+        deduplication: *deduplicated
+        evaluation_freeze_prerequisite: {evaluation_dataset_id: governed-frozen-evaluation-fixture, evaluation_dataset_version: fixture-v1, evaluation_purpose: EVALUATION, evaluation_lifecycle_status: FROZEN, evaluation_freeze_status: FROZEN, evaluation_integrity_checksum: frozen-evaluation-checksum-reference, evaluation_approval_reference: evaluation-approval-reference}
+        limitations_and_bias: limitations-and-bias-reference
+        created_at_reference: created-at-reference
+        revocation_reference: revocation-reference
+        contributing_category_ids: [CAT_ADMIN_SYSTEM_STATUS]
+        contributing_source_data_owners: [ADMINISTRATION_DOMAIN_DATA_OWNER]
+        contributing_approval_authorities: [ADMINISTRATION_DATA_GOVERNANCE_APPROVAL_AUTHORITY]
+        contributing_source_permission_references: [source-permission-reference]
+        contributing_approval_references: [approval-reference]
+        consumer_assistant_keys: [ADMIN_ASSISTANT, LAB_ASSISTANT]
+      manifest:
+        dataset_id: governed-shared-fixture
+        dataset_version: fixture-v1
+        contract_version: "1.0.0"
+        schema_version: "1.0.0"
+        assistant_key: ADMIN_ASSISTANT
+        partition: SHARED
+        visibility: SHARED
+        category_ids: [CAT_SHARED_SANITIZED_POLICY]
+        classification: INTERNAL
+        use_decision: ELIGIBLE_AFTER_APPROVAL
+        permitted_purposes: [TRAINING, EVALUATION, BENCHMARK, HUMAN_EVALUATION, DEVELOPMENT_TEST]
+        prohibited_purposes: []
+        approved_purposes: [TRAINING]
+        model_development_purpose: TRAINING
+        model_development_operation: TRAINING
+        source_data_owner: CROSS_DOMAIN_SANITIZED_DATA_OWNER
+        dataset_steward: CROSS_DOMAIN_SANITIZED_DATASET_STEWARD
+        approval_authority: CROSS_DOMAIN_DATA_GOVERNANCE_APPROVAL_AUTHORITY
+        source_permission_references: [source-permission-reference]
+        source_permission_status: VERIFIED
+        approval_references: [approval-reference]
+        approval_status: APPROVED
+        lifecycle_status: APPROVED
+        freeze_status: NOT_REQUIRED
+        retention: *approved_retention
+        sanitization: {disposition: SANITIZED_DERIVATIVE_REQUIRED, field_decisions: [{category_id: CAT_SHARED_SANITIZED_POLICY, field_decision: GENERALIZE, transform_reference: transform-reference, reviewer_reference: reviewer-reference, result_reference: sanitization-result-reference, residual_risk_reference: residual-risk-reference}], transform_reference: transform-reference, reviewer_reference: reviewer-reference, result_reference: sanitization-result-reference, residual_risk_reference: residual-risk-reference}
+        provenance: *internal_sanitized
+        lineage: *lineage
+        integrity: *integrity
+        split: *training_split
+        deduplication: *deduplicated
+        checksum: checksum-reference
+        checksum_algorithm: checksum-algorithm-reference
+        manifest_created_at_reference: manifest-created-at-reference
+        card_reference: card-reference
+        revocation_reference: revocation-reference
+        evaluation_freeze_prerequisite: {evaluation_dataset_id: governed-frozen-evaluation-fixture, evaluation_dataset_version: fixture-v1, evaluation_purpose: EVALUATION, evaluation_lifecycle_status: FROZEN, evaluation_freeze_status: FROZEN, evaluation_integrity_checksum: frozen-evaluation-checksum-reference, evaluation_approval_reference: evaluation-approval-reference}
+        contributing_category_ids: [CAT_ADMIN_SYSTEM_STATUS]
+        contributing_source_data_owners: [ADMINISTRATION_DOMAIN_DATA_OWNER]
+        contributing_approval_authorities: [ADMINISTRATION_DATA_GOVERNANCE_APPROVAL_AUTHORITY]
+        contributing_source_permission_references: [source-permission-reference]
+        contributing_approval_references: [approval-reference]
+        consumer_assistant_keys: [ADMIN_ASSISTANT, LAB_ASSISTANT]
+  audit_checklist:
+    required_checks: [exact_version_identity, source_data_owner, dataset_steward, approval_authority, source_permission, approval, controlled_purpose, permitted_purpose, classification, visibility, sanitization, provenance, lineage, retention, lifecycle, integrity, split, deduplication, freeze, revocation, evaluation_freeze_before_training, shared_conditional_fields, shared_contributor_lineage, shared_contributor_evidence_token_restrictions, shared_consumer_restrictions, shared_card_manifest_equality]
+    evidence_rule: "Record identifiers and outcomes, never secrets or removed values."
+  downstream_handoffs:
+    P6-T3: "Consumes assistant keys, partition and visibility, category IDs, classification, roles, and card/manifest contract to define physical/domain schemas only."
+    P6-T4: "Consumes category IDs, purpose, evaluation approval, split/deduplication/freeze, integrity evidence, and frozen-evaluation identity/version/checksum/approval references to define frozen evaluation artifacts using the FROZEN_EVALUATION lifecycle/purpose retention override that a later TRAINING prerequisite can resolve without inheriting training permission."
+    P7-T1: "Must implement any controlled export/sanitize/split/manifest pipeline only after its own approval and must enforce these fail-closed gates, including category-derived retention except the FROZEN_EVALUATION lifecycle/purpose override for FROZEN EVALUATION, BENCHMARK, or HUMAN_EVALUATION artifacts, and the TRAINING conditional trigger resolving only to a separate approved FROZEN EVALUATION artifact with matching ID/version/checksum/approval reference; the SHARED conditional trigger, all six required fields, known unique non-shared contributors, rejection of every assistant key and SHARED in contributor source-owner, approval-authority, source-permission-reference, and approval-reference lists, valid unique assistant consumers, and card/manifest equality before artifact creation or consumption."
