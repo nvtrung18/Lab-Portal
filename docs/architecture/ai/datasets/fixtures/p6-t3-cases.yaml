@@ -1,0 +1,3392 @@
+{
+  "manifest": {
+    "requiredCaseIds": [
+      "POS-SHARED",
+      "POS-ADMIN-001",
+      "POS-ADMIN-002",
+      "POS-ADMIN-003",
+      "POS-ADMIN-004",
+      "POS-ADMIN-005",
+      "POS-LAB-001",
+      "POS-LAB-002",
+      "POS-LAB-003",
+      "POS-LAB-004",
+      "POS-LAB-005",
+      "POS-LAB-006",
+      "POS-RESEARCH-001",
+      "POS-RESEARCH-002",
+      "POS-RESEARCH-003",
+      "POS-RESEARCH-004",
+      "POS-RESEARCH-005",
+      "SAFE-READ-DENY-ADMIN-001",
+      "SAFE-READ-REFUSAL-LAB-003",
+      "SAFE-READ-NOCONTEXT-RESEARCH-002",
+      "SAFE-DRAFT-REFUSAL-LAB-005",
+      "ISO-ADMIN-AS-LAB",
+      "ISO-ADMIN-AS-RESEARCH",
+      "ISO-LAB-AS-ADMIN",
+      "ISO-LAB-AS-RESEARCH",
+      "ISO-RESEARCH-AS-ADMIN",
+      "ISO-RESEARCH-AS-LAB",
+      "ISO-ADMIN-PRIVATE-AS-SHARED",
+      "ISO-LAB-PRIVATE-AS-SHARED",
+      "ISO-RESEARCH-PRIVATE-AS-SHARED",
+      "NEG-MISSING-USECASE",
+      "NEG-MISSING-VISIBILITY",
+      "NEG-MISSING-GOVERNANCE",
+      "NEG-MISSING-PURPOSE",
+      "NEG-GOV-TUPLE-CLASSIFICATION",
+      "NEG-GOV-INVALID-DATASET-USE-PERMISSION",
+      "NEG-ADMIN-005-MISSING-SECOND-CATEGORY",
+      "NEG-LAB-005-SECOND-TUPLE-MISMATCH",
+      "NEG-UNKNOWN-VERSION",
+      "NEG-UNKNOWN-DOMAIN",
+      "NEG-EXTRA-ACCESS-TOKEN",
+      "NEG-ROOT-EXTRA-ACCESS-TOKEN-ISOLATED",
+      "NEG-SHARED-USECASE-ID-ISOLATED",
+      "NEG-BRANCH-GOVERNANCE-CONSTANT-ISOLATED",
+      "NEG-EXTRA-PAYLOAD-FIELD",
+      "NEG-INPUT-MISSING-OBSERVATION-ADMIN-001",
+      "NEG-INPUT-MISSING-REF-LAB-002",
+      "NEG-INPUT-MISSING-TASK-RESEARCH-004",
+      "NEG-OUTPUT-CONTENT-ADMIN-001",
+      "NEG-OUTPUT-ACTION-ADMIN-004",
+      "NEG-READ-FAILURE-HAS-SUMMARY",
+      "NEG-DRAFT-FAILURE-HAS-DRAFT",
+      "NEG-DRAFT-SUCCESS-MISSING-STEPS",
+      "NEG-MANIFEST-MISSING-POS-LAB-006",
+      "NEG-DUPLICATE-CASE-ID",
+      "NEG-UNLISTED-CASE"
+    ]
+  },
+  "cases": [
+    {
+      "id": "POS-SHARED",
+      "schema": "shared",
+      "record": {
+        "schemaVersion": "1.0.0",
+        "recordId": "record-shared-policy",
+        "domain": "SHARED",
+        "recordType": "SHARED_SANITIZED_POLICY",
+        "visibility": "SHARED",
+        "input": {
+          "policyTopic": "Safe policy"
+        },
+        "payload": {
+          "policyTopic": "Safe policy",
+          "safeResponseTemplate": "Use safe guidance."
+        },
+        "expectedOutput": {
+          "behavior": "SUCCESS",
+          "contentType": "GUIDANCE",
+          "summary": "Synthetic shared guidance.",
+          "actionRisk": "READ_ONLY"
+        },
+        "governance": {
+          "categoryIds": [
+            "CAT_SHARED_SANITIZED_POLICY"
+          ],
+          "categoryGovernance": [
+            {
+              "categoryId": "CAT_SHARED_SANITIZED_POLICY",
+              "classification": "INTERNAL",
+              "datasetUsePermission": "ELIGIBLE_AFTER_APPROVAL",
+              "visibility": "SHARED",
+              "sanitization": {
+                "disposition": "SANITIZED_DERIVATIVE_REQUIRED"
+              },
+              "provenance": {
+                "type": "INTERNAL_SANITIZED"
+              },
+              "modelDevelopmentPurpose": [
+                "DEVELOPMENT_TEST"
+              ]
+            }
+          ]
+        },
+        "metadata": {
+          "synthetic": true
+        }
+      },
+      "expected": true,
+      "assertion": "minimal closed policy record"
+    },
+    {
+      "id": "POS-ADMIN-001",
+      "schema": "admin",
+      "record": {
+        "schemaVersion": "1.0.0",
+        "recordId": "record-admin-uc-001",
+        "domain": "ADMIN",
+        "recordType": "SYSTEM_STATUS_SUMMARY",
+        "visibility": "ADMIN_ASSISTANT_ONLY",
+        "useCaseId": "ADMIN_UC_001",
+        "input": {
+          "systemStatus": {
+            "statusKind": "SYSTEM_STATUS",
+            "health": "HEALTHY"
+          }
+        },
+        "payload": {
+          "resourceRef": {
+            "resourceType": "SYSTEM_STATUS",
+            "resourceId": "system-status-1"
+          },
+          "subjectKind": "SYSTEM_STATUS"
+        },
+        "expectedOutput": {
+          "behavior": "SUCCESS",
+          "contentType": "SUMMARY",
+          "summary": "Synthetic safe result.",
+          "actionRisk": "READ_ONLY"
+        },
+        "governance": {
+          "categoryIds": [
+            "CAT_ADMIN_SYSTEM_STATUS"
+          ],
+          "categoryGovernance": [
+            {
+              "categoryId": "CAT_ADMIN_SYSTEM_STATUS",
+              "classification": "INTERNAL",
+              "datasetUsePermission": "ELIGIBLE_AFTER_APPROVAL",
+              "visibility": "ADMIN_ASSISTANT_ONLY",
+              "sanitization": {
+                "disposition": "SANITIZED_DERIVATIVE_REQUIRED"
+              },
+              "provenance": {
+                "type": "INTERNAL_SANITIZED"
+              },
+              "modelDevelopmentPurpose": [
+                "DEVELOPMENT_TEST"
+              ]
+            }
+          ]
+        },
+        "metadata": {
+          "synthetic": true
+        }
+      },
+      "expected": true,
+      "assertion": "minimal exact branch/projection"
+    },
+    {
+      "id": "POS-ADMIN-002",
+      "schema": "admin",
+      "record": {
+        "schemaVersion": "1.0.0",
+        "recordId": "record-admin-uc-002",
+        "domain": "ADMIN",
+        "recordType": "AUDIT_SUMMARY",
+        "visibility": "ADMIN_ASSISTANT_ONLY",
+        "useCaseId": "ADMIN_UC_002",
+        "input": {
+          "auditSummary": {
+            "summaryKind": "AUDIT_SUMMARY",
+            "eventCount": 2,
+            "window": "CURRENT_AUTHORIZED_WINDOW"
+          }
+        },
+        "payload": {
+          "resourceRef": {
+            "resourceType": "AUDIT_SUMMARY",
+            "resourceId": "audit-summary-1"
+          },
+          "subjectKind": "AUDIT_SUMMARY"
+        },
+        "expectedOutput": {
+          "behavior": "SUCCESS",
+          "contentType": "SUMMARY",
+          "summary": "Synthetic safe result.",
+          "actionRisk": "READ_ONLY"
+        },
+        "governance": {
+          "categoryIds": [
+            "CAT_ADMIN_AUDIT_SUMMARY"
+          ],
+          "categoryGovernance": [
+            {
+              "categoryId": "CAT_ADMIN_AUDIT_SUMMARY",
+              "classification": "SENSITIVE",
+              "datasetUsePermission": "ELIGIBLE_AFTER_APPROVAL",
+              "visibility": "ADMIN_ASSISTANT_ONLY",
+              "sanitization": {
+                "disposition": "SANITIZED_DERIVATIVE_REQUIRED"
+              },
+              "provenance": {
+                "type": "INTERNAL_SANITIZED"
+              },
+              "modelDevelopmentPurpose": [
+                "DEVELOPMENT_TEST"
+              ]
+            }
+          ]
+        },
+        "metadata": {
+          "synthetic": true
+        }
+      },
+      "expected": true,
+      "assertion": "minimal exact branch/projection"
+    },
+    {
+      "id": "POS-ADMIN-003",
+      "schema": "admin",
+      "record": {
+        "schemaVersion": "1.0.0",
+        "recordId": "record-admin-uc-003",
+        "domain": "ADMIN",
+        "recordType": "USER_STATUS_LOOKUP",
+        "visibility": "ADMIN_ASSISTANT_ONLY",
+        "useCaseId": "ADMIN_UC_003",
+        "input": {
+          "userRef": {
+            "resourceType": "USER_STATUS",
+            "resourceId": "user-status-1"
+          },
+          "userStatus": {
+            "statusKind": "USER_STATUS",
+            "state": "ACTIVE"
+          }
+        },
+        "payload": {
+          "resourceRef": {
+            "resourceType": "USER_STATUS",
+            "resourceId": "user-status-1"
+          },
+          "subjectKind": "USER_STATUS"
+        },
+        "expectedOutput": {
+          "behavior": "SUCCESS",
+          "contentType": "LOOKUP",
+          "summary": "Synthetic safe result.",
+          "actionRisk": "READ_ONLY"
+        },
+        "governance": {
+          "categoryIds": [
+            "CAT_IDENTITY_USER_STATUS"
+          ],
+          "categoryGovernance": [
+            {
+              "categoryId": "CAT_IDENTITY_USER_STATUS",
+              "classification": "SENSITIVE",
+              "datasetUsePermission": "ELIGIBLE_AFTER_APPROVAL",
+              "visibility": "ADMIN_ASSISTANT_ONLY",
+              "sanitization": {
+                "disposition": "SANITIZED_DERIVATIVE_REQUIRED"
+              },
+              "provenance": {
+                "type": "INTERNAL_SANITIZED"
+              },
+              "modelDevelopmentPurpose": [
+                "DEVELOPMENT_TEST"
+              ]
+            }
+          ]
+        },
+        "metadata": {
+          "synthetic": true
+        }
+      },
+      "expected": true,
+      "assertion": "minimal exact branch/projection"
+    },
+    {
+      "id": "POS-ADMIN-004",
+      "schema": "admin",
+      "record": {
+        "schemaVersion": "1.0.0",
+        "recordId": "record-admin-uc-004",
+        "domain": "ADMIN",
+        "recordType": "CONFIGURATION_CHANGE_DRAFT",
+        "visibility": "ADMIN_ASSISTANT_ONLY",
+        "useCaseId": "ADMIN_UC_004",
+        "input": {
+          "task": "Draft a safe configuration change."
+        },
+        "payload": {
+          "draftKind": "CONFIGURATION_CHANGE_DRAFT"
+        },
+        "expectedOutput": {
+          "behavior": "DRAFT_ONLY",
+          "contentType": "NON_OFFICIAL_STRUCTURED_DRAFT",
+          "draft": {
+            "kind": "CONFIGURATION_CHANGE_DRAFT",
+            "title": "Synthetic draft",
+            "steps": [
+              "Review safely"
+            ]
+          },
+          "actionRisk": "DRAFT_ONLY"
+        },
+        "governance": {
+          "categoryIds": [
+            "CAT_ADMIN_DRAFT_TEMPLATE"
+          ],
+          "categoryGovernance": [
+            {
+              "categoryId": "CAT_ADMIN_DRAFT_TEMPLATE",
+              "classification": "INTERNAL",
+              "datasetUsePermission": "SYNTHETIC_ONLY",
+              "visibility": "ADMIN_ASSISTANT_ONLY",
+              "sanitization": {
+                "disposition": "SYNTHETIC_GENERATION_ONLY"
+              },
+              "provenance": {
+                "type": "SYNTHETIC"
+              },
+              "modelDevelopmentPurpose": [
+                "DEVELOPMENT_TEST"
+              ]
+            }
+          ]
+        },
+        "metadata": {
+          "synthetic": true
+        }
+      },
+      "expected": true,
+      "assertion": "minimal exact branch/projection"
+    },
+    {
+      "id": "POS-ADMIN-005",
+      "schema": "admin",
+      "record": {
+        "schemaVersion": "1.0.0",
+        "recordId": "record-admin-uc-005",
+        "domain": "ADMIN",
+        "recordType": "ACCOUNT_ACTION_DRAFT",
+        "visibility": "ADMIN_ASSISTANT_ONLY",
+        "useCaseId": "ADMIN_UC_005",
+        "input": {
+          "userRef": {
+            "resourceType": "USER_STATUS",
+            "resourceId": "user-status-5"
+          },
+          "userStatus": {
+            "statusKind": "USER_STATUS",
+            "state": "ACTIVE"
+          },
+          "task": "Draft an account action."
+        },
+        "payload": {
+          "resourceRef": {
+            "resourceType": "USER_STATUS",
+            "resourceId": "user-status-5"
+          },
+          "draftKind": "ACCOUNT_ACTION_DRAFT"
+        },
+        "expectedOutput": {
+          "behavior": "DRAFT_ONLY",
+          "contentType": "NON_OFFICIAL_STRUCTURED_DRAFT",
+          "draft": {
+            "kind": "ACCOUNT_ACTION_DRAFT",
+            "title": "Synthetic draft",
+            "steps": [
+              "Review safely"
+            ]
+          },
+          "actionRisk": "DRAFT_ONLY"
+        },
+        "governance": {
+          "categoryIds": [
+            "CAT_IDENTITY_USER_STATUS",
+            "CAT_ADMIN_ACCOUNT_POLICY_SYNTHETIC"
+          ],
+          "categoryGovernance": [
+            {
+              "categoryId": "CAT_IDENTITY_USER_STATUS",
+              "classification": "SENSITIVE",
+              "datasetUsePermission": "ELIGIBLE_AFTER_APPROVAL",
+              "visibility": "ADMIN_ASSISTANT_ONLY",
+              "sanitization": {
+                "disposition": "SANITIZED_DERIVATIVE_REQUIRED"
+              },
+              "provenance": {
+                "type": "INTERNAL_SANITIZED"
+              },
+              "modelDevelopmentPurpose": [
+                "DEVELOPMENT_TEST"
+              ]
+            },
+            {
+              "categoryId": "CAT_ADMIN_ACCOUNT_POLICY_SYNTHETIC",
+              "classification": "INTERNAL",
+              "datasetUsePermission": "SYNTHETIC_ONLY",
+              "visibility": "ADMIN_ASSISTANT_ONLY",
+              "sanitization": {
+                "disposition": "SYNTHETIC_GENERATION_ONLY"
+              },
+              "provenance": {
+                "type": "SYNTHETIC"
+              },
+              "modelDevelopmentPurpose": [
+                "DEVELOPMENT_TEST"
+              ]
+            }
+          ]
+        },
+        "metadata": {
+          "synthetic": true
+        }
+      },
+      "expected": true,
+      "assertion": "minimal exact branch/projection"
+    },
+    {
+      "id": "POS-LAB-001",
+      "schema": "lab",
+      "record": {
+        "schemaVersion": "1.0.0",
+        "recordId": "record-lab-uc-001",
+        "domain": "LAB",
+        "recordType": "POLICY_GUIDANCE",
+        "visibility": "LAB_ASSISTANT_ONLY",
+        "useCaseId": "LAB_UC_001",
+        "input": {
+          "labRef": {
+            "resourceType": "LAB",
+            "resourceId": "lab-1"
+          },
+          "policy": {
+            "policyKind": "LAB_POLICY",
+            "ruleState": "AVAILABLE"
+          },
+          "task": "Give policy guidance."
+        },
+        "payload": {
+          "resourceRef": {
+            "resourceType": "LAB",
+            "resourceId": "lab-1"
+          }
+        },
+        "expectedOutput": {
+          "behavior": "SUCCESS",
+          "contentType": "GUIDANCE",
+          "summary": "Synthetic safe result.",
+          "actionRisk": "READ_ONLY"
+        },
+        "governance": {
+          "categoryIds": [
+            "CAT_LAB_POLICY_GUIDANCE"
+          ],
+          "categoryGovernance": [
+            {
+              "categoryId": "CAT_LAB_POLICY_GUIDANCE",
+              "classification": "INTERNAL",
+              "datasetUsePermission": "ELIGIBLE_AFTER_APPROVAL",
+              "visibility": "LAB_ASSISTANT_ONLY",
+              "sanitization": {
+                "disposition": "SANITIZED_DERIVATIVE_REQUIRED"
+              },
+              "provenance": {
+                "type": "INTERNAL_SANITIZED"
+              },
+              "modelDevelopmentPurpose": [
+                "DEVELOPMENT_TEST"
+              ]
+            }
+          ]
+        },
+        "metadata": {
+          "synthetic": true
+        }
+      },
+      "expected": true,
+      "assertion": "minimal exact branch/projection"
+    },
+    {
+      "id": "POS-LAB-002",
+      "schema": "lab",
+      "record": {
+        "schemaVersion": "1.0.0",
+        "recordId": "record-lab-uc-002",
+        "domain": "LAB",
+        "recordType": "SLOT_AVAILABILITY",
+        "visibility": "LAB_ASSISTANT_ONLY",
+        "useCaseId": "LAB_UC_002",
+        "input": {
+          "labRef": {
+            "resourceType": "LAB",
+            "resourceId": "lab-2"
+          },
+          "slotAvailability": {
+            "availability": "AVAILABLE"
+          },
+          "slotRef": {
+            "resourceType": "LAB_SLOT",
+            "resourceId": "lab-slot-2"
+          }
+        },
+        "payload": {
+          "resourceRef": {
+            "resourceType": "LAB_SLOT",
+            "resourceId": "lab-slot-2"
+          }
+        },
+        "expectedOutput": {
+          "behavior": "SUCCESS",
+          "contentType": "LOOKUP",
+          "summary": "Synthetic safe result.",
+          "actionRisk": "READ_ONLY"
+        },
+        "governance": {
+          "categoryIds": [
+            "CAT_LAB_SLOT_AVAILABILITY"
+          ],
+          "categoryGovernance": [
+            {
+              "categoryId": "CAT_LAB_SLOT_AVAILABILITY",
+              "classification": "SENSITIVE",
+              "datasetUsePermission": "ELIGIBLE_AFTER_APPROVAL",
+              "visibility": "LAB_ASSISTANT_ONLY",
+              "sanitization": {
+                "disposition": "SANITIZED_DERIVATIVE_REQUIRED"
+              },
+              "provenance": {
+                "type": "INTERNAL_SANITIZED"
+              },
+              "modelDevelopmentPurpose": [
+                "DEVELOPMENT_TEST"
+              ]
+            }
+          ]
+        },
+        "metadata": {
+          "synthetic": true
+        }
+      },
+      "expected": true,
+      "assertion": "minimal exact branch/projection"
+    },
+    {
+      "id": "POS-LAB-003",
+      "schema": "lab",
+      "record": {
+        "schemaVersion": "1.0.0",
+        "recordId": "record-lab-uc-003",
+        "domain": "LAB",
+        "recordType": "OWN_BOOKING_LOOKUP",
+        "visibility": "LAB_ASSISTANT_ONLY",
+        "useCaseId": "LAB_UC_003",
+        "input": {
+          "bookingRef": {
+            "resourceType": "BOOKING",
+            "resourceId": "booking-3"
+          },
+          "bookingStatus": {
+            "state": "ACTIVE"
+          }
+        },
+        "payload": {
+          "resourceRef": {
+            "resourceType": "BOOKING",
+            "resourceId": "booking-3"
+          }
+        },
+        "expectedOutput": {
+          "behavior": "SUCCESS",
+          "contentType": "LOOKUP",
+          "summary": "Synthetic safe result.",
+          "actionRisk": "READ_ONLY"
+        },
+        "governance": {
+          "categoryIds": [
+            "CAT_BOOKING_OWNERSHIP"
+          ],
+          "categoryGovernance": [
+            {
+              "categoryId": "CAT_BOOKING_OWNERSHIP",
+              "classification": "SENSITIVE",
+              "datasetUsePermission": "SYNTHETIC_ONLY",
+              "visibility": "LAB_ASSISTANT_ONLY",
+              "sanitization": {
+                "disposition": "SYNTHETIC_GENERATION_ONLY"
+              },
+              "provenance": {
+                "type": "SYNTHETIC"
+              },
+              "modelDevelopmentPurpose": [
+                "DEVELOPMENT_TEST"
+              ]
+            }
+          ]
+        },
+        "metadata": {
+          "synthetic": true
+        }
+      },
+      "expected": true,
+      "assertion": "minimal exact branch/projection"
+    },
+    {
+      "id": "POS-LAB-004",
+      "schema": "lab",
+      "record": {
+        "schemaVersion": "1.0.0",
+        "recordId": "record-lab-uc-004",
+        "domain": "LAB",
+        "recordType": "MANAGED_LAB_SUMMARY",
+        "visibility": "LAB_ASSISTANT_ONLY",
+        "useCaseId": "LAB_UC_004",
+        "input": {
+          "labRef": {
+            "resourceType": "LAB",
+            "resourceId": "lab-4"
+          },
+          "managedLab": {
+            "summaryKind": "MANAGED_LAB",
+            "operationalState": "OPEN"
+          }
+        },
+        "payload": {
+          "resourceRef": {
+            "resourceType": "LAB",
+            "resourceId": "lab-4"
+          }
+        },
+        "expectedOutput": {
+          "behavior": "SUCCESS",
+          "contentType": "SUMMARY",
+          "summary": "Synthetic safe result.",
+          "actionRisk": "READ_ONLY"
+        },
+        "governance": {
+          "categoryIds": [
+            "CAT_LAB_MANAGED_SUMMARY"
+          ],
+          "categoryGovernance": [
+            {
+              "categoryId": "CAT_LAB_MANAGED_SUMMARY",
+              "classification": "SENSITIVE",
+              "datasetUsePermission": "ELIGIBLE_AFTER_APPROVAL",
+              "visibility": "LAB_ASSISTANT_ONLY",
+              "sanitization": {
+                "disposition": "SANITIZED_DERIVATIVE_REQUIRED"
+              },
+              "provenance": {
+                "type": "INTERNAL_SANITIZED"
+              },
+              "modelDevelopmentPurpose": [
+                "DEVELOPMENT_TEST"
+              ]
+            }
+          ]
+        },
+        "metadata": {
+          "synthetic": true
+        }
+      },
+      "expected": true,
+      "assertion": "minimal exact branch/projection"
+    },
+    {
+      "id": "POS-LAB-005",
+      "schema": "lab",
+      "record": {
+        "schemaVersion": "1.0.0",
+        "recordId": "record-lab-uc-005",
+        "domain": "LAB",
+        "recordType": "BOOKING_DRAFT",
+        "visibility": "LAB_ASSISTANT_ONLY",
+        "useCaseId": "LAB_UC_005",
+        "input": {
+          "labRef": {
+            "resourceType": "LAB",
+            "resourceId": "lab-5"
+          },
+          "slotRef": {
+            "resourceType": "LAB_SLOT",
+            "resourceId": "lab-slot-5"
+          },
+          "slotAvailability": {
+            "availability": "AVAILABLE"
+          },
+          "task": "Draft a booking."
+        },
+        "payload": {
+          "resourceRef": {
+            "resourceType": "LAB_SLOT",
+            "resourceId": "lab-slot-5"
+          },
+          "draftBookingKind": "BOOKING_DRAFT"
+        },
+        "expectedOutput": {
+          "behavior": "DRAFT_ONLY",
+          "contentType": "NON_OFFICIAL_STRUCTURED_DRAFT",
+          "draft": {
+            "kind": "BOOKING_DRAFT",
+            "title": "Synthetic draft",
+            "steps": [
+              "Review safely"
+            ]
+          },
+          "actionRisk": "DRAFT_ONLY"
+        },
+        "governance": {
+          "categoryIds": [
+            "CAT_LAB_SLOT_AVAILABILITY",
+            "CAT_SYNTHETIC_LAB_BOOKING_DRAFT"
+          ],
+          "categoryGovernance": [
+            {
+              "categoryId": "CAT_LAB_SLOT_AVAILABILITY",
+              "classification": "SENSITIVE",
+              "datasetUsePermission": "ELIGIBLE_AFTER_APPROVAL",
+              "visibility": "LAB_ASSISTANT_ONLY",
+              "sanitization": {
+                "disposition": "SANITIZED_DERIVATIVE_REQUIRED"
+              },
+              "provenance": {
+                "type": "INTERNAL_SANITIZED"
+              },
+              "modelDevelopmentPurpose": [
+                "DEVELOPMENT_TEST"
+              ]
+            },
+            {
+              "categoryId": "CAT_SYNTHETIC_LAB_BOOKING_DRAFT",
+              "classification": "INTERNAL",
+              "datasetUsePermission": "SYNTHETIC_ONLY",
+              "visibility": "LAB_ASSISTANT_ONLY",
+              "sanitization": {
+                "disposition": "SYNTHETIC_GENERATION_ONLY"
+              },
+              "provenance": {
+                "type": "SYNTHETIC"
+              },
+              "modelDevelopmentPurpose": [
+                "DEVELOPMENT_TEST"
+              ]
+            }
+          ]
+        },
+        "metadata": {
+          "synthetic": true
+        }
+      },
+      "expected": true,
+      "assertion": "minimal exact branch/projection"
+    },
+    {
+      "id": "POS-LAB-006",
+      "schema": "lab",
+      "record": {
+        "schemaVersion": "1.0.0",
+        "recordId": "record-lab-uc-006",
+        "domain": "LAB",
+        "recordType": "CHECKIN_GUIDANCE",
+        "visibility": "LAB_ASSISTANT_ONLY",
+        "useCaseId": "LAB_UC_006",
+        "input": {
+          "bookingRef": {
+            "resourceType": "BOOKING",
+            "resourceId": "booking-6"
+          },
+          "checkInPolicy": {
+            "policyKind": "CHECKIN_POLICY",
+            "freshness": "CURRENT_AUTHORIZED_SNAPSHOT"
+          },
+          "task": "Give check-in guidance."
+        },
+        "payload": {
+          "resourceRef": {
+            "resourceType": "BOOKING",
+            "resourceId": "booking-6"
+          }
+        },
+        "expectedOutput": {
+          "behavior": "SUCCESS",
+          "contentType": "GUIDANCE",
+          "summary": "Synthetic safe result.",
+          "actionRisk": "READ_ONLY"
+        },
+        "governance": {
+          "categoryIds": [
+            "CAT_CHECKIN_POLICY"
+          ],
+          "categoryGovernance": [
+            {
+              "categoryId": "CAT_CHECKIN_POLICY",
+              "classification": "INTERNAL",
+              "datasetUsePermission": "ELIGIBLE_AFTER_APPROVAL",
+              "visibility": "LAB_ASSISTANT_ONLY",
+              "sanitization": {
+                "disposition": "SANITIZED_DERIVATIVE_REQUIRED"
+              },
+              "provenance": {
+                "type": "INTERNAL_SANITIZED"
+              },
+              "modelDevelopmentPurpose": [
+                "DEVELOPMENT_TEST"
+              ]
+            }
+          ]
+        },
+        "metadata": {
+          "synthetic": true
+        }
+      },
+      "expected": true,
+      "assertion": "minimal exact branch/projection"
+    },
+    {
+      "id": "POS-RESEARCH-001",
+      "schema": "research",
+      "record": {
+        "schemaVersion": "1.0.0",
+        "recordId": "record-research-uc-001",
+        "domain": "RESEARCH",
+        "recordType": "PROJECT_PROGRESS_SUMMARY",
+        "visibility": "RESEARCH_ASSISTANT_ONLY",
+        "useCaseId": "RESEARCH_UC_001",
+        "input": {
+          "projectRef": {
+            "resourceType": "PROJECT",
+            "resourceId": "project-1"
+          },
+          "projectProgress": {
+            "state": "ON_TRACK"
+          }
+        },
+        "payload": {
+          "resourceRef": {
+            "resourceType": "PROJECT",
+            "resourceId": "project-1"
+          }
+        },
+        "expectedOutput": {
+          "behavior": "SUCCESS",
+          "contentType": "SUMMARY",
+          "summary": "Synthetic safe result.",
+          "actionRisk": "READ_ONLY"
+        },
+        "governance": {
+          "categoryIds": [
+            "CAT_RESEARCH_PROJECT_PROGRESS"
+          ],
+          "categoryGovernance": [
+            {
+              "categoryId": "CAT_RESEARCH_PROJECT_PROGRESS",
+              "classification": "SENSITIVE",
+              "datasetUsePermission": "ELIGIBLE_AFTER_APPROVAL",
+              "visibility": "RESEARCH_ASSISTANT_ONLY",
+              "sanitization": {
+                "disposition": "SANITIZED_DERIVATIVE_REQUIRED"
+              },
+              "provenance": {
+                "type": "INTERNAL_SANITIZED"
+              },
+              "modelDevelopmentPurpose": [
+                "DEVELOPMENT_TEST"
+              ]
+            }
+          ]
+        },
+        "metadata": {
+          "synthetic": true
+        }
+      },
+      "expected": true,
+      "assertion": "minimal exact branch/projection"
+    },
+    {
+      "id": "POS-RESEARCH-002",
+      "schema": "research",
+      "record": {
+        "schemaVersion": "1.0.0",
+        "recordId": "record-research-uc-002",
+        "domain": "RESEARCH",
+        "recordType": "GROUP_PROGRESS_SUMMARY",
+        "visibility": "RESEARCH_ASSISTANT_ONLY",
+        "useCaseId": "RESEARCH_UC_002",
+        "input": {
+          "projectRef": {
+            "resourceType": "PROJECT",
+            "resourceId": "project-2"
+          },
+          "groupRef": {
+            "resourceType": "PROJECT_GROUP",
+            "resourceId": "project-group-2"
+          },
+          "groupProgress": {
+            "state": "ON_TRACK"
+          }
+        },
+        "payload": {
+          "resourceRef": {
+            "resourceType": "PROJECT",
+            "resourceId": "project-2"
+          }
+        },
+        "expectedOutput": {
+          "behavior": "SUCCESS",
+          "contentType": "SUMMARY",
+          "summary": "Synthetic safe result.",
+          "actionRisk": "READ_ONLY"
+        },
+        "governance": {
+          "categoryIds": [
+            "CAT_RESEARCH_GROUP_PROGRESS"
+          ],
+          "categoryGovernance": [
+            {
+              "categoryId": "CAT_RESEARCH_GROUP_PROGRESS",
+              "classification": "SENSITIVE",
+              "datasetUsePermission": "ELIGIBLE_AFTER_APPROVAL",
+              "visibility": "RESEARCH_ASSISTANT_ONLY",
+              "sanitization": {
+                "disposition": "SANITIZED_DERIVATIVE_REQUIRED"
+              },
+              "provenance": {
+                "type": "INTERNAL_SANITIZED"
+              },
+              "modelDevelopmentPurpose": [
+                "DEVELOPMENT_TEST"
+              ]
+            }
+          ]
+        },
+        "metadata": {
+          "synthetic": true
+        }
+      },
+      "expected": true,
+      "assertion": "minimal exact branch/projection"
+    },
+    {
+      "id": "POS-RESEARCH-003",
+      "schema": "research",
+      "record": {
+        "schemaVersion": "1.0.0",
+        "recordId": "record-research-uc-003",
+        "domain": "RESEARCH",
+        "recordType": "ASSIGNED_TASK_LOOKUP",
+        "visibility": "RESEARCH_ASSISTANT_ONLY",
+        "useCaseId": "RESEARCH_UC_003",
+        "input": {
+          "taskRef": {
+            "resourceType": "ASSIGNED_TASK",
+            "resourceId": "assigned-task-3"
+          },
+          "assignedTask": {
+            "state": "TODO"
+          }
+        },
+        "payload": {
+          "resourceRef": {
+            "resourceType": "ASSIGNED_TASK",
+            "resourceId": "assigned-task-3"
+          }
+        },
+        "expectedOutput": {
+          "behavior": "SUCCESS",
+          "contentType": "LOOKUP",
+          "summary": "Synthetic safe result.",
+          "actionRisk": "READ_ONLY"
+        },
+        "governance": {
+          "categoryIds": [
+            "CAT_RESEARCH_ASSIGNED_TASK"
+          ],
+          "categoryGovernance": [
+            {
+              "categoryId": "CAT_RESEARCH_ASSIGNED_TASK",
+              "classification": "SENSITIVE",
+              "datasetUsePermission": "SYNTHETIC_ONLY",
+              "visibility": "RESEARCH_ASSISTANT_ONLY",
+              "sanitization": {
+                "disposition": "SYNTHETIC_GENERATION_ONLY"
+              },
+              "provenance": {
+                "type": "SYNTHETIC"
+              },
+              "modelDevelopmentPurpose": [
+                "DEVELOPMENT_TEST"
+              ]
+            }
+          ]
+        },
+        "metadata": {
+          "synthetic": true
+        }
+      },
+      "expected": true,
+      "assertion": "minimal exact branch/projection"
+    },
+    {
+      "id": "POS-RESEARCH-004",
+      "schema": "research",
+      "record": {
+        "schemaVersion": "1.0.0",
+        "recordId": "record-research-uc-004",
+        "domain": "RESEARCH",
+        "recordType": "TASK_PROPOSAL_DRAFT",
+        "visibility": "RESEARCH_ASSISTANT_ONLY",
+        "useCaseId": "RESEARCH_UC_004",
+        "input": {
+          "projectRef": {
+            "resourceType": "PROJECT",
+            "resourceId": "project-4"
+          },
+          "groupRef": {
+            "resourceType": "PROJECT_GROUP",
+            "resourceId": "project-group-4"
+          },
+          "groupProgress": {
+            "state": "ON_TRACK"
+          },
+          "task": "Draft a task proposal."
+        },
+        "payload": {
+          "proposalKind": "TASK_PROPOSAL_DRAFT"
+        },
+        "expectedOutput": {
+          "behavior": "DRAFT_ONLY",
+          "contentType": "NON_OFFICIAL_STRUCTURED_DRAFT",
+          "draft": {
+            "kind": "TASK_PROPOSAL_DRAFT",
+            "title": "Synthetic draft",
+            "steps": [
+              "Review safely"
+            ]
+          },
+          "actionRisk": "DRAFT_ONLY"
+        },
+        "governance": {
+          "categoryIds": [
+            "CAT_RESEARCH_DRAFT_CONTEXT"
+          ],
+          "categoryGovernance": [
+            {
+              "categoryId": "CAT_RESEARCH_DRAFT_CONTEXT",
+              "classification": "SENSITIVE",
+              "datasetUsePermission": "SYNTHETIC_ONLY",
+              "visibility": "RESEARCH_ASSISTANT_ONLY",
+              "sanitization": {
+                "disposition": "SYNTHETIC_GENERATION_ONLY"
+              },
+              "provenance": {
+                "type": "SYNTHETIC"
+              },
+              "modelDevelopmentPurpose": [
+                "DEVELOPMENT_TEST"
+              ]
+            }
+          ]
+        },
+        "metadata": {
+          "synthetic": true
+        }
+      },
+      "expected": true,
+      "assertion": "minimal exact branch/projection"
+    },
+    {
+      "id": "POS-RESEARCH-005",
+      "schema": "research",
+      "record": {
+        "schemaVersion": "1.0.0",
+        "recordId": "record-research-uc-005",
+        "domain": "RESEARCH",
+        "recordType": "TASK_SUGGESTION_DRAFT",
+        "visibility": "RESEARCH_ASSISTANT_ONLY",
+        "useCaseId": "RESEARCH_UC_005",
+        "input": {
+          "taskRef": {
+            "resourceType": "ASSIGNED_TASK",
+            "resourceId": "assigned-task-5"
+          },
+          "assignedTask": {
+            "state": "TODO"
+          },
+          "task": "Draft a task suggestion."
+        },
+        "payload": {
+          "proposalKind": "TASK_SUGGESTION_DRAFT"
+        },
+        "expectedOutput": {
+          "behavior": "DRAFT_ONLY",
+          "contentType": "NON_OFFICIAL_STRUCTURED_DRAFT",
+          "draft": {
+            "kind": "TASK_SUGGESTION_DRAFT",
+            "title": "Synthetic draft",
+            "steps": [
+              "Review safely"
+            ]
+          },
+          "actionRisk": "DRAFT_ONLY"
+        },
+        "governance": {
+          "categoryIds": [
+            "CAT_RESEARCH_DRAFT_CONTEXT"
+          ],
+          "categoryGovernance": [
+            {
+              "categoryId": "CAT_RESEARCH_DRAFT_CONTEXT",
+              "classification": "SENSITIVE",
+              "datasetUsePermission": "SYNTHETIC_ONLY",
+              "visibility": "RESEARCH_ASSISTANT_ONLY",
+              "sanitization": {
+                "disposition": "SYNTHETIC_GENERATION_ONLY"
+              },
+              "provenance": {
+                "type": "SYNTHETIC"
+              },
+              "modelDevelopmentPurpose": [
+                "DEVELOPMENT_TEST"
+              ]
+            }
+          ]
+        },
+        "metadata": {
+          "synthetic": true
+        }
+      },
+      "expected": true,
+      "assertion": "minimal exact branch/projection"
+    },
+    {
+      "id": "SAFE-READ-DENY-ADMIN-001",
+      "schema": "admin",
+      "record": {
+        "schemaVersion": "1.0.0",
+        "recordId": "record-admin-uc-001",
+        "domain": "ADMIN",
+        "recordType": "SYSTEM_STATUS_SUMMARY",
+        "visibility": "ADMIN_ASSISTANT_ONLY",
+        "useCaseId": "ADMIN_UC_001",
+        "input": {
+          "systemStatus": {
+            "statusKind": "SYSTEM_STATUS",
+            "health": "HEALTHY"
+          }
+        },
+        "payload": {
+          "resourceRef": {
+            "resourceType": "SYSTEM_STATUS",
+            "resourceId": "system-status-1"
+          },
+          "subjectKind": "SYSTEM_STATUS"
+        },
+        "expectedOutput": {
+          "behavior": "DENY",
+          "contentType": "SUMMARY",
+          "message": "Synthetic denial.",
+          "actionRisk": "READ_ONLY"
+        },
+        "governance": {
+          "categoryIds": [
+            "CAT_ADMIN_SYSTEM_STATUS"
+          ],
+          "categoryGovernance": [
+            {
+              "categoryId": "CAT_ADMIN_SYSTEM_STATUS",
+              "classification": "INTERNAL",
+              "datasetUsePermission": "ELIGIBLE_AFTER_APPROVAL",
+              "visibility": "ADMIN_ASSISTANT_ONLY",
+              "sanitization": {
+                "disposition": "SANITIZED_DERIVATIVE_REQUIRED"
+              },
+              "provenance": {
+                "type": "INTERNAL_SANITIZED"
+              },
+              "modelDevelopmentPurpose": [
+                "DEVELOPMENT_TEST"
+              ]
+            }
+          ]
+        },
+        "metadata": {
+          "synthetic": true
+        }
+      },
+      "expected": true,
+      "assertion": "DENY without success payload"
+    },
+    {
+      "id": "SAFE-READ-REFUSAL-LAB-003",
+      "schema": "lab",
+      "record": {
+        "schemaVersion": "1.0.0",
+        "recordId": "record-lab-uc-003",
+        "domain": "LAB",
+        "recordType": "OWN_BOOKING_LOOKUP",
+        "visibility": "LAB_ASSISTANT_ONLY",
+        "useCaseId": "LAB_UC_003",
+        "input": {
+          "bookingRef": {
+            "resourceType": "BOOKING",
+            "resourceId": "booking-3"
+          },
+          "bookingStatus": {
+            "state": "ACTIVE"
+          }
+        },
+        "payload": {
+          "resourceRef": {
+            "resourceType": "BOOKING",
+            "resourceId": "booking-3"
+          }
+        },
+        "expectedOutput": {
+          "behavior": "SAFE_REFUSAL",
+          "contentType": "LOOKUP",
+          "message": "Synthetic refusal.",
+          "actionRisk": "READ_ONLY"
+        },
+        "governance": {
+          "categoryIds": [
+            "CAT_BOOKING_OWNERSHIP"
+          ],
+          "categoryGovernance": [
+            {
+              "categoryId": "CAT_BOOKING_OWNERSHIP",
+              "classification": "SENSITIVE",
+              "datasetUsePermission": "SYNTHETIC_ONLY",
+              "visibility": "LAB_ASSISTANT_ONLY",
+              "sanitization": {
+                "disposition": "SYNTHETIC_GENERATION_ONLY"
+              },
+              "provenance": {
+                "type": "SYNTHETIC"
+              },
+              "modelDevelopmentPurpose": [
+                "DEVELOPMENT_TEST"
+              ]
+            }
+          ]
+        },
+        "metadata": {
+          "synthetic": true
+        }
+      },
+      "expected": true,
+      "assertion": "safe refusal"
+    },
+    {
+      "id": "SAFE-READ-NOCONTEXT-RESEARCH-002",
+      "schema": "research",
+      "record": {
+        "schemaVersion": "1.0.0",
+        "recordId": "record-research-uc-002",
+        "domain": "RESEARCH",
+        "recordType": "GROUP_PROGRESS_SUMMARY",
+        "visibility": "RESEARCH_ASSISTANT_ONLY",
+        "useCaseId": "RESEARCH_UC_002",
+        "input": {
+          "projectRef": {
+            "resourceType": "PROJECT",
+            "resourceId": "project-2"
+          },
+          "groupRef": {
+            "resourceType": "PROJECT_GROUP",
+            "resourceId": "project-group-2"
+          },
+          "groupProgress": {
+            "state": "ON_TRACK"
+          }
+        },
+        "payload": {
+          "resourceRef": {
+            "resourceType": "PROJECT",
+            "resourceId": "project-2"
+          }
+        },
+        "expectedOutput": {
+          "behavior": "NO_CONTEXT",
+          "contentType": "SUMMARY",
+          "message": "Synthetic no context.",
+          "actionRisk": "READ_ONLY"
+        },
+        "governance": {
+          "categoryIds": [
+            "CAT_RESEARCH_GROUP_PROGRESS"
+          ],
+          "categoryGovernance": [
+            {
+              "categoryId": "CAT_RESEARCH_GROUP_PROGRESS",
+              "classification": "SENSITIVE",
+              "datasetUsePermission": "ELIGIBLE_AFTER_APPROVAL",
+              "visibility": "RESEARCH_ASSISTANT_ONLY",
+              "sanitization": {
+                "disposition": "SANITIZED_DERIVATIVE_REQUIRED"
+              },
+              "provenance": {
+                "type": "INTERNAL_SANITIZED"
+              },
+              "modelDevelopmentPurpose": [
+                "DEVELOPMENT_TEST"
+              ]
+            }
+          ]
+        },
+        "metadata": {
+          "synthetic": true
+        }
+      },
+      "expected": true,
+      "assertion": "no context"
+    },
+    {
+      "id": "SAFE-DRAFT-REFUSAL-LAB-005",
+      "schema": "lab",
+      "record": {
+        "schemaVersion": "1.0.0",
+        "recordId": "record-lab-uc-005",
+        "domain": "LAB",
+        "recordType": "BOOKING_DRAFT",
+        "visibility": "LAB_ASSISTANT_ONLY",
+        "useCaseId": "LAB_UC_005",
+        "input": {
+          "labRef": {
+            "resourceType": "LAB",
+            "resourceId": "lab-5"
+          },
+          "slotRef": {
+            "resourceType": "LAB_SLOT",
+            "resourceId": "lab-slot-5"
+          },
+          "slotAvailability": {
+            "availability": "AVAILABLE"
+          },
+          "task": "Draft a booking."
+        },
+        "payload": {
+          "resourceRef": {
+            "resourceType": "LAB_SLOT",
+            "resourceId": "lab-slot-5"
+          },
+          "draftBookingKind": "BOOKING_DRAFT"
+        },
+        "expectedOutput": {
+          "behavior": "SAFE_REFUSAL",
+          "contentType": "NON_OFFICIAL_STRUCTURED_DRAFT",
+          "message": "Synthetic refusal.",
+          "actionRisk": "DRAFT_ONLY"
+        },
+        "governance": {
+          "categoryIds": [
+            "CAT_LAB_SLOT_AVAILABILITY",
+            "CAT_SYNTHETIC_LAB_BOOKING_DRAFT"
+          ],
+          "categoryGovernance": [
+            {
+              "categoryId": "CAT_LAB_SLOT_AVAILABILITY",
+              "classification": "SENSITIVE",
+              "datasetUsePermission": "ELIGIBLE_AFTER_APPROVAL",
+              "visibility": "LAB_ASSISTANT_ONLY",
+              "sanitization": {
+                "disposition": "SANITIZED_DERIVATIVE_REQUIRED"
+              },
+              "provenance": {
+                "type": "INTERNAL_SANITIZED"
+              },
+              "modelDevelopmentPurpose": [
+                "DEVELOPMENT_TEST"
+              ]
+            },
+            {
+              "categoryId": "CAT_SYNTHETIC_LAB_BOOKING_DRAFT",
+              "classification": "INTERNAL",
+              "datasetUsePermission": "SYNTHETIC_ONLY",
+              "visibility": "LAB_ASSISTANT_ONLY",
+              "sanitization": {
+                "disposition": "SYNTHETIC_GENERATION_ONLY"
+              },
+              "provenance": {
+                "type": "SYNTHETIC"
+              },
+              "modelDevelopmentPurpose": [
+                "DEVELOPMENT_TEST"
+              ]
+            }
+          ]
+        },
+        "metadata": {
+          "synthetic": true
+        }
+      },
+      "expected": true,
+      "assertion": "draft safe refusal"
+    },
+    {
+      "id": "ISO-ADMIN-AS-LAB",
+      "schema": "lab",
+      "record": {
+        "schemaVersion": "1.0.0",
+        "recordId": "record-admin-uc-001",
+        "domain": "ADMIN",
+        "recordType": "SYSTEM_STATUS_SUMMARY",
+        "visibility": "ADMIN_ASSISTANT_ONLY",
+        "useCaseId": "ADMIN_UC_001",
+        "input": {
+          "systemStatus": {
+            "statusKind": "SYSTEM_STATUS",
+            "health": "HEALTHY"
+          }
+        },
+        "payload": {
+          "resourceRef": {
+            "resourceType": "SYSTEM_STATUS",
+            "resourceId": "system-status-1"
+          },
+          "subjectKind": "SYSTEM_STATUS"
+        },
+        "expectedOutput": {
+          "behavior": "SUCCESS",
+          "contentType": "SUMMARY",
+          "summary": "Synthetic safe result.",
+          "actionRisk": "READ_ONLY"
+        },
+        "governance": {
+          "categoryIds": [
+            "CAT_ADMIN_SYSTEM_STATUS"
+          ],
+          "categoryGovernance": [
+            {
+              "categoryId": "CAT_ADMIN_SYSTEM_STATUS",
+              "classification": "INTERNAL",
+              "datasetUsePermission": "ELIGIBLE_AFTER_APPROVAL",
+              "visibility": "ADMIN_ASSISTANT_ONLY",
+              "sanitization": {
+                "disposition": "SANITIZED_DERIVATIVE_REQUIRED"
+              },
+              "provenance": {
+                "type": "INTERNAL_SANITIZED"
+              },
+              "modelDevelopmentPurpose": [
+                "DEVELOPMENT_TEST"
+              ]
+            }
+          ]
+        },
+        "metadata": {
+          "synthetic": true
+        }
+      },
+      "expected": false,
+      "assertion": "cross-family isolation"
+    },
+    {
+      "id": "ISO-ADMIN-AS-RESEARCH",
+      "schema": "research",
+      "record": {
+        "schemaVersion": "1.0.0",
+        "recordId": "record-admin-uc-001",
+        "domain": "ADMIN",
+        "recordType": "SYSTEM_STATUS_SUMMARY",
+        "visibility": "ADMIN_ASSISTANT_ONLY",
+        "useCaseId": "ADMIN_UC_001",
+        "input": {
+          "systemStatus": {
+            "statusKind": "SYSTEM_STATUS",
+            "health": "HEALTHY"
+          }
+        },
+        "payload": {
+          "resourceRef": {
+            "resourceType": "SYSTEM_STATUS",
+            "resourceId": "system-status-1"
+          },
+          "subjectKind": "SYSTEM_STATUS"
+        },
+        "expectedOutput": {
+          "behavior": "SUCCESS",
+          "contentType": "SUMMARY",
+          "summary": "Synthetic safe result.",
+          "actionRisk": "READ_ONLY"
+        },
+        "governance": {
+          "categoryIds": [
+            "CAT_ADMIN_SYSTEM_STATUS"
+          ],
+          "categoryGovernance": [
+            {
+              "categoryId": "CAT_ADMIN_SYSTEM_STATUS",
+              "classification": "INTERNAL",
+              "datasetUsePermission": "ELIGIBLE_AFTER_APPROVAL",
+              "visibility": "ADMIN_ASSISTANT_ONLY",
+              "sanitization": {
+                "disposition": "SANITIZED_DERIVATIVE_REQUIRED"
+              },
+              "provenance": {
+                "type": "INTERNAL_SANITIZED"
+              },
+              "modelDevelopmentPurpose": [
+                "DEVELOPMENT_TEST"
+              ]
+            }
+          ]
+        },
+        "metadata": {
+          "synthetic": true
+        }
+      },
+      "expected": false,
+      "assertion": "cross-family isolation"
+    },
+    {
+      "id": "ISO-LAB-AS-ADMIN",
+      "schema": "admin",
+      "record": {
+        "schemaVersion": "1.0.0",
+        "recordId": "record-lab-uc-001",
+        "domain": "LAB",
+        "recordType": "POLICY_GUIDANCE",
+        "visibility": "LAB_ASSISTANT_ONLY",
+        "useCaseId": "LAB_UC_001",
+        "input": {
+          "labRef": {
+            "resourceType": "LAB",
+            "resourceId": "lab-1"
+          },
+          "policy": {
+            "policyKind": "LAB_POLICY",
+            "ruleState": "AVAILABLE"
+          },
+          "task": "Give policy guidance."
+        },
+        "payload": {
+          "resourceRef": {
+            "resourceType": "LAB",
+            "resourceId": "lab-1"
+          }
+        },
+        "expectedOutput": {
+          "behavior": "SUCCESS",
+          "contentType": "GUIDANCE",
+          "summary": "Synthetic safe result.",
+          "actionRisk": "READ_ONLY"
+        },
+        "governance": {
+          "categoryIds": [
+            "CAT_LAB_POLICY_GUIDANCE"
+          ],
+          "categoryGovernance": [
+            {
+              "categoryId": "CAT_LAB_POLICY_GUIDANCE",
+              "classification": "INTERNAL",
+              "datasetUsePermission": "ELIGIBLE_AFTER_APPROVAL",
+              "visibility": "LAB_ASSISTANT_ONLY",
+              "sanitization": {
+                "disposition": "SANITIZED_DERIVATIVE_REQUIRED"
+              },
+              "provenance": {
+                "type": "INTERNAL_SANITIZED"
+              },
+              "modelDevelopmentPurpose": [
+                "DEVELOPMENT_TEST"
+              ]
+            }
+          ]
+        },
+        "metadata": {
+          "synthetic": true
+        }
+      },
+      "expected": false,
+      "assertion": "cross-family isolation"
+    },
+    {
+      "id": "ISO-LAB-AS-RESEARCH",
+      "schema": "research",
+      "record": {
+        "schemaVersion": "1.0.0",
+        "recordId": "record-lab-uc-001",
+        "domain": "LAB",
+        "recordType": "POLICY_GUIDANCE",
+        "visibility": "LAB_ASSISTANT_ONLY",
+        "useCaseId": "LAB_UC_001",
+        "input": {
+          "labRef": {
+            "resourceType": "LAB",
+            "resourceId": "lab-1"
+          },
+          "policy": {
+            "policyKind": "LAB_POLICY",
+            "ruleState": "AVAILABLE"
+          },
+          "task": "Give policy guidance."
+        },
+        "payload": {
+          "resourceRef": {
+            "resourceType": "LAB",
+            "resourceId": "lab-1"
+          }
+        },
+        "expectedOutput": {
+          "behavior": "SUCCESS",
+          "contentType": "GUIDANCE",
+          "summary": "Synthetic safe result.",
+          "actionRisk": "READ_ONLY"
+        },
+        "governance": {
+          "categoryIds": [
+            "CAT_LAB_POLICY_GUIDANCE"
+          ],
+          "categoryGovernance": [
+            {
+              "categoryId": "CAT_LAB_POLICY_GUIDANCE",
+              "classification": "INTERNAL",
+              "datasetUsePermission": "ELIGIBLE_AFTER_APPROVAL",
+              "visibility": "LAB_ASSISTANT_ONLY",
+              "sanitization": {
+                "disposition": "SANITIZED_DERIVATIVE_REQUIRED"
+              },
+              "provenance": {
+                "type": "INTERNAL_SANITIZED"
+              },
+              "modelDevelopmentPurpose": [
+                "DEVELOPMENT_TEST"
+              ]
+            }
+          ]
+        },
+        "metadata": {
+          "synthetic": true
+        }
+      },
+      "expected": false,
+      "assertion": "cross-family isolation"
+    },
+    {
+      "id": "ISO-RESEARCH-AS-ADMIN",
+      "schema": "admin",
+      "record": {
+        "schemaVersion": "1.0.0",
+        "recordId": "record-research-uc-001",
+        "domain": "RESEARCH",
+        "recordType": "PROJECT_PROGRESS_SUMMARY",
+        "visibility": "RESEARCH_ASSISTANT_ONLY",
+        "useCaseId": "RESEARCH_UC_001",
+        "input": {
+          "projectRef": {
+            "resourceType": "PROJECT",
+            "resourceId": "project-1"
+          },
+          "projectProgress": {
+            "state": "ON_TRACK"
+          }
+        },
+        "payload": {
+          "resourceRef": {
+            "resourceType": "PROJECT",
+            "resourceId": "project-1"
+          }
+        },
+        "expectedOutput": {
+          "behavior": "SUCCESS",
+          "contentType": "SUMMARY",
+          "summary": "Synthetic safe result.",
+          "actionRisk": "READ_ONLY"
+        },
+        "governance": {
+          "categoryIds": [
+            "CAT_RESEARCH_PROJECT_PROGRESS"
+          ],
+          "categoryGovernance": [
+            {
+              "categoryId": "CAT_RESEARCH_PROJECT_PROGRESS",
+              "classification": "SENSITIVE",
+              "datasetUsePermission": "ELIGIBLE_AFTER_APPROVAL",
+              "visibility": "RESEARCH_ASSISTANT_ONLY",
+              "sanitization": {
+                "disposition": "SANITIZED_DERIVATIVE_REQUIRED"
+              },
+              "provenance": {
+                "type": "INTERNAL_SANITIZED"
+              },
+              "modelDevelopmentPurpose": [
+                "DEVELOPMENT_TEST"
+              ]
+            }
+          ]
+        },
+        "metadata": {
+          "synthetic": true
+        }
+      },
+      "expected": false,
+      "assertion": "cross-family isolation"
+    },
+    {
+      "id": "ISO-RESEARCH-AS-LAB",
+      "schema": "lab",
+      "record": {
+        "schemaVersion": "1.0.0",
+        "recordId": "record-research-uc-001",
+        "domain": "RESEARCH",
+        "recordType": "PROJECT_PROGRESS_SUMMARY",
+        "visibility": "RESEARCH_ASSISTANT_ONLY",
+        "useCaseId": "RESEARCH_UC_001",
+        "input": {
+          "projectRef": {
+            "resourceType": "PROJECT",
+            "resourceId": "project-1"
+          },
+          "projectProgress": {
+            "state": "ON_TRACK"
+          }
+        },
+        "payload": {
+          "resourceRef": {
+            "resourceType": "PROJECT",
+            "resourceId": "project-1"
+          }
+        },
+        "expectedOutput": {
+          "behavior": "SUCCESS",
+          "contentType": "SUMMARY",
+          "summary": "Synthetic safe result.",
+          "actionRisk": "READ_ONLY"
+        },
+        "governance": {
+          "categoryIds": [
+            "CAT_RESEARCH_PROJECT_PROGRESS"
+          ],
+          "categoryGovernance": [
+            {
+              "categoryId": "CAT_RESEARCH_PROJECT_PROGRESS",
+              "classification": "SENSITIVE",
+              "datasetUsePermission": "ELIGIBLE_AFTER_APPROVAL",
+              "visibility": "RESEARCH_ASSISTANT_ONLY",
+              "sanitization": {
+                "disposition": "SANITIZED_DERIVATIVE_REQUIRED"
+              },
+              "provenance": {
+                "type": "INTERNAL_SANITIZED"
+              },
+              "modelDevelopmentPurpose": [
+                "DEVELOPMENT_TEST"
+              ]
+            }
+          ]
+        },
+        "metadata": {
+          "synthetic": true
+        }
+      },
+      "expected": false,
+      "assertion": "cross-family isolation"
+    },
+    {
+      "id": "ISO-ADMIN-PRIVATE-AS-SHARED",
+      "schema": "shared",
+      "record": {
+        "schemaVersion": "1.0.0",
+        "recordId": "record-admin-uc-001",
+        "domain": "ADMIN",
+        "recordType": "SYSTEM_STATUS_SUMMARY",
+        "visibility": "ADMIN_ASSISTANT_ONLY",
+        "useCaseId": "ADMIN_UC_001",
+        "input": {
+          "systemStatus": {
+            "statusKind": "SYSTEM_STATUS",
+            "health": "HEALTHY"
+          }
+        },
+        "payload": {
+          "resourceRef": {
+            "resourceType": "SYSTEM_STATUS",
+            "resourceId": "system-status-1"
+          },
+          "subjectKind": "SYSTEM_STATUS"
+        },
+        "expectedOutput": {
+          "behavior": "SUCCESS",
+          "contentType": "SUMMARY",
+          "summary": "Synthetic safe result.",
+          "actionRisk": "READ_ONLY"
+        },
+        "governance": {
+          "categoryIds": [
+            "CAT_ADMIN_SYSTEM_STATUS"
+          ],
+          "categoryGovernance": [
+            {
+              "categoryId": "CAT_ADMIN_SYSTEM_STATUS",
+              "classification": "INTERNAL",
+              "datasetUsePermission": "ELIGIBLE_AFTER_APPROVAL",
+              "visibility": "ADMIN_ASSISTANT_ONLY",
+              "sanitization": {
+                "disposition": "SANITIZED_DERIVATIVE_REQUIRED"
+              },
+              "provenance": {
+                "type": "INTERNAL_SANITIZED"
+              },
+              "modelDevelopmentPurpose": [
+                "DEVELOPMENT_TEST"
+              ]
+            }
+          ]
+        },
+        "metadata": {
+          "synthetic": true
+        }
+      },
+      "expected": false,
+      "assertion": "cross-family isolation"
+    },
+    {
+      "id": "ISO-LAB-PRIVATE-AS-SHARED",
+      "schema": "shared",
+      "record": {
+        "schemaVersion": "1.0.0",
+        "recordId": "record-lab-uc-001",
+        "domain": "LAB",
+        "recordType": "POLICY_GUIDANCE",
+        "visibility": "LAB_ASSISTANT_ONLY",
+        "useCaseId": "LAB_UC_001",
+        "input": {
+          "labRef": {
+            "resourceType": "LAB",
+            "resourceId": "lab-1"
+          },
+          "policy": {
+            "policyKind": "LAB_POLICY",
+            "ruleState": "AVAILABLE"
+          },
+          "task": "Give policy guidance."
+        },
+        "payload": {
+          "resourceRef": {
+            "resourceType": "LAB",
+            "resourceId": "lab-1"
+          }
+        },
+        "expectedOutput": {
+          "behavior": "SUCCESS",
+          "contentType": "GUIDANCE",
+          "summary": "Synthetic safe result.",
+          "actionRisk": "READ_ONLY"
+        },
+        "governance": {
+          "categoryIds": [
+            "CAT_LAB_POLICY_GUIDANCE"
+          ],
+          "categoryGovernance": [
+            {
+              "categoryId": "CAT_LAB_POLICY_GUIDANCE",
+              "classification": "INTERNAL",
+              "datasetUsePermission": "ELIGIBLE_AFTER_APPROVAL",
+              "visibility": "LAB_ASSISTANT_ONLY",
+              "sanitization": {
+                "disposition": "SANITIZED_DERIVATIVE_REQUIRED"
+              },
+              "provenance": {
+                "type": "INTERNAL_SANITIZED"
+              },
+              "modelDevelopmentPurpose": [
+                "DEVELOPMENT_TEST"
+              ]
+            }
+          ]
+        },
+        "metadata": {
+          "synthetic": true
+        }
+      },
+      "expected": false,
+      "assertion": "cross-family isolation"
+    },
+    {
+      "id": "ISO-RESEARCH-PRIVATE-AS-SHARED",
+      "schema": "shared",
+      "record": {
+        "schemaVersion": "1.0.0",
+        "recordId": "record-research-uc-001",
+        "domain": "RESEARCH",
+        "recordType": "PROJECT_PROGRESS_SUMMARY",
+        "visibility": "RESEARCH_ASSISTANT_ONLY",
+        "useCaseId": "RESEARCH_UC_001",
+        "input": {
+          "projectRef": {
+            "resourceType": "PROJECT",
+            "resourceId": "project-1"
+          },
+          "projectProgress": {
+            "state": "ON_TRACK"
+          }
+        },
+        "payload": {
+          "resourceRef": {
+            "resourceType": "PROJECT",
+            "resourceId": "project-1"
+          }
+        },
+        "expectedOutput": {
+          "behavior": "SUCCESS",
+          "contentType": "SUMMARY",
+          "summary": "Synthetic safe result.",
+          "actionRisk": "READ_ONLY"
+        },
+        "governance": {
+          "categoryIds": [
+            "CAT_RESEARCH_PROJECT_PROGRESS"
+          ],
+          "categoryGovernance": [
+            {
+              "categoryId": "CAT_RESEARCH_PROJECT_PROGRESS",
+              "classification": "SENSITIVE",
+              "datasetUsePermission": "ELIGIBLE_AFTER_APPROVAL",
+              "visibility": "RESEARCH_ASSISTANT_ONLY",
+              "sanitization": {
+                "disposition": "SANITIZED_DERIVATIVE_REQUIRED"
+              },
+              "provenance": {
+                "type": "INTERNAL_SANITIZED"
+              },
+              "modelDevelopmentPurpose": [
+                "DEVELOPMENT_TEST"
+              ]
+            }
+          ]
+        },
+        "metadata": {
+          "synthetic": true
+        }
+      },
+      "expected": false,
+      "assertion": "cross-family isolation"
+    },
+    {
+      "id": "NEG-MISSING-USECASE",
+      "schema": "admin",
+      "record": {
+        "schemaVersion": "1.0.0",
+        "recordId": "record-admin-uc-001",
+        "domain": "ADMIN",
+        "recordType": "SYSTEM_STATUS_SUMMARY",
+        "visibility": "ADMIN_ASSISTANT_ONLY",
+        "input": {
+          "systemStatus": {
+            "statusKind": "SYSTEM_STATUS"
+          }
+        },
+        "payload": {
+          "resourceRef": {
+            "resourceType": "SYSTEM_STATUS",
+            "resourceId": "system-status-1"
+          },
+          "subjectKind": "SYSTEM_STATUS"
+        },
+        "expectedOutput": {
+          "behavior": "SUCCESS",
+          "contentType": "SUMMARY",
+          "summary": "Synthetic safe result.",
+          "actionRisk": "READ_ONLY"
+        },
+        "governance": {
+          "categoryIds": [
+            "CAT_ADMIN_SYSTEM_STATUS"
+          ],
+          "categoryGovernance": [
+            {
+              "categoryId": "CAT_ADMIN_SYSTEM_STATUS",
+              "classification": "INTERNAL",
+              "datasetUsePermission": "ELIGIBLE_AFTER_APPROVAL",
+              "visibility": "ADMIN_ASSISTANT_ONLY",
+              "sanitization": {
+                "disposition": "SANITIZED_DERIVATIVE_REQUIRED"
+              },
+              "provenance": {
+                "type": "INTERNAL_SANITIZED"
+              },
+              "modelDevelopmentPurpose": [
+                "DEVELOPMENT_TEST"
+              ]
+            }
+          ]
+        },
+        "metadata": {
+          "synthetic": true
+        }
+      },
+      "expected": false,
+      "assertion": "delete useCaseId"
+    },
+    {
+      "id": "NEG-MISSING-VISIBILITY",
+      "schema": "lab",
+      "record": {
+        "schemaVersion": "1.0.0",
+        "recordId": "record-lab-uc-001",
+        "domain": "LAB",
+        "recordType": "POLICY_GUIDANCE",
+        "useCaseId": "LAB_UC_001",
+        "input": {
+          "labRef": {
+            "resourceType": "LAB",
+            "resourceId": "lab-1"
+          },
+          "policy": {
+            "policyKind": "LAB_POLICY",
+            "ruleState": "AVAILABLE"
+          },
+          "task": "Give policy guidance."
+        },
+        "payload": {
+          "resourceRef": {
+            "resourceType": "LAB",
+            "resourceId": "lab-1"
+          }
+        },
+        "expectedOutput": {
+          "behavior": "SUCCESS",
+          "contentType": "GUIDANCE",
+          "summary": "Synthetic safe result.",
+          "actionRisk": "READ_ONLY"
+        },
+        "governance": {
+          "categoryIds": [
+            "CAT_LAB_POLICY_GUIDANCE"
+          ],
+          "categoryGovernance": [
+            {
+              "categoryId": "CAT_LAB_POLICY_GUIDANCE",
+              "classification": "INTERNAL",
+              "datasetUsePermission": "ELIGIBLE_AFTER_APPROVAL",
+              "visibility": "LAB_ASSISTANT_ONLY",
+              "sanitization": {
+                "disposition": "SANITIZED_DERIVATIVE_REQUIRED"
+              },
+              "provenance": {
+                "type": "INTERNAL_SANITIZED"
+              },
+              "modelDevelopmentPurpose": [
+                "DEVELOPMENT_TEST"
+              ]
+            }
+          ]
+        },
+        "metadata": {
+          "synthetic": true
+        }
+      },
+      "expected": false,
+      "assertion": "delete visibility"
+    },
+    {
+      "id": "NEG-MISSING-GOVERNANCE",
+      "schema": "research",
+      "record": {
+        "schemaVersion": "1.0.0",
+        "recordId": "record-research-uc-001",
+        "domain": "RESEARCH",
+        "recordType": "PROJECT_PROGRESS_SUMMARY",
+        "visibility": "RESEARCH_ASSISTANT_ONLY",
+        "useCaseId": "RESEARCH_UC_001",
+        "input": {
+          "projectRef": {
+            "resourceType": "PROJECT",
+            "resourceId": "project-1"
+          },
+          "projectProgress": {
+            "state": "ON_TRACK"
+          }
+        },
+        "payload": {
+          "resourceRef": {
+            "resourceType": "PROJECT",
+            "resourceId": "project-1"
+          },
+          "rawProjectData": "nope"
+        },
+        "expectedOutput": {
+          "behavior": "SUCCESS",
+          "contentType": "SUMMARY",
+          "summary": "Synthetic safe result.",
+          "actionRisk": "READ_ONLY"
+        },
+        "metadata": {
+          "synthetic": true
+        }
+      },
+      "expected": false,
+      "assertion": "delete governance"
+    },
+    {
+      "id": "NEG-MISSING-PURPOSE",
+      "schema": "admin",
+      "record": {
+        "schemaVersion": "1.0.0",
+        "recordId": "record-admin-uc-001",
+        "domain": "ADMIN",
+        "recordType": "SYSTEM_STATUS_SUMMARY",
+        "visibility": "ADMIN_ASSISTANT_ONLY",
+        "useCaseId": "ADMIN_UC_001",
+        "input": {
+          "systemStatus": {
+            "statusKind": "SYSTEM_STATUS"
+          }
+        },
+        "payload": {
+          "resourceRef": {
+            "resourceType": "SYSTEM_STATUS",
+            "resourceId": "system-status-1"
+          },
+          "subjectKind": "SYSTEM_STATUS"
+        },
+        "expectedOutput": {
+          "behavior": "SUCCESS",
+          "contentType": "SUMMARY",
+          "summary": "Synthetic safe result.",
+          "actionRisk": "READ_ONLY"
+        },
+        "governance": {
+          "categoryIds": [
+            "CAT_ADMIN_SYSTEM_STATUS"
+          ],
+          "categoryGovernance": [
+            {
+              "categoryId": "CAT_ADMIN_SYSTEM_STATUS",
+              "classification": "INTERNAL",
+              "datasetUsePermission": "ELIGIBLE_AFTER_APPROVAL",
+              "visibility": "ADMIN_ASSISTANT_ONLY",
+              "sanitization": {
+                "disposition": "SANITIZED_DERIVATIVE_REQUIRED"
+              },
+              "provenance": {
+                "type": "INTERNAL_SANITIZED"
+              }
+            }
+          ]
+        },
+        "metadata": {
+          "synthetic": true
+        }
+      },
+      "expected": false,
+      "assertion": "delete purpose"
+    },
+    {
+      "id": "NEG-GOV-TUPLE-CLASSIFICATION",
+      "schema": "lab",
+      "record": {
+        "schemaVersion": "1.0.0",
+        "recordId": "record-lab-uc-002",
+        "domain": "LAB",
+        "recordType": "SLOT_AVAILABILITY",
+        "visibility": "LAB_ASSISTANT_ONLY",
+        "useCaseId": "LAB_UC_002",
+        "input": {
+          "labRef": {
+            "resourceType": "LAB",
+            "resourceId": "lab-2"
+          },
+          "slotAvailability": {
+            "availability": "AVAILABLE"
+          }
+        },
+        "payload": {
+          "resourceRef": {
+            "resourceType": "LAB_SLOT",
+            "resourceId": "lab-slot-2"
+          }
+        },
+        "expectedOutput": {
+          "behavior": "SUCCESS",
+          "contentType": "LOOKUP",
+          "summary": "Synthetic safe result.",
+          "actionRisk": "READ_ONLY"
+        },
+        "governance": {
+          "categoryIds": [
+            "CAT_LAB_SLOT_AVAILABILITY"
+          ],
+          "categoryGovernance": [
+            {
+              "categoryId": "CAT_LAB_SLOT_AVAILABILITY",
+              "classification": "INTERNAL",
+              "datasetUsePermission": "ELIGIBLE_AFTER_APPROVAL",
+              "visibility": "LAB_ASSISTANT_ONLY",
+              "sanitization": {
+                "disposition": "SANITIZED_DERIVATIVE_REQUIRED"
+              },
+              "provenance": {
+                "type": "INTERNAL_SANITIZED"
+              },
+              "modelDevelopmentPurpose": [
+                "DEVELOPMENT_TEST"
+              ]
+            }
+          ]
+        },
+        "metadata": {
+          "synthetic": true
+        }
+      },
+      "expected": false,
+      "assertion": "wrong classification"
+    },
+    {
+      "id": "NEG-GOV-INVALID-DATASET-USE-PERMISSION",
+      "schema": "research",
+      "record": {
+        "schemaVersion": "1.0.0",
+        "recordId": "record-research-uc-001",
+        "domain": "RESEARCH",
+        "recordType": "PROJECT_PROGRESS_SUMMARY",
+        "visibility": "RESEARCH_ASSISTANT_ONLY",
+        "useCaseId": "RESEARCH_UC_001",
+        "input": {
+          "projectRef": {
+            "resourceType": "PROJECT",
+            "resourceId": "project-1"
+          },
+          "projectProgress": {
+            "state": "ON_TRACK"
+          }
+        },
+        "payload": {
+          "resourceRef": {
+            "resourceType": "PROJECT",
+            "resourceId": "project-1"
+          },
+          "rawProjectData": "nope"
+        },
+        "expectedOutput": {
+          "behavior": "SUCCESS",
+          "contentType": "SUMMARY",
+          "summary": "Synthetic safe result.",
+          "actionRisk": "READ_ONLY"
+        },
+        "governance": {
+          "categoryIds": [
+            "CAT_RESEARCH_PROJECT_PROGRESS"
+          ],
+          "categoryGovernance": [
+            {
+              "categoryId": "CAT_RESEARCH_PROJECT_PROGRESS",
+              "classification": "SENSITIVE",
+              "datasetUsePermission": "PROHIBITED",
+              "visibility": "RESEARCH_ASSISTANT_ONLY",
+              "sanitization": {
+                "disposition": "SANITIZED_DERIVATIVE_REQUIRED"
+              },
+              "provenance": {
+                "type": "INTERNAL_SANITIZED"
+              },
+              "modelDevelopmentPurpose": [
+                "DEVELOPMENT_TEST"
+              ]
+            }
+          ]
+        },
+        "metadata": {
+          "synthetic": true
+        }
+      },
+      "expected": false,
+      "assertion": "inactive permission"
+    },
+    {
+      "id": "NEG-ADMIN-005-MISSING-SECOND-CATEGORY",
+      "schema": "admin",
+      "record": {
+        "schemaVersion": "1.0.0",
+        "recordId": "record-admin-uc-005",
+        "domain": "ADMIN",
+        "recordType": "ACCOUNT_ACTION_DRAFT",
+        "visibility": "ADMIN_ASSISTANT_ONLY",
+        "useCaseId": "ADMIN_UC_005",
+        "input": {
+          "userRef": {
+            "resourceType": "USER_STATUS",
+            "resourceId": "user-status-5"
+          },
+          "userStatus": {
+            "statusKind": "USER_STATUS",
+            "state": "ACTIVE"
+          },
+          "task": "Draft an account action."
+        },
+        "payload": {
+          "resourceRef": {
+            "resourceType": "USER_STATUS",
+            "resourceId": "user-status-5"
+          },
+          "draftKind": "ACCOUNT_ACTION_DRAFT"
+        },
+        "expectedOutput": {
+          "behavior": "DRAFT_ONLY",
+          "contentType": "NON_OFFICIAL_STRUCTURED_DRAFT",
+          "draft": {
+            "kind": "ACCOUNT_ACTION_DRAFT",
+            "title": "Synthetic draft",
+            "steps": [
+              "Review safely"
+            ]
+          },
+          "actionRisk": "DRAFT_ONLY"
+        },
+        "governance": {
+          "categoryIds": [
+            "CAT_IDENTITY_USER_STATUS"
+          ],
+          "categoryGovernance": [
+            {
+              "categoryId": "CAT_IDENTITY_USER_STATUS",
+              "classification": "SENSITIVE",
+              "datasetUsePermission": "ELIGIBLE_AFTER_APPROVAL",
+              "visibility": "ADMIN_ASSISTANT_ONLY",
+              "sanitization": {
+                "disposition": "SANITIZED_DERIVATIVE_REQUIRED"
+              },
+              "provenance": {
+                "type": "INTERNAL_SANITIZED"
+              },
+              "modelDevelopmentPurpose": [
+                "DEVELOPMENT_TEST"
+              ]
+            }
+          ]
+        },
+        "metadata": {
+          "synthetic": true
+        }
+      },
+      "expected": false,
+      "assertion": "missing second tuple"
+    },
+    {
+      "id": "NEG-LAB-005-SECOND-TUPLE-MISMATCH",
+      "schema": "lab",
+      "record": {
+        "schemaVersion": "1.0.0",
+        "recordId": "record-lab-uc-005",
+        "domain": "LAB",
+        "recordType": "BOOKING_DRAFT",
+        "visibility": "LAB_ASSISTANT_ONLY",
+        "useCaseId": "LAB_UC_005",
+        "input": {
+          "labRef": {
+            "resourceType": "LAB",
+            "resourceId": "lab-5"
+          },
+          "slotRef": {
+            "resourceType": "LAB_SLOT",
+            "resourceId": "lab-slot-5"
+          },
+          "slotAvailability": {
+            "availability": "AVAILABLE"
+          },
+          "task": "Draft a booking."
+        },
+        "payload": {
+          "resourceRef": {
+            "resourceType": "LAB_SLOT",
+            "resourceId": "lab-slot-5"
+          },
+          "draftBookingKind": "BOOKING_DRAFT"
+        },
+        "expectedOutput": {
+          "behavior": "DRAFT_ONLY",
+          "contentType": "NON_OFFICIAL_STRUCTURED_DRAFT",
+          "draft": {
+            "kind": "BOOKING_DRAFT",
+            "title": "Synthetic draft",
+            "steps": [
+              "Review safely"
+            ]
+          },
+          "actionRisk": "DRAFT_ONLY"
+        },
+        "governance": {
+          "categoryIds": [
+            "CAT_LAB_SLOT_AVAILABILITY",
+            "CAT_SYNTHETIC_LAB_BOOKING_DRAFT"
+          ],
+          "categoryGovernance": [
+            {
+              "categoryId": "CAT_LAB_SLOT_AVAILABILITY",
+              "classification": "SENSITIVE",
+              "datasetUsePermission": "ELIGIBLE_AFTER_APPROVAL",
+              "visibility": "LAB_ASSISTANT_ONLY",
+              "sanitization": {
+                "disposition": "SANITIZED_DERIVATIVE_REQUIRED"
+              },
+              "provenance": {
+                "type": "INTERNAL_SANITIZED"
+              },
+              "modelDevelopmentPurpose": [
+                "DEVELOPMENT_TEST"
+              ]
+            },
+            {
+              "categoryId": "CAT_SYNTHETIC_LAB_BOOKING_DRAFT",
+              "classification": "INTERNAL",
+              "datasetUsePermission": "SYNTHETIC_ONLY",
+              "visibility": "LAB_ASSISTANT_ONLY",
+              "sanitization": {
+                "disposition": "SYNTHETIC_GENERATION_ONLY"
+              },
+              "provenance": {
+                "type": "INTERNAL_SANITIZED"
+              },
+              "modelDevelopmentPurpose": [
+                "DEVELOPMENT_TEST"
+              ]
+            }
+          ]
+        },
+        "metadata": {
+          "synthetic": true
+        }
+      },
+      "expected": false,
+      "assertion": "tuple provenance mismatch"
+    },
+    {
+      "id": "NEG-UNKNOWN-VERSION",
+      "schema": "shared",
+      "record": {
+        "schemaVersion": "9.9.9",
+        "recordId": "record-admin-uc-001",
+        "domain": "ADMIN",
+        "recordType": "SYSTEM_STATUS_SUMMARY",
+        "visibility": "ADMIN_ASSISTANT_ONLY",
+        "useCaseId": "ADMIN_UC_001",
+        "input": {
+          "systemStatus": {
+            "statusKind": "SYSTEM_STATUS"
+          }
+        },
+        "payload": {
+          "resourceRef": {
+            "resourceType": "SYSTEM_STATUS",
+            "resourceId": "system-status-1"
+          },
+          "subjectKind": "SYSTEM_STATUS"
+        },
+        "expectedOutput": {
+          "behavior": "SUCCESS",
+          "contentType": "SUMMARY",
+          "summary": "Synthetic safe result.",
+          "actionRisk": "READ_ONLY"
+        },
+        "governance": {
+          "categoryIds": [
+            "CAT_ADMIN_SYSTEM_STATUS"
+          ],
+          "categoryGovernance": [
+            {
+              "categoryId": "CAT_ADMIN_SYSTEM_STATUS",
+              "classification": "INTERNAL",
+              "datasetUsePermission": "ELIGIBLE_AFTER_APPROVAL",
+              "visibility": "ADMIN_ASSISTANT_ONLY",
+              "sanitization": {
+                "disposition": "SANITIZED_DERIVATIVE_REQUIRED"
+              },
+              "provenance": {
+                "type": "INTERNAL_SANITIZED"
+              },
+              "modelDevelopmentPurpose": [
+                "DEVELOPMENT_TEST"
+              ]
+            }
+          ]
+        },
+        "metadata": {
+          "synthetic": true
+        }
+      },
+      "expected": false,
+      "assertion": "unknown version"
+    },
+    {
+      "id": "NEG-UNKNOWN-DOMAIN",
+      "schema": "admin",
+      "record": {
+        "schemaVersion": "1.0.0",
+        "recordId": "record-admin-uc-001",
+        "domain": "UNKNOWN",
+        "recordType": "SYSTEM_STATUS_SUMMARY",
+        "visibility": "ADMIN_ASSISTANT_ONLY",
+        "useCaseId": "ADMIN_UC_001",
+        "input": {
+          "systemStatus": {
+            "statusKind": "SYSTEM_STATUS"
+          }
+        },
+        "payload": {
+          "resourceRef": {
+            "resourceType": "SYSTEM_STATUS",
+            "resourceId": "system-status-1"
+          },
+          "subjectKind": "SYSTEM_STATUS"
+        },
+        "expectedOutput": {
+          "behavior": "SUCCESS",
+          "contentType": "SUMMARY",
+          "summary": "Synthetic safe result.",
+          "actionRisk": "READ_ONLY"
+        },
+        "governance": {
+          "categoryIds": [
+            "CAT_ADMIN_SYSTEM_STATUS"
+          ],
+          "categoryGovernance": [
+            {
+              "categoryId": "CAT_ADMIN_SYSTEM_STATUS",
+              "classification": "INTERNAL",
+              "datasetUsePermission": "ELIGIBLE_AFTER_APPROVAL",
+              "visibility": "ADMIN_ASSISTANT_ONLY",
+              "sanitization": {
+                "disposition": "SANITIZED_DERIVATIVE_REQUIRED"
+              },
+              "provenance": {
+                "type": "INTERNAL_SANITIZED"
+              },
+              "modelDevelopmentPurpose": [
+                "DEVELOPMENT_TEST"
+              ]
+            }
+          ]
+        },
+        "metadata": {
+          "synthetic": true
+        }
+      },
+      "expected": false,
+      "assertion": "unknown domain"
+    },
+    {
+      "id": "NEG-EXTRA-ACCESS-TOKEN",
+      "schema": "admin",
+      "record": {
+        "schemaVersion": "1.0.0",
+        "recordId": "record-admin-uc-001",
+        "domain": "ADMIN",
+        "recordType": "SYSTEM_STATUS_SUMMARY",
+        "visibility": "ADMIN_ASSISTANT_ONLY",
+        "useCaseId": "ADMIN_UC_001",
+        "input": {
+          "systemStatus": {
+            "statusKind": "SYSTEM_STATUS"
+          }
+        },
+        "payload": {
+          "resourceRef": {
+            "resourceType": "SYSTEM_STATUS",
+            "resourceId": "system-status-1"
+          },
+          "subjectKind": "SYSTEM_STATUS"
+        },
+        "expectedOutput": {
+          "behavior": "SUCCESS",
+          "contentType": "SUMMARY",
+          "summary": "Synthetic safe result.",
+          "actionRisk": "READ_ONLY"
+        },
+        "governance": {
+          "categoryIds": [
+            "CAT_ADMIN_SYSTEM_STATUS"
+          ],
+          "categoryGovernance": [
+            {
+              "categoryId": "CAT_ADMIN_SYSTEM_STATUS",
+              "classification": "INTERNAL",
+              "datasetUsePermission": "ELIGIBLE_AFTER_APPROVAL",
+              "visibility": "ADMIN_ASSISTANT_ONLY",
+              "sanitization": {
+                "disposition": "SANITIZED_DERIVATIVE_REQUIRED"
+              },
+              "provenance": {
+                "type": "INTERNAL_SANITIZED"
+              },
+              "modelDevelopmentPurpose": [
+                "DEVELOPMENT_TEST"
+              ]
+            }
+          ]
+        },
+        "metadata": {
+          "synthetic": true
+        },
+        "accessToken": "nope"
+      },
+      "expected": false,
+      "assertion": "forbidden top-level field"
+    },
+    {
+      "id": "NEG-EXTRA-PAYLOAD-FIELD",
+      "schema": "research",
+      "record": {
+        "schemaVersion": "1.0.0",
+        "recordId": "record-research-uc-001",
+        "domain": "RESEARCH",
+        "recordType": "PROJECT_PROGRESS_SUMMARY",
+        "visibility": "RESEARCH_ASSISTANT_ONLY",
+        "useCaseId": "RESEARCH_UC_001",
+        "input": {
+          "projectRef": {
+            "resourceType": "PROJECT",
+            "resourceId": "project-1"
+          },
+          "projectProgress": {
+            "state": "ON_TRACK"
+          }
+        },
+        "payload": {
+          "resourceRef": {
+            "resourceType": "PROJECT",
+            "resourceId": "project-1"
+          },
+          "rawProjectData": "nope"
+        },
+        "expectedOutput": {
+          "behavior": "SUCCESS",
+          "contentType": "SUMMARY",
+          "summary": "Synthetic safe result.",
+          "actionRisk": "READ_ONLY"
+        },
+        "governance": {
+          "categoryIds": [
+            "CAT_RESEARCH_PROJECT_PROGRESS"
+          ],
+          "categoryGovernance": [
+            {
+              "categoryId": "CAT_RESEARCH_PROJECT_PROGRESS",
+              "classification": "SENSITIVE",
+              "datasetUsePermission": "ELIGIBLE_AFTER_APPROVAL",
+              "visibility": "RESEARCH_ASSISTANT_ONLY",
+              "sanitization": {
+                "disposition": "SANITIZED_DERIVATIVE_REQUIRED"
+              },
+              "provenance": {
+                "type": "INTERNAL_SANITIZED"
+              },
+              "modelDevelopmentPurpose": [
+                "DEVELOPMENT_TEST"
+              ]
+            }
+          ]
+        },
+        "metadata": {
+          "synthetic": true
+        }
+      },
+      "expected": false,
+      "assertion": "forbidden payload field"
+    },
+    {
+      "id": "NEG-INPUT-MISSING-OBSERVATION-ADMIN-001",
+      "schema": "admin",
+      "record": {
+        "schemaVersion": "1.0.0",
+        "recordId": "record-admin-uc-001",
+        "domain": "ADMIN",
+        "recordType": "SYSTEM_STATUS_SUMMARY",
+        "visibility": "ADMIN_ASSISTANT_ONLY",
+        "useCaseId": "ADMIN_UC_001",
+        "input": {
+          "systemStatus": {
+            "statusKind": "SYSTEM_STATUS"
+          }
+        },
+        "payload": {
+          "resourceRef": {
+            "resourceType": "SYSTEM_STATUS",
+            "resourceId": "system-status-1"
+          },
+          "subjectKind": "SYSTEM_STATUS"
+        },
+        "expectedOutput": {
+          "behavior": "SUCCESS",
+          "contentType": "SUMMARY",
+          "summary": "Synthetic safe result.",
+          "actionRisk": "READ_ONLY"
+        },
+        "governance": {
+          "categoryIds": [
+            "CAT_ADMIN_SYSTEM_STATUS"
+          ],
+          "categoryGovernance": [
+            {
+              "categoryId": "CAT_ADMIN_SYSTEM_STATUS",
+              "classification": "INTERNAL",
+              "datasetUsePermission": "ELIGIBLE_AFTER_APPROVAL",
+              "visibility": "ADMIN_ASSISTANT_ONLY",
+              "sanitization": {
+                "disposition": "SANITIZED_DERIVATIVE_REQUIRED"
+              },
+              "provenance": {
+                "type": "INTERNAL_SANITIZED"
+              },
+              "modelDevelopmentPurpose": [
+                "DEVELOPMENT_TEST"
+              ]
+            }
+          ]
+        },
+        "metadata": {
+          "synthetic": true
+        }
+      },
+      "expected": false,
+      "assertion": "missing observation"
+    },
+    {
+      "id": "NEG-INPUT-MISSING-REF-LAB-002",
+      "schema": "lab",
+      "record": {
+        "schemaVersion": "1.0.0",
+        "recordId": "record-lab-uc-002",
+        "domain": "LAB",
+        "recordType": "SLOT_AVAILABILITY",
+        "visibility": "LAB_ASSISTANT_ONLY",
+        "useCaseId": "LAB_UC_002",
+        "input": {
+          "labRef": {
+            "resourceType": "LAB",
+            "resourceId": "lab-2"
+          },
+          "slotAvailability": {
+            "availability": "AVAILABLE"
+          }
+        },
+        "payload": {
+          "resourceRef": {
+            "resourceType": "LAB_SLOT",
+            "resourceId": "lab-slot-2"
+          }
+        },
+        "expectedOutput": {
+          "behavior": "SUCCESS",
+          "contentType": "LOOKUP",
+          "summary": "Synthetic safe result.",
+          "actionRisk": "READ_ONLY"
+        },
+        "governance": {
+          "categoryIds": [
+            "CAT_LAB_SLOT_AVAILABILITY"
+          ],
+          "categoryGovernance": [
+            {
+              "categoryId": "CAT_LAB_SLOT_AVAILABILITY",
+              "classification": "SENSITIVE",
+              "datasetUsePermission": "ELIGIBLE_AFTER_APPROVAL",
+              "visibility": "LAB_ASSISTANT_ONLY",
+              "sanitization": {
+                "disposition": "SANITIZED_DERIVATIVE_REQUIRED"
+              },
+              "provenance": {
+                "type": "INTERNAL_SANITIZED"
+              },
+              "modelDevelopmentPurpose": [
+                "DEVELOPMENT_TEST"
+              ]
+            }
+          ]
+        },
+        "metadata": {
+          "synthetic": true
+        }
+      },
+      "expected": false,
+      "assertion": "missing reference"
+    },
+    {
+      "id": "NEG-INPUT-MISSING-TASK-RESEARCH-004",
+      "schema": "research",
+      "record": {
+        "schemaVersion": "1.0.0",
+        "recordId": "record-research-uc-004",
+        "domain": "RESEARCH",
+        "recordType": "TASK_PROPOSAL_DRAFT",
+        "visibility": "RESEARCH_ASSISTANT_ONLY",
+        "useCaseId": "RESEARCH_UC_004",
+        "input": {
+          "projectRef": {
+            "resourceType": "PROJECT",
+            "resourceId": "project-4"
+          },
+          "groupRef": {
+            "resourceType": "PROJECT_GROUP",
+            "resourceId": "project-group-4"
+          },
+          "groupProgress": {
+            "state": "ON_TRACK"
+          }
+        },
+        "payload": {
+          "proposalKind": "TASK_PROPOSAL_DRAFT"
+        },
+        "expectedOutput": {
+          "behavior": "DRAFT_ONLY",
+          "contentType": "NON_OFFICIAL_STRUCTURED_DRAFT",
+          "draft": {
+            "kind": "TASK_PROPOSAL_DRAFT",
+            "title": "Synthetic draft",
+            "steps": [
+              "Review safely"
+            ]
+          },
+          "actionRisk": "DRAFT_ONLY"
+        },
+        "governance": {
+          "categoryIds": [
+            "CAT_RESEARCH_DRAFT_CONTEXT"
+          ],
+          "categoryGovernance": [
+            {
+              "categoryId": "CAT_RESEARCH_DRAFT_CONTEXT",
+              "classification": "SENSITIVE",
+              "datasetUsePermission": "SYNTHETIC_ONLY",
+              "visibility": "RESEARCH_ASSISTANT_ONLY",
+              "sanitization": {
+                "disposition": "SYNTHETIC_GENERATION_ONLY"
+              },
+              "provenance": {
+                "type": "SYNTHETIC"
+              },
+              "modelDevelopmentPurpose": [
+                "DEVELOPMENT_TEST"
+              ]
+            }
+          ]
+        },
+        "metadata": {
+          "synthetic": true
+        }
+      },
+      "expected": false,
+      "assertion": "missing task"
+    },
+    {
+      "id": "NEG-OUTPUT-CONTENT-ADMIN-001",
+      "schema": "admin",
+      "record": {
+        "schemaVersion": "1.0.0",
+        "recordId": "record-admin-uc-001",
+        "domain": "ADMIN",
+        "recordType": "SYSTEM_STATUS_SUMMARY",
+        "visibility": "ADMIN_ASSISTANT_ONLY",
+        "useCaseId": "ADMIN_UC_001",
+        "input": {
+          "systemStatus": {
+            "statusKind": "SYSTEM_STATUS"
+          }
+        },
+        "payload": {
+          "resourceRef": {
+            "resourceType": "SYSTEM_STATUS",
+            "resourceId": "system-status-1"
+          },
+          "subjectKind": "SYSTEM_STATUS"
+        },
+        "expectedOutput": {
+          "behavior": "SUCCESS",
+          "contentType": "LOOKUP",
+          "summary": "Synthetic safe result.",
+          "actionRisk": "READ_ONLY"
+        },
+        "governance": {
+          "categoryIds": [
+            "CAT_ADMIN_SYSTEM_STATUS"
+          ],
+          "categoryGovernance": [
+            {
+              "categoryId": "CAT_ADMIN_SYSTEM_STATUS",
+              "classification": "INTERNAL",
+              "datasetUsePermission": "ELIGIBLE_AFTER_APPROVAL",
+              "visibility": "ADMIN_ASSISTANT_ONLY",
+              "sanitization": {
+                "disposition": "SANITIZED_DERIVATIVE_REQUIRED"
+              },
+              "provenance": {
+                "type": "INTERNAL_SANITIZED"
+              },
+              "modelDevelopmentPurpose": [
+                "DEVELOPMENT_TEST"
+              ]
+            }
+          ]
+        },
+        "metadata": {
+          "synthetic": true
+        }
+      },
+      "expected": false,
+      "assertion": "wrong output content"
+    },
+    {
+      "id": "NEG-OUTPUT-ACTION-ADMIN-004",
+      "schema": "admin",
+      "record": {
+        "schemaVersion": "1.0.0",
+        "recordId": "record-admin-uc-004",
+        "domain": "ADMIN",
+        "recordType": "CONFIGURATION_CHANGE_DRAFT",
+        "visibility": "ADMIN_ASSISTANT_ONLY",
+        "useCaseId": "ADMIN_UC_004",
+        "input": {
+          "task": "Draft a safe configuration change."
+        },
+        "payload": {
+          "draftKind": "CONFIGURATION_CHANGE_DRAFT"
+        },
+        "expectedOutput": {
+          "behavior": "DRAFT_ONLY",
+          "contentType": "NON_OFFICIAL_STRUCTURED_DRAFT",
+          "draft": {
+            "kind": "CONFIGURATION_CHANGE_DRAFT",
+            "title": "Synthetic draft",
+            "steps": [
+              "Review safely"
+            ]
+          },
+          "actionRisk": "READ_ONLY"
+        },
+        "governance": {
+          "categoryIds": [
+            "CAT_ADMIN_DRAFT_TEMPLATE"
+          ],
+          "categoryGovernance": [
+            {
+              "categoryId": "CAT_ADMIN_DRAFT_TEMPLATE",
+              "classification": "INTERNAL",
+              "datasetUsePermission": "SYNTHETIC_ONLY",
+              "visibility": "ADMIN_ASSISTANT_ONLY",
+              "sanitization": {
+                "disposition": "SYNTHETIC_GENERATION_ONLY"
+              },
+              "provenance": {
+                "type": "SYNTHETIC"
+              },
+              "modelDevelopmentPurpose": [
+                "DEVELOPMENT_TEST"
+              ]
+            }
+          ]
+        },
+        "metadata": {
+          "synthetic": true
+        }
+      },
+      "expected": false,
+      "assertion": "wrong output action"
+    },
+    {
+      "id": "NEG-READ-FAILURE-HAS-SUMMARY",
+      "schema": "lab",
+      "record": {
+        "schemaVersion": "1.0.0",
+        "recordId": "record-lab-uc-003",
+        "domain": "LAB",
+        "recordType": "OWN_BOOKING_LOOKUP",
+        "visibility": "LAB_ASSISTANT_ONLY",
+        "useCaseId": "LAB_UC_003",
+        "input": {
+          "bookingRef": {
+            "resourceType": "BOOKING",
+            "resourceId": "booking-3"
+          },
+          "bookingStatus": {
+            "state": "ACTIVE"
+          }
+        },
+        "payload": {
+          "resourceRef": {
+            "resourceType": "BOOKING",
+            "resourceId": "booking-3"
+          }
+        },
+        "expectedOutput": {
+          "behavior": "SAFE_REFUSAL",
+          "contentType": "LOOKUP",
+          "message": "Synthetic refusal.",
+          "summary": "leak",
+          "actionRisk": "READ_ONLY"
+        },
+        "governance": {
+          "categoryIds": [
+            "CAT_BOOKING_OWNERSHIP"
+          ],
+          "categoryGovernance": [
+            {
+              "categoryId": "CAT_BOOKING_OWNERSHIP",
+              "classification": "SENSITIVE",
+              "datasetUsePermission": "SYNTHETIC_ONLY",
+              "visibility": "LAB_ASSISTANT_ONLY",
+              "sanitization": {
+                "disposition": "SYNTHETIC_GENERATION_ONLY"
+              },
+              "provenance": {
+                "type": "SYNTHETIC"
+              },
+              "modelDevelopmentPurpose": [
+                "DEVELOPMENT_TEST"
+              ]
+            }
+          ]
+        },
+        "metadata": {
+          "synthetic": true
+        }
+      },
+      "expected": false,
+      "assertion": "failure has summary"
+    },
+    {
+      "id": "NEG-DRAFT-FAILURE-HAS-DRAFT",
+      "schema": "research",
+      "record": {
+        "schemaVersion": "1.0.0",
+        "recordId": "record-research-uc-005",
+        "domain": "RESEARCH",
+        "recordType": "TASK_SUGGESTION_DRAFT",
+        "visibility": "RESEARCH_ASSISTANT_ONLY",
+        "useCaseId": "RESEARCH_UC_005",
+        "input": {
+          "taskRef": {
+            "resourceType": "ASSIGNED_TASK",
+            "resourceId": "assigned-task-5"
+          },
+          "assignedTask": {
+            "state": "TODO"
+          },
+          "task": "Draft a task suggestion."
+        },
+        "payload": {
+          "proposalKind": "TASK_SUGGESTION_DRAFT"
+        },
+        "expectedOutput": {
+          "behavior": "SAFE_REFUSAL",
+          "contentType": "NON_OFFICIAL_STRUCTURED_DRAFT",
+          "message": "Synthetic refusal.",
+          "draft": {
+            "kind": "TASK_SUGGESTION_DRAFT",
+            "title": "x",
+            "steps": [
+              "x"
+            ]
+          },
+          "actionRisk": "DRAFT_ONLY"
+        },
+        "governance": {
+          "categoryIds": [
+            "CAT_RESEARCH_DRAFT_CONTEXT"
+          ],
+          "categoryGovernance": [
+            {
+              "categoryId": "CAT_RESEARCH_DRAFT_CONTEXT",
+              "classification": "SENSITIVE",
+              "datasetUsePermission": "SYNTHETIC_ONLY",
+              "visibility": "RESEARCH_ASSISTANT_ONLY",
+              "sanitization": {
+                "disposition": "SYNTHETIC_GENERATION_ONLY"
+              },
+              "provenance": {
+                "type": "SYNTHETIC"
+              },
+              "modelDevelopmentPurpose": [
+                "DEVELOPMENT_TEST"
+              ]
+            }
+          ]
+        },
+        "metadata": {
+          "synthetic": true
+        }
+      },
+      "expected": false,
+      "assertion": "failure has draft"
+    },
+    {
+      "id": "NEG-DRAFT-SUCCESS-MISSING-STEPS",
+      "schema": "lab",
+      "record": {
+        "schemaVersion": "1.0.0",
+        "recordId": "record-lab-uc-005",
+        "domain": "LAB",
+        "recordType": "BOOKING_DRAFT",
+        "visibility": "LAB_ASSISTANT_ONLY",
+        "useCaseId": "LAB_UC_005",
+        "input": {
+          "labRef": {
+            "resourceType": "LAB",
+            "resourceId": "lab-5"
+          },
+          "slotRef": {
+            "resourceType": "LAB_SLOT",
+            "resourceId": "lab-slot-5"
+          },
+          "slotAvailability": {
+            "availability": "AVAILABLE"
+          },
+          "task": "Draft a booking."
+        },
+        "payload": {
+          "resourceRef": {
+            "resourceType": "LAB_SLOT",
+            "resourceId": "lab-slot-5"
+          },
+          "draftBookingKind": "BOOKING_DRAFT"
+        },
+        "expectedOutput": {
+          "behavior": "DRAFT_ONLY",
+          "contentType": "NON_OFFICIAL_STRUCTURED_DRAFT",
+          "draft": {
+            "kind": "BOOKING_DRAFT",
+            "title": "Synthetic draft"
+          },
+          "actionRisk": "DRAFT_ONLY"
+        },
+        "governance": {
+          "categoryIds": [
+            "CAT_LAB_SLOT_AVAILABILITY",
+            "CAT_SYNTHETIC_LAB_BOOKING_DRAFT"
+          ],
+          "categoryGovernance": [
+            {
+              "categoryId": "CAT_LAB_SLOT_AVAILABILITY",
+              "classification": "SENSITIVE",
+              "datasetUsePermission": "ELIGIBLE_AFTER_APPROVAL",
+              "visibility": "LAB_ASSISTANT_ONLY",
+              "sanitization": {
+                "disposition": "SANITIZED_DERIVATIVE_REQUIRED"
+              },
+              "provenance": {
+                "type": "INTERNAL_SANITIZED"
+              },
+              "modelDevelopmentPurpose": [
+                "DEVELOPMENT_TEST"
+              ]
+            },
+            {
+              "categoryId": "CAT_SYNTHETIC_LAB_BOOKING_DRAFT",
+              "classification": "INTERNAL",
+              "datasetUsePermission": "SYNTHETIC_ONLY",
+              "visibility": "LAB_ASSISTANT_ONLY",
+              "sanitization": {
+                "disposition": "SYNTHETIC_GENERATION_ONLY"
+              },
+              "provenance": {
+                "type": "SYNTHETIC"
+              },
+              "modelDevelopmentPurpose": [
+                "DEVELOPMENT_TEST"
+              ]
+            }
+          ]
+        },
+        "metadata": {
+          "synthetic": true
+        }
+      },
+      "expected": false,
+      "assertion": "draft missing steps"
+    },
+    {
+      "id": "NEG-MANIFEST-MISSING-POS-LAB-006",
+      "collectionMutation": {"kind": "removeManifestId", "targetCaseId": "POS-LAB-006"},
+      "schema": "lab",
+      "record": {
+        "schemaVersion": "1.0.0",
+        "recordId": "record-lab-uc-006",
+        "domain": "LAB",
+        "recordType": "CHECKIN_GUIDANCE",
+        "visibility": "LAB_ASSISTANT_ONLY",
+        "useCaseId": "LAB_UC_006",
+        "input": {
+          "bookingRef": {
+            "resourceType": "BOOKING",
+            "resourceId": "booking-6"
+          },
+          "checkInPolicy": {
+            "policyKind": "CHECKIN_POLICY",
+            "freshness": "CURRENT_AUTHORIZED_SNAPSHOT"
+          },
+          "task": "Give check-in guidance."
+        },
+        "payload": {
+          "resourceRef": {
+            "resourceType": "BOOKING",
+            "resourceId": "booking-6"
+          }
+        },
+        "expectedOutput": {
+          "behavior": "SUCCESS",
+          "contentType": "GUIDANCE",
+          "summary": "Synthetic safe result.",
+          "actionRisk": "READ_ONLY"
+        },
+        "governance": {
+          "categoryIds": [
+            "CAT_CHECKIN_POLICY"
+          ],
+          "categoryGovernance": [
+            {
+              "categoryId": "CAT_CHECKIN_POLICY",
+              "classification": "INTERNAL",
+              "datasetUsePermission": "ELIGIBLE_AFTER_APPROVAL",
+              "visibility": "LAB_ASSISTANT_ONLY",
+              "sanitization": {
+                "disposition": "SANITIZED_DERIVATIVE_REQUIRED"
+              },
+              "provenance": {
+                "type": "INTERNAL_SANITIZED"
+              },
+              "modelDevelopmentPurpose": [
+                "DEVELOPMENT_TEST"
+              ]
+            }
+          ]
+        },
+        "metadata": {
+          "synthetic": true
+        }
+      },
+      "expected": false,
+      "assertion": "fixture mismatch is checked by validator's manifest probe"
+    },
+    {
+      "id": "NEG-DUPLICATE-CASE-ID",
+      "collectionMutation": {"kind": "duplicateCaseId", "targetCaseId": "POS-ADMIN-001"},
+      "schema": "admin",
+      "record": {
+        "schemaVersion": "1.0.0",
+        "recordId": "record-duplicate",
+        "domain": "ADMIN",
+        "recordType": "SYSTEM_STATUS_SUMMARY",
+        "visibility": "ADMIN_ASSISTANT_ONLY",
+        "useCaseId": "ADMIN_UC_001",
+        "input": {
+          "systemStatus": {
+            "statusKind": "SYSTEM_STATUS"
+          }
+        },
+        "payload": {
+          "resourceRef": {
+            "resourceType": "SYSTEM_STATUS",
+            "resourceId": "system-status-1"
+          },
+          "subjectKind": "SYSTEM_STATUS"
+        },
+        "expectedOutput": {
+          "behavior": "SUCCESS",
+          "contentType": "SUMMARY",
+          "summary": "Synthetic safe result.",
+          "actionRisk": "READ_ONLY"
+        },
+        "governance": {
+          "categoryIds": [
+            "CAT_ADMIN_SYSTEM_STATUS"
+          ],
+          "categoryGovernance": [
+            {
+              "categoryId": "CAT_ADMIN_SYSTEM_STATUS",
+              "classification": "INTERNAL",
+              "datasetUsePermission": "ELIGIBLE_AFTER_APPROVAL",
+              "visibility": "ADMIN_ASSISTANT_ONLY",
+              "sanitization": {
+                "disposition": "SANITIZED_DERIVATIVE_REQUIRED"
+              },
+              "provenance": {
+                "type": "INTERNAL_SANITIZED"
+              },
+              "modelDevelopmentPurpose": [
+                "DEVELOPMENT_TEST"
+              ]
+            }
+          ]
+        },
+        "metadata": {
+          "synthetic": true
+        }
+      },
+      "expected": false,
+      "assertion": "fixture duplicate identity probe"
+    },
+    {
+      "id": "NEG-UNLISTED-CASE",
+      "collectionMutation": {"kind": "appendUnlistedCase", "targetCaseId": "POS-SHARED"},
+      "schema": "shared",
+      "record": {
+        "schemaVersion": "1.0.0",
+        "recordId": "record-unlisted",
+        "domain": "SHARED",
+        "recordType": "SHARED_SANITIZED_POLICY",
+        "visibility": "SHARED",
+        "input": {
+          "policyTopic": "Safe policy"
+        },
+        "payload": {
+          "policyTopic": "Safe policy",
+          "safeResponseTemplate": "Use safe guidance."
+        },
+        "expectedOutput": {
+          "behavior": "SUCCESS",
+          "contentType": "GUIDANCE",
+          "summary": "Synthetic shared guidance.",
+          "actionRisk": "READ_ONLY"
+        },
+        "governance": {
+          "categoryIds": [
+            "CAT_SHARED_SANITIZED_POLICY"
+          ],
+          "categoryGovernance": [
+            {
+              "categoryId": "CAT_SHARED_SANITIZED_POLICY",
+              "classification": "INTERNAL",
+              "datasetUsePermission": "ELIGIBLE_AFTER_APPROVAL",
+              "visibility": "SHARED",
+              "sanitization": {
+                "disposition": "SANITIZED_DERIVATIVE_REQUIRED"
+              },
+              "provenance": {
+                "type": "INTERNAL_SANITIZED"
+              },
+              "modelDevelopmentPurpose": [
+                "DEVELOPMENT_TEST"
+              ]
+            }
+          ]
+        },
+        "metadata": {
+          "synthetic": true
+        }
+      },
+      "expected": false,
+      "assertion": "fixture unlisted identity probe"
+    },
+    {
+      "id": "NEG-ROOT-EXTRA-ACCESS-TOKEN-ISOLATED",
+      "schema": "admin",
+      "recordMutation": {
+        "sourceCaseId": "POS-ADMIN-001",
+        "operation": "add",
+        "path": ["accessToken"],
+        "value": "not-allowed"
+      },
+      "expected": false,
+      "assertion": "one added root accessToken is rejected by Draft 2020-12 root closure"
+    },
+    {
+      "id": "NEG-SHARED-USECASE-ID-ISOLATED",
+      "schema": "shared",
+      "recordMutation": {
+        "sourceCaseId": "POS-SHARED",
+        "operation": "add",
+        "path": ["useCaseId"],
+        "value": "ADMIN_UC_001"
+      },
+      "expected": false,
+      "assertion": "one added useCaseId is rejected by the shared root schema"
+    },
+    {
+      "id": "NEG-BRANCH-GOVERNANCE-CONSTANT-ISOLATED",
+      "schema": "lab",
+      "recordMutation": {
+        "sourceCaseId": "POS-LAB-002",
+        "operation": "replace",
+        "path": ["governance", "categoryGovernance", "0", "classification"],
+        "value": "INTERNAL"
+      },
+      "expected": false,
+      "assertion": "one branch governance value is rejected by its schema-level constant"
+    }
+  ]
+}
