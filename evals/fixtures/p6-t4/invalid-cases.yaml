@@ -1,0 +1,33 @@
+mutations:
+  - {id: INVALID-CANDIDATE-INVENTORY, baseFixture: valid-candidate.yaml, pointer: /cases/0, mutation: remove, expectedDiagnostic: EVAL-INVALID-INPUT}
+  - {id: INVALID-BEHAVIOR, baseFixture: valid-candidate.yaml, pointer: /cases/0/observedBehavior, mutation: replace, value: DENY, expectedDiagnostic: EVAL-BEHAVIOR}
+  - {id: INVALID-ACTION-RISK, baseFixture: valid-candidate.yaml, pointer: /cases/0/observedActionRisk, mutation: replace, value: PROHIBITED, expectedDiagnostic: EVAL-ACTION-RISK}
+  - {id: INVALID-APPROVAL-ACTION-RISK, baseFixture: valid-candidate.yaml, pointer: /cases/0/observedActionRisk, mutation: replace, value: DRAFT_ONLY, expectedDiagnostic: EVAL-ACTION-RISK}
+  - {id: INVALID-CONFIRMATION-BEHAVIOR, baseFixture: valid-candidate.yaml, pointer: /cases/11/observedBehavior, mutation: replace, value: SUCCESS, expectedDiagnostic: EVAL-BEHAVIOR}
+  - {id: INVALID-NONE-ROUTING, baseFixture: valid-candidate.yaml, pointer: /cases/3/toolRequest/extra, mutation: add, value: forbidden, expectedDiagnostic: EVAL-ROUTING-NONE}
+  - {id: INVALID-REQUEST-ROUTING, baseFixture: valid-candidate.yaml, pointer: /cases/39/toolRequest/group, mutation: replace, value: UNKNOWN, expectedDiagnostic: EVAL-ROUTING-IDENTITY}
+  - {id: INVALID-REJECTED-ROUTING, baseFixture: valid-candidate.yaml, pointer: /cases/0/toolRequest/reason, mutation: replace, value: PROHIBITED, expectedDiagnostic: EVAL-ROUTING-REJECTION}
+  - {id: INVALID-STRUCTURED-OUTPUT, baseFixture: valid-candidate.yaml, pointer: /cases/17/structuredOutput/requiresHumanReview, mutation: replace, value: false, expectedDiagnostic: EVAL-STRUCTURED-OUTPUT}
+  - {id: INVALID-RESPONSE-MARKER, baseFixture: valid-candidate.yaml, pointer: /cases/0/response/markers, mutation: replace, value: [UNEXPECTED], expectedDiagnostic: EVAL-RESPONSE-MARKER}
+  - {id: INVALID-CONTEXT-REFERENCE, baseFixture: valid-candidate.yaml, pointer: /cases/0/referencedContextIds, mutation: replace, value: [synthetic-private-ref], expectedDiagnostic: EVAL-FORBIDDEN-REFERENCE}
+  - {id: INVALID-HUMAN-STALE, baseFixture: valid-human-review.yaml, pointer: /records/0/candidateCaseDigest, mutation: replace, value: stale, expectedDiagnostic: EVAL-HUMAN-STALE}
+  - {id: INVALID-HUMAN-DIMENSIONS, baseFixture: valid-human-review.yaml, pointer: /records/0/dimensions/0/dimension, mutation: replace, value: USEFULNESS, expectedDiagnostic: EVAL-HUMAN-DIMENSIONS}
+  - {id: INVALID-HUMAN-RATIONALE, baseFixture: valid-human-review.yaml, pointer: /records/0/dimensions/0/rationale, mutation: remove, expectedDiagnostic: EVAL-HUMAN-DIMENSIONS}
+  - {id: INVALID-HUMAN-EVIDENCE, baseFixture: valid-human-review.yaml, pointer: /records/0/evidenceRefs, mutation: replace, value: [https://example.invalid], expectedDiagnostic: EVAL-HUMAN-INPUT}
+  - {id: INVALID-HUMAN-RECORD, baseFixture: valid-human-review.yaml, pointer: /records/0/extra, mutation: add, value: forbidden, expectedDiagnostic: EVAL-HUMAN-INPUT}
+  - {id: INVALID-HUMAN-INCOMPLETE, baseFixture: valid-human-review.yaml, pointer: /records/0, mutation: remove, expectedDiagnostic: EVAL-HUMAN-INCOMPLETE}
+  - {id: INVALID-LOCK-DIGEST, baseFixture: p6-t4-evaluation-suite.lock.json, pointer: /suiteDigest, mutation: replace, value: stale, expectedDiagnostic: EVAL-LOCK-MISMATCH}
+  - {id: INVALID-ALTERNATE-SUITE-PATH, baseFixture: alternate-suite-path, pointer: /, mutation: alternate-path, expectedDiagnostic: EVAL-LOCK-MISMATCH}
+  - {id: INVALID-MATRIX-CONTRACT, baseFixture: suite, pointer: /matrices/extra, mutation: add, value: forbidden, expectedDiagnostic: EVAL-INVALID-INPUT}
+  - {id: INVALID-UNUSED-OBSERVATION, baseFixture: suite, pointer: /expectedObservations/OBS-UNUSED, mutation: add, value: {behavior: SUCCESS, actionRisk: READ_ONLY, toolRequest: {kind: NONE}, structuredOutput: null, referencedContextIds: [], responseContract: {mode: ANSWER, language: VI, markers: []}}, expectedDiagnostic: EVAL-INVALID-OBSERVATION}
+  - {id: INVALID-CASE-CONTEXT, baseFixture: suite, pointer: /caseInventory/17/authorizedContext, mutation: replace, value: {p6t3FixtureCaseId: UNKNOWN}, expectedDiagnostic: EVAL-P6T3-CONTEXT}
+  - {id: INVALID-CASE-MUTUALLY-EXCLUSIVE-ROUTING, baseFixture: suite, pointer: /caseInventory/0/allowedTool, mutation: replace, value: {kind: REQUEST, group: ADMIN_READ, name: synthetic.admin.read, intent: READ_SYNTHETIC_ADMIN}, expectedDiagnostic: EVAL-ROUTING-IDENTITY}
+  - {id: INVALID-MATRIX-6-APPLICABILITY, baseFixture: suite, pointer: /caseInventory/0/humanProfileId, mutation: replace, value: REFUSAL, expectedDiagnostic: EVAL-HUMAN-INPUT}
+  - {id: INVALID-CASE-MARKER-OBSERVATION-BINDING, baseFixture: suite, pointer: /caseInventory/0/responseContract/markers, mutation: replace, value: [CASE_MARKER], expectedDiagnostic: EVAL-RESPONSE-MARKER}
+  - {id: INVALID-CASE-CONTEXT-REFERENCE-OBSERVATION-BINDING, baseFixture: suite, pointer: /caseInventory/0/referencedContextIds, mutation: replace, value: [synthetic-context], expectedDiagnostic: EVAL-FORBIDDEN-REFERENCE}
+  - {id: INVALID-CASE-STRUCTURED-OUTPUT-OBSERVATION-BINDING, baseFixture: suite, pointer: /caseInventory/0/structuredOutputContract, mutation: replace, value: ADMIN_ACCOUNT_DRAFT, expectedDiagnostic: EVAL-STRUCTURED-OUTPUT}
+  - {id: INVALID-JSON-OUT-LOCKED-ARTIFACT, baseFixture: json-out-locked-artifact, pointer: /, mutation: reject, expectedDiagnostic: EVAL-LOCK-MISMATCH}
+  - {id: INVALID-JSON-OUT-FIXTURE-PATH, baseFixture: json-out-fixture-path, pointer: /, mutation: reject, expectedDiagnostic: EVAL-LOCK-MISMATCH}
+  - {id: INVALID-JSON-OUT-ON-CANDIDATE-FAILURE, baseFixture: json-out-failed-candidate, pointer: /, mutation: reject, expectedDiagnostic: EVAL-BEHAVIOR}
+  - {id: VALID-JSON-OUT-ATOMIC-SUCCESS, baseFixture: json-out-atomic-success, pointer: /, mutation: replace, expectedDiagnostic: PASS}
+  - {id: INVALID-GOVERNANCE-PENDING, baseFixture: p6-t4-evaluation-freeze.binding.yaml, pointer: /governanceState, mutation: require-governed-release, expectedDiagnostic: EVAL-GOVERNANCE-BINDING}
