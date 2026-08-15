@@ -40,6 +40,9 @@ ACTION_RISKS = {"READ_ONLY", "DRAFT_ONLY", "CONFIRM_REQUIRED", "APPROVAL_REQUIRE
 RESPONSE_MODES = {"ANSWER", "DRAFT_PRESENTATION", "SAFE_REFUSAL", "NO_CONTEXT_NOTICE", "CONFIRMATION_REQUEST", "APPROVAL_REQUEST"}
 RESPONSE_LANGUAGES = {"VI", "EN", "MIXED"}
 RESPONSE_MARKERS = {"NO_DISCLOSURE", "NO_EXECUTION", "CONTEXT_UNAVAILABLE", "CONFIRMATION_NEEDED", "APPROVAL_NEEDED", "HUMAN_REVIEW_NEEDED"}
+FROZEN_EVALUATION_BASELINE = "FROZEN_EVALUATION_BASELINE"
+DATASET_MODEL_WORK_RELEASE = "DATASET_MODEL_WORK_RELEASE"
+VALIDATION_CONTEXTS = (FROZEN_EVALUATION_BASELINE, DATASET_MODEL_WORK_RELEASE)
 DIAGNOSTICS = {
     "input": "EVAL-INVALID-INPUT", "observation": "EVAL-INVALID-OBSERVATION",
     "behavior": "EVAL-BEHAVIOR", "risk": "EVAL-ACTION-RISK", "routing_none": "EVAL-ROUTING-NONE",
@@ -63,12 +66,27 @@ def digest(value: object) -> str:
     return hashlib.sha256(canonical(value)).hexdigest()
 
 
+def canonical_locked_bytes(path: Path) -> bytes:
+    """Normalize checkout line endings without changing any other locked bytes."""
+    return path.read_bytes().replace(b"\r\n", b"\n")
+
+
 def file_digest(path: Path) -> str:
-    return hashlib.sha256(path.read_bytes()).hexdigest()
+    return hashlib.sha256(canonical_locked_bytes(path)).hexdigest()
 
 
 def error(code: str, detail: str) -> str:
     return f"{code}: {detail}"
+
+
+def resolve_validation_context(validation_context: str | None, require_governed_release: bool) -> str:
+    if validation_context is not None and validation_context not in VALIDATION_CONTEXTS:
+        raise ValueError(f"unsupported validation context: {validation_context}")
+    if require_governed_release and validation_context == FROZEN_EVALUATION_BASELINE:
+        raise ValueError("--require-governed-release cannot be combined with FROZEN_EVALUATION_BASELINE")
+    if require_governed_release:
+        return DATASET_MODEL_WORK_RELEASE
+    return validation_context or FROZEN_EVALUATION_BASELINE
 
 
 def canonical_path(relative: str) -> Path:
@@ -264,8 +282,12 @@ def validate_case_observation_contract(case: dict, observation: dict) -> list[st
     return errors
 
 
-def validate_suite(suite: object, schema: object, rubric: object, lock: object | None, binding: object | None, require_governed: bool) -> list[str]:
+def validate_suite(
+        suite: object, schema: object, rubric: object, lock: object | None, binding: object | None,
+        validation_context: str, artifact_root: Path = ROOT) -> list[str]:
     errors = [error(DIAGNOSTICS["input"], item.message) for item in Draft202012Validator(schema).iter_errors(suite)]
+    if validation_context not in VALIDATION_CONTEXTS:
+        errors.append(error(DIAGNOSTICS["input"], "unsupported validation context"))
     errors.extend(validate_rubric(rubric))
     if not isinstance(suite, dict):
         return errors
@@ -355,13 +377,15 @@ def validate_suite(suite: object, schema: object, rubric: object, lock: object |
                     errors.append(error("EVAL-HUMAN-INPUT", "Matrix 6 does not exactly match case applicability"))
         if sorted(seen) != sorted(ids) or len(seen) != len(set(seen)):
             errors.append(error("EVAL-HUMAN-INPUT", "Matrix 6 must partition the complete inventory"))
-    errors.extend(validate_lock(suite, lock, binding))
-    if require_governed and (not isinstance(binding, dict) or binding.get("governanceState") != "GOVERNED_EVIDENCE_APPROVED" or not binding.get("approvalReference")):
+    errors.extend(validate_lock(suite, lock, binding, artifact_root))
+    if (validation_context == DATASET_MODEL_WORK_RELEASE
+            and (not isinstance(binding, dict) or binding.get("governanceState") != "GOVERNED_EVIDENCE_APPROVED"
+                 or not isinstance(binding.get("approvalReference"), str) or not binding["approvalReference"].strip())):
         errors.append(error(DIAGNOSTICS["governance"], "governed release evidence is absent or not approved"))
     return sorted(set(errors))
 
 
-def validate_lock(suite: dict, lock: object | None, binding: object | None) -> list[str]:
+def validate_lock(suite: dict, lock: object | None, binding: object | None, artifact_root: Path = ROOT) -> list[str]:
     if not isinstance(lock, dict) or not isinstance(binding, dict):
         return [error(DIAGNOSTICS["lock"], "lock and binding are required")]
     if lock.get("suiteId") != suite.get("suiteId") or lock.get("suiteVersion") != suite.get("suiteVersion"):
@@ -376,7 +400,8 @@ def validate_lock(suite: dict, lock: object | None, binding: object | None) -> l
     if (binding.get("suiteId") != suite.get("suiteId") or binding.get("suiteVersion") != suite.get("suiteVersion")
             or binding.get("governanceState") not in {"GOVERNED_EVIDENCE_PENDING", "GOVERNED_EVIDENCE_APPROVED"}
             or (binding.get("governanceState") == "GOVERNED_EVIDENCE_PENDING" and binding.get("approvalReference") is not None)
-            or (binding.get("governanceState") == "GOVERNED_EVIDENCE_APPROVED" and not isinstance(binding.get("approvalReference"), str))):
+            or (binding.get("governanceState") == "GOVERNED_EVIDENCE_APPROVED"
+                and (not isinstance(binding.get("approvalReference"), str) or not binding["approvalReference"].strip()))):
         return [error(DIAGNOSTICS["lock"], "binding identity or governance state mismatch")]
     required_files = {relative for name, relative in LOCKED_ARTIFACTS.items() if name != "lock"} | {
         "evals/fixtures/p6-t4/valid-suite.yaml", "evals/fixtures/p6-t4/valid-candidate.yaml", "evals/fixtures/p6-t4/valid-human-review.yaml", "evals/fixtures/p6-t4/pending-human-review.yaml", "evals/fixtures/p6-t4/invalid-cases.yaml"
@@ -384,10 +409,10 @@ def validate_lock(suite: dict, lock: object | None, binding: object | None) -> l
     if not isinstance(expected, dict) or set(expected) != required_files:
         return [error(DIAGNOSTICS["lock"], "file digest inventory missing")]
     for relative, actual in expected.items():
-        path = ROOT / relative
+        path = artifact_root / relative
         if not path.is_file() or file_digest(path) != actual:
             return [error(DIAGNOSTICS["lock"], f"digest mismatch: {relative}")]
-    suite_digest = file_digest(ROOT / "evals/p6-t4-evaluation-suites.yaml")
+    suite_digest = file_digest(artifact_root / "evals/p6-t4-evaluation-suites.yaml")
     if lock.get("suiteDigest") != suite_digest or binding.get("suiteDigest") != suite_digest:
         return [error(DIAGNOSTICS["lock"], "suite digest mismatch")]
     required = {"purpose": "EVALUATION", "EVALUATION_ONLY": True, "TRAINING_PROHIBITED": True}
@@ -534,9 +559,80 @@ def self_test(fixtures: Path) -> list[str]:
     if valid_suite_bytes != canonical_suite_path.read_bytes():
         failures.append("VALID-CANONICAL-SUITE: fixture bytes do not match the canonical suite")
     else:
-        fixture_errors = validate_suite(copied_fixtures["valid-suite.yaml"], schema, rubric, lock, binding, False)
+        fixture_errors = validate_suite(
+            copied_fixtures["valid-suite.yaml"], schema, rubric, lock, binding,
+            FROZEN_EVALUATION_BASELINE,
+        )
         if fixture_errors:
             failures.append(f"VALID-CANONICAL-SUITE: expected valid suite, got {fixture_errors}")
+    baseline_errors = validate_suite(suite, schema, rubric, lock, binding, FROZEN_EVALUATION_BASELINE)
+    if baseline_errors:
+        failures.append(f"BASELINE-PENDING-BINDING: expected baseline pass, got {baseline_errors}")
+    release_errors = validate_suite(suite, schema, rubric, lock, binding, DATASET_MODEL_WORK_RELEASE)
+    if not any(DIAGNOSTICS["governance"] in item for item in release_errors):
+        failures.append(f"RELEASE-PENDING-BINDING: expected governed-release failure, got {release_errors}")
+    if (resolve_validation_context(None, False) != FROZEN_EVALUATION_BASELINE
+            or resolve_validation_context(None, True) != DATASET_MODEL_WORK_RELEASE
+            or resolve_validation_context(DATASET_MODEL_WORK_RELEASE, True) != DATASET_MODEL_WORK_RELEASE):
+        failures.append("VALIDATION-CONTEXT-RESOLUTION: expected deterministic baseline and release resolution")
+    try:
+        resolve_validation_context(FROZEN_EVALUATION_BASELINE, True)
+        failures.append("VALIDATION-CONTEXT-CONFLICT: baseline context accepted the strict legacy alias")
+    except ValueError:
+        pass
+
+    def expect_lock_failure_in_all_contexts(label: str, candidate_lock: object, candidate_binding: object, artifact_root: Path = ROOT) -> None:
+        for context in (FROZEN_EVALUATION_BASELINE, DATASET_MODEL_WORK_RELEASE):
+            found = validate_suite(suite, schema, rubric, candidate_lock, candidate_binding, context, artifact_root)
+            if not any(DIAGNOSTICS["lock"] in item for item in found):
+                failures.append(f"{label}-{context}: expected lock mismatch, got {found}")
+
+    with tempfile.TemporaryDirectory(prefix="p6-t4-lock-digest-") as temporary:
+        artifact_root = Path(temporary)
+        shutil.copytree(ROOT / "evals", artifact_root / "evals")
+        mutated_schema = artifact_root / LOCKED_ARTIFACTS["schema"]
+        lf_schema = mutated_schema.read_bytes().replace(b"\r\n", b"\n")
+        crlf_schema = lf_schema.replace(b"\n", b"\r\n")
+        mutated_schema.write_bytes(lf_schema)
+        for context, expected in ((FROZEN_EVALUATION_BASELINE, None), (DATASET_MODEL_WORK_RELEASE, DIAGNOSTICS["governance"])):
+            found = validate_suite(suite, schema, rubric, lock, binding, context, artifact_root)
+            if expected is None and found:
+                failures.append(f"LOCK-LF-{context}: expected valid tuple, got {found}")
+            elif expected is not None and not any(expected in item for item in found):
+                failures.append(f"LOCK-LF-{context}: expected {expected}, got {found}")
+        mutated_schema.write_bytes(crlf_schema)
+        if file_digest(mutated_schema) != hashlib.sha256(lf_schema).hexdigest():
+            failures.append("LOCK-LINE-ENDINGS: locked LF and CRLF forms produced different digests")
+        for context, expected in ((FROZEN_EVALUATION_BASELINE, None), (DATASET_MODEL_WORK_RELEASE, DIAGNOSTICS["governance"])):
+            found = validate_suite(suite, schema, rubric, lock, binding, context, artifact_root)
+            if expected is None and found:
+                failures.append(f"LOCK-CRLF-{context}: expected valid tuple, got {found}")
+            elif expected is not None and not any(expected in item for item in found):
+                failures.append(f"LOCK-CRLF-{context}: expected {expected}, got {found}")
+        mutated_schema.write_bytes(bytes([lf_schema[0] ^ 1]) + lf_schema[1:])
+        expect_lock_failure_in_all_contexts("LOCK-CONTENT-MUTATION", lock, binding, artifact_root)
+
+    for label, key, value in (
+        ("BINDING-SUITE-ID", "suiteId", "mutated-suite"),
+        ("BINDING-SUITE-VERSION", "suiteVersion", "0.0.0"),
+        ("BINDING-SUITE-DIGEST", "suiteDigest", "0" * 64),
+        ("BINDING-FREEZE-STATUS", "requiredFreezeStatus", "MUTATED"),
+    ):
+        mutated_binding = copy.deepcopy(binding)
+        mutated_binding[key] = value
+        expect_lock_failure_in_all_contexts(label, lock, mutated_binding)
+    mutated_lock = copy.deepcopy(lock)
+    mutated_lock["canonicalInventoryDigest"] = "0" * 64
+    expect_lock_failure_in_all_contexts("LOCK-INVENTORY-DIGEST", mutated_lock, binding)
+    for label, state, reference in (
+        ("BINDING-PENDING-REFERENCE", "GOVERNED_EVIDENCE_PENDING", "P7-T1-approval"),
+        ("BINDING-APPROVED-NULL", "GOVERNED_EVIDENCE_APPROVED", None),
+        ("BINDING-APPROVED-BLANK", "GOVERNED_EVIDENCE_APPROVED", "   "),
+    ):
+        mutated_binding = copy.deepcopy(binding)
+        mutated_binding["governanceState"] = state
+        mutated_binding["approvalReference"] = reference
+        expect_lock_failure_in_all_contexts(label, lock, mutated_binding)
     for mutation in inventory["mutations"]:
         expected = mutation["expectedDiagnostic"]
         if mutation["baseFixture"] == "json-out-locked-artifact":
@@ -564,15 +660,15 @@ def self_test(fixtures: Path) -> list[str]:
         elif mutation["baseFixture"] == "p6-t4-evaluation-freeze.binding.yaml":
             mutated_binding = copy.deepcopy(binding)
             mutate(mutated_binding, mutation["pointer"], mutation["mutation"], mutation.get("value"))
-            found = validate_suite(suite, schema, rubric, lock, mutated_binding, True)
+            found = validate_suite(suite, schema, rubric, lock, mutated_binding, DATASET_MODEL_WORK_RELEASE)
         elif mutation["baseFixture"] == "p6-t4-evaluation-suite.lock.json":
             mutated_lock = copy.deepcopy(lock)
             mutate(mutated_lock, mutation["pointer"], mutation["mutation"], mutation.get("value"))
-            found = validate_suite(suite, schema, rubric, mutated_lock, binding, False)
+            found = validate_suite(suite, schema, rubric, mutated_lock, binding, FROZEN_EVALUATION_BASELINE)
         elif mutation["baseFixture"] == "suite":
             mutated_suite = copy.deepcopy(suite)
             mutate(mutated_suite, mutation["pointer"], mutation["mutation"], mutation.get("value"))
-            found = validate_suite(mutated_suite, schema, rubric, lock, binding, False)
+            found = validate_suite(mutated_suite, schema, rubric, lock, binding, FROZEN_EVALUATION_BASELINE)
         elif mutation["baseFixture"] == "alternate-suite-path":
             found = validate_input_paths({"suite": copied_directory / "valid-suite.yaml"})
         else:
@@ -597,6 +693,7 @@ def main() -> int:
     parser.add_argument("--rubric", type=Path, default=ROOT / "evals/human-eval-rubric.yaml")
     parser.add_argument("--lock", type=Path, default=ROOT / "evals/p6-t4-evaluation-suite.lock.json")
     parser.add_argument("--governance-binding", type=Path, default=ROOT / "evals/p6-t4-evaluation-freeze.binding.yaml")
+    parser.add_argument("--validation-context", choices=VALIDATION_CONTEXTS)
     parser.add_argument("--require-governed-release", action="store_true")
     parser.add_argument("--candidate", type=Path)
     parser.add_argument("--human-review", type=Path)
@@ -605,6 +702,10 @@ def main() -> int:
     parser.add_argument("--self-test", action="store_true")
     parser.add_argument("--fixtures", type=Path)
     args = parser.parse_args()
+    try:
+        validation_context = resolve_validation_context(args.validation_context, args.require_governed_release)
+    except ValueError as exc:
+        parser.error(str(exc))
     try:
         if args.self_test:
             errors = self_test(args.fixtures)
@@ -616,7 +717,7 @@ def main() -> int:
             return 1
         suite, schema, rubric = load(args.suite), json.loads(args.schema.read_text(encoding="utf-8")), load(args.rubric)
         lock, binding = load(args.lock), load(args.governance_binding)
-        errors = validate_suite(suite, schema, rubric, lock, binding, args.require_governed_release)
+        errors = validate_suite(suite, schema, rubric, lock, binding, validation_context)
         if args.validate_suite:
             print("PASS suite validation" if not errors else "\n".join(errors))
             return 0 if not errors else 1
