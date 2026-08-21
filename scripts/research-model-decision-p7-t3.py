@@ -29,6 +29,13 @@ P7T2_SPEC = importlib.util.spec_from_file_location("p7t2_for_p7t3", ROOT / "scri
 P7T2 = importlib.util.module_from_spec(P7T2_SPEC)
 assert P7T2_SPEC.loader is not None
 P7T2_SPEC.loader.exec_module(P7T2)
+GOVERNANCE_SPEC = importlib.util.spec_from_file_location(
+    "p7t3_report_governance_for_decision",
+    ROOT / "scripts" / "research-report-eval-governance-p7-t3.py",
+)
+GOVERNANCE = importlib.util.module_from_spec(GOVERNANCE_SPEC)
+assert GOVERNANCE_SPEC.loader is not None
+GOVERNANCE_SPEC.loader.exec_module(GOVERNANCE)
 
 SCHEMA_VERSION = "1.0.0"
 PIPELINE_VERSION = "1.0.0"
@@ -321,6 +328,9 @@ def validate_gap_evidence(
     gap_suite: dict[str, Any],
     baseline_evidence: dict[str, Any],
     base_suite: dict[str, Any],
+    *,
+    governance_request: dict[str, Any] | None = None,
+    governance_approval: dict[str, Any] | None = None,
 ) -> None:
     """Accept only actual, user-approved, case-level Research gap outcomes."""
     validate_gap_suite(gap_suite, base_suite)
@@ -338,6 +348,8 @@ def validate_gap_evidence(
         "approval",
         "evidenceReference",
         "sourceCommit",
+        "executionCaseIds",
+        "governanceApproval",
         "caseResults",
         "artifactIdentity",
     }
@@ -401,7 +413,52 @@ def validate_gap_evidence(
     _validate_reference(approval.get("reference"), "gap evidence/approval/reference", diagnostics)
     _validate_sha256(approval.get("sha256"), "gap evidence/approval/sha256", diagnostics)
 
-    cases = {case["evalCaseId"]: case for case in gap_suite["caseInventory"]}
+    cases = {
+        case["evalCaseId"]: case
+        for case in [*gap_suite["caseInventory"], *gap_suite["proposedCaseInventory"]]
+    }
+    execution_case_ids = evidence.get("executionCaseIds")
+    if (
+        not isinstance(execution_case_ids, list)
+        or not execution_case_ids
+        or execution_case_ids != sorted(execution_case_ids)
+        or len(execution_case_ids) != len(set(execution_case_ids))
+        or not set(execution_case_ids).issubset(cases)
+    ):
+        diagnostics.append("gap evidence/executionCaseIds: exact targeted case selection required")
+        execution_case_ids = []
+    report_selected = "E-FUNC-RESEARCH-006" in execution_case_ids
+    if report_selected:
+        if governance_request is None or governance_approval is None:
+            diagnostics.append("gap evidence/governanceApproval: approved governance artifact required")
+        else:
+            try:
+                GOVERNANCE.validate_request(
+                    governance_request,
+                    GOVERNANCE.load_document(GOVERNANCE.GOVERNANCE_PATH),
+                    GOVERNANCE.load_document(GOVERNANCE.FIXTURE_PATH),
+                    GOVERNANCE.load_document(GOVERNANCE.SCHEMA_PATH),
+                    gap_suite,
+                )
+                GOVERNANCE.validate_execution_authorization(
+                    governance_request,
+                    governance_approval,
+                    purpose="EVALUATION",
+                )
+            except GOVERNANCE.GovernanceError as error:
+                diagnostics.extend(error.diagnostics)
+        expected_governance = (
+            {
+                "requestIdentity": governance_approval.get("requestIdentity"),
+                "approvalIdentity": governance_approval.get("artifactIdentity"),
+            }
+            if isinstance(governance_approval, dict)
+            else None
+        )
+        if evidence.get("governanceApproval") != expected_governance:
+            diagnostics.append("gap evidence/governanceApproval: exact approval identity binding required")
+    elif evidence.get("governanceApproval") is not None:
+        diagnostics.append("gap evidence/governanceApproval: safe-refusal-only evidence must not claim report approval")
     case_results = evidence.get("caseResults")
     seen: set[str] = set()
     result_fields = {
@@ -436,8 +493,8 @@ def validate_gap_evidence(
             diagnostics.append(f"{path}/humanReviewStatus: USER_APPROVED required")
         _validate_sha256(result.get("evidenceSha256"), f"{path}/evidenceSha256", diagnostics)
         _validate_reference(result.get("sourceRecordReference"), f"{path}/sourceRecordReference", diagnostics)
-    if seen != set(cases):
-        diagnostics.append("gap evidence/caseResults: complete gap case inventory required")
+    if seen != set(execution_case_ids):
+        diagnostics.append("gap evidence/caseResults: complete targeted case inventory required")
     if evidence.get("artifactIdentity") != gap_evidence_identity(evidence):
         diagnostics.append("gap evidence/artifactIdentity: canonical artifact identity mismatch")
     if diagnostics:
@@ -445,7 +502,10 @@ def validate_gap_evidence(
 
 
 def _combined_research_suite(
-    base_suite: dict[str, Any], gap_suite: dict[str, Any] | None
+    base_suite: dict[str, Any],
+    gap_suite: dict[str, Any] | None,
+    *,
+    include_proposed: bool = False,
 ) -> dict[str, Any]:
     if gap_suite is None:
         return base_suite
@@ -454,7 +514,12 @@ def _combined_research_suite(
     combined["caseInventory"] = [
         *copy.deepcopy(base_suite["caseInventory"]),
         *copy.deepcopy(gap_suite["caseInventory"]),
+        *(copy.deepcopy(gap_suite["proposedCaseInventory"]) if include_proposed else []),
     ]
+    if include_proposed:
+        for case in combined["caseInventory"]:
+            if case.get("caseState") == "GOVERNANCE_PENDING":
+                case["caseState"] = "ACTIVE"
     return combined
 
 
@@ -466,10 +531,19 @@ def merge_research_evidence(
     *,
     evidence_reference: str,
     source_commit: str,
+    governance_request: dict[str, Any] | None = None,
+    governance_approval: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Merge immutable H01 binding plus approved gap evidence without inference."""
     validate_baseline_evidence(baseline_evidence, base_suite)
-    validate_gap_evidence(gap_evidence, gap_suite, baseline_evidence, base_suite)
+    validate_gap_evidence(
+        gap_evidence,
+        gap_suite,
+        baseline_evidence,
+        base_suite,
+        governance_request=governance_request,
+        governance_approval=governance_approval,
+    )
     diagnostics: list[str] = []
     _validate_reference(evidence_reference, "merged evidence/reference", diagnostics)
     if not _nonempty_string(source_commit):
@@ -534,6 +608,7 @@ def merge_research_evidence(
             },
         ],
         "candidate": copy.deepcopy(baseline_evidence["candidate"]),
+        "governanceApproval": copy.deepcopy(gap_evidence["governanceApproval"]),
         "sourceCommit": source_commit,
         "caseResults": [merged_by_case[case_id] for case_id in sorted(merged_by_case)],
         "mergeIdentity": "",
@@ -560,6 +635,7 @@ def validate_merged_evidence(
         "evidenceReference",
         "sourceArtifacts",
         "candidate",
+        "governanceApproval",
         "sourceCommit",
         "caseResults",
         "mergeIdentity",
@@ -630,7 +706,8 @@ def validate_merged_evidence(
             diagnostics.append("merged evidence/sourceArtifacts: exact historical and gap source types required")
 
     combined_cases = {
-        case["evalCaseId"]: case for case in _combined_research_suite(base_suite, gap_suite)["caseInventory"]
+        case["evalCaseId"]: case
+        for case in _combined_research_suite(base_suite, gap_suite, include_proposed=True)["caseInventory"]
     }
     case_results = evidence.get("caseResults")
     seen: set[str] = set()
@@ -672,6 +749,17 @@ def validate_merged_evidence(
             diagnostics.append(f"{path}/sourceArtifactType: approved source type required")
         _validate_sha256(result.get("evidenceSha256"), f"{path}/evidenceSha256", diagnostics)
         _validate_reference(result.get("sourceRecordReference"), f"{path}/sourceRecordReference", diagnostics)
+    report_present = "E-FUNC-RESEARCH-006" in seen
+    governance_binding = evidence.get("governanceApproval")
+    if report_present:
+        if (
+            not isinstance(governance_binding, dict)
+            or set(governance_binding) != {"requestIdentity", "approvalIdentity"}
+            or any(not isinstance(value, str) or not SHA256_PATTERN.fullmatch(value) for value in governance_binding.values())
+        ):
+            diagnostics.append("merged evidence/governanceApproval: exact report approval identities required")
+    elif governance_binding is not None:
+        diagnostics.append("merged evidence/governanceApproval: safe-refusal-only merge must not claim report approval")
     if evidence.get("mergeIdentity") != _merged_evidence_identity(evidence):
         diagnostics.append("merged evidence/mergeIdentity: canonical merge identity mismatch")
     if diagnostics:
@@ -738,6 +826,7 @@ def validate_gap_suite(gap_suite: object, base_suite: dict[str, Any]) -> None:
         "EVALUATION_ONLY",
         "TRAINING_PROHIBITED",
         "caseInventory",
+        "proposedCaseInventory",
         "expectedObservations",
         "matrices",
         "governanceBlockers",
@@ -750,7 +839,7 @@ def validate_gap_suite(gap_suite: object, base_suite: dict[str, Any]) -> None:
         diagnostics.append(f"gap suite/artifactType: {GAP_SUITE_ARTIFACT_TYPE} required")
     if gap_suite.get("schemaVersion") != SCHEMA_VERSION:
         diagnostics.append("gap suite/schemaVersion: unsupported version")
-    if gap_suite.get("suiteId") != "P7-T3-RESEARCH-GAP-EVALUATION" or gap_suite.get("suiteVersion") != "1.0.0":
+    if gap_suite.get("suiteId") != "P7-T3-RESEARCH-GAP-EVALUATION" or gap_suite.get("suiteVersion") != "1.1.0":
         diagnostics.append("gap suite: exact Research gap suite ID/version required")
     if gap_suite.get("EVALUATION_ONLY") is not True or gap_suite.get("TRAINING_PROHIBITED") is not True:
         diagnostics.append("gap suite: evaluation-only and training-prohibited declarations required")
@@ -766,16 +855,28 @@ def validate_gap_suite(gap_suite: object, base_suite: dict[str, Any]) -> None:
         _validate_sha256(base.get("digest"), "gap suite/baseSuite/digest", diagnostics)
 
     cases = gap_suite.get("caseInventory")
+    proposed_cases = gap_suite.get("proposedCaseInventory")
     observations = gap_suite.get("expectedObservations")
     if not isinstance(cases, list) or not cases:
         diagnostics.append("gap suite/caseInventory: non-empty case list required")
         cases = []
+    if not isinstance(proposed_cases, list) or not proposed_cases:
+        diagnostics.append("gap suite/proposedCaseInventory: non-empty proposed case list required")
+        proposed_cases = []
     if not isinstance(observations, dict):
         diagnostics.append("gap suite/expectedObservations: object required")
         observations = {}
     case_ids = [case.get("evalCaseId") for case in cases if isinstance(case, dict)]
     if len(case_ids) != len(cases) or case_ids != sorted(case_ids) or len(case_ids) != len(set(case_ids)):
         diagnostics.append("gap suite/caseInventory: unique sorted evalCaseId values required")
+    proposed_case_ids = [case.get("evalCaseId") for case in proposed_cases if isinstance(case, dict)]
+    if (
+        len(proposed_case_ids) != len(proposed_cases)
+        or proposed_case_ids != sorted(proposed_case_ids)
+        or len(proposed_case_ids) != len(set(proposed_case_ids))
+        or set(case_ids) & set(proposed_case_ids)
+    ):
+        diagnostics.append("gap suite/proposedCaseInventory: unique sorted non-active evalCaseId values required")
 
     safe_scenarios: set[str] = set()
     report_case_ids: list[str] = []
@@ -798,8 +899,11 @@ def validate_gap_suite(gap_suite: object, base_suite: dict[str, Any]) -> None:
         "humanProfileId",
         "responseContract",
     }
-    for index, case in enumerate(cases):
-        path = f"gap suite/caseInventory/{index}"
+    for index, case in enumerate([*cases, *proposed_cases]):
+        proposed = index >= len(cases)
+        inventory_index = index - len(cases) if proposed else index
+        inventory_name = "proposedCaseInventory" if proposed else "caseInventory"
+        path = f"gap suite/{inventory_name}/{inventory_index}"
         if not _require_exact_fields(case, required_case_fields, path, diagnostics):
             continue
         assert isinstance(case, dict)
@@ -845,21 +949,37 @@ def validate_gap_suite(gap_suite: object, base_suite: dict[str, Any]) -> None:
                 or observation.get("structuredOutput") is not None
             ):
                 diagnostics.append(f"{path}: closed Research safe-refusal semantics required")
-        elif case.get("useCaseId") == "RESEARCH_UC_006" and scenario == "RESEARCH_UC_006":
+        elif case.get("useCaseId") == "RESEARCH_UC_006" and scenario == "RESEARCH_UC_006" and proposed:
             report_case_ids.append(case["evalCaseId"])
+            structured = observation.get("structuredOutput")
             if (
-                case.get("caseState") != "ACTIVE"
+                case.get("caseState") != "GOVERNANCE_PENDING"
                 or case.get("humanProfileId") != "DRAFT_RESEARCH"
                 or case.get("structuredOutputContract") != "RESEARCH_REPORT_REVIEW_DRAFT"
+                or case.get("authorizedContext") != {"p6t3FixtureCaseId": "POS-RESEARCH-006"}
+                or case.get("p6t3Root") != "research"
+                or case.get("referencedContextIds")
+                != ["synthetic-group-006", "synthetic-project-006", "synthetic-report-006"]
+                or not _nonempty_string(case.get("input"))
                 or not isinstance(response, dict)
                 or response.get("mode") != "DRAFT_PRESENTATION"
                 or observation.get("behavior") != "SUCCESS"
                 or observation.get("actionRisk") != "DRAFT_ONLY"
                 or observation.get("toolRequest") != {"kind": "NONE"}
+                or not isinstance(structured, dict)
+                or set(structured)
+                != {
+                    "kind", "reportRef", "reviewSummary", "issues", "suggestions",
+                    "requiresHumanReview", "advisoryOnly",
+                }
+                or structured.get("kind") != "RESEARCH_REPORT_REVIEW_DRAFT"
+                or structured.get("reportRef") != "synthetic-report-006"
+                or structured.get("requiresHumanReview") is not True
+                or structured.get("advisoryOnly") is not True
                 or case.get("allowedTool") is not None
                 or case.get("rejectedTool") is not None
             ):
-                diagnostics.append(f"{path}: report review must preserve DRAFT_ONLY and prohibit approval/write")
+                diagnostics.append(f"{path}: pending report review must preserve bounded DRAFT_ONLY semantics")
         else:
             diagnostics.append(f"{path}: unsupported Research gap scenario")
 
@@ -879,20 +999,22 @@ def validate_gap_suite(gap_suite: object, base_suite: dict[str, Any]) -> None:
         diagnostics.append("gap suite/matrices: exact human-review applicability required")
 
     blockers = gap_suite.get("governanceBlockers")
-    if report_case_ids:
-        if blockers != []:
-            diagnostics.append("gap suite/governanceBlockers: executable report case cannot retain blocker")
-    elif not isinstance(blockers, list) or not any(
+    if report_case_ids != ["E-FUNC-RESEARCH-006"]:
+        diagnostics.append("gap suite/proposedCaseInventory: exact report-review proposal required")
+    if not isinstance(blockers, list) or not any(
         isinstance(blocker, dict)
         and blocker.get("evalCaseId") == "E-DEFERRED-RESEARCH-006"
         and blocker.get("useCaseId") == "RESEARCH_UC_006"
         and blocker.get("categoryId") == "CAT_RESEARCH_REPORT_METADATA"
-        and blocker.get("status") == "REPORT_REVIEW_EVALUATION_GOVERNANCE_BLOCKED"
+        and blocker.get("status") == "AWAITING_GOVERNANCE_APPROVAL"
         and blocker.get("useDecision") == "DEFERRED"
         and blocker.get("permittedPurposes") == []
         and set(blocker.get("prohibitedPurposes", []))
         == {"TRAINING", "EVALUATION", "BENCHMARK", "HUMAN_EVALUATION", "DEVELOPMENT_TEST"}
         and blocker.get("sanitizationDisposition") == "DEFERRED_NO_EXPORT"
+        and blocker.get("governanceRequestReference")
+        == "config/p7-t3-research-report-eval-governance-request.json"
+        and blocker.get("proposedEvalCaseId") == "E-FUNC-RESEARCH-006"
         for blocker in blockers
     ):
         diagnostics.append("gap suite/governanceBlockers: exact CAT_RESEARCH_REPORT_METADATA blocker required")
@@ -903,12 +1025,18 @@ def validate_gap_suite(gap_suite: object, base_suite: dict[str, Any]) -> None:
         "sourceRunId",
         "model",
         "caseIds",
+        "postApprovalCaseIds",
+        "governanceApprovalRequiredCaseIds",
+        "governanceRequestReference",
         "executionScope",
         "networkAccess",
         "humanReviewRequired",
         "command",
+        "approvedCommand",
         "outputReference",
         "reviewReference",
+        "approvedOutputReference",
+        "approvedReviewReference",
         "frozenEvidenceReference",
     }
     if not _require_exact_fields(execution, execution_fields, "gap suite/executionPolicy", diagnostics):
@@ -919,12 +1047,19 @@ def validate_gap_suite(gap_suite: object, base_suite: dict[str, Any]) -> None:
         or execution.get("sourceRunId") != "qwen3_4b-R01"
         or execution.get("model") != BASE_MODEL
         or execution.get("caseIds") != sorted(case_ids)
+        or execution.get("postApprovalCaseIds") != sorted([*case_ids, *proposed_case_ids])
+        or execution.get("governanceApprovalRequiredCaseIds") != sorted(proposed_case_ids)
+        or execution.get("governanceRequestReference")
+        != "config/p7-t3-research-report-eval-governance-request.json"
         or execution.get("executionScope") != "TARGETED_CASES_ONLY"
         or execution.get("networkAccess") != "PROHIBITED"
         or execution.get("humanReviewRequired") is not True
     ):
         diagnostics.append("gap suite/executionPolicy: exact offline targeted execution policy required")
-    for field in ("command", "outputReference", "reviewReference", "frozenEvidenceReference"):
+    for field in (
+        "command", "approvedCommand", "outputReference", "reviewReference",
+        "approvedOutputReference", "approvedReviewReference", "frozenEvidenceReference",
+    ):
         _validate_reference(execution.get(field), f"gap suite/executionPolicy/{field}", diagnostics)
     if diagnostics:
         raise ResearchDecisionError(diagnostics)
@@ -963,14 +1098,21 @@ def validate_gap_suite_lock(
         "schemaVersion": SCHEMA_VERSION,
         "suiteId": gap_suite["suiteId"],
         "suiteVersion": gap_suite["suiteVersion"],
-        "lockVersion": "1.0.0",
+        "lockVersion": "1.1.0",
         "purpose": "EVALUATION",
         "localFreezeStatus": "CONTENT_LOCKED",
         "EVALUATION_ONLY": True,
         "TRAINING_PROHIBITED": True,
         "baseSuite": gap_suite["baseSuite"],
         "suiteDigest": gap_suite["suiteDigest"],
-        "canonicalInventoryDigest": sha256_bytes(canonical_bytes(gap_suite["caseInventory"])),
+        "canonicalInventoryDigest": sha256_bytes(
+            canonical_bytes(
+                {
+                    "caseInventory": gap_suite["caseInventory"],
+                    "proposedCaseInventory": gap_suite["proposedCaseInventory"],
+                }
+            )
+        ),
     }
     for field, value in expected.items():
         if lock.get(field) != value:
@@ -1333,11 +1475,15 @@ def evaluate_research_baseline(
     validate_research_suite(suite)
     if evidence is not None:
         validate_research_evidence(evidence, suite, gap_suite)
-    effective_suite = _combined_research_suite(suite, gap_suite)
     result_by_case = {
         result["evalCaseId"]: result
         for result in (evidence or {}).get("caseResults", [])
     }
+    effective_suite = _combined_research_suite(
+        suite,
+        gap_suite,
+        include_proposed="E-FUNC-RESEARCH-006" in result_by_case,
+    )
     gates: list[dict[str, Any]] = []
     for gate, case_ids in required_gate_cases(effective_suite).items():
         missing = [case_id for case_id in case_ids if case_id not in result_by_case]
@@ -1362,14 +1508,14 @@ def evaluate_research_baseline(
             gap_suite
             and any(
                 isinstance(blocker, dict)
-                and blocker.get("status") == "REPORT_REVIEW_EVALUATION_GOVERNANCE_BLOCKED"
+                and blocker.get("status") == "AWAITING_GOVERNANCE_APPROVAL"
                 for blocker in gap_suite.get("governanceBlockers", [])
             )
         )
         if deferred and not case_ids:
             result = "UNRESOLVED"
             reason = (
-                "REPORT_REVIEW_EVALUATION_GOVERNANCE_BLOCKED"
+                "AWAITING_GOVERNANCE_APPROVAL"
                 if report_governance_blocked
                 else "EVALUATION_SUITE_CASE_NOT_EXECUTABLE"
             )
@@ -1382,7 +1528,12 @@ def evaluate_research_baseline(
             reason = "FROZEN_CASE_COVERAGE_MISSING"
         elif missing:
             result = "UNRESOLVED"
-            reason = "CASE_RESULT_EVIDENCE_MISSING"
+            gap_execution_ids = set(gap_suite.get("executionPolicy", {}).get("caseIds", [])) if gap_suite else set()
+            reason = (
+                "EVIDENCE_EXECUTION_ENVIRONMENT_REQUIRED"
+                if gate == "SAFE_REFUSAL" and set(missing).issubset(gap_execution_ids)
+                else "CASE_RESULT_EVIDENCE_MISSING"
+            )
         elif needs_review:
             result = "UNRESOLVED"
             reason = "CASE_RESULT_NEEDS_REVIEW"
@@ -1947,7 +2098,7 @@ def validate_research_decision_record(record: object) -> None:
         diagnostics.append("decision record/evaluationSuite: exact frozen suite identity required")
     try:
         _validate_frozen_evidence_inventory(record.get("frozenEvidence"))
-    except ResearchDecisionError as error:
+    except (ResearchDecisionError, GOVERNANCE.GovernanceError) as error:
         diagnostics.extend(error.diagnostics)
     baseline_reference = record.get("baselineEvidenceReference")
     if baseline_reference is not None:
@@ -2452,6 +2603,17 @@ def main() -> int:
         help="actual user-approved Research gap evidence; definitions or review packets are insufficient",
     )
     parser.add_argument(
+        "--governance-request",
+        type=Path,
+        default=ROOT / "config" / "p7-t3-research-report-eval-governance-request.json",
+        help="pending scoped Research report-evaluation governance request",
+    )
+    parser.add_argument(
+        "--governance-approval",
+        type=Path,
+        help="explicit approved follow-up artifact required when gap evidence includes report review",
+    )
+    parser.add_argument(
         "--merged-evidence-output",
         type=Path,
         default=ROOT / "evidence" / "p7-t3-research-merged-baseline-evidence.json",
@@ -2480,6 +2642,19 @@ def main() -> int:
         training_config = _load_document(args.training_config, "training config")
         validate_suite_lock(suite, args.suite, suite_lock, benchmark_config)
         validate_gap_suite_lock(gap_suite, args.gap_suite, gap_suite_lock, suite, benchmark_config)
+        governance_request = _load_document(args.governance_request, "Research report governance request")
+        GOVERNANCE.validate_request(
+            governance_request,
+            GOVERNANCE.load_document(GOVERNANCE.GOVERNANCE_PATH),
+            GOVERNANCE.load_document(GOVERNANCE.FIXTURE_PATH),
+            GOVERNANCE.load_document(GOVERNANCE.SCHEMA_PATH),
+            gap_suite,
+        )
+        governance_approval = (
+            _load_document(args.governance_approval, "Research report governance approval")
+            if args.governance_approval is not None
+            else None
+        )
         source_commit = _source_commit(args.source_commit)
         evidence: dict[str, Any] | None = None
         evidence_inventory_path: Path | None = None
@@ -2533,7 +2708,14 @@ def main() -> int:
                     "gap evidence merge requires the validated historical P7-T3 baseline binding"
                 )
             loaded_gap_evidence = _load_document(args.gap_evidence, "Research gap evidence")
-            validate_gap_evidence(loaded_gap_evidence, gap_suite, evidence, suite)
+            validate_gap_evidence(
+                loaded_gap_evidence,
+                gap_suite,
+                evidence,
+                suite,
+                governance_request=governance_request,
+                governance_approval=governance_approval,
+            )
             evidence = merge_research_evidence(
                 evidence,
                 loaded_gap_evidence,
@@ -2541,6 +2723,8 @@ def main() -> int:
                 gap_suite,
                 evidence_reference=_repository_reference(args.merged_evidence_output),
                 source_commit=source_commit,
+                governance_request=governance_request,
+                governance_approval=governance_approval,
             )
             _write_json_atomically(args.merged_evidence_output, evidence)
             evidence_inventory_path = args.merged_evidence_output
@@ -2551,6 +2735,7 @@ def main() -> int:
             ("evaluation-governance-binding", freeze_binding),
             ("research-gap-evaluation-suite", args.gap_suite),
             ("research-gap-evaluation-suite-lock", args.gap_suite_lock),
+            ("research-report-evaluation-governance-request", args.governance_request),
             ("benchmark-configuration", args.benchmark_config),
             ("adapter-strategy-decision", args.decisions),
             ("adapter-strategy-rationale", p6_rationale),
@@ -2560,6 +2745,8 @@ def main() -> int:
             evidence_artifacts.append(("research-baseline-evidence-binding", evidence_inventory_path))
         if gap_evidence_path is not None:
             evidence_artifacts.append(("research-gap-evidence", gap_evidence_path))
+        if args.governance_approval is not None:
+            evidence_artifacts.append(("research-report-evaluation-governance-approval", args.governance_approval))
         inventory = frozen_evidence_inventory(evidence_artifacts)
         decision = decide_research_model(
             suite,
@@ -2578,7 +2765,7 @@ def main() -> int:
         _write_json_atomically(args.output, decision)
         print(json.dumps(decision, ensure_ascii=False, sort_keys=True, separators=(",", ":")))
         return 0
-    except ResearchDecisionError as error:
+    except (ResearchDecisionError, GOVERNANCE.GovernanceError) as error:
         print(
             json.dumps(
                 {"status": "ERROR", "diagnostics": error.diagnostics},

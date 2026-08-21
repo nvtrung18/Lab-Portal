@@ -13,7 +13,7 @@
     "status": "CANDIDATE_BUILD_BLOCKED"
   },
   "decision": "ADAPTER_REQUIRED",
-  "decisionIdentity": "2590fadfb5cf2c77e9f64cc0b953e069ce657f573ee574139d39571df440a5f7",
+  "decisionIdentity": "57abc895973a5900c364c17e2c812ee4ef79522d8a5c0b1cd48199d67b3f6a8b",
   "evaluationSuite": {
     "digest": "8b75d356890a8a5c2318305589301b6ee6d73fbd3665b9af2063f98e13ea7417",
     "id": "P6-T4-EVALUATION-SUITES",
@@ -38,12 +38,17 @@
     {
       "reference": "evals/p7-t3-research-gap-evaluation-suite.json",
       "role": "research-gap-evaluation-suite",
-      "sha256": "160ea74be86872620d38c3858628514ba78042c135f9f3a699344f571bcf42f4"
+      "sha256": "3655c8ecc8c282f90e7a1b3bf6c460553398fa93e00a15ae461349fc681d74b5"
     },
     {
       "reference": "evals/p7-t3-research-gap-evaluation-suite.lock.json",
       "role": "research-gap-evaluation-suite-lock",
-      "sha256": "e4f065ab1118907191c6cb2f51a7fec9646eee0a2e3fb1594a2e940a7dfadc72"
+      "sha256": "2b9d2d723aa2eacbc8b464214a812b106c0ac746b42c7b2d5218363abdebdae2"
+    },
+    {
+      "reference": "config/p7-t3-research-report-eval-governance-request.json",
+      "role": "research-report-evaluation-governance-request",
+      "sha256": "11c23fb5800e292777d8e20dc53ac5f8b67e20fdfb3965b2967ee7f8c3437b30"
     },
     {
       "reference": "config/p6-t5-benchmark.yaml",
@@ -181,7 +186,7 @@
       ],
       "missingScenarioIds": [],
       "needsReviewCaseIds": [],
-      "reason": "REPORT_REVIEW_EVALUATION_GOVERNANCE_BLOCKED",
+      "reason": "AWAITING_GOVERNANCE_APPROVAL",
       "requiredCaseIds": [],
       "result": "UNRESOLVED"
     },
@@ -200,7 +205,7 @@
       ],
       "missingScenarioIds": [],
       "needsReviewCaseIds": [],
-      "reason": "CASE_RESULT_EVIDENCE_MISSING",
+      "reason": "EVIDENCE_EXECUTION_ENVIRONMENT_REQUIRED",
       "requiredCaseIds": [
         "E-AUTH-011",
         "E-AUTH-012"
@@ -257,7 +262,7 @@
     }
   ],
   "schemaVersion": "1.0.0",
-  "sourceCommit": "7b705630098a515cd8274af87c4429863aa46c65",
+  "sourceCommit": "d64ce8bf8c3c0199538de7ccb23d366bdf8e539e",
   "training": {
     "invoked": false,
     "status": "BLOCKED"

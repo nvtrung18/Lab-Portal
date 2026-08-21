@@ -1,0 +1,101 @@
+{
+  "artifactType": "P7-T3-RESEARCH-REPORT-EVAL-GOVERNANCE-REQUEST",
+  "schemaVersion": "1.0.0",
+  "requestId": "P7-T3-RESEARCH-REPORT-EVAL-GOVERNANCE-REQUEST-001",
+  "status": "PENDING_USER_APPROVAL",
+  "category": {
+    "categoryId": "CAT_RESEARCH_REPORT_METADATA",
+    "sourcePartition": "RESEARCH_ASSISTANT",
+    "sourceDataOwner": "RESEARCH_GOVERNANCE_DOMAIN_DATA_OWNER",
+    "datasetSteward": "RESEARCH_GOVERNANCE_DATASET_STEWARD",
+    "approvalAuthority": "RESEARCH_GOVERNANCE_DATA_GOVERNANCE_APPROVAL_AUTHORITY",
+    "classification": "SENSITIVE",
+    "currentUseDecision": "DEFERRED",
+    "currentPermittedPurposes": [],
+    "currentProhibitedPurposes": [
+      "BENCHMARK",
+      "DEVELOPMENT_TEST",
+      "EVALUATION",
+      "HUMAN_EVALUATION",
+      "TRAINING"
+    ],
+    "currentRetentionClass": "QUARANTINE_UNTIL_DISPOSITION",
+    "visibility": "RESEARCH_ASSISTANT_ONLY",
+    "currentSanitizationDisposition": "DEFERRED_NO_EXPORT",
+    "useCaseIds": [
+      "RESEARCH_UC_006"
+    ]
+  },
+  "requestedScope": {
+    "purposeMode": "EVALUATION_ONLY",
+    "requestedUseDecision": "SYNTHETIC_ONLY",
+    "permittedPurposes": [
+      "EVALUATION",
+      "HUMAN_EVALUATION"
+    ],
+    "forbiddenPurposes": [
+      "BENCHMARK",
+      "DEVELOPMENT_TEST",
+      "EXTERNAL_SHARING",
+      "GENERAL_DEVELOPMENT_EXPORT",
+      "PRODUCTION_PROMPTING",
+      "RAG_INGESTION",
+      "TRAINING",
+      "UNRESTRICTED_BENCHMARK_REUSE"
+    ],
+    "dataScope": "BOUND_SYNTHETIC_FIXTURE_ONLY",
+    "requestedRetentionClass": "APPROVAL_BOUND",
+    "requestedSanitizationDisposition": "SYNTHETIC_GENERATION_ONLY",
+    "trainingAllowed": false,
+    "productionPromptingAllowed": false,
+    "ragIngestionAllowed": false,
+    "externalSharingAllowed": false,
+    "generalExportAllowed": false
+  },
+  "fixture": {
+    "fixtureCaseId": "POS-RESEARCH-006",
+    "reference": "docs/architecture/ai/datasets/fixtures/p6-t3-cases.yaml#/cases/POS-RESEARCH-006",
+    "schemaRoot": "researchRecord",
+    "synthetic": true,
+    "sha256": "51d482f9744ffdb4cc7eb5144c4911ed37fd03487ed4b2d033331011f5d79ff3"
+  },
+  "schema": {
+    "id": "https://lab-portal.local/schemas/p6-t3/domain-dataset-schemas/1.0.0",
+    "reference": "docs/architecture/ai/datasets/domain-dataset-schemas.schema.json",
+    "sha256": "2a89de660bc407a7102f6f25e257aaf66981aa6b402607fb68b1aedae8e76cf4"
+  },
+  "evaluationCase": {
+    "evalCaseId": "E-FUNC-RESEARCH-006",
+    "useCaseId": "RESEARCH_UC_006",
+    "assistantKey": "RESEARCH_ASSISTANT",
+    "actionRisk": "DRAFT_ONLY",
+    "caseState": "GOVERNANCE_PENDING",
+    "sha256": "ca596bcbd2373575e3b4a593c8a6fbcb60de45f0a26bc53d26f5d667b93991e2"
+  },
+  "candidate": {
+    "id": "qwen3_4b",
+    "sourceRunId": "qwen3_4b-R01",
+    "model": {
+      "identifier": "Qwen/Qwen3-4B-Instruct-2507",
+      "revision": "cdbee75f17c01a7cc42f958dc650907174af0554"
+    }
+  },
+  "suiteLineage": {
+    "base": {
+      "id": "P6-T4-EVALUATION-SUITES",
+      "version": "1.0.0",
+      "digest": "8b75d356890a8a5c2318305589301b6ee6d73fbd3665b9af2063f98e13ea7417"
+    },
+    "gap": {
+      "id": "P7-T3-RESEARCH-GAP-EVALUATION",
+      "version": "1.1.0",
+      "digest": "95ff79e0ec38c6d8ebfbcca05f0320b49819bf4f61e99c5b3b5c52cd559c83a5"
+    }
+  },
+  "requester": "P7_T3_IMPLEMENTATION_AGENT",
+  "sourceCommit": "d64ce8bf8c3c0199538de7ccb23d366bdf8e539e",
+  "approval": null,
+  "approvedBy": null,
+  "approvedAt": null,
+  "requestIdentity": "961957f646e9a8ae0d5ee9a8846dfdb85c554101a072eef3e833600121449114"
+}

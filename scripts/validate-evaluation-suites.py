@@ -31,6 +31,7 @@ P6T3_BRANCHES = {
     "LAB_UC_001", "LAB_UC_002", "LAB_UC_003", "LAB_UC_004", "LAB_UC_005", "LAB_UC_006",
     "RESEARCH_UC_001", "RESEARCH_UC_002", "RESEARCH_UC_003", "RESEARCH_UC_004", "RESEARCH_UC_005",
 }
+P6T3_CONTEXT_BRANCHES = P6T3_BRANCHES | {"RESEARCH_UC_006"}
 TOOL_GROUPS = {"ADMIN_READ", "ADMIN_DRAFT", "LAB_READ", "LAB_DRAFT", "RESEARCH_READ", "RESEARCH_DRAFT", "UNKNOWN"}
 REJECTION_REASONS = {"UNKNOWN_TOOL", "PROHIBITED", "CONFIRMATION_REQUIRED", "APPROVAL_REQUIRED"}
 ASSISTANT_KEYS = {"ADMIN_ASSISTANT", "LAB_ASSISTANT", "RESEARCH_ASSISTANT"}
@@ -209,7 +210,10 @@ def resolve_context(case: dict, records: dict[str, dict], validators: dict[str, 
         return [error(DIAGNOSTICS["context"], "referenced P6-T3 record fails declared root")]
     if record.get("metadata", {}).get("synthetic") is not True:
         return [error(DIAGNOSTICS["context"], "P6-T3 record is not synthetic")]
-    if state == "ACTIVE" and (record.get("useCaseId") != case.get("useCaseId") or case.get("useCaseId") not in P6T3_BRANCHES):
+    if state == "ACTIVE" and (
+        record.get("useCaseId") != case.get("useCaseId")
+        or case.get("useCaseId") not in P6T3_CONTEXT_BRANCHES
+    ):
         return [error(DIAGNOSTICS["context"], "active case does not match P6-T3 use case")]
     if state == "SHARED_POLICY" and (root != "shared" or "useCaseId" in record or record.get("recordType") != "SHARED_SANITIZED_POLICY"):
         return [error(DIAGNOSTICS["context"], "shared case must use exact shared record")]

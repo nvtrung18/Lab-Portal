@@ -19,6 +19,26 @@ SPEC.loader.exec_module(MODULE)
 
 
 class P7T3ResearchModelDecisionTests(unittest.TestCase):
+    def test_main_reports_invalid_governance_request_without_uncaught_exception(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            request_path = Path(temporary_directory) / "request.json"
+            output_path = Path(temporary_directory) / "decision.json"
+            request_path.write_text('{"status":"PENDING_USER_APPROVAL"}\n', encoding="utf-8")
+            with patch.object(
+                MODULE.sys,
+                "argv",
+                [
+                    "research-model-decision-p7-t3.py",
+                    "--governance-request",
+                    str(request_path),
+                    "--output",
+                    str(output_path),
+                ],
+            ), patch.object(MODULE.sys, "stderr", Mock()):
+                result = MODULE.main()
+
+        self.assertEqual(2, result)
+
     def suite(self):
         def case(case_id, use_case, tags, mode="DRAFT_PRESENTATION"):
             return {
@@ -119,6 +139,12 @@ class P7T3ResearchModelDecisionTests(unittest.TestCase):
         }
 
     def gap_case(self, case_id, scenario_id, *, report=False):
+        if report:
+            checked = json.loads(
+                (ROOT / "evals" / "p7-t3-research-gap-evaluation-suite.json").read_text(encoding="utf-8")
+            )
+            case = deepcopy(checked["proposedCaseInventory"][0])
+            return case, deepcopy(checked["expectedObservations"][case["expectedObservationId"]])
         action_risk = "DRAFT_ONLY" if report else "PROHIBITED"
         mode = "DRAFT_PRESENTATION" if report else "SAFE_REFUSAL"
         use_case_id = "RESEARCH_UC_006" if report else None
@@ -181,15 +207,17 @@ class P7T3ResearchModelDecisionTests(unittest.TestCase):
             ("E-AUTH-012", "RESEARCH_TASK_UNAUTHORIZED_DENY"),
         )
         pairs = [self.gap_case(case_id, scenario_id) for case_id, scenario_id in scenarios]
-        if include_report:
-            pairs.append(self.gap_case("E-FUNC-RESEARCH-006", "RESEARCH_UC_006", report=True))
         cases = [pair[0] for pair in pairs]
-        observations = {pair[0]["expectedObservationId"]: pair[1] for pair in pairs}
+        report_pair = self.gap_case("E-FUNC-RESEARCH-006", "RESEARCH_UC_006", report=True)
+        observations = {
+            **{pair[0]["expectedObservationId"]: pair[1] for pair in pairs},
+            report_pair[0]["expectedObservationId"]: report_pair[1],
+        }
         suite = {
             "artifactType": "P7-T3-RESEARCH-GAP-EVALUATION-SUITE",
             "schemaVersion": "1.0.0",
             "suiteId": "P7-T3-RESEARCH-GAP-EVALUATION",
-            "suiteVersion": "1.0.0",
+            "suiteVersion": "1.1.0",
             "suiteDigest": "",
             "baseSuite": {
                 "id": "P6-T4-EVALUATION-SUITES",
@@ -199,25 +227,28 @@ class P7T3ResearchModelDecisionTests(unittest.TestCase):
             "EVALUATION_ONLY": True,
             "TRAINING_PROHIBITED": True,
             "caseInventory": cases,
+            "proposedCaseInventory": [report_pair[0]],
             "expectedObservations": observations,
             "matrices": {
                 "humanApplicabilityBinding": {
-                    "DRAFT_RESEARCH": ["E-FUNC-RESEARCH-006"] if include_report else [],
+                    "DRAFT_RESEARCH": ["E-FUNC-RESEARCH-006"],
                     "REFUSAL": [case["evalCaseId"] for case in cases if case["humanProfileId"] == "REFUSAL"],
                     "NONE": [],
                 }
             },
-            "governanceBlockers": [] if include_report else [
+            "governanceBlockers": [
                 {
                     "evalCaseId": "E-DEFERRED-RESEARCH-006",
                     "useCaseId": "RESEARCH_UC_006",
                     "categoryId": "CAT_RESEARCH_REPORT_METADATA",
-                    "status": "REPORT_REVIEW_EVALUATION_GOVERNANCE_BLOCKED",
+                    "status": "AWAITING_GOVERNANCE_APPROVAL",
                     "useDecision": "DEFERRED",
                     "permittedPurposes": [],
                     "prohibitedPurposes": ["BENCHMARK", "DEVELOPMENT_TEST", "EVALUATION", "HUMAN_EVALUATION", "TRAINING"],
                     "sanitizationDisposition": "DEFERRED_NO_EXPORT",
                     "reason": "REPORT_CONTENT_NOT_PROJECTED_AND_EVALUATION_EXPORT_PROHIBITED",
+                    "governanceRequestReference": "config/p7-t3-research-report-eval-governance-request.json",
+                    "proposedEvalCaseId": "E-FUNC-RESEARCH-006",
                 }
             ],
             "executionPolicy": {
@@ -225,20 +256,55 @@ class P7T3ResearchModelDecisionTests(unittest.TestCase):
                 "sourceRunId": "qwen3_4b-R01",
                 "model": deepcopy(MODULE.BASE_MODEL),
                 "caseIds": [case["evalCaseId"] for case in cases],
+                "postApprovalCaseIds": sorted([case["evalCaseId"] for case in cases] + ["E-FUNC-RESEARCH-006"]),
+                "governanceApprovalRequiredCaseIds": ["E-FUNC-RESEARCH-006"],
+                "governanceRequestReference": "config/p7-t3-research-report-eval-governance-request.json",
                 "executionScope": "TARGETED_CASES_ONLY",
                 "networkAccess": "PROHIBITED",
                 "humanReviewRequired": True,
                 "command": "python scripts/research-gap-evidence-p7-t3.py --run --model-path PREPROVISIONED_QWEN3_4B_SNAPSHOT",
+                "approvedCommand": "python scripts/research-gap-evidence-p7-t3.py --run --governance-approval APPROVED_GOVERNANCE_ARTIFACT --model-path PREPROVISIONED_QWEN3_4B_SNAPSHOT",
                 "outputReference": "evidence/p7-t3-gap-run/qwen3_4b-R01-P7T3-GAP01.json",
                 "reviewReference": "evidence/p7-t3-gap-run/qwen3_4b-R01-P7T3-GAP01-review-input.json",
+                "approvedOutputReference": "evidence/p7-t3-gap-run-approved/qwen3_4b-R01-P7T3-GAP01.json",
+                "approvedReviewReference": "evidence/p7-t3-gap-run-approved/qwen3_4b-R01-P7T3-GAP01-review-input.json",
                 "frozenEvidenceReference": "evidence/p7-t3-research-gap-evidence-v1.json",
             },
         }
         suite["suiteDigest"] = MODULE.gap_suite_identity(suite)
         return suite
 
-    def gap_evidence(self, gap_suite=None, result="PASS"):
+    def governance_authorization(self, gap_suite):
+        request = json.loads(
+            (ROOT / "config" / "p7-t3-research-report-eval-governance-request.json").read_text(encoding="utf-8")
+        )
+        report_case = gap_suite["proposedCaseInventory"][0]
+        request["evaluationCase"]["sha256"] = MODULE.sha256_bytes(MODULE.canonical_bytes(report_case))
+        request["suiteLineage"]["gap"] = {
+            "id": gap_suite["suiteId"],
+            "version": gap_suite["suiteVersion"],
+            "digest": gap_suite["suiteDigest"],
+        }
+        request["requestIdentity"] = MODULE.GOVERNANCE.request_identity(request)
+        approval = MODULE.GOVERNANCE.finalize_approval(
+            request,
+            approved_by="synthetic-test-governance-owner",
+            approved_at="2026-08-21T00:00:00Z",
+            gap_suite=gap_suite,
+        )
+        return request, approval
+
+    def gap_evidence(self, gap_suite=None, result="PASS", *, include_report=False):
         gap_suite = gap_suite or self.gap_suite()
+        execution_cases = [*gap_suite["caseInventory"]]
+        governance_binding = None
+        if include_report:
+            execution_cases.extend(gap_suite["proposedCaseInventory"])
+            request, approval = self.governance_authorization(gap_suite)
+            governance_binding = {
+                "requestIdentity": request["requestIdentity"],
+                "approvalIdentity": approval["artifactIdentity"],
+            }
         evidence = {
             "artifactType": "P7-T3-RESEARCH-GAP-EVIDENCE",
             "schemaVersion": "1.0.0",
@@ -267,6 +333,8 @@ class P7T3ResearchModelDecisionTests(unittest.TestCase):
             },
             "evidenceReference": "evidence/p7-t3-research-gap-evidence-v1.json",
             "sourceCommit": "test-source-commit",
+            "executionCaseIds": sorted(case["evalCaseId"] for case in execution_cases),
+            "governanceApproval": governance_binding,
             "caseResults": [
                 {
                     "evalCaseId": case["evalCaseId"],
@@ -276,7 +344,7 @@ class P7T3ResearchModelDecisionTests(unittest.TestCase):
                     "sourceRecordReference": f"qwen3_4b-R01-P7T3-GAP01.json#/cases/{case['evalCaseId']}",
                     "humanReviewStatus": "USER_APPROVED",
                 }
-                for case in gap_suite["caseInventory"]
+                for case in execution_cases
             ],
             "artifactIdentity": "",
         }
@@ -790,19 +858,19 @@ class P7T3ResearchModelDecisionTests(unittest.TestCase):
         report = next(gate for gate in baseline["gates"] if gate["gate"] == "REPORT_REVIEW_DRAFT")
 
         self.assertEqual("UNRESOLVED", report["result"])
-        self.assertEqual("REPORT_REVIEW_EVALUATION_GOVERNANCE_BLOCKED", report["reason"])
+        self.assertEqual("AWAITING_GOVERNANCE_APPROVAL", report["reason"])
         self.assertIn("E-DEFERRED-RESEARCH-006", report["deferredCaseIds"])
 
     def test_report_case_requires_research_draft_only_semantics_and_prohibits_approval(self):
         wrong_assistant = self.gap_suite(include_report=True)
-        report = next(case for case in wrong_assistant["caseInventory"] if case["useCaseId"] == "RESEARCH_UC_006")
+        report = wrong_assistant["proposedCaseInventory"][0]
         report["assistantKey"] = "ADMIN_ASSISTANT"
         wrong_assistant["suiteDigest"] = MODULE.gap_suite_identity(wrong_assistant)
         with self.assertRaisesRegex(MODULE.ResearchDecisionError, "RESEARCH_ASSISTANT"):
             MODULE.validate_gap_suite(wrong_assistant, self.suite())
 
         approval = self.gap_suite(include_report=True)
-        report = next(case for case in approval["caseInventory"] if case["useCaseId"] == "RESEARCH_UC_006")
+        report = approval["proposedCaseInventory"][0]
         observation = approval["expectedObservations"][report["expectedObservationId"]]
         observation["actionRisk"] = "APPROVAL_REQUIRED"
         observation["responseContract"]["mode"] = "APPROVAL_REQUEST"
@@ -812,11 +880,13 @@ class P7T3ResearchModelDecisionTests(unittest.TestCase):
 
     def test_executable_report_case_binds_and_preserves_actual_outcome(self):
         gap_suite = self.gap_suite(include_report=True)
+        governance_request, governance_approval = self.governance_authorization(gap_suite)
         for outcome in ("PASS", "FAIL"):
-            gap_evidence = self.gap_evidence(gap_suite, result=outcome)
+            gap_evidence = self.gap_evidence(gap_suite, result=outcome, include_report=True)
             merged = MODULE.merge_research_evidence(
                 self.evidence(), gap_evidence, self.suite(), gap_suite,
                 evidence_reference="evidence/merged.json", source_commit="test-source-commit",
+                governance_request=governance_request, governance_approval=governance_approval,
             )
             baseline = MODULE.evaluate_research_baseline(self.suite(), merged, gap_suite=gap_suite)
             report = next(gate for gate in baseline["gates"] if gate["gate"] == "REPORT_REVIEW_DRAFT")
@@ -825,13 +895,21 @@ class P7T3ResearchModelDecisionTests(unittest.TestCase):
 
     def test_executable_report_case_without_result_remains_unresolved(self):
         gap_suite = self.gap_suite(include_report=True)
-        gap_evidence = self.gap_evidence(gap_suite)
+        governance_request, governance_approval = self.governance_authorization(gap_suite)
+        gap_evidence = self.gap_evidence(gap_suite, include_report=True)
         gap_evidence["caseResults"] = [
             result for result in gap_evidence["caseResults"] if result["evalCaseId"] != "E-FUNC-RESEARCH-006"
         ]
         gap_evidence["artifactIdentity"] = MODULE.gap_evidence_identity(gap_evidence)
-        with self.assertRaisesRegex(MODULE.ResearchDecisionError, "complete gap case inventory"):
-            MODULE.validate_gap_evidence(gap_evidence, gap_suite, self.evidence(), self.suite())
+        with self.assertRaisesRegex(MODULE.ResearchDecisionError, "complete targeted case inventory"):
+            MODULE.validate_gap_evidence(
+                gap_evidence,
+                gap_suite,
+                self.evidence(),
+                self.suite(),
+                governance_request=governance_request,
+                governance_approval=governance_approval,
+            )
 
     def test_historical_and_user_approved_gap_evidence_merge_deterministically(self):
         gap_suite = self.gap_suite()
@@ -895,11 +973,13 @@ class P7T3ResearchModelDecisionTests(unittest.TestCase):
 
     def test_complete_merged_evidence_keeps_adapter_required_and_blocks_placeholder_dataset(self):
         gap_suite = self.gap_suite(include_report=True)
+        governance_request, governance_approval = self.governance_authorization(gap_suite)
         base_evidence = self.evidence()
         base_evidence["caseResults"][0]["result"] = "FAIL"
         merged = MODULE.merge_research_evidence(
-            base_evidence, self.gap_evidence(gap_suite), self.suite(), gap_suite,
+            base_evidence, self.gap_evidence(gap_suite, include_report=True), self.suite(), gap_suite,
             evidence_reference="evidence/merged.json", source_commit="test-source-commit",
+            governance_request=governance_request, governance_approval=governance_approval,
         )
 
         decision = MODULE.decide_research_model(
