@@ -17,11 +17,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.web.labportalbackend.ai.client.AiGatewayException;
 import com.web.labportalbackend.ai.client.AiGatewayFailure;
 import com.web.labportalbackend.ai.client.AiGatewayFailureCategory;
+import com.web.labportalbackend.ai.context.AiContextReadDeniedException;
 import com.web.labportalbackend.ai.dto.response.AiAssistantChatResponse;
 import com.web.labportalbackend.ai.enums.AiAssistantKey;
+import com.web.labportalbackend.ai.enums.AiCapability;
 import com.web.labportalbackend.ai.service.AiAssistantAvailabilityException;
 import com.web.labportalbackend.ai.service.AiAssistantAvailabilityFailure;
 import com.web.labportalbackend.ai.service.AiAssistantGatewayService;
+import com.web.labportalbackend.ai.service.AiCapabilityDeniedException;
 import com.web.labportalbackend.auth.security.JwtAuthenticationFilter;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -70,7 +73,10 @@ class AiAssistantControllerTest {
                         .header(HttpHeaders.AUTHORIZATION, "Bearer user-jwt-must-stay-in-spring")
                         .header("X-Request-Id", "request-123")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"input\":\"Summarize allowed information.\"}"))
+                        .content("""
+                                {"input":"Summarize allowed information.",
+                                 "capability":"LAB_POLICY_READ","resourceId":10}
+                                """))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(0))
                 .andExpect(jsonPath("$.data.assistantKey").value(assistantKey.name()))
@@ -79,7 +85,9 @@ class AiAssistantControllerTest {
                 .andExpect(content().string(not(containsString("user-jwt-must-stay-in-spring"))));
 
         verify(gatewayService).chat(eq(assistantKey),
-                argThat(request -> "Summarize allowed information.".equals(request.getInput())),
+                argThat(request -> "Summarize allowed information.".equals(request.getInput())
+                        && request.getCapability() == AiCapability.LAB_POLICY_READ
+                        && Long.valueOf(10L).equals(request.getResourceId())),
                 eq("request-123"));
     }
 
@@ -89,7 +97,7 @@ class AiAssistantControllerTest {
                         .contextPath("/api")
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"input\":\"Hello\"}"))
+                        .content("{\"input\":\"Hello\",\"capability\":\"LAB_POLICY_READ\",\"resourceId\":10}"))
                 .andExpect(status().isUnauthorized());
 
         verifyNoInteractions(gatewayService);
@@ -103,7 +111,7 @@ class AiAssistantControllerTest {
                         .with(csrf())
                         .with(user("student").roles("STUDENT"))
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"input\":\"Hello\"}"))
+                        .content("{\"input\":\"Hello\",\"capability\":\"LAB_POLICY_READ\",\"resourceId\":10}"))
                 .andExpect(status().isBadRequest());
 
         verifyNoInteractions(gatewayService);
@@ -112,10 +120,21 @@ class AiAssistantControllerTest {
     @ParameterizedTest
     @ValueSource(strings = {
             "", "null", "{", "{}", "{\"input\":\"   \"}",
-            "{\"input\":\"Hello\",\"authorizedContext\":{}}",
-            "{\"input\":\"Hello\",\"role\":\"ADMIN\"}",
-            "{\"input\":\"Hello\",\"userJwt\":\"secret\"}",
-            "{\"input\":\"Hello\",\"accessToken\":\"secret\"}"
+            "{\"input\":\"Hello\",\"capability\":\"LAB_POLICY_READ\"}",
+            "{\"input\":\"Hello\",\"capability\":\"ADMIN_SYSTEM_SUMMARY\",\"resourceId\":10}",
+            "{\"input\":\"Hello\",\"capability\":\"RESEARCH_TASK_PROPOSAL_DRAFT\",\"resourceId\":30}",
+            "{\"input\":\"Hello\",\"capability\":\"LAB_POLICY_READ\",\"resourceId\":10,\"parentResourceId\":20}",
+            "{\"input\":\"Hello\",\"capability\":\"UNKNOWN\",\"resourceId\":10}",
+            "{\"input\":\"Hello\",\"capability\":\"LAB_POLICY_READ\",\"resourceId\":10,\"resourceType\":\"LABORATORY\"}",
+            "{\"input\":\"Hello\",\"capability\":\"LAB_POLICY_READ\",\"resourceId\":10,\"authorizedContext\":{}}",
+            "{\"input\":\"Hello\",\"capability\":\"LAB_POLICY_READ\",\"resourceId\":10,\"allowedTools\":[]}",
+            "{\"input\":\"Hello\",\"capability\":\"LAB_POLICY_READ\",\"resourceId\":10,\"allowedToolSchemas\":[]}",
+            "{\"input\":\"Hello\",\"capability\":\"LAB_POLICY_READ\",\"resourceId\":10,\"authorizedResources\":[]}",
+            "{\"input\":\"Hello\",\"capability\":\"LAB_POLICY_READ\",\"resourceId\":10,\"resourceReferences\":[]}",
+            "{\"input\":\"Hello\",\"capability\":\"LAB_POLICY_READ\",\"resourceId\":10,\"effectiveCapabilities\":[]}",
+            "{\"input\":\"Hello\",\"capability\":\"LAB_POLICY_READ\",\"resourceId\":10,\"role\":\"ADMIN\"}",
+            "{\"input\":\"Hello\",\"capability\":\"LAB_POLICY_READ\",\"resourceId\":10,\"userJwt\":\"secret\"}",
+            "{\"input\":\"Hello\",\"capability\":\"LAB_POLICY_READ\",\"resourceId\":10,\"accessToken\":\"secret\"}"
     })
     void malformedOrAuthorityInjectingBodyFailsBeforeGateway(String body) throws Exception {
         mockMvc.perform(post("/api/ai/assistants/LAB_ASSISTANT/chat")
@@ -143,7 +162,7 @@ class AiAssistantControllerTest {
                         .with(user("student").roles("STUDENT"))
                         .header("X-Request-Id", "request-123")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"input\":\"Hello\"}"))
+                        .content("{\"input\":\"Hello\",\"capability\":\"RESEARCH_GROUP_SUMMARY\",\"resourceId\":30}"))
                 .andExpect(status().isServiceUnavailable())
                 .andExpect(jsonPath("$.code").value(503))
                 .andExpect(jsonPath("$.message").value("AI assistant is temporarily unavailable"))
@@ -164,7 +183,7 @@ class AiAssistantControllerTest {
                         .with(user("student").roles("STUDENT"))
                         .header("X-Request-Id", "request-quota")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"input\":\"Hello\"}"))
+                        .content("{\"input\":\"Hello\",\"capability\":\"RESEARCH_GROUP_SUMMARY\",\"resourceId\":30}"))
                 .andExpect(status().isTooManyRequests())
                 .andExpect(jsonPath("$.code").value(429))
                 .andExpect(jsonPath("$.message").value("AI assistant quota exceeded"))
@@ -185,12 +204,48 @@ class AiAssistantControllerTest {
                         .with(user("student").roles("STUDENT"))
                         .header("X-Request-Id", "request-disabled")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"input\":\"Hello\"}"))
+                        .content("{\"input\":\"Hello\",\"capability\":\"LAB_POLICY_READ\",\"resourceId\":10}"))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.code").value(403))
                 .andExpect(jsonPath("$.message").value("AI assistant is not available for this request"))
                 .andExpect(content().string(not(containsString("CONFIGURATION_UNAVAILABLE"))))
                 .andExpect(content().string(not(containsString("database"))));
+    }
+
+    @Test
+    void capabilityDenialMapsToGenericForbiddenWithoutAuthorizationDetails() throws Exception {
+        when(gatewayService.chat(eq(AiAssistantKey.RESEARCH_ASSISTANT),
+                org.mockito.ArgumentMatchers.any(), eq("request-capability")))
+                .thenThrow(Mockito.mock(AiCapabilityDeniedException.class));
+
+        mockMvc.perform(post("/api/ai/assistants/RESEARCH_ASSISTANT/chat")
+                        .contextPath("/api")
+                        .with(csrf())
+                        .with(user("student").roles("STUDENT"))
+                        .header("X-Request-Id", "request-capability")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"input\":\"Hello\",\"capability\":\"RESEARCH_GROUP_SUMMARY\",\"resourceId\":30}"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.message").value("AI assistant is not available for this request"))
+                .andExpect(content().string(not(containsString("NOT_GROUP_MEMBER"))));
+    }
+
+    @Test
+    void contextDenialMapsToGenericForbiddenWithoutResourceDetails() throws Exception {
+        when(gatewayService.chat(eq(AiAssistantKey.LAB_ASSISTANT),
+                org.mockito.ArgumentMatchers.any(), eq("request-context")))
+                .thenThrow(new AiContextReadDeniedException());
+
+        mockMvc.perform(post("/api/ai/assistants/LAB_ASSISTANT/chat")
+                        .contextPath("/api")
+                        .with(csrf())
+                        .with(user("student").roles("STUDENT"))
+                        .header("X-Request-Id", "request-context")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"input\":\"Hello\",\"capability\":\"LAB_POLICY_READ\",\"resourceId\":10}"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.message").value("AI assistant is not available for this request"))
+                .andExpect(content().string(not(containsString("context is unavailable"))));
     }
 
     @TestConfiguration

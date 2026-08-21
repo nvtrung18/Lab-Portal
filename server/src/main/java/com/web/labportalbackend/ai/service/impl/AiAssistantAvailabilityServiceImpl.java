@@ -5,6 +5,7 @@ import com.web.labportalbackend.ai.enums.AiAssistantSystemRole;
 import com.web.labportalbackend.ai.enums.AiQuotaPolicyReference;
 import com.web.labportalbackend.ai.service.AiAssistantAvailabilityException;
 import com.web.labportalbackend.ai.service.AiAssistantAvailabilityFailure;
+import com.web.labportalbackend.ai.service.AiAssistantAvailability;
 import com.web.labportalbackend.ai.service.AiAssistantAvailabilityService;
 import com.web.labportalbackend.ai.service.AiAssistantProfile;
 import com.web.labportalbackend.ai.service.AiAssistantRegistry;
@@ -44,6 +45,16 @@ public class AiAssistantAvailabilityServiceImpl implements AiAssistantAvailabili
     @Override
     @Transactional(readOnly = true)
     public AiAssistantProfile requireAvailable(AiAssistantKey assistantKey) {
+        return evaluateAvailability(assistantKey).profile();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public AiAssistantAvailability requireAvailableForActor(AiAssistantKey assistantKey) {
+        return evaluateAvailability(assistantKey);
+    }
+
+    private AiAssistantAvailability evaluateAvailability(AiAssistantKey assistantKey) {
         AiAssistantProfile profile = resolveProfile(assistantKey);
         if (!validProfile(profile, assistantKey)) {
             throw denied(AiAssistantAvailabilityFailure.CONFIGURATION_UNAVAILABLE);
@@ -81,7 +92,7 @@ public class AiAssistantAvailabilityServiceImpl implements AiAssistantAvailabili
         if (!quotaDecision.allowed()) {
             throw denied(mapQuotaFailure(quotaDecision.denialReason()));
         }
-        return profile;
+        return new AiAssistantAvailability(profile, actor.getId(), role);
     }
 
     private AiAssistantProfile resolveProfile(AiAssistantKey assistantKey) {

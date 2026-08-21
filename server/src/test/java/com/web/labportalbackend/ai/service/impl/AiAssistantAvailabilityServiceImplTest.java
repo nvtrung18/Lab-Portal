@@ -17,6 +17,7 @@ import com.web.labportalbackend.ai.enums.AiAssistantToolGroup;
 import com.web.labportalbackend.ai.enums.AiQuotaPolicyReference;
 import com.web.labportalbackend.ai.service.AiAssistantAvailabilityException;
 import com.web.labportalbackend.ai.service.AiAssistantAvailabilityFailure;
+import com.web.labportalbackend.ai.service.AiAssistantAvailability;
 import com.web.labportalbackend.ai.service.AiAssistantProfile;
 import com.web.labportalbackend.ai.service.AiAssistantRegistry;
 import com.web.labportalbackend.ai.service.AiAssistantRegistryException;
@@ -93,6 +94,23 @@ class AiAssistantAvailabilityServiceImplTest {
         gateOrder.verify(assistantRegistry)
                 .getAvailableProfile(AiAssistantKey.LAB_ASSISTANT, AiAssistantSystemRole.STUDENT);
         gateOrder.verify(configQuotaService).evaluate(any());
+    }
+
+    @Test
+    void actorAwareAvailabilityReturnsOnlyServerResolvedIdentityAndRole() {
+        User actor = authenticate(activeUser(7L, "student", "STUDENT"));
+        AiAssistantProfile profile = profile(AiAssistantKey.LAB_ASSISTANT, true,
+                Set.of(AiAssistantSystemRole.STUDENT));
+        when(assistantRegistry.getProfile(AiAssistantKey.LAB_ASSISTANT)).thenReturn(profile);
+        when(assistantRegistry.getAvailableProfile(AiAssistantKey.LAB_ASSISTANT, AiAssistantSystemRole.STUDENT))
+                .thenReturn(profile);
+        when(configQuotaService.evaluate(any())).thenReturn(AiQuotaDecision.allow());
+
+        AiAssistantAvailability availability = service.requireAvailableForActor(AiAssistantKey.LAB_ASSISTANT);
+
+        assertSame(profile, availability.profile());
+        assertEquals(actor.getId(), availability.actorId());
+        assertEquals(AiAssistantSystemRole.STUDENT, availability.selectedSystemRole());
     }
 
     @Test
