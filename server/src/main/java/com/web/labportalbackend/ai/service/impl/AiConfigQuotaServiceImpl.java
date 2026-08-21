@@ -2,6 +2,7 @@ package com.web.labportalbackend.ai.service.impl;
 
 import com.web.labportalbackend.ai.entity.AiAssistantConfigEntity;
 import com.web.labportalbackend.ai.entity.AiQuotaConfigEntity;
+import com.web.labportalbackend.ai.enums.AiAssistantKey;
 import com.web.labportalbackend.ai.repository.AiAssistantConfigRepository;
 import com.web.labportalbackend.ai.repository.AiQuotaConfigRepository;
 import com.web.labportalbackend.ai.repository.AiUsageLogRepository;
@@ -53,8 +54,16 @@ public class AiConfigQuotaServiceImpl implements AiConfigQuotaService {
         if (assistantConfig.isEmpty()) {
             return AiQuotaDecision.deny(AiQuotaDenialReason.ASSISTANT_CONFIGURATION_UNAVAILABLE);
         }
-        if (!Boolean.TRUE.equals(assistantConfig.get().getEnabled())) {
+        AiAssistantConfigEntity assistant = assistantConfig.get();
+        if (assistant.getAssistantKey() != request.assistantKey()) {
+            return AiQuotaDecision.deny(AiQuotaDenialReason.ASSISTANT_CONFIGURATION_UNAVAILABLE);
+        }
+        if (!Boolean.TRUE.equals(assistant.getEnabled())) {
             return AiQuotaDecision.deny(AiQuotaDenialReason.ASSISTANT_DISABLED);
+        }
+        if (!hasText(assistant.getSystemPromptKey()) || !positive(assistant.getMaxRequestsPerDay())
+                || !positive(assistant.getMaxContextTokens())) {
+            return AiQuotaDecision.deny(AiQuotaDenialReason.ASSISTANT_CONFIGURATION_UNAVAILABLE);
         }
 
         Optional<AiQuotaConfigEntity> quotaConfig = quotaConfigRepository
@@ -62,8 +71,10 @@ public class AiConfigQuotaServiceImpl implements AiConfigQuotaService {
         if (quotaConfig.isPresent() && !Boolean.TRUE.equals(quotaConfig.get().getEnabled())) {
             return AiQuotaDecision.deny(AiQuotaDenialReason.QUOTA_DISABLED);
         }
+        if (quotaConfig.isPresent() && !validQuotaConfig(quotaConfig.get(), request.assistantKey())) {
+            return AiQuotaDecision.deny(AiQuotaDenialReason.ASSISTANT_CONFIGURATION_UNAVAILABLE);
+        }
 
-        AiAssistantConfigEntity assistant = assistantConfig.get();
         int contextLimit = quotaConfig.map(quota -> Math.min(assistant.getMaxContextTokens(), quota.getMaxContextTokens()))
                 .orElse(assistant.getMaxContextTokens());
         if (request.contextTokens() > contextLimit) {
@@ -111,6 +122,19 @@ public class AiConfigQuotaServiceImpl implements AiConfigQuotaService {
 
     private String normalizeModule(String module) {
         return module.trim().toLowerCase(Locale.ROOT);
+    }
+
+    private boolean validQuotaConfig(AiQuotaConfigEntity quota, AiAssistantKey key) {
+        return quota.getAssistantKey() == key && hasText(quota.getRole()) && hasText(quota.getModule())
+                && positive(quota.getMaxRequestsPerDay()) && positive(quota.getMaxContextTokens());
+    }
+
+    private boolean hasText(String value) {
+        return value != null && !value.isBlank();
+    }
+
+    private boolean positive(Integer value) {
+        return value != null && value > 0;
     }
 
     private record UtcDayWindow(Instant startInclusive, Instant endExclusive) {

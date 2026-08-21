@@ -1,5 +1,10 @@
 package com.web.labportalbackend.common.exception;
 
+import com.web.labportalbackend.ai.client.AiGatewayException;
+import com.web.labportalbackend.ai.context.AiContextReadDeniedException;
+import com.web.labportalbackend.ai.service.AiAssistantAvailabilityException;
+import com.web.labportalbackend.ai.service.AiAssistantAvailabilityFailure;
+import com.web.labportalbackend.ai.service.AiCapabilityDeniedException;
 import com.web.labportalbackend.common.dto.Response;
 import com.web.labportalbackend.research.exception.TaskProposalReviewConflictException;
 import lombok.extern.slf4j.Slf4j;
@@ -26,6 +31,40 @@ import java.util.List;
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(AiAssistantAvailabilityException.class)
+    public ResponseEntity<Response<Void>> handleAiAssistantAvailability(AiAssistantAvailabilityException ex) {
+        AiAssistantAvailabilityFailure failure = ex.failure();
+        HttpStatus status = switch (failure) {
+            case UNAUTHENTICATED -> HttpStatus.UNAUTHORIZED;
+            case QUOTA_EXCEEDED -> HttpStatus.TOO_MANY_REQUESTS;
+            default -> HttpStatus.FORBIDDEN;
+        };
+        String message = switch (failure) {
+            case UNAUTHENTICATED -> "Authentication is required";
+            case QUOTA_EXCEEDED -> "AI assistant quota exceeded";
+            default -> "AI assistant is not available for this request";
+        };
+        log.warn("AI assistant availability denied: failure={}", failure);
+        return ResponseEntity.status(status).body(Response.error(status.value(), message));
+    }
+
+    @ExceptionHandler({AiCapabilityDeniedException.class, AiContextReadDeniedException.class})
+    public ResponseEntity<Response<Void>> handleAiAssistantAuthorization(RuntimeException ex) {
+        log.warn("AI assistant authorization or context projection denied");
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(Response.error(HttpStatus.FORBIDDEN.value(),
+                        "AI assistant is not available for this request"));
+    }
+
+    @ExceptionHandler(AiGatewayException.class)
+    public ResponseEntity<Response<Void>> handleAiGateway(AiGatewayException ex) {
+        log.warn("AI gateway request failed: category={}, statusCode={}",
+                ex.failure().category(), ex.failure().statusCode());
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                .body(Response.error(HttpStatus.SERVICE_UNAVAILABLE.value(),
+                        "AI assistant is temporarily unavailable"));
+    }
 
     // ---- Validation ----
 

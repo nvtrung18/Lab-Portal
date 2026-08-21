@@ -12,6 +12,7 @@ import static org.mockito.Mockito.when;
 
 import com.web.labportalbackend.ai.entity.AiAssistantConfigEntity;
 import com.web.labportalbackend.ai.entity.AiQuotaConfigEntity;
+import com.web.labportalbackend.ai.entity.AiUsageLogEntity;
 import com.web.labportalbackend.ai.enums.AiAssistantKey;
 import com.web.labportalbackend.ai.repository.AiAssistantConfigRepository;
 import com.web.labportalbackend.ai.repository.AiQuotaConfigRepository;
@@ -85,6 +86,32 @@ class AiConfigQuotaServiceImplTest {
     }
 
     @Test
+    void malformedRequiredAssistantMetadataFailsClosedBeforeQuotaOrUsageLookups() {
+        AiAssistantConfigEntity assistant = assistantConfig(true, 5, 100);
+        assistant.setSystemPromptKey(" ");
+        when(assistantConfigRepository.findByAssistantKeyAndActiveTrueAndDeletedFalse(AiAssistantKey.LAB_ASSISTANT))
+                .thenReturn(Optional.of(assistant));
+
+        AiQuotaDecision decision = service.evaluate(request(1));
+
+        assertDenied(decision, AiQuotaDenialReason.ASSISTANT_CONFIGURATION_UNAVAILABLE);
+        verifyNoInteractions(quotaConfigRepository, usageLogRepository);
+    }
+
+    @Test
+    void malformedRequiredAssistantLimitsFailClosedBeforeQuotaOrUsageLookups() {
+        AiAssistantConfigEntity assistant = assistantConfig(true, 5, 100);
+        assistant.setMaxRequestsPerDay(null);
+        when(assistantConfigRepository.findByAssistantKeyAndActiveTrueAndDeletedFalse(AiAssistantKey.LAB_ASSISTANT))
+                .thenReturn(Optional.of(assistant));
+
+        AiQuotaDecision decision = service.evaluate(request(1));
+
+        assertDenied(decision, AiQuotaDenialReason.ASSISTANT_CONFIGURATION_UNAVAILABLE);
+        verifyNoInteractions(quotaConfigRepository, usageLogRepository);
+    }
+
+    @Test
     void disabledNarrowQuotaDeniesBeforeUsageCounts() {
         stubAssistant(5, 100);
         AiQuotaConfigEntity quota = quotaConfig(3, 80);
@@ -95,6 +122,35 @@ class AiConfigQuotaServiceImplTest {
 
         assertDenied(decision, AiQuotaDenialReason.QUOTA_DISABLED);
         verifyNoInteractions(usageLogRepository);
+    }
+
+    @Test
+    void malformedPresentNarrowQuotaFailsClosedBeforeUsageCounts() {
+        stubAssistant(5, 100);
+        AiQuotaConfigEntity quota = quotaConfig(3, 80);
+        quota.setMaxContextTokens(null);
+        stubQuota("STUDENT", "research", quota);
+
+        AiQuotaDecision decision = service.evaluate(request(1));
+
+        assertDenied(decision, AiQuotaDenialReason.ASSISTANT_CONFIGURATION_UNAVAILABLE);
+        verifyNoInteractions(usageLogRepository);
+    }
+
+    @Test
+    void missingOptionalNarrowQuotaUsesValidAssistantWideLimits() {
+        stubAssistant(5, 100);
+        when(quotaConfigRepository.findByAssistantKeyAndRoleAndModuleAndActiveTrueAndDeletedFalse(
+                AiAssistantKey.LAB_ASSISTANT, "STUDENT", "research")).thenReturn(Optional.empty());
+        stubAssistantUsageCount(0);
+
+        AiQuotaDecision decision = service.evaluate(request(1));
+
+        assertEquals(AiQuotaDecision.allow(), decision);
+        verify(usageLogRepository, never())
+                .countByUserIdAndAssistantKeyAndRoleAndModuleAndCreatedAtGreaterThanEqualAndCreatedAtLessThanAndActiveTrueAndDeletedFalse(
+                        anyLong(), any(), any(), any(), any(), any());
+        verify(usageLogRepository, never()).save(any(AiUsageLogEntity.class));
     }
 
     @Test

@@ -1,6 +1,7 @@
 package com.web.labportalbackend.ai.service.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.web.labportalbackend.ai.enums.AiCapability;
@@ -48,6 +49,17 @@ class AiToolRegistryServiceImplTest {
             assertEquals(definition.riskBoundary(), definition.capability().riskBoundary());
         }
         assertEquals(AiCapability.values().length, EXPECTED_CAPABILITY_BY_ID.size());
+    }
+
+    @Test
+    void resolvesOnlyExactCanonicalExternalToolIds() {
+        AiToolRegistryServiceImpl registry = new AiToolRegistryServiceImpl();
+
+        assertEquals(AiToolId.LAB_SLOT_READ, registry.get("lab.slot.read").id());
+        assertNull(registry.get("LAB.SLOT.READ"));
+        assertNull(registry.get("lab.slot.read "));
+        assertNull(registry.get("model.random.tool"));
+        assertNull(registry.get((String) null));
     }
 
     @Test

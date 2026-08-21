@@ -197,6 +197,15 @@ class AiGatewayClientImplTest {
                 () -> new AiGatewayConfiguration("https://ai.example.invalid", " "));
     }
 
+    @Test
+    void requestIdsUseSharedCorrelationFormat() throws Exception {
+        assertEquals("request-123", request("{}", " request-123 ").requestId());
+
+        for (String invalid : List.of("bad request id", "-invalid-prefix", "a".repeat(129))) {
+            assertThrows(IllegalArgumentException.class, () -> request("{}", invalid));
+        }
+    }
+
     private void assertOneAttemptFailure(String body, AiGatewayFailureCategory expectedCategory) throws Exception {
         AtomicInteger attempts = new AtomicInteger();
         AiGatewayClient client = client(request -> {
