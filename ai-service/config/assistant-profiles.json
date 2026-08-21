@@ -1,0 +1,98 @@
+{
+  "schemaVersion": "1.0.0",
+  "status": "APPROVED",
+  "profiles": {
+    "ADMIN_ASSISTANT": {
+      "assistantKey": "ADMIN_ASSISTANT",
+      "profileVersion": "1.0.0",
+      "prompt": {
+        "version": "admin-v2",
+        "systemPrompt": "Use only the bounded administrative context supplied by Spring. Produce AI guidance and clearly non-official drafts. Never execute tools, claim approval, or claim that a business write occurred."
+      },
+      "modelProfile": {
+        "baseModelIdentifier": "Qwen/Qwen3-4B-Instruct-2507",
+        "baseModelRevision": "cdbee75f17c01a7cc42f958dc650907174af0554",
+        "profileVersion": "1.0.0",
+        "runtimeProfile": "shared-base",
+        "servingMode": "METADATA_ONLY"
+      },
+      "adapter": null,
+      "retrievalNamespace": "admin-knowledge",
+      "allowedToolSchemas": [
+        "admin.system.summary",
+        "admin.audit.summary",
+        "admin.user.status.lookup",
+        "admin.config.draft",
+        "admin.account.action.draft"
+      ],
+      "schemaBundle": "admin-assistant-output-v1",
+      "safety": {
+        "modelOutputTrusted": false,
+        "toolExecutionEnabled": false,
+        "retrievalEnabled": false
+      }
+    },
+    "LAB_ASSISTANT": {
+      "assistantKey": "LAB_ASSISTANT",
+      "profileVersion": "1.0.0",
+      "prompt": {
+        "version": "lab-v2",
+        "systemPrompt": "Use only the bounded laboratory context supplied by Spring. Produce operational guidance and clearly non-official drafts. Never execute tools, change bookings, or claim that a business write occurred."
+      },
+      "modelProfile": {
+        "baseModelIdentifier": "Qwen/Qwen3-4B-Instruct-2507",
+        "baseModelRevision": "cdbee75f17c01a7cc42f958dc650907174af0554",
+        "profileVersion": "1.0.0",
+        "runtimeProfile": "shared-base",
+        "servingMode": "METADATA_ONLY"
+      },
+      "adapter": null,
+      "retrievalNamespace": "lab-knowledge",
+      "allowedToolSchemas": [
+        "lab.policy.read",
+        "lab.slot.read",
+        "lab.own.booking.read",
+        "lab.managed.summary",
+        "lab.booking.draft",
+        "lab.checkin.guidance"
+      ],
+      "schemaBundle": "lab-assistant-output-v1",
+      "safety": {
+        "modelOutputTrusted": false,
+        "toolExecutionEnabled": false,
+        "retrievalEnabled": false
+      }
+    },
+    "RESEARCH_ASSISTANT": {
+      "assistantKey": "RESEARCH_ASSISTANT",
+      "profileVersion": "1.0.0",
+      "prompt": {
+        "version": "research-v2",
+        "systemPrompt": "Use only the bounded research context supplied by Spring. Produce research guidance and clearly non-official drafts. Never execute tools, create official records, or claim that a business write occurred."
+      },
+      "modelProfile": {
+        "baseModelIdentifier": "Qwen/Qwen3-4B-Instruct-2507",
+        "baseModelRevision": "cdbee75f17c01a7cc42f958dc650907174af0554",
+        "profileVersion": "1.0.0",
+        "runtimeProfile": "shared-base",
+        "servingMode": "METADATA_ONLY"
+      },
+      "adapter": null,
+      "retrievalNamespace": "research-knowledge",
+      "allowedToolSchemas": [
+        "research.project.summary",
+        "research.group.summary",
+        "research.assigned.task.read",
+        "research.task.proposal.draft",
+        "research.task.suggestion.draft",
+        "research.report.review.draft"
+      ],
+      "schemaBundle": "research-assistant-output-v1",
+      "safety": {
+        "modelOutputTrusted": false,
+        "toolExecutionEnabled": false,
+        "retrievalEnabled": false
+      }
+    }
+  }
+}

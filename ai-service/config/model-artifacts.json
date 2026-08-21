@@ -1,0 +1,65 @@
+{
+  "schemaVersion": "1.0.0",
+  "artifactVersion": "1.0.0",
+  "status": "APPROVED",
+  "baseModel": {
+    "identifier": "Qwen/Qwen3-4B-Instruct-2507",
+    "revision": "cdbee75f17c01a7cc42f958dc650907174af0554",
+    "runtimeProfile": "shared-base",
+    "status": "METADATA_ONLY",
+    "artifact": null
+  },
+  "assistantAdapters": {
+    "ADMIN_ASSISTANT": {
+      "assistantKey": "ADMIN_ASSISTANT",
+      "identifier": null,
+      "version": null,
+      "baseModelIdentifier": "Qwen/Qwen3-4B-Instruct-2507",
+      "baseModelRevision": "cdbee75f17c01a7cc42f958dc650907174af0554",
+      "status": "NOT_AVAILABLE",
+      "artifact": null,
+      "sourceDecision": {
+        "reference": "config/p6-t6-adapter-decisions.json",
+        "identity": null,
+        "outcome": "BASE_ONLY_APPROVED"
+      },
+      "sourceRegistryReference": null
+    },
+    "LAB_ASSISTANT": {
+      "assistantKey": "LAB_ASSISTANT",
+      "identifier": null,
+      "version": null,
+      "baseModelIdentifier": "Qwen/Qwen3-4B-Instruct-2507",
+      "baseModelRevision": "cdbee75f17c01a7cc42f958dc650907174af0554",
+      "status": "NOT_AVAILABLE",
+      "artifact": null,
+      "sourceDecision": {
+        "reference": "config/p6-t6-adapter-decisions.json",
+        "identity": null,
+        "outcome": "BASE_ONLY_APPROVED"
+      },
+      "sourceRegistryReference": null
+    },
+    "RESEARCH_ASSISTANT": {
+      "assistantKey": "RESEARCH_ASSISTANT",
+      "identifier": null,
+      "version": null,
+      "baseModelIdentifier": "Qwen/Qwen3-4B-Instruct-2507",
+      "baseModelRevision": "cdbee75f17c01a7cc42f958dc650907174af0554",
+      "status": "BLOCKED",
+      "artifact": null,
+      "sourceDecision": {
+        "reference": "config/p7-t3-research-model-decision.json",
+        "identity": "3b57340a2e97903f6ccafa48d06f04ad21f7d92ebde6548a163f779ff7fcb30e",
+        "outcome": "ADAPTER_REQUIRED+CANDIDATE_BUILD_BLOCKED"
+      },
+      "sourceRegistryReference": null
+    }
+  },
+  "sourceDecision": {
+    "reference": "config/p7-t3-research-model-decision.json",
+    "identity": "3b57340a2e97903f6ccafa48d06f04ad21f7d92ebde6548a163f779ff7fcb30e",
+    "outcome": "ADAPTER_REQUIRED+CANDIDATE_BUILD_BLOCKED"
+  },
+  "sourceRegistryReference": null
+}

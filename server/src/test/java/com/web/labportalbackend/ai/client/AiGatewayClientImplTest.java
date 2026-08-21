@@ -69,7 +69,8 @@ class AiGatewayClientImplTest {
         List<ClientRequest> requests = new ArrayList<>();
         Deque<Mono<ClientResponse>> responses = new ArrayDeque<>();
         responses.add(Mono.just(json(HttpStatus.BAD_GATEWAY,
-                "{\"errorCode\":\"AI_TIMEOUT\",\"message\":\"remote detail\",\"retryable\":true}")));
+                "{\"errorCode\":\"AI_TIMEOUT\",\"message\":\"remote detail\",\"retryable\":true,"
+                        + "\"requestId\":\"retry-request\"}")));
         responses.add(Mono.just(json(HttpStatus.OK, """
                 {"assistantKey":"LAB_ASSISTANT","answer":"Recovered","promptTokens":1,
                  "completionTokens":2,"metadata":{}}
@@ -126,7 +127,8 @@ class AiGatewayClientImplTest {
         AiGatewayClient client = client(request -> {
             attempts.incrementAndGet();
             return Mono.just(json(HttpStatus.BAD_REQUEST,
-                    "{\"errorCode\":\"INVALID\",\"message\":\"private detail\",\"retryable\":true}"));
+                    "{\"errorCode\":\"INVALID\",\"message\":\"private detail\",\"retryable\":true,"
+                            + "\"requestId\":\"error-request\"}"));
         });
 
         AiGatewayException exception = assertThrows(AiGatewayException.class,
@@ -145,7 +147,8 @@ class AiGatewayClientImplTest {
         AiGatewayClient client = client(request -> {
             attempts.incrementAndGet();
             return Mono.just(json(HttpStatus.FOUND,
-                    "{\"errorCode\":\"REDIRECT\",\"message\":\"detail\",\"retryable\":true}"));
+                    "{\"errorCode\":\"REDIRECT\",\"message\":\"detail\",\"retryable\":true,"
+                            + "\"requestId\":\"redirect-request\"}"));
         });
 
         AiGatewayException exception = assertThrows(AiGatewayException.class,
@@ -158,7 +161,8 @@ class AiGatewayClientImplTest {
 
     @Test
     void nonRetryableMalformedAndEmptyServerErrorsNeverRetry() throws Exception {
-        assertOneAttemptFailure("{\"errorCode\":\"NO_RETRY\",\"message\":\"detail\",\"retryable\":false}",
+        assertOneAttemptFailure("{\"errorCode\":\"NO_RETRY\",\"message\":\"detail\",\"retryable\":false,"
+                        + "\"requestId\":\"failure-request\"}",
                 AiGatewayFailureCategory.REMOTE);
         assertOneAttemptFailure("not-json", AiGatewayFailureCategory.PROTOCOL);
         assertOneAttemptFailure("", AiGatewayFailureCategory.PROTOCOL);

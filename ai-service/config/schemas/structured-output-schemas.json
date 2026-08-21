@@ -1,0 +1,178 @@
+{
+  "schemaVersion": "1.0.0",
+  "status": "APPROVED",
+  "schemas": [
+    {
+      "schemaId": "chat-response-v1",
+      "schemaVersion": "1.0.0",
+      "assistantKey": null,
+      "outputType": "CHAT_RESPONSE",
+      "schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "https://lab-portal.local/schemas/p8/chat-response/1.0.0",
+        "type": "object",
+        "required": ["assistantKey", "answer", "promptTokens", "completionTokens", "metadata"],
+        "additionalProperties": false,
+        "properties": {
+          "assistantKey": {"enum": ["ADMIN_ASSISTANT", "LAB_ASSISTANT", "RESEARCH_ASSISTANT"]},
+          "answer": {"type": "string", "minLength": 1, "maxLength": 32768},
+          "promptTokens": {"type": "integer", "minimum": 0},
+          "completionTokens": {"type": "integer", "minimum": 0},
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "resourceReferences": {
+                "type": "array",
+                "maxItems": 32,
+                "uniqueItems": true,
+                "items": {"$ref": "#/$defs/resourceReference"}
+              }
+            }
+          }
+        },
+        "$defs": {
+          "resourceReference": {
+            "type": "object",
+            "required": ["resourceType", "resourceId"],
+            "additionalProperties": false,
+            "properties": {
+              "resourceType": {"enum": ["SYSTEM", "AUDIT_LOG", "USER_ACCOUNT", "SYSTEM_CONFIG", "LABORATORY", "TIME_SLOT", "BOOKING", "PROJECT", "GROUP", "TASK", "REPORT"]},
+              "resourceId": {"oneOf": [{"type": "null"}, {"type": "integer", "minimum": 1}, {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"}]}
+            }
+          }
+        }
+      }
+    },
+    {
+      "schemaId": "tool-request-v1",
+      "schemaVersion": "1.0.0",
+      "assistantKey": null,
+      "outputType": "TOOL_REQUEST",
+      "schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "https://lab-portal.local/schemas/p8/tool-request/1.0.0",
+        "type": "object",
+        "required": ["assistantKey", "schemaVersion", "toolId", "arguments"],
+        "additionalProperties": false,
+        "properties": {
+          "assistantKey": {"enum": ["ADMIN_ASSISTANT", "LAB_ASSISTANT", "RESEARCH_ASSISTANT"]},
+          "schemaVersion": {"const": "v1"},
+          "toolId": {"type": "string", "minLength": 1, "maxLength": 128},
+          "arguments": {
+            "type": "object",
+            "required": ["resource"],
+            "additionalProperties": false,
+            "properties": {
+              "resource": {"$ref": "#/$defs/resourceReference"},
+              "parentResource": {"$ref": "#/$defs/resourceReference"}
+            }
+          }
+        },
+        "$defs": {
+          "resourceReference": {
+            "type": "object",
+            "required": ["resourceType", "resourceId"],
+            "additionalProperties": false,
+            "properties": {
+              "resourceType": {"enum": ["SYSTEM", "AUDIT_LOG", "USER_ACCOUNT", "SYSTEM_CONFIG", "LABORATORY", "TIME_SLOT", "BOOKING", "PROJECT", "GROUP", "TASK", "REPORT"]},
+              "resourceId": {"oneOf": [{"type": "null"}, {"type": "integer", "minimum": 1}, {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"}]}
+            }
+          }
+        }
+      }
+    },
+    {
+      "schemaId": "admin-assistant-output-v1",
+      "schemaVersion": "1.0.0",
+      "assistantKey": "ADMIN_ASSISTANT",
+      "outputType": "STRUCTURED_DRAFT",
+      "schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "https://lab-portal.local/schemas/p8/admin-structured-draft/1.0.0",
+        "type": "object",
+        "required": ["kind", "subject", "actions", "requiresHumanReview"],
+        "additionalProperties": false,
+        "properties": {
+          "kind": {"const": "ADMIN_ACCOUNT_DRAFT"},
+          "subject": {"type": "string", "minLength": 1, "maxLength": 512},
+          "actions": {"type": "array", "minItems": 1, "maxItems": 32, "items": {"type": "string", "minLength": 1, "maxLength": 1000}},
+          "requiresHumanReview": {"const": true}
+        }
+      }
+    },
+    {
+      "schemaId": "lab-assistant-output-v1",
+      "schemaVersion": "1.0.0",
+      "assistantKey": "LAB_ASSISTANT",
+      "outputType": "STRUCTURED_DRAFT",
+      "schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "https://lab-portal.local/schemas/p8/lab-structured-draft/1.0.0",
+        "type": "object",
+        "required": ["kind", "labRef", "slotRef", "requestedPurpose", "requiresHumanReview"],
+        "additionalProperties": false,
+        "properties": {
+          "kind": {"const": "LAB_BOOKING_DRAFT"},
+          "labRef": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"},
+          "slotRef": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"},
+          "requestedPurpose": {"type": "string", "minLength": 1, "maxLength": 2000},
+          "requiresHumanReview": {"const": true}
+        }
+      }
+    },
+    {
+      "schemaId": "research-assistant-output-v1",
+      "schemaVersion": "1.0.0",
+      "assistantKey": "RESEARCH_ASSISTANT",
+      "outputType": "STRUCTURED_DRAFT",
+      "schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "https://lab-portal.local/schemas/p8/research-structured-draft/1.0.0",
+        "oneOf": [
+          {
+            "type": "object",
+            "required": ["kind", "projectRef", "groupRef", "taskTitle", "requiresHumanReview"],
+            "additionalProperties": false,
+            "properties": {
+              "kind": {"const": "RESEARCH_TASK_PROPOSAL_DRAFT"},
+              "projectRef": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"},
+              "groupRef": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"},
+              "taskTitle": {"type": "string", "minLength": 1, "maxLength": 200},
+              "requiresHumanReview": {"const": true}
+            }
+          },
+          {
+            "type": "object",
+            "required": ["kind", "taskRef", "suggestion", "requiresHumanReview"],
+            "additionalProperties": false,
+            "properties": {
+              "kind": {"const": "RESEARCH_TASK_SUGGESTION_DRAFT"},
+              "taskRef": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"},
+              "suggestion": {"type": "string", "minLength": 1, "maxLength": 4000},
+              "requiresHumanReview": {"const": true}
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "tools": [
+    {"toolId": "admin.system.summary", "assistantKey": "ADMIN_ASSISTANT", "schemaVersion": "v1", "resourceType": "SYSTEM", "parentResourceType": null, "argumentNames": ["resource"], "riskBoundary": "READ_ONLY"},
+    {"toolId": "admin.audit.summary", "assistantKey": "ADMIN_ASSISTANT", "schemaVersion": "v1", "resourceType": "AUDIT_LOG", "parentResourceType": null, "argumentNames": ["resource"], "riskBoundary": "READ_ONLY"},
+    {"toolId": "admin.user.status.lookup", "assistantKey": "ADMIN_ASSISTANT", "schemaVersion": "v1", "resourceType": "USER_ACCOUNT", "parentResourceType": null, "argumentNames": ["resource"], "riskBoundary": "READ_ONLY"},
+    {"toolId": "admin.config.draft", "assistantKey": "ADMIN_ASSISTANT", "schemaVersion": "v1", "resourceType": "SYSTEM_CONFIG", "parentResourceType": null, "argumentNames": ["resource"], "riskBoundary": "DRAFT_ONLY"},
+    {"toolId": "admin.account.action.draft", "assistantKey": "ADMIN_ASSISTANT", "schemaVersion": "v1", "resourceType": "USER_ACCOUNT", "parentResourceType": null, "argumentNames": ["resource"], "riskBoundary": "DRAFT_ONLY"},
+    {"toolId": "lab.policy.read", "assistantKey": "LAB_ASSISTANT", "schemaVersion": "v1", "resourceType": "LABORATORY", "parentResourceType": null, "argumentNames": ["resource"], "riskBoundary": "READ_ONLY"},
+    {"toolId": "lab.slot.read", "assistantKey": "LAB_ASSISTANT", "schemaVersion": "v1", "resourceType": "TIME_SLOT", "parentResourceType": null, "argumentNames": ["resource"], "riskBoundary": "READ_ONLY"},
+    {"toolId": "lab.own.booking.read", "assistantKey": "LAB_ASSISTANT", "schemaVersion": "v1", "resourceType": "BOOKING", "parentResourceType": null, "argumentNames": ["resource"], "riskBoundary": "READ_ONLY"},
+    {"toolId": "lab.managed.summary", "assistantKey": "LAB_ASSISTANT", "schemaVersion": "v1", "resourceType": "LABORATORY", "parentResourceType": null, "argumentNames": ["resource"], "riskBoundary": "READ_ONLY"},
+    {"toolId": "lab.booking.draft", "assistantKey": "LAB_ASSISTANT", "schemaVersion": "v1", "resourceType": "TIME_SLOT", "parentResourceType": null, "argumentNames": ["resource"], "riskBoundary": "DRAFT_ONLY"},
+    {"toolId": "lab.checkin.guidance", "assistantKey": "LAB_ASSISTANT", "schemaVersion": "v1", "resourceType": "BOOKING", "parentResourceType": null, "argumentNames": ["resource"], "riskBoundary": "READ_ONLY"},
+    {"toolId": "research.project.summary", "assistantKey": "RESEARCH_ASSISTANT", "schemaVersion": "v1", "resourceType": "PROJECT", "parentResourceType": null, "argumentNames": ["resource"], "riskBoundary": "READ_ONLY"},
+    {"toolId": "research.group.summary", "assistantKey": "RESEARCH_ASSISTANT", "schemaVersion": "v1", "resourceType": "GROUP", "parentResourceType": null, "argumentNames": ["resource"], "riskBoundary": "READ_ONLY"},
+    {"toolId": "research.assigned.task.read", "assistantKey": "RESEARCH_ASSISTANT", "schemaVersion": "v1", "resourceType": "TASK", "parentResourceType": null, "argumentNames": ["resource"], "riskBoundary": "READ_ONLY"},
+    {"toolId": "research.task.proposal.draft", "assistantKey": "RESEARCH_ASSISTANT", "schemaVersion": "v1", "resourceType": "GROUP", "parentResourceType": "PROJECT", "argumentNames": ["resource", "parentResource"], "riskBoundary": "DRAFT_ONLY"},
+    {"toolId": "research.task.suggestion.draft", "assistantKey": "RESEARCH_ASSISTANT", "schemaVersion": "v1", "resourceType": "TASK", "parentResourceType": null, "argumentNames": ["resource"], "riskBoundary": "DRAFT_ONLY"},
+    {"toolId": "research.report.review.draft", "assistantKey": "RESEARCH_ASSISTANT", "schemaVersion": "v1", "resourceType": "REPORT", "parentResourceType": null, "argumentNames": ["resource"], "riskBoundary": "DRAFT_ONLY"}
+  ]
+}

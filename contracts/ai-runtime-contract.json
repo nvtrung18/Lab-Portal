@@ -1,0 +1,164 @@
+{
+  "schemaVersion": "1.0.0",
+  "headers": {
+    "internalServiceToken": "X-Internal-Service-Token",
+    "requestId": "X-Request-Id",
+    "userAuthorization": "Authorization"
+  },
+  "requestIdPattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+  "assistantKeys": [
+    "ADMIN_ASSISTANT",
+    "LAB_ASSISTANT",
+    "RESEARCH_ASSISTANT"
+  ],
+  "toolIds": [
+    "admin.system.summary",
+    "admin.audit.summary",
+    "admin.user.status.lookup",
+    "admin.config.draft",
+    "admin.account.action.draft",
+    "lab.policy.read",
+    "lab.slot.read",
+    "lab.own.booking.read",
+    "lab.managed.summary",
+    "lab.booking.draft",
+    "lab.checkin.guidance",
+    "research.project.summary",
+    "research.group.summary",
+    "research.assigned.task.read",
+    "research.task.proposal.draft",
+    "research.task.suggestion.draft",
+    "research.report.review.draft"
+  ],
+  "routes": {
+    "health": {"method": "GET", "path": "/health", "openApi": true, "springClientConsumes": false},
+    "ready": {"method": "GET", "path": "/ready", "openApi": true, "springClientConsumes": false},
+    "modelInfo": {"method": "GET", "path": "/model-info", "openApi": true, "springClientConsumes": false},
+    "chat": {"method": "POST", "path": "/v1/assistants/chat", "openApi": true, "springClientConsumes": true},
+    "toolRequest": {"method": "POST", "path": "/v1/assistants/tool-request", "openApi": true, "springClientConsumes": false},
+    "suggestions": {"method": "POST", "path": "/v1/assistants/suggestions", "openApi": true, "springClientConsumes": false},
+    "legacySuggestions": {"method": "POST", "path": "/v1/research/suggestions", "openApi": false, "springClientConsumes": true}
+  },
+  "assistantRequest": {
+    "requiredFields": ["assistantKey", "input"],
+    "optionalFields": ["authorizedContext"],
+    "forbiddenAuthorityFields": [
+      "userJwt",
+      "actorRole",
+      "approved",
+      "authorized",
+      "executeNow",
+      "function",
+      "sql"
+    ],
+    "example": {
+      "assistantKey": "LAB_ASSISTANT",
+      "input": "Summarize the authorized lab context.",
+      "authorizedContext": {
+        "resources": [
+          {"resourceType": "TIME_SLOT", "resourceId": "slot-17"}
+        ]
+      }
+    }
+  },
+  "errorEnvelope": {
+    "requiredFields": ["errorCode", "message", "retryable", "requestId"],
+    "cases": [
+      {
+        "statusCode": 400,
+        "body": {"errorCode": "AI_INVALID_REQUEST_ID", "message": "Request ID is invalid.", "retryable": false, "requestId": "contract-request-123"}
+      },
+      {
+        "statusCode": 401,
+        "body": {"errorCode": "AI_INTERNAL_AUTH_FAILED", "message": "Internal service authentication failed.", "retryable": false, "requestId": "contract-request-123"}
+      },
+      {
+        "statusCode": 422,
+        "body": {"errorCode": "AI_INVALID_REQUEST", "message": "Request validation failed.", "retryable": false, "requestId": "contract-request-123"}
+      },
+      {
+        "statusCode": 500,
+        "body": {"errorCode": "AI_INTERNAL_ERROR", "message": "An unexpected server error occurred.", "retryable": false, "requestId": "contract-request-123"}
+      },
+      {
+        "statusCode": 503,
+        "body": {"errorCode": "AI_MODEL_NOT_READY", "message": "AI model is not loaded.", "retryable": true, "requestId": "contract-request-123"}
+      },
+      {
+        "statusCode": 503,
+        "body": {"errorCode": "AI_SERVICE_NOT_READY", "message": "AI tool requests are not available.", "retryable": false, "requestId": "contract-request-123"},
+        "allowedMessages": [
+          "AI tool requests are not available.",
+          "AI suggestions are not available."
+        ]
+      },
+      {
+        "statusCode": 504,
+        "body": {"errorCode": "AI_REQUEST_TIMEOUT", "message": "AI request processing timed out.", "retryable": true, "requestId": "contract-request-123"}
+      }
+    ]
+  },
+  "runtimeStates": {
+    "health": {
+      "statusCode": 200,
+      "expectedFields": {"status": "UP", "service": "ai-service"}
+    },
+    "ready": {
+      "statusCode": 503,
+      "expectedFields": {
+        "status": "NOT_READY",
+        "serviceStatus": "READY",
+        "modelStatus": "NOT_LOADED",
+        "profileLoaded": true,
+        "artifactValidated": false,
+        "modelLoaded": false,
+        "adapterLoaded": false,
+        "ready": false
+      }
+    },
+    "modelInfo": {
+      "statusCode": 200,
+      "expectedFields": {
+        "status": "NOT_LOADED",
+        "source": "SERVING_ARTIFACT_DESCRIPTOR",
+        "artifactState": "METADATA_ONLY",
+        "profileLoaded": true,
+        "artifactValidated": false,
+        "modelLoaded": false,
+        "adapterLoaded": false,
+        "ready": false
+      }
+    }
+  },
+  "postErrors": {
+    "chat": "AI_MODEL_NOT_READY",
+    "toolRequest": "AI_SERVICE_NOT_READY",
+    "suggestions": "AI_SERVICE_NOT_READY",
+    "legacySuggestions": "AI_SERVICE_NOT_READY"
+  },
+  "toolValidation": {
+    "candidate": {
+      "assistantKey": "LAB_ASSISTANT",
+      "schemaVersion": "v1",
+      "toolId": "lab.slot.read",
+      "arguments": {
+        "resource": {"resourceType": "TIME_SLOT", "resourceId": "slot-17"}
+      }
+    },
+    "authorizedResources": [
+      {"resourceType": "TIME_SLOT", "resourceId": "slot-17"}
+    ],
+    "expected": {
+      "validationStatus": "VALID",
+      "executionEligibility": "REQUIRES_SPRING_AUTHORIZATION",
+      "executable": false
+    },
+    "forbiddenApprovalStates": ["APPROVED", "AUTHORIZED", "EXECUTE_NOW"]
+  },
+  "authority": {
+    "businessOwner": "SPRING",
+    "assistantKeyAuthorizes": false,
+    "pythonAuthorizesResources": false,
+    "pythonExecutesTools": false
+  }
+}
