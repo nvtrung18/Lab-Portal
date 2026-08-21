@@ -5,6 +5,7 @@
 !docs/decisions/P2-DECISION-02.md
 !docs/decisions/P2-DECISION-03.md
 !docs/decisions/P2-DECISION-04.md
+!docs/architecture/p6-t6-adapter-strategy-decision.md
 !docs/deployment/
 !docs/deployment/**/*.md
 *.docx
