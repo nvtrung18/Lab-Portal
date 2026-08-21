@@ -2,7 +2,9 @@ package com.web.labportalbackend.ai.service.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
@@ -40,7 +42,12 @@ import com.web.labportalbackend.ai.service.AiAssistantAvailability;
 import com.web.labportalbackend.ai.service.AiAssistantAvailabilityException;
 import com.web.labportalbackend.ai.service.AiAssistantAvailabilityFailure;
 import com.web.labportalbackend.ai.service.AiAssistantAvailabilityService;
+import com.web.labportalbackend.ai.service.AiAssistantAuditEvent;
 import com.web.labportalbackend.ai.service.AiAssistantProfile;
+import com.web.labportalbackend.ai.service.AiAuditExecutionResult;
+import com.web.labportalbackend.ai.service.AiAuditFailureCode;
+import com.web.labportalbackend.ai.service.AiAuditGateStatus;
+import com.web.labportalbackend.ai.service.AiAuditUsageService;
 import com.web.labportalbackend.ai.service.AiAuthorizedToolPolicy;
 import com.web.labportalbackend.ai.service.AiCapabilityDecision;
 import com.web.labportalbackend.ai.service.AiCapabilityDeniedException;
@@ -65,9 +72,10 @@ class AiAssistantGatewayServiceImplTest {
     private final AiAssistantAvailabilityService availabilityService = mock(AiAssistantAvailabilityService.class);
     private final AiContextFacade contextFacade = mock(AiContextFacade.class);
     private final AiGatewayClient gatewayClient = mock(AiGatewayClient.class);
+    private final AiAuditUsageService auditUsageService = mock(AiAuditUsageService.class);
     private final ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
     private final AiAssistantGatewayServiceImpl service = new AiAssistantGatewayServiceImpl(
-            availabilityService, contextFacade, gatewayClient, objectMapper);
+            availabilityService, contextFacade, gatewayClient, objectMapper, auditUsageService);
 
     @Test
     void authorizedContextToolsAndResourcesAreProjectedBeforeCallingPython() throws Exception {
@@ -89,10 +97,12 @@ class AiAssistantGatewayServiceImplTest {
 
         ArgumentCaptor<AiGatewayRequest> gatewayRequest = ArgumentCaptor.forClass(AiGatewayRequest.class);
         verify(gatewayClient).chat(gatewayRequest.capture());
-        InOrder invocationOrder = inOrder(availabilityService, contextFacade, gatewayClient);
+        ArgumentCaptor<AiAssistantAuditEvent> auditEvent = ArgumentCaptor.forClass(AiAssistantAuditEvent.class);
+        InOrder invocationOrder = inOrder(availabilityService, contextFacade, gatewayClient, auditUsageService);
         invocationOrder.verify(availabilityService).requireAvailableForActor(AiAssistantKey.LAB_ASSISTANT);
         invocationOrder.verify(contextFacade).build(new AiContextBuildRequest(capabilityRequest, "request-123"));
         invocationOrder.verify(gatewayClient).chat(any());
+        invocationOrder.verify(auditUsageService).recordAssistantRequest(auditEvent.capture());
 
         JsonNode serialized = objectMapper.readTree(objectMapper.writeValueAsBytes(gatewayRequest.getValue().payload()));
         assertEquals(Set.of("assistantKey", "input", "authorizedContext"), fieldSet(serialized));
@@ -115,6 +125,21 @@ class AiAssistantGatewayServiceImplTest {
         assertFalse(serialized.toString().contains("effectiveScope"));
         assertEquals("request-123", gatewayRequest.getValue().requestId());
         assertEquals("LAB_ASSISTANT", response.assistantKey());
+        assertEquals(7L, auditEvent.getValue().actorId());
+        assertEquals(AiAssistantKey.LAB_ASSISTANT, auditEvent.getValue().assistant());
+        assertEquals(AiCapability.LAB_SLOT_READ, auditEvent.getValue().action());
+        assertEquals(AiResourceType.TIME_SLOT, auditEvent.getValue().resourceType());
+        assertEquals(17L, auditEvent.getValue().resourceId());
+        assertEquals("model", auditEvent.getValue().modelVersion());
+        assertNull(auditEvent.getValue().adapterVersion());
+        assertEquals("prompt-v1", auditEvent.getValue().promptVersion());
+        assertEquals("request-123", auditEvent.getValue().requestId());
+        assertEquals(AiAuditGateStatus.NOT_REQUIRED, auditEvent.getValue().gateStatus());
+        assertEquals(AiAuditExecutionResult.SUCCEEDED, auditEvent.getValue().executionResult());
+        assertNull(auditEvent.getValue().failureCode());
+        assertEquals(12, auditEvent.getValue().promptTokens());
+        assertEquals(7, auditEvent.getValue().completionTokens());
+        assertTrue(auditEvent.getValue().consumesUsage());
     }
 
     @Test
@@ -165,6 +190,13 @@ class AiAssistantGatewayServiceImplTest {
 
         assertEquals(failure, exception.failure());
         verifyNoInteractions(contextFacade, gatewayClient);
+        ArgumentCaptor<AiAssistantAuditEvent> auditEvent = ArgumentCaptor.forClass(AiAssistantAuditEvent.class);
+        verify(auditUsageService).recordAssistantRequest(auditEvent.capture());
+        assertNull(auditEvent.getValue().assistant());
+        assertEquals(AiAuditExecutionResult.DENIED, auditEvent.getValue().executionResult());
+        assertEquals(AiAuditFailureCode.valueOf(failure.name()), auditEvent.getValue().failureCode());
+        assertNull(auditEvent.getValue().promptTokens());
+        assertFalse(auditEvent.getValue().consumesUsage());
     }
 
     @Test
@@ -186,6 +218,38 @@ class AiAssistantGatewayServiceImplTest {
                         request(AiCapability.RESEARCH_GROUP_SUMMARY, 30L, null), "request-denied"));
 
         verifyNoInteractions(gatewayClient);
+        ArgumentCaptor<AiAssistantAuditEvent> auditEvent = ArgumentCaptor.forClass(AiAssistantAuditEvent.class);
+        verify(auditUsageService).recordAssistantRequest(auditEvent.capture());
+        assertEquals(7L, auditEvent.getValue().actorId());
+        assertEquals(AiAssistantKey.RESEARCH_ASSISTANT, auditEvent.getValue().assistant());
+        assertEquals(AiAuditExecutionResult.DENIED, auditEvent.getValue().executionResult());
+        assertEquals(AiAuditFailureCode.RESOURCE_NOT_AUTHORIZED, auditEvent.getValue().failureCode());
+        assertFalse(auditEvent.getValue().consumesUsage());
+    }
+
+    @Test
+    void gatewayFailureIsAuditedWithoutFabricatedUsageOrRawFailureDetails() {
+        AiAssistantAvailability availability = new AiAssistantAvailability(
+                profile(AiAssistantKey.LAB_ASSISTANT), 7L, AiAssistantSystemRole.STUDENT);
+        AiCapabilityRequest capabilityRequest = capabilityRequest(
+                AiAssistantKey.LAB_ASSISTANT, 7L, AiCapability.LAB_SLOT_READ, 17L, null);
+        when(availabilityService.requireAvailableForActor(AiAssistantKey.LAB_ASSISTANT))
+                .thenReturn(availability);
+        when(contextFacade.build(any())).thenReturn(context(capabilityRequest));
+        when(gatewayClient.chat(any())).thenThrow(new IllegalStateException(
+                "Authorization: Bearer internal-service-token raw-model-response"));
+
+        assertThrows(IllegalStateException.class,
+                () -> service.chat(AiAssistantKey.LAB_ASSISTANT,
+                        request(AiCapability.LAB_SLOT_READ, 17L, null), "request-failed"));
+
+        ArgumentCaptor<AiAssistantAuditEvent> auditEvent = ArgumentCaptor.forClass(AiAssistantAuditEvent.class);
+        verify(auditUsageService).recordAssistantRequest(auditEvent.capture());
+        assertEquals(AiAuditExecutionResult.FAILED, auditEvent.getValue().executionResult());
+        assertEquals(AiAuditFailureCode.INTERNAL_FAILURE, auditEvent.getValue().failureCode());
+        assertNull(auditEvent.getValue().promptTokens());
+        assertNull(auditEvent.getValue().completionTokens());
+        assertFalse(auditEvent.getValue().consumesUsage());
     }
 
     @Test

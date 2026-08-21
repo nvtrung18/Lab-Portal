@@ -12,6 +12,7 @@ import static org.mockito.Mockito.when;
 
 import com.web.labportalbackend.ai.entity.AiAssistantConfigEntity;
 import com.web.labportalbackend.ai.entity.AiQuotaConfigEntity;
+import com.web.labportalbackend.ai.entity.AiUsageLogEntity;
 import com.web.labportalbackend.ai.enums.AiAssistantKey;
 import com.web.labportalbackend.ai.repository.AiAssistantConfigRepository;
 import com.web.labportalbackend.ai.repository.AiQuotaConfigRepository;
@@ -149,6 +150,7 @@ class AiConfigQuotaServiceImplTest {
         verify(usageLogRepository, never())
                 .countByUserIdAndAssistantKeyAndRoleAndModuleAndCreatedAtGreaterThanEqualAndCreatedAtLessThanAndActiveTrueAndDeletedFalse(
                         anyLong(), any(), any(), any(), any(), any());
+        verify(usageLogRepository, never()).save(any(AiUsageLogEntity.class));
     }
 
     @Test

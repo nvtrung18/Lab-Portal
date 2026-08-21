@@ -6,9 +6,11 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -34,11 +36,16 @@ import com.web.labportalbackend.ai.enums.AiToolId;
 import com.web.labportalbackend.ai.service.AiAssistantAvailability;
 import com.web.labportalbackend.ai.service.AiAssistantAvailabilityService;
 import com.web.labportalbackend.ai.service.AiAssistantProfile;
+import com.web.labportalbackend.ai.service.AiAuditExecutionResult;
+import com.web.labportalbackend.ai.service.AiAuditFailureCode;
+import com.web.labportalbackend.ai.service.AiAuditGateStatus;
+import com.web.labportalbackend.ai.service.AiAuditUsageService;
 import com.web.labportalbackend.ai.service.AiAuthorizedToolPolicy;
 import com.web.labportalbackend.ai.service.AiCapabilityDecision;
 import com.web.labportalbackend.ai.service.AiCapabilityRequest;
 import com.web.labportalbackend.ai.service.AiToolActionGateDecision;
 import com.web.labportalbackend.ai.service.AiToolActionGateService;
+import com.web.labportalbackend.ai.service.AiToolAuditEvent;
 import com.web.labportalbackend.ai.service.AiToolDefinition;
 import com.web.labportalbackend.ai.service.AiToolExecutionException;
 import com.web.labportalbackend.ai.service.AiToolExecutionFailure;
@@ -54,6 +61,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 
 class AiToolExecutionServiceImplTest {
@@ -62,6 +70,7 @@ class AiToolExecutionServiceImplTest {
     private final AiToolRegistry registry = new AiToolRegistryServiceImpl();
     private final AiAssistantAvailabilityService availabilityService = mock(AiAssistantAvailabilityService.class);
     private final AiContextFacade contextFacade = mock(AiContextFacade.class);
+    private final AiAuditUsageService auditUsageService = mock(AiAuditUsageService.class);
 
     @Test
     void executesOnlyTheExactRegisteredReadHandlerAfterFreshAuthorization() {
@@ -79,10 +88,12 @@ class AiToolExecutionServiceImplTest {
 
         AiCapabilityRequest expectedCapabilityRequest = capabilityRequest(
                 AiAssistantKey.LAB_ASSISTANT, AiCapability.LAB_SLOT_READ, 17L, null);
-        InOrder order = inOrder(availabilityService, contextFacade, slotHandler);
+        ArgumentCaptor<AiToolAuditEvent> auditEvent = ArgumentCaptor.forClass(AiToolAuditEvent.class);
+        InOrder order = inOrder(availabilityService, contextFacade, slotHandler, auditUsageService);
         order.verify(availabilityService).requireAvailableForActor(AiAssistantKey.LAB_ASSISTANT);
         order.verify(contextFacade).build(new AiContextBuildRequest(expectedCapabilityRequest, "request-123"));
         order.verify(slotHandler).execute(AiToolId.LAB_SLOT_READ, authorized);
+        order.verify(auditUsageService).recordToolOutcome(auditEvent.capture());
         verify(policyHandler, never()).execute(any(), any());
         assertEquals("request-123", result.requestId());
         assertEquals("lab.slot.read", result.toolId());
@@ -93,6 +104,19 @@ class AiToolExecutionServiceImplTest {
         assertFalse(serialized.toString().contains("jwt"));
         assertFalse(serialized.toString().contains("token"));
         assertFalse(serialized.toString().contains("stackTrace"));
+        assertEquals(7L, auditEvent.getValue().actorId());
+        assertEquals(AiAssistantKey.LAB_ASSISTANT, auditEvent.getValue().assistant());
+        assertEquals(AiToolId.LAB_SLOT_READ, auditEvent.getValue().toolId());
+        assertEquals(AiCapability.LAB_SLOT_READ, auditEvent.getValue().action());
+        assertEquals(AiResourceType.TIME_SLOT, auditEvent.getValue().resourceType());
+        assertEquals(17L, auditEvent.getValue().resourceId());
+        assertEquals("model", auditEvent.getValue().modelVersion());
+        assertNull(auditEvent.getValue().adapterVersion());
+        assertEquals("prompt-v1", auditEvent.getValue().promptVersion());
+        assertEquals("request-123", auditEvent.getValue().requestId());
+        assertEquals(AiAuditGateStatus.NOT_REQUIRED, auditEvent.getValue().gateStatus());
+        assertEquals(AiAuditExecutionResult.SUCCEEDED, auditEvent.getValue().executionResult());
+        assertNull(auditEvent.getValue().failureCode());
     }
 
     @Test
@@ -111,6 +135,12 @@ class AiToolExecutionServiceImplTest {
         verify(availabilityService, never()).requireAvailableForActor(any());
         verify(contextFacade, never()).build(any());
         verify(handler, never()).execute(any(), any());
+        ArgumentCaptor<AiToolAuditEvent> auditEvents = ArgumentCaptor.forClass(AiToolAuditEvent.class);
+        verify(auditUsageService, times(3)).recordToolOutcome(auditEvents.capture());
+        assertEquals(java.util.Arrays.asList("model.random.tool", "LAB.SLOT.READ", null),
+                auditEvents.getAllValues().stream().map(AiToolAuditEvent::requestedToolId).toList());
+        assertEquals(Set.of(AiAuditFailureCode.UNKNOWN_TOOL), auditEvents.getAllValues().stream()
+                .map(AiToolAuditEvent::failureCode).collect(java.util.stream.Collectors.toSet()));
     }
 
     @ParameterizedTest
@@ -212,6 +242,10 @@ class AiToolExecutionServiceImplTest {
 
         assertEquals("request-revoked", exception.requestId());
         verify(handler, never()).execute(any(), any());
+        ArgumentCaptor<AiToolAuditEvent> auditEvent = ArgumentCaptor.forClass(AiToolAuditEvent.class);
+        verify(auditUsageService).recordToolOutcome(auditEvent.capture());
+        assertEquals(AiAuditExecutionResult.DENIED, auditEvent.getValue().executionResult());
+        assertEquals(AiAuditFailureCode.RESOURCE_NOT_AUTHORIZED, auditEvent.getValue().failureCode());
     }
 
     @Test
@@ -270,6 +304,11 @@ class AiToolExecutionServiceImplTest {
         assertEquals("request-gated", exception.requestId());
         verify(contextFacade).build(any());
         verify(readHandler, never()).execute(any(), any());
+        ArgumentCaptor<AiToolAuditEvent> auditEvent = ArgumentCaptor.forClass(AiToolAuditEvent.class);
+        verify(auditUsageService).recordToolOutcome(auditEvent.capture());
+        assertEquals(AiAuditGateStatus.DRAFT_ONLY_WRITE_BLOCKED, auditEvent.getValue().gateStatus());
+        assertEquals(AiAuditExecutionResult.GATE_REQUIRED, auditEvent.getValue().executionResult());
+        assertEquals(AiAuditFailureCode.TOOL_GATE_REQUIRED, auditEvent.getValue().failureCode());
     }
 
     @ParameterizedTest
@@ -296,6 +335,18 @@ class AiToolExecutionServiceImplTest {
         order.verify(contextFacade).build(any());
         order.verify(actionGateService).classify(draftDefinition);
         verify(readHandler, never()).execute(any(), any());
+        ArgumentCaptor<AiToolAuditEvent> auditEvent = ArgumentCaptor.forClass(AiToolAuditEvent.class);
+        verify(auditUsageService).recordToolOutcome(auditEvent.capture());
+        AiAuditGateStatus expectedGate = switch (decision) {
+            case REQUIRE_CONFIRMATION -> AiAuditGateStatus.CONFIRMATION_REQUIRED;
+            case REQUIRE_APPROVAL -> AiAuditGateStatus.APPROVAL_REQUIRED;
+            case DENY -> AiAuditGateStatus.PROHIBITED;
+            default -> throw new IllegalArgumentException("Unexpected decision");
+        };
+        assertEquals(expectedGate, auditEvent.getValue().gateStatus());
+        assertEquals(decision == AiToolActionGateDecision.DENY
+                        ? AiAuditExecutionResult.DENIED : AiAuditExecutionResult.GATE_REQUIRED,
+                auditEvent.getValue().executionResult());
     }
 
     @Test
@@ -342,6 +393,29 @@ class AiToolExecutionServiceImplTest {
         assertEquals("request-failed", exception.requestId());
         assertNull(exception.getCause());
         verify(handler).execute(AiToolId.LAB_SLOT_READ, authorized);
+        ArgumentCaptor<AiToolAuditEvent> auditEvent = ArgumentCaptor.forClass(AiToolAuditEvent.class);
+        verify(auditUsageService).recordToolOutcome(auditEvent.capture());
+        assertEquals(AiAuditExecutionResult.FAILED, auditEvent.getValue().executionResult());
+        assertEquals(AiAuditFailureCode.TOOL_EXECUTION_FAILED, auditEvent.getValue().failureCode());
+    }
+
+    @Test
+    void auditPersistenceFailureFailsClosedWithoutReplayingTheTool() {
+        AiToolHandler handler = handler(AiToolId.LAB_SLOT_READ);
+        AiToolExecutionServiceImpl service = service(handler);
+        AiAuthorizedContext authorized = context(AiCapability.LAB_SLOT_READ, 17L, null, "request-audit-failed");
+        when(availabilityService.requireAvailableForActor(AiAssistantKey.LAB_ASSISTANT))
+                .thenReturn(availability(profile(AiAssistantKey.LAB_ASSISTANT, AiAssistantToolGroup.LAB_READ)));
+        when(contextFacade.build(any())).thenReturn(authorized);
+        when(handler.execute(AiToolId.LAB_SLOT_READ, authorized)).thenReturn(authorized.context());
+        doThrow(new IllegalStateException("audit persistence unavailable"))
+                .when(auditUsageService).recordToolOutcome(any());
+
+        assertThrows(IllegalStateException.class,
+                () -> service.execute(request(AiAssistantKey.LAB_ASSISTANT,
+                        AiToolId.LAB_SLOT_READ, 17L, null), "request-audit-failed"));
+
+        verify(handler).execute(AiToolId.LAB_SLOT_READ, authorized);
     }
 
     @Test
@@ -368,7 +442,8 @@ class AiToolExecutionServiceImplTest {
     private AiToolExecutionServiceImpl service(AiToolActionGateService actionGateService,
                                                AiToolHandler... handlers) {
         return new AiToolExecutionServiceImpl(
-                registry, availabilityService, contextFacade, actionGateService, List.of(handlers));
+                registry, availabilityService, contextFacade, actionGateService,
+                auditUsageService, List.of(handlers));
     }
 
     private static AiToolHandler handler(AiToolId toolId) {
