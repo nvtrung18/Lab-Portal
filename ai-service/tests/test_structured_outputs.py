@@ -556,7 +556,10 @@ def test_application_starts_with_internal_output_validator_and_no_debug_endpoint
     from app.main import create_app
 
     application = create_app()
-    schema = TestClient(application).get("/openapi.json").json()
+    schema = TestClient(
+        application,
+        headers={"X-Internal-Service-Token": "test-only-internal-service-token"},
+    ).get("/openapi.json").json()
 
     assert application.state.output_schema_registry.registry_identity
     assert isinstance(application.state.output_validator, StructuredOutputValidator)
@@ -566,7 +569,13 @@ def test_application_starts_with_internal_output_validator_and_no_debug_endpoint
 def test_health_readiness_and_model_not_ready_routes_remain_compatible() -> None:
     from app.main import create_app
 
-    client = TestClient(create_app())
+    client = TestClient(
+        create_app(),
+        headers={
+            "X-Internal-Service-Token": "test-only-internal-service-token",
+            "X-Request-Id": "test-request-123",
+        },
+    )
     health = client.get("/health")
     readiness = client.get("/ready")
     chat = client.post(
@@ -584,6 +593,7 @@ def test_health_readiness_and_model_not_ready_routes_remain_compatible() -> None
         "errorCode": "AI_MODEL_NOT_READY",
         "message": "AI model is not loaded.",
         "retryable": True,
+        "requestId": "test-request-123",
     }
     serialized = json.dumps([health.json(), readiness.json(), chat.json()])
     assert "structured-output-schemas.json" not in serialized

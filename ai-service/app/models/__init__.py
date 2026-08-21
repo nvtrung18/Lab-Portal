@@ -1,4 +1,5 @@
 from app.models.contracts import (
+    AdapterArtifactInfoResponse,
     AssistantKey,
     AssistantRequest,
     ErrorResponse,
@@ -8,6 +9,7 @@ from app.models.contracts import (
 )
 
 __all__ = [
+    "AdapterArtifactInfoResponse",
     "AssistantKey",
     "AssistantRequest",
     "ErrorResponse",

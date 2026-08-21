@@ -4,7 +4,7 @@ import os
 from pathlib import Path
 from typing import Annotated
 
-from pydantic import BaseModel, ConfigDict, Field, SecretStr, StringConstraints
+from pydantic import BaseModel, ConfigDict, Field, SecretStr, StringConstraints, field_validator
 
 
 NonBlankText = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
@@ -17,22 +17,26 @@ DEFAULT_OUTPUT_SCHEMA_CONFIG_PATH = (
 
 
 class Settings(BaseModel):
-    """Environment-backed foundation settings.
+    """Environment-backed AI service settings."""
 
-    The internal token is only a compatibility hook in P8-T1. Authentication is
-    intentionally deferred to P8-T5.
-    """
-
-    model_config = ConfigDict(extra="forbid", frozen=True)
+    model_config = ConfigDict(extra="forbid", frozen=True, hide_input_in_errors=True)
 
     service_name: NonBlankText = "ai-service"
     environment: NonBlankText = "local"
-    internal_service_token: SecretStr | None = None
+    internal_service_token: SecretStr = Field(exclude=True, repr=False)
     request_timeout_seconds: float = Field(default=5.0, gt=0, le=300)
     profile_config_path: Path = DEFAULT_PROFILE_CONFIG_PATH
     artifact_config_path: Path = DEFAULT_ARTIFACT_CONFIG_PATH
     artifact_root: Path = DEFAULT_ARTIFACT_ROOT
     output_schema_config_path: Path = DEFAULT_OUTPUT_SCHEMA_CONFIG_PATH
+
+    @field_validator("internal_service_token")
+    @classmethod
+    def validate_internal_service_token(cls, value: SecretStr) -> SecretStr:
+        token = value.get_secret_value()
+        if not token or len(token) > 1024 or any(not 0x21 <= ord(character) <= 0x7E for character in token):
+            raise ValueError("Internal service token configuration is invalid.")
+        return value
 
     @classmethod
     def from_env(cls) -> "Settings":

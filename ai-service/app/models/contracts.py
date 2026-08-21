@@ -92,3 +92,4 @@ class ErrorResponse(ContractModel):
     error_code: str
     message: str
     retryable: bool
+    request_id: str

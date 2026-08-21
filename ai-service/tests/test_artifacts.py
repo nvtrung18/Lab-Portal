@@ -435,7 +435,10 @@ def test_missing_profile_fails_closed(tmp_path: Path) -> None:
 
 def test_current_application_readiness_remains_truthfully_unavailable() -> None:
     application = create_app()
-    response = TestClient(application).get("/ready")
+    response = TestClient(
+        application,
+        headers={"X-Internal-Service-Token": "test-only-internal-service-token"},
+    ).get("/ready")
 
     assert response.status_code == 503
     assert response.json() == {
@@ -452,7 +455,10 @@ def test_current_application_readiness_remains_truthfully_unavailable() -> None:
 
 
 def test_health_remains_up_independently_of_artifact_state() -> None:
-    response = TestClient(create_app()).get("/health")
+    response = TestClient(
+        create_app(),
+        headers={"X-Internal-Service-Token": "test-only-internal-service-token"},
+    ).get("/health")
 
     assert response.status_code == 200
     assert response.json() == {"status": "UP", "service": "ai-service"}
@@ -477,7 +483,10 @@ def test_assistant_request_resolves_artifact_state_then_returns_safe_not_ready(p
             return delegate.get_state(assistant_key)
 
     application.state.artifact_loader = RecordingLoader()
-    response = TestClient(application).post(
+    response = TestClient(
+        application,
+        headers={"X-Internal-Service-Token": "test-only-internal-service-token"},
+    ).post(
         path,
         json={"assistantKey": "LAB_ASSISTANT", "input": "Use bounded context.", "authorizedContext": {}},
     )
@@ -490,7 +499,10 @@ def test_assistant_request_resolves_artifact_state_then_returns_safe_not_ready(p
 def test_model_info_exposes_no_local_artifact_path_or_environment_value(tmp_path: Path) -> None:
     secret_path_fragment = str(tmp_path)
     application = create_app()
-    response = TestClient(application).get("/model-info")
+    response = TestClient(
+        application,
+        headers={"X-Internal-Service-Token": "test-only-internal-service-token"},
+    ).get("/model-info")
 
     assert response.status_code == 200
     serialized = response.text

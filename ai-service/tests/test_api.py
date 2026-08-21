@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 
 from fastapi.testclient import TestClient
 from pydantic import SecretStr
@@ -14,10 +15,15 @@ VALID_REQUEST = {
     "input": "Summarize the authorized lab context.",
     "authorizedContext": {"lab": {"id": 17, "name": "Chemistry Lab"}},
 }
+TEST_REQUEST_ID = "test-request-123"
+INTERNAL_HEADERS = {
+    "X-Internal-Service-Token": "test-only-internal-service-token",
+    "X-Request-Id": TEST_REQUEST_ID,
+}
 
 
 def test_application_imports_and_starts() -> None:
-    with TestClient(app) as client:
+    with TestClient(app, headers=INTERNAL_HEADERS) as client:
         assert client.app.state.settings.service_name == "ai-service"
 
 
@@ -26,6 +32,8 @@ def test_settings_load_foundation_values_from_environment(monkeypatch) -> None:
     monkeypatch.setenv("AI_ENVIRONMENT", "test")
     monkeypatch.setenv("AI_INTERNAL_SERVICE_TOKEN", "configured-token")
     monkeypatch.setenv("AI_REQUEST_TIMEOUT_SECONDS", "7.5")
+    monkeypatch.setenv("AI_MODEL_ARTIFACTS_PATH", "runtime/model-artifacts.json")
+    monkeypatch.setenv("AI_MODEL_ARTIFACT_ROOT", "runtime/artifacts")
 
     settings = Settings.from_env()
 
@@ -34,10 +42,12 @@ def test_settings_load_foundation_values_from_environment(monkeypatch) -> None:
     assert settings.internal_service_token is not None
     assert settings.internal_service_token.get_secret_value() == "configured-token"
     assert settings.request_timeout_seconds == 7.5
+    assert settings.artifact_config_path == Path("runtime/model-artifacts.json")
+    assert settings.artifact_root == Path("runtime/artifacts")
 
 
 def test_required_routes_are_registered() -> None:
-    schema = TestClient(app).get("/openapi.json").json()
+    schema = TestClient(app, headers=INTERNAL_HEADERS).get("/openapi.json").json()
 
     assert {
         "/health",
@@ -59,7 +69,7 @@ def test_required_routes_are_registered() -> None:
 
 
 def test_health_is_up_independently_of_model_readiness() -> None:
-    client = TestClient(app)
+    client = TestClient(app, headers=INTERNAL_HEADERS)
 
     health = client.get("/health")
     readiness = client.get("/ready")
@@ -71,7 +81,7 @@ def test_health_is_up_independently_of_model_readiness() -> None:
 
 
 def test_ready_is_truthful_and_deterministic() -> None:
-    response = TestClient(app).get("/ready")
+    response = TestClient(app, headers=INTERNAL_HEADERS).get("/ready")
 
     assert response.status_code == 503
     assert response.json() == {
@@ -79,30 +89,43 @@ def test_ready_is_truthful_and_deterministic() -> None:
         "service": "ai-service",
         "serviceStatus": "READY",
         "modelStatus": "NOT_LOADED",
+        "profileLoaded": True,
+        "artifactValidated": False,
+        "modelLoaded": False,
+        "adapterLoaded": False,
         "ready": False,
     }
 
 
-def test_model_info_is_an_explicit_unloaded_foundation_stub() -> None:
-    response = TestClient(app).get("/model-info")
+def test_model_info_reports_validated_metadata_without_claiming_a_loaded_model() -> None:
+    response = TestClient(app, headers=INTERNAL_HEADERS).get("/model-info")
 
     assert response.status_code == 200
-    assert response.json() == {
-        "status": "NOT_LOADED",
-        "source": "FOUNDATION_STUB",
-        "modelName": None,
-        "modelVersion": None,
-        "adapterName": None,
-        "adapterVersion": None,
-        "ready": False,
+    body = response.json()
+    assert body["status"] == "NOT_LOADED"
+    assert body["source"] == "SERVING_ARTIFACT_DESCRIPTOR"
+    assert body["modelName"] == "Qwen/Qwen3-4B-Instruct-2507"
+    assert body["modelVersion"] == "cdbee75f17c01a7cc42f958dc650907174af0554"
+    assert body["modelRevision"] == "cdbee75f17c01a7cc42f958dc650907174af0554"
+    assert body["artifactState"] == "METADATA_ONLY"
+    assert body["artifactIdentity"] is None
+    assert len(body["descriptorIdentity"]) == 64
+    assert body["profileLoaded"] is True
+    assert body["artifactValidated"] is False
+    assert body["modelLoaded"] is False
+    assert body["adapterLoaded"] is False
+    assert body["ready"] is False
+    assert {key: value["status"] for key, value in body["assistantAdapters"].items()} == {
+        "ADMIN_ASSISTANT": "NOT_AVAILABLE",
+        "LAB_ASSISTANT": "NOT_AVAILABLE",
+        "RESEARCH_ASSISTANT": "BLOCKED",
     }
 
 
 def test_chat_accepts_authorized_contract_and_returns_model_not_ready() -> None:
-    response = TestClient(app).post(
+    response = TestClient(app, headers=INTERNAL_HEADERS).post(
         "/v1/assistants/chat",
         json=VALID_REQUEST,
-        headers={"X-Internal-Service-Token": "spring-token", "X-Request-Id": "request-123"},
     )
 
     assert response.status_code == 503
@@ -110,6 +133,7 @@ def test_chat_accepts_authorized_contract_and_returns_model_not_ready() -> None:
         "errorCode": "AI_MODEL_NOT_READY",
         "message": "AI model is not loaded.",
         "retryable": True,
+        "requestId": TEST_REQUEST_ID,
     }
 
 
@@ -119,29 +143,31 @@ def test_tool_request_is_advisory_and_never_executes() -> None:
         "authorizedContext": {"tool": {"name": "arbitrary.function"}},
     }
 
-    response = TestClient(app).post("/v1/assistants/tool-request", json=request)
+    response = TestClient(app, headers=INTERNAL_HEADERS).post("/v1/assistants/tool-request", json=request)
 
     assert response.status_code == 503
     assert response.json() == {
         "errorCode": "AI_SERVICE_NOT_READY",
         "message": "AI tool requests are not available.",
         "retryable": False,
+        "requestId": TEST_REQUEST_ID,
     }
 
 
 def test_suggestions_never_write_or_fabricate_output() -> None:
-    response = TestClient(app).post("/v1/assistants/suggestions", json=VALID_REQUEST)
+    response = TestClient(app, headers=INTERNAL_HEADERS).post("/v1/assistants/suggestions", json=VALID_REQUEST)
 
     assert response.status_code == 503
     assert response.json() == {
         "errorCode": "AI_SERVICE_NOT_READY",
         "message": "AI suggestions are not available.",
         "retryable": False,
+        "requestId": TEST_REQUEST_ID,
     }
 
 
 def test_legacy_suggestions_route_preserves_active_spring_compatibility() -> None:
-    response = TestClient(app).post("/v1/research/suggestions", json=VALID_REQUEST)
+    response = TestClient(app, headers=INTERNAL_HEADERS).post("/v1/research/suggestions", json=VALID_REQUEST)
 
     assert response.status_code == 503
     assert response.json()["errorCode"] == "AI_SERVICE_NOT_READY"
@@ -150,18 +176,19 @@ def test_legacy_suggestions_route_preserves_active_spring_compatibility() -> Non
 def test_unknown_assistant_key_is_rejected_with_safe_validation_error() -> None:
     request = VALID_REQUEST | {"assistantKey": "UNKNOWN_ASSISTANT"}
 
-    response = TestClient(app).post("/v1/assistants/chat", json=request)
+    response = TestClient(app, headers=INTERNAL_HEADERS).post("/v1/assistants/chat", json=request)
 
     assert response.status_code == 422
     assert response.json() == {
         "errorCode": "AI_INVALID_REQUEST",
         "message": "Request validation failed.",
         "retryable": False,
+        "requestId": TEST_REQUEST_ID,
     }
 
 
 def test_malformed_and_authorization_shaped_inputs_are_rejected_safely() -> None:
-    client = TestClient(app)
+    client = TestClient(app, headers=INTERNAL_HEADERS)
 
     malformed = client.post("/v1/assistants/chat", content="not-json", headers={"content-type": "application/json"})
     prohibited = client.post(
@@ -175,6 +202,7 @@ def test_malformed_and_authorization_shaped_inputs_are_rejected_safely() -> None
             "errorCode": "AI_INVALID_REQUEST",
             "message": "Request validation failed.",
             "retryable": False,
+            "requestId": TEST_REQUEST_ID,
         }
         assert "secret.jwt.value" not in response.text
 
@@ -187,13 +215,18 @@ def test_unexpected_exception_response_is_sanitized(caplog) -> None:
     def boom() -> None:
         raise RuntimeError(f"private failure at C:\\private\\model.bin using {secret}")
 
-    response = TestClient(test_app, raise_server_exceptions=False).get("/_test/boom")
+    response = TestClient(
+        test_app,
+        headers={"X-Internal-Service-Token": secret, "X-Request-Id": TEST_REQUEST_ID},
+        raise_server_exceptions=False,
+    ).get("/_test/boom")
 
     assert response.status_code == 500
     assert response.json() == {
         "errorCode": "AI_INTERNAL_ERROR",
         "message": "An unexpected server error occurred.",
         "retryable": False,
+        "requestId": TEST_REQUEST_ID,
     }
     assert "Traceback" not in response.text
     assert "C:\\private" not in response.text
@@ -204,7 +237,10 @@ def test_unexpected_exception_response_is_sanitized(caplog) -> None:
 def test_responses_never_expose_the_configured_internal_service_token() -> None:
     secret = "configured-internal-service-token"
     test_app = create_app(Settings(internal_service_token=SecretStr(secret)))
-    client = TestClient(test_app)
+    client = TestClient(
+        test_app,
+        headers={"X-Internal-Service-Token": secret, "X-Request-Id": TEST_REQUEST_ID},
+    )
 
     responses = [
         client.get("/health"),

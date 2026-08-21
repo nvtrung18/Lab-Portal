@@ -39,6 +39,7 @@ def test_each_required_assistant_profile_loads(assistant_key: AssistantKey) -> N
     assert profile.profile_version == "1.0.0"
     assert profile.prompt.system_prompt
     assert profile.model_profile.base_model_identifier == "Qwen/Qwen3-4B-Instruct-2507"
+    assert profile.model_profile.base_model_revision == "cdbee75f17c01a7cc42f958dc650907174af0554"
     assert profile.model_profile.serving_mode == "METADATA_ONLY"
 
 
@@ -204,7 +205,10 @@ def test_assistant_requests_resolve_profile_then_remain_not_ready(path: str, exp
             return delegate.get_profile(assistant_key)
 
     application.state.profile_loader = RecordingLoader()
-    response = TestClient(application).post(
+    response = TestClient(
+        application,
+        headers={"X-Internal-Service-Token": "test-only-internal-service-token"},
+    ).post(
         path,
         json={"assistantKey": "LAB_ASSISTANT", "input": "Use bounded context.", "authorizedContext": {}},
     )
@@ -216,7 +220,10 @@ def test_assistant_requests_resolve_profile_then_remain_not_ready(path: str, exp
 
 def test_profile_loading_does_not_mark_model_or_serving_ready() -> None:
     application = create_app()
-    client = TestClient(application)
+    client = TestClient(
+        application,
+        headers={"X-Internal-Service-Token": "test-only-internal-service-token"},
+    )
 
     assert len(application.state.profile_loader.profiles) == 3
     assert client.get("/model-info").json()["status"] == "NOT_LOADED"

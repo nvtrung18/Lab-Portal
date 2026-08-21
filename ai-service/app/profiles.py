@@ -25,6 +25,7 @@ RetrievalNamespace = Annotated[
 ]
 NonBlankText = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=4096)]
 Sha256Digest = Annotated[str, StringConstraints(pattern=r"^[0-9a-f]{64}$")]
+ModelRevision = Annotated[str, StringConstraints(pattern=r"^[0-9a-f]{40}$")]
 
 
 TOOL_SCHEMAS_BY_ASSISTANT: Mapping[AssistantKey, frozenset[str]] = MappingProxyType(
@@ -88,6 +89,7 @@ class PromptProfile(ProfileModel):
 
 class ModelProfile(ProfileModel):
     base_model_identifier: NonBlankText
+    base_model_revision: ModelRevision
     profile_version: SemanticVersion
     runtime_profile: ProfileIdentifier
     serving_mode: Literal["METADATA_ONLY"]

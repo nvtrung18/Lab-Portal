@@ -12,6 +12,7 @@ from app.models import (
     ModelInfoResponse,
     ReadinessResponse,
 )
+from app.security import safe_error_response
 
 
 router = APIRouter()
@@ -22,10 +23,20 @@ def _settings(request: Request) -> Settings:
 
 
 def _error_response(
-    *, error_code: str, message: str, retryable: bool, status_code: int
+    request: Request,
+    *,
+    error_code: str,
+    message: str,
+    retryable: bool,
+    status_code: int,
 ) -> JSONResponse:
-    error = ErrorResponse(error_code=error_code, message=message, retryable=retryable)
-    return JSONResponse(status_code=status_code, content=error.model_dump(by_alias=True, mode="json"))
+    return safe_error_response(
+        request,
+        error_code=error_code,
+        message=message,
+        retryable=retryable,
+        status_code=status_code,
+    )
 
 
 @router.get("/health", response_model=HealthResponse)
@@ -90,6 +101,7 @@ def chat(request: Request, payload: AssistantRequest) -> JSONResponse:
     request.app.state.profile_loader.get_profile(payload.assistant_key)
     request.app.state.artifact_loader.get_state(payload.assistant_key)
     return _error_response(
+        request,
         error_code="AI_MODEL_NOT_READY",
         message="AI model is not loaded.",
         retryable=True,
@@ -106,6 +118,7 @@ def tool_request(request: Request, payload: AssistantRequest) -> JSONResponse:
     request.app.state.profile_loader.get_profile(payload.assistant_key)
     request.app.state.artifact_loader.get_state(payload.assistant_key)
     return _error_response(
+        request,
         error_code="AI_SERVICE_NOT_READY",
         message="AI tool requests are not available.",
         retryable=False,
@@ -128,6 +141,7 @@ def suggestions(request: Request, payload: AssistantRequest) -> JSONResponse:
     request.app.state.profile_loader.get_profile(payload.assistant_key)
     request.app.state.artifact_loader.get_state(payload.assistant_key)
     return _error_response(
+        request,
         error_code="AI_SERVICE_NOT_READY",
         message="AI suggestions are not available.",
         retryable=False,
