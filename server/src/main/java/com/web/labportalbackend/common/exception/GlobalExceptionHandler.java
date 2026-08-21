@@ -1,5 +1,6 @@
 package com.web.labportalbackend.common.exception;
 
+import com.web.labportalbackend.ai.client.AiGatewayException;
 import com.web.labportalbackend.common.dto.Response;
 import com.web.labportalbackend.research.exception.TaskProposalReviewConflictException;
 import lombok.extern.slf4j.Slf4j;
@@ -26,6 +27,15 @@ import java.util.List;
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(AiGatewayException.class)
+    public ResponseEntity<Response<Void>> handleAiGateway(AiGatewayException ex) {
+        log.warn("AI gateway request failed: category={}, statusCode={}",
+                ex.failure().category(), ex.failure().statusCode());
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                .body(Response.error(HttpStatus.SERVICE_UNAVAILABLE.value(),
+                        "AI assistant is temporarily unavailable"));
+    }
 
     // ---- Validation ----
 
