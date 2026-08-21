@@ -5,6 +5,7 @@
 !docs/decisions/P2-DECISION-02.md
 !docs/decisions/P2-DECISION-03.md
 !docs/decisions/P2-DECISION-04.md
+!docs/architecture/p6-t6-adapter-strategy-decision.md
 !docs/deployment/
 !docs/deployment/**/*.md
 *.docx
@@ -84,3 +85,12 @@ bin/
 build/
 out/
 qa/
+
+# P6-T5 local benchmark evidence: may contain weights, raw model output, hardware paths and telemetry.
+.cache/p6-t5/
+.artifacts/p6-t5/
+
+# User-owned Windows bundle supplied for Kaggle transfer; it is neither Linux runtime provenance nor benchmark evidence.
+# Preserve locally without deleting, reading as authoritative, or staging it.
+p6-t5-kaggle/
+p6-t5-kaggle.zip
