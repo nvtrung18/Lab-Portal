@@ -9,6 +9,7 @@ from fastapi.responses import JSONResponse
 from app.artifacts import ArtifactLoader
 from app.config import Settings
 from app.models import ErrorResponse
+from app.output_validation import OutputSchemaRegistry, StructuredOutputValidator
 from app.profiles import ProfileLoader
 from app.routes.foundation import router
 
@@ -54,10 +55,17 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         resolved_settings.artifact_root,
         profile_loader,
     )
+    output_schema_registry = OutputSchemaRegistry.from_file(
+        resolved_settings.output_schema_config_path,
+        profile_loader,
+    )
+    output_validator = StructuredOutputValidator(output_schema_registry)
     application = FastAPI(title=resolved_settings.service_name, version="0.1.0")
     application.state.settings = resolved_settings
     application.state.profile_loader = profile_loader
     application.state.artifact_loader = artifact_loader
+    application.state.output_schema_registry = output_schema_registry
+    application.state.output_validator = output_validator
     application.include_router(router)
     application.add_exception_handler(RequestValidationError, validation_error_handler)
     application.add_exception_handler(Exception, unexpected_error_handler)

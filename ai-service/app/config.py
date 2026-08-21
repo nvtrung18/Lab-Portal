@@ -11,6 +11,9 @@ NonBlankText = Annotated[str, StringConstraints(strip_whitespace=True, min_lengt
 DEFAULT_PROFILE_CONFIG_PATH = Path(__file__).resolve().parents[1] / "config" / "assistant-profiles.json"
 DEFAULT_ARTIFACT_CONFIG_PATH = Path(__file__).resolve().parents[1] / "config" / "model-artifacts.json"
 DEFAULT_ARTIFACT_ROOT = Path(__file__).resolve().parents[1] / "artifacts"
+DEFAULT_OUTPUT_SCHEMA_CONFIG_PATH = (
+    Path(__file__).resolve().parents[1] / "config" / "schemas" / "structured-output-schemas.json"
+)
 
 
 class Settings(BaseModel):
@@ -29,6 +32,7 @@ class Settings(BaseModel):
     profile_config_path: Path = DEFAULT_PROFILE_CONFIG_PATH
     artifact_config_path: Path = DEFAULT_ARTIFACT_CONFIG_PATH
     artifact_root: Path = DEFAULT_ARTIFACT_ROOT
+    output_schema_config_path: Path = DEFAULT_OUTPUT_SCHEMA_CONFIG_PATH
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -41,6 +45,7 @@ class Settings(BaseModel):
             "profile_config_path": "AI_ASSISTANT_PROFILES_PATH",
             "artifact_config_path": "AI_MODEL_ARTIFACTS_PATH",
             "artifact_root": "AI_MODEL_ARTIFACT_ROOT",
+            "output_schema_config_path": "AI_OUTPUT_SCHEMAS_PATH",
         }
         for field_name, environment_name in environment_names.items():
             value = os.getenv(environment_name)
