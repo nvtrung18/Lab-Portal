@@ -16,11 +16,17 @@ import com.web.labportalbackend.ai.enums.AiResourceType;
 import com.web.labportalbackend.ai.enums.AiToolArgument;
 import com.web.labportalbackend.ai.enums.AiToolId;
 import com.web.labportalbackend.ai.service.AiAssistantAvailability;
+import com.web.labportalbackend.ai.service.AiAssistantAvailabilityException;
 import com.web.labportalbackend.ai.service.AiAssistantAvailabilityService;
 import com.web.labportalbackend.ai.service.AiAssistantProfile;
+import com.web.labportalbackend.ai.service.AiAuditExecutionResult;
+import com.web.labportalbackend.ai.service.AiAuditFailureCode;
+import com.web.labportalbackend.ai.service.AiAuditGateStatus;
+import com.web.labportalbackend.ai.service.AiAuditUsageService;
 import com.web.labportalbackend.ai.service.AiCapabilityRequest;
 import com.web.labportalbackend.ai.service.AiToolActionGateDecision;
 import com.web.labportalbackend.ai.service.AiToolActionGateService;
+import com.web.labportalbackend.ai.service.AiToolAuditEvent;
 import com.web.labportalbackend.ai.service.AiToolDefinition;
 import com.web.labportalbackend.ai.service.AiToolExecutionException;
 import com.web.labportalbackend.ai.service.AiToolExecutionFailure;
@@ -34,6 +40,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.regex.Pattern;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -43,36 +50,57 @@ public final class AiToolExecutionServiceImpl implements AiToolExecutionService 
             Set.of("assistantKey", "schemaVersion", "toolId", "arguments");
     private static final Set<String> RESOURCE_FIELDS = Set.of("resourceType", "resourceId");
     private static final int MAX_TOOL_ID_LENGTH = 128;
+    private static final Pattern SAFE_AUDIT_TOOL_ID =
+            Pattern.compile("^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$");
 
     private final AiToolRegistry toolRegistry;
     private final AiAssistantAvailabilityService availabilityService;
     private final AiContextFacade contextFacade;
     private final AiToolActionGateService actionGateService;
+    private final AiAuditUsageService auditUsageService;
     private final Map<AiToolId, AiToolHandler> handlers;
 
     public AiToolExecutionServiceImpl(AiToolRegistry toolRegistry,
                                       AiAssistantAvailabilityService availabilityService,
                                       AiContextFacade contextFacade,
                                       AiToolActionGateService actionGateService,
+                                      AiAuditUsageService auditUsageService,
                                       List<AiToolHandler> handlers) {
         if (toolRegistry == null || availabilityService == null || contextFacade == null
-                || actionGateService == null || handlers == null) {
+                || actionGateService == null || auditUsageService == null || handlers == null) {
             throw new IllegalArgumentException("tool execution dependencies are required");
         }
         this.toolRegistry = toolRegistry;
         this.availabilityService = availabilityService;
         this.contextFacade = contextFacade;
         this.actionGateService = actionGateService;
+        this.auditUsageService = auditUsageService;
         this.handlers = validatedHandlers(toolRegistry, handlers);
     }
 
     @Override
     public AiToolExecutionResult execute(JsonNode untrustedRequest, String requestId) {
         String normalizedRequestId = AiGatewayRequest.normalizeRequestId(requestId);
-        ParsedToolRequest parsed = parse(untrustedRequest, normalizedRequestId);
+        ToolAuditState audit = new ToolAuditState(normalizedRequestId, safeRequestedToolId(untrustedRequest));
+        AiToolExecutionResult result;
+        try {
+            result = executeAuthorized(untrustedRequest, normalizedRequestId, audit);
+        } catch (RuntimeException exception) {
+            auditUsageService.recordToolOutcome(audit.failed(exception));
+            throw exception;
+        }
+        auditUsageService.recordToolOutcome(audit.succeeded());
+        return result;
+    }
+
+    private AiToolExecutionResult executeAuthorized(JsonNode untrustedRequest,
+                                                    String normalizedRequestId,
+                                                    ToolAuditState audit) {
+        ParsedToolRequest parsed = parse(untrustedRequest, normalizedRequestId, audit);
 
         AiAssistantAvailability availability = availabilityService.requireAvailableForActor(parsed.assistantKey());
         validateAssistant(parsed.assistantKey(), parsed.definition(), availability, normalizedRequestId);
+        audit.authorized(availability);
 
         AiCapabilityRequest capabilityRequest = new AiCapabilityRequest(
                 parsed.assistantKey(), availability.actorId(), parsed.definition().capability(),
@@ -88,7 +116,7 @@ public final class AiToolExecutionServiceImpl implements AiToolExecutionService 
         if (!matchesCurrentAuthority(parsed, availability, authorized, normalizedRequestId)) {
             throw denied(AiToolExecutionFailure.RESOURCE_NOT_AUTHORIZED, normalizedRequestId);
         }
-        enforceActionGate(parsed.definition(), normalizedRequestId);
+        enforceActionGate(parsed.definition(), normalizedRequestId, audit);
 
         AiToolHandler handler = handlers.get(parsed.definition().id());
         if (handler == null) {
@@ -106,7 +134,7 @@ public final class AiToolExecutionServiceImpl implements AiToolExecutionService 
         return new AiToolExecutionResult(normalizedRequestId, parsed.definition().id().value(), result);
     }
 
-    private void enforceActionGate(AiToolDefinition definition, String requestId) {
+    private void enforceActionGate(AiToolDefinition definition, String requestId, ToolAuditState audit) {
         AiToolActionGateDecision decision;
         try {
             decision = actionGateService.classify(definition);
@@ -118,17 +146,29 @@ public final class AiToolExecutionServiceImpl implements AiToolExecutionService 
         }
         switch (decision) {
             case ALLOW_READ_ONLY -> {
+                audit.gate(AiAuditGateStatus.NOT_REQUIRED);
                 return;
             }
-            case RETURN_DRAFT_ONLY -> throw denied(AiToolExecutionFailure.TOOL_GATE_REQUIRED, requestId);
-            case REQUIRE_CONFIRMATION ->
-                    throw denied(AiToolExecutionFailure.TOOL_CONFIRMATION_REQUIRED, requestId);
-            case REQUIRE_APPROVAL -> throw denied(AiToolExecutionFailure.TOOL_APPROVAL_REQUIRED, requestId);
-            case DENY -> throw denied(AiToolExecutionFailure.TOOL_NOT_ALLOWED, requestId);
+            case RETURN_DRAFT_ONLY -> {
+                audit.gate(AiAuditGateStatus.DRAFT_ONLY_WRITE_BLOCKED);
+                throw denied(AiToolExecutionFailure.TOOL_GATE_REQUIRED, requestId);
+            }
+            case REQUIRE_CONFIRMATION -> {
+                audit.gate(AiAuditGateStatus.CONFIRMATION_REQUIRED);
+                throw denied(AiToolExecutionFailure.TOOL_CONFIRMATION_REQUIRED, requestId);
+            }
+            case REQUIRE_APPROVAL -> {
+                audit.gate(AiAuditGateStatus.APPROVAL_REQUIRED);
+                throw denied(AiToolExecutionFailure.TOOL_APPROVAL_REQUIRED, requestId);
+            }
+            case DENY -> {
+                audit.gate(AiAuditGateStatus.PROHIBITED);
+                throw denied(AiToolExecutionFailure.TOOL_NOT_ALLOWED, requestId);
+            }
         }
     }
 
-    private ParsedToolRequest parse(JsonNode root, String requestId) {
+    private ParsedToolRequest parse(JsonNode root, String requestId, ToolAuditState audit) {
         if (!hasExactFields(root, REQUEST_FIELDS)) {
             throw denied(AiToolExecutionFailure.INVALID_TOOL_ARGUMENTS, requestId);
         }
@@ -140,6 +180,7 @@ public final class AiToolExecutionServiceImpl implements AiToolExecutionService 
         if (definition == null) {
             throw denied(AiToolExecutionFailure.UNKNOWN_TOOL, requestId);
         }
+        audit.definition(definition);
         AiAssistantKey assistantKey = assistantKey(root.get("assistantKey"), requestId);
         if (definition.domain() != assistantKey.domain()) {
             throw denied(AiToolExecutionFailure.TOOL_NOT_ALLOWED, requestId);
@@ -157,6 +198,7 @@ public final class AiToolExecutionServiceImpl implements AiToolExecutionService 
         ParsedResource resource = resource(arguments.get("resource"), definition.resourceType(), requestId);
         ParsedResource parent = definition.parentResourceType() == null ? null
                 : resource(arguments.get("parentResource"), definition.parentResourceType(), requestId);
+        audit.resource(resource);
         return new ParsedToolRequest(assistantKey, definition, resource, parent);
     }
 
@@ -270,6 +312,11 @@ public final class AiToolExecutionServiceImpl implements AiToolExecutionService 
         return node != null && node.isTextual() && !node.textValue().isBlank() ? node.textValue() : null;
     }
 
+    private static String safeRequestedToolId(JsonNode root) {
+        String requested = root != null && root.isObject() ? exactText(root.get("toolId")) : null;
+        return requested != null && SAFE_AUDIT_TOOL_ID.matcher(requested).matches() ? requested : null;
+    }
+
     private static boolean isGlobal(AiResourceType type) {
         return type == AiResourceType.SYSTEM || type == AiResourceType.AUDIT_LOG
                 || type == AiResourceType.SYSTEM_CONFIG;
@@ -285,6 +332,85 @@ public final class AiToolExecutionServiceImpl implements AiToolExecutionService 
 
     private static AiToolExecutionException denied(AiToolExecutionFailure failure, String requestId) {
         return new AiToolExecutionException(failure, requestId);
+    }
+
+    private static AiAuditFailureCode auditFailure(RuntimeException exception) {
+        if (exception instanceof AiToolExecutionException toolException) {
+            return AiAuditFailureCode.from(toolException.failure());
+        }
+        if (exception instanceof AiAssistantAvailabilityException availabilityException) {
+            return AiAuditFailureCode.from(availabilityException.failure());
+        }
+        return AiAuditFailureCode.INTERNAL_FAILURE;
+    }
+
+    private static AiAuditExecutionResult auditResult(RuntimeException exception) {
+        if (exception instanceof AiToolExecutionException toolException) {
+            return switch (toolException.failure()) {
+                case TOOL_GATE_REQUIRED, TOOL_CONFIRMATION_REQUIRED, TOOL_APPROVAL_REQUIRED ->
+                        AiAuditExecutionResult.GATE_REQUIRED;
+                case TOOL_EXECUTION_FAILED -> AiAuditExecutionResult.FAILED;
+                default -> AiAuditExecutionResult.DENIED;
+            };
+        }
+        return exception instanceof AiAssistantAvailabilityException
+                ? AiAuditExecutionResult.DENIED : AiAuditExecutionResult.FAILED;
+    }
+
+    private static final class ToolAuditState {
+        private final String requestId;
+        private String requestedToolId;
+        private Long actorId;
+        private AiAssistantKey assistant;
+        private AiToolDefinition definition;
+        private ParsedResource resource;
+        private String modelVersion;
+        private String adapterVersion;
+        private String promptVersion;
+        private AiAuditGateStatus gateStatus = AiAuditGateStatus.NOT_CLASSIFIED;
+
+        private ToolAuditState(String requestId, String requestedToolId) {
+            this.requestId = requestId;
+            this.requestedToolId = requestedToolId;
+        }
+
+        private void definition(AiToolDefinition definition) {
+            this.definition = definition;
+            this.requestedToolId = null;
+        }
+
+        private void resource(ParsedResource resource) {
+            this.resource = resource;
+        }
+
+        private void authorized(AiAssistantAvailability availability) {
+            AiAssistantProfile profile = availability.profile();
+            this.actorId = availability.actorId();
+            this.assistant = profile.key();
+            this.modelVersion = profile.modelProfile();
+            this.adapterVersion = profile.adapterReference();
+            this.promptVersion = profile.promptVersion();
+        }
+
+        private void gate(AiAuditGateStatus gateStatus) {
+            this.gateStatus = gateStatus;
+        }
+
+        private AiToolAuditEvent succeeded() {
+            return event(AiAuditExecutionResult.SUCCEEDED, null);
+        }
+
+        private AiToolAuditEvent failed(RuntimeException exception) {
+            return event(auditResult(exception), auditFailure(exception));
+        }
+
+        private AiToolAuditEvent event(AiAuditExecutionResult result, AiAuditFailureCode failure) {
+            return new AiToolAuditEvent(
+                    actorId, assistant, definition == null ? null : definition.id(), requestedToolId,
+                    definition == null ? null : definition.capability(),
+                    resource == null ? null : resource.type(), resource == null ? null : resource.id(),
+                    modelVersion, adapterVersion, promptVersion, requestId, gateStatus, result, failure);
+        }
     }
 
     private record ParsedToolRequest(AiAssistantKey assistantKey, AiToolDefinition definition,
