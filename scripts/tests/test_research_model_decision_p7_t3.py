@@ -1296,38 +1296,65 @@ class P7T3ResearchModelDecisionTests(unittest.TestCase):
 
             self.assertEqual(MODULE.file_sha256(lf), MODULE.file_sha256(crlf))
 
-    def test_checked_in_current_decision_binds_frozen_cases_and_reports_only_real_gaps(self):
+    def test_checked_in_current_decision_binds_complete_merged_evidence(self):
         decision_path = ROOT / "config" / "p7-t3-research-model-decision.json"
-        binding_path = ROOT / "evidence" / "p7-t3-research-baseline-evidence.json"
+        merged_path = ROOT / "evidence" / "p7-t3-research-merged-baseline-evidence.json"
         self.assertTrue(decision_path.is_file())
-        self.assertTrue(binding_path.is_file())
+        self.assertTrue(merged_path.is_file())
         decision = json.loads(decision_path.read_text(encoding="utf-8"))
-        binding = json.loads(binding_path.read_text(encoding="utf-8"))
+        merged = json.loads(merged_path.read_text(encoding="utf-8"))
+        suite = yaml.safe_load((ROOT / "evals" / "p6-t4-evaluation-suites.yaml").read_text(encoding="utf-8"))
+        gap_suite = json.loads(
+            (ROOT / "evals" / "p7-t3-research-gap-evaluation-suite.json").read_text(encoding="utf-8")
+        )
 
-        MODULE.validate_baseline_evidence(binding, yaml.safe_load(
-            (ROOT / "evals" / "p6-t4-evaluation-suites.yaml").read_text(encoding="utf-8")
-        ))
+        MODULE.validate_merged_evidence(merged, suite, gap_suite)
         MODULE.validate_research_decision_record(decision)
         for artifact in decision["frozenEvidence"]:
             artifact_path = ROOT / artifact["reference"]
             self.assertTrue(artifact_path.is_file())
             self.assertEqual(artifact["sha256"], MODULE.file_sha256(artifact_path))
-        self.assertEqual("UNRESOLVED", decision["overallBaselineResult"])
+        self.assertEqual("FAIL", decision["overallBaselineResult"])
+        self.assertEqual("BASELINE_EVIDENCE_COMPLETE", decision["baselineEvidenceStatus"])
         self.assertEqual("ADAPTER_REQUIRED+CANDIDATE_BUILD_BLOCKED", decision["outcome"])
-        self.assertEqual("BASELINE_EVIDENCE_INCOMPLETE", decision["candidateBuild"]["reason"])
+        self.assertEqual("RESEARCH_DATASET_NOT_APPROVED", decision["candidateBuild"]["reason"])
+        self.assertEqual("P7_T2_DATASET_IDENTITY_IS_A_FAIL_CLOSED_PLACEHOLDER", decision["reason"])
         self.assertFalse(decision["training"]["invoked"])
         self.assertEqual(
             {
                 "TASK_PROPOSAL_DRAFT": "FAIL",
                 "TASK_SUGGESTION": "FAIL",
-                "REPORT_REVIEW_DRAFT": "UNRESOLVED",
-                "SAFE_REFUSAL": "UNRESOLVED",
+                "REPORT_REVIEW_DRAFT": "FAIL",
+                "SAFE_REFUSAL": "FAIL",
                 "STRUCTURED_OUTPUT": "FAIL",
             },
             {gate["gate"]: gate["result"] for gate in decision["requiredCapabilityGates"]},
         )
-        self.assertEqual(7, len(binding["caseResults"]))
-        self.assertTrue(all(result["result"] == "FAIL" for result in binding["caseResults"]))
+        self.assertEqual(10, len(merged["caseResults"]))
+        self.assertTrue(all(result["humanReviewStatus"] == "USER_APPROVED" for result in merged["caseResults"]))
+        self.assertEqual(
+            {
+                "P7-T3-RESEARCH-BASELINE-EVIDENCE-BINDING": 7,
+                "P7-T3-RESEARCH-GAP-EVIDENCE": 3,
+            },
+            {
+                artifact_type: sum(
+                    result["sourceArtifactType"] == artifact_type for result in merged["caseResults"]
+                )
+                for artifact_type in {
+                    "P7-T3-RESEARCH-BASELINE-EVIDENCE-BINDING",
+                    "P7-T3-RESEARCH-GAP-EVIDENCE",
+                }
+            },
+        )
+        self.assertEqual(
+            {"E-AUTH-011": "FAIL", "E-AUTH-012": "FAIL", "E-FUNC-RESEARCH-006": "FAIL"},
+            {
+                result["evalCaseId"]: result["result"]
+                for result in merged["caseResults"]
+                if result["sourceArtifactType"] == "P7-T3-RESEARCH-GAP-EVIDENCE"
+            },
+        )
 
 
 if __name__ == "__main__":

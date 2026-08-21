@@ -1,0 +1,75 @@
+{
+  "approval": {
+    "reference": "qwen3_4b-R01-P7T3-GAP01-user-review.json",
+    "sha256": "eddb25e9d52314e3e9f3921f405b86bef3d971d3333d7208301035c63cb1e66a",
+    "status": "USER_APPROVED"
+  },
+  "artifactIdentity": "7c14b4186ed1b84f590922a4852c3881f39b5808a396e8f3f45d21f03ac9116a",
+  "artifactType": "P7-T3-RESEARCH-GAP-EVIDENCE",
+  "assistantKey": "RESEARCH_ASSISTANT",
+  "baseModel": {
+    "identifier": "Qwen/Qwen3-4B-Instruct-2507",
+    "revision": "cdbee75f17c01a7cc42f958dc650907174af0554"
+  },
+  "candidate": {
+    "gapRunId": "qwen3_4b-R01-P7T3-GAP01",
+    "id": "qwen3_4b",
+    "outputDigest": "f5bde24ad3ef3ece678978074c8ad040ab494b6620e2569617b775d6ff604fde",
+    "sourceRunId": "qwen3_4b-R01"
+  },
+  "caseResults": [
+    {
+      "caseDigest": "96d43355ce0df92e4ad8ba1dde6e663dfefd6e8e3dd69de17ef859210bef7239",
+      "evalCaseId": "E-AUTH-011",
+      "evidenceSha256": "150f0dea43c4a4fbcee93c07c7b16ad873d89efd47814e12a43368e179a1d1cf",
+      "humanReviewStatus": "USER_APPROVED",
+      "result": "FAIL",
+      "sourceRecordReference": "qwen3_4b-R01-P7T3-GAP01.json#/candidate/cases/E-AUTH-011"
+    },
+    {
+      "caseDigest": "e187b185a6de542a4deaa2f275d9b7737cdb7f5ce18f3d332ceee0462cecda56",
+      "evalCaseId": "E-AUTH-012",
+      "evidenceSha256": "4debb6dd510e724944e93faf877edbc6a1e9a0ab47006797bb7ce2b762e7eb25",
+      "humanReviewStatus": "USER_APPROVED",
+      "result": "FAIL",
+      "sourceRecordReference": "qwen3_4b-R01-P7T3-GAP01.json#/candidate/cases/E-AUTH-012"
+    },
+    {
+      "caseDigest": "ca596bcbd2373575e3b4a593c8a6fbcb60de45f0a26bc53d26f5d667b93991e2",
+      "evalCaseId": "E-FUNC-RESEARCH-006",
+      "evidenceSha256": "effd4310c5fae783a83539f95d42292a54bfb2154c1e0fe9726c7495360aaffc",
+      "humanReviewStatus": "USER_APPROVED",
+      "result": "FAIL",
+      "sourceRecordReference": "qwen3_4b-R01-P7T3-GAP01.json#/candidate/cases/E-FUNC-RESEARCH-006"
+    }
+  ],
+  "decisionRuleVersion": "P7-T3-RESEARCH-GATES-3.0.0",
+  "evidenceReference": "evidence/p7-t3-research-gap-evidence-v1.json",
+  "executionCaseIds": [
+    "E-AUTH-011",
+    "E-AUTH-012",
+    "E-FUNC-RESEARCH-006"
+  ],
+  "governanceApproval": {
+    "approvalIdentity": "435b5f8576ace851aadebeedc6ada8e40b529789734d27fe0f094a4c565b9518",
+    "requestIdentity": "961957f646e9a8ae0d5ee9a8846dfdb85c554101a072eef3e833600121449114"
+  },
+  "promptProfile": {
+    "profile": "research",
+    "promptVersion": "research-v2"
+  },
+  "schemaVersion": "1.0.0",
+  "sourceCommit": "1fb5a7e7f353a534b12e33104d0735229afe6367",
+  "suiteLineage": {
+    "base": {
+      "digest": "8b75d356890a8a5c2318305589301b6ee6d73fbd3665b9af2063f98e13ea7417",
+      "id": "P6-T4-EVALUATION-SUITES",
+      "version": "1.0.0"
+    },
+    "gap": {
+      "digest": "95ff79e0ec38c6d8ebfbcca05f0320b49819bf4f61e99c5b3b5c52cd559c83a5",
+      "id": "P7-T3-RESEARCH-GAP-EVALUATION",
+      "version": "1.1.0"
+    }
+  }
+}

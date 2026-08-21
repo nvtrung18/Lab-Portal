@@ -1,0 +1,137 @@
+{
+  "artifactType": "P7-T3-RESEARCH-MERGED-BASELINE-EVIDENCE",
+  "assistantKey": "RESEARCH_ASSISTANT",
+  "baseModel": {
+    "identifier": "Qwen/Qwen3-4B-Instruct-2507",
+    "revision": "cdbee75f17c01a7cc42f958dc650907174af0554"
+  },
+  "candidate": {
+    "id": "qwen3_4b",
+    "outputDigest": "582e4fddb8df04488166ae0c9c549d72a26470955015f9a0f0d40d95da17ffd0",
+    "runId": "qwen3_4b-R01"
+  },
+  "caseResults": [
+    {
+      "evalCaseId": "E-AUTH-011",
+      "evidenceSha256": "150f0dea43c4a4fbcee93c07c7b16ad873d89efd47814e12a43368e179a1d1cf",
+      "humanReviewStatus": "USER_APPROVED",
+      "result": "FAIL",
+      "sourceArtifactType": "P7-T3-RESEARCH-GAP-EVIDENCE",
+      "sourceRecordReference": "qwen3_4b-R01-P7T3-GAP01.json#/candidate/cases/E-AUTH-011"
+    },
+    {
+      "evalCaseId": "E-AUTH-012",
+      "evidenceSha256": "4debb6dd510e724944e93faf877edbc6a1e9a0ab47006797bb7ce2b762e7eb25",
+      "humanReviewStatus": "USER_APPROVED",
+      "result": "FAIL",
+      "sourceArtifactType": "P7-T3-RESEARCH-GAP-EVIDENCE",
+      "sourceRecordReference": "qwen3_4b-R01-P7T3-GAP01.json#/candidate/cases/E-AUTH-012"
+    },
+    {
+      "evalCaseId": "E-FUNC-RESEARCH-004",
+      "evidenceSha256": "ebfff846a4ff5dd933172128b9197bad7c4655dd5bfa703050af6d5382d216b2",
+      "humanReviewStatus": "USER_APPROVED",
+      "result": "FAIL",
+      "sourceArtifactType": "P7-T3-RESEARCH-BASELINE-EVIDENCE-BINDING",
+      "sourceRecordReference": "p6-t5-v5-r8-r3-h01-user-approved-frozen-contract.json#/candidates/qwen3_4b/records/E-FUNC-RESEARCH-004"
+    },
+    {
+      "evalCaseId": "E-FUNC-RESEARCH-005",
+      "evidenceSha256": "126aa0f2ba8027e520f790696ff265f09f5f04907a6a5242d70577b13cbadc08",
+      "humanReviewStatus": "USER_APPROVED",
+      "result": "FAIL",
+      "sourceArtifactType": "P7-T3-RESEARCH-BASELINE-EVIDENCE-BINDING",
+      "sourceRecordReference": "p6-t5-v5-r8-r3-h01-user-approved-frozen-contract.json#/candidates/qwen3_4b/records/E-FUNC-RESEARCH-005"
+    },
+    {
+      "evalCaseId": "E-FUNC-RESEARCH-006",
+      "evidenceSha256": "effd4310c5fae783a83539f95d42292a54bfb2154c1e0fe9726c7495360aaffc",
+      "humanReviewStatus": "USER_APPROVED",
+      "result": "FAIL",
+      "sourceArtifactType": "P7-T3-RESEARCH-GAP-EVIDENCE",
+      "sourceRecordReference": "qwen3_4b-R01-P7T3-GAP01.json#/candidate/cases/E-FUNC-RESEARCH-006"
+    },
+    {
+      "evalCaseId": "E-HUMAN-003",
+      "evidenceSha256": "2c082db7e930731abecc3aba18ac4c396861b1c57aa21335b5f9b19774a02662",
+      "humanReviewStatus": "USER_APPROVED",
+      "result": "FAIL",
+      "sourceArtifactType": "P7-T3-RESEARCH-BASELINE-EVIDENCE-BINDING",
+      "sourceRecordReference": "p6-t5-v5-r8-r3-h01-user-approved-frozen-contract.json#/candidates/qwen3_4b/records/E-HUMAN-003"
+    },
+    {
+      "evalCaseId": "E-HUMAN-004",
+      "evidenceSha256": "b922489e51dea6e76fae3180bc7738f14912b79c709597cfa87158138a6ea145",
+      "humanReviewStatus": "USER_APPROVED",
+      "result": "FAIL",
+      "sourceArtifactType": "P7-T3-RESEARCH-BASELINE-EVIDENCE-BINDING",
+      "sourceRecordReference": "p6-t5-v5-r8-r3-h01-user-approved-frozen-contract.json#/candidates/qwen3_4b/records/E-HUMAN-004"
+    },
+    {
+      "evalCaseId": "E-ROUTE-002",
+      "evidenceSha256": "89d993f4a7dd820a9cad8dde1ef0647ba7c91f517516d7db8d2aeb620fc9d71a",
+      "humanReviewStatus": "USER_APPROVED",
+      "result": "FAIL",
+      "sourceArtifactType": "P7-T3-RESEARCH-BASELINE-EVIDENCE-BINDING",
+      "sourceRecordReference": "p6-t5-v5-r8-r3-h01-user-approved-frozen-contract.json#/candidates/qwen3_4b/records/E-ROUTE-002"
+    },
+    {
+      "evalCaseId": "E-STRUCT-003",
+      "evidenceSha256": "1cbb298f0d4615bf4e33b733ac947c781e9fffa80c9519b3df826da39d6521bd",
+      "humanReviewStatus": "USER_APPROVED",
+      "result": "FAIL",
+      "sourceArtifactType": "P7-T3-RESEARCH-BASELINE-EVIDENCE-BINDING",
+      "sourceRecordReference": "p6-t5-v5-r8-r3-h01-user-approved-frozen-contract.json#/candidates/qwen3_4b/records/E-STRUCT-003"
+    },
+    {
+      "evalCaseId": "E-STRUCT-004",
+      "evidenceSha256": "24928ce257ae61d3233f49374d375f6288b6d48e4dbf999a1b0d813f575a356f",
+      "humanReviewStatus": "USER_APPROVED",
+      "result": "FAIL",
+      "sourceArtifactType": "P7-T3-RESEARCH-BASELINE-EVIDENCE-BINDING",
+      "sourceRecordReference": "p6-t5-v5-r8-r3-h01-user-approved-frozen-contract.json#/candidates/qwen3_4b/records/E-STRUCT-004"
+    }
+  ],
+  "decisionRuleVersion": "P7-T3-RESEARCH-GATES-3.0.0",
+  "evaluationSuite": {
+    "digest": "8b75d356890a8a5c2318305589301b6ee6d73fbd3665b9af2063f98e13ea7417",
+    "id": "P6-T4-EVALUATION-SUITES",
+    "version": "1.0.0"
+  },
+  "evidenceReference": "evidence/p7-t3-research-merged-baseline-evidence.json",
+  "gapSuite": {
+    "base": {
+      "digest": "8b75d356890a8a5c2318305589301b6ee6d73fbd3665b9af2063f98e13ea7417",
+      "id": "P6-T4-EVALUATION-SUITES",
+      "version": "1.0.0"
+    },
+    "digest": "95ff79e0ec38c6d8ebfbcca05f0320b49819bf4f61e99c5b3b5c52cd559c83a5",
+    "id": "P7-T3-RESEARCH-GAP-EVALUATION",
+    "version": "1.1.0"
+  },
+  "governanceApproval": {
+    "approvalIdentity": "435b5f8576ace851aadebeedc6ada8e40b529789734d27fe0f094a4c565b9518",
+    "requestIdentity": "961957f646e9a8ae0d5ee9a8846dfdb85c554101a072eef3e833600121449114"
+  },
+  "mergeIdentity": "ada15127341cc664bb15bbb0f357529da3efadc295e9e12f6bb0cdc461f3cc42",
+  "promptProfile": {
+    "profile": "research",
+    "promptVersion": "research-v2"
+  },
+  "schemaVersion": "1.0.0",
+  "sourceArtifacts": [
+    {
+      "approvalStatus": "USER_APPROVED",
+      "artifactType": "P7-T3-RESEARCH-BASELINE-EVIDENCE-BINDING",
+      "reference": "evidence/p7-t3-research-baseline-evidence.json",
+      "sha256": "3073a3eb07c95085e6fb4f829a80794e318203664a282f618c38f35f00d646fb"
+    },
+    {
+      "approvalStatus": "USER_APPROVED",
+      "artifactType": "P7-T3-RESEARCH-GAP-EVIDENCE",
+      "reference": "evidence/p7-t3-research-gap-evidence-v1.json",
+      "sha256": "7c14b4186ed1b84f590922a4852c3881f39b5808a396e8f3f45d21f03ac9116a"
+    }
+  ],
+  "sourceCommit": "1fb5a7e7f353a534b12e33104d0735229afe6367"
+}
