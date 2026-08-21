@@ -19,6 +19,8 @@ import com.web.labportalbackend.ai.client.AiGatewayFailure;
 import com.web.labportalbackend.ai.client.AiGatewayFailureCategory;
 import com.web.labportalbackend.ai.dto.response.AiAssistantChatResponse;
 import com.web.labportalbackend.ai.enums.AiAssistantKey;
+import com.web.labportalbackend.ai.service.AiAssistantAvailabilityException;
+import com.web.labportalbackend.ai.service.AiAssistantAvailabilityFailure;
 import com.web.labportalbackend.ai.service.AiAssistantGatewayService;
 import com.web.labportalbackend.auth.security.JwtAuthenticationFilter;
 import org.junit.jupiter.api.Test;
@@ -111,6 +113,7 @@ class AiAssistantControllerTest {
     @ValueSource(strings = {
             "", "null", "{", "{}", "{\"input\":\"   \"}",
             "{\"input\":\"Hello\",\"authorizedContext\":{}}",
+            "{\"input\":\"Hello\",\"role\":\"ADMIN\"}",
             "{\"input\":\"Hello\",\"userJwt\":\"secret\"}",
             "{\"input\":\"Hello\",\"accessToken\":\"secret\"}"
     })
@@ -147,6 +150,47 @@ class AiAssistantControllerTest {
                 .andExpect(content().string(not(containsString("AI_MODEL_NOT_READY"))))
                 .andExpect(content().string(not(containsString("X-Internal-Service-Token"))))
                 .andExpect(content().string(not(containsString("ai-service"))));
+    }
+
+    @Test
+    void quotaDenialMapsToTooManyRequestsWithoutBecomingGatewayFailure() throws Exception {
+        when(gatewayService.chat(eq(AiAssistantKey.RESEARCH_ASSISTANT),
+                org.mockito.ArgumentMatchers.any(), eq("request-quota")))
+                .thenThrow(new AiAssistantAvailabilityException(AiAssistantAvailabilityFailure.QUOTA_EXCEEDED));
+
+        mockMvc.perform(post("/api/ai/assistants/RESEARCH_ASSISTANT/chat")
+                        .contextPath("/api")
+                        .with(csrf())
+                        .with(user("student").roles("STUDENT"))
+                        .header("X-Request-Id", "request-quota")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"input\":\"Hello\"}"))
+                .andExpect(status().isTooManyRequests())
+                .andExpect(jsonPath("$.code").value(429))
+                .andExpect(jsonPath("$.message").value("AI assistant quota exceeded"))
+                .andExpect(content().string(not(containsString("QUOTA_EXCEEDED"))))
+                .andExpect(content().string(not(containsString("temporarily unavailable"))));
+    }
+
+    @Test
+    void unavailableAssistantMapsToGenericForbiddenWithoutConfigDisclosure() throws Exception {
+        when(gatewayService.chat(eq(AiAssistantKey.LAB_ASSISTANT),
+                org.mockito.ArgumentMatchers.any(), eq("request-disabled")))
+                .thenThrow(new AiAssistantAvailabilityException(
+                        AiAssistantAvailabilityFailure.CONFIGURATION_UNAVAILABLE));
+
+        mockMvc.perform(post("/api/ai/assistants/LAB_ASSISTANT/chat")
+                        .contextPath("/api")
+                        .with(csrf())
+                        .with(user("student").roles("STUDENT"))
+                        .header("X-Request-Id", "request-disabled")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"input\":\"Hello\"}"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value(403))
+                .andExpect(jsonPath("$.message").value("AI assistant is not available for this request"))
+                .andExpect(content().string(not(containsString("CONFIGURATION_UNAVAILABLE"))))
+                .andExpect(content().string(not(containsString("database"))));
     }
 
     @TestConfiguration
