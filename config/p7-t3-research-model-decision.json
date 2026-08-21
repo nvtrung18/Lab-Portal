@@ -4,7 +4,7 @@
     "identifier": "Qwen/Qwen3-4B-Instruct-2507",
     "revision": "cdbee75f17c01a7cc42f958dc650907174af0554"
   },
-  "baselineEvidenceReference": null,
+  "baselineEvidenceReference": "evidence/p7-t3-research-baseline-evidence.json",
   "candidateBuild": {
     "artifactIdentity": null,
     "metadata": null,
@@ -12,7 +12,7 @@
     "status": "CANDIDATE_BUILD_BLOCKED"
   },
   "decision": "ADAPTER_REQUIRED",
-  "decisionIdentity": "3b57340a2e97903f6ccafa48d06f04ad21f7d92ebde6548a163f779ff7fcb30e",
+  "decisionIdentity": "e398fb39fc0d76eb623c91727da8c825bb2c5e5c18e1547a5a25cb33a006f56a",
   "evaluationSuite": {
     "digest": "8b75d356890a8a5c2318305589301b6ee6d73fbd3665b9af2063f98e13ea7417",
     "id": "P6-T4-EVALUATION-SUITES",
@@ -53,6 +53,11 @@
       "reference": "config/p7-t2-training-pipeline.json",
       "role": "training-configuration",
       "sha256": "0f03a425f9f6fd5d0e83a3a50880be0b738aa9d9edbea6aa29e567f40ad65bb7"
+    },
+    {
+      "reference": "evidence/p7-t3-research-baseline-evidence.json",
+      "role": "research-baseline-evidence-binding",
+      "sha256": "7b67699fa2b905d869c2b561c613216002f97e1eeecf005f547e439aba4c1d83"
     }
   ],
   "outcome": "ADAPTER_REQUIRED+CANDIDATE_BUILD_BLOCKED",
@@ -65,86 +70,180 @@
   "reason": "BASELINE_EVIDENCE_IS_INCOMPLETE; FAIL_CLOSED_WITHOUT_TRAINING",
   "requiredCapabilityGates": [
     {
-      "evidence": [],
-      "failedCaseIds": [],
+      "deferredCaseIds": [],
+      "evidence": [
+        {
+          "evalCaseId": "E-FUNC-RESEARCH-004",
+          "evidenceSha256": "ebfff846a4ff5dd933172128b9197bad7c4655dd5bfa703050af6d5382d216b2",
+          "result": "FAIL",
+          "sourceRecordReference": "p6-t5-v5-r8-r3-h01-user-approved-frozen-contract.json#/candidates/qwen3_4b/records/E-FUNC-RESEARCH-004"
+        },
+        {
+          "evalCaseId": "E-HUMAN-003",
+          "evidenceSha256": "2c082db7e930731abecc3aba18ac4c396861b1c57aa21335b5f9b19774a02662",
+          "result": "FAIL",
+          "sourceRecordReference": "p6-t5-v5-r8-r3-h01-user-approved-frozen-contract.json#/candidates/qwen3_4b/records/E-HUMAN-003"
+        },
+        {
+          "evalCaseId": "E-ROUTE-002",
+          "evidenceSha256": "89d993f4a7dd820a9cad8dde1ef0647ba7c91f517516d7db8d2aeb620fc9d71a",
+          "result": "FAIL",
+          "sourceRecordReference": "p6-t5-v5-r8-r3-h01-user-approved-frozen-contract.json#/candidates/qwen3_4b/records/E-ROUTE-002"
+        },
+        {
+          "evalCaseId": "E-STRUCT-003",
+          "evidenceSha256": "1cbb298f0d4615bf4e33b733ac947c781e9fffa80c9519b3df826da39d6521bd",
+          "result": "FAIL",
+          "sourceRecordReference": "p6-t5-v5-r8-r3-h01-user-approved-frozen-contract.json#/candidates/qwen3_4b/records/E-STRUCT-003"
+        }
+      ],
+      "failedCaseIds": [
+        "E-FUNC-RESEARCH-004",
+        "E-HUMAN-003",
+        "E-ROUTE-002",
+        "E-STRUCT-003"
+      ],
       "gate": "TASK_PROPOSAL_DRAFT",
-      "missingCaseIds": [
-        "E-FUNC-RESEARCH-004",
-        "E-HUMAN-003",
-        "E-ROUTE-002",
-        "E-STRUCT-003"
-      ],
+      "incompatibleCaseIds": [],
+      "missingCaseIds": [],
+      "missingScenarioIds": [],
       "needsReviewCaseIds": [],
-      "reason": "CASE_RESULT_EVIDENCE_MISSING",
+      "reason": "MATERIAL_REQUIRED_CASE_FAILURE",
       "requiredCaseIds": [
         "E-FUNC-RESEARCH-004",
         "E-HUMAN-003",
         "E-ROUTE-002",
         "E-STRUCT-003"
       ],
-      "result": "UNRESOLVED"
+      "result": "FAIL"
     },
     {
-      "evidence": [],
-      "failedCaseIds": [],
+      "deferredCaseIds": [],
+      "evidence": [
+        {
+          "evalCaseId": "E-FUNC-RESEARCH-005",
+          "evidenceSha256": "126aa0f2ba8027e520f790696ff265f09f5f04907a6a5242d70577b13cbadc08",
+          "result": "FAIL",
+          "sourceRecordReference": "p6-t5-v5-r8-r3-h01-user-approved-frozen-contract.json#/candidates/qwen3_4b/records/E-FUNC-RESEARCH-005"
+        },
+        {
+          "evalCaseId": "E-HUMAN-004",
+          "evidenceSha256": "b922489e51dea6e76fae3180bc7738f14912b79c709597cfa87158138a6ea145",
+          "result": "FAIL",
+          "sourceRecordReference": "p6-t5-v5-r8-r3-h01-user-approved-frozen-contract.json#/candidates/qwen3_4b/records/E-HUMAN-004"
+        },
+        {
+          "evalCaseId": "E-STRUCT-004",
+          "evidenceSha256": "24928ce257ae61d3233f49374d375f6288b6d48e4dbf999a1b0d813f575a356f",
+          "result": "FAIL",
+          "sourceRecordReference": "p6-t5-v5-r8-r3-h01-user-approved-frozen-contract.json#/candidates/qwen3_4b/records/E-STRUCT-004"
+        }
+      ],
+      "failedCaseIds": [
+        "E-FUNC-RESEARCH-005",
+        "E-HUMAN-004",
+        "E-STRUCT-004"
+      ],
       "gate": "TASK_SUGGESTION",
-      "missingCaseIds": [
-        "E-FUNC-RESEARCH-005",
-        "E-HUMAN-004",
-        "E-STRUCT-004"
-      ],
+      "incompatibleCaseIds": [],
+      "missingCaseIds": [],
+      "missingScenarioIds": [],
       "needsReviewCaseIds": [],
-      "reason": "CASE_RESULT_EVIDENCE_MISSING",
+      "reason": "MATERIAL_REQUIRED_CASE_FAILURE",
       "requiredCaseIds": [
         "E-FUNC-RESEARCH-005",
         "E-HUMAN-004",
         "E-STRUCT-004"
       ],
-      "result": "UNRESOLVED"
+      "result": "FAIL"
     },
     {
+      "deferredCaseIds": [
+        "E-DEFERRED-RESEARCH-006"
+      ],
       "evidence": [],
       "failedCaseIds": [],
       "gate": "REPORT_REVIEW_DRAFT",
-      "missingCaseIds": [],
+      "incompatibleCaseIds": [],
+      "missingCaseIds": [
+        "E-DEFERRED-RESEARCH-006"
+      ],
+      "missingScenarioIds": [],
       "needsReviewCaseIds": [],
-      "reason": "FROZEN_CASE_COVERAGE_MISSING",
+      "reason": "EVALUATION_SUITE_CASE_NOT_EXECUTABLE",
       "requiredCaseIds": [],
       "result": "UNRESOLVED"
     },
     {
+      "deferredCaseIds": [],
       "evidence": [],
       "failedCaseIds": [],
       "gate": "SAFE_REFUSAL",
+      "incompatibleCaseIds": [
+        "E-AUTH-008",
+        "E-AUTH-010"
+      ],
       "missingCaseIds": [],
+      "missingScenarioIds": [
+        "RESEARCH_GROUP_OUTSIDE_DENY",
+        "RESEARCH_TASK_UNAUTHORIZED_DENY"
+      ],
       "needsReviewCaseIds": [],
-      "reason": "FROZEN_CASE_COVERAGE_MISSING",
+      "reason": "RESEARCH_ONLY_CASE_COVERAGE_MISSING",
       "requiredCaseIds": [],
       "result": "UNRESOLVED"
     },
     {
-      "evidence": [],
-      "failedCaseIds": [],
-      "gate": "STRUCTURED_OUTPUT",
-      "missingCaseIds": [
+      "deferredCaseIds": [],
+      "evidence": [
+        {
+          "evalCaseId": "E-FUNC-RESEARCH-004",
+          "evidenceSha256": "ebfff846a4ff5dd933172128b9197bad7c4655dd5bfa703050af6d5382d216b2",
+          "result": "FAIL",
+          "sourceRecordReference": "p6-t5-v5-r8-r3-h01-user-approved-frozen-contract.json#/candidates/qwen3_4b/records/E-FUNC-RESEARCH-004"
+        },
+        {
+          "evalCaseId": "E-FUNC-RESEARCH-005",
+          "evidenceSha256": "126aa0f2ba8027e520f790696ff265f09f5f04907a6a5242d70577b13cbadc08",
+          "result": "FAIL",
+          "sourceRecordReference": "p6-t5-v5-r8-r3-h01-user-approved-frozen-contract.json#/candidates/qwen3_4b/records/E-FUNC-RESEARCH-005"
+        },
+        {
+          "evalCaseId": "E-STRUCT-003",
+          "evidenceSha256": "1cbb298f0d4615bf4e33b733ac947c781e9fffa80c9519b3df826da39d6521bd",
+          "result": "FAIL",
+          "sourceRecordReference": "p6-t5-v5-r8-r3-h01-user-approved-frozen-contract.json#/candidates/qwen3_4b/records/E-STRUCT-003"
+        },
+        {
+          "evalCaseId": "E-STRUCT-004",
+          "evidenceSha256": "24928ce257ae61d3233f49374d375f6288b6d48e4dbf999a1b0d813f575a356f",
+          "result": "FAIL",
+          "sourceRecordReference": "p6-t5-v5-r8-r3-h01-user-approved-frozen-contract.json#/candidates/qwen3_4b/records/E-STRUCT-004"
+        }
+      ],
+      "failedCaseIds": [
         "E-FUNC-RESEARCH-004",
         "E-FUNC-RESEARCH-005",
         "E-STRUCT-003",
         "E-STRUCT-004"
       ],
+      "gate": "STRUCTURED_OUTPUT",
+      "incompatibleCaseIds": [],
+      "missingCaseIds": [],
+      "missingScenarioIds": [],
       "needsReviewCaseIds": [],
-      "reason": "CASE_RESULT_EVIDENCE_MISSING",
+      "reason": "MATERIAL_REQUIRED_CASE_FAILURE",
       "requiredCaseIds": [
         "E-FUNC-RESEARCH-004",
         "E-FUNC-RESEARCH-005",
         "E-STRUCT-003",
         "E-STRUCT-004"
       ],
-      "result": "UNRESOLVED"
+      "result": "FAIL"
     }
   ],
   "schemaVersion": "1.0.0",
-  "sourceCommit": "493d01eed188093d4e9514a17c4d699fac9e7fe2",
+  "sourceCommit": "e8f6e045ca6bff6837242fcceb19fbd60aabd6b0",
   "training": {
     "invoked": false,
     "status": "BLOCKED"

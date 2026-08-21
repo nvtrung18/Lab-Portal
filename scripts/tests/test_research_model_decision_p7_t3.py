@@ -3,6 +3,7 @@ import importlib.util
 import json
 import tempfile
 import unittest
+import zipfile
 from copy import deepcopy
 from pathlib import Path
 from unittest.mock import Mock, patch
@@ -26,6 +27,7 @@ class P7T3ResearchModelDecisionTests(unittest.TestCase):
                 "useCaseId": use_case,
                 "suiteTags": tags,
                 "caseState": "ACTIVE",
+                "humanProfileId": "REFUSAL" if mode == "SAFE_REFUSAL" else "DRAFT_RESEARCH",
                 "responseContract": {"mode": mode, "language": "VI", "markers": []},
             }
 
@@ -65,7 +67,9 @@ class P7T3ResearchModelDecisionTests(unittest.TestCase):
     def evidence(self, suite=None, default_result="PASS"):
         suite = suite or self.suite()
         return {
+            "artifactType": "P7-T3-RESEARCH-BASELINE-EVIDENCE-BINDING",
             "schemaVersion": "1.0.0",
+            "decisionRuleVersion": "P7-T3-RESEARCH-GATES-2.0.0",
             "assistantKey": "RESEARCH_ASSISTANT",
             "baseModel": {
                 "identifier": "Qwen/Qwen3-4B-Instruct-2507",
@@ -78,32 +82,188 @@ class P7T3ResearchModelDecisionTests(unittest.TestCase):
                 "digest": "8b75d356890a8a5c2318305589301b6ee6d73fbd3665b9af2063f98e13ea7417",
             },
             "evidenceReference": "retained/p7-t3-research-baseline-evidence.json",
+            "sourceEvidence": {
+                "artifactType": "P6-T5-H01-USER-APPROVED-FROZEN-CONTRACT",
+                "reference": "p6-t5-v5-r8-r3-h01-user-approved-frozen-contract.json",
+                "sha256": "1" * 64,
+                "sizeBytes": 1,
+                "lineage": "P6-T5-V5-R8-R3",
+                "executionAttempt": "A2",
+                "reviewCheckpoint": "H01",
+                "approvalDecision": "APPROVED",
+                "proposalRevision": "R3",
+                "reviewInputReference": "p6-t5-v5-r8-r3-h01-review-input.json",
+                "reviewInputSha256": "2" * 64,
+                "manifestReference": "p6-t5-final-evidence-manifest-v1.json",
+                "manifestSha256": "3" * 64,
+            },
+            "candidate": {
+                "id": "qwen3_4b",
+                "runId": "qwen3_4b-R01",
+                "outputDigest": "4" * 64,
+            },
+            "sourceCommit": "test-source-commit",
             "caseResults": [
                 {
                     "evalCaseId": case["evalCaseId"],
                     "result": default_result,
                     "evidenceSha256": hashlib.sha256(case["evalCaseId"].encode()).hexdigest(),
+                    "sourceRecordReference": (
+                        "p6-t5-v5-r8-r3-h01-user-approved-frozen-contract.json"
+                        f"#/candidates/qwen3_4b/records/{case['evalCaseId']}"
+                    ),
                 }
                 for case in suite["caseInventory"]
+                if case.get("assistantKey") == "RESEARCH_ASSISTANT"
             ],
         }
 
-    def decisions(self):
-        return json.loads((ROOT / "config" / "p6-t6-adapter-decisions.json").read_text(encoding="utf-8"))
+    def decisions(self, research_decision="ADAPTER_REQUIRED"):
+        decisions = json.loads(
+            (ROOT / "config" / "p6-t6-adapter-decisions.json").read_text(encoding="utf-8")
+        )
+        decisions["decisions"]["RESEARCH_ASSISTANT"] = research_decision
+        return decisions
 
     def training_config(self):
         return json.loads((ROOT / "config" / "p7-t2-training-pipeline.json").read_text(encoding="utf-8"))
 
-    def decide(self, evidence=None, **kwargs):
+    def decide(self, evidence=None, decision_manifest=None, **kwargs):
         return MODULE.decide_research_model(
             self.suite(),
             self.benchmark_config(),
-            self.decisions(),
+            decision_manifest or self.decisions(),
             self.training_config(),
             self.evidence() if evidence is None else evidence,
             frozen_evidence=[],
             source_commit="test-source-commit",
             **kwargs,
+        )
+
+    def frozen_inputs(self, suite=None, result_by_case=None):
+        suite = suite or self.suite()
+        result_by_case = result_by_case or {}
+        records = []
+        review_records = []
+        for case in suite["caseInventory"]:
+            if case.get("caseState") == "DEFERRED_ASSERTION_ONLY":
+                continue
+            candidate_case = {"evalCaseId": case["evalCaseId"], "raw": "frozen"}
+            case_digest = MODULE.sha256_bytes(MODULE.canonical_bytes(candidate_case))
+            outcome = result_by_case.get(case["evalCaseId"], "PASS")
+            records.append(
+                {
+                    "evidenceRefs": [f"evalCaseId:{case['evalCaseId']}"],
+                    "profileId": case.get("humanProfileId") or "DRAFT_RESEARCH",
+                    "reviewerRationale": "Approved frozen result.",
+                    "overall": outcome,
+                    "dimensions": [],
+                    "candidateCaseDigest": case_digest,
+                    "evalCaseId": case["evalCaseId"],
+                }
+            )
+            review_records.append(
+                {
+                    "evalCaseId": case["evalCaseId"],
+                    "suiteCase": deepcopy(case),
+                    "candidateCase": candidate_case,
+                    "rawOutput": {"rawTextDigest": "5" * 64},
+                    "humanReview": {"decision": None, "notes": None},
+                }
+            )
+        pass_count = sum(record["overall"] == "PASS" for record in records)
+        fail_count = sum(record["overall"] == "FAIL" for record in records)
+        needs_review_count = sum(record["overall"] == "NEEDS_REVIEW" for record in records)
+        review_input = {
+            "lineage": "P6-T5-V5-R8-R3",
+            "executionAttempt": "A2",
+            "reviewCheckpoint": "H01",
+            "candidates": {
+                "qwen3_4b": {
+                    "candidateRunId": "qwen3_4b-R01",
+                    "candidateOutputDigest": "4" * 64,
+                    "applicableCaseCount": len(records),
+                    "missingRawOutputCaseIds": [],
+                    "records": review_records,
+                }
+            },
+        }
+        review_input_sha256 = MODULE.sha256_bytes(MODULE.canonical_bytes(review_input))
+        contract = {
+            "artifactType": "P6-T5-H01-USER-APPROVED-FROZEN-CONTRACT",
+            "materializationRevision": "R2-FROZEN-CONTRACT",
+            "lineage": "P6-T5-V5-R8-R3",
+            "executionAttempt": "A2",
+            "reviewCheckpoint": "H01",
+            "approval": {
+                "decision": "APPROVED",
+                "source": "user-current-chat",
+                "approvedAt": "2026-08-19T05:46:17.142028Z",
+                "proposalRevision": "R3",
+                "proposalSha256": "6" * 64,
+            },
+            "sourceReviewInputSha256": review_input_sha256,
+            "candidates": {
+                "qwen3_4b": {
+                    "candidateRunId": "qwen3_4b-R01",
+                    "candidateOutputDigest": "4" * 64,
+                    "recordCount": len(records),
+                    "summary": {
+                        "PASS": pass_count,
+                        "FAIL": fail_count,
+                        "NEEDS_REVIEW": needs_review_count,
+                    },
+                    "records": records,
+                }
+            },
+            "contractAdaptation": {
+                "semanticDecisionChanged": False,
+                "outcomesChanged": False,
+                "rationalesChanged": False,
+                "evidenceRefPolicy": "Use only evalCaseId:<case_id>.",
+                "candidateCaseDigestPolicy": "Rebind mechanically.",
+                "sidecarPolicy": "Frozen.",
+                "removedAssumptions": [],
+            },
+        }
+        source_sha256 = "1" * 64
+        source_size = 123
+        manifest = {
+            "artifacts": {
+                "approvedH01": {
+                    "path": "evidence/p6-t5-v5-r8-r3-h01-user-approved-frozen-contract.json",
+                    "sha256": source_sha256,
+                    "sizeBytes": source_size,
+                }
+            }
+        }
+        return contract, review_input, review_input_sha256, manifest, source_sha256, source_size
+
+    def import_contract(self, suite=None, result_by_case=None, contract=None, **overrides):
+        suite = suite or self.suite()
+        generated_contract, review_input, review_sha, manifest, source_sha, source_size = self.frozen_inputs(
+            suite, result_by_case
+        )
+        contract = contract or generated_contract
+        values = {
+            "source_reference": "p6-t5-v5-r8-r3-h01-user-approved-frozen-contract.json",
+            "source_sha256": source_sha,
+            "source_size": source_size,
+            "evidence_reference": "evidence/p7-t3-research-baseline-evidence.json",
+            "review_input": review_input,
+            "review_input_reference": "p6-t5-v5-r8-r3-h01-review-input.json",
+            "review_input_sha256": review_sha,
+            "evidence_manifest": manifest,
+            "evidence_manifest_reference": "p6-t5-final-evidence-manifest-v1.json",
+            "evidence_manifest_sha256": "3" * 64,
+            "source_commit": "test-source-commit",
+        }
+        values.update(overrides)
+        return MODULE.import_frozen_h01_contract(
+            contract,
+            suite,
+            self.benchmark_config(),
+            **values,
         )
 
     def write_approved_dataset(self, root):
@@ -177,12 +337,20 @@ class P7T3ResearchModelDecisionTests(unittest.TestCase):
             {gate["gate"] for gate in baseline["gates"]},
         )
 
-    def test_passing_all_required_gates_produces_base_only_approved(self):
-        decision = self.decide()
+    def test_passing_all_required_gates_produces_base_only_when_upstream_policy_allows_it(self):
+        decision = self.decide(decision_manifest=self.decisions("BASE_ONLY_APPROVED"))
 
         self.assertEqual("PASS", decision["overallBaselineResult"])
         self.assertEqual("BASE_ONLY_APPROVED", decision["decision"])
         self.assertEqual("BASE_ONLY_APPROVED", decision["outcome"])
+        self.assertFalse(decision["training"]["invoked"])
+
+    def test_passing_baseline_cannot_override_authoritative_adapter_required_decision(self):
+        decision = self.decide()
+
+        self.assertEqual("PASS", decision["overallBaselineResult"])
+        self.assertEqual("ADAPTER_REQUIRED", decision["decision"])
+        self.assertEqual("UPSTREAM_DECISION_CONFLICT", decision["candidateBuild"]["reason"])
         self.assertFalse(decision["training"]["invoked"])
 
     def test_material_required_gate_failure_produces_adapter_required(self):
@@ -208,7 +376,10 @@ class P7T3ResearchModelDecisionTests(unittest.TestCase):
     def test_base_only_approved_never_invokes_training(self):
         training_invoker = Mock(side_effect=AssertionError("training must not run"))
 
-        decision = self.decide(training_invoker=training_invoker)
+        decision = self.decide(
+            decision_manifest=self.decisions("BASE_ONLY_APPROVED"),
+            training_invoker=training_invoker,
+        )
 
         training_invoker.assert_not_called()
         self.assertEqual("NOT_REQUIRED", decision["training"]["status"])
@@ -220,7 +391,7 @@ class P7T3ResearchModelDecisionTests(unittest.TestCase):
         decision = MODULE.decide_research_model(
             self.suite(),
             self.benchmark_config(),
-            {"not": "a P7-T2 decision manifest"},
+            self.decisions("BASE_ONLY_APPROVED"),
             config,
             self.evidence(),
             frozen_evidence=[],
@@ -228,6 +399,167 @@ class P7T3ResearchModelDecisionTests(unittest.TestCase):
         )
 
         self.assertEqual("BASE_ONLY_APPROVED", decision["outcome"])
+
+    def test_valid_user_approved_frozen_contract_imports_exact_research_cases(self):
+        evidence = self.import_contract()
+
+        self.assertEqual("P7-T3-RESEARCH-BASELINE-EVIDENCE-BINDING", evidence["artifactType"])
+        self.assertEqual("qwen3_4b-R01", evidence["candidate"]["runId"])
+        self.assertEqual(
+            {case["evalCaseId"] for case in self.suite()["caseInventory"]},
+            {result["evalCaseId"] for result in evidence["caseResults"]},
+        )
+
+    def test_json_loader_rejects_duplicate_keys(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            evidence_path = Path(temporary_directory) / "duplicate.json"
+            evidence_path.write_text('{"artifactType":"draft","artifactType":"frozen"}', encoding="utf-8")
+
+            with self.assertRaisesRegex(MODULE.ResearchDecisionError, "duplicate JSON key"):
+                MODULE._load_document(evidence_path, "baseline evidence")
+
+    def test_bundle_rejects_closure_that_does_not_reference_frozen_contract(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            contract_name = "p6-t5-v5-r8-r3-h01-user-approved-frozen-contract.json"
+            contract_path = root / contract_name
+            contract_bytes = b'{"approved":true}\n'
+            contract_path.write_bytes(contract_bytes)
+            contract_sha = hashlib.sha256(contract_bytes).hexdigest()
+            closure = {
+                "humanEvaluation": {
+                    "artifact": contract_name,
+                    "sha256": "9" * 64,
+                    "state": "USER_APPROVED",
+                }
+            }
+            closure_bytes = json.dumps(closure, sort_keys=True).encode()
+            manifest = {
+                "artifacts": {
+                    "approvedH01": {
+                        "path": f"evidence/{contract_name}",
+                        "sha256": contract_sha,
+                        "sizeBytes": len(contract_bytes),
+                    },
+                    "closure": {
+                        "path": "evidence/p6-t5-final-closure-v1.json",
+                        "sha256": hashlib.sha256(closure_bytes).hexdigest(),
+                        "sizeBytes": len(closure_bytes),
+                    },
+                }
+            }
+            bundle_path = root / "bundle.zip"
+            with zipfile.ZipFile(bundle_path, "w") as bundle:
+                bundle.writestr(contract_name, contract_bytes)
+                bundle.writestr("p6-t5-final-closure-v1.json", closure_bytes)
+                bundle.writestr("p6-t5-final-evidence-manifest-v1.json", json.dumps(manifest))
+
+            with self.assertRaisesRegex(MODULE.ResearchDecisionError, "closure"):
+                MODULE._load_p6_t5_evidence_bundle(bundle_path, contract_path)
+
+    def test_frozen_contract_rejects_wrong_candidate_identity(self):
+        contract, review_input, review_sha, manifest, source_sha, source_size = self.frozen_inputs()
+        contract["candidates"]["qwen3_4b"]["candidateRunId"] = "qwen3_1_7b-R01"
+
+        with self.assertRaisesRegex(MODULE.ResearchDecisionError, "candidate"):
+            self.import_contract(
+                contract=contract,
+                review_input=review_input,
+                review_input_sha256=review_sha,
+                evidence_manifest=manifest,
+                source_sha256=source_sha,
+                source_size=source_size,
+            )
+
+    def test_frozen_contract_rejects_wrong_suite_version(self):
+        suite = self.suite()
+        suite["suiteVersion"] = "2.0.0"
+
+        with self.assertRaisesRegex(MODULE.ResearchDecisionError, "suite"):
+            self.import_contract(suite=suite)
+
+    def test_frozen_contract_rejects_duplicate_case_ids(self):
+        contract, review_input, review_sha, manifest, source_sha, source_size = self.frozen_inputs()
+        contract["candidates"]["qwen3_4b"]["records"].append(
+            deepcopy(contract["candidates"]["qwen3_4b"]["records"][0])
+        )
+        contract["candidates"]["qwen3_4b"]["recordCount"] += 1
+
+        with self.assertRaisesRegex(MODULE.ResearchDecisionError, "duplicate evalCaseId"):
+            self.import_contract(
+                contract=contract,
+                review_input=review_input,
+                review_input_sha256=review_sha,
+                evidence_manifest=manifest,
+                source_sha256=source_sha,
+                source_size=source_size,
+            )
+
+    def test_draft_review_cannot_override_user_approved_frozen_contract(self):
+        contract, review_input, review_sha, manifest, source_sha, source_size = self.frozen_inputs()
+        contract["artifactType"] = "P6-T5-H01-AI-REVIEW-PROPOSAL"
+
+        with self.assertRaisesRegex(MODULE.ResearchDecisionError, "user-approved frozen contract"):
+            self.import_contract(
+                contract=contract,
+                review_input=review_input,
+                review_input_sha256=review_sha,
+                evidence_manifest=manifest,
+                source_sha256=source_sha,
+                source_size=source_size,
+            )
+
+    def test_aggregate_totals_cannot_satisfy_case_level_gates(self):
+        contract, review_input, review_sha, manifest, source_sha, source_size = self.frozen_inputs()
+        candidate = contract["candidates"]["qwen3_4b"]
+        candidate["records"] = []
+        candidate["recordCount"] = 0
+        candidate["summary"] = {"PASS": 19, "FAIL": 14, "NEEDS_REVIEW": 0}
+
+        with self.assertRaisesRegex(MODULE.ResearchDecisionError, "aggregate|record"):
+            self.import_contract(
+                contract=contract,
+                review_input=review_input,
+                review_input_sha256=review_sha,
+                evidence_manifest=manifest,
+                source_sha256=source_sha,
+                source_size=source_size,
+            )
+
+    def test_admin_refusal_evidence_cannot_satisfy_research_safe_refusal_gate(self):
+        suite = self.suite()
+        refusal = next(case for case in suite["caseInventory"] if case["evalCaseId"] == "CASE-REFUSAL")
+        refusal["assistantKey"] = "ADMIN_ASSISTANT"
+        refusal["mandatoryScenarioId"] = "RESEARCH_TASK_UNAUTHORIZED_DENY"
+        evidence = self.import_contract(suite=suite)
+
+        baseline = MODULE.evaluate_research_baseline(suite, evidence)
+        safe_refusal = next(gate for gate in baseline["gates"] if gate["gate"] == "SAFE_REFUSAL")
+        self.assertEqual("UNRESOLVED", safe_refusal["result"])
+        self.assertIn("CASE-REFUSAL", safe_refusal["incompatibleCaseIds"])
+
+    def test_case_digest_mismatch_against_review_input_fails_closed(self):
+        contract, review_input, review_sha, manifest, source_sha, source_size = self.frozen_inputs()
+        contract["candidates"]["qwen3_4b"]["records"][0]["candidateCaseDigest"] = "9" * 64
+
+        with self.assertRaisesRegex(MODULE.ResearchDecisionError, "case digest mismatch"):
+            self.import_contract(
+                contract=contract,
+                review_input=review_input,
+                review_input_sha256=review_sha,
+                evidence_manifest=manifest,
+                source_sha256=source_sha,
+                source_size=source_size,
+            )
+
+    def test_unresolved_gate_takes_precedence_over_known_mandatory_failure(self):
+        evidence = self.evidence()
+        evidence["caseResults"][0]["result"] = "FAIL"
+        evidence["caseResults"].pop()
+
+        baseline = MODULE.evaluate_research_baseline(self.suite(), evidence)
+
+        self.assertEqual("UNRESOLVED", baseline["overallResult"])
 
     def test_adapter_required_requires_approved_research_dataset(self):
         evidence = self.evidence()
@@ -307,6 +639,30 @@ class P7T3ResearchModelDecisionTests(unittest.TestCase):
             training_invoker.assert_not_called()
             self.assertEqual("DATASET_APPROVAL_INVALID", decision["candidateBuild"]["reason"])
 
+    def test_missing_dataset_owner_approval_blocks_candidate_build(self):
+        evidence = self.evidence()
+        evidence["caseResults"][0]["result"] = "FAIL"
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            manifest_path, manifest = self.write_approved_dataset(temporary_directory)
+            manifest["source_data_owner"] = ""
+            manifest["checksum"] = MODULE.P7T2.dataset_identity(manifest)
+            manifest_path.write_text(json.dumps(manifest, sort_keys=True, indent=2) + "\n", encoding="utf-8")
+
+            decision = MODULE.decide_research_model(
+                self.suite(),
+                self.benchmark_config(),
+                self.decisions(),
+                self.configured_dataset(manifest),
+                evidence,
+                frozen_evidence=[],
+                dataset_manifest_path=manifest_path,
+                training_output=Path(temporary_directory) / "training",
+                training_invoker=Mock(),
+                source_commit="test-source-commit",
+            )
+
+            self.assertEqual("DATASET_APPROVAL_INVALID", decision["candidateBuild"]["reason"])
+
     def test_research_only_scope_is_enforced(self):
         evidence = self.evidence()
         evidence["assistantKey"] = "LAB_ASSISTANT"
@@ -348,6 +704,20 @@ class P7T3ResearchModelDecisionTests(unittest.TestCase):
         metadata["adapterDisposition"] = "APPROVED"
 
         with self.assertRaisesRegex(MODULE.ResearchDecisionError, "CANDIDATE_ONLY"):
+            MODULE.validate_real_candidate_metadata(metadata)
+
+    def test_missing_model_manifest_cannot_be_accepted_as_candidate(self):
+        metadata = self.candidate_metadata(self.training_config(), {"checksum": "0" * 64})
+        metadata.pop("trainingRunIdentity")
+
+        with self.assertRaisesRegex(MODULE.ResearchDecisionError, "complete P7-T2 provenance"):
+            MODULE.validate_real_candidate_metadata(metadata)
+
+    def test_unmanifested_adapter_file_cannot_be_accepted_as_candidate(self):
+        metadata = self.candidate_metadata(self.training_config(), {"checksum": "0" * 64})
+        metadata["exportedArtifacts"] = []
+
+        with self.assertRaisesRegex(MODULE.ResearchDecisionError, "exported artifact"):
             MODULE.validate_real_candidate_metadata(metadata)
 
     def test_identical_evidence_produces_identical_canonical_decision_identity(self):
@@ -470,11 +840,17 @@ class P7T3ResearchModelDecisionTests(unittest.TestCase):
 
             self.assertEqual(MODULE.file_sha256(lf), MODULE.file_sha256(crlf))
 
-    def test_checked_in_current_decision_is_valid_and_truthfully_blocked(self):
+    def test_checked_in_current_decision_binds_frozen_cases_and_reports_only_real_gaps(self):
         decision_path = ROOT / "config" / "p7-t3-research-model-decision.json"
+        binding_path = ROOT / "evidence" / "p7-t3-research-baseline-evidence.json"
         self.assertTrue(decision_path.is_file())
+        self.assertTrue(binding_path.is_file())
         decision = json.loads(decision_path.read_text(encoding="utf-8"))
+        binding = json.loads(binding_path.read_text(encoding="utf-8"))
 
+        MODULE.validate_baseline_evidence(binding, yaml.safe_load(
+            (ROOT / "evals" / "p6-t4-evaluation-suites.yaml").read_text(encoding="utf-8")
+        ))
         MODULE.validate_research_decision_record(decision)
         for artifact in decision["frozenEvidence"]:
             artifact_path = ROOT / artifact["reference"]
@@ -485,9 +861,17 @@ class P7T3ResearchModelDecisionTests(unittest.TestCase):
         self.assertEqual("BASELINE_EVIDENCE_INCOMPLETE", decision["candidateBuild"]["reason"])
         self.assertFalse(decision["training"]["invoked"])
         self.assertEqual(
-            {gate: "UNRESOLVED" for gate in MODULE.REQUIRED_GATES},
+            {
+                "TASK_PROPOSAL_DRAFT": "FAIL",
+                "TASK_SUGGESTION": "FAIL",
+                "REPORT_REVIEW_DRAFT": "UNRESOLVED",
+                "SAFE_REFUSAL": "UNRESOLVED",
+                "STRUCTURED_OUTPUT": "FAIL",
+            },
             {gate["gate"]: gate["result"] for gate in decision["requiredCapabilityGates"]},
         )
+        self.assertEqual(7, len(binding["caseResults"]))
+        self.assertTrue(all(result["result"] == "FAIL" for result in binding["caseResults"]))
 
 
 if __name__ == "__main__":

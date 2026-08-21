@@ -1,0 +1,85 @@
+{
+  "artifactType": "P7-T3-RESEARCH-BASELINE-EVIDENCE-BINDING",
+  "assistantKey": "RESEARCH_ASSISTANT",
+  "baseModel": {
+    "identifier": "Qwen/Qwen3-4B-Instruct-2507",
+    "revision": "cdbee75f17c01a7cc42f958dc650907174af0554"
+  },
+  "candidate": {
+    "id": "qwen3_4b",
+    "outputDigest": "582e4fddb8df04488166ae0c9c549d72a26470955015f9a0f0d40d95da17ffd0",
+    "runId": "qwen3_4b-R01"
+  },
+  "caseResults": [
+    {
+      "evalCaseId": "E-FUNC-RESEARCH-004",
+      "evidenceSha256": "ebfff846a4ff5dd933172128b9197bad7c4655dd5bfa703050af6d5382d216b2",
+      "result": "FAIL",
+      "sourceRecordReference": "p6-t5-v5-r8-r3-h01-user-approved-frozen-contract.json#/candidates/qwen3_4b/records/E-FUNC-RESEARCH-004"
+    },
+    {
+      "evalCaseId": "E-FUNC-RESEARCH-005",
+      "evidenceSha256": "126aa0f2ba8027e520f790696ff265f09f5f04907a6a5242d70577b13cbadc08",
+      "result": "FAIL",
+      "sourceRecordReference": "p6-t5-v5-r8-r3-h01-user-approved-frozen-contract.json#/candidates/qwen3_4b/records/E-FUNC-RESEARCH-005"
+    },
+    {
+      "evalCaseId": "E-HUMAN-003",
+      "evidenceSha256": "2c082db7e930731abecc3aba18ac4c396861b1c57aa21335b5f9b19774a02662",
+      "result": "FAIL",
+      "sourceRecordReference": "p6-t5-v5-r8-r3-h01-user-approved-frozen-contract.json#/candidates/qwen3_4b/records/E-HUMAN-003"
+    },
+    {
+      "evalCaseId": "E-HUMAN-004",
+      "evidenceSha256": "b922489e51dea6e76fae3180bc7738f14912b79c709597cfa87158138a6ea145",
+      "result": "FAIL",
+      "sourceRecordReference": "p6-t5-v5-r8-r3-h01-user-approved-frozen-contract.json#/candidates/qwen3_4b/records/E-HUMAN-004"
+    },
+    {
+      "evalCaseId": "E-ROUTE-002",
+      "evidenceSha256": "89d993f4a7dd820a9cad8dde1ef0647ba7c91f517516d7db8d2aeb620fc9d71a",
+      "result": "FAIL",
+      "sourceRecordReference": "p6-t5-v5-r8-r3-h01-user-approved-frozen-contract.json#/candidates/qwen3_4b/records/E-ROUTE-002"
+    },
+    {
+      "evalCaseId": "E-STRUCT-003",
+      "evidenceSha256": "1cbb298f0d4615bf4e33b733ac947c781e9fffa80c9519b3df826da39d6521bd",
+      "result": "FAIL",
+      "sourceRecordReference": "p6-t5-v5-r8-r3-h01-user-approved-frozen-contract.json#/candidates/qwen3_4b/records/E-STRUCT-003"
+    },
+    {
+      "evalCaseId": "E-STRUCT-004",
+      "evidenceSha256": "24928ce257ae61d3233f49374d375f6288b6d48e4dbf999a1b0d813f575a356f",
+      "result": "FAIL",
+      "sourceRecordReference": "p6-t5-v5-r8-r3-h01-user-approved-frozen-contract.json#/candidates/qwen3_4b/records/E-STRUCT-004"
+    }
+  ],
+  "decisionRuleVersion": "P7-T3-RESEARCH-GATES-2.0.0",
+  "evaluationSuite": {
+    "digest": "8b75d356890a8a5c2318305589301b6ee6d73fbd3665b9af2063f98e13ea7417",
+    "id": "P6-T4-EVALUATION-SUITES",
+    "version": "1.0.0"
+  },
+  "evidenceReference": "evidence/p7-t3-research-baseline-evidence.json",
+  "promptProfile": {
+    "profile": "research",
+    "promptVersion": "research-v2"
+  },
+  "schemaVersion": "1.0.0",
+  "sourceCommit": "e8f6e045ca6bff6837242fcceb19fbd60aabd6b0",
+  "sourceEvidence": {
+    "approvalDecision": "APPROVED",
+    "artifactType": "P6-T5-H01-USER-APPROVED-FROZEN-CONTRACT",
+    "executionAttempt": "A2",
+    "lineage": "P6-T5-V5-R8-R3",
+    "manifestReference": "p6-t5-final-evidence-manifest-v1.json",
+    "manifestSha256": "cedfa91a1c7c74a63d1e58eca97a959c567707d8315230c6f1374d325abdb55f",
+    "proposalRevision": "R3",
+    "reference": "p6-t5-v5-r8-r3-h01-user-approved-frozen-contract.json",
+    "reviewCheckpoint": "H01",
+    "reviewInputReference": "p6-t5-v5-r8-r3-h01-review-input.json",
+    "reviewInputSha256": "5bc199f9fd640ad1411645f2b233cf434bb4f258659f746f5b97f313bd802e8d",
+    "sha256": "12b516a06bc78118fbdf7490ecf60d87996f2a33199e64be3f4af6556ef05697",
+    "sizeBytes": 227120
+  }
+}
