@@ -19,6 +19,8 @@ import com.web.labportalbackend.ai.service.AiAssistantAvailability;
 import com.web.labportalbackend.ai.service.AiAssistantAvailabilityService;
 import com.web.labportalbackend.ai.service.AiAssistantProfile;
 import com.web.labportalbackend.ai.service.AiCapabilityRequest;
+import com.web.labportalbackend.ai.service.AiToolActionGateDecision;
+import com.web.labportalbackend.ai.service.AiToolActionGateService;
 import com.web.labportalbackend.ai.service.AiToolDefinition;
 import com.web.labportalbackend.ai.service.AiToolExecutionException;
 import com.web.labportalbackend.ai.service.AiToolExecutionFailure;
@@ -45,18 +47,22 @@ public final class AiToolExecutionServiceImpl implements AiToolExecutionService 
     private final AiToolRegistry toolRegistry;
     private final AiAssistantAvailabilityService availabilityService;
     private final AiContextFacade contextFacade;
+    private final AiToolActionGateService actionGateService;
     private final Map<AiToolId, AiToolHandler> handlers;
 
     public AiToolExecutionServiceImpl(AiToolRegistry toolRegistry,
                                       AiAssistantAvailabilityService availabilityService,
                                       AiContextFacade contextFacade,
+                                      AiToolActionGateService actionGateService,
                                       List<AiToolHandler> handlers) {
-        if (toolRegistry == null || availabilityService == null || contextFacade == null || handlers == null) {
+        if (toolRegistry == null || availabilityService == null || contextFacade == null
+                || actionGateService == null || handlers == null) {
             throw new IllegalArgumentException("tool execution dependencies are required");
         }
         this.toolRegistry = toolRegistry;
         this.availabilityService = availabilityService;
         this.contextFacade = contextFacade;
+        this.actionGateService = actionGateService;
         this.handlers = validatedHandlers(toolRegistry, handlers);
     }
 
@@ -82,9 +88,7 @@ public final class AiToolExecutionServiceImpl implements AiToolExecutionService 
         if (!matchesCurrentAuthority(parsed, availability, authorized, normalizedRequestId)) {
             throw denied(AiToolExecutionFailure.RESOURCE_NOT_AUTHORIZED, normalizedRequestId);
         }
-        if (parsed.definition().riskBoundary() != AiActionRiskBoundary.READ_ONLY) {
-            throw denied(AiToolExecutionFailure.TOOL_GATE_REQUIRED, normalizedRequestId);
-        }
+        enforceActionGate(parsed.definition(), normalizedRequestId);
 
         AiToolHandler handler = handlers.get(parsed.definition().id());
         if (handler == null) {
@@ -100,6 +104,28 @@ public final class AiToolExecutionServiceImpl implements AiToolExecutionService 
             throw denied(AiToolExecutionFailure.TOOL_EXECUTION_FAILED, normalizedRequestId);
         }
         return new AiToolExecutionResult(normalizedRequestId, parsed.definition().id().value(), result);
+    }
+
+    private void enforceActionGate(AiToolDefinition definition, String requestId) {
+        AiToolActionGateDecision decision;
+        try {
+            decision = actionGateService.classify(definition);
+        } catch (RuntimeException exception) {
+            throw denied(AiToolExecutionFailure.TOOL_NOT_ALLOWED, requestId);
+        }
+        if (decision == null) {
+            throw denied(AiToolExecutionFailure.TOOL_NOT_ALLOWED, requestId);
+        }
+        switch (decision) {
+            case ALLOW_READ_ONLY -> {
+                return;
+            }
+            case RETURN_DRAFT_ONLY -> throw denied(AiToolExecutionFailure.TOOL_GATE_REQUIRED, requestId);
+            case REQUIRE_CONFIRMATION ->
+                    throw denied(AiToolExecutionFailure.TOOL_CONFIRMATION_REQUIRED, requestId);
+            case REQUIRE_APPROVAL -> throw denied(AiToolExecutionFailure.TOOL_APPROVAL_REQUIRED, requestId);
+            case DENY -> throw denied(AiToolExecutionFailure.TOOL_NOT_ALLOWED, requestId);
+        }
     }
 
     private ParsedToolRequest parse(JsonNode root, String requestId) {

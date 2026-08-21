@@ -37,11 +37,13 @@ import com.web.labportalbackend.ai.service.AiAssistantProfile;
 import com.web.labportalbackend.ai.service.AiAuthorizedToolPolicy;
 import com.web.labportalbackend.ai.service.AiCapabilityDecision;
 import com.web.labportalbackend.ai.service.AiCapabilityRequest;
+import com.web.labportalbackend.ai.service.AiToolActionGateDecision;
+import com.web.labportalbackend.ai.service.AiToolActionGateService;
+import com.web.labportalbackend.ai.service.AiToolDefinition;
 import com.web.labportalbackend.ai.service.AiToolExecutionException;
 import com.web.labportalbackend.ai.service.AiToolExecutionFailure;
 import com.web.labportalbackend.ai.service.AiToolExecutionResult;
 import com.web.labportalbackend.ai.service.AiToolHandler;
-import com.web.labportalbackend.ai.service.AiToolDefinition;
 import com.web.labportalbackend.ai.service.AiToolRegistry;
 import java.time.Instant;
 import java.util.HashSet;
@@ -49,6 +51,8 @@ import java.util.List;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InOrder;
 
@@ -110,8 +114,11 @@ class AiToolExecutionServiceImplTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"approved", "authorized", "executeNow", "bypassConfirmation", "adminOverride",
-            "confirmed", "springBean", "javaClass", "methodName", "endpoint", "url", "sql"})
+    @ValueSource(strings = {"confirmed", "confirmedByUser", "approved", "approvedBy", "approvalRole",
+            "approverRole", "force", "forceExecute", "bypass", "override", "executeNow", "authorized",
+            "actorId", "requestedBy", "role", "riskBoundary", "actionRiskLevel", "actionClass",
+            "bypassConfirmation", "adminOverride", "springBean", "javaClass", "methodName", "endpoint", "url",
+            "sql"})
     void rejectsAuthorityAndDynamicDispatchFields(String untrustedField) {
         AiToolHandler handler = handler(AiToolId.LAB_SLOT_READ);
         AiToolExecutionServiceImpl service = service(handler);
@@ -248,7 +255,7 @@ class AiToolExecutionServiceImplTest {
     }
 
     @Test
-    void nonReadToolRequiresTheFutureGateAfterFreshAuthorizationAndNeverExecutes() {
+    void draftOnlyToolReturnsTheExistingGateOutcomeAfterFreshAuthorizationAndNeverExecutes() {
         AiToolHandler readHandler = handler(AiToolId.LAB_SLOT_READ);
         AiToolExecutionServiceImpl service = service(readHandler);
         AiAuthorizedContext authorized = context(AiCapability.LAB_BOOKING_DRAFT, 17L, null, "request-gated");
@@ -262,6 +269,57 @@ class AiToolExecutionServiceImplTest {
 
         assertEquals("request-gated", exception.requestId());
         verify(contextFacade).build(any());
+        verify(readHandler, never()).execute(any(), any());
+    }
+
+    @ParameterizedTest
+    @MethodSource("blockingGateDecisions")
+    void confirmationAndApprovalPoliciesStopAfterFreshAuthorizationAndBeforeHandlerInvocation(
+            AiToolActionGateDecision decision, AiToolExecutionFailure expectedFailure) {
+        AiToolActionGateService actionGateService = mock(AiToolActionGateService.class);
+        AiToolHandler readHandler = handler(AiToolId.LAB_SLOT_READ);
+        AiToolExecutionServiceImpl service = service(actionGateService, readHandler);
+        AiToolDefinition draftDefinition = registry.get(AiToolId.LAB_BOOKING_DRAFT);
+        AiAuthorizedContext authorized = context(
+                AiCapability.LAB_BOOKING_DRAFT, 17L, null, "request-sensitive");
+        when(availabilityService.requireAvailableForActor(AiAssistantKey.LAB_ASSISTANT))
+                .thenReturn(availability(profile(AiAssistantKey.LAB_ASSISTANT, AiAssistantToolGroup.LAB_DRAFT)));
+        when(contextFacade.build(any())).thenReturn(authorized);
+        when(actionGateService.classify(draftDefinition)).thenReturn(decision);
+
+        assertFailure(expectedFailure,
+                () -> service.execute(request(AiAssistantKey.LAB_ASSISTANT,
+                        AiToolId.LAB_BOOKING_DRAFT, 17L, null), "request-sensitive"));
+
+        InOrder order = inOrder(availabilityService, contextFacade, actionGateService);
+        order.verify(availabilityService).requireAvailableForActor(AiAssistantKey.LAB_ASSISTANT);
+        order.verify(contextFacade).build(any());
+        order.verify(actionGateService).classify(draftDefinition);
+        verify(readHandler, never()).execute(any(), any());
+    }
+
+    @Test
+    void missingOrFailingActionGateFailsClosedBeforeHandlerInvocation() {
+        AiToolHandler readHandler = handler(AiToolId.LAB_SLOT_READ);
+        AiToolDefinition definition = registry.get(AiToolId.LAB_SLOT_READ);
+        AiAuthorizedContext authorized = context(
+                AiCapability.LAB_SLOT_READ, 17L, null, "request-gate-failure");
+        when(availabilityService.requireAvailableForActor(AiAssistantKey.LAB_ASSISTANT))
+                .thenReturn(availability(profile(AiAssistantKey.LAB_ASSISTANT, AiAssistantToolGroup.LAB_READ)));
+        when(contextFacade.build(any())).thenReturn(authorized);
+
+        AiToolActionGateService missingDecision = mock(AiToolActionGateService.class);
+        AiToolActionGateService failingGate = mock(AiToolActionGateService.class);
+        when(failingGate.classify(definition)).thenThrow(new IllegalStateException("internal-secret"));
+
+        for (AiToolActionGateService actionGateService : List.of(missingDecision, failingGate)) {
+            AiToolExecutionServiceImpl service = service(actionGateService, readHandler);
+            AiToolExecutionException exception = assertFailure(AiToolExecutionFailure.TOOL_NOT_ALLOWED,
+                    () -> service.execute(request(AiAssistantKey.LAB_ASSISTANT,
+                            AiToolId.LAB_SLOT_READ, 17L, null), "request-gate-failure"));
+            assertEquals("AI tool is not allowed", exception.getMessage());
+        }
+
         verify(readHandler, never()).execute(any(), any());
     }
 
@@ -304,7 +362,13 @@ class AiToolExecutionServiceImplTest {
     }
 
     private AiToolExecutionServiceImpl service(AiToolHandler... handlers) {
-        return new AiToolExecutionServiceImpl(registry, availabilityService, contextFacade, List.of(handlers));
+        return service(new AiToolActionGateServiceImpl(registry), handlers);
+    }
+
+    private AiToolExecutionServiceImpl service(AiToolActionGateService actionGateService,
+                                               AiToolHandler... handlers) {
+        return new AiToolExecutionServiceImpl(
+                registry, availabilityService, contextFacade, actionGateService, List.of(handlers));
     }
 
     private static AiToolHandler handler(AiToolId toolId) {
@@ -388,5 +452,15 @@ class AiToolExecutionServiceImplTest {
         AiToolExecutionException exception = assertThrows(AiToolExecutionException.class, executable);
         assertEquals(expected, exception.failure());
         return exception;
+    }
+
+    private static java.util.stream.Stream<Arguments> blockingGateDecisions() {
+        return java.util.stream.Stream.of(
+                Arguments.of(AiToolActionGateDecision.REQUIRE_CONFIRMATION,
+                        AiToolExecutionFailure.TOOL_CONFIRMATION_REQUIRED),
+                Arguments.of(AiToolActionGateDecision.REQUIRE_APPROVAL,
+                        AiToolExecutionFailure.TOOL_APPROVAL_REQUIRED),
+                Arguments.of(AiToolActionGateDecision.DENY,
+                        AiToolExecutionFailure.TOOL_NOT_ALLOWED));
     }
 }

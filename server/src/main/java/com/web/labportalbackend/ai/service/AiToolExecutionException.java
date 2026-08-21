@@ -32,6 +32,8 @@ public final class AiToolExecutionException extends RuntimeException {
             case INVALID_TOOL_ARGUMENTS -> "AI tool arguments are invalid";
             case RESOURCE_NOT_AUTHORIZED -> "AI tool resource is not authorized";
             case TOOL_GATE_REQUIRED -> "AI tool action gate is required";
+            case TOOL_CONFIRMATION_REQUIRED -> "AI tool action requires user confirmation";
+            case TOOL_APPROVAL_REQUIRED -> "AI tool action requires authorized approval";
             case TOOL_EXECUTION_FAILED -> "Tool execution failed";
         };
     }
