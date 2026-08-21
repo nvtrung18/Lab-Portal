@@ -1,0 +1,11 @@
+{
+  "cardReference": "replace-with-approved-dataset-card-reference",
+  "schemaVersion": "1.0.0",
+  "split": {
+    "evaluationWeight": 10,
+    "seed": "lab-portal-p7-t1-v1",
+    "strategy": "SHA256_CONTENT_BUCKET",
+    "trainWeight": 80,
+    "validationWeight": 10
+  }
+}
