@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import os
+from pathlib import Path
 from typing import Annotated
 
 from pydantic import BaseModel, ConfigDict, Field, SecretStr, StringConstraints
 
 
 NonBlankText = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
+DEFAULT_PROFILE_CONFIG_PATH = Path(__file__).resolve().parents[1] / "config" / "assistant-profiles.json"
 
 
 class Settings(BaseModel):
@@ -22,6 +24,7 @@ class Settings(BaseModel):
     environment: NonBlankText = "local"
     internal_service_token: SecretStr | None = None
     request_timeout_seconds: float = Field(default=5.0, gt=0, le=300)
+    profile_config_path: Path = DEFAULT_PROFILE_CONFIG_PATH
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -31,6 +34,7 @@ class Settings(BaseModel):
             "environment": "AI_ENVIRONMENT",
             "internal_service_token": "AI_INTERNAL_SERVICE_TOKEN",
             "request_timeout_seconds": "AI_REQUEST_TIMEOUT_SECONDS",
+            "profile_config_path": "AI_ASSISTANT_PROFILES_PATH",
         }
         for field_name, environment_name in environment_names.items():
             value = os.getenv(environment_name)

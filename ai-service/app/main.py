@@ -8,6 +8,7 @@ from fastapi.responses import JSONResponse
 
 from app.config import Settings
 from app.models import ErrorResponse
+from app.profiles import ProfileLoader
 from app.routes.foundation import router
 
 
@@ -46,8 +47,10 @@ async def unexpected_error_handler(request: Request, exception: Exception) -> JS
 
 def create_app(settings: Settings | None = None) -> FastAPI:
     resolved_settings = settings or Settings.from_env()
+    profile_loader = ProfileLoader.from_file(resolved_settings.profile_config_path)
     application = FastAPI(title=resolved_settings.service_name, version="0.1.0")
     application.state.settings = resolved_settings
+    application.state.profile_loader = profile_loader
     application.include_router(router)
     application.add_exception_handler(RequestValidationError, validation_error_handler)
     application.add_exception_handler(Exception, unexpected_error_handler)

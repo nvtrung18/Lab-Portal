@@ -51,7 +51,8 @@ def model_info() -> ModelInfoResponse:
     response_model=ErrorResponse,
     status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
 )
-def chat(_request: AssistantRequest) -> JSONResponse:
+def chat(request: Request, payload: AssistantRequest) -> JSONResponse:
+    request.app.state.profile_loader.get_profile(payload.assistant_key)
     return _error_response(
         error_code="AI_MODEL_NOT_READY",
         message="AI model is not loaded.",
@@ -65,7 +66,8 @@ def chat(_request: AssistantRequest) -> JSONResponse:
     response_model=ErrorResponse,
     status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
 )
-def tool_request(_request: AssistantRequest) -> JSONResponse:
+def tool_request(request: Request, payload: AssistantRequest) -> JSONResponse:
+    request.app.state.profile_loader.get_profile(payload.assistant_key)
     return _error_response(
         error_code="AI_SERVICE_NOT_READY",
         message="AI tool requests are not available.",
@@ -85,7 +87,8 @@ def tool_request(_request: AssistantRequest) -> JSONResponse:
     status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
     include_in_schema=False,
 )
-def suggestions(_request: AssistantRequest) -> JSONResponse:
+def suggestions(request: Request, payload: AssistantRequest) -> JSONResponse:
+    request.app.state.profile_loader.get_profile(payload.assistant_key)
     return _error_response(
         error_code="AI_SERVICE_NOT_READY",
         message="AI suggestions are not available.",
