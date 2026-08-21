@@ -36,7 +36,7 @@ class CorsConfigurationPolicyTest {
                 .containsExactly("http://localhost:5173", "http://localhost:5174", "https://frontend.example.invalid");
         assertThat(configuration.getAllowCredentials()).isFalse();
         assertThat(configuration.getAllowedHeaders())
-                .containsExactly("Authorization", "Content-Type", "Accept");
+                .containsExactly("Authorization", "Content-Type", "Accept", "X-Request-Id");
     }
 
     @Test
@@ -54,10 +54,11 @@ class CorsConfigurationPolicyTest {
         mockMvc.perform(options("/auth/login")
                         .header("Origin", "https://frontend.example.invalid")
                         .header("Access-Control-Request-Method", "POST")
-                        .header("Access-Control-Request-Headers", "Authorization,Content-Type"))
+                        .header("Access-Control-Request-Headers", "Authorization,Content-Type,X-Request-Id"))
                 .andExpect(status().isOk())
                 .andExpect(header().string("Access-Control-Allow-Origin", "https://frontend.example.invalid"))
-                .andExpect(header().string("Access-Control-Allow-Headers", "Authorization, Content-Type"));
+                .andExpect(header().string("Access-Control-Allow-Headers",
+                        "Authorization, Content-Type, X-Request-Id"));
 
         mockMvc.perform(options("/auth/login")
                         .header("Origin", "https://untrusted.example.invalid")

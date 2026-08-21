@@ -1,8 +1,12 @@
 package com.web.labportalbackend.ai.client;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import java.util.regex.Pattern;
 
 public record AiGatewayRequest(JsonNode payload, String requestId) {
+
+    private static final Pattern REQUEST_ID_PATTERN =
+            Pattern.compile("^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$");
 
     public AiGatewayRequest {
         if (payload == null) {
@@ -10,6 +14,9 @@ public record AiGatewayRequest(JsonNode payload, String requestId) {
         }
         payload = payload.deepCopy();
         requestId = requestId == null || requestId.isBlank() ? null : requestId.trim();
+        if (requestId != null && !REQUEST_ID_PATTERN.matcher(requestId).matches()) {
+            throw new IllegalArgumentException("Request ID is invalid");
+        }
     }
 
     @Override
