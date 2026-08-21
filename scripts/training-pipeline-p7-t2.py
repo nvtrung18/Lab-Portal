@@ -339,13 +339,12 @@ def validate_dataset_manifest(
     if expected_identity != actual_identity:
         diagnostics.append("configured dataset identity mismatch")
 
-    expected_partition = assistant_key.removesuffix("_ASSISTANT")
     partition = manifest.get("partition")
     if partition == "SHARED":
         consumers = manifest.get("consumer_assistant_keys")
         if not isinstance(consumers, list) or assistant_key not in consumers:
             diagnostics.append("dataset manifest: assistant is not an approved shared consumer")
-    elif partition != expected_partition:
+    elif partition != assistant_key or manifest.get("assistant_key") != assistant_key:
         diagnostics.append("dataset manifest: assistant partition mismatch")
 
     artifacts = manifest.get("artifacts")
