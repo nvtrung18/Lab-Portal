@@ -90,6 +90,12 @@ qa/
 .cache/p6-t5/
 .artifacts/p6-t5/
 
+# Python local environments and test/build artifacts
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
 # User-owned Windows bundle supplied for Kaggle transfer; it is neither Linux runtime provenance nor benchmark evidence.
 # Preserve locally without deleting, reading as authoritative, or staging it.
 p6-t5-kaggle/

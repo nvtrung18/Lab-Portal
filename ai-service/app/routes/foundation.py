@@ -1,0 +1,94 @@
+from __future__ import annotations
+
+from fastapi import APIRouter, Request, status
+from fastapi.responses import JSONResponse
+
+from app.config import Settings
+from app.models import (
+    AssistantRequest,
+    ErrorResponse,
+    HealthResponse,
+    ModelInfoResponse,
+    ReadinessResponse,
+)
+
+
+router = APIRouter()
+
+
+def _settings(request: Request) -> Settings:
+    return request.app.state.settings
+
+
+def _error_response(
+    *, error_code: str, message: str, retryable: bool, status_code: int
+) -> JSONResponse:
+    error = ErrorResponse(error_code=error_code, message=message, retryable=retryable)
+    return JSONResponse(status_code=status_code, content=error.model_dump(by_alias=True, mode="json"))
+
+
+@router.get("/health", response_model=HealthResponse)
+def health(request: Request) -> HealthResponse:
+    return HealthResponse(service=_settings(request).service_name)
+
+
+@router.get(
+    "/ready",
+    response_model=ReadinessResponse,
+    status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+)
+def ready(request: Request) -> ReadinessResponse:
+    return ReadinessResponse(service=_settings(request).service_name)
+
+
+@router.get("/model-info", response_model=ModelInfoResponse)
+def model_info() -> ModelInfoResponse:
+    return ModelInfoResponse()
+
+
+@router.post(
+    "/v1/assistants/chat",
+    response_model=ErrorResponse,
+    status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+)
+def chat(_request: AssistantRequest) -> JSONResponse:
+    return _error_response(
+        error_code="AI_MODEL_NOT_READY",
+        message="AI model is not loaded.",
+        retryable=True,
+        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+    )
+
+
+@router.post(
+    "/v1/assistants/tool-request",
+    response_model=ErrorResponse,
+    status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+)
+def tool_request(_request: AssistantRequest) -> JSONResponse:
+    return _error_response(
+        error_code="AI_SERVICE_NOT_READY",
+        message="AI tool requests are not available.",
+        retryable=False,
+        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+    )
+
+
+@router.post(
+    "/v1/assistants/suggestions",
+    response_model=ErrorResponse,
+    status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+)
+@router.post(
+    "/v1/research/suggestions",
+    response_model=ErrorResponse,
+    status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+    include_in_schema=False,
+)
+def suggestions(_request: AssistantRequest) -> JSONResponse:
+    return _error_response(
+        error_code="AI_SERVICE_NOT_READY",
+        message="AI suggestions are not available.",
+        retryable=False,
+        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+    )

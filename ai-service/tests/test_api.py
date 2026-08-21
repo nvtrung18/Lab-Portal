@@ -1,0 +1,218 @@
+from __future__ import annotations
+
+import json
+
+from fastapi.testclient import TestClient
+from pydantic import SecretStr
+
+from app.config import Settings
+from app.main import app, create_app
+
+
+VALID_REQUEST = {
+    "assistantKey": "LAB_ASSISTANT",
+    "input": "Summarize the authorized lab context.",
+    "authorizedContext": {"lab": {"id": 17, "name": "Chemistry Lab"}},
+}
+
+
+def test_application_imports_and_starts() -> None:
+    with TestClient(app) as client:
+        assert client.app.state.settings.service_name == "ai-service"
+
+
+def test_settings_load_foundation_values_from_environment(monkeypatch) -> None:
+    monkeypatch.setenv("AI_SERVICE_NAME", "ai-service-test")
+    monkeypatch.setenv("AI_ENVIRONMENT", "test")
+    monkeypatch.setenv("AI_INTERNAL_SERVICE_TOKEN", "configured-token")
+    monkeypatch.setenv("AI_REQUEST_TIMEOUT_SECONDS", "7.5")
+
+    settings = Settings.from_env()
+
+    assert settings.service_name == "ai-service-test"
+    assert settings.environment == "test"
+    assert settings.internal_service_token is not None
+    assert settings.internal_service_token.get_secret_value() == "configured-token"
+    assert settings.request_timeout_seconds == 7.5
+
+
+def test_required_routes_are_registered() -> None:
+    schema = TestClient(app).get("/openapi.json").json()
+
+    assert {
+        "/health",
+        "/ready",
+        "/model-info",
+        "/v1/assistants/chat",
+        "/v1/assistants/tool-request",
+        "/v1/assistants/suggestions",
+    }.issubset(schema["paths"])
+    assert "/v1/research/suggestions" not in schema["paths"]
+    for path in (
+        "/v1/assistants/chat",
+        "/v1/assistants/tool-request",
+        "/v1/assistants/suggestions",
+    ):
+        responses = schema["paths"][path]["post"]["responses"]
+        assert "503" in responses
+        assert "200" not in responses
+
+
+def test_health_is_up_independently_of_model_readiness() -> None:
+    client = TestClient(app)
+
+    health = client.get("/health")
+    readiness = client.get("/ready")
+
+    assert health.status_code == 200
+    assert health.json() == {"status": "UP", "service": "ai-service"}
+    assert readiness.status_code == 503
+    assert readiness.json()["modelStatus"] == "NOT_LOADED"
+
+
+def test_ready_is_truthful_and_deterministic() -> None:
+    response = TestClient(app).get("/ready")
+
+    assert response.status_code == 503
+    assert response.json() == {
+        "status": "NOT_READY",
+        "service": "ai-service",
+        "serviceStatus": "READY",
+        "modelStatus": "NOT_LOADED",
+        "ready": False,
+    }
+
+
+def test_model_info_is_an_explicit_unloaded_foundation_stub() -> None:
+    response = TestClient(app).get("/model-info")
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "status": "NOT_LOADED",
+        "source": "FOUNDATION_STUB",
+        "modelName": None,
+        "modelVersion": None,
+        "adapterName": None,
+        "adapterVersion": None,
+        "ready": False,
+    }
+
+
+def test_chat_accepts_authorized_contract_and_returns_model_not_ready() -> None:
+    response = TestClient(app).post(
+        "/v1/assistants/chat",
+        json=VALID_REQUEST,
+        headers={"X-Internal-Service-Token": "spring-token", "X-Request-Id": "request-123"},
+    )
+
+    assert response.status_code == 503
+    assert response.json() == {
+        "errorCode": "AI_MODEL_NOT_READY",
+        "message": "AI model is not loaded.",
+        "retryable": True,
+    }
+
+
+def test_tool_request_is_advisory_and_never_executes() -> None:
+    request = VALID_REQUEST | {
+        "input": "Run this function.",
+        "authorizedContext": {"tool": {"name": "arbitrary.function"}},
+    }
+
+    response = TestClient(app).post("/v1/assistants/tool-request", json=request)
+
+    assert response.status_code == 503
+    assert response.json() == {
+        "errorCode": "AI_SERVICE_NOT_READY",
+        "message": "AI tool requests are not available.",
+        "retryable": False,
+    }
+
+
+def test_suggestions_never_write_or_fabricate_output() -> None:
+    response = TestClient(app).post("/v1/assistants/suggestions", json=VALID_REQUEST)
+
+    assert response.status_code == 503
+    assert response.json() == {
+        "errorCode": "AI_SERVICE_NOT_READY",
+        "message": "AI suggestions are not available.",
+        "retryable": False,
+    }
+
+
+def test_legacy_suggestions_route_preserves_active_spring_compatibility() -> None:
+    response = TestClient(app).post("/v1/research/suggestions", json=VALID_REQUEST)
+
+    assert response.status_code == 503
+    assert response.json()["errorCode"] == "AI_SERVICE_NOT_READY"
+
+
+def test_unknown_assistant_key_is_rejected_with_safe_validation_error() -> None:
+    request = VALID_REQUEST | {"assistantKey": "UNKNOWN_ASSISTANT"}
+
+    response = TestClient(app).post("/v1/assistants/chat", json=request)
+
+    assert response.status_code == 422
+    assert response.json() == {
+        "errorCode": "AI_INVALID_REQUEST",
+        "message": "Request validation failed.",
+        "retryable": False,
+    }
+
+
+def test_malformed_and_authorization_shaped_inputs_are_rejected_safely() -> None:
+    client = TestClient(app)
+
+    malformed = client.post("/v1/assistants/chat", content="not-json", headers={"content-type": "application/json"})
+    prohibited = client.post(
+        "/v1/assistants/chat",
+        json=VALID_REQUEST | {"actorRole": "ADMIN", "userJwt": "secret.jwt.value"},
+    )
+
+    for response in (malformed, prohibited):
+        assert response.status_code == 422
+        assert response.json() == {
+            "errorCode": "AI_INVALID_REQUEST",
+            "message": "Request validation failed.",
+            "retryable": False,
+        }
+        assert "secret.jwt.value" not in response.text
+
+
+def test_unexpected_exception_response_is_sanitized(caplog) -> None:
+    secret = "internal-token-that-must-never-escape"
+    test_app = create_app(Settings(internal_service_token=SecretStr(secret)))
+
+    @test_app.get("/_test/boom")
+    def boom() -> None:
+        raise RuntimeError(f"private failure at C:\\private\\model.bin using {secret}")
+
+    response = TestClient(test_app, raise_server_exceptions=False).get("/_test/boom")
+
+    assert response.status_code == 500
+    assert response.json() == {
+        "errorCode": "AI_INTERNAL_ERROR",
+        "message": "An unexpected server error occurred.",
+        "retryable": False,
+    }
+    assert "Traceback" not in response.text
+    assert "C:\\private" not in response.text
+    assert secret not in response.text
+    assert secret not in caplog.text
+
+
+def test_responses_never_expose_the_configured_internal_service_token() -> None:
+    secret = "configured-internal-service-token"
+    test_app = create_app(Settings(internal_service_token=SecretStr(secret)))
+    client = TestClient(test_app)
+
+    responses = [
+        client.get("/health"),
+        client.get("/ready"),
+        client.get("/model-info"),
+        client.post("/v1/assistants/chat", json=VALID_REQUEST),
+        client.post("/v1/assistants/tool-request", json=VALID_REQUEST),
+        client.post("/v1/assistants/suggestions", json=VALID_REQUEST),
+    ]
+
+    assert secret not in json.dumps([response.json() for response in responses])
