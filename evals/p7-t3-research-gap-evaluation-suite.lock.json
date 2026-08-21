@@ -1,0 +1,22 @@
+{
+  "artifactType": "P7-T3-RESEARCH-GAP-EVALUATION-SUITE-LOCK",
+  "schemaVersion": "1.0.0",
+  "suiteId": "P7-T3-RESEARCH-GAP-EVALUATION",
+  "suiteVersion": "1.0.0",
+  "lockVersion": "1.0.0",
+  "purpose": "EVALUATION",
+  "localFreezeStatus": "CONTENT_LOCKED",
+  "EVALUATION_ONLY": true,
+  "TRAINING_PROHIBITED": true,
+  "baseSuite": {
+    "id": "P6-T4-EVALUATION-SUITES",
+    "version": "1.0.0",
+    "digest": "8b75d356890a8a5c2318305589301b6ee6d73fbd3665b9af2063f98e13ea7417"
+  },
+  "suiteDigest": "0bbc2c294cb77235a01fdca291261b38c71eb6c7e451562b0e4bc67f28187494",
+  "fileDigest": "160ea74be86872620d38c3858628514ba78042c135f9f3a699344f571bcf42f4",
+  "canonicalInventoryDigest": "5cc6f88080406d9b0e539e3ade2fd15b6ba93eb23276651c0bbfdcc30443609f",
+  "files": {
+    "evals/p7-t3-research-gap-evaluation-suite.json": "160ea74be86872620d38c3858628514ba78042c135f9f3a699344f571bcf42f4"
+  }
+}

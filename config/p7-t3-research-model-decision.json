@@ -5,6 +5,7 @@
     "revision": "cdbee75f17c01a7cc42f958dc650907174af0554"
   },
   "baselineEvidenceReference": "evidence/p7-t3-research-baseline-evidence.json",
+  "baselineEvidenceStatus": "BASELINE_EVIDENCE_INCOMPLETE",
   "candidateBuild": {
     "artifactIdentity": null,
     "metadata": null,
@@ -12,7 +13,7 @@
     "status": "CANDIDATE_BUILD_BLOCKED"
   },
   "decision": "ADAPTER_REQUIRED",
-  "decisionIdentity": "e398fb39fc0d76eb623c91727da8c825bb2c5e5c18e1547a5a25cb33a006f56a",
+  "decisionIdentity": "2590fadfb5cf2c77e9f64cc0b953e069ce657f573ee574139d39571df440a5f7",
   "evaluationSuite": {
     "digest": "8b75d356890a8a5c2318305589301b6ee6d73fbd3665b9af2063f98e13ea7417",
     "id": "P6-T4-EVALUATION-SUITES",
@@ -33,6 +34,16 @@
       "reference": "evals/p6-t4-evaluation-freeze.binding.yaml",
       "role": "evaluation-governance-binding",
       "sha256": "3618d497850a9077e3c4561a8b60533c5eb2c72dbfb7a6a57c309b79027bc460"
+    },
+    {
+      "reference": "evals/p7-t3-research-gap-evaluation-suite.json",
+      "role": "research-gap-evaluation-suite",
+      "sha256": "160ea74be86872620d38c3858628514ba78042c135f9f3a699344f571bcf42f4"
+    },
+    {
+      "reference": "evals/p7-t3-research-gap-evaluation-suite.lock.json",
+      "role": "research-gap-evaluation-suite-lock",
+      "sha256": "e4f065ab1118907191c6cb2f51a7fec9646eee0a2e3fb1594a2e940a7dfadc72"
     },
     {
       "reference": "config/p6-t5-benchmark.yaml",
@@ -170,7 +181,7 @@
       ],
       "missingScenarioIds": [],
       "needsReviewCaseIds": [],
-      "reason": "EVALUATION_SUITE_CASE_NOT_EXECUTABLE",
+      "reason": "REPORT_REVIEW_EVALUATION_GOVERNANCE_BLOCKED",
       "requiredCaseIds": [],
       "result": "UNRESOLVED"
     },
@@ -183,14 +194,17 @@
         "E-AUTH-008",
         "E-AUTH-010"
       ],
-      "missingCaseIds": [],
-      "missingScenarioIds": [
-        "RESEARCH_GROUP_OUTSIDE_DENY",
-        "RESEARCH_TASK_UNAUTHORIZED_DENY"
+      "missingCaseIds": [
+        "E-AUTH-011",
+        "E-AUTH-012"
       ],
+      "missingScenarioIds": [],
       "needsReviewCaseIds": [],
-      "reason": "RESEARCH_ONLY_CASE_COVERAGE_MISSING",
-      "requiredCaseIds": [],
+      "reason": "CASE_RESULT_EVIDENCE_MISSING",
+      "requiredCaseIds": [
+        "E-AUTH-011",
+        "E-AUTH-012"
+      ],
       "result": "UNRESOLVED"
     },
     {
@@ -243,7 +257,7 @@
     }
   ],
   "schemaVersion": "1.0.0",
-  "sourceCommit": "e8f6e045ca6bff6837242fcceb19fbd60aabd6b0",
+  "sourceCommit": "7b705630098a515cd8274af87c4429863aa46c65",
   "training": {
     "invoked": false,
     "status": "BLOCKED"
