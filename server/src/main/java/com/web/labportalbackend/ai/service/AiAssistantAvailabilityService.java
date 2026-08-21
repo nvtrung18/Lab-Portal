@@ -8,4 +8,6 @@ import com.web.labportalbackend.ai.enums.AiAssistantKey;
 public interface AiAssistantAvailabilityService {
 
     AiAssistantProfile requireAvailable(AiAssistantKey assistantKey);
+
+    AiAssistantAvailability requireAvailableForActor(AiAssistantKey assistantKey);
 }

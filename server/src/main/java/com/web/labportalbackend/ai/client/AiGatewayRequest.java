@@ -13,14 +13,19 @@ public record AiGatewayRequest(JsonNode payload, String requestId) {
             throw new IllegalArgumentException("AI gateway payload is required");
         }
         payload = payload.deepCopy();
-        requestId = requestId == null || requestId.isBlank() ? null : requestId.trim();
-        if (requestId != null && !REQUEST_ID_PATTERN.matcher(requestId).matches()) {
-            throw new IllegalArgumentException("Request ID is invalid");
-        }
+        requestId = normalizeRequestId(requestId);
     }
 
     @Override
     public JsonNode payload() {
         return payload.deepCopy();
+    }
+
+    public static String normalizeRequestId(String requestId) {
+        String normalized = requestId == null || requestId.isBlank() ? null : requestId.trim();
+        if (normalized != null && !REQUEST_ID_PATTERN.matcher(normalized).matches()) {
+            throw new IllegalArgumentException("Request ID is invalid");
+        }
+        return normalized;
     }
 }
