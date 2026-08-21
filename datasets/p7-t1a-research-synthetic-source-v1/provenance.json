@@ -1,0 +1,170 @@
+{
+  "antiLeakage": {
+    "checkedReferences": [
+      "docs/architecture/ai/datasets/fixtures/p6-t3-cases.yaml",
+      "evals/p6-t4-evaluation-suites.yaml",
+      "evals/p7-t3-research-gap-evaluation-suite.json"
+    ],
+    "exactCanonicalNodeDuplicates": 0,
+    "exactSubstantialStringDuplicates": 0,
+    "exactTrainingContentDuplicates": 0
+  },
+  "artifactType": "P7-T1A-PROJECT-OWNED-SYNTHETIC-RESEARCH-SOURCE-PROVENANCE",
+  "artifacts": [
+    {
+      "filename": "source-export.json",
+      "recordCount": 45,
+      "sha256": "7b5744e1e49925b228d346cf60817e2fbf976283b72c1673aedb329449503436"
+    }
+  ],
+  "assistantKey": "RESEARCH_ASSISTANT",
+  "contentIdentity": "c8dc56a1cbff71dd8c15c1eff6f561e1d6d1d4152326bbb24f99cdf2e4753722",
+  "coverage": {
+    "advisoryDraftOnly": true,
+    "excludedUseCases": {
+      "RESEARCH_UC_006": "TRAINING remains prohibited for CAT_RESEARCH_REPORT_METADATA"
+    },
+    "includedCategories": [
+      "CAT_RESEARCH_ASSIGNED_TASK",
+      "CAT_RESEARCH_DRAFT_CONTEXT"
+    ],
+    "includedUseCases": [
+      "RESEARCH_UC_003",
+      "RESEARCH_UC_004",
+      "RESEARCH_UC_005"
+    ],
+    "toolExecutionExamples": 0
+  },
+  "generator": {
+    "deterministic": true,
+    "randomnessUsed": false,
+    "reference": "scripts/build-p7-t1a-research-synthetic-source.py",
+    "version": "1.0.0"
+  },
+  "governance": {
+    "approvalAuthority": "RESEARCH_GOVERNANCE_DATA_GOVERNANCE_APPROVAL_AUTHORITY",
+    "approvalReference": null,
+    "approvalStatus": "PENDING",
+    "currentPermittedPurposes": [
+      "DEVELOPMENT_TEST"
+    ],
+    "lifecycleStatus": "PENDING_APPROVAL",
+    "materializationAuthorized": false,
+    "proposedPurposes": [
+      "TRAINING"
+    ],
+    "sourcePermissionReference": null,
+    "sourcePermissionStatus": "NOT_ASSESSED",
+    "trainingAuthorized": false
+  },
+  "governanceState": "AWAITING_GOVERNANCE_APPROVAL",
+  "intendedFutureUse": {
+    "assistantKey": "RESEARCH_ASSISTANT",
+    "purpose": "TRAINING",
+    "subjectToExplicitGovernanceApproval": true,
+    "trainingApproaches": [
+      "LoRA",
+      "QLoRA"
+    ]
+  },
+  "inventory": {
+    "byBehavior": {
+      "DENY": 6,
+      "DRAFT_ONLY": 20,
+      "NO_CONTEXT": 3,
+      "SAFE_REFUSAL": 6,
+      "SUCCESS": 10
+    },
+    "byRecordType": {
+      "ASSIGNED_TASK_LOOKUP": 15,
+      "TASK_PROPOSAL_DRAFT": 15,
+      "TASK_SUGGESTION_DRAFT": 15
+    },
+    "byUseCase": {
+      "RESEARCH_UC_003": 15,
+      "RESEARCH_UC_004": 15,
+      "RESEARCH_UC_005": 15
+    },
+    "positiveRecordCount": 30,
+    "recordCount": 45,
+    "recordIds": [
+      "record-p7t1a-r003-001",
+      "record-p7t1a-r003-002",
+      "record-p7t1a-r003-003",
+      "record-p7t1a-r003-004",
+      "record-p7t1a-r003-005",
+      "record-p7t1a-r003-006",
+      "record-p7t1a-r003-007",
+      "record-p7t1a-r003-008",
+      "record-p7t1a-r003-009",
+      "record-p7t1a-r003-010",
+      "record-p7t1a-r003-011",
+      "record-p7t1a-r003-012",
+      "record-p7t1a-r003-013",
+      "record-p7t1a-r003-014",
+      "record-p7t1a-r003-015",
+      "record-p7t1a-r004-001",
+      "record-p7t1a-r004-002",
+      "record-p7t1a-r004-003",
+      "record-p7t1a-r004-004",
+      "record-p7t1a-r004-005",
+      "record-p7t1a-r004-006",
+      "record-p7t1a-r004-007",
+      "record-p7t1a-r004-008",
+      "record-p7t1a-r004-009",
+      "record-p7t1a-r004-010",
+      "record-p7t1a-r004-011",
+      "record-p7t1a-r004-012",
+      "record-p7t1a-r004-013",
+      "record-p7t1a-r004-014",
+      "record-p7t1a-r004-015",
+      "record-p7t1a-r005-001",
+      "record-p7t1a-r005-002",
+      "record-p7t1a-r005-003",
+      "record-p7t1a-r005-004",
+      "record-p7t1a-r005-005",
+      "record-p7t1a-r005-006",
+      "record-p7t1a-r005-007",
+      "record-p7t1a-r005-008",
+      "record-p7t1a-r005-009",
+      "record-p7t1a-r005-010",
+      "record-p7t1a-r005-011",
+      "record-p7t1a-r005-012",
+      "record-p7t1a-r005-013",
+      "record-p7t1a-r005-014",
+      "record-p7t1a-r005-015"
+    ],
+    "safetyRecordCount": 15
+  },
+  "lineage": {
+    "contractReferences": [
+      "ai-service/config/assistant-profiles.json",
+      "docs/architecture/ai/assistant-use-case-catalog.yml",
+      "docs/architecture/ai/data-governance.yml",
+      "docs/architecture/ai/datasets/domain-dataset-schemas.schema.json",
+      "docs/architecture/ai/three-assistant-contract.yml"
+    ],
+    "evaluationFixturesUsedAsTrainingSource": false,
+    "sourceReference": "P7-T1A"
+  },
+  "ownership": {
+    "externalSources": [],
+    "project": "Lab-Portal",
+    "projectOwned": true,
+    "sourceDataOwner": "RESEARCH_GOVERNANCE_DOMAIN_DATA_OWNER"
+  },
+  "provenanceIdentity": "04ed322cf9604d753c1fdb2ab03120aa06c4856b185fb98d387f26e969c6ed1b",
+  "schemaVersion": "1.0.0",
+  "sourceId": "p7-t1a-research-synthetic-source",
+  "sourceState": "SOURCE_READY",
+  "sourceVersion": "1.0.0",
+  "syntheticData": {
+    "evaluationMaterialCopied": false,
+    "fullySynthetic": true,
+    "independentlyAuthored": true,
+    "internetDownloadedDataUsed": false,
+    "privateResearchDocumentsUsed": false,
+    "productionDataUsed": false,
+    "userDataUsed": false
+  }
+}
