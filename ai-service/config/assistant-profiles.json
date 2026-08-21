@@ -11,6 +11,7 @@
       },
       "modelProfile": {
         "baseModelIdentifier": "Qwen/Qwen3-4B-Instruct-2507",
+        "baseModelRevision": "cdbee75f17c01a7cc42f958dc650907174af0554",
         "profileVersion": "1.0.0",
         "runtimeProfile": "shared-base",
         "servingMode": "METADATA_ONLY"
@@ -40,6 +41,7 @@
       },
       "modelProfile": {
         "baseModelIdentifier": "Qwen/Qwen3-4B-Instruct-2507",
+        "baseModelRevision": "cdbee75f17c01a7cc42f958dc650907174af0554",
         "profileVersion": "1.0.0",
         "runtimeProfile": "shared-base",
         "servingMode": "METADATA_ONLY"
@@ -70,6 +72,7 @@
       },
       "modelProfile": {
         "baseModelIdentifier": "Qwen/Qwen3-4B-Instruct-2507",
+        "baseModelRevision": "cdbee75f17c01a7cc42f958dc650907174af0554",
         "profileVersion": "1.0.0",
         "runtimeProfile": "shared-base",
         "servingMode": "METADATA_ONLY"

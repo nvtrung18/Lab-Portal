@@ -25,6 +25,14 @@ RequestInput = Annotated[str, StringConstraints(strip_whitespace=True, min_lengt
 ReadinessStatus = Literal["READY", "NOT_READY"]
 ServiceStatus = Literal["READY", "NOT_READY"]
 ModelStatus = Literal["NOT_LOADED", "LOADING", "READY", "ERROR"]
+ArtifactStatus = Literal[
+    "APPROVED",
+    "CANDIDATE_ONLY",
+    "BLOCKED",
+    "PENDING",
+    "METADATA_ONLY",
+    "NOT_AVAILABLE",
+]
 
 
 class AssistantRequest(ContractModel):
@@ -43,16 +51,40 @@ class ReadinessResponse(ContractModel):
     service: str
     service_status: ServiceStatus = "READY"
     model_status: ModelStatus = "NOT_LOADED"
+    profile_loaded: bool = False
+    artifact_validated: bool = False
+    model_loaded: bool = False
+    adapter_loaded: bool = False
     ready: bool = False
+
+
+class AdapterArtifactInfoResponse(ContractModel):
+    status: ArtifactStatus
+    identifier: str | None
+    version: str | None
+    artifact_identity: str | None
+    artifact_validated: bool
+    adapter_loaded: bool
 
 
 class ModelInfoResponse(ContractModel):
     status: ModelStatus = "NOT_LOADED"
-    source: str = "FOUNDATION_STUB"
-    model_name: str | None = None
-    model_version: str | None = None
+    source: str = "SERVING_ARTIFACT_DESCRIPTOR"
+    model_name: str
+    model_version: str
+    model_revision: str
     adapter_name: str | None = None
     adapter_version: str | None = None
+    artifact_version: str
+    artifact_state: ArtifactStatus
+    artifact_identity: str | None
+    descriptor_identity: str
+    profile_versions: dict[AssistantKey, str]
+    assistant_adapters: dict[AssistantKey, AdapterArtifactInfoResponse]
+    profile_loaded: bool
+    artifact_validated: bool
+    model_loaded: bool
+    adapter_loaded: bool
     ready: bool = False
 
 

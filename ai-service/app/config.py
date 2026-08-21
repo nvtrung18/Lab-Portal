@@ -9,6 +9,8 @@ from pydantic import BaseModel, ConfigDict, Field, SecretStr, StringConstraints
 
 NonBlankText = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
 DEFAULT_PROFILE_CONFIG_PATH = Path(__file__).resolve().parents[1] / "config" / "assistant-profiles.json"
+DEFAULT_ARTIFACT_CONFIG_PATH = Path(__file__).resolve().parents[1] / "config" / "model-artifacts.json"
+DEFAULT_ARTIFACT_ROOT = Path(__file__).resolve().parents[1] / "artifacts"
 
 
 class Settings(BaseModel):
@@ -25,6 +27,8 @@ class Settings(BaseModel):
     internal_service_token: SecretStr | None = None
     request_timeout_seconds: float = Field(default=5.0, gt=0, le=300)
     profile_config_path: Path = DEFAULT_PROFILE_CONFIG_PATH
+    artifact_config_path: Path = DEFAULT_ARTIFACT_CONFIG_PATH
+    artifact_root: Path = DEFAULT_ARTIFACT_ROOT
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -35,6 +39,8 @@ class Settings(BaseModel):
             "internal_service_token": "AI_INTERNAL_SERVICE_TOKEN",
             "request_timeout_seconds": "AI_REQUEST_TIMEOUT_SECONDS",
             "profile_config_path": "AI_ASSISTANT_PROFILES_PATH",
+            "artifact_config_path": "AI_MODEL_ARTIFACTS_PATH",
+            "artifact_root": "AI_MODEL_ARTIFACT_ROOT",
         }
         for field_name, environment_name in environment_names.items():
             value = os.getenv(environment_name)

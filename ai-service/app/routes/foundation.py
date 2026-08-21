@@ -5,6 +5,7 @@ from fastapi.responses import JSONResponse
 
 from app.config import Settings
 from app.models import (
+    AdapterArtifactInfoResponse,
     AssistantRequest,
     ErrorResponse,
     HealthResponse,
@@ -38,12 +39,46 @@ def health(request: Request) -> HealthResponse:
     status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
 )
 def ready(request: Request) -> ReadinessResponse:
-    return ReadinessResponse(service=_settings(request).service_name)
+    artifacts = request.app.state.artifact_loader
+    return ReadinessResponse(
+        service=_settings(request).service_name,
+        profile_loaded=artifacts.profile_loaded,
+        artifact_validated=artifacts.artifact_validated,
+        model_loaded=artifacts.model_loaded,
+        adapter_loaded=artifacts.adapter_loaded,
+        ready=artifacts.ready,
+    )
 
 
 @router.get("/model-info", response_model=ModelInfoResponse)
-def model_info() -> ModelInfoResponse:
-    return ModelInfoResponse()
+def model_info(request: Request) -> ModelInfoResponse:
+    artifacts = request.app.state.artifact_loader
+    return ModelInfoResponse(
+        model_name=artifacts.base_model_identifier,
+        model_version=artifacts.base_model_revision,
+        model_revision=artifacts.base_model_revision,
+        artifact_version=artifacts.artifact_version,
+        artifact_state=artifacts.base_artifact_status,
+        artifact_identity=artifacts.base_artifact_identity,
+        descriptor_identity=artifacts.artifact_identity,
+        profile_versions={key: state.profile_version for key, state in artifacts.states.items()},
+        assistant_adapters={
+            key: AdapterArtifactInfoResponse(
+                status=state.adapter_status,
+                identifier=state.adapter_identifier,
+                version=state.adapter_version,
+                artifact_identity=state.adapter_identity,
+                artifact_validated=state.adapter_artifact_validated,
+                adapter_loaded=state.adapter_loaded,
+            )
+            for key, state in artifacts.states.items()
+        },
+        profile_loaded=artifacts.profile_loaded,
+        artifact_validated=artifacts.artifact_validated,
+        model_loaded=artifacts.model_loaded,
+        adapter_loaded=artifacts.adapter_loaded,
+        ready=artifacts.ready,
+    )
 
 
 @router.post(
@@ -53,6 +88,7 @@ def model_info() -> ModelInfoResponse:
 )
 def chat(request: Request, payload: AssistantRequest) -> JSONResponse:
     request.app.state.profile_loader.get_profile(payload.assistant_key)
+    request.app.state.artifact_loader.get_state(payload.assistant_key)
     return _error_response(
         error_code="AI_MODEL_NOT_READY",
         message="AI model is not loaded.",
@@ -68,6 +104,7 @@ def chat(request: Request, payload: AssistantRequest) -> JSONResponse:
 )
 def tool_request(request: Request, payload: AssistantRequest) -> JSONResponse:
     request.app.state.profile_loader.get_profile(payload.assistant_key)
+    request.app.state.artifact_loader.get_state(payload.assistant_key)
     return _error_response(
         error_code="AI_SERVICE_NOT_READY",
         message="AI tool requests are not available.",
@@ -89,6 +126,7 @@ def tool_request(request: Request, payload: AssistantRequest) -> JSONResponse:
 )
 def suggestions(request: Request, payload: AssistantRequest) -> JSONResponse:
     request.app.state.profile_loader.get_profile(payload.assistant_key)
+    request.app.state.artifact_loader.get_state(payload.assistant_key)
     return _error_response(
         error_code="AI_SERVICE_NOT_READY",
         message="AI suggestions are not available.",
