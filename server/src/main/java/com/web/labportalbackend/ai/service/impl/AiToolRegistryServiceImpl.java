@@ -46,6 +46,7 @@ public class AiToolRegistryServiceImpl implements AiToolRegistry {
             entry(AiToolId.RESEARCH_REPORT_REVIEW_DRAFT, AiAssistantToolGroup.RESEARCH_DRAFT, AiCapability.RESEARCH_REPORT_REVIEW_DRAFT));
     private static final Map<AiToolId, AiCapability> EXPECTED_CAPABILITY_BY_ID = CANONICAL_CATALOG.stream()
             .collect(Collectors.toUnmodifiableMap(CatalogEntry::id, CatalogEntry::capability));
+    private final Map<String, AiToolDefinition> definitionsByExternalId;
     private final Map<AiToolId, AiToolDefinition> definitionsById;
     private final Map<AiCapability, AiToolDefinition> definitionsByCapability;
 
@@ -55,7 +56,14 @@ public class AiToolRegistryServiceImpl implements AiToolRegistry {
 
     AiToolRegistryServiceImpl(List<AiToolDefinition> definitions) {
         this.definitionsById = byId(definitions);
+        this.definitionsByExternalId = this.definitionsById.values().stream()
+                .collect(Collectors.toUnmodifiableMap(definition -> definition.id().value(), definition -> definition));
         this.definitionsByCapability = byCapability(definitions);
+    }
+
+    @Override
+    public AiToolDefinition get(String externalToolId) {
+        return externalToolId == null ? null : definitionsByExternalId.get(externalToolId);
     }
 
     @Override
