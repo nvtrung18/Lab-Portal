@@ -1,0 +1,53 @@
+{
+  "adapter": {
+    "lora": {
+      "alpha": 32,
+      "bias": "none",
+      "dropout": 0.05,
+      "rank": 16,
+      "targetModules": [
+        "q_proj",
+        "k_proj",
+        "v_proj",
+        "o_proj"
+      ]
+    },
+    "method": "QLORA",
+    "quantization": {
+      "bits": 4,
+      "computeDtype": "bfloat16",
+      "doubleQuantization": true,
+      "quantType": "nf4"
+    }
+  },
+  "assistantKey": "RESEARCH_ASSISTANT",
+  "baseModel": {
+    "identifier": "Qwen/Qwen3-4B-Instruct-2507",
+    "revision": "cdbee75f17c01a7cc42f958dc650907174af0554"
+  },
+  "dataset": {
+    "identity": "0000000000000000000000000000000000000000000000000000000000000000",
+    "manifestReference": "replace-with-approved-p7-t1-research-manifest"
+  },
+  "output": {
+    "checkpointDirectory": "checkpoints",
+    "exportDirectory": "adapter",
+    "metadataFilename": "training-metadata.json"
+  },
+  "pipelineVersion": "1.0.0",
+  "schemaVersion": "1.0.0",
+  "seed": 20260821,
+  "splits": {
+    "evaluation": "validation",
+    "training": "train"
+  },
+  "training": {
+    "batchSize": 1,
+    "checkpointFrequency": 100,
+    "epochs": null,
+    "gradientAccumulation": 16,
+    "learningRate": 0.0002,
+    "maxSteps": 1000,
+    "precision": "bfloat16"
+  }
+}

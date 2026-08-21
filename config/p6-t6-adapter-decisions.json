@@ -1,0 +1,11 @@
+{
+  "decisionRecordVersion": "P6-T6-1.0.0",
+  "decisionReference": "docs/architecture/p6-t6-adapter-strategy-decision.md",
+  "decisions": {
+    "ADMIN_ASSISTANT": "BASE_ONLY_APPROVED",
+    "LAB_ASSISTANT": "BASE_ONLY_APPROVED",
+    "RESEARCH_ASSISTANT": "ADAPTER_REQUIRED"
+  },
+  "schemaVersion": "1.0.0",
+  "status": "APPROVED"
+}
