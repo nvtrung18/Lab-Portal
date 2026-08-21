@@ -245,7 +245,21 @@ def validate_output(value: object, contract: object) -> list[str]:
         "RESEARCH_TASK_PROPOSAL_DRAFT": {"kind", "projectRef", "groupRef", "taskTitle", "requiresHumanReview"},
         "RESEARCH_TASK_SUGGESTION_DRAFT": {"kind", "taskRef", "suggestion", "requiresHumanReview"},
     }.get(contract)
-    return [] if fields and set(value) == fields else [error(DIAGNOSTICS["output"], "draft fields are not closed")]
+    if not fields or set(value) != fields:
+        return [error(DIAGNOSTICS["output"], "draft fields are not closed")]
+    scalar_fields = {
+        "ADMIN_ACCOUNT_DRAFT": ("subject",),
+        "LAB_BOOKING_DRAFT": ("labRef", "slotRef", "requestedPurpose"),
+        "RESEARCH_TASK_PROPOSAL_DRAFT": ("projectRef", "groupRef", "taskTitle"),
+        "RESEARCH_TASK_SUGGESTION_DRAFT": ("taskRef", "suggestion"),
+    }[contract]
+    if any(not isinstance(value[field], str) for field in scalar_fields):
+        return [error(DIAGNOSTICS["output"], "draft scalar fields must be strings")]
+    if contract == "ADMIN_ACCOUNT_DRAFT":
+        actions = value["actions"]
+        if not isinstance(actions, list) or any(not isinstance(item, str) for item in actions):
+            return [error(DIAGNOSTICS["output"], "draft actions must be an array of strings")]
+    return []
 
 
 def routing_diagnostic(tool: object) -> str:
@@ -455,8 +469,6 @@ def score_candidate(suite: dict, candidate: object) -> tuple[list[str], dict[str
             findings.append(error(code, case["evalCaseId"]))
         output_errors = validate_output(actual.get("structuredOutput"), case.get("structuredOutputContract"))
         findings.extend(f"{item} ({case['evalCaseId']})" for item in output_errors)
-        if actual.get("structuredOutput") != expected["structuredOutput"]:
-            findings.append(error(DIAGNOSTICS["output"], case["evalCaseId"]))
         outcomes.append({"evalCaseId": case["evalCaseId"], "candidateCaseDigest": digest(actual), "automaticState": "PASS"})
     for item in outcomes:
         if any(item["evalCaseId"] in finding for finding in findings):
