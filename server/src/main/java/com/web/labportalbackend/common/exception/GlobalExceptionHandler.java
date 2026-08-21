@@ -1,6 +1,8 @@
 package com.web.labportalbackend.common.exception;
 
 import com.web.labportalbackend.ai.client.AiGatewayException;
+import com.web.labportalbackend.ai.service.AiAssistantAvailabilityException;
+import com.web.labportalbackend.ai.service.AiAssistantAvailabilityFailure;
 import com.web.labportalbackend.common.dto.Response;
 import com.web.labportalbackend.research.exception.TaskProposalReviewConflictException;
 import lombok.extern.slf4j.Slf4j;
@@ -27,6 +29,23 @@ import java.util.List;
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(AiAssistantAvailabilityException.class)
+    public ResponseEntity<Response<Void>> handleAiAssistantAvailability(AiAssistantAvailabilityException ex) {
+        AiAssistantAvailabilityFailure failure = ex.failure();
+        HttpStatus status = switch (failure) {
+            case UNAUTHENTICATED -> HttpStatus.UNAUTHORIZED;
+            case QUOTA_EXCEEDED -> HttpStatus.TOO_MANY_REQUESTS;
+            default -> HttpStatus.FORBIDDEN;
+        };
+        String message = switch (failure) {
+            case UNAUTHENTICATED -> "Authentication is required";
+            case QUOTA_EXCEEDED -> "AI assistant quota exceeded";
+            default -> "AI assistant is not available for this request";
+        };
+        log.warn("AI assistant availability denied: failure={}", failure);
+        return ResponseEntity.status(status).body(Response.error(status.value(), message));
+    }
 
     @ExceptionHandler(AiGatewayException.class)
     public ResponseEntity<Response<Void>> handleAiGateway(AiGatewayException ex) {
