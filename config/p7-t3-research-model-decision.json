@@ -1,0 +1,152 @@
+{
+  "assistantKey": "RESEARCH_ASSISTANT",
+  "baseModel": {
+    "identifier": "Qwen/Qwen3-4B-Instruct-2507",
+    "revision": "cdbee75f17c01a7cc42f958dc650907174af0554"
+  },
+  "baselineEvidenceReference": null,
+  "candidateBuild": {
+    "artifactIdentity": null,
+    "metadata": null,
+    "reason": "BASELINE_EVIDENCE_INCOMPLETE",
+    "status": "CANDIDATE_BUILD_BLOCKED"
+  },
+  "decision": "ADAPTER_REQUIRED",
+  "decisionIdentity": "3b57340a2e97903f6ccafa48d06f04ad21f7d92ebde6548a163f779ff7fcb30e",
+  "evaluationSuite": {
+    "digest": "8b75d356890a8a5c2318305589301b6ee6d73fbd3665b9af2063f98e13ea7417",
+    "id": "P6-T4-EVALUATION-SUITES",
+    "version": "1.0.0"
+  },
+  "frozenEvidence": [
+    {
+      "reference": "evals/p6-t4-evaluation-suites.yaml",
+      "role": "evaluation-suite",
+      "sha256": "8b75d356890a8a5c2318305589301b6ee6d73fbd3665b9af2063f98e13ea7417"
+    },
+    {
+      "reference": "evals/p6-t4-evaluation-suite.lock.json",
+      "role": "evaluation-suite-lock",
+      "sha256": "193c3bb491afaf0e0d13f878a22105652edfaa3ee8592e0a3f2b138e7640e484"
+    },
+    {
+      "reference": "evals/p6-t4-evaluation-freeze.binding.yaml",
+      "role": "evaluation-governance-binding",
+      "sha256": "3618d497850a9077e3c4561a8b60533c5eb2c72dbfb7a6a57c309b79027bc460"
+    },
+    {
+      "reference": "config/p6-t5-benchmark.yaml",
+      "role": "benchmark-configuration",
+      "sha256": "3857b9dafef490aeb563a5e22edfe1d49f1731cf039dfa66ffbf3f78012b3508"
+    },
+    {
+      "reference": "config/p6-t6-adapter-decisions.json",
+      "role": "adapter-strategy-decision",
+      "sha256": "9b131e68b0660ef6b6f116405710302010c30c706f46b0138621a82f7d60f94d"
+    },
+    {
+      "reference": "docs/architecture/p6-t6-adapter-strategy-decision.md",
+      "role": "adapter-strategy-rationale",
+      "sha256": "65cf07f5c5ad070e7ee670bea7d8a63f183449b77a582857855b4fa17ab8f018"
+    },
+    {
+      "reference": "config/p7-t2-training-pipeline.json",
+      "role": "training-configuration",
+      "sha256": "0f03a425f9f6fd5d0e83a3a50880be0b738aa9d9edbea6aa29e567f40ad65bb7"
+    }
+  ],
+  "outcome": "ADAPTER_REQUIRED+CANDIDATE_BUILD_BLOCKED",
+  "overallBaselineResult": "UNRESOLVED",
+  "pipelineVersion": "1.0.0",
+  "promptProfile": {
+    "profile": "research",
+    "promptVersion": "research-v2"
+  },
+  "reason": "BASELINE_EVIDENCE_IS_INCOMPLETE; FAIL_CLOSED_WITHOUT_TRAINING",
+  "requiredCapabilityGates": [
+    {
+      "evidence": [],
+      "failedCaseIds": [],
+      "gate": "TASK_PROPOSAL_DRAFT",
+      "missingCaseIds": [
+        "E-FUNC-RESEARCH-004",
+        "E-HUMAN-003",
+        "E-ROUTE-002",
+        "E-STRUCT-003"
+      ],
+      "needsReviewCaseIds": [],
+      "reason": "CASE_RESULT_EVIDENCE_MISSING",
+      "requiredCaseIds": [
+        "E-FUNC-RESEARCH-004",
+        "E-HUMAN-003",
+        "E-ROUTE-002",
+        "E-STRUCT-003"
+      ],
+      "result": "UNRESOLVED"
+    },
+    {
+      "evidence": [],
+      "failedCaseIds": [],
+      "gate": "TASK_SUGGESTION",
+      "missingCaseIds": [
+        "E-FUNC-RESEARCH-005",
+        "E-HUMAN-004",
+        "E-STRUCT-004"
+      ],
+      "needsReviewCaseIds": [],
+      "reason": "CASE_RESULT_EVIDENCE_MISSING",
+      "requiredCaseIds": [
+        "E-FUNC-RESEARCH-005",
+        "E-HUMAN-004",
+        "E-STRUCT-004"
+      ],
+      "result": "UNRESOLVED"
+    },
+    {
+      "evidence": [],
+      "failedCaseIds": [],
+      "gate": "REPORT_REVIEW_DRAFT",
+      "missingCaseIds": [],
+      "needsReviewCaseIds": [],
+      "reason": "FROZEN_CASE_COVERAGE_MISSING",
+      "requiredCaseIds": [],
+      "result": "UNRESOLVED"
+    },
+    {
+      "evidence": [],
+      "failedCaseIds": [],
+      "gate": "SAFE_REFUSAL",
+      "missingCaseIds": [],
+      "needsReviewCaseIds": [],
+      "reason": "FROZEN_CASE_COVERAGE_MISSING",
+      "requiredCaseIds": [],
+      "result": "UNRESOLVED"
+    },
+    {
+      "evidence": [],
+      "failedCaseIds": [],
+      "gate": "STRUCTURED_OUTPUT",
+      "missingCaseIds": [
+        "E-FUNC-RESEARCH-004",
+        "E-FUNC-RESEARCH-005",
+        "E-STRUCT-003",
+        "E-STRUCT-004"
+      ],
+      "needsReviewCaseIds": [],
+      "reason": "CASE_RESULT_EVIDENCE_MISSING",
+      "requiredCaseIds": [
+        "E-FUNC-RESEARCH-004",
+        "E-FUNC-RESEARCH-005",
+        "E-STRUCT-003",
+        "E-STRUCT-004"
+      ],
+      "result": "UNRESOLVED"
+    }
+  ],
+  "schemaVersion": "1.0.0",
+  "sourceCommit": "493d01eed188093d4e9514a17c4d699fac9e7fe2",
+  "training": {
+    "invoked": false,
+    "status": "BLOCKED"
+  }
+}
