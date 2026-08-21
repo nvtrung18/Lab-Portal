@@ -114,7 +114,7 @@ public final class AiGatewayClientImpl implements AiGatewayClient {
             AiGatewayErrorResponse error = decodeError(readJson(body));
             boolean retryable = status.is5xxServerError() && error.retryable();
             return Mono.error(new AiGatewayException(new AiGatewayFailure(AiGatewayFailureCategory.REMOTE,
-                    status.value(), error.errorCode()), retryable));
+                    status.value(), error.errorCode(), error.requestId()), retryable));
         } catch (AiGatewayException exception) {
             return Mono.error(exception);
         } catch (RuntimeException exception) {
@@ -160,7 +160,7 @@ public final class AiGatewayClientImpl implements AiGatewayClient {
             throw protocolFailure(null);
         }
         return new AiGatewayErrorResponse(requiredText(root, "errorCode"), requiredText(root, "message"),
-                retryable.booleanValue());
+                retryable.booleanValue(), requiredText(root, "requestId"));
     }
 
     private String requiredText(JsonNode root, String field) {
