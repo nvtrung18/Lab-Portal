@@ -1,0 +1,81 @@
+{
+  "approval": {
+    "approvedAt": "2026-08-21T14:27:07Z",
+    "approvedBy": "RESEARCH_GOVERNANCE_DATA_GOVERNANCE_APPROVAL_AUTHORITY",
+    "decision": "APPROVED"
+  },
+  "artifactIdentity": "435b5f8576ace851aadebeedc6ada8e40b529789734d27fe0f094a4c565b9518",
+  "artifactType": "P7-T3-RESEARCH-REPORT-EVAL-GOVERNANCE-APPROVAL",
+  "candidate": {
+    "id": "qwen3_4b",
+    "model": {
+      "identifier": "Qwen/Qwen3-4B-Instruct-2507",
+      "revision": "cdbee75f17c01a7cc42f958dc650907174af0554"
+    },
+    "sourceRunId": "qwen3_4b-R01"
+  },
+  "categoryId": "CAT_RESEARCH_REPORT_METADATA",
+  "evaluationCase": {
+    "actionRisk": "DRAFT_ONLY",
+    "assistantKey": "RESEARCH_ASSISTANT",
+    "caseState": "GOVERNANCE_PENDING",
+    "evalCaseId": "E-FUNC-RESEARCH-006",
+    "sha256": "ca596bcbd2373575e3b4a593c8a6fbcb60de45f0a26bc53d26f5d667b93991e2",
+    "useCaseId": "RESEARCH_UC_006"
+  },
+  "fixture": {
+    "fixtureCaseId": "POS-RESEARCH-006",
+    "reference": "docs/architecture/ai/datasets/fixtures/p6-t3-cases.yaml#/cases/POS-RESEARCH-006",
+    "schemaRoot": "researchRecord",
+    "sha256": "51d482f9744ffdb4cc7eb5144c4911ed37fd03487ed4b2d033331011f5d79ff3",
+    "synthetic": true
+  },
+  "forbiddenPurposes": [
+    "BENCHMARK",
+    "DEVELOPMENT_TEST",
+    "EXTERNAL_SHARING",
+    "GENERAL_DEVELOPMENT_EXPORT",
+    "PRODUCTION_PROMPTING",
+    "RAG_INGESTION",
+    "TRAINING",
+    "UNRESTRICTED_BENCHMARK_REUSE"
+  ],
+  "permittedPurposes": [
+    "EVALUATION",
+    "HUMAN_EVALUATION"
+  ],
+  "requestIdentity": "961957f646e9a8ae0d5ee9a8846dfdb85c554101a072eef3e833600121449114",
+  "requestReference": "config/p7-t3-research-report-eval-governance-request.json",
+  "schema": {
+    "id": "https://lab-portal.local/schemas/p6-t3/domain-dataset-schemas/1.0.0",
+    "reference": "docs/architecture/ai/datasets/domain-dataset-schemas.schema.json",
+    "sha256": "2a89de660bc407a7102f6f25e257aaf66981aa6b402607fb68b1aedae8e76cf4"
+  },
+  "schemaVersion": "1.0.0",
+  "scope": {
+    "dataScope": "BOUND_SYNTHETIC_FIXTURE_ONLY",
+    "externalSharingAllowed": false,
+    "generalExportAllowed": false,
+    "productionPromptingAllowed": false,
+    "purposeMode": "EVALUATION_ONLY",
+    "ragIngestionAllowed": false,
+    "retentionClass": "APPROVAL_BOUND",
+    "sanitizationDisposition": "SYNTHETIC_GENERATION_ONLY",
+    "trainingAllowed": false,
+    "useDecision": "SYNTHETIC_ONLY"
+  },
+  "sourceCommit": "d64ce8bf8c3c0199538de7ccb23d366bdf8e539e",
+  "status": "APPROVED",
+  "suiteLineage": {
+    "base": {
+      "digest": "8b75d356890a8a5c2318305589301b6ee6d73fbd3665b9af2063f98e13ea7417",
+      "id": "P6-T4-EVALUATION-SUITES",
+      "version": "1.0.0"
+    },
+    "gap": {
+      "digest": "95ff79e0ec38c6d8ebfbcca05f0320b49819bf4f61e99c5b3b5c52cd559c83a5",
+      "id": "P7-T3-RESEARCH-GAP-EVALUATION",
+      "version": "1.1.0"
+    }
+  }
+}
