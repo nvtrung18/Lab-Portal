@@ -12,7 +12,7 @@
     "evals/evaluation-suite.schema.json": "230fa0afceeb1fd9f0149de6daf9a8ecc486bcd0e8835a304265c44c15eb3872",
     "evals/p6-t4-evaluation-suites.yaml": "8b75d356890a8a5c2318305589301b6ee6d73fbd3665b9af2063f98e13ea7417",
     "evals/human-eval-rubric.yaml": "720858ec86f297fb30b1aa673f2b5247274f7db23cdec161848598f18262fe64",
-    "evals/p6-t4-evaluation-freeze.binding.yaml": "3618d497850a9077e3c4561a8b60533c5eb2c72dbfb7a6a57c309b79027bc460",
+    "evals/p6-t4-evaluation-freeze.binding.yaml": "f1cc2a0d7ca1d38ace6bcc7840b52d0155eb9a3fa4beae0bd74d7bf15983be85",
     "evals/fixtures/p6-t4/valid-suite.yaml": "8b75d356890a8a5c2318305589301b6ee6d73fbd3665b9af2063f98e13ea7417",
     "evals/fixtures/p6-t4/valid-candidate.yaml": "945585046bdf6e7b195fe83759498015faef5af47035c423f6a4ace689421b4f",
     "evals/fixtures/p6-t4/valid-human-review.yaml": "6d7596f2e14b3f257111143898231e8410f1935382d2343ce614d37cce3b58e4",

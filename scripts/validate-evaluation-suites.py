@@ -583,9 +583,12 @@ def self_test(fixtures: Path) -> list[str]:
             failures.append(f"VALID-CANONICAL-SUITE: expected valid suite, got {fixture_errors}")
     baseline_errors = validate_suite(suite, schema, rubric, lock, binding, FROZEN_EVALUATION_BASELINE)
     if baseline_errors:
-        failures.append(f"BASELINE-PENDING-BINDING: expected baseline pass, got {baseline_errors}")
+        failures.append(f"BASELINE-BINDING: expected baseline pass, got {baseline_errors}")
     release_errors = validate_suite(suite, schema, rubric, lock, binding, DATASET_MODEL_WORK_RELEASE)
-    if not any(DIAGNOSTICS["governance"] in item for item in release_errors):
+    release_expected = None if binding.get("governanceState") == "GOVERNED_EVIDENCE_APPROVED" else DIAGNOSTICS["governance"]
+    if release_expected is None and release_errors:
+        failures.append(f"RELEASE-APPROVED-BINDING: expected governed-release pass, got {release_errors}")
+    elif release_expected is not None and not any(release_expected in item for item in release_errors):
         failures.append(f"RELEASE-PENDING-BINDING: expected governed-release failure, got {release_errors}")
     if (resolve_validation_context(None, False) != FROZEN_EVALUATION_BASELINE
             or resolve_validation_context(None, True) != DATASET_MODEL_WORK_RELEASE
@@ -610,7 +613,7 @@ def self_test(fixtures: Path) -> list[str]:
         lf_schema = mutated_schema.read_bytes().replace(b"\r\n", b"\n")
         crlf_schema = lf_schema.replace(b"\n", b"\r\n")
         mutated_schema.write_bytes(lf_schema)
-        for context, expected in ((FROZEN_EVALUATION_BASELINE, None), (DATASET_MODEL_WORK_RELEASE, DIAGNOSTICS["governance"])):
+        for context, expected in ((FROZEN_EVALUATION_BASELINE, None), (DATASET_MODEL_WORK_RELEASE, release_expected)):
             found = validate_suite(suite, schema, rubric, lock, binding, context, artifact_root)
             if expected is None and found:
                 failures.append(f"LOCK-LF-{context}: expected valid tuple, got {found}")
@@ -619,7 +622,7 @@ def self_test(fixtures: Path) -> list[str]:
         mutated_schema.write_bytes(crlf_schema)
         if file_digest(mutated_schema) != hashlib.sha256(lf_schema).hexdigest():
             failures.append("LOCK-LINE-ENDINGS: locked LF and CRLF forms produced different digests")
-        for context, expected in ((FROZEN_EVALUATION_BASELINE, None), (DATASET_MODEL_WORK_RELEASE, DIAGNOSTICS["governance"])):
+        for context, expected in ((FROZEN_EVALUATION_BASELINE, None), (DATASET_MODEL_WORK_RELEASE, release_expected)):
             found = validate_suite(suite, schema, rubric, lock, binding, context, artifact_root)
             if expected is None and found:
                 failures.append(f"LOCK-CRLF-{context}: expected valid tuple, got {found}")

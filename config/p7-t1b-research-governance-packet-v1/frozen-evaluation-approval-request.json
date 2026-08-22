@@ -1,0 +1,50 @@
+{
+  "approval": null,
+  "approvalAuthority": "RESEARCH_GOVERNANCE_DATA_GOVERNANCE_APPROVAL_AUTHORITY",
+  "approvedAt": null,
+  "approvedBy": null,
+  "artifactType": "P7-T1B-FROZEN-EVALUATION-GOVERNANCE-REQUEST",
+  "candidateManifest": {
+    "candidateManifestIdentity": "29155e0b968e43b0f53c42ddd57c47eb5fb7164385e2f54db3724decbf004615",
+    "reference": "config/p7-t1b-research-governance-packet-v1/frozen-evaluation-manifest.pending.json"
+  },
+  "currentBinding": {
+    "approvalReference": null,
+    "evaluationOnly": true,
+    "governanceState": "GOVERNED_EVIDENCE_PENDING",
+    "localFreezeStatus": "CONTENT_LOCKED",
+    "trainingProhibited": true
+  },
+  "requestId": "P7-T1B-FROZEN-EVALUATION-GOVERNANCE-REQUEST-001",
+  "requestIdentity": "9f9b38c038c7c2ed2afaadc5496e5049f904fd3f26eac4c2feaee7ed0d8e0dba",
+  "requestedScope": {
+    "externalSharingAllowed": false,
+    "forbiddenPurposes": [
+      "TRAINING"
+    ],
+    "permittedPurposes": [
+      "EVALUATION"
+    ],
+    "productionPromptingAllowed": false,
+    "purposeMode": "EVALUATION_ONLY",
+    "ragIngestionAllowed": false,
+    "requestedFreezeStatus": "FROZEN",
+    "requestedLifecycleStatus": "FROZEN",
+    "requestedRetentionClass": "FROZEN_EVALUATION",
+    "trainingAllowed": false
+  },
+  "requester": "P7_T1B_IMPLEMENTATION_AGENT",
+  "schemaVersion": "1.0.0",
+  "sourceCommit": "1aa4d2e158046d8fe08a94f36ceb7d811c54b716",
+  "status": "PENDING_USER_APPROVAL",
+  "suite": {
+    "bindingReference": "evals/p6-t4-evaluation-freeze.binding.yaml",
+    "canonicalInventoryDigest": "8bec7e6d2c726bb19ce14cc60eb82323e728852249159d70e8533180c28b69c2",
+    "lockReference": "evals/p6-t4-evaluation-suite.lock.json",
+    "lockVersion": "1.0.0",
+    "suiteDigest": "8b75d356890a8a5c2318305589301b6ee6d73fbd3665b9af2063f98e13ea7417",
+    "suiteId": "P6-T4-EVALUATION-SUITES",
+    "suiteReference": "evals/p6-t4-evaluation-suites.yaml",
+    "suiteVersion": "1.0.0"
+  }
+}

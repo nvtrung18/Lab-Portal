@@ -26,8 +26,8 @@
     "revision": "cdbee75f17c01a7cc42f958dc650907174af0554"
   },
   "dataset": {
-    "identity": "0000000000000000000000000000000000000000000000000000000000000000",
-    "manifestReference": "replace-with-approved-p7-t1-research-manifest"
+    "identity": "7bc78402046966f603f81c374ae68bafe13be2eb0b90de297d16461e38b970e4",
+    "manifestReference": "datasets/p7-research-synthetic-training-dataset-v1/manifest.json"
   },
   "output": {
     "checkpointDirectory": "checkpoints",

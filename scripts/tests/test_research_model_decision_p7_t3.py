@@ -1310,10 +1310,31 @@ class P7T3ResearchModelDecisionTests(unittest.TestCase):
 
         MODULE.validate_merged_evidence(merged, suite, gap_suite)
         MODULE.validate_research_decision_record(decision)
+        # P7-T3 keeps its historical snapshot while these governed references advance under P7-T1C/P7-T2.
+        transitioned_references = {
+            "evals/p6-t4-evaluation-suite.lock.json": (
+                "193c3bb491afaf0e0d13f878a22105652edfaa3ee8592e0a3f2b138e7640e484",
+                "7bc4b4d6da72349646d5675d32d5845500e06456836654231eb7b7562b172610",
+            ),
+            "evals/p6-t4-evaluation-freeze.binding.yaml": (
+                "3618d497850a9077e3c4561a8b60533c5eb2c72dbfb7a6a57c309b79027bc460",
+                "f1cc2a0d7ca1d38ace6bcc7840b52d0155eb9a3fa4beae0bd74d7bf15983be85",
+            ),
+            "config/p7-t2-training-pipeline.json": (
+                "0f03a425f9f6fd5d0e83a3a50880be0b738aa9d9edbea6aa29e567f40ad65bb7",
+                "d27346f0d9b6a01f3f3aa7056447956875e52bf67f5a6cc6996d392b8ef1717c",
+            ),
+        }
         for artifact in decision["frozenEvidence"]:
             artifact_path = ROOT / artifact["reference"]
             self.assertTrue(artifact_path.is_file())
-            self.assertEqual(artifact["sha256"], MODULE.file_sha256(artifact_path))
+            transition = transitioned_references.get(artifact["reference"])
+            if transition is None:
+                self.assertEqual(artifact["sha256"], MODULE.file_sha256(artifact_path))
+                continue
+            historical_sha256, current_sha256 = transition
+            self.assertEqual(historical_sha256, artifact["sha256"])
+            self.assertEqual(current_sha256, MODULE.file_sha256(artifact_path))
         self.assertEqual("FAIL", decision["overallBaselineResult"])
         self.assertEqual("BASELINE_EVIDENCE_COMPLETE", decision["baselineEvidenceStatus"])
         self.assertEqual("ADAPTER_REQUIRED+CANDIDATE_BUILD_BLOCKED", decision["outcome"])
