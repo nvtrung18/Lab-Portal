@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
-"""Run deterministic P7-T2 adapter training infrastructure.
+"""Run the governed P7-T2 adapter pipeline with real or explicit smoke backends.
 
-P7-T2 deliberately provides only an offline smoke backend. It validates the
-same configuration, approved P7-T1 dataset manifest, decision gate,
-checkpoint, resume, and export contracts that a later real backend must use,
-without loading or downloading model weights.
+The default ADAPTER_REQUIRED path delegates to the pinned real QLoRA backend.
+The offline smoke backend remains opt-in and its artifacts remain ineligible
+as model-quality evidence.
 """
 from __future__ import annotations
 
 import argparse
 import hashlib
+import importlib.util
 import json
 import os
 from pathlib import Path
@@ -36,6 +36,8 @@ SUPPORTED_ADAPTER_METHODS = {"LORA", "QLORA"}
 SUPPORTED_PRECISIONS = {"float32", "float16", "bfloat16"}
 SHA256_PATTERN = re.compile(r"^[0-9a-f]{64}$")
 WINDOWS_ABSOLUTE_PATTERN = re.compile(r"^[A-Za-z]:[\\/]")
+ROOT = Path(__file__).resolve().parents[1]
+REAL_BACKEND_PATH = ROOT / "scripts" / "p7-t2-real-training.py"
 
 
 class TrainingPipelineError(ValueError):
@@ -45,6 +47,18 @@ class TrainingPipelineError(ValueError):
         values = [diagnostics] if isinstance(diagnostics, str) else diagnostics
         self.diagnostics = sorted(set(values))
         super().__init__("; ".join(self.diagnostics))
+
+
+def _load_real_backend():
+    specification = importlib.util.spec_from_file_location("p7_t2_real_training_backend", REAL_BACKEND_PATH)
+    if specification is None or specification.loader is None:
+        raise TrainingPipelineError("P7-T2 real training backend is unavailable")
+    module = importlib.util.module_from_spec(specification)
+    try:
+        specification.loader.exec_module(module)
+    except (ImportError, OSError) as error:
+        raise TrainingPipelineError(f"P7-T2 real training backend cannot load: {error}") from error
+    return module
 
 
 def canonical_bytes(value: object) -> bytes:
@@ -769,6 +783,7 @@ def run_pipeline(
     output_directory: Path,
     *,
     smoke: bool,
+    model_path: Path | None = None,
     resume_from: Path | None = None,
     optional_seed_modules: dict[str, object] | None = None,
     source_commit: str | None = None,
@@ -790,15 +805,40 @@ def run_pipeline(
             run_identity,
             resolved_source_commit,
         )
-    if not smoke:
-        raise TrainingPipelineError("P7-T2 has no real training backend; --smoke is required")
-
     validate_dataset_manifest(
         dataset_manifest_path,
         config["dataset"]["identity"],
         config["assistantKey"],
         {config["splits"]["training"], config["splits"]["evaluation"]},
     )
+    if not smoke:
+        if model_path is None:
+            raise TrainingPipelineError("P7-T2 real training requires --model-path")
+        backend = _load_real_backend()
+
+        def real_writer(temporary_directory: Path) -> dict[str, Any]:
+            try:
+                metadata = backend.run_real_training(
+                    config=config,
+                    decision=decision,
+                    decision_reference=decision_manifest["decisionReference"],
+                    dataset_manifest_path=dataset_manifest_path,
+                    output_directory=temporary_directory,
+                    model_path=model_path,
+                    resume_from=resume_from,
+                    source_commit=resolved_source_commit,
+                )
+                backend.validate_real_training_output(
+                    temporary_directory,
+                    config,
+                    dataset_manifest_path,
+                )
+                return metadata
+            except (OSError, ValueError) as error:
+                raise TrainingPipelineError(f"P7-T2 real training failed: {error}") from error
+
+        return _write_output_atomically(output_directory, real_writer)
+
     seed_state = seed_everything(config["seed"], optional_seed_modules)
     backend = SmokeTrainingBackend()
     total_steps = _resolved_smoke_steps(config)
@@ -878,6 +918,8 @@ def main() -> int:
     parser.add_argument("--dataset-manifest", required=True, type=Path, help="approved P7-T1 manifest.json")
     parser.add_argument("--output", required=True, type=Path, help="new run artifact directory")
     parser.add_argument("--resume-from", type=Path, help="explicit deterministic checkpoint directory")
+    parser.add_argument("--model-path", type=Path, help="exact locally provisioned immutable base-model snapshot")
+    parser.add_argument("--source-commit", help="full source commit for portable/extracted execution")
     parser.add_argument("--smoke", action="store_true", help="use offline deterministic smoke backend")
     args = parser.parse_args()
     try:
@@ -887,7 +929,9 @@ def main() -> int:
             args.dataset_manifest,
             args.output,
             smoke=args.smoke,
+            model_path=args.model_path,
             resume_from=args.resume_from,
+            source_commit=args.source_commit,
         )
         print(json.dumps(result, ensure_ascii=False, sort_keys=True, separators=(",", ":")))
         return 0
