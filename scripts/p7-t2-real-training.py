@@ -43,6 +43,7 @@ EXPECTED_RUNTIME_VERSIONS = {
     "transformers": "4.51.3",
 }
 SUPPORTED_PYTHON_MINORS = {("3", "12"), ("3", "13")}
+DETERMINISTIC_CUBLAS_WORKSPACE_CONFIG = ":4096:8"
 
 
 def canonical_bytes(value: object) -> bytes:
@@ -309,6 +310,26 @@ def _training_dtype(torch: Any, config: dict[str, Any]) -> Any:
     return mapping[training_precision]
 
 
+def _configure_deterministic_runtime() -> None:
+    configured = os.environ.get("CUBLAS_WORKSPACE_CONFIG")
+    if configured not in {None, DETERMINISTIC_CUBLAS_WORKSPACE_CONFIG}:
+        raise ValueError(
+            "real runtime requires CUBLAS_WORKSPACE_CONFIG="
+            f"{DETERMINISTIC_CUBLAS_WORKSPACE_CONFIG}"
+        )
+    os.environ["CUBLAS_WORKSPACE_CONFIG"] = DETERMINISTIC_CUBLAS_WORKSPACE_CONFIG
+
+
+def _model_loading_options(dtype: Any, quantization_config: Any) -> dict[str, Any]:
+    return {
+        "local_files_only": True,
+        "device_map": {"": 0},
+        "torch_dtype": dtype,
+        "quantization_config": quantization_config,
+        "attn_implementation": "eager",
+    }
+
+
 def _runtime_modules(precision: str = "bfloat16") -> dict[str, Any]:
     try:
         import accelerate
@@ -532,6 +553,7 @@ def run_real_training(
         raise ValueError("real training requires ADAPTER_REQUIRED decision")
     if not COMMIT_PATTERN.fullmatch(source_commit):
         raise ValueError("real training requires a full source commit")
+    _configure_deterministic_runtime()
     validate_model_snapshot(model_path, config)
     inputs = load_training_inputs(dataset_manifest_path, config)
     if resume_from is not None:
@@ -549,7 +571,7 @@ def run_real_training(
     numpy.random.seed(seed)
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
-    torch.use_deterministic_algorithms(True, warn_only=True)
+    torch.use_deterministic_algorithms(True, warn_only=False)
 
     quantization = config["adapter"]["quantization"]
     dtype = _training_dtype(torch, config)
@@ -564,10 +586,7 @@ def run_real_training(
         tokenizer.pad_token = tokenizer.eos_token
     model = transformers.AutoModelForCausalLM.from_pretrained(
         model_path,
-        local_files_only=True,
-        device_map={"": 0},
-        torch_dtype=dtype,
-        quantization_config=quantization_config,
+        **_model_loading_options(dtype, quantization_config),
     )
     model.config.use_cache = False
     model = peft.prepare_model_for_kbit_training(model, use_gradient_checkpointing=True)

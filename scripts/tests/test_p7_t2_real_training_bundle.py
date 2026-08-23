@@ -105,6 +105,8 @@ class P7T2RealTrainingBundleTests(unittest.TestCase):
             ).read_text(encoding="utf-8")
             self.assertIn("Tesla T4", readme)
             self.assertIn("Python 3.13.15", readme)
+            self.assertIn("/content/p7-t2-real-training-t4", readme)
+            self.assertIn("CUBLAS_WORKSPACE_CONFIG=:4096:8", readme)
             self.assertIn("CPython 3.13.15", requirements)
             self.assertIn(
                 "torch==2.7.1+cu118 --hash=sha256:"

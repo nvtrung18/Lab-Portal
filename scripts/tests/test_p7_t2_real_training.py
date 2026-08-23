@@ -4,6 +4,7 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -197,6 +198,23 @@ class P7T2RealTrainingTests(unittest.TestCase):
 
         with self.assertRaisesRegex(ValueError, "CPython 3.12 or 3.13"):
             MODULE._validate_python_runtime("3.11.13")
+
+    def test_real_training_enforces_cublas_workspace_and_eager_attention(self):
+        with patch.dict(MODULE.os.environ, {}, clear=False):
+            MODULE.os.environ.pop("CUBLAS_WORKSPACE_CONFIG", None)
+            MODULE._configure_deterministic_runtime()
+            self.assertEqual(":4096:8", MODULE.os.environ["CUBLAS_WORKSPACE_CONFIG"])
+
+        with patch.dict(
+            MODULE.os.environ,
+            {"CUBLAS_WORKSPACE_CONFIG": ":invalid"},
+            clear=False,
+        ):
+            with self.assertRaisesRegex(ValueError, "CUBLAS_WORKSPACE_CONFIG"):
+                MODULE._configure_deterministic_runtime()
+
+        options = MODULE._model_loading_options(object(), object())
+        self.assertEqual("eager", options["attn_implementation"])
 
 
 if __name__ == "__main__":
