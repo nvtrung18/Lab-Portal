@@ -191,6 +191,13 @@ class P7T2RealTrainingTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "bfloat16"):
             MODULE._validate_cuda_runtime(Torch(), "bfloat16")
 
+    def test_real_runtime_accepts_colab_python_3_13_and_existing_python_3_12(self):
+        MODULE._validate_python_runtime("3.13.15")
+        MODULE._validate_python_runtime("3.12.13")
+
+        with self.assertRaisesRegex(ValueError, "CPython 3.12 or 3.13"):
+            MODULE._validate_python_runtime("3.11.13")
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -5,9 +5,8 @@ QLoRA parameters, seed, split separation, and 1000 configured steps. It changes
 only quantization compute dtype and Trainer precision from bfloat16 to float16
 because Tesla T4 does not provide native bfloat16 execution.
 
-Use a private Google Colab notebook. Select a hosted `GPU T4` runtime and a
-Colab runtime version with CPython 3.12 before running these cells. Never add
-`--smoke`.
+Use a private Google Colab notebook. Select the latest hosted `GPU T4` runtime
+with CPython 3.13.15 before running these cells. Never add `--smoke`.
 
 ## Cell 1 - inspect the accelerator
 
@@ -16,7 +15,7 @@ import shutil
 import subprocess
 import sys
 
-assert sys.version_info[:2] == (3, 12), sys.version
+assert sys.version_info[:3] == (3, 13, 15), sys.version
 assert shutil.which("nvidia-smi") is not None, "NVIDIA GPU runtime required"
 subprocess.run(["nvidia-smi"], check=True)
 ```
@@ -47,11 +46,11 @@ with zipfile.ZipFile(bundle_zip) as archive:
 Verify the uploaded ZIP SHA-256 against the out-of-band value printed by the
 repository bundle builder before continuing.
 
-## Cell 3 - install the pinned CPython 3.12 / CUDA 11.8 runtime
+## Cell 3 - install the pinned CPython 3.13.15 / CUDA 11.8 runtime
 
 ```python
 import sys
-assert sys.version_info[:2] == (3, 12), sys.version
+assert sys.version_info[:3] == (3, 13, 15), sys.version
 ```
 
 ```python

@@ -99,7 +99,18 @@ class P7T2RealTrainingBundleTests(unittest.TestCase):
             self.assertEqual("float16", config["adapter"]["quantization"]["computeDtype"])
             self.assertEqual(BUILDER.DATASET_IDENTITY, config["dataset"]["identity"])
             self.assertEqual(BUILDER.BASE_MODEL, config["baseModel"])
-            self.assertIn("Tesla T4", (output / "README.md").read_text(encoding="utf-8"))
+            readme = (output / "README.md").read_text(encoding="utf-8")
+            requirements = (
+                output / "requirements" / "p7-t2-real-training-requirements.txt"
+            ).read_text(encoding="utf-8")
+            self.assertIn("Tesla T4", readme)
+            self.assertIn("Python 3.13.15", readme)
+            self.assertIn("CPython 3.13.15", requirements)
+            self.assertIn(
+                "torch==2.7.1+cu118 --hash=sha256:"
+                "a3f02b2795165eaf6dfe18c963519049a45a9c588488795cebc5015dac77ab46",
+                requirements,
+            )
             self.assertTrue(archive.is_file())
             self.assertEqual(
                 manifest["trainingConfigIdentity"],

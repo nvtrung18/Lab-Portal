@@ -103,6 +103,9 @@ PAYLOAD_MAPPINGS = (
 T4_SOURCE_OVERRIDES = {
     "README.md": "docs/architecture/ai/p7-t2-real-training-t4-runbook.txt",
     "config/p7-t2-training-pipeline.json": "config/p7-t2-training-pipeline-t4.json",
+    "requirements/p7-t2-real-training-requirements.txt": (
+        "requirements/p7-t2-real-training-t4-cp313-requirements.txt"
+    ),
 }
 
 

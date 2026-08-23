@@ -42,6 +42,7 @@ EXPECTED_RUNTIME_VERSIONS = {
     "torch": "2.7.1+cu118",
     "transformers": "4.51.3",
 }
+SUPPORTED_PYTHON_MINORS = {("3", "12"), ("3", "13")}
 
 
 def canonical_bytes(value: object) -> bytes:
@@ -270,6 +271,11 @@ def _finite_number(value: object) -> bool:
     return isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value)
 
 
+def _validate_python_runtime(version: str) -> None:
+    if tuple(version.split(".")[:2]) not in SUPPORTED_PYTHON_MINORS:
+        raise ValueError("real runtime requires CPython 3.12 or 3.13")
+
+
 def _validate_cuda_runtime(torch: Any, precision: str) -> dict[str, Any]:
     if precision not in {"float16", "bfloat16", "float32"}:
         raise ValueError("real runtime requires a supported training precision")
@@ -324,8 +330,7 @@ def _runtime_modules(precision: str = "bfloat16") -> dict[str, Any]:
     observed = {name: importlib.metadata.version(name) for name in EXPECTED_RUNTIME_VERSIONS}
     if observed != EXPECTED_RUNTIME_VERSIONS:
         raise ValueError(f"real runtime version mismatch: expected={EXPECTED_RUNTIME_VERSIONS} observed={observed}")
-    if platform.python_version_tuple()[:2] != ("3", "12"):
-        raise ValueError("real runtime requires CPython 3.12")
+    _validate_python_runtime(platform.python_version())
     gpu = _validate_cuda_runtime(torch, precision)
     modules["versions"] = observed
     modules["gpu"] = gpu
