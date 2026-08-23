@@ -481,6 +481,13 @@ class P7T2TrainingPipelineTests(unittest.TestCase):
         self.assertEqual("BASE_ONLY_APPROVED", decision_manifest["decisions"]["LAB_ASSISTANT"])
         self.assertEqual("BASE_ONLY_APPROVED", decision_manifest["decisions"]["ADMIN_ASSISTANT"])
 
+    def test_qlora_compute_dtype_must_match_training_precision(self):
+        config = self.config("1" * 64)
+        config["training"]["precision"] = "float16"
+
+        with self.assertRaisesRegex(MODULE.TrainingPipelineError, "computeDtype.*precision"):
+            MODULE.validate_training_config(config)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -18,6 +18,7 @@ import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
 BUNDLE_NAME = "p7-t2-real-training"
+T4_BUNDLE_NAME = "p7-t2-real-training-t4"
 MANIFEST_NAME = "bundle-manifest.json"
 DATASET_IDENTITY = "7bc78402046966f603f81c374ae68bafe13be2eb0b90de297d16461e38b970e4"
 BASE_MODEL = {
@@ -99,6 +100,28 @@ PAYLOAD_MAPPINGS = (
         "scripts/validate-p7-t2-real-training-bundle.py",
     ),
 )
+T4_SOURCE_OVERRIDES = {
+    "README.md": "docs/architecture/ai/p7-t2-real-training-t4-runbook.txt",
+    "config/p7-t2-training-pipeline.json": "config/p7-t2-training-pipeline-t4.json",
+}
+
+
+def _bundle_name(profile: str) -> str:
+    if profile == "bf16":
+        return BUNDLE_NAME
+    if profile == "t4":
+        return T4_BUNDLE_NAME
+    raise ValueError("profile must be bf16 or t4")
+
+
+def _payload_mappings(profile: str) -> tuple[tuple[str, str], ...]:
+    _bundle_name(profile)
+    if profile == "bf16":
+        return PAYLOAD_MAPPINGS
+    return tuple(
+        (T4_SOURCE_OVERRIDES.get(destination, source), destination)
+        for source, destination in PAYLOAD_MAPPINGS
+    )
 
 
 def canonical_bytes(value: object) -> bytes:
@@ -216,24 +239,26 @@ def build_bundle(
     zip_path: Path,
     source_commit: str,
     replace: bool = False,
+    profile: str = "bf16",
 ) -> dict[str, Any]:
     source_root = source_root.resolve()
     output_dir = output_dir.resolve()
     zip_path = zip_path.resolve()
+    bundle_name = _bundle_name(profile)
     if not re.fullmatch(r"[0-9a-f]{40}", source_commit):
         raise ValueError("source_commit must be a full lowercase Git commit")
     if (output_dir.exists() or zip_path.exists()) and not replace:
         raise FileExistsError("bundle output is append-only; directory and ZIP must not exist")
     if output_dir.parent != zip_path.parent:
         raise ValueError("bundle directory and ZIP must share a parent")
-    if replace and (output_dir.name != BUNDLE_NAME or zip_path.name != f"{BUNDLE_NAME}.zip"):
+    if replace and (output_dir.name != bundle_name or zip_path.name != f"{bundle_name}.zip"):
         raise ValueError("replacement is restricted to the named P7-T2 bundle outputs")
     output_dir.parent.mkdir(parents=True, exist_ok=True)
-    with tempfile.TemporaryDirectory(prefix=f".{BUNDLE_NAME}.", dir=output_dir.parent) as temporary:
-        staging = Path(temporary) / BUNDLE_NAME
-        staged_zip = Path(temporary) / f"{BUNDLE_NAME}.zip"
+    with tempfile.TemporaryDirectory(prefix=f".{bundle_name}.", dir=output_dir.parent) as temporary:
+        staging = Path(temporary) / bundle_name
+        staged_zip = Path(temporary) / f"{bundle_name}.zip"
         staging.mkdir()
-        for source_name, destination_name in PAYLOAD_MAPPINGS:
+        for source_name, destination_name in _payload_mappings(profile):
             source = source_root / source_name
             if not source.is_file():
                 raise FileNotFoundError(f"required bundle source missing: {source_name}")
@@ -260,27 +285,32 @@ def build_bundle(
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--source-root", type=Path, default=ROOT)
-    parser.add_argument("--output-dir", type=Path, default=ROOT / "dist" / BUNDLE_NAME)
-    parser.add_argument("--zip", dest="zip_path", type=Path, default=ROOT / "dist" / f"{BUNDLE_NAME}.zip")
+    parser.add_argument("--profile", choices=("bf16", "t4"), default="bf16")
+    parser.add_argument("--output-dir", type=Path)
+    parser.add_argument("--zip", dest="zip_path", type=Path)
     parser.add_argument("--source-commit")
     parser.add_argument("--replace", action="store_true")
     args = parser.parse_args()
     try:
+        bundle_name = _bundle_name(args.profile)
+        output_dir = args.output_dir or ROOT / "dist" / bundle_name
+        zip_path = args.zip_path or ROOT / "dist" / f"{bundle_name}.zip"
         source_commit = args.source_commit or _source_commit(args.source_root)
         manifest = build_bundle(
             source_root=args.source_root,
-            output_dir=args.output_dir,
-            zip_path=args.zip_path,
+            output_dir=output_dir,
+            zip_path=zip_path,
             source_commit=source_commit,
             replace=args.replace,
+            profile=args.profile,
         )
         print(
             json.dumps(
                 {
                     "status": "READY_FOR_EXTERNAL_REAL_TRAINING",
-                    "bundleDirectory": str(args.output_dir),
-                    "zip": str(args.zip_path),
-                    "zipSha256": sha256_bytes(args.zip_path.read_bytes()),
+                    "bundleDirectory": str(output_dir),
+                    "zip": str(zip_path),
+                    "zipSha256": sha256_bytes(zip_path.read_bytes()),
                     "bundleIdentity": manifest["bundleIdentity"],
                     "trainingConfigIdentity": manifest["trainingConfigIdentity"],
                     "fileCount": manifest["fileCount"],

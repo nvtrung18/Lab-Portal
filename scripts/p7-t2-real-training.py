@@ -270,7 +270,40 @@ def _finite_number(value: object) -> bool:
     return isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value)
 
 
-def _runtime_modules() -> dict[str, Any]:
+def _validate_cuda_runtime(torch: Any, precision: str) -> dict[str, Any]:
+    if precision not in {"float16", "bfloat16", "float32"}:
+        raise ValueError("real runtime requires a supported training precision")
+    if not torch.cuda.is_available() or torch.cuda.device_count() < 1:
+        raise ValueError("real runtime requires an NVIDIA CUDA GPU")
+    if precision == "bfloat16" and not torch.cuda.is_bf16_supported():
+        raise ValueError("real runtime requires native bfloat16 CUDA support")
+    properties = torch.cuda.get_device_properties(0)
+    if properties.total_memory < MINIMUM_CUDA_MEMORY_BYTES:
+        raise ValueError("real runtime requires at least 12 GiB CUDA memory")
+    return {
+        "name": properties.name,
+        "totalMemoryBytes": properties.total_memory,
+        "cudaRuntime": str(torch.version.cuda),
+        "device": "cuda:0",
+    }
+
+
+def _training_dtype(torch: Any, config: dict[str, Any]) -> Any:
+    training_precision = config.get("training", {}).get("precision")
+    compute_dtype = config.get("adapter", {}).get("quantization", {}).get("computeDtype")
+    if training_precision != compute_dtype:
+        raise ValueError("real training: quantization compute dtype must match training precision")
+    mapping = {
+        "float16": torch.float16,
+        "bfloat16": torch.bfloat16,
+        "float32": torch.float32,
+    }
+    if training_precision not in mapping:
+        raise ValueError("real training: supported compute dtype required")
+    return mapping[training_precision]
+
+
+def _runtime_modules(precision: str = "bfloat16") -> dict[str, Any]:
     try:
         import accelerate
         import bitsandbytes
@@ -293,20 +326,9 @@ def _runtime_modules() -> dict[str, Any]:
         raise ValueError(f"real runtime version mismatch: expected={EXPECTED_RUNTIME_VERSIONS} observed={observed}")
     if platform.python_version_tuple()[:2] != ("3", "12"):
         raise ValueError("real runtime requires CPython 3.12")
-    if not torch.cuda.is_available() or torch.cuda.device_count() < 1:
-        raise ValueError("real runtime requires an NVIDIA CUDA GPU")
-    if not torch.cuda.is_bf16_supported():
-        raise ValueError("real runtime requires native bfloat16 CUDA support")
-    properties = torch.cuda.get_device_properties(0)
-    if properties.total_memory < MINIMUM_CUDA_MEMORY_BYTES:
-        raise ValueError("real runtime requires at least 12 GiB CUDA memory")
+    gpu = _validate_cuda_runtime(torch, precision)
     modules["versions"] = observed
-    modules["gpu"] = {
-        "name": properties.name,
-        "totalMemoryBytes": properties.total_memory,
-        "cudaRuntime": str(torch.version.cuda),
-        "device": "cuda:0",
-    }
+    modules["gpu"] = gpu
     return modules
 
 
@@ -509,7 +531,7 @@ def run_real_training(
     inputs = load_training_inputs(dataset_manifest_path, config)
     if resume_from is not None:
         validate_resume_checkpoint(resume_from, config)
-    runtime = _runtime_modules()
+    runtime = _runtime_modules(config["training"]["precision"])
     torch = runtime["torch"]
     transformers = runtime["transformers"]
     peft = runtime["peft"]
@@ -525,7 +547,7 @@ def run_real_training(
     torch.use_deterministic_algorithms(True, warn_only=True)
 
     quantization = config["adapter"]["quantization"]
-    dtype = torch.bfloat16
+    dtype = _training_dtype(torch, config)
     quantization_config = transformers.BitsAndBytesConfig(
         load_in_4bit=True,
         bnb_4bit_quant_type=quantization["quantType"],

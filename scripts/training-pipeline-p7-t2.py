@@ -243,6 +243,19 @@ def validate_training_config(config: object) -> None:
         if training.get("precision") not in SUPPORTED_PRECISIONS:
             diagnostics.append("config/training/precision: supported precision required")
 
+    if (
+        isinstance(adapter, dict)
+        and adapter.get("method") == "QLORA"
+        and isinstance(adapter.get("quantization"), dict)
+        and isinstance(training, dict)
+        and adapter["quantization"].get("computeDtype") in SUPPORTED_PRECISIONS
+        and training.get("precision") in SUPPORTED_PRECISIONS
+        and adapter["quantization"]["computeDtype"] != training["precision"]
+    ):
+        diagnostics.append(
+            "config/adapter/quantization/computeDtype: must match config/training/precision"
+        )
+
     output = config.get("output")
     output_fields = {"checkpointDirectory", "exportDirectory", "metadataFilename"}
     if _require_exact_fields(output, output_fields, "config/output", diagnostics):

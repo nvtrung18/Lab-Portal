@@ -79,6 +79,33 @@ class P7T2RealTrainingBundleTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "checksum"):
                 VALIDATOR.validate_bundle(bundle)
 
+    def test_t4_bundle_is_additive_and_uses_the_fp16_profile(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            output = Path(temporary_directory) / BUILDER.T4_BUNDLE_NAME
+            archive = output.parent / f"{BUILDER.T4_BUNDLE_NAME}.zip"
+            manifest = BUILDER.build_bundle(
+                source_root=ROOT,
+                output_dir=output,
+                zip_path=archive,
+                source_commit="f9de3c1f3838ec2815276fabce3460b0824e0909",
+                profile="t4",
+            )
+
+            VALIDATOR.validate_bundle(output)
+            config = json.loads(
+                (output / "config" / "p7-t2-training-pipeline.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual("float16", config["training"]["precision"])
+            self.assertEqual("float16", config["adapter"]["quantization"]["computeDtype"])
+            self.assertEqual(BUILDER.DATASET_IDENTITY, config["dataset"]["identity"])
+            self.assertEqual(BUILDER.BASE_MODEL, config["baseModel"])
+            self.assertIn("Tesla T4", (output / "README.md").read_text(encoding="utf-8"))
+            self.assertTrue(archive.is_file())
+            self.assertEqual(
+                manifest["trainingConfigIdentity"],
+                VALIDATOR.validate_bundle(output)["trainingConfigIdentity"],
+            )
+
 
 if __name__ == "__main__":
     unittest.main()

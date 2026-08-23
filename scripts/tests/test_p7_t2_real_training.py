@@ -1,4 +1,5 @@
 import importlib.util
+import copy
 import json
 import tempfile
 import unittest
@@ -19,6 +20,11 @@ class P7T2RealTrainingTests(unittest.TestCase):
     def config(self):
         return json.loads(
             (ROOT / "config" / "p7-t2-training-pipeline.json").read_text(encoding="utf-8")
+        )
+
+    def t4_config(self):
+        return json.loads(
+            (ROOT / "config" / "p7-t2-training-pipeline-t4.json").read_text(encoding="utf-8")
         )
 
     def record(self):
@@ -142,6 +148,48 @@ class P7T2RealTrainingTests(unittest.TestCase):
             state.write_bytes(b"tampered")
             with self.assertRaisesRegex(ValueError, "checksum|inventory"):
                 MODULE.validate_resume_checkpoint(checkpoint, config)
+
+    def test_t4_profile_changes_only_compute_precision(self):
+        expected = copy.deepcopy(self.config())
+        expected["adapter"]["quantization"]["computeDtype"] = "float16"
+        expected["training"]["precision"] = "float16"
+
+        self.assertEqual(expected, self.t4_config())
+
+    def test_t4_cuda_runtime_accepts_float16_and_rejects_bfloat16(self):
+        class Properties:
+            name = "Tesla T4"
+            total_memory = 16 * 1024**3
+
+        class Cuda:
+            @staticmethod
+            def is_available():
+                return True
+
+            @staticmethod
+            def device_count():
+                return 1
+
+            @staticmethod
+            def is_bf16_supported():
+                return False
+
+            @staticmethod
+            def get_device_properties(_index):
+                return Properties()
+
+        class Torch:
+            cuda = Cuda()
+            version = type("Version", (), {"cuda": "11.8"})()
+            float16 = object()
+            bfloat16 = object()
+            float32 = object()
+
+        gpu = MODULE._validate_cuda_runtime(Torch(), "float16")
+        self.assertEqual("Tesla T4", gpu["name"])
+        self.assertIs(Torch.float16, MODULE._training_dtype(Torch(), self.t4_config()))
+        with self.assertRaisesRegex(ValueError, "bfloat16"):
+            MODULE._validate_cuda_runtime(Torch(), "bfloat16")
 
 
 if __name__ == "__main__":
