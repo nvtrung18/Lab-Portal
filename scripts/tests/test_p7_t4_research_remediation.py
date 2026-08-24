@@ -47,16 +47,24 @@ class P7T4ResearchRemediationTests(unittest.TestCase):
         for reference in (
             "datasets/p7-research-synthetic-training-dataset-v1",
             "datasets/p7-research-synthetic-training-dataset-v2",
+            "datasets/p7-research-synthetic-training-dataset-v3",
             "datasets/p7-t4-research-remediation-source-v2",
+            "datasets/p7-t4-research-remediation-source-v3",
             "config/p7-t1c-research-remediation-governance-v2",
+            "config/p7-t1c-research-remediation-governance-v3",
             "config/p7-t4-research-remediation-governance-v2",
+            "config/p7-t4-research-remediation-governance-v3",
             "evidence/p7-t2-real-training",
             "evidence/p7-t4-research-independent-evaluation/automatic-fail",
+            "evidence/p7-t4-research-independent-evaluation/automatic-fail-remediation-v2",
         ):
             shutil.copytree(ROOT / reference, copied_root / reference, dirs_exist_ok=True)
         for reference in (
             "config/p7-t2-training-pipeline-t4-remediation.json",
+            "config/p7-t2-training-pipeline-t4-remediation-v3.json",
             "evidence/p7-t1c-research-remediation-training-governance-approval.json",
+            "evidence/p7-t1c-research-remediation-v3-training-governance-approval.json",
+            "scripts/training-pipeline-p7-t2-remediation-v3.py",
         ):
             source = ROOT / reference
             target = copied_root / reference
@@ -64,22 +72,45 @@ class P7T4ResearchRemediationTests(unittest.TestCase):
             shutil.copy2(source, target)
         return copied_root
 
-    def test_checked_in_remediation_records_real_training_and_allows_reevaluation(self):
+    def test_checked_in_remediation_records_v3_ready_after_second_failure(self):
         result = self.validator().validate_remediation(ROOT, CONFIG_PATH)
 
-        self.assertEqual("REMEDIATION_TRAINING_COMPLETE", result["state"])
         self.assertEqual(
-            "COMMIT_AND_BUILD_P7_T4_REEVALUATION_BUNDLE",
+            "REMEDIATION_V3_READY_FOR_EXTERNAL_REAL_TRAINING",
+            result["state"],
+        )
+        self.assertEqual(
+            "COMMIT_AND_BUILD_P7_T2_REMEDIATION_V3_BUNDLE",
             result["nextAction"],
         )
-        self.assertFalse(result["trainingAllowed"])
+        self.assertTrue(result["trainingAllowed"])
         self.assertFalse(result["promotionAllowed"])
         self.assertEqual(
-            self.config()["replacementDataset"]["governanceRequestIdentity"],
+            self.config()["replacementV3"]["governanceRequestIdentity"],
             result["governanceRequestIdentity"],
         )
 
-    def test_completed_training_binds_a_new_candidate_without_changing_failed_candidate(self):
+    def test_v3_readiness_binds_approved_materialized_dataset_and_training_config(self):
+        config = self.config()
+        replacement = config["replacementV3"]
+
+        self.assertEqual("READY_FOR_EXTERNAL_REAL_TRAINING", replacement["state"])
+        self.assertEqual(
+            "6b98270d32015aaf1f8f04aa43089a18128baf5fd55a785f675f0d56698851d1",
+            replacement["governanceRequestIdentity"],
+        )
+        self.assertEqual(
+            "a1f92aec9caca9b053daf780c1bfde951abdb88e2fe3e92f4f2545c676d45015",
+            replacement["trainingApprovalIdentity"],
+        )
+        self.assertEqual(
+            "430390b22936bdea27c7e5b4022795ef483b55ac21f84e3e52cc663b9aaf9d10",
+            replacement["datasetIdentity"],
+        )
+        self.assertEqual(270, replacement["sourceRecordCount"])
+        self.assertIsNone(replacement["candidateId"])
+
+    def test_completed_training_binds_a_new_failed_candidate_without_changing_first_failure(self):
         config = self.config()
 
         self.assertEqual(
@@ -95,8 +126,20 @@ class P7T4ResearchRemediationTests(unittest.TestCase):
             config["replacementTraining"]["candidateId"],
         )
         self.assertEqual(
-            "READY_FOR_EXTERNAL_REEVALUATION",
+            "AUTOMATIC_FAIL",
             config["reevaluation"]["state"],
+        )
+        self.assertEqual(
+            config["replacementTraining"]["candidateId"],
+            config["reevaluationResult"]["candidateId"],
+        )
+        self.assertEqual(
+            "aecbab9a601b20716821bd1ec8454924ff23b6088a35e7e1e21e4e7d654982f2",
+            config["reevaluationResult"]["comparisonIdentity"],
+        )
+        self.assertEqual(
+            "CANDIDATE_NOT_PROMOTABLE_AUTOMATIC_FAIL",
+            config["reevaluationResult"]["disposition"],
         )
 
     def test_remediation_identity_and_failure_diagnostics_are_reproducible(self):
@@ -228,6 +271,48 @@ class P7T4ResearchRemediationTests(unittest.TestCase):
             )
             with self.assertRaisesRegex(
                 validator.RemediationValidationError, "source inventory drift"
+            ):
+                validator.validate_document(copied_root, config)
+
+    def test_validator_rejects_tampered_remediation_reevaluation_run(self):
+        validator = self.validator()
+        config = self.config()
+
+        with tempfile.TemporaryDirectory() as directory:
+            copied_root = self.copied_validation_root(validator, Path(directory))
+            run_path = (
+                copied_root
+                / "evidence/p7-t4-research-independent-evaluation"
+                / "automatic-fail-remediation-v2/runs/RESEARCH_ADAPTER/R01.json"
+            )
+            run = json.loads(run_path.read_text(encoding="utf-8"))
+            run["rawOutputs"][0]["rawText"] += " "
+            run_path.write_text(
+                json.dumps(run, ensure_ascii=False, indent=2) + "\n",
+                encoding="utf-8",
+            )
+
+            with self.assertRaisesRegex(
+                validator.RemediationValidationError,
+                "reevaluationResult",
+            ):
+                validator.validate_document(copied_root, config)
+
+    def test_validator_rejects_tampered_v3_training_dataset(self):
+        validator = self.validator()
+        config = self.config()
+
+        with tempfile.TemporaryDirectory() as directory:
+            copied_root = self.copied_validation_root(validator, Path(directory))
+            train_path = (
+                copied_root
+                / "datasets/p7-research-synthetic-training-dataset-v3/train.jsonl"
+            )
+            train_path.write_bytes(train_path.read_bytes() + b"\n")
+
+            with self.assertRaisesRegex(
+                validator.RemediationValidationError,
+                "replacementV3",
             ):
                 validator.validate_document(copied_root, config)
 

@@ -1,5 +1,5 @@
 {
-  "artifactIdentity": "70c62efe272acb464b22064e92c3c0e510ea79150474c06a058cf149b952f563",
+  "artifactIdentity": "2bb26557cecb897b615fd12f1a699e5b2daefa8c2004b061f22e8ca4359b2b3d",
   "artifactType": "P7-T4-RESEARCH-REMEDIATION",
   "evaluationFreeze": {
     "preflightIdentity": "dd0635dc9c5a59c0ea360481712ab10b40e9d7c33255cf3e79ceeb547206b3c4",
@@ -136,8 +136,26 @@
       "R02",
       "R03"
     ],
-    "state": "READY_FOR_EXTERNAL_REEVALUATION",
+    "state": "AUTOMATIC_FAIL",
     "task": "P7-T4"
+  },
+  "reevaluationResult": {
+    "adapterFailedCaseCount": 17,
+    "archiveSha256": "ad87a67f50ff4ee9411c954467b4550e2b091b8f30afba2f3d232b478999ca98",
+    "archiveSha256Reference": "evidence/p7-t4-research-independent-evaluation/automatic-fail-remediation-v2/p7-t4-remediation-automatic-fail.zip.sha256",
+    "automaticDecision": "AUTOMATIC_FAIL",
+    "candidateId": "445a2c33e7cf7a7b9dc8b69c3ebe01ab0d7cf2565463ffb3d30920d9509baf61",
+    "comparisonIdentity": "aecbab9a601b20716821bd1ec8454924ff23b6088a35e7e1e21e4e7d654982f2",
+    "comparisonReference": "evidence/p7-t4-research-independent-evaluation/automatic-fail-remediation-v2/comparison.json",
+    "disposition": "CANDIDATE_NOT_PROMOTABLE_AUTOMATIC_FAIL",
+    "improvedCaseIds": [
+      "E-FUNC-RESEARCH-002"
+    ],
+    "preflightIdentity": "5af955eaefe4912f93709df7a0a8496265434340664dd0acb3616e0d8c5c4605",
+    "preflightReference": "evidence/p7-t4-research-independent-evaluation/automatic-fail-remediation-v2/preflight.json",
+    "sourceCommit": "23f920f4da5b4f7266d0991af3af34921994600b",
+    "state": "AUTOMATIC_FAIL",
+    "summaryReference": "evidence/p7-t4-research-independent-evaluation/automatic-fail-remediation-v2/summary.json"
   },
   "remediationPolicy": {
     "automaticEvidenceMayBeRewritten": false,
@@ -193,6 +211,27 @@
     "trainingContractReference": "datasets/p7-t4-research-remediation-source-v2/training-contract.json",
     "trainingApprovalIdentity": "5565b0339f9745d3e0b9cb44353bb97a131824fcdd7511130d11d6742b13dbd0",
     "trainingApprovalReference": "evidence/p7-t1c-research-remediation-training-governance-approval.json"
+  },
+  "replacementV3": {
+    "candidateId": null,
+    "contentIdentity": "5f0b65c3026f19e99058c7e15ed180aa304f1d91db8b69195ac828b65932b84c",
+    "datasetIdentity": "430390b22936bdea27c7e5b4022795ef483b55ac21f84e3e52cc663b9aaf9d10",
+    "datasetManifestReference": "datasets/p7-research-synthetic-training-dataset-v3/manifest.json",
+    "governanceRequestIdentity": "6b98270d32015aaf1f8f04aa43089a18128baf5fd55a785f675f0d56698851d1",
+    "governanceRequestReference": "config/p7-t4-research-remediation-governance-v3/training-approval-request.json",
+    "provenanceIdentity": "6f7ddabd49be23afccf19911b0ac9498fe4d8c71b4b2544f5a51a279d38e9361",
+    "provenanceReference": "datasets/p7-t4-research-remediation-source-v3/provenance.json",
+    "sourceRecordCount": 270,
+    "sourceReference": "datasets/p7-t4-research-remediation-source-v3/source-export.json",
+    "sourceSha256": "fa0e0ae6a10379e6e5b16a45a2fb8b1adc5963902b3ad94d6b573103622bb7bf",
+    "state": "READY_FOR_EXTERNAL_REAL_TRAINING",
+    "trainingApprovalIdentity": "a1f92aec9caca9b053daf780c1bfde951abdb88e2fe3e92f4f2545c676d45015",
+    "trainingApprovalReference": "evidence/p7-t1c-research-remediation-v3-training-governance-approval.json",
+    "trainingConfigIdentity": "3ac3f242586d8254d86d8e4412503a8ddbb80e2ce0e64094df559a666a37a8fd",
+    "trainingConfigReference": "config/p7-t2-training-pipeline-t4-remediation-v3.json",
+    "trainingContractIdentity": "4431a4dea11dc3e9f420cbc21070abb6d351db95a4507668e5c189f9040643ad",
+    "trainingContractReference": "datasets/p7-t4-research-remediation-source-v3/training-contract.json",
+    "trainingRunIdentity": "8487c2bff555e06682cb7b0b2dfdf5a34ebd17009667f7154c3c485672519593"
   },
   "replacementTraining": {
     "adapterIdentity": "feb512ff5783e0f9d959e1522be9171c746419bae7e657919e881c94578a3b14",
@@ -268,5 +307,5 @@
     }
   },
   "schemaVersion": "1.0.0",
-  "state": "REMEDIATION_TRAINING_COMPLETE"
+  "state": "REMEDIATION_V3_READY_FOR_EXTERNAL_REAL_TRAINING"
 }

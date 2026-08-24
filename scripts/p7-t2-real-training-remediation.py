@@ -8,6 +8,7 @@ import os
 from pathlib import Path
 import platform
 import re
+import sys
 from typing import Any
 
 
@@ -38,6 +39,10 @@ SYSTEM_MESSAGE = (
     "Use only supplied context, preserve authorization boundaries, keep drafts non-official, "
     "and never claim a tool or business action was executed."
 )
+RECORD_SCHEMA_VERSION = "2.0.0"
+EXPECTED_TRAIN_RECORDS = 38
+EXPECTED_VALIDATION_RECORDS = 4
+EXPECTED_CONTRACT_HOLDOUT_RECORDS = 3
 
 
 def _load_legacy():
@@ -47,7 +52,12 @@ def _load_legacy():
     if specification is None or specification.loader is None:
         raise ValueError("legacy real-training helpers unavailable")
     module = importlib.util.module_from_spec(specification)
-    specification.loader.exec_module(module)
+    previous = sys.dont_write_bytecode
+    sys.dont_write_bytecode = True
+    try:
+        specification.loader.exec_module(module)
+    finally:
+        sys.dont_write_bytecode = previous
     return module
 
 
@@ -65,7 +75,7 @@ def training_messages(record: dict[str, Any]) -> list[dict[str, str]]:
     prompt = record.get("trainingPrompt")
     target = record.get("trainingTarget")
     if (
-        record.get("schemaVersion") != "2.0.0"
+        record.get("schemaVersion") != RECORD_SCHEMA_VERSION
         or record.get("assistantKey") != "RESEARCH_ASSISTANT"
         or record.get("domain") != "RESEARCH"
         or record.get("visibility") != "RESEARCH_ASSISTANT_ONLY"
@@ -265,9 +275,9 @@ def validate_real_metadata_contract(metadata: object, config: dict[str, Any]) ->
     actual = metadata.get("actualTraining")
     if (
         not isinstance(actual, dict)
-        or actual.get("trainRecords") != 38
-        or actual.get("validationRecords") != 4
-        or actual.get("contractHoldoutRecords") != 3
+        or actual.get("trainRecords") != EXPECTED_TRAIN_RECORDS
+        or actual.get("validationRecords") != EXPECTED_VALIDATION_RECORDS
+        or actual.get("contractHoldoutRecords") != EXPECTED_CONTRACT_HOLDOUT_RECORDS
         or actual.get("contractHoldoutUsedForOptimization") is not False
         or actual.get("validationSplit") != "validation"
         or actual.get("contractHoldoutSplit") != "evaluation"

@@ -23,6 +23,10 @@ PIPELINE_VERSION = "2.0.0"
 DATASET_IDENTITY = "0409e9087efe7332e298d0c3812d11f2edac7cedf538a8db475776d9c190eb30"
 TRAINING_APPROVAL_IDENTITY = "5565b0339f9745d3e0b9cb44353bb97a131824fcdd7511130d11d6742b13dbd0"
 TRAINING_CONTRACT_IDENTITY = "89e49c43fd6488a6d47473141ad9070bd0dd785e309bbdaf26246e41d277a145"
+DATASET_MANIFEST_REFERENCE = (
+    "datasets/p7-research-synthetic-training-dataset-v2/manifest.json"
+)
+DATASET_RECORD_SCHEMA_VERSION = "2.0.0"
 BASE_MODEL = {
     "identifier": "Qwen/Qwen3-4B-Instruct-2507",
     "revision": "cdbee75f17c01a7cc42f958dc650907174af0554",
@@ -95,10 +99,14 @@ def _load_module(name: str, path: Path):
     if specification is None or specification.loader is None:
         raise TrainingPipelineError(f"runtime module unavailable: {path.name}")
     module = importlib.util.module_from_spec(specification)
+    previous = sys.dont_write_bytecode
     try:
+        sys.dont_write_bytecode = True
         specification.loader.exec_module(module)
     except (ImportError, OSError) as error:
         raise TrainingPipelineError(f"runtime module cannot load: {error}") from error
+    finally:
+        sys.dont_write_bytecode = previous
     return module
 
 
@@ -141,8 +149,7 @@ def validate_training_config(config: object) -> None:
         diagnostics.append("config/dataset: exact binding required")
     elif (
         dataset.get("identity") != DATASET_IDENTITY
-        or dataset.get("manifestReference")
-        != "datasets/p7-research-synthetic-training-dataset-v2/manifest.json"
+        or dataset.get("manifestReference") != DATASET_MANIFEST_REFERENCE
     ):
         diagnostics.append("config/dataset: exact approved v2 dataset required")
 
@@ -285,7 +292,7 @@ def _load_records(path: Path, expected: dict[str, Any]) -> list[dict[str, Any]]:
         if not isinstance(record, dict) or set(record) != RECORD_FIELDS:
             raise TrainingPipelineError(f"dataset/{path.name}: exact training record fields required")
         if (
-            record.get("schemaVersion") != "2.0.0"
+            record.get("schemaVersion") != DATASET_RECORD_SCHEMA_VERSION
             or record.get("assistantKey") != "RESEARCH_ASSISTANT"
             or record.get("domain") != "RESEARCH"
             or record.get("visibility") != "RESEARCH_ASSISTANT_ONLY"

@@ -16,7 +16,7 @@ from typing import Any
 
 PIPELINE_SCHEMA_VERSION = "2.0.0"
 PIPELINE_VERSION = "2.0.0"
-SOURCE_SCHEMA_VERSION = "2.0.0"
+SUPPORTED_SOURCE_RECORD_COUNTS = {"2.0.0": 45, "3.0.0": 270}
 SERIALIZATION_VERSION = "canonical-jsonl-utf8-lf-v1"
 SPLIT_STRATEGY = "SHA256_CONTENT_BUCKET"
 OUTPUT_KEYS = (
@@ -164,12 +164,15 @@ def _validate_approval(
         raise DatasetPipelineError(diagnostics)
     assert isinstance(card, dict)
     assert isinstance(approval, dict)
+    source_schema_version = source.get("exportSchemaVersion")
+    dataset_version = card.get("dataset_version")
     if approval.get("artifactIdentity") != artifact_identity(approval, "artifactIdentity"):
         diagnostics.append("source approval: artifact identity mismatch")
     expected_reference = config.get("approvalReference")
     if (
         card.get("dataset_id") != "p7-research-synthetic-training-dataset"
-        or card.get("dataset_version") != "2.0.0"
+        or dataset_version not in SUPPORTED_SOURCE_RECORD_COUNTS
+        or source_schema_version != dataset_version
         or card.get("assistant_key") != "RESEARCH_ASSISTANT"
         or card.get("approved_purposes") != ["TRAINING"]
         or card.get("source_permission_status") != "VERIFIED"
@@ -211,8 +214,10 @@ def prepare_records(
     source: dict[str, Any], contract: dict[str, Any]
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     records = source.get("records")
-    if not isinstance(records, list) or len(records) != 45:
-        raise DatasetPipelineError("source: exact 45-record inventory required")
+    source_schema_version = source.get("exportSchemaVersion")
+    expected_count = SUPPORTED_SOURCE_RECORD_COUNTS.get(source_schema_version)
+    if not isinstance(records, list) or expected_count is None or len(records) != expected_count:
+        raise DatasetPipelineError("source: exact versioned record inventory required")
     accepted: list[dict[str, Any]] = []
     rejected: list[dict[str, Any]] = []
     seen: set[str] = set()
@@ -225,7 +230,7 @@ def prepare_records(
             prompt = record.get("trainingPrompt")
             target = record.get("trainingTarget")
             if (
-                record.get("schemaVersion") != SOURCE_SCHEMA_VERSION
+                record.get("schemaVersion") != source_schema_version
                 or record.get("assistantKey") != "RESEARCH_ASSISTANT"
                 or record.get("domain") != "RESEARCH"
                 or record.get("visibility") != "RESEARCH_ASSISTANT_ONLY"

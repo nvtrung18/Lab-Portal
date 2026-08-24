@@ -83,6 +83,21 @@ REMEDIATION_ARCHIVE_SHA256_REFERENCE = (
 REMEDIATION_EVALUATION_CONFIG_REFERENCE = (
     "config/p7-t4-research-independent-evaluation-remediation.json"
 )
+REMEDIATION_REEVALUATION_ROOT = (
+    "evidence/p7-t4-research-independent-evaluation/automatic-fail-remediation-v2"
+)
+REMEDIATION_REEVALUATION_COMPARISON_REFERENCE = (
+    f"{REMEDIATION_REEVALUATION_ROOT}/comparison.json"
+)
+REMEDIATION_REEVALUATION_PREFLIGHT_REFERENCE = (
+    f"{REMEDIATION_REEVALUATION_ROOT}/preflight.json"
+)
+REMEDIATION_REEVALUATION_SUMMARY_REFERENCE = (
+    f"{REMEDIATION_REEVALUATION_ROOT}/summary.json"
+)
+REMEDIATION_REEVALUATION_ARCHIVE_SHA256_REFERENCE = (
+    f"{REMEDIATION_REEVALUATION_ROOT}/p7-t4-remediation-automatic-fail.zip.sha256"
+)
 EXPECTED_REMEDIATION_CANDIDATE_ID = (
     "445a2c33e7cf7a7b9dc8b69c3ebe01ab0d7cf2565463ffb3d30920d9509baf61"
 )
@@ -133,6 +148,72 @@ EXPECTED_REMEDIATION_DATASET_IDENTITY = (
 )
 EXPECTED_REMEDIATION_TRAINING_CONFIG_IDENTITY = (
     "404e55cd16f6e56c317c973c666f6f4a42716db202323a626b29b6305116f608"
+)
+EXPECTED_REMEDIATION_REEVALUATION_PREFLIGHT_IDENTITY = (
+    "5af955eaefe4912f93709df7a0a8496265434340664dd0acb3616e0d8c5c4605"
+)
+EXPECTED_REMEDIATION_REEVALUATION_COMPARISON_IDENTITY = (
+    "aecbab9a601b20716821bd1ec8454924ff23b6088a35e7e1e21e4e7d654982f2"
+)
+EXPECTED_REMEDIATION_REEVALUATION_ARCHIVE_SHA256 = (
+    "ad87a67f50ff4ee9411c954467b4550e2b091b8f30afba2f3d232b478999ca98"
+)
+EXPECTED_REMEDIATION_REEVALUATION_SOURCE_COMMIT = (
+    "23f920f4da5b4f7266d0991af3af34921994600b"
+)
+REMEDIATION_V3_SOURCE_REFERENCE = (
+    "datasets/p7-t4-research-remediation-source-v3/source-export.json"
+)
+REMEDIATION_V3_PROVENANCE_REFERENCE = (
+    "datasets/p7-t4-research-remediation-source-v3/provenance.json"
+)
+REMEDIATION_V3_CONTRACT_REFERENCE = (
+    "datasets/p7-t4-research-remediation-source-v3/training-contract.json"
+)
+REMEDIATION_V3_REQUEST_REFERENCE = (
+    "config/p7-t4-research-remediation-governance-v3/training-approval-request.json"
+)
+REMEDIATION_V3_APPROVED_CARD_REFERENCE = (
+    "config/p7-t1c-research-remediation-governance-v3/training-dataset-card.approved.json"
+)
+REMEDIATION_V3_APPROVAL_REFERENCE = (
+    "evidence/p7-t1c-research-remediation-v3-training-governance-approval.json"
+)
+REMEDIATION_V3_DATASET_MANIFEST_REFERENCE = (
+    "datasets/p7-research-synthetic-training-dataset-v3/manifest.json"
+)
+REMEDIATION_V3_TRAINING_CONFIG_REFERENCE = (
+    "config/p7-t2-training-pipeline-t4-remediation-v3.json"
+)
+REMEDIATION_V3_TRAINING_PIPELINE_REFERENCE = (
+    "scripts/training-pipeline-p7-t2-remediation-v3.py"
+)
+EXPECTED_REMEDIATION_V3_SOURCE_SHA256 = (
+    "fa0e0ae6a10379e6e5b16a45a2fb8b1adc5963902b3ad94d6b573103622bb7bf"
+)
+EXPECTED_REMEDIATION_V3_CONTENT_IDENTITY = (
+    "5f0b65c3026f19e99058c7e15ed180aa304f1d91db8b69195ac828b65932b84c"
+)
+EXPECTED_REMEDIATION_V3_CONTRACT_IDENTITY = (
+    "4431a4dea11dc3e9f420cbc21070abb6d351db95a4507668e5c189f9040643ad"
+)
+EXPECTED_REMEDIATION_V3_PROVENANCE_IDENTITY = (
+    "6f7ddabd49be23afccf19911b0ac9498fe4d8c71b4b2544f5a51a279d38e9361"
+)
+EXPECTED_REMEDIATION_V3_REQUEST_IDENTITY = (
+    "6b98270d32015aaf1f8f04aa43089a18128baf5fd55a785f675f0d56698851d1"
+)
+EXPECTED_REMEDIATION_V3_APPROVAL_IDENTITY = (
+    "a1f92aec9caca9b053daf780c1bfde951abdb88e2fe3e92f4f2545c676d45015"
+)
+EXPECTED_REMEDIATION_V3_DATASET_IDENTITY = (
+    "430390b22936bdea27c7e5b4022795ef483b55ac21f84e3e52cc663b9aaf9d10"
+)
+EXPECTED_REMEDIATION_V3_TRAINING_CONFIG_IDENTITY = (
+    "3ac3f242586d8254d86d8e4412503a8ddbb80e2ce0e64094df559a666a37a8fd"
+)
+EXPECTED_REMEDIATION_V3_TRAINING_RUN_IDENTITY = (
+    "8487c2bff555e06682cb7b0b2dfdf5a34ebd17009667f7154c3c485672519593"
 )
 EVALUATION_FREEZE_REFERENCES = (
     "config/p6-t5-benchmark.yaml",
@@ -534,6 +615,216 @@ def _validate_failed_evaluation(
             "remediation/evaluationFreeze: comparison is not reproducible from runs"
         )
     return comparison, runs["RESEARCH_ADAPTER"], evaluation.P6_BENCHMARK
+
+
+def _validate_remediation_reevaluation(
+    root: Path,
+    freeze: object,
+    result: object,
+    diagnostics: list[str],
+) -> None:
+    expected_result = {
+        "adapterFailedCaseCount": 17,
+        "archiveSha256": EXPECTED_REMEDIATION_REEVALUATION_ARCHIVE_SHA256,
+        "archiveSha256Reference": REMEDIATION_REEVALUATION_ARCHIVE_SHA256_REFERENCE,
+        "automaticDecision": "AUTOMATIC_FAIL",
+        "candidateId": EXPECTED_REMEDIATION_CANDIDATE_ID,
+        "comparisonIdentity": EXPECTED_REMEDIATION_REEVALUATION_COMPARISON_IDENTITY,
+        "comparisonReference": REMEDIATION_REEVALUATION_COMPARISON_REFERENCE,
+        "disposition": "CANDIDATE_NOT_PROMOTABLE_AUTOMATIC_FAIL",
+        "improvedCaseIds": ["E-FUNC-RESEARCH-002"],
+        "preflightIdentity": EXPECTED_REMEDIATION_REEVALUATION_PREFLIGHT_IDENTITY,
+        "preflightReference": REMEDIATION_REEVALUATION_PREFLIGHT_REFERENCE,
+        "sourceCommit": EXPECTED_REMEDIATION_REEVALUATION_SOURCE_COMMIT,
+        "state": "AUTOMATIC_FAIL",
+        "summaryReference": REMEDIATION_REEVALUATION_SUMMARY_REFERENCE,
+    }
+    if result != expected_result:
+        diagnostics.append(
+            "remediation/reevaluationResult: exact automatic-fail evidence binding required"
+        )
+        return
+
+    try:
+        preflight = _load_json(
+            root / REMEDIATION_REEVALUATION_PREFLIGHT_REFERENCE,
+            "remediation reevaluation preflight",
+        )
+        comparison = _load_json(
+            root / REMEDIATION_REEVALUATION_COMPARISON_REFERENCE,
+            "remediation reevaluation comparison",
+        )
+        summary = _load_json(
+            root / REMEDIATION_REEVALUATION_SUMMARY_REFERENCE,
+            "remediation reevaluation summary",
+        )
+        evaluation_config = _load_json(
+            root / REMEDIATION_EVALUATION_CONFIG_REFERENCE,
+            "remediation evaluation config",
+        )
+        evaluation = _load_module(
+            "p7_t4_for_remediation_reevaluation",
+            root / "scripts" / "research-independent-evaluation-p7-t4.py",
+        )
+    except RemediationValidationError as error:
+        diagnostics.extend(error.diagnostics)
+        return
+
+    suite = preflight.get("composedSuite")
+    if (
+        preflight.get("artifactIdentity") != evaluation.artifact_identity(preflight)
+        or preflight.get("artifactIdentity")
+        != EXPECTED_REMEDIATION_REEVALUATION_PREFLIGHT_IDENTITY
+        or preflight.get("state") != "PREFLIGHT_PASS"
+        or preflight.get("candidate")
+        != {
+            "candidateId": EXPECTED_REMEDIATION_CANDIDATE_ID,
+            "adapterIdentity": EXPECTED_REMEDIATION_ADAPTER_IDENTITY,
+        }
+        or preflight.get("baseModel") != evaluation_config.get("baseModel")
+        or preflight.get("suite")
+        != (freeze.get("suite") if isinstance(freeze, dict) else None)
+        or preflight.get("caseCount") != 18
+        or not isinstance(suite, dict)
+        or suite.get("EVALUATION_ONLY") is not True
+        or suite.get("TRAINING_PROHIBITED") is not True
+        or evaluation._suite_identity(suite) != suite.get("suiteDigest")
+    ):
+        diagnostics.append(
+            "remediation/reevaluationResult: preflight identity or frozen suite mismatch"
+        )
+        return
+
+    prompt_config = evaluation._load_yaml(
+        root / evaluation_config["execution"]["promptProfileReference"]
+    )
+    try:
+        evaluation.P6_BENCHMARK.validate_profile_templates(prompt_config)
+        research_profile = evaluation.P6_BENCHMARK.assistant_profile(
+            prompt_config, "RESEARCH_ASSISTANT"
+        )
+    except (TypeError, ValueError) as error:
+        diagnostics.append(
+            f"remediation/reevaluationResult: prompt profile invalid: {error}"
+        )
+        return
+    expected_prompt_digests = {}
+    for case in suite["caseInventory"]:
+        prompt_case = dict(case)
+        prompt_case["assistantKey"] = "RESEARCH_ASSISTANT"
+        messages = evaluation.P6_BENCHMARK.render_prompt(
+            prompt_case, research_profile["systemInstruction"]
+        )
+        expected_prompt_digests[case["evalCaseId"]] = hashlib.sha256(
+            canonical_bytes(messages)
+        ).hexdigest()
+
+    runs: dict[str, list[dict[str, Any]]] = {}
+    run_root = root / REMEDIATION_REEVALUATION_ROOT / "runs"
+    try:
+        for variant in ("SHARED_BASE", "RESEARCH_ADAPTER"):
+            runs[variant] = []
+            for repetition in EXPECTED_REPETITIONS:
+                run = _load_json(
+                    run_root / variant / f"{repetition}.json",
+                    f"remediation {variant} {repetition} run",
+                )
+                evaluation._validate_run(run, suite, variant, repetition)
+                prompt_digests = {
+                    item.get("evalCaseId"): item.get("promptDigest")
+                    for item in run.get("promptManifest", [])
+                    if isinstance(item, dict)
+                }
+                candidate = run.get("candidateRun")
+                metadata = (
+                    candidate.get("modelMetadata")
+                    if isinstance(candidate, dict)
+                    else None
+                )
+                expected_candidate_id = (
+                    EXPECTED_REMEDIATION_CANDIDATE_ID
+                    if variant == "RESEARCH_ADAPTER"
+                    else None
+                )
+                expected_run_id = (
+                    f"{EXPECTED_REMEDIATION_CANDIDATE_ID}-{variant}-{repetition}"
+                )
+                if (
+                    run.get("sourceCommit")
+                    != EXPECTED_REMEDIATION_REEVALUATION_SOURCE_COMMIT
+                    or prompt_digests != expected_prompt_digests
+                    or not isinstance(candidate, dict)
+                    or candidate.get("candidateRunId") != expected_run_id
+                    or run.get("automatic", {}).get("candidateRunId")
+                    != expected_run_id
+                    or metadata
+                    != {
+                        "variant": variant,
+                        "baseModel": evaluation_config["baseModel"],
+                        "candidateId": expected_candidate_id,
+                    }
+                ):
+                    raise RemediationValidationError(
+                        f"remediation/reevaluationResult: {variant} {repetition} binding mismatch"
+                    )
+                runs[variant].append(run)
+        recomputed = evaluation.compare_model_runs(
+            suite,
+            runs["SHARED_BASE"],
+            runs["RESEARCH_ADAPTER"],
+        )
+    except (OSError, TypeError, ValueError, RemediationValidationError) as error:
+        if isinstance(error, RemediationValidationError):
+            diagnostics.extend(error.diagnostics)
+        else:
+            diagnostics.append(
+                f"remediation/reevaluationResult: run evidence invalid: {error}"
+            )
+        return
+
+    if (
+        recomputed != comparison
+        or comparison.get("artifactIdentity")
+        != EXPECTED_REMEDIATION_REEVALUATION_COMPARISON_IDENTITY
+        or comparison.get("automaticDecision") != "AUTOMATIC_FAIL"
+        or comparison.get("promotionAllowed") is not False
+        or len(comparison.get("adapterFailedCaseIds", [])) != 17
+        or comparison.get("improvedCaseIds") != ["E-FUNC-RESEARCH-002"]
+    ):
+        diagnostics.append(
+            "remediation/reevaluationResult: comparison is not reproducible from runs"
+        )
+    if (
+        summary.get("artifactType") != "P7-T4-AUTOMATIC-FAIL-HANDOFF"
+        or summary.get("automaticDecision") != "AUTOMATIC_FAIL"
+        or summary.get("promotionAllowed") is not False
+        or summary.get("candidateId") != EXPECTED_REMEDIATION_CANDIDATE_ID
+        or summary.get("comparisonIdentity")
+        != EXPECTED_REMEDIATION_REEVALUATION_COMPARISON_IDENTITY
+        or summary.get("archiveSha256")
+        != EXPECTED_REMEDIATION_REEVALUATION_ARCHIVE_SHA256
+        or summary.get("adapterFailedCaseIds")
+        != comparison.get("adapterFailedCaseIds")
+        or summary.get("improvedCaseIds") != comparison.get("improvedCaseIds")
+        or summary.get("regressions") != comparison.get("regressions")
+    ):
+        diagnostics.append("remediation/reevaluationResult: summary evidence mismatch")
+    archive_reference = root / REMEDIATION_REEVALUATION_ARCHIVE_SHA256_REFERENCE
+    expected_sidecar = (
+        f"{EXPECTED_REMEDIATION_REEVALUATION_ARCHIVE_SHA256}  "
+        "p7-t4-remediation-automatic-fail.zip\n"
+    )
+    try:
+        sidecar = archive_reference.read_text(encoding="utf-8")
+    except (OSError, UnicodeError) as error:
+        diagnostics.append(
+            f"remediation/reevaluationResult: archive SHA-256 unavailable: {error}"
+        )
+    else:
+        if sidecar != expected_sidecar:
+            diagnostics.append(
+                "remediation/reevaluationResult: archive SHA-256 mismatch"
+            )
 
 
 def diagnose_current_failure(root: Path, evaluation_freeze: object) -> dict[str, Any]:
@@ -1062,6 +1353,202 @@ def _validate_completed_replacement_training(
         )
 
 
+def _expected_v3_readiness() -> dict[str, Any]:
+    return {
+        "candidateId": None,
+        "contentIdentity": EXPECTED_REMEDIATION_V3_CONTENT_IDENTITY,
+        "datasetIdentity": EXPECTED_REMEDIATION_V3_DATASET_IDENTITY,
+        "datasetManifestReference": REMEDIATION_V3_DATASET_MANIFEST_REFERENCE,
+        "governanceRequestIdentity": EXPECTED_REMEDIATION_V3_REQUEST_IDENTITY,
+        "governanceRequestReference": REMEDIATION_V3_REQUEST_REFERENCE,
+        "provenanceIdentity": EXPECTED_REMEDIATION_V3_PROVENANCE_IDENTITY,
+        "provenanceReference": REMEDIATION_V3_PROVENANCE_REFERENCE,
+        "sourceRecordCount": 270,
+        "sourceReference": REMEDIATION_V3_SOURCE_REFERENCE,
+        "sourceSha256": EXPECTED_REMEDIATION_V3_SOURCE_SHA256,
+        "state": "READY_FOR_EXTERNAL_REAL_TRAINING",
+        "trainingApprovalIdentity": EXPECTED_REMEDIATION_V3_APPROVAL_IDENTITY,
+        "trainingApprovalReference": REMEDIATION_V3_APPROVAL_REFERENCE,
+        "trainingConfigIdentity": EXPECTED_REMEDIATION_V3_TRAINING_CONFIG_IDENTITY,
+        "trainingConfigReference": REMEDIATION_V3_TRAINING_CONFIG_REFERENCE,
+        "trainingContractIdentity": EXPECTED_REMEDIATION_V3_CONTRACT_IDENTITY,
+        "trainingContractReference": REMEDIATION_V3_CONTRACT_REFERENCE,
+        "trainingRunIdentity": EXPECTED_REMEDIATION_V3_TRAINING_RUN_IDENTITY,
+    }
+
+
+def _validate_v3_readiness(
+    root: Path, replacement: object, diagnostics: list[str]
+) -> None:
+    if replacement != _expected_v3_readiness():
+        diagnostics.append(
+            "remediation/replacementV3: exact approved training-readiness binding required"
+        )
+        return
+
+    try:
+        request = _load_json(
+            root / REMEDIATION_V3_REQUEST_REFERENCE,
+            "remediation v3 governance request",
+        )
+        approval = _load_json(
+            root / REMEDIATION_V3_APPROVAL_REFERENCE,
+            "remediation v3 training approval",
+        )
+        approved_card = _load_json(
+            root / REMEDIATION_V3_APPROVED_CARD_REFERENCE,
+            "remediation v3 approved dataset card",
+        )
+        source_path = root / REMEDIATION_V3_SOURCE_REFERENCE
+        source = _load_json(source_path, "remediation v3 source export")
+        provenance = _load_json(
+            root / REMEDIATION_V3_PROVENANCE_REFERENCE,
+            "remediation v3 source provenance",
+        )
+        contract = _load_json(
+            root / REMEDIATION_V3_CONTRACT_REFERENCE,
+            "remediation v3 training contract",
+        )
+        manifest_path = root / REMEDIATION_V3_DATASET_MANIFEST_REFERENCE
+        manifest = _load_json(manifest_path, "remediation v3 dataset manifest")
+        training_config = _load_json(
+            root / REMEDIATION_V3_TRAINING_CONFIG_REFERENCE,
+            "remediation v3 training config",
+        )
+        pipeline = _load_module(
+            "p7_t2_remediation_v3_pipeline_for_readiness_gate",
+            root / REMEDIATION_V3_TRAINING_PIPELINE_REFERENCE,
+        )
+        pipeline.validate_training_config(training_config)
+        gate_result = pipeline.validate_dataset_and_contract_gates(
+            manifest_path, training_config, root
+        )
+    except (OSError, ValueError, RemediationValidationError) as error:
+        diagnostics.append(f"remediation/replacementV3: readiness invalid: {error}")
+        return
+
+    request_source = request.get("source")
+    request_binding = request.get("remediationBinding")
+    if (
+        request.get("requestIdentity") != EXPECTED_REMEDIATION_V3_REQUEST_IDENTITY
+        or _identity_without(request, "requestIdentity")
+        != EXPECTED_REMEDIATION_V3_REQUEST_IDENTITY
+        or request.get("status") != "PENDING_USER_APPROVAL"
+        or request.get("currentState", {}).get("trainingAuthorized") is not False
+        or not isinstance(request_source, dict)
+        or request_source.get("sourceSha256") != EXPECTED_REMEDIATION_V3_SOURCE_SHA256
+        or request_source.get("contentIdentity")
+        != EXPECTED_REMEDIATION_V3_CONTENT_IDENTITY
+        or request_source.get("contractIdentity")
+        != EXPECTED_REMEDIATION_V3_CONTRACT_IDENTITY
+        or request_source.get("provenanceIdentity")
+        != EXPECTED_REMEDIATION_V3_PROVENANCE_IDENTITY
+        or request_source.get("recordCount") != 270
+        or not isinstance(request_binding, dict)
+        or request_binding.get("failedCandidateId")
+        != EXPECTED_REMEDIATION_CANDIDATE_ID
+        or request_binding.get("failedComparisonIdentity")
+        != EXPECTED_REMEDIATION_REEVALUATION_COMPARISON_IDENTITY
+        or request_binding.get("frozenEvaluationUnchanged") is not True
+    ):
+        diagnostics.append(
+            "remediation/replacementV3: immutable governance request binding mismatch"
+        )
+
+    approval_scope = approval.get("scope")
+    if (
+        approval.get("artifactIdentity") != EXPECTED_REMEDIATION_V3_APPROVAL_IDENTITY
+        or artifact_identity(approval) != EXPECTED_REMEDIATION_V3_APPROVAL_IDENTITY
+        or approval.get("requestIdentity") != EXPECTED_REMEDIATION_V3_REQUEST_IDENTITY
+        or approval.get("requestReference") != REMEDIATION_V3_REQUEST_REFERENCE
+        or approval.get("status") != "APPROVED"
+        or approval.get("revocation", {}).get("status") != "ACTIVE"
+        or not isinstance(approval_scope, dict)
+        or approval_scope.get("permittedPurposes") != ["TRAINING"]
+        or approval_scope.get("frozenEvaluationTrainingUseAllowed") is not False
+        or approval_scope.get("excludedUseCases")
+        != {"RESEARCH_UC_006": "TRAINING_PROHIBITED_BY_CURRENT_GOVERNANCE"}
+    ):
+        diagnostics.append(
+            "remediation/replacementV3: exact active narrow training approval required"
+        )
+
+    records = source.get("records")
+    if (
+        hashlib.sha256(source_path.read_bytes()).hexdigest()
+        != EXPECTED_REMEDIATION_V3_SOURCE_SHA256
+        or not isinstance(records, list)
+        or len(records) != 270
+        or hashlib.sha256(canonical_bytes(records)).hexdigest()
+        != EXPECTED_REMEDIATION_V3_CONTENT_IDENTITY
+        or provenance.get("provenanceIdentity")
+        != EXPECTED_REMEDIATION_V3_PROVENANCE_IDENTITY
+        or _identity_without(provenance, "provenanceIdentity")
+        != EXPECTED_REMEDIATION_V3_PROVENANCE_IDENTITY
+        or provenance.get("contentIdentity")
+        != EXPECTED_REMEDIATION_V3_CONTENT_IDENTITY
+        or provenance.get("contractIdentity")
+        != EXPECTED_REMEDIATION_V3_CONTRACT_IDENTITY
+        or provenance.get("antiLeakage")
+        != {
+            "exactCanonicalNodeDuplicates": 0,
+            "exactSubstantialStringDuplicates": 0,
+            "exactTrainingContentDuplicates": 0,
+        }
+        or contract.get("contractIdentity")
+        != EXPECTED_REMEDIATION_V3_CONTRACT_IDENTITY
+        or _identity_without(contract, "contractIdentity")
+        != EXPECTED_REMEDIATION_V3_CONTRACT_IDENTITY
+        or contract.get("scope", {}).get("frozenEvaluationDerivedRecordsAllowed")
+        is not False
+        or contract.get("scope", {}).get("excludedUseCases")
+        != {"RESEARCH_UC_006": "TRAINING_PROHIBITED_BY_CURRENT_GOVERNANCE"}
+    ):
+        diagnostics.append(
+            "remediation/replacementV3: source, provenance, or contract identity mismatch"
+        )
+
+    if (
+        approved_card.get("approval_status") != "APPROVED"
+        or approved_card.get("approval_references")
+        != [REMEDIATION_V3_APPROVAL_REFERENCE]
+        or approved_card.get("integrity", {}).get("checksum")
+        != EXPECTED_REMEDIATION_V3_SOURCE_SHA256
+        or manifest.get("checksum") != EXPECTED_REMEDIATION_V3_DATASET_IDENTITY
+        or pipeline.artifact_identity(manifest, "checksum")
+        != EXPECTED_REMEDIATION_V3_DATASET_IDENTITY
+        or manifest.get("training_approval_identity")
+        != EXPECTED_REMEDIATION_V3_APPROVAL_IDENTITY
+        or manifest.get("training_contract_identity")
+        != EXPECTED_REMEDIATION_V3_CONTRACT_IDENTITY
+        or manifest.get("counts")
+        != {
+            "acceptedRecords": 270,
+            "duplicatesRemoved": 0,
+            "rejectedRecords": 0,
+            "sourceRecords": 270,
+            "splits": {"evaluation": 34, "train": 214, "validation": 22},
+        }
+    ):
+        diagnostics.append(
+            "remediation/replacementV3: approved materialized dataset mismatch"
+        )
+
+    if (
+        gate_result.get("state") != "PASS"
+        or gate_result.get("counts")
+        != {"train": 214, "validation": 22, "evaluation": 34}
+        or gate_result.get("contentIdsDisjoint") is not True
+        or pipeline.training_config_identity(training_config)
+        != EXPECTED_REMEDIATION_V3_TRAINING_CONFIG_IDENTITY
+        or pipeline.training_run_identity(training_config)
+        != EXPECTED_REMEDIATION_V3_TRAINING_RUN_IDENTITY
+    ):
+        diagnostics.append(
+            "remediation/replacementV3: guarded training configuration mismatch"
+        )
+
+
 def validate_document(root: Path, document: dict[str, Any]) -> dict[str, Any]:
     root = root.resolve()
     diagnostics: list[str] = []
@@ -1071,9 +1558,11 @@ def validate_document(root: Path, document: dict[str, Any]) -> dict[str, Any]:
         "evaluationFreeze",
         "failedCandidate",
         "reevaluation",
+        "reevaluationResult",
         "remediationPolicy",
         "replacementDataset",
         "replacementTraining",
+        "replacementV3",
         "rootCause",
         "schemaVersion",
         "state",
@@ -1084,9 +1573,9 @@ def validate_document(root: Path, document: dict[str, Any]) -> dict[str, Any]:
         diagnostics.append("remediation/artifactType: unsupported contract")
     if document.get("schemaVersion") != "1.0.0":
         diagnostics.append("remediation/schemaVersion: unsupported version")
-    if document.get("state") != "REMEDIATION_TRAINING_COMPLETE":
+    if document.get("state") != "REMEDIATION_V3_READY_FOR_EXTERNAL_REAL_TRAINING":
         diagnostics.append(
-            "remediation/state: REMEDIATION_TRAINING_COMPLETE required"
+            "remediation/state: REMEDIATION_V3_READY_FOR_EXTERNAL_REAL_TRAINING required"
         )
     if document.get("artifactIdentity") != artifact_identity(document):
         diagnostics.append("remediation/artifactIdentity: identity mismatch")
@@ -1394,12 +1883,19 @@ def validate_document(root: Path, document: dict[str, Any]) -> dict[str, Any]:
         "humanEvaluationRequired": True,
         "independentReviewerRequired": True,
         "repetitions": list(EXPECTED_REPETITIONS),
-        "state": "READY_FOR_EXTERNAL_REEVALUATION",
+        "state": "AUTOMATIC_FAIL",
         "task": "P7-T4",
     }
     if document.get("reevaluation") != expected_reevaluation:
         diagnostics.append("remediation/reevaluation: unchanged P7-T4 gate required")
+    _validate_remediation_reevaluation(
+        root,
+        document.get("evaluationFreeze"),
+        document.get("reevaluationResult"),
+        diagnostics,
+    )
     _validate_completed_replacement_training(root, failed, diagnostics)
+    _validate_v3_readiness(root, document.get("replacementV3"), diagnostics)
 
     try:
         expected_root_cause = {
@@ -1418,15 +1914,17 @@ def validate_document(root: Path, document: dict[str, Any]) -> dict[str, Any]:
     if diagnostics:
         raise RemediationValidationError(diagnostics)
     assert isinstance(failed, dict)
+    reevaluation_result = document["reevaluationResult"]
+    assert isinstance(reevaluation_result, dict)
     return {
         "artifactIdentity": document["artifactIdentity"],
-        "comparisonIdentity": failed["comparisonIdentity"],
-        "failedCandidateId": failed["candidateId"],
-        "governanceRequestIdentity": EXPECTED_REMEDIATION_REQUEST_IDENTITY,
-        "nextAction": "COMMIT_AND_BUILD_P7_T4_REEVALUATION_BUNDLE",
+        "comparisonIdentity": reevaluation_result["comparisonIdentity"],
+        "failedCandidateId": reevaluation_result["candidateId"],
+        "governanceRequestIdentity": EXPECTED_REMEDIATION_V3_REQUEST_IDENTITY,
+        "nextAction": "COMMIT_AND_BUILD_P7_T2_REMEDIATION_V3_BUNDLE",
         "promotionAllowed": False,
-        "state": "REMEDIATION_TRAINING_COMPLETE",
-        "trainingAllowed": False,
+        "state": "REMEDIATION_V3_READY_FOR_EXTERNAL_REAL_TRAINING",
+        "trainingAllowed": True,
     }
 
 

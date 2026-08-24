@@ -23,6 +23,10 @@ MANIFEST_NAME = "bundle-manifest.json"
 DATASET_IDENTITY = "0409e9087efe7332e298d0c3812d11f2edac7cedf538a8db475776d9c190eb30"
 TRAINING_APPROVAL_IDENTITY = "5565b0339f9745d3e0b9cb44353bb97a131824fcdd7511130d11d6742b13dbd0"
 TRAINING_CONTRACT_IDENTITY = "89e49c43fd6488a6d47473141ad9070bd0dd785e309bbdaf26246e41d277a145"
+BUNDLE_VERSION = "2.0.0"
+TRAINING_CONFIG_REFERENCE = "config/p7-t2-training-pipeline-t4-remediation.json"
+TRAINING_PIPELINE_REFERENCE = "scripts/training-pipeline-p7-t2-remediation.py"
+VALIDATOR_REFERENCE = "scripts/validate-p7-t2-research-remediation-bundle.py"
 BASE_MODEL = {
     "identifier": "Qwen/Qwen3-4B-Instruct-2507",
     "revision": "cdbee75f17c01a7cc42f958dc650907174af0554",
@@ -157,12 +161,10 @@ def _readme(source_commit: str) -> bytes:
 def _manifest(bundle_root: Path, source_commit: str) -> dict[str, Any]:
     pipeline = _load_module(
         "p7_t2_remediation_bundle_pipeline",
-        bundle_root / "scripts/training-pipeline-p7-t2-remediation.py",
+        bundle_root / TRAINING_PIPELINE_REFERENCE,
     )
     config = json.loads(
-        (bundle_root / "config/p7-t2-training-pipeline-t4-remediation.json").read_text(
-            encoding="utf-8"
-        )
+        (bundle_root / TRAINING_CONFIG_REFERENCE).read_text(encoding="utf-8")
     )
     pipeline.validate_training_config(config)
     pipeline.validate_dataset_and_contract_gates(
@@ -170,7 +172,7 @@ def _manifest(bundle_root: Path, source_commit: str) -> dict[str, Any]:
     )
     manifest = {
         "artifactType": "P7-T2-RESEARCH-REMEDIATION-REAL-TRAINING-BUNDLE",
-        "bundleVersion": "2.0.0",
+        "bundleVersion": BUNDLE_VERSION,
         "runtimeProfile": "COLAB_TESLA_T4_CP313_CUDA118",
         "sourceCommit": source_commit,
         "baseModel": BASE_MODEL,
@@ -236,7 +238,7 @@ def build_bundle(
         (staging / MANIFEST_NAME).write_bytes(json_bytes(manifest))
         validator = _load_module(
             "p7_t2_remediation_bundle_validator_for_builder",
-            source_root / "scripts/validate-p7-t2-research-remediation-bundle.py",
+            source_root / VALIDATOR_REFERENCE,
         )
         validator.validate_bundle(staging)
         staged_zip = Path(name) / f"{BUNDLE_NAME}.zip"
