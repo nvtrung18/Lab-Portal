@@ -1,5 +1,5 @@
 {
-  "artifactIdentity": "e9751892b0b0ce1155500745c48b729bf3d144b6346b217535e5a1c1165e4424",
+  "artifactIdentity": "70c62efe272acb464b22064e92c3c0e510ea79150474c06a058cf149b952f563",
   "artifactType": "P7-T4-RESEARCH-REMEDIATION",
   "evaluationFreeze": {
     "preflightIdentity": "dd0635dc9c5a59c0ea360481712ab10b40e9d7c33255cf3e79ceeb547206b3c4",
@@ -127,6 +127,8 @@
   "reevaluation": {
     "allAdapterCasesMustPass": true,
     "automaticThresholdRelaxationAllowed": false,
+    "candidateId": "445a2c33e7cf7a7b9dc8b69c3ebe01ab0d7cf2565463ffb3d30920d9509baf61",
+    "evaluationConfigReference": "config/p7-t4-research-independent-evaluation-remediation.json",
     "humanEvaluationRequired": true,
     "independentReviewerRequired": true,
     "repetitions": [
@@ -134,7 +136,7 @@
       "R02",
       "R03"
     ],
-    "state": "BLOCKED_BY_NEW_CANDIDATE",
+    "state": "READY_FOR_EXTERNAL_REEVALUATION",
     "task": "P7-T4"
   },
   "remediationPolicy": {
@@ -193,19 +195,32 @@
     "trainingApprovalReference": "evidence/p7-t1c-research-remediation-training-governance-approval.json"
   },
   "replacementTraining": {
+    "adapterIdentity": "feb512ff5783e0f9d959e1522be9171c746419bae7e657919e881c94578a3b14",
+    "adapterManifestReference": "evidence/p7-t2-real-training/remediation-v2/adapter-manifest.json",
+    "adapterManifestSha256": "e5b8991941f36dc799a0fc1b53ac09bf082665a2b2cc09b0a6463aa95b8b0287",
+    "archiveSha256": "1f642aab913e705702bc463aff7a85d5f799d2f6214b6bd926904674a10a860d",
+    "archiveSha256Reference": "evidence/p7-t2-real-training/remediation-v2/p7-t2-research-remediation-output.zip.sha256",
+    "bestCheckpoint": "checkpoint-00000032",
     "bestCheckpointSelectionRequired": true,
+    "candidateId": "445a2c33e7cf7a7b9dc8b69c3ebe01ab0d7cf2565463ffb3d30920d9509baf61",
     "datasetIdentity": "0409e9087efe7332e298d0c3812d11f2edac7cedf538a8db475776d9c190eb30",
     "earlyStoppingRequired": true,
+    "evidenceArtifactIdentity": "6ac24aa9e1079ad2e58a9b778a841b51855eb91a027f1b1559845dcff70b4945",
+    "evidenceReference": "evidence/p7-t2-real-training/remediation-v2/real-training-evidence.json",
+    "evidenceSha256": "ef51c3c252937744eee2e73d6856c48b3219511ac41098091e01c8919ad1c837",
     "finiteEpochScheduleRequired": true,
     "fixedThousandStepScheduleAllowed": false,
     "independentContractHoldoutRequired": true,
+    "metadataReference": "evidence/p7-t2-real-training/remediation-v2/training-metadata.json",
+    "metadataSha256": "eb949bd2eccd3e0e866fbe23a8aa61f94915cebf086afc491400bbc1247d452a",
     "periodicValidationRequired": true,
     "preparedRuntimeContractRegressionGateRequired": true,
     "sourceTask": "P7-T2",
-    "state": "CONFIGURED_NOT_EXECUTED",
+    "state": "REAL_TRAINING_COMPLETE",
     "trainingApprovalIdentity": "5565b0339f9745d3e0b9cb44353bb97a131824fcdd7511130d11d6742b13dbd0",
     "trainingConfigIdentity": "404e55cd16f6e56c317c973c666f6f4a42716db202323a626b29b6305116f608",
-    "trainingConfigReference": "config/p7-t2-training-pipeline-t4-remediation.json"
+    "trainingConfigReference": "config/p7-t2-training-pipeline-t4-remediation.json",
+    "trainingRunIdentity": "e8c3b34b22297d3ae52426d43d021445948742b4f752e8769d8317d42b9c42fc"
   },
   "rootCause": {
     "adapterParseErrorsPerRepetition": {
@@ -253,5 +268,5 @@
     }
   },
   "schemaVersion": "1.0.0",
-  "state": "RETRAINING_CONFIGURED"
+  "state": "REMEDIATION_TRAINING_COMPLETE"
 }

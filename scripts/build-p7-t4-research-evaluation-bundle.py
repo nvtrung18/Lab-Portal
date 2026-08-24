@@ -50,10 +50,61 @@ SOURCE_FILES = (
     "scripts/training-pipeline-p7-t2.py",
     "scripts/p7-t2-real-training.py",
 )
+REMEDIATION_CONFIG_REFERENCE = (
+    "config/p7-t4-research-independent-evaluation-remediation.json"
+)
+REMEDIATION_EVIDENCE_ROOT = "evidence/p7-t2-real-training/remediation-v2"
+REMEDIATION_ADAPTER_MANIFEST_REFERENCE = (
+    f"{REMEDIATION_EVIDENCE_ROOT}/adapter-manifest.json"
+)
+REMEDIATION_REAL_EVIDENCE_REFERENCE = (
+    f"{REMEDIATION_EVIDENCE_ROOT}/real-training-evidence.json"
+)
+REMEDIATION_TRAINING_METADATA_REFERENCE = (
+    f"{REMEDIATION_EVIDENCE_ROOT}/training-metadata.json"
+)
+REMEDIATION_ARCHIVE_SHA256_REFERENCE = (
+    f"{REMEDIATION_EVIDENCE_ROOT}/p7-t2-research-remediation-output.zip.sha256"
+)
+REMEDIATION_REAL_EVIDENCE_SHA256 = (
+    "ef51c3c252937744eee2e73d6856c48b3219511ac41098091e01c8919ad1c837"
+)
+CANONICAL_EVALUATION_CONFIG_REFERENCE = (
+    "config/p7-t4-research-independent-evaluation.json"
+)
+CANONICAL_ADAPTER_MANIFEST_REFERENCE = (
+    "evidence/p7-t2-real-training/adapter-manifest.json"
+)
+CANONICAL_REAL_EVIDENCE_REFERENCE = (
+    "evidence/p7-t2-real-training/real-training-evidence.json"
+)
 
 
 class BundleBuildError(ValueError):
     pass
+
+
+def bundle_sources(root: Path, *, remediation: bool) -> dict[str, Path]:
+    root = root.resolve()
+    sources = {relative: root / relative for relative in SOURCE_FILES}
+    if not remediation:
+        return sources
+    sources[CANONICAL_EVALUATION_CONFIG_REFERENCE] = (
+        root / REMEDIATION_CONFIG_REFERENCE
+    )
+    sources[CANONICAL_ADAPTER_MANIFEST_REFERENCE] = (
+        root / REMEDIATION_ADAPTER_MANIFEST_REFERENCE
+    )
+    sources.pop(CANONICAL_REAL_EVIDENCE_REFERENCE)
+    for relative in (
+        REMEDIATION_CONFIG_REFERENCE,
+        REMEDIATION_ADAPTER_MANIFEST_REFERENCE,
+        REMEDIATION_REAL_EVIDENCE_REFERENCE,
+        REMEDIATION_TRAINING_METADATA_REFERENCE,
+        REMEDIATION_ARCHIVE_SHA256_REFERENCE,
+    ):
+        sources[relative] = root / relative
+    return sources
 
 
 def _load_module(name: str, path: Path):
@@ -80,6 +131,44 @@ def manifest_identity(manifest: dict[str, Any]) -> str:
     return hashlib.sha256(
         canonical_bytes({key: value for key, value in manifest.items() if key != "bundleIdentity"})
     ).hexdigest()
+
+
+def build_evaluation_compatibility_evidence(
+    source_payload: bytes,
+    *,
+    source_reference: str,
+    expected_source_sha256: str,
+) -> dict[str, Any]:
+    actual_source_sha256 = hashlib.sha256(source_payload).hexdigest()
+    if actual_source_sha256 != expected_source_sha256:
+        raise BundleBuildError("remediation evidence source SHA-256 mismatch")
+    reference = Path(source_reference)
+    if reference.is_absolute() or ".." in reference.parts:
+        raise BundleBuildError("remediation evidence source reference invalid")
+    try:
+        source = json.loads(source_payload.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as error:
+        raise BundleBuildError("remediation evidence source JSON invalid") from error
+    if (
+        not isinstance(source, dict)
+        or source.get("schemaVersion") != "2.0.0"
+        or source.get("artifactType")
+        != "P7-T2-REMEDIATION-REAL-TRAINING-EXECUTION-EVIDENCE"
+        or source.get("artifactIdentity") != P7T4.artifact_identity(source)
+    ):
+        raise BundleBuildError("remediation evidence source contract invalid")
+    projected = dict(source)
+    projected["schemaVersion"] = "1.0.0"
+    projected["artifactType"] = "P7-T2-REAL-TRAINING-EXECUTION-EVIDENCE"
+    projected["remediationSourceEvidence"] = {
+        "artifactIdentity": source["artifactIdentity"],
+        "artifactType": source["artifactType"],
+        "reference": source_reference,
+        "schemaVersion": source["schemaVersion"],
+        "sha256": actual_source_sha256,
+    }
+    projected["artifactIdentity"] = P7T4.artifact_identity(projected)
+    return projected
 
 
 def bundle_inventory(bundle_root: Path) -> list[dict[str, Any]]:
@@ -118,25 +207,46 @@ def _write_deterministic_zip(bundle_root: Path, archive_path: Path) -> None:
             archive.writestr(information, path.read_bytes())
 
 
-def build_bundle(root: Path, adapter_directory: Path, output_parent: Path) -> tuple[Path, Path, dict[str, Any]]:
+def build_bundle(
+    root: Path,
+    adapter_directory: Path,
+    output_parent: Path,
+    *,
+    remediation: bool = False,
+) -> tuple[Path, Path, dict[str, Any]]:
     root = root.resolve()
     output_parent = output_parent.resolve()
     bundle_root = output_parent / BUNDLE_NAME
     archive_path = output_parent / f"{BUNDLE_NAME}.zip"
     if bundle_root.exists() or archive_path.exists():
         raise BundleBuildError("bundle output already exists; use a clean output parent")
-    gate = P7T4.preflight(root, adapter_directory)
-    missing = [relative for relative in SOURCE_FILES if not (root / relative).is_file()]
+    sources = bundle_sources(root, remediation=remediation)
+    missing = [relative for relative, source in sources.items() if not source.is_file()]
     if missing:
         raise BundleBuildError("bundle source unavailable: " + ", ".join(missing))
     output_parent.mkdir(parents=True, exist_ok=True)
     bundle_root.mkdir()
     try:
-        for relative in SOURCE_FILES:
+        for relative, source in sources.items():
             destination = bundle_root / relative
             destination.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(root / relative, destination)
+            shutil.copy2(source, destination)
+        if remediation:
+            source_path = root / REMEDIATION_REAL_EVIDENCE_REFERENCE
+            compatibility_evidence = build_evaluation_compatibility_evidence(
+                source_path.read_bytes(),
+                source_reference=REMEDIATION_REAL_EVIDENCE_REFERENCE,
+                expected_source_sha256=REMEDIATION_REAL_EVIDENCE_SHA256,
+            )
+            compatibility_path = bundle_root / CANONICAL_REAL_EVIDENCE_REFERENCE
+            compatibility_path.parent.mkdir(parents=True, exist_ok=True)
+            _write_json(compatibility_path, compatibility_evidence)
         shutil.copytree(adapter_directory.resolve(), bundle_root / "adapter")
+        staged_p7t4 = _load_module(
+            "p7t4_for_staged_bundle_preflight",
+            bundle_root / "scripts" / "research-independent-evaluation-p7-t4.py",
+        )
+        gate = staged_p7t4.preflight(bundle_root, bundle_root / "adapter")
         manifest: dict[str, Any] = {
             "artifactType": "P7-T4-RESEARCH-EVALUATION-BUNDLE",
             "schemaVersion": "1.0.0",
@@ -163,10 +273,14 @@ def main() -> int:
     parser.add_argument("--root", type=Path, default=ROOT)
     parser.add_argument("--adapter-directory", type=Path, required=True)
     parser.add_argument("--output-parent", type=Path, default=ROOT / ".artifacts" / "p7-t4-bundle")
+    parser.add_argument("--remediation", action="store_true")
     args = parser.parse_args()
     try:
         bundle_root, archive_path, manifest = build_bundle(
-            args.root, args.adapter_directory, args.output_parent
+            args.root,
+            args.adapter_directory,
+            args.output_parent,
+            remediation=args.remediation,
         )
         print(
             json.dumps(

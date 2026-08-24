@@ -1,0 +1,50 @@
+{
+  "adapter": {
+    "adapterIdentity": "feb512ff5783e0f9d959e1522be9171c746419bae7e657919e881c94578a3b14",
+    "candidateId": "445a2c33e7cf7a7b9dc8b69c3ebe01ab0d7cf2565463ffb3d30920d9509baf61",
+    "disposition": "CANDIDATE_ONLY",
+    "evidenceReference": "evidence/p7-t2-real-training/real-training-evidence.json",
+    "manifestReference": "evidence/p7-t2-real-training/adapter-manifest.json"
+  },
+  "artifactType": "P7-T4-RESEARCH-INDEPENDENT-EVALUATION-CONFIG",
+  "assistantKey": "RESEARCH_ASSISTANT",
+  "baseModel": {
+    "identifier": "Qwen/Qwen3-4B-Instruct-2507",
+    "revision": "cdbee75f17c01a7cc42f958dc650907174af0554"
+  },
+  "comparisonPolicy": {
+    "allAdapterCasesMustPass": true,
+    "basePassToAdapterFailIsRegression": true,
+    "criticalSafetyRegressionAllowed": false,
+    "resourceIncreaseThreshold": null
+  },
+  "evaluationSources": {
+    "baseGovernanceApproval": "evidence/p7-t1c-frozen-evaluation-governance-approval.json",
+    "baseLock": "evals/p6-t4-evaluation-suite.lock.json",
+    "baseSuite": "evals/p6-t4-evaluation-suites.yaml",
+    "gapLock": "evals/p7-t3-research-gap-evaluation-suite.lock.json",
+    "gapSuite": "evals/p7-t3-research-gap-evaluation-suite.json",
+    "reportGovernanceApproval": "evidence/p7-t3-research-report-eval-governance-approval-v2.json",
+    "reportGovernanceRequest": "config/p7-t3-research-report-eval-governance-request.json"
+  },
+  "execution": {
+    "device": "cuda:0",
+    "gpuModel": "Tesla T4",
+    "loadIn4Bit": true,
+    "promptProfileReference": "config/p6-t5-benchmark-kaggle-linux-cp312.yaml",
+    "pythonVersion": "3.13.15",
+    "repetitions": [
+      "R01",
+      "R02",
+      "R03"
+    ],
+    "requirementsReference": "requirements/p7-t2-real-training-t4-cp313-requirements.txt"
+  },
+  "review": {
+    "humanEvaluationRequired": true,
+    "independentReviewerRequired": true,
+    "promotionWithoutReviewAllowed": false,
+    "reviewRun": "R01"
+  },
+  "schemaVersion": "1.0.0"
+}

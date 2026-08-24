@@ -14,10 +14,12 @@ From the repository root:
 python scripts/validate-p7-t4-research-remediation.py
 ```
 
-The command must report `RETRAINING_CONFIGURED`, `trainingAllowed=true`, and
-`promotionAllowed=false`. Any other result is a stop condition. Training is
-authorized only for the exact approved remediation dataset and config below;
-P7-T4 promotion remains blocked until a new candidate passes reevaluation.
+Before external training, the command reported `RETRAINING_CONFIGURED`,
+`trainingAllowed=true`, and `promotionAllowed=false`. After the validated output
+is materialized, it must report `REMEDIATION_TRAINING_COMPLETE`,
+`trainingAllowed=false`, and `promotionAllowed=false`. Any other result is a
+stop condition. P7-T4 promotion remains blocked until the new candidate passes
+reevaluation.
 
 The immutable approved decision is bound to request identity
 `64692cc3d48aa10676c39242a42efa212e692c5b05be18a0a66445c1a8b2ae09`.
@@ -110,12 +112,38 @@ does not byte-match the declared commit. Validate its inventory and identities,
 then run real QLoRA on the governed T4 runtime. The run must emit a new candidate
 identity and immutable real-training evidence.
 
+The canonical imported output archive has SHA-256
+`1f642aab913e705702bc463aff7a85d5f799d2f6214b6bd926904674a10a860d`.
+It binds candidate
+`445a2c33e7cf7a7b9dc8b69c3ebe01ab0d7cf2565463ffb3d30920d9509baf61`,
+adapter identity
+`feb512ff5783e0f9d959e1522be9171c746419bae7e657919e881c94578a3b14`,
+and training-run identity
+`e8c3b34b22297d3ae52426d43d021445948742b4f752e8769d8317d42b9c42fc`.
+The complete weights, checkpoints, and log remain under the ignored local
+artifact directory. Only their validated metadata, evidence, manifest, and
+archive digest are materialized in Git.
+
 ## 5. Re-run P7-T4 without changing its contract
 
 Bind the new candidate in the P7-T4 configuration, rebuild and validate the
 evaluation bundle, and execute all six isolated repetitions: `SHARED_BASE` and
 `RESEARCH_ADAPTER`, each for `R01`, `R02`, and `R03`. Complete the required human
 sidecars and independent review using the existing frozen rubric.
+
+The frozen evaluator consumes schema-version-1 real-training evidence. The
+remediation bundle builder deterministically projects the validated version-2
+training evidence into that compatibility envelope while retaining a hash and
+artifact-identity link to the original version-2 evidence. It does not change
+the evaluator, suite, parser, thresholds, or model output.
+
+After committing the materialized candidate binding, build and validate from a
+clean output parent:
+
+```text
+python scripts/build-p7-t4-research-evaluation-bundle.py --root . --adapter-directory .artifacts/p7-t2/445a2c33e7cf7a7b9dc8b69c3ebe01ab0d7cf2565463ffb3d30920d9509baf61/p7-t2-real-training-output/adapter --output-parent .artifacts/p7-t4-remediation-ready --remediation
+python scripts/validate-p7-t4-research-evaluation-bundle.py --bundle-root .artifacts/p7-t4-remediation-ready/p7-t4-research-evaluation
+```
 
 P7-T4 completes only when the generated final decision states
 `evaluationDecision=PASS` and `promotionAllowed=true`. P7-T5 remains blocked for

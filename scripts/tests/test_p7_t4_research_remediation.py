@@ -33,6 +33,8 @@ class P7T4ResearchRemediationTests(unittest.TestCase):
         file_references = {
             *validator.EVALUATION_FREEZE_REFERENCES,
             validator.CURRENT_TRAINING_CONFIG_REFERENCE,
+            validator.REMEDIATION_EVALUATION_CONFIG_REFERENCE,
+            validator.REMEDIATION_REAL_TRAINING_REFERENCE,
             validator.REMEDIATION_TRAINING_PIPELINE_REFERENCE,
             validator.SERVING_PROFILE_REFERENCE,
             validator.SERVING_SCHEMA_REFERENCE,
@@ -62,19 +64,39 @@ class P7T4ResearchRemediationTests(unittest.TestCase):
             shutil.copy2(source, target)
         return copied_root
 
-    def test_checked_in_remediation_is_approved_materialized_and_allows_retraining(self):
+    def test_checked_in_remediation_records_real_training_and_allows_reevaluation(self):
         result = self.validator().validate_remediation(ROOT, CONFIG_PATH)
 
-        self.assertEqual("RETRAINING_CONFIGURED", result["state"])
+        self.assertEqual("REMEDIATION_TRAINING_COMPLETE", result["state"])
         self.assertEqual(
-            "COMMIT_AND_BUILD_P7_T2_REMEDIATION_BUNDLE",
+            "COMMIT_AND_BUILD_P7_T4_REEVALUATION_BUNDLE",
             result["nextAction"],
         )
-        self.assertTrue(result["trainingAllowed"])
+        self.assertFalse(result["trainingAllowed"])
         self.assertFalse(result["promotionAllowed"])
         self.assertEqual(
             self.config()["replacementDataset"]["governanceRequestIdentity"],
             result["governanceRequestIdentity"],
+        )
+
+    def test_completed_training_binds_a_new_candidate_without_changing_failed_candidate(self):
+        config = self.config()
+
+        self.assertEqual(
+            "REAL_TRAINING_COMPLETE",
+            config["replacementTraining"]["state"],
+        )
+        self.assertEqual(
+            "445a2c33e7cf7a7b9dc8b69c3ebe01ab0d7cf2565463ffb3d30920d9509baf61",
+            config["replacementTraining"]["candidateId"],
+        )
+        self.assertNotEqual(
+            config["failedCandidate"]["candidateId"],
+            config["replacementTraining"]["candidateId"],
+        )
+        self.assertEqual(
+            "READY_FOR_EXTERNAL_REEVALUATION",
+            config["reevaluation"]["state"],
         )
 
     def test_remediation_identity_and_failure_diagnostics_are_reproducible(self):
@@ -235,6 +257,26 @@ class P7T4ResearchRemediationTests(unittest.TestCase):
                 validator.RemediationValidationError, "training metadata mismatch"
             ):
                 validator.validate_document(copied_root, rewritten)
+
+    def test_validator_rejects_tampered_completed_remediation_evidence(self):
+        validator = self.validator()
+        config = self.config()
+
+        with tempfile.TemporaryDirectory() as directory:
+            copied_root = self.copied_validation_root(validator, Path(directory))
+            metadata_path = copied_root / validator.REMEDIATION_TRAINING_METADATA_REFERENCE
+            metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+            metadata["metrics"]["validationLoss"] = 0.0
+            metadata_path.write_text(
+                json.dumps(metadata, ensure_ascii=False, indent=2) + "\n",
+                encoding="utf-8",
+            )
+
+            with self.assertRaisesRegex(
+                validator.RemediationValidationError,
+                "replacementTraining",
+            ):
+                validator.validate_document(copied_root, config)
 
 
 if __name__ == "__main__":

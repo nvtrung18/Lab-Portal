@@ -92,6 +92,7 @@ qa/
 
 # P7-T2 external real-training outputs: validated locally, but too large and runtime-specific for Git.
 .artifacts/p7-t2/
+.artifacts/p7-t2-remediation-ready/
 
 # P7-T4 portable evaluation bundles and raw comparison/review evidence stay local.
 .artifacts/p7-t4*/

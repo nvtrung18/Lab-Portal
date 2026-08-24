@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 from collections import Counter
+import copy
 import hashlib
 import importlib.util
 import json
@@ -64,6 +65,47 @@ REMEDIATION_TRAINING_CONFIG_REFERENCE = (
 )
 REMEDIATION_TRAINING_PIPELINE_REFERENCE = (
     "scripts/training-pipeline-p7-t2-remediation.py"
+)
+REMEDIATION_REAL_TRAINING_REFERENCE = "scripts/p7-t2-real-training-remediation.py"
+REMEDIATION_EVIDENCE_ROOT = "evidence/p7-t2-real-training/remediation-v2"
+REMEDIATION_ADAPTER_MANIFEST_REFERENCE = (
+    f"{REMEDIATION_EVIDENCE_ROOT}/adapter-manifest.json"
+)
+REMEDIATION_REAL_EVIDENCE_REFERENCE = (
+    f"{REMEDIATION_EVIDENCE_ROOT}/real-training-evidence.json"
+)
+REMEDIATION_TRAINING_METADATA_REFERENCE = (
+    f"{REMEDIATION_EVIDENCE_ROOT}/training-metadata.json"
+)
+REMEDIATION_ARCHIVE_SHA256_REFERENCE = (
+    f"{REMEDIATION_EVIDENCE_ROOT}/p7-t2-research-remediation-output.zip.sha256"
+)
+REMEDIATION_EVALUATION_CONFIG_REFERENCE = (
+    "config/p7-t4-research-independent-evaluation-remediation.json"
+)
+EXPECTED_REMEDIATION_CANDIDATE_ID = (
+    "445a2c33e7cf7a7b9dc8b69c3ebe01ab0d7cf2565463ffb3d30920d9509baf61"
+)
+EXPECTED_REMEDIATION_ADAPTER_IDENTITY = (
+    "feb512ff5783e0f9d959e1522be9171c746419bae7e657919e881c94578a3b14"
+)
+EXPECTED_REMEDIATION_ADAPTER_MANIFEST_SHA256 = (
+    "e5b8991941f36dc799a0fc1b53ac09bf082665a2b2cc09b0a6463aa95b8b0287"
+)
+EXPECTED_REMEDIATION_TRAINING_RUN_IDENTITY = (
+    "e8c3b34b22297d3ae52426d43d021445948742b4f752e8769d8317d42b9c42fc"
+)
+EXPECTED_REMEDIATION_EVIDENCE_IDENTITY = (
+    "6ac24aa9e1079ad2e58a9b778a841b51855eb91a027f1b1559845dcff70b4945"
+)
+EXPECTED_REMEDIATION_EVIDENCE_SHA256 = (
+    "ef51c3c252937744eee2e73d6856c48b3219511ac41098091e01c8919ad1c837"
+)
+EXPECTED_REMEDIATION_METADATA_SHA256 = (
+    "eb949bd2eccd3e0e866fbe23a8aa61f94915cebf086afc491400bbc1247d452a"
+)
+EXPECTED_REMEDIATION_ARCHIVE_SHA256 = (
+    "1f642aab913e705702bc463aff7a85d5f799d2f6214b6bd926904674a10a860d"
 )
 EXPECTED_REMEDIATION_SOURCE_SHA256 = (
     "6654416e24e190d6614fab7881e28ddd83a63284e08f1eef56c06b68de235bdb"
@@ -842,6 +884,184 @@ def _validate_approved_materialization(
         )
 
 
+def _validate_completed_replacement_training(
+    root: Path,
+    failed_candidate: object,
+    diagnostics: list[str],
+) -> None:
+    try:
+        config = _load_json(
+            _resolve_reference(
+                root,
+                REMEDIATION_TRAINING_CONFIG_REFERENCE,
+                "remediation replacement training/config",
+            ),
+            "remediation replacement training config",
+        )
+        manifest_path = _resolve_reference(
+            root,
+            REMEDIATION_ADAPTER_MANIFEST_REFERENCE,
+            "remediation replacement training/adapter manifest",
+        )
+        evidence_path = _resolve_reference(
+            root,
+            REMEDIATION_REAL_EVIDENCE_REFERENCE,
+            "remediation replacement training/evidence",
+        )
+        metadata_path = _resolve_reference(
+            root,
+            REMEDIATION_TRAINING_METADATA_REFERENCE,
+            "remediation replacement training/metadata",
+        )
+        archive_sha256_path = _resolve_reference(
+            root,
+            REMEDIATION_ARCHIVE_SHA256_REFERENCE,
+            "remediation replacement training/archive digest",
+        )
+        evaluation_config = _load_json(
+            _resolve_reference(
+                root,
+                REMEDIATION_EVALUATION_CONFIG_REFERENCE,
+                "remediation reevaluation/config",
+            ),
+            "remediation reevaluation config",
+        )
+        manifest = _load_json(manifest_path, "remediation adapter manifest")
+        evidence = _load_json(evidence_path, "remediation real-training evidence")
+        metadata = _load_json(metadata_path, "remediation training metadata")
+        training = _load_module(
+            "p7_t2_real_training_remediation_for_completion_gate",
+            root / REMEDIATION_REAL_TRAINING_REFERENCE,
+        )
+        evaluator = _load_module(
+            "p7_t4_for_remediation_completion_gate",
+            root / "scripts/research-independent-evaluation-p7-t4.py",
+        )
+        training.validate_real_metadata_contract(metadata, config)
+        evaluator.validate_evaluation_config(evaluation_config, manifest)
+    except (OSError, ValueError, RemediationValidationError) as error:
+        diagnostics.append(
+            f"remediation/replacementTraining: completed evidence invalid: {error}"
+        )
+        return
+
+    manifest_artifacts = manifest.get("artifacts")
+    adapter_identity = (
+        hashlib.sha256(canonical_bytes(manifest_artifacts)).hexdigest()
+        if isinstance(manifest_artifacts, list)
+        else None
+    )
+    candidate_id = (
+        hashlib.sha256(
+            canonical_bytes(
+                {
+                    "trainingRunIdentity": manifest.get("trainingRunIdentity"),
+                    "adapterIdentity": adapter_identity,
+                }
+            )
+        ).hexdigest()
+        if adapter_identity is not None
+        else None
+    )
+    evidence_export = evidence.get("exportedArtifacts")
+    evidence_adapter_artifacts = (
+        [
+            item
+            for item in evidence_export
+            if isinstance(item, dict) and item.get("filename") != "adapter-manifest.json"
+        ]
+        if isinstance(evidence_export, list)
+        else None
+    )
+    evidence_reference = metadata.get("realTrainingEvidence")
+    if (
+        hashlib.sha256(manifest_path.read_bytes()).hexdigest()
+        != EXPECTED_REMEDIATION_ADAPTER_MANIFEST_SHA256
+        or manifest.get("schemaVersion") != "1.0.0"
+        or manifest.get("backend") != "REAL_QLORA"
+        or manifest.get("realTraining") is not True
+        or manifest.get("adapterDisposition") != "CANDIDATE_ONLY"
+        or manifest.get("adapterIdentity") != EXPECTED_REMEDIATION_ADAPTER_IDENTITY
+        or manifest.get("adapterIdentity") != adapter_identity
+        or manifest.get("candidateId") != EXPECTED_REMEDIATION_CANDIDATE_ID
+        or manifest.get("candidateId") != candidate_id
+        or manifest.get("trainingRunIdentity")
+        != EXPECTED_REMEDIATION_TRAINING_RUN_IDENTITY
+        or manifest.get("datasetIdentity") != EXPECTED_REMEDIATION_DATASET_IDENTITY
+        or manifest.get("trainingConfigIdentity")
+        != EXPECTED_REMEDIATION_TRAINING_CONFIG_IDENTITY
+        or manifest.get("artifacts") != evidence_adapter_artifacts
+    ):
+        diagnostics.append(
+            "remediation/replacementTraining: adapter identity or inventory mismatch"
+        )
+    if (
+        evidence.get("artifactType")
+        != "P7-T2-REMEDIATION-REAL-TRAINING-EXECUTION-EVIDENCE"
+        or evidence.get("schemaVersion") != "2.0.0"
+        or evidence.get("artifactIdentity") != EXPECTED_REMEDIATION_EVIDENCE_IDENTITY
+        or evidence.get("artifactIdentity") != artifact_identity(evidence)
+        or hashlib.sha256(evidence_path.read_bytes()).hexdigest()
+        != EXPECTED_REMEDIATION_EVIDENCE_SHA256
+        or evidence.get("candidateId") != EXPECTED_REMEDIATION_CANDIDATE_ID
+        or evidence.get("trainingRunIdentity")
+        != EXPECTED_REMEDIATION_TRAINING_RUN_IDENTITY
+        or evidence.get("datasetIdentity") != EXPECTED_REMEDIATION_DATASET_IDENTITY
+        or evidence.get("trainingConfigIdentity")
+        != EXPECTED_REMEDIATION_TRAINING_CONFIG_IDENTITY
+    ):
+        diagnostics.append(
+            "remediation/replacementTraining: real-training evidence identity mismatch"
+        )
+    if (
+        hashlib.sha256(metadata_path.read_bytes()).hexdigest()
+        != EXPECTED_REMEDIATION_METADATA_SHA256
+        or metadata.get("candidateId") != EXPECTED_REMEDIATION_CANDIDATE_ID
+        or metadata.get("trainingRunIdentity")
+        != EXPECTED_REMEDIATION_TRAINING_RUN_IDENTITY
+        or metadata.get("exportedArtifacts") != evidence_export
+        or metadata.get("actualTraining") != evidence.get("actualTraining")
+        or metadata.get("metrics") != evidence.get("metrics")
+        or not isinstance(evidence_reference, dict)
+        or evidence_reference.get("artifactIdentity")
+        != EXPECTED_REMEDIATION_EVIDENCE_IDENTITY
+        or evidence_reference.get("sha256") != EXPECTED_REMEDIATION_EVIDENCE_SHA256
+    ):
+        diagnostics.append(
+            "remediation/replacementTraining: training metadata binding mismatch"
+        )
+    expected_archive_line = (
+        f"{EXPECTED_REMEDIATION_ARCHIVE_SHA256}  "
+        "p7-t2-research-remediation-output.zip\n"
+    )
+    if archive_sha256_path.read_text(encoding="utf-8") != expected_archive_line:
+        diagnostics.append(
+            "remediation/replacementTraining: output archive digest mismatch"
+        )
+    frozen_config = _load_json(
+        root / "config/p7-t4-research-independent-evaluation.json",
+        "frozen P7-T4 evaluation config",
+    )
+    expected_evaluation_config = copy.deepcopy(frozen_config)
+    expected_evaluation_config["adapter"]["candidateId"] = (
+        EXPECTED_REMEDIATION_CANDIDATE_ID
+    )
+    expected_evaluation_config["adapter"]["adapterIdentity"] = (
+        EXPECTED_REMEDIATION_ADAPTER_IDENTITY
+    )
+    if evaluation_config != expected_evaluation_config:
+        diagnostics.append(
+            "remediation/reevaluation: frozen contract changed beyond candidate binding"
+        )
+    if (
+        not isinstance(failed_candidate, dict)
+        or failed_candidate.get("candidateId") == EXPECTED_REMEDIATION_CANDIDATE_ID
+    ):
+        diagnostics.append(
+            "remediation/replacementTraining: distinct candidate identity required"
+        )
+
+
 def validate_document(root: Path, document: dict[str, Any]) -> dict[str, Any]:
     root = root.resolve()
     diagnostics: list[str] = []
@@ -864,8 +1084,10 @@ def validate_document(root: Path, document: dict[str, Any]) -> dict[str, Any]:
         diagnostics.append("remediation/artifactType: unsupported contract")
     if document.get("schemaVersion") != "1.0.0":
         diagnostics.append("remediation/schemaVersion: unsupported version")
-    if document.get("state") != "RETRAINING_CONFIGURED":
-        diagnostics.append("remediation/state: RETRAINING_CONFIGURED required")
+    if document.get("state") != "REMEDIATION_TRAINING_COMPLETE":
+        diagnostics.append(
+            "remediation/state: REMEDIATION_TRAINING_COMPLETE required"
+        )
     if document.get("artifactIdentity") != artifact_identity(document):
         diagnostics.append("remediation/artifactIdentity: identity mismatch")
 
@@ -1133,19 +1355,32 @@ def validate_document(root: Path, document: dict[str, Any]) -> dict[str, Any]:
         _validate_approved_materialization(root, replacement, diagnostics)
 
     expected_training = {
+        "adapterIdentity": EXPECTED_REMEDIATION_ADAPTER_IDENTITY,
+        "adapterManifestReference": REMEDIATION_ADAPTER_MANIFEST_REFERENCE,
+        "adapterManifestSha256": EXPECTED_REMEDIATION_ADAPTER_MANIFEST_SHA256,
+        "archiveSha256": EXPECTED_REMEDIATION_ARCHIVE_SHA256,
+        "archiveSha256Reference": REMEDIATION_ARCHIVE_SHA256_REFERENCE,
+        "bestCheckpoint": "checkpoint-00000032",
         "bestCheckpointSelectionRequired": True,
+        "candidateId": EXPECTED_REMEDIATION_CANDIDATE_ID,
         "datasetIdentity": EXPECTED_REMEDIATION_DATASET_IDENTITY,
         "earlyStoppingRequired": True,
+        "evidenceArtifactIdentity": EXPECTED_REMEDIATION_EVIDENCE_IDENTITY,
+        "evidenceReference": REMEDIATION_REAL_EVIDENCE_REFERENCE,
+        "evidenceSha256": EXPECTED_REMEDIATION_EVIDENCE_SHA256,
         "finiteEpochScheduleRequired": True,
         "fixedThousandStepScheduleAllowed": False,
         "independentContractHoldoutRequired": True,
+        "metadataReference": REMEDIATION_TRAINING_METADATA_REFERENCE,
+        "metadataSha256": EXPECTED_REMEDIATION_METADATA_SHA256,
         "periodicValidationRequired": True,
         "preparedRuntimeContractRegressionGateRequired": True,
         "sourceTask": "P7-T2",
-        "state": "CONFIGURED_NOT_EXECUTED",
+        "state": "REAL_TRAINING_COMPLETE",
         "trainingApprovalIdentity": EXPECTED_REMEDIATION_APPROVAL_IDENTITY,
         "trainingConfigIdentity": EXPECTED_REMEDIATION_TRAINING_CONFIG_IDENTITY,
         "trainingConfigReference": REMEDIATION_TRAINING_CONFIG_REFERENCE,
+        "trainingRunIdentity": EXPECTED_REMEDIATION_TRAINING_RUN_IDENTITY,
     }
     if document.get("replacementTraining") != expected_training:
         diagnostics.append(
@@ -1154,14 +1389,17 @@ def validate_document(root: Path, document: dict[str, Any]) -> dict[str, Any]:
     expected_reevaluation = {
         "allAdapterCasesMustPass": True,
         "automaticThresholdRelaxationAllowed": False,
+        "candidateId": EXPECTED_REMEDIATION_CANDIDATE_ID,
+        "evaluationConfigReference": REMEDIATION_EVALUATION_CONFIG_REFERENCE,
         "humanEvaluationRequired": True,
         "independentReviewerRequired": True,
         "repetitions": list(EXPECTED_REPETITIONS),
-        "state": "BLOCKED_BY_NEW_CANDIDATE",
+        "state": "READY_FOR_EXTERNAL_REEVALUATION",
         "task": "P7-T4",
     }
     if document.get("reevaluation") != expected_reevaluation:
         diagnostics.append("remediation/reevaluation: unchanged P7-T4 gate required")
+    _validate_completed_replacement_training(root, failed, diagnostics)
 
     try:
         expected_root_cause = {
@@ -1185,10 +1423,10 @@ def validate_document(root: Path, document: dict[str, Any]) -> dict[str, Any]:
         "comparisonIdentity": failed["comparisonIdentity"],
         "failedCandidateId": failed["candidateId"],
         "governanceRequestIdentity": EXPECTED_REMEDIATION_REQUEST_IDENTITY,
-        "nextAction": "COMMIT_AND_BUILD_P7_T2_REMEDIATION_BUNDLE",
+        "nextAction": "COMMIT_AND_BUILD_P7_T4_REEVALUATION_BUNDLE",
         "promotionAllowed": False,
-        "state": "RETRAINING_CONFIGURED",
-        "trainingAllowed": True,
+        "state": "REMEDIATION_TRAINING_COMPLETE",
+        "trainingAllowed": False,
     }
 
 

@@ -1,0 +1,175 @@
+{
+  "actualTraining": {
+    "bestCheckpoint": "checkpoint-00000032",
+    "bestMetricName": "eval_loss",
+    "bestValidationMetric": 0.22946837544441223,
+    "configuredEpochs": 8,
+    "contractHoldoutArtifact": {
+      "filename": "evaluation.jsonl",
+      "recordCount": 3,
+      "sha256": "add0c9ef3d250edc4bb32e8dc62173febc9de005331d8e73bd77dde81716a146"
+    },
+    "contractHoldoutRecords": 3,
+    "contractHoldoutSplit": "evaluation",
+    "contractHoldoutUsedForOptimization": false,
+    "earlyStopped": true,
+    "epochs": 6.421052631578947,
+    "globalSteps": 32,
+    "trainRecords": 38,
+    "trainingArtifact": {
+      "filename": "train.jsonl",
+      "recordCount": 38,
+      "sha256": "cb35e807bb9883dd6e981ba7460048b77a0eb180b2940cf20a70c8ca74fc3c95"
+    },
+    "trainingSplit": "train",
+    "trainingTokenization": {
+      "maximumTokens": 508,
+      "minimumTokens": 264,
+      "totalTokens": 16033
+    },
+    "validationArtifact": {
+      "filename": "validation.jsonl",
+      "recordCount": 4,
+      "sha256": "22a2c985b482b33f554d41932ffbf6cd23c349a69b86e282ee1a164a26e8049f"
+    },
+    "validationRecords": 4,
+    "validationSplit": "validation",
+    "validationTokenization": {
+      "maximumTokens": 509,
+      "minimumTokens": 432,
+      "totalTokens": 1904
+    }
+  },
+  "artifactIdentity": "6ac24aa9e1079ad2e58a9b778a841b51855eb91a027f1b1559845dcff70b4945",
+  "artifactType": "P7-T2-REMEDIATION-REAL-TRAINING-EXECUTION-EVIDENCE",
+  "backend": "REAL_QLORA",
+  "baseModel": {
+    "identifier": "Qwen/Qwen3-4B-Instruct-2507",
+    "revision": "cdbee75f17c01a7cc42f958dc650907174af0554"
+  },
+  "candidateId": "445a2c33e7cf7a7b9dc8b69c3ebe01ab0d7cf2565463ffb3d30920d9509baf61",
+  "checkpoints": [
+    {
+      "checkpointIdentity": "895529d1f902139ea15e54a0161c3778261cab553e3e145e225b17eb0019f537",
+      "checkpointName": "checkpoint-00000030",
+      "globalStep": 30,
+      "metadataSha256": "f1d8bce0077760434d591603d10231f29d112f28aa9ee61d61fc3bcb859cb9bf"
+    },
+    {
+      "checkpointIdentity": "9f5ef6fd778c9d2dd01842cd68471643939dafa617cc323393ce5c863c742b07",
+      "checkpointName": "checkpoint-00000032",
+      "globalStep": 32,
+      "metadataSha256": "83ab87376bf0473230369b2e325bc3b797b9154a133c9deb5296bc376e06c7c3"
+    }
+  ],
+  "contractGates": {
+    "frozenEvaluationTrainingUseAllowed": false,
+    "independentHoldout": {
+      "split": "evaluation",
+      "useForBestCheckpointSelection": false,
+      "useForEarlyStopping": false,
+      "useForOptimization": false
+    },
+    "preparedRuntimeContract": {
+      "assistantProfileReference": "ai-service/config/assistant-profiles.json",
+      "assistantProfileSha256": "115fa97380aa5f90abb9b5732f37bd157da3d2349467002150ee0e323a8d6703",
+      "schemaBundle": "research-assistant-output-v1",
+      "schemaReference": "ai-service/config/schemas/structured-output-schemas.json",
+      "schemaSha256": "be16c67a61a12b37e2eb70eb4771a44c1bee37d3ca8800ad623d0d4e00bc08c8"
+    },
+    "trainingApprovalIdentity": "5565b0339f9745d3e0b9cb44353bb97a131824fcdd7511130d11d6742b13dbd0",
+    "trainingApprovalReference": "evidence/p7-t1c-research-remediation-training-governance-approval.json",
+    "trainingContractIdentity": "89e49c43fd6488a6d47473141ad9070bd0dd785e309bbdaf26246e41d277a145",
+    "trainingContractReference": "datasets/p7-t4-research-remediation-source-v2/training-contract.json"
+  },
+  "datasetIdentity": "0409e9087efe7332e298d0c3812d11f2edac7cedf538a8db475776d9c190eb30",
+  "decision": "ADAPTER_REQUIRED",
+  "decisionReference": "docs/architecture/p6-t6-adapter-strategy-decision.md",
+  "environment": {
+    "gpu": {
+      "cudaRuntime": "11.8",
+      "device": "cuda:0",
+      "name": "Tesla T4",
+      "totalMemoryBytes": 15637086208
+    },
+    "platform": "Linux-6.6.122+-x86_64-with-glibc2.35"
+  },
+  "exportedArtifacts": [
+    {
+      "filename": "README.md",
+      "sha256": "ef7a1e9649dd3ec0fc702b2b66b652d17a58dd67f299b0c83a8d64ba6532e6bb",
+      "size": 5147
+    },
+    {
+      "filename": "adapter-manifest.json",
+      "sha256": "e5b8991941f36dc799a0fc1b53ac09bf082665a2b2cc09b0a6463aa95b8b0287",
+      "size": 2328
+    },
+    {
+      "filename": "adapter_config.json",
+      "sha256": "e9ebd7b68bec4f1dff5819ec7dc2ff92a9b6651c21a8999b23e8513544ceed53",
+      "size": 857
+    },
+    {
+      "filename": "adapter_model.safetensors",
+      "sha256": "06154be00e8d6e7177ebc97a40fd36e20700a1779a6c5aad28c714ca73841004",
+      "size": 47224624
+    },
+    {
+      "filename": "added_tokens.json",
+      "sha256": "c0284b582e14987fbd3d5a2cb2bd139084371ed9acbae488829a1c900833c680",
+      "size": 707
+    },
+    {
+      "filename": "merges.txt",
+      "sha256": "8831e4f1a044471340f7c0a83d7bd71306a5b867e95fd870f74d0c5308a904d5",
+      "size": 1671853
+    },
+    {
+      "filename": "special_tokens_map.json",
+      "sha256": "76862e765266b85aa9459767e33cbaf13970f327a0e88d1c65846c2ddd3a1ecd",
+      "size": 613
+    },
+    {
+      "filename": "tokenizer.json",
+      "sha256": "aeb13307a71acd8fe81861d94ad54ab689df773318809eed3cbe794b4492dae4",
+      "size": 11422654
+    },
+    {
+      "filename": "tokenizer_config.json",
+      "sha256": "fed1bd317e1d5c4b32af689a7dec579e51392ba41942ec94a8dfba8ba85deefd",
+      "size": 8180
+    },
+    {
+      "filename": "vocab.json",
+      "sha256": "ca10d7e9fb3ed18575dd1e277a2579c16d108e32f27439684afa0e10b1440910",
+      "size": 2776833
+    }
+  ],
+  "metrics": {
+    "trainLoss": 0.6625387640669942,
+    "trainRuntimeSeconds": 383.0346,
+    "trainSamplesPerSecond": 0.794,
+    "trainStepsPerSecond": 0.084,
+    "validationLoss": 0.22946837544441223,
+    "validationRuntimeSeconds": 2.0051,
+    "validationSamplesPerSecond": 1.995,
+    "validationStepsPerSecond": 1.995
+  },
+  "qualityEvidence": "REAL_TRAINING_EXECUTION",
+  "realTraining": true,
+  "runtimeVersions": {
+    "accelerate": "1.6.0",
+    "bitsandbytes": "0.48.1",
+    "numpy": "2.5.2",
+    "peft": "0.15.2",
+    "python": "3.13.15",
+    "torch": "2.7.1+cu118",
+    "transformers": "4.51.3"
+  },
+  "schemaVersion": "2.0.0",
+  "seed": 20260824,
+  "sourceCommit": "7bfc9c64548785472d5112f17f21e0bdfc93f2fc",
+  "trainingConfigIdentity": "404e55cd16f6e56c317c973c666f6f4a42716db202323a626b29b6305116f608",
+  "trainingRunIdentity": "e8c3b34b22297d3ae52426d43d021445948742b4f752e8769d8317d42b9c42fc"
+}
