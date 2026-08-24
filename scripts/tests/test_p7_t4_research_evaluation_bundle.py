@@ -27,6 +27,16 @@ VALIDATOR = load_module(
 
 
 class P7T4ResearchEvaluationBundleTests(unittest.TestCase):
+    def test_bundle_module_loaders_do_not_create_python_bytecode(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            module_path = Path(temporary_directory) / "temporary_module.py"
+            module_path.write_text("VALUE = 1\n", encoding="utf-8")
+
+            BUILDER._load_module("p7t4_builder_bytecode_test", module_path)
+            VALIDATOR._load_module("p7t4_validator_bytecode_test", module_path)
+
+            self.assertFalse((module_path.parent / "__pycache__").exists())
+
     def test_remediation_evidence_is_projected_without_changing_training_facts(self):
         reference = (
             "evidence/p7-t2-real-training/remediation-v2/real-training-evidence.json"
@@ -178,6 +188,12 @@ class P7T4ResearchEvaluationBundleTests(unittest.TestCase):
 
             self.assertEqual(candidate_id, result["candidateId"])
             self.assertTrue((bundle_root / "bundle-manifest.json").is_file())
+            self.assertFalse(
+                any(
+                    "__pycache__" in path.parts or path.suffix == ".pyc"
+                    for path in bundle_root.rglob("*")
+                )
+            )
 
     def test_bundle_sources_exclude_training_data_checkpoints_and_base_weights(self):
         sources = set(BUILDER.SOURCE_FILES)

@@ -6,6 +6,7 @@ import argparse
 import importlib.util
 import json
 import re
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -23,7 +24,12 @@ def _load_module(name: str, path: Path):
     if specification is None or specification.loader is None:
         raise BundleValidationError(f"module unavailable: {path}")
     module = importlib.util.module_from_spec(specification)
-    specification.loader.exec_module(module)
+    previous = sys.dont_write_bytecode
+    sys.dont_write_bytecode = True
+    try:
+        specification.loader.exec_module(module)
+    finally:
+        sys.dont_write_bytecode = previous
     return module
 
 
