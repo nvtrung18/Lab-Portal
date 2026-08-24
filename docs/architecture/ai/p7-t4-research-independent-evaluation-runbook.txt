@@ -1,0 +1,89 @@
+# P7-T4 independent Research evaluation on Google Colab Tesla T4
+
+This runbook compares the immutable shared base and the governed Research
+adapter. It does not train, resume training, approve deployment, or manufacture
+human-review outcomes. Use a clean private Colab runtime with Python 3.13.15 and
+one Tesla T4. Keep the six timed runs in separate Python processes.
+
+## 1. Build and upload the governed bundle
+
+From the repository workstation:
+
+```text
+python scripts/build-p7-t4-research-evaluation-bundle.py --adapter-directory <P7-T2-output>/adapter --output-parent .artifacts/p7-t4-bundle
+```
+
+Upload the printed ZIP to Colab and verify its printed SHA-256 out of band.
+Extract only after rejecting absolute paths and `..` path components. The
+extracted root must be `/content/p7-t4-research-evaluation`.
+
+## 2. Install the reviewed runtime and validate the bundle
+
+```text
+python -m pip install --disable-pip-version-check --no-cache-dir --force-reinstall --only-binary=:all: --require-hashes --extra-index-url https://download.pytorch.org/whl/cu118 -r requirements/p7-t2-real-training-t4-cp313-requirements.txt
+python scripts/validate-p7-t4-research-evaluation-bundle.py --bundle-root /content/p7-t4-research-evaluation
+```
+
+Restart the runtime after installation, return to the extracted root, and run
+the validator again. It must report `VALID` before model provisioning.
+
+## 3. Provision the exact base snapshot, then force offline execution
+
+Use `huggingface_hub.snapshot_download` only for this step with:
+
+```text
+repository: Qwen/Qwen3-4B-Instruct-2507
+revision: cdbee75f17c01a7cc42f958dc650907174af0554
+local path: /content/p7-t4-model/cdbee75f17c01a7cc42f958dc650907174af0554
+```
+
+Write `p7-t2-model-identity.json` in that directory with exactly:
+
+```json
+{"identifier":"Qwen/Qwen3-4B-Instruct-2507","revision":"cdbee75f17c01a7cc42f958dc650907174af0554"}
+```
+
+Then set `HF_HUB_OFFLINE=1`, `TRANSFORMERS_OFFLINE=1`,
+`HF_HUB_DISABLE_TELEMETRY=1`, `WANDB_DISABLED=true`,
+`TOKENIZERS_PARALLELISM=false`, `CUDA_VISIBLE_DEVICES=0`, and
+`CUBLAS_WORKSPACE_CONFIG=:4096:8`.
+
+## 4. Preflight and run the six isolated repetitions
+
+```text
+python scripts/research-independent-evaluation-p7-t4.py --preflight --artifact-root /content/p7-t4-output
+python scripts/research-independent-evaluation-p7-t4.py --run --model-path /content/p7-t4-model/cdbee75f17c01a7cc42f958dc650907174af0554 --model-variant SHARED_BASE --repetition R01 --artifact-root /content/p7-t4-output
+python scripts/research-independent-evaluation-p7-t4.py --run --model-path /content/p7-t4-model/cdbee75f17c01a7cc42f958dc650907174af0554 --model-variant SHARED_BASE --repetition R02 --artifact-root /content/p7-t4-output
+python scripts/research-independent-evaluation-p7-t4.py --run --model-path /content/p7-t4-model/cdbee75f17c01a7cc42f958dc650907174af0554 --model-variant SHARED_BASE --repetition R03 --artifact-root /content/p7-t4-output
+python scripts/research-independent-evaluation-p7-t4.py --run --model-path /content/p7-t4-model/cdbee75f17c01a7cc42f958dc650907174af0554 --model-variant RESEARCH_ADAPTER --repetition R01 --artifact-root /content/p7-t4-output
+python scripts/research-independent-evaluation-p7-t4.py --run --model-path /content/p7-t4-model/cdbee75f17c01a7cc42f958dc650907174af0554 --model-variant RESEARCH_ADAPTER --repetition R02 --artifact-root /content/p7-t4-output
+python scripts/research-independent-evaluation-p7-t4.py --run --model-path /content/p7-t4-model/cdbee75f17c01a7cc42f958dc650907174af0554 --model-variant RESEARCH_ADAPTER --repetition R03 --artifact-root /content/p7-t4-output
+python scripts/research-independent-evaluation-p7-t4.py --compare --artifact-root /content/p7-t4-output
+python scripts/research-independent-evaluation-p7-t4.py --review-packets --artifact-root /content/p7-t4-output
+```
+
+Do not overwrite or edit run artifacts. A failed or interrupted repetition must
+be rerun in a new clean output root so immutable evidence remains unambiguous.
+
+## 5. Independent human review and finalization
+
+Download `/content/p7-t4-output`. A reviewer who did not perform P7-T2 training
+must complete both R01 human sidecars using the frozen rubric and visible output
+evidence. `PASS`, `FAIL`, and `NEEDS_REVIEW` remain distinct; unresolved records
+must not be coerced.
+
+The independent comparison review is a JSON object with the closed fields
+documented by `P7-T4-INDEPENDENT-REVIEW`: it binds `comparisonIdentity`, names a
+non-empty `reviewerId`, sets `independentFromTraining` to true, records an ISO-8601
+`reviewedAt`, selects `PASS` or `FAIL`, explicitly accepts or rejects recorded
+resource use, and supplies a non-empty rationale.
+
+After placing the two human sidecars and independent review beside the output:
+
+```text
+python scripts/research-independent-evaluation-p7-t4.py --finalize --artifact-root /content/p7-t4-output --comparison /content/p7-t4-output/comparison.json --base-human <base-sidecar.json> --adapter-human <adapter-sidecar.json> --independent-review <independent-review.json>
+```
+
+Only a generated decision with `evaluationDecision=PASS` and
+`promotionAllowed=true` completes P7-T4. Bundle validation, preflight, automatic
+scores, or a smoke run alone never complete it.
