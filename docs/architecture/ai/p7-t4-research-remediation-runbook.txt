@@ -1,0 +1,122 @@
+# P7-T4 Research automatic-fail remediation
+
+This runbook governs remediation of the immutable P7-T4 result for candidate
+`e8bfada2b79f669409f2506c3e6d63635f02ff4f1cf8e510fbf8a97340d4e1ad`.
+That candidate remains `AUTOMATIC_FAIL` and is not promotable. Remediation must
+produce a newly approved dataset and a new trained candidate; it must not edit,
+replace, or reinterpret the recorded evaluation evidence.
+
+## 1. Verify the remediation gate
+
+From the repository root:
+
+```text
+python scripts/validate-p7-t4-research-remediation.py
+```
+
+The command must report `RETRAINING_CONFIGURED`, `trainingAllowed=true`, and
+`promotionAllowed=false`. Any other result is a stop condition. Training is
+authorized only for the exact approved remediation dataset and config below;
+P7-T4 promotion remains blocked until a new candidate passes reevaluation.
+
+The immutable approved decision is bound to request identity
+`64692cc3d48aa10676c39242a42efa212e692c5b05be18a0a66445c1a8b2ae09`.
+Approval identity
+`5565b0339f9745d3e0b9cb44353bb97a131824fcdd7511130d11d6742b13dbd0`
+authorizes only UC003-UC005 TRAINING. Review these exact artifacts before
+building or executing the training bundle:
+
+```text
+datasets/p7-t4-research-remediation-source-v2/training-contract.json
+datasets/p7-t4-research-remediation-source-v2/source-export.json
+datasets/p7-t4-research-remediation-source-v2/provenance.json
+config/p7-t4-research-remediation-governance-v2/training-dataset-card.pending.json
+config/p7-t4-research-remediation-governance-v2/training-approval-request.json
+evidence/p7-t1c-research-remediation-training-governance-approval.json
+config/p7-t1c-research-remediation-governance-v2/training-dataset-card.approved.json
+datasets/p7-research-synthetic-training-dataset-v2/manifest.json
+config/p7-t2-training-pipeline-t4-remediation.json
+```
+
+## 2. Preserve the failed evaluation
+
+Keep the failed candidate, comparison identity, run outputs, thresholds, parser,
+and frozen P7-T4 suite unchanged. Do not:
+
+- post-process model output to manufacture a valid envelope;
+- weaken the evaluator, thresholds, repetition count, or review requirements;
+- train on any frozen evaluation prompt, expected answer, or case-derived data;
+- reuse the failed candidate for another promotion decision;
+- claim that automatic metrics, smoke evidence, or preflight imply PASS.
+
+## 3. Approved and materialized replacement optimization dataset
+
+Research dataset version `2.0.0` is approved and deterministically materialized
+with identity
+`0409e9087efe7332e298d0c3812d11f2edac7cedf538a8db475776d9c190eb30`.
+It contains 45 independent synthetic records: 38 train, 4 validation, and 3
+independent contract-holdout records for `RESEARCH_UC_003` through
+`RESEARCH_UC_005`. `RESEARCH_UC_006` remains excluded because current governance
+marks `CAT_RESEARCH_REPORT_METADATA` as `DEFERRED` and prohibits `TRAINING`.
+
+The prepared source uses a prompt-scoped dual-contract design:
+The dataset must use a prompt-scoped dual-contract design:
+
+- independently authored P7-T4 v1 compatibility records may teach the closed
+  candidate envelope containing exactly:
+
+```text
+evalCaseId
+observedActionRisk
+observedBehavior
+referencedContextIds
+response
+structuredOutput
+toolRequest
+```
+
+- Research structured-draft records must remain compatible with the prepared
+  `research-assistant-output-v1` schema and profile;
+- targets must be selected by the visible prompt contract instead of one fixed
+  legacy `behavior/actionRisk/contentType` top-level schema.
+
+The P7-T4 compatibility contract is bound by the approved training sidecar. Do
+not derive additional records from frozen evaluation cases, prompts,
+expected observations, or recorded outputs. Every response, tool decision,
+marker, reference, and structured field must have an authoritative optimization
+source; do not synthesize missing business semantics merely to fill the schema.
+
+The prepared Research output schemas are not proof of an active production
+inference route. P7-T4 v1 PASS measures the frozen candidate-evaluation protocol,
+not serving readiness. Record the new source, content, dataset, card, transform,
+approval, and contract identities. Only the approval identity listed above
+authorizes this source. The prior P7-T1C approval for dataset v1 and the P7-T3
+evaluation approval do not authorize it.
+
+## 4. Train a new candidate
+
+The P7-T2 remediation config identity is
+`404e55cd16f6e56c317c973c666f6f4a42716db202323a626b29b6305116f608`.
+It uses at most 8 epochs, validation and checkpointing every epoch, best model
+selection by validation loss, early-stopping patience 2, and an independent
+contract holdout that is not used for optimization, early stopping, or best
+checkpoint selection. It does not reuse the fixed 1000-step schedule that
+produced approximately 333 epochs on 36 training rows.
+
+Validate the target envelope and prepared runtime schema gate before external
+training. Commit the exact approved/materialized/configured payload, then build
+`p7-t2-research-remediation-t4.zip`; the builder rejects any payload file that
+does not byte-match the declared commit. Validate its inventory and identities,
+then run real QLoRA on the governed T4 runtime. The run must emit a new candidate
+identity and immutable real-training evidence.
+
+## 5. Re-run P7-T4 without changing its contract
+
+Bind the new candidate in the P7-T4 configuration, rebuild and validate the
+evaluation bundle, and execute all six isolated repetitions: `SHARED_BASE` and
+`RESEARCH_ADAPTER`, each for `R01`, `R02`, and `R03`. Complete the required human
+sidecars and independent review using the existing frozen rubric.
+
+P7-T4 completes only when the generated final decision states
+`evaluationDecision=PASS` and `promotionAllowed=true`. P7-T5 remains blocked for
+any other state.

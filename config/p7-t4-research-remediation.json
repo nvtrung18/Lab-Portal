@@ -1,0 +1,257 @@
+{
+  "artifactIdentity": "e9751892b0b0ce1155500745c48b729bf3d144b6346b217535e5a1c1165e4424",
+  "artifactType": "P7-T4-RESEARCH-REMEDIATION",
+  "evaluationFreeze": {
+    "preflightIdentity": "dd0635dc9c5a59c0ea360481712ab10b40e9d7c33255cf3e79ceeb547206b3c4",
+    "preflightReference": "evidence/p7-t4-research-independent-evaluation/automatic-fail/preflight.json",
+    "sourceInventory": {
+      "algorithm": "SHA256_CANONICAL_FILE_INVENTORY_V1",
+      "files": [
+        {
+          "reference": "config/p6-t5-benchmark.yaml",
+          "sha256": "2308600adf235c3d39c8af72ba39972688a78bf4951467e9075b935133c5fcdb"
+        },
+        {
+          "reference": "config/p6-t5-benchmark-kaggle-linux-cp312.yaml",
+          "sha256": "78628578a23ff344508bbd05a1ebee866259263346273069a9b569c9ca28f868"
+        },
+        {
+          "reference": "config/p7-t3-research-report-eval-governance-request.json",
+          "sha256": "11c23fb5800e292777d8e20dc53ac5f8b67e20fdfb3965b2967ee7f8c3437b30"
+        },
+        {
+          "reference": "config/p7-t4-research-independent-evaluation.json",
+          "sha256": "3ac16436042944e5dd6c61bb09d463482177e60f45ce174aacd42a0aa49b368d"
+        },
+        {
+          "reference": "docs/architecture/ai/datasets/domain-dataset-schemas.schema.json",
+          "sha256": "6760d7f31091bd255f560f1749b594f9288d635d655d0182466a148905a3cbef"
+        },
+        {
+          "reference": "docs/architecture/ai/datasets/fixtures/p6-t3-cases.yaml",
+          "sha256": "416bc55ad60823205a501571e0b2a92b79c66f03d7ee336a48aa016bb33069eb"
+        },
+        {
+          "reference": "evals/evaluation-suite.schema.json",
+          "sha256": "b07ac82529ed1d4b84e764a4792577ef2ecd00f3ed7ffe4c1dd8dd39e6863717"
+        },
+        {
+          "reference": "evals/human-eval-rubric.yaml",
+          "sha256": "6ce93c7df2268e1899a64cb749dd5a1d23931c6413a442d0db2078fb3cf70d27"
+        },
+        {
+          "reference": "evals/p6-t4-evaluation-freeze.binding.yaml",
+          "sha256": "f1cc2a0d7ca1d38ace6bcc7840b52d0155eb9a3fa4beae0bd74d7bf15983be85"
+        },
+        {
+          "reference": "evals/p6-t4-evaluation-suite.lock.json",
+          "sha256": "7bc4b4d6da72349646d5675d32d5845500e06456836654231eb7b7562b172610"
+        },
+        {
+          "reference": "evals/p6-t4-evaluation-suites.yaml",
+          "sha256": "ce7b6269190ed6a654cd62356f8831afbb159c81267dcd4f511b0cd6c323608c"
+        },
+        {
+          "reference": "evals/p7-t3-research-gap-evaluation-suite.json",
+          "sha256": "3655c8ecc8c282f90e7a1b3bf6c460553398fa93e00a15ae461349fc681d74b5"
+        },
+        {
+          "reference": "evals/p7-t3-research-gap-evaluation-suite.lock.json",
+          "sha256": "2b9d2d723aa2eacbc8b464214a812b106c0ac746b42c7b2d5218363abdebdae2"
+        },
+        {
+          "reference": "evidence/p7-t1c-frozen-evaluation-governance-approval.json",
+          "sha256": "caabacd19a15545842264f2ab90bf0a306540c91758c89a4af84aa79657ba5ca"
+        },
+        {
+          "reference": "evidence/p7-t3-research-report-eval-governance-approval-v2.json",
+          "sha256": "cf54d011c2bffe6ea152f2dcca35cf4941eb569bceb9492475cb0bcdd4cf987c"
+        },
+        {
+          "reference": "requirements/p7-t2-real-training-t4-cp313-requirements.txt",
+          "sha256": "1e82499e57386309fe101c79228068a88f922ef84579c78f96f0b6e97b07c3be"
+        },
+        {
+          "reference": "scripts/benchmark-p6-t5.py",
+          "sha256": "419500899a5ef5ce72936b9c2858a5e2a8661ea32ec9ec8e5af46a9e89e7a936"
+        },
+        {
+          "reference": "scripts/p7-t2-real-training.py",
+          "sha256": "809ea5699ddf1ed7ad26f92fef5da6bf1ce0ad63add48874b5c2cc6add6515b3"
+        },
+        {
+          "reference": "scripts/research-gap-evidence-p7-t3.py",
+          "sha256": "7e69d83ddeedc6eed838f4fcd7174cca2126bbb9d300352ea51cd9c743d792f2"
+        },
+        {
+          "reference": "scripts/research-independent-evaluation-p7-t4.py",
+          "sha256": "edae875fde0de1c21c978261ee200ece8f6df91886e68a7cd1e5f4562fd34008"
+        },
+        {
+          "reference": "scripts/research-model-decision-p7-t3.py",
+          "sha256": "e730a91e65cb5acb240a6a22d6ae5d35d46df3431cbfa91cac404a67f6d46fa8"
+        },
+        {
+          "reference": "scripts/research-report-eval-governance-p7-t3.py",
+          "sha256": "7303d2f8262473818ba4eacddf353b6d55c87a952f6390ecd8605bd3146ffbb2"
+        },
+        {
+          "reference": "scripts/training-pipeline-p7-t2.py",
+          "sha256": "e047a310df45640528103d046f5cade93ee8f4b3194cdb72093b34b52045f1d8"
+        },
+        {
+          "reference": "scripts/validate-evaluation-suites.py",
+          "sha256": "c02d9b62f456921d1c23a9a58d99ae3f7fe96f21d42d32abcc95d1f39a838bef"
+        }
+      ],
+      "identity": "293763371316022f332c23d06fc6b449878b9a18e9f0adc28ec378912d719b0f"
+    },
+    "suite": {
+      "digest": "d1ed92811c6483d5ab5a68321496b6c719df1e7b8e327bc5adcd054c8c71f170",
+      "id": "P7-T4-RESEARCH-INDEPENDENT-EVALUATION",
+      "version": "1.0.0"
+    }
+  },
+  "failedCandidate": {
+    "automaticDecision": "AUTOMATIC_FAIL",
+    "candidateId": "e8bfada2b79f669409f2506c3e6d63635f02ff4f1cf8e510fbf8a97340d4e1ad",
+    "comparisonIdentity": "0b6e942a73e72be90c56cd2120354d604a04c3a9238abffd1aa7180a2de42856",
+    "comparisonReference": "evidence/p7-t4-research-independent-evaluation/automatic-fail/comparison.json",
+    "disposition": "CANDIDATE_NOT_PROMOTABLE_AUTOMATIC_FAIL",
+    "summaryReference": "evidence/p7-t4-research-independent-evaluation/automatic-fail/summary.json",
+    "trainingEvidenceReference": "evidence/p7-t2-real-training/real-training-evidence.json",
+    "trainingMetadataReference": "evidence/p7-t2-real-training/training-metadata.json",
+    "trainingMetadataSha256": "dd55c7d78e4ecea0043472f91cc2f11c85778ecff294714353136c000d2d88d8",
+    "trainingRunIdentity": "2450f6d24e2479d0d8d651956341a88a4f89960bb962292f3b08389da4414135"
+  },
+  "reevaluation": {
+    "allAdapterCasesMustPass": true,
+    "automaticThresholdRelaxationAllowed": false,
+    "humanEvaluationRequired": true,
+    "independentReviewerRequired": true,
+    "repetitions": [
+      "R01",
+      "R02",
+      "R03"
+    ],
+    "state": "BLOCKED_BY_NEW_CANDIDATE",
+    "task": "P7-T4"
+  },
+  "remediationPolicy": {
+    "automaticEvidenceMayBeRewritten": false,
+    "frozenEvaluationTrainingUseAllowed": false,
+    "frozenEvaluationUnchanged": true,
+    "newCandidateIdentityRequired": true,
+    "newTrainingApprovalRequired": true,
+    "newTrainingDatasetRequired": true,
+    "outputPostProcessingToPassAllowed": false
+  },
+  "replacementDataset": {
+    "contentIdentity": "243352c24fb4aa5c95fad616a8cbd2e4062652854ec69619d3c426fb23f871af",
+    "datasetId": "p7-research-synthetic-training-dataset",
+    "governanceRequestIdentity": "64692cc3d48aa10676c39242a42efa212e692c5b05be18a0a66445c1a8b2ae09",
+    "governanceRequestReference": "config/p7-t4-research-remediation-governance-v2/training-approval-request.json",
+    "manifestIdentity": "0409e9087efe7332e298d0c3812d11f2edac7cedf538a8db475776d9c190eb30",
+    "manifestReference": "datasets/p7-research-synthetic-training-dataset-v2/manifest.json",
+    "pendingCardIdentity": "cc8fae04f912d965a7d23ca55022b9ebb55a93589fea7bc3e022f09e3d0a8382",
+    "pendingCardReference": "config/p7-t4-research-remediation-governance-v2/training-dataset-card.pending.json",
+    "proposedVersion": "2.0.0",
+    "provenanceIdentity": "359b5836a34eb7fc1a91249df60583d687dad82104ab3dfe701b6057f01f4cc5",
+    "provenanceReference": "datasets/p7-t4-research-remediation-source-v2/provenance.json",
+    "requiredContractDesign": {
+      "benchmarkCompatibility": {
+        "closedKeys": [
+          "evalCaseId",
+          "observedActionRisk",
+          "observedBehavior",
+          "referencedContextIds",
+          "response",
+          "structuredOutput",
+          "toolRequest"
+        ],
+        "contractSource": "APPROVED_GOVERNED_TRAINING_SPECIFICATION",
+        "scope": "P7_T4_V1_CANDIDATE_EVALUATION_ONLY"
+      },
+      "design": "PROMPT_SCOPED_DUAL_CONTRACT",
+      "fixedLegacyTopLevelSchemaAllowed": false,
+      "frozenEvaluationDerivedRecordsAllowed": false,
+      "preparedRuntimeContract": {
+        "activationState": "PREPARED_NOT_ACTIVE",
+        "assistantProfileReference": "ai-service/config/assistant-profiles.json",
+        "assistantProfileSha256": "115fa97380aa5f90abb9b5732f37bd157da3d2349467002150ee0e323a8d6703",
+        "schemaBundle": "research-assistant-output-v1",
+        "schemaReference": "ai-service/config/schemas/structured-output-schemas.json",
+        "schemaSha256": "be16c67a61a12b37e2eb70eb4771a44c1bee37d3ca8800ad623d0d4e00bc08c8"
+      }
+    },
+    "sourceReference": "datasets/p7-t4-research-remediation-source-v2/source-export.json",
+    "sourceSha256": "6654416e24e190d6614fab7881e28ddd83a63284e08f1eef56c06b68de235bdb",
+    "state": "APPROVED_AND_MATERIALIZED",
+    "trainingContractIdentity": "89e49c43fd6488a6d47473141ad9070bd0dd785e309bbdaf26246e41d277a145",
+    "trainingContractReference": "datasets/p7-t4-research-remediation-source-v2/training-contract.json",
+    "trainingApprovalIdentity": "5565b0339f9745d3e0b9cb44353bb97a131824fcdd7511130d11d6742b13dbd0",
+    "trainingApprovalReference": "evidence/p7-t1c-research-remediation-training-governance-approval.json"
+  },
+  "replacementTraining": {
+    "bestCheckpointSelectionRequired": true,
+    "datasetIdentity": "0409e9087efe7332e298d0c3812d11f2edac7cedf538a8db475776d9c190eb30",
+    "earlyStoppingRequired": true,
+    "finiteEpochScheduleRequired": true,
+    "fixedThousandStepScheduleAllowed": false,
+    "independentContractHoldoutRequired": true,
+    "periodicValidationRequired": true,
+    "preparedRuntimeContractRegressionGateRequired": true,
+    "sourceTask": "P7-T2",
+    "state": "CONFIGURED_NOT_EXECUTED",
+    "trainingApprovalIdentity": "5565b0339f9745d3e0b9cb44353bb97a131824fcdd7511130d11d6742b13dbd0",
+    "trainingConfigIdentity": "404e55cd16f6e56c317c973c666f6f4a42716db202323a626b29b6305116f608",
+    "trainingConfigReference": "config/p7-t2-training-pipeline-t4-remediation.json"
+  },
+  "rootCause": {
+    "adapterParseErrorsPerRepetition": {
+      "R01": {
+        "RAW_OUTPUT_CASE_ID_MISMATCH": 10,
+        "RAW_OUTPUT_ENVELOPE_INVALID": 6,
+        "RAW_OUTPUT_PARSE_FAILURE": 2
+      },
+      "R02": {
+        "RAW_OUTPUT_CASE_ID_MISMATCH": 10,
+        "RAW_OUTPUT_ENVELOPE_INVALID": 6,
+        "RAW_OUTPUT_PARSE_FAILURE": 2
+      },
+      "R03": {
+        "RAW_OUTPUT_CASE_ID_MISMATCH": 10,
+        "RAW_OUTPUT_ENVELOPE_INVALID": 6,
+        "RAW_OUTPUT_PARSE_FAILURE": 2
+      }
+    },
+    "codes": [
+      "TRAINING_TARGET_CONTRACT_MISMATCH",
+      "TRAINING_SCHEDULE_OVERFIT_RISK"
+    ],
+    "supervisedTargets": {
+      "p7T4CompatibleCount": 0,
+      "recordCount": 39,
+      "topLevelKeyUnion": [
+        "actionRisk",
+        "behavior",
+        "contentType",
+        "draft",
+        "message",
+        "summary"
+      ]
+    },
+    "trainingSchedule": {
+      "epochs": 333.44444444444446,
+      "globalSteps": 1000,
+      "gradientAccumulation": 16,
+      "learningRate": 0.0002,
+      "maxSteps": 1000,
+      "trainLoss": 0.06041742135953245,
+      "trainRecords": 36,
+      "validationLoss": 2.058237075805664
+    }
+  },
+  "schemaVersion": "1.0.0",
+  "state": "RETRAINING_CONFIGURED"
+}
