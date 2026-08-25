@@ -1,0 +1,54 @@
+P7-T2 RESEARCH REMEDIATION V3 NUMERICAL-STABILITY RETRY - EXTERNAL TESLA T4 RUNBOOK
+
+Status boundary
+- Approval 67520e81e5c0bc9a326f17b437c1b4193a4f4ebf9b8a79d515d7b99266debfda authorizes one fresh external retry only.
+- The quarantined candidate 9e6409fd012b28191ddab55c90ee5f17800c2ae683994bc9312757e29c8d4188 must never be resumed, evaluated, or promoted.
+- The retry starts from the exact base model and uses the unchanged approved v3 dataset and split identities.
+- The only numerical change is FP16 gradientScalerInitialScale=32768.
+- Bundle validation, preflight, or completed training does not establish P7-T4 PASS or promotion.
+- A successful adapter remains CANDIDATE_ONLY until unchanged P7-T4 evaluation and review pass.
+
+Locked runtime
+- Google Colab
+- CPython 3.13.15
+- Tesla T4, CUDA 11.8
+- Qwen/Qwen3-4B-Instruct-2507
+- revision cdbee75f17c01a7cc42f958dc650907174af0554
+
+Execution order
+1. Upload p7-t2-research-remediation-v3-stability-t4.zip and extract it under /content.
+2. Validate the extracted bundle with:
+   python scripts/validate-p7-t2-research-remediation-v3-stability-bundle.py --bundle-root /content/p7-t2-research-remediation-v3-stability-t4
+3. Install requirements/p7-t2-real-training-t4-cp313-requirements.txt with hashes.
+4. Restart the whole Colab runtime.
+5. Revalidate Python, Tesla T4, pinned packages, the bundle, and the active retry approval.
+6. Download the exact base-model revision into a clean local directory, then enable offline mode.
+7. Run preflight:
+   python scripts/training-pipeline-p7-t2-remediation-v3.py \
+     --config config/p7-t2-training-pipeline-t4-remediation-v3-stability.json \
+     --decisions config/p6-t6-adapter-decisions.json \
+     --dataset-manifest datasets/p7-research-synthetic-training-dataset-v3/manifest.json \
+     --output /content/p7-t2-research-remediation-v3-stability-output \
+     --model-path /content/p7-t2-remediation-v3-stability-model/cdbee75f17c01a7cc42f958dc650907174af0554 \
+     --preflight-only
+8. Run the same command once without --preflight-only and with --source-commit set to the bundle manifest sourceCommit. Do not pass --resume-from.
+9. Validate real output:
+   python scripts/validate-p7-t2-research-remediation-v3-stability-bundle.py \
+     --bundle-root /content/p7-t2-research-remediation-v3-stability-t4 \
+     --run-output /content/p7-t2-research-remediation-v3-stability-output
+10. Archive and download the complete validated output directory with a SHA-256 sidecar.
+
+Preserved training policy
+- Four finite epochs maximum; no fixed maxSteps schedule.
+- Learning rate, batch size, gradient accumulation, adapter configuration, and dataset are unchanged.
+- Validation is evaluated each epoch; early stopping patience is two epochs.
+- Best checkpoint is selected only by validation loss.
+- Evaluation split remains an isolated contract holdout and is never used for optimization, early stopping, or best-checkpoint selection.
+- No resumption is permitted for this retry.
+
+Stop conditions
+- Stop on any bundle inventory mismatch, identity mismatch, inactive approval, second execution attempt, wrong Python version, non-T4 GPU, model revision mismatch, package mismatch, CUDA error, NaN/Inf logged metric, missing best checkpoint, or contract-holdout contamination.
+- The runtime callback stops immediately on a logged non-finite metric.
+- The output validator rejects any preserved checkpoint whose trainer_state.json contains a non-finite metric.
+- Do not repair generated outputs manually.
+- Do not archive a failed output as a candidate and do not run P7-T4 until validated REAL_TRAINING_COMPLETE output is ingested and bound.

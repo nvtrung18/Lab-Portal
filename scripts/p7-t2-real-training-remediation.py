@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import math
 import os
 from pathlib import Path
 import platform
@@ -181,6 +182,7 @@ def training_argument_values(config: dict[str, Any], checkpoint_root: Path) -> d
         "save_total_limit": training["saveTotalLimit"],
         "logging_strategy": "steps",
         "logging_steps": 1,
+        "logging_nan_inf_filter": False,
         "seed": config["seed"],
         "data_seed": config["seed"],
         "report_to": [],
@@ -206,6 +208,73 @@ def validate_runtime_preflight(precision: str) -> dict[str, Any]:
         "gpu": runtime["gpu"],
         "python": platform.python_version(),
     }
+
+
+def validate_finite_log_history(log_history: object, label: str) -> None:
+    if not isinstance(log_history, list):
+        raise ValueError(f"{label}: trainer log history required")
+    for index, event in enumerate(log_history):
+        if not isinstance(event, dict):
+            raise ValueError(f"{label}: trainer log event {index} must be an object")
+        non_finite = sorted(
+            key
+            for key, value in event.items()
+            if isinstance(value, (int, float))
+            and not isinstance(value, bool)
+            and not math.isfinite(float(value))
+        )
+        if non_finite:
+            raise ValueError(
+                f"{label}: non-finite logged metric at event {index}: "
+                + ", ".join(non_finite)
+            )
+
+
+def validate_finite_checkpoint_metrics(checkpoint_root: Path) -> None:
+    trainer_states = sorted(checkpoint_root.glob("checkpoint-*/trainer_state.json"))
+    if not trainer_states:
+        raise ValueError("real remediation output: checkpoint trainer state required")
+    for trainer_state_path in trainer_states:
+        trainer_state = legacy._load_json(
+            trainer_state_path,
+            f"real remediation output/{trainer_state_path.parent.name}/trainer state",
+        )
+        validate_finite_log_history(
+            trainer_state.get("log_history"),
+            f"real remediation output/{trainer_state_path.parent.name}",
+        )
+
+
+def non_finite_metric_callback(transformers):
+    class FailOnNonFiniteMetricCallback(transformers.TrainerCallback):
+        def on_log(self, args, state, control, logs=None, **kwargs):
+            del args, kwargs
+            validate_finite_log_history(
+                [logs if isinstance(logs, dict) else {}],
+                f"real remediation training/step {state.global_step}",
+            )
+            return control
+
+    return FailOnNonFiniteMetricCallback()
+
+
+def configure_gradient_scaler(trainer: object, config: dict[str, Any]) -> None:
+    initial_scale = config["training"].get("gradientScalerInitialScale")
+    if initial_scale is None:
+        return
+    accelerator = getattr(trainer, "accelerator", None)
+    scaler = getattr(accelerator, "scaler", None)
+    if scaler is None:
+        raise ValueError("real remediation training: FP16 gradient scaler required")
+    state = scaler.state_dict()
+    if not isinstance(state, dict) or "scale" not in state:
+        raise ValueError("real remediation training: gradient scaler state unavailable")
+    state["scale"] = float(initial_scale)
+    state["_growth_tracker"] = 0
+    scaler.load_state_dict(state)
+    configured = scaler.state_dict().get("scale")
+    if not isinstance(configured, (int, float)) or float(configured) != float(initial_scale):
+        raise ValueError("real remediation training: gradient scaler configuration mismatch")
 
 
 def validate_real_metadata_contract(metadata: object, config: dict[str, Any]) -> None:
@@ -370,7 +439,7 @@ def run_real_training(
     arguments = transformers.TrainingArguments(
         **training_argument_values(config, checkpoint_root)
     )
-    callback = transformers.EarlyStoppingCallback(
+    early_stopping_callback = transformers.EarlyStoppingCallback(
         early_stopping_patience=config["training"]["earlyStoppingPatience"],
         early_stopping_threshold=config["training"]["earlyStoppingThreshold"],
     )
@@ -381,10 +450,17 @@ def run_real_training(
         eval_dataset=validation_dataset,
         data_collator=legacy._data_collator(tokenizer, torch),
         processing_class=tokenizer,
-        callbacks=[callback],
+        callbacks=[early_stopping_callback, non_finite_metric_callback(transformers)],
     )
+    if config["training"].get("gradientScalerInitialScale") is not None and resume_from is not None:
+        raise ValueError("real remediation stability retry must start from the base model")
+    configure_gradient_scaler(trainer, config)
     train_result = trainer.train(
         resume_from_checkpoint=str(resume_from.resolve()) if resume_from is not None else None
+    )
+    validate_finite_log_history(
+        trainer.state.log_history,
+        "real remediation training",
     )
     validation_metrics = trainer.evaluate(eval_dataset=validation_dataset)
     export_directory.mkdir(parents=True, exist_ok=False)
@@ -505,6 +581,9 @@ def run_real_training(
 def validate_real_training_output(
     output_directory: Path, config: dict[str, Any], dataset_manifest_path: Path
 ) -> dict[str, Any]:
+    validate_finite_checkpoint_metrics(
+        output_directory / config["output"]["checkpointDirectory"]
+    )
     legacy.load_training_inputs = load_training_inputs
     legacy.validate_real_metadata_contract = validate_real_metadata_contract
     return legacy.validate_real_training_output(output_directory, config, dataset_manifest_path)

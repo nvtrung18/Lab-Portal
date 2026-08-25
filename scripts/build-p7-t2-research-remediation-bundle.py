@@ -24,6 +24,7 @@ DATASET_IDENTITY = "0409e9087efe7332e298d0c3812d11f2edac7cedf538a8db475776d9c190
 TRAINING_APPROVAL_IDENTITY = "5565b0339f9745d3e0b9cb44353bb97a131824fcdd7511130d11d6742b13dbd0"
 TRAINING_CONTRACT_IDENTITY = "89e49c43fd6488a6d47473141ad9070bd0dd785e309bbdaf26246e41d277a145"
 BUNDLE_VERSION = "2.0.0"
+EXECUTION_APPROVAL_IDENTITY: str | None = None
 TRAINING_CONFIG_REFERENCE = "config/p7-t2-training-pipeline-t4-remediation.json"
 TRAINING_PIPELINE_REFERENCE = "scripts/training-pipeline-p7-t2-remediation.py"
 VALIDATOR_REFERENCE = "scripts/validate-p7-t2-research-remediation-bundle.py"
@@ -184,6 +185,8 @@ def _manifest(bundle_root: Path, source_commit: str) -> dict[str, Any]:
         "fileCount": 0,
         "bundleIdentity": "",
     }
+    if EXECUTION_APPROVAL_IDENTITY is not None:
+        manifest["executionApprovalIdentity"] = EXECUTION_APPROVAL_IDENTITY
     manifest["fileCount"] = len(manifest["fileInventory"])
     manifest["bundleIdentity"] = sha256_bytes(
         canonical_bytes({key: value for key, value in manifest.items() if key != "bundleIdentity"})

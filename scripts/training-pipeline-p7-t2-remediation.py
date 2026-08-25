@@ -27,6 +27,11 @@ DATASET_MANIFEST_REFERENCE = (
     "datasets/p7-research-synthetic-training-dataset-v2/manifest.json"
 )
 DATASET_RECORD_SCHEMA_VERSION = "2.0.0"
+GRADIENT_SCALER_INITIAL_SCALE: int | None = None
+STABILITY_RETRY_APPROVAL_IDENTITY: str | None = None
+STABILITY_RETRY_APPROVAL_REFERENCE: str | None = None
+STABILITY_RETRY_REQUEST_IDENTITY: str | None = None
+STABILITY_RETRY_INCIDENT_IDENTITY: str | None = None
 BASE_MODEL = {
     "identifier": "Qwen/Qwen3-4B-Instruct-2507",
     "revision": "cdbee75f17c01a7cc42f958dc650907174af0554",
@@ -177,7 +182,11 @@ def validate_training_config(config: object) -> None:
         "earlyStoppingThreshold",
         "saveTotalLimit",
     }
-    if not isinstance(training, dict) or set(training) != expected_training_fields:
+    stability_training_fields = expected_training_fields | {"gradientScalerInitialScale"}
+    allowed_training_fields = {frozenset(expected_training_fields)}
+    if GRADIENT_SCALER_INITIAL_SCALE is not None:
+        allowed_training_fields.add(frozenset(stability_training_fields))
+    if not isinstance(training, dict) or frozenset(training) not in allowed_training_fields:
         diagnostics.append("config/training: exact guarded schedule fields required")
     else:
         if not _positive_int(training.get("epochs")) or training.get("maxSteps") is not None:
@@ -207,6 +216,13 @@ def validate_training_config(config: object) -> None:
             diagnostics.append("config/training/learningRate: positive number required")
         if training.get("precision") != "float16":
             diagnostics.append("config/training/precision: float16 required for Tesla T4")
+        if (
+            "gradientScalerInitialScale" in training
+            and training.get("gradientScalerInitialScale") != GRADIENT_SCALER_INITIAL_SCALE
+        ):
+            diagnostics.append(
+                "config/training/gradientScalerInitialScale: supported stability value required"
+            )
 
     adapter = config.get("adapter")
     if not isinstance(adapter, dict) or adapter.get("method") != "QLORA":
@@ -431,7 +447,53 @@ def validate_dataset_and_contract_gates(
         for record in split_records:
             _validate_structured_output(record["trainingTarget"]["structuredOutput"], bundle)
 
-    return {
+    stability_retry_approval = None
+    if config["training"].get("gradientScalerInitialScale") is not None:
+        if (
+            STABILITY_RETRY_APPROVAL_IDENTITY is None
+            or STABILITY_RETRY_APPROVAL_REFERENCE is None
+            or STABILITY_RETRY_REQUEST_IDENTITY is None
+            or STABILITY_RETRY_INCIDENT_IDENTITY is None
+        ):
+            raise TrainingPipelineError("stability retry approval: binding unavailable")
+        retry_approval = load_document(
+            repository_root / STABILITY_RETRY_APPROVAL_REFERENCE,
+            "stability retry approval",
+        )
+        if (
+            retry_approval.get("artifactIdentity") != STABILITY_RETRY_APPROVAL_IDENTITY
+            or artifact_identity(retry_approval, "artifactIdentity")
+            != STABILITY_RETRY_APPROVAL_IDENTITY
+            or retry_approval.get("status") != "APPROVED"
+            or retry_approval.get("approval", {}).get("decision") != "APPROVED"
+            or retry_approval.get("revocation", {}).get("status") != "ACTIVE"
+            or retry_approval.get("requestIdentity") != STABILITY_RETRY_REQUEST_IDENTITY
+            or retry_approval.get("incident", {}).get("incidentIdentity")
+            != STABILITY_RETRY_INCIDENT_IDENTITY
+            or retry_approval.get("stabilityChange", {}).get("gradientScalerInitialScale")
+            != GRADIENT_SCALER_INITIAL_SCALE
+            or retry_approval.get("stabilityChange", {}).get("trainingConfigIdentity")
+            != training_config_identity(config)
+            or retry_approval.get("stabilityChange", {}).get("trainingRunIdentity")
+            != training_run_identity(config)
+            or retry_approval.get("scope", {}).get("maximumRuns") != 1
+            or retry_approval.get("scope", {}).get("freshBaseModelStartRequired") is not True
+            or retry_approval.get("scope", {}).get("resumeFromQuarantinedCheckpointAllowed")
+            is not False
+            or retry_approval.get("scope", {}).get("candidateDispositionAfterTraining")
+            != "CANDIDATE_ONLY"
+        ):
+            raise TrainingPipelineError(
+                "stability retry approval: exact active one-run approval required"
+            )
+        stability_retry_approval = {
+            "state": "PASS",
+            "approvalIdentity": STABILITY_RETRY_APPROVAL_IDENTITY,
+            "maximumRuns": 1,
+            "freshBaseModelStartRequired": True,
+        }
+
+    result = {
         "state": "PASS",
         "counts": {split: len(values) for split, values in records.items()},
         "contentIdsDisjoint": True,
@@ -446,6 +508,9 @@ def validate_dataset_and_contract_gates(
             "schemaBundle": runtime["schemaBundle"],
         },
     }
+    if stability_retry_approval is not None:
+        result["stabilityRetryApproval"] = stability_retry_approval
+    return result
 
 
 def _source_commit() -> str:

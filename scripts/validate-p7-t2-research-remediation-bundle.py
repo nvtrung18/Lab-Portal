@@ -18,6 +18,7 @@ DATASET_IDENTITY = "0409e9087efe7332e298d0c3812d11f2edac7cedf538a8db475776d9c190
 TRAINING_APPROVAL_IDENTITY = "5565b0339f9745d3e0b9cb44353bb97a131824fcdd7511130d11d6742b13dbd0"
 TRAINING_CONTRACT_IDENTITY = "89e49c43fd6488a6d47473141ad9070bd0dd785e309bbdaf26246e41d277a145"
 BUNDLE_VERSION = "2.0.0"
+EXECUTION_APPROVAL_IDENTITY: str | None = None
 TRAINING_CONFIG_REFERENCE = "config/p7-t2-training-pipeline-t4-remediation.json"
 TRAINING_PIPELINE_REFERENCE = "scripts/training-pipeline-p7-t2-remediation.py"
 BACKEND_REFERENCE = "scripts/p7-t2-real-training-remediation.py"
@@ -122,6 +123,8 @@ def validate_bundle(bundle_root: Path) -> dict[str, Any]:
         "fileCount",
         "bundleIdentity",
     }
+    if EXECUTION_APPROVAL_IDENTITY is not None:
+        expected_fields.add("executionApprovalIdentity")
     if set(manifest) != expected_fields:
         raise ValueError("bundle manifest: exact fields required")
     if (
@@ -142,6 +145,11 @@ def validate_bundle(bundle_root: Path) -> dict[str, Any]:
         or manifest.get("trainingContractIdentity") != TRAINING_CONTRACT_IDENTITY
     ):
         raise ValueError("bundle manifest: exact model/dataset/governance binding required")
+    if (
+        EXECUTION_APPROVAL_IDENTITY is not None
+        and manifest.get("executionApprovalIdentity") != EXECUTION_APPROVAL_IDENTITY
+    ):
+        raise ValueError("bundle manifest: exact execution approval binding required")
     expected_identity = sha256_bytes(
         canonical_bytes({key: value for key, value in manifest.items() if key != "bundleIdentity"})
     )

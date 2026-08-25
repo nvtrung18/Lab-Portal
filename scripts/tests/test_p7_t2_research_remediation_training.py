@@ -96,12 +96,23 @@ class P7T2ResearchRemediationTrainingTests(unittest.TestCase):
         self.assertEqual("eval_loss", kwargs["metric_for_best_model"])
         self.assertFalse(kwargs["greater_is_better"])
         self.assertEqual(2, kwargs["save_total_limit"])
+        self.assertFalse(kwargs["logging_nan_inf_filter"])
         self.assertEqual(
             "checkpoint-00000012",
             self.backend.canonical_checkpoint_name("/tmp/checkpoint-12"),
         )
         with self.assertRaisesRegex(ValueError, "best checkpoint"):
             self.backend.canonical_checkpoint_name("/tmp/not-a-checkpoint")
+
+    def test_v2_config_rejects_v3_stability_retry_field(self):
+        config = copy.deepcopy(self.config)
+        config["training"]["gradientScalerInitialScale"] = 32768
+
+        with self.assertRaisesRegex(
+            self.pipeline.TrainingPipelineError,
+            "exact guarded schedule fields",
+        ):
+            self.pipeline.validate_training_config(config)
 
     def test_tampered_holdout_or_runtime_schema_is_rejected(self):
         with tempfile.TemporaryDirectory() as temporary_directory:

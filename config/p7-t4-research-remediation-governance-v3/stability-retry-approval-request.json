@@ -1,0 +1,66 @@
+{
+  "approval": null,
+  "approvalAuthority": "RESEARCH_GOVERNANCE_DATA_GOVERNANCE_APPROVAL_AUTHORITY",
+  "approvedAt": null,
+  "approvedBy": null,
+  "artifactType": "P7-T2-REMEDIATION-V3-NUMERICAL-STABILITY-RETRY-REQUEST",
+  "currentState": {
+    "candidatePromotable": false,
+    "disposition": "CANDIDATE_OUTPUT_QUARANTINED",
+    "p7T4ExecutionAllowed": false,
+    "retryAuthorized": false
+  },
+  "incident": {
+    "archiveSha256": "18d54f55675e9df7814106b346b7e24431f812e60d2dfdffd3550c5d6026870c",
+    "candidateId": "9e6409fd012b28191ddab55c90ee5f17800c2ae683994bc9312757e29c8d4188",
+    "incidentIdentity": "d8e26eeacbf4a46dc81facef7ec3a12987148d874b6aeb409dc0ee266f3588d0",
+    "reason": "NON_FINITE_GRADIENT_METRIC",
+    "reference": "evidence/p7-t2-real-training/remediation-v3-quarantine/incident.json",
+    "trainingRunIdentity": "8487c2bff555e06682cb7b0b2dfdf5a34ebd17009667f7154c3c485672519593"
+  },
+  "proposedRetry": {
+    "baseModel": {
+      "identifier": "Qwen/Qwen3-4B-Instruct-2507",
+      "revision": "cdbee75f17c01a7cc42f958dc650907174af0554"
+    },
+    "datasetIdentity": "430390b22936bdea27c7e5b4022795ef483b55ac21f84e3e52cc663b9aaf9d10",
+    "freshBaseModelStartRequired": true,
+    "gradientScalerInitialScale": 32768,
+    "maximumRuns": 1,
+    "resumeFromQuarantinedCheckpointAllowed": false,
+    "trainingConfigIdentity": "58f945c432208e032edcd4180116de8540b429cc4a5d070a4c90e7f9a8111667",
+    "trainingConfigReference": "config/p7-t2-training-pipeline-t4-remediation-v3-stability.json",
+    "trainingRunIdentity": "961521eff75736427b4d9b405e6616dd0b989af41cf5d5a017ba3d2a64a94005"
+  },
+  "preservedControls": {
+    "adapterConfigurationUnchanged": true,
+    "batchAndGradientAccumulationUnchanged": true,
+    "datasetAndSplitIdentitiesUnchanged": true,
+    "earlyStoppingAndBestCheckpointPolicyUnchanged": true,
+    "frozenEvaluationTrainingUseAllowed": false,
+    "learningRateUnchanged": true,
+    "maximumEpochsUnchanged": true,
+    "p7T4EvaluationSuiteUnchanged": true,
+    "precisionRemainsFloat16": true,
+    "trainingDataApprovalIdentity": "a1f92aec9caca9b053daf780c1bfde951abdb88e2fe3e92f4f2545c676d45015"
+  },
+  "repositoryBaseCommit": "304804c096fe2c0299d4ec4e229eca637dc9a5c0",
+  "requestId": "P7-T2-REMEDIATION-V3-NUMERICAL-STABILITY-RETRY-001",
+  "requestIdentity": "517f170d595d68bd813a6c805da54cf8ebe68b2f3c30ea326af9da492c561b21",
+  "requestedScope": {
+    "assistantKey": "RESEARCH_ASSISTANT",
+    "candidateDispositionAfterTraining": "CANDIDATE_ONLY",
+    "externalSharingAllowed": false,
+    "p7T4AutomaticPassClaimAllowed": false,
+    "productionActivationAllowed": false,
+    "promotionAllowed": false,
+    "purpose": "ONE_EXTERNAL_T4_NUMERICAL_STABILITY_RETRY"
+  },
+  "runtimeGuard": {
+    "failOnAnyNonFiniteLoggedMetric": true,
+    "rejectNonFiniteCheckpointTrainerState": true,
+    "stopCondition": "NON_FINITE_GRADIENT_METRIC"
+  },
+  "schemaVersion": "1.0.0",
+  "status": "PENDING_USER_APPROVAL"
+}
