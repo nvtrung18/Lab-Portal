@@ -70,6 +70,28 @@ REMEDIATION_ARCHIVE_SHA256_REFERENCE = (
 REMEDIATION_REAL_EVIDENCE_SHA256 = (
     "ef51c3c252937744eee2e73d6856c48b3219511ac41098091e01c8919ad1c837"
 )
+STABILITY_RETRY_CONFIG_REFERENCE = (
+    "config/p7-t4-research-independent-evaluation-remediation-v3-stability.json"
+)
+STABILITY_RETRY_EVIDENCE_ROOT = (
+    "evidence/p7-t2-real-training/remediation-v3-stability"
+)
+STABILITY_RETRY_ADAPTER_MANIFEST_REFERENCE = (
+    f"{STABILITY_RETRY_EVIDENCE_ROOT}/adapter-manifest.json"
+)
+STABILITY_RETRY_REAL_EVIDENCE_REFERENCE = (
+    f"{STABILITY_RETRY_EVIDENCE_ROOT}/real-training-evidence.json"
+)
+STABILITY_RETRY_TRAINING_METADATA_REFERENCE = (
+    f"{STABILITY_RETRY_EVIDENCE_ROOT}/training-metadata.json"
+)
+STABILITY_RETRY_ARCHIVE_SHA256_REFERENCE = (
+    f"{STABILITY_RETRY_EVIDENCE_ROOT}/"
+    "p7-t2-research-remediation-v3-stability-output.zip.sha256"
+)
+STABILITY_RETRY_REAL_EVIDENCE_SHA256 = (
+    "710584c0bc23beba0c0e76f17472eb4aea09351b04f7c93ed08dc535eed17937"
+)
 CANONICAL_EVALUATION_CONFIG_REFERENCE = (
     "config/p7-t4-research-independent-evaluation.json"
 )
@@ -85,24 +107,45 @@ class BundleBuildError(ValueError):
     pass
 
 
-def bundle_sources(root: Path, *, remediation: bool) -> dict[str, Path]:
+def bundle_sources(
+    root: Path,
+    *,
+    remediation: bool = False,
+    stability_retry: bool = False,
+) -> dict[str, Path]:
     root = root.resolve()
     sources = {relative: root / relative for relative in SOURCE_FILES}
-    if not remediation:
+    if remediation and stability_retry:
+        raise BundleBuildError("select exactly one candidate mode")
+    if not remediation and not stability_retry:
         return sources
+
+    if stability_retry:
+        config_reference = STABILITY_RETRY_CONFIG_REFERENCE
+        manifest_reference = STABILITY_RETRY_ADAPTER_MANIFEST_REFERENCE
+        evidence_reference = STABILITY_RETRY_REAL_EVIDENCE_REFERENCE
+        metadata_reference = STABILITY_RETRY_TRAINING_METADATA_REFERENCE
+        archive_reference = STABILITY_RETRY_ARCHIVE_SHA256_REFERENCE
+    else:
+        config_reference = REMEDIATION_CONFIG_REFERENCE
+        manifest_reference = REMEDIATION_ADAPTER_MANIFEST_REFERENCE
+        evidence_reference = REMEDIATION_REAL_EVIDENCE_REFERENCE
+        metadata_reference = REMEDIATION_TRAINING_METADATA_REFERENCE
+        archive_reference = REMEDIATION_ARCHIVE_SHA256_REFERENCE
+
     sources[CANONICAL_EVALUATION_CONFIG_REFERENCE] = (
-        root / REMEDIATION_CONFIG_REFERENCE
+        root / config_reference
     )
     sources[CANONICAL_ADAPTER_MANIFEST_REFERENCE] = (
-        root / REMEDIATION_ADAPTER_MANIFEST_REFERENCE
+        root / manifest_reference
     )
     sources.pop(CANONICAL_REAL_EVIDENCE_REFERENCE)
     for relative in (
-        REMEDIATION_CONFIG_REFERENCE,
-        REMEDIATION_ADAPTER_MANIFEST_REFERENCE,
-        REMEDIATION_REAL_EVIDENCE_REFERENCE,
-        REMEDIATION_TRAINING_METADATA_REFERENCE,
-        REMEDIATION_ARCHIVE_SHA256_REFERENCE,
+        config_reference,
+        manifest_reference,
+        evidence_reference,
+        metadata_reference,
+        archive_reference,
     ):
         sources[relative] = root / relative
     return sources
@@ -219,6 +262,7 @@ def build_bundle(
     output_parent: Path,
     *,
     remediation: bool = False,
+    stability_retry: bool = False,
 ) -> tuple[Path, Path, dict[str, Any]]:
     root = root.resolve()
     output_parent = output_parent.resolve()
@@ -226,7 +270,11 @@ def build_bundle(
     archive_path = output_parent / f"{BUNDLE_NAME}.zip"
     if bundle_root.exists() or archive_path.exists():
         raise BundleBuildError("bundle output already exists; use a clean output parent")
-    sources = bundle_sources(root, remediation=remediation)
+    sources = bundle_sources(
+        root,
+        remediation=remediation,
+        stability_retry=stability_retry,
+    )
     missing = [relative for relative, source in sources.items() if not source.is_file()]
     if missing:
         raise BundleBuildError("bundle source unavailable: " + ", ".join(missing))
@@ -237,12 +285,22 @@ def build_bundle(
             destination = bundle_root / relative
             destination.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(source, destination)
-        if remediation:
-            source_path = root / REMEDIATION_REAL_EVIDENCE_REFERENCE
+        if remediation or stability_retry:
+            source_reference = (
+                STABILITY_RETRY_REAL_EVIDENCE_REFERENCE
+                if stability_retry
+                else REMEDIATION_REAL_EVIDENCE_REFERENCE
+            )
+            source_sha256 = (
+                STABILITY_RETRY_REAL_EVIDENCE_SHA256
+                if stability_retry
+                else REMEDIATION_REAL_EVIDENCE_SHA256
+            )
+            source_path = root / source_reference
             compatibility_evidence = build_evaluation_compatibility_evidence(
                 source_path.read_bytes(),
-                source_reference=REMEDIATION_REAL_EVIDENCE_REFERENCE,
-                expected_source_sha256=REMEDIATION_REAL_EVIDENCE_SHA256,
+                source_reference=source_reference,
+                expected_source_sha256=source_sha256,
             )
             compatibility_path = bundle_root / CANONICAL_REAL_EVIDENCE_REFERENCE
             compatibility_path.parent.mkdir(parents=True, exist_ok=True)
@@ -279,7 +337,9 @@ def main() -> int:
     parser.add_argument("--root", type=Path, default=ROOT)
     parser.add_argument("--adapter-directory", type=Path, required=True)
     parser.add_argument("--output-parent", type=Path, default=ROOT / ".artifacts" / "p7-t4-bundle")
-    parser.add_argument("--remediation", action="store_true")
+    candidate_mode = parser.add_mutually_exclusive_group()
+    candidate_mode.add_argument("--remediation", action="store_true")
+    candidate_mode.add_argument("--remediation-v3-stability", action="store_true")
     args = parser.parse_args()
     try:
         bundle_root, archive_path, manifest = build_bundle(
@@ -287,6 +347,7 @@ def main() -> int:
             args.adapter_directory,
             args.output_parent,
             remediation=args.remediation,
+            stability_retry=args.remediation_v3_stability,
         )
         print(
             json.dumps(

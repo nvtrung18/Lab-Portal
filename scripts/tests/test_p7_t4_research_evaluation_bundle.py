@@ -81,6 +81,35 @@ class P7T4ResearchEvaluationBundleTests(unittest.TestCase):
                 expected_source_sha256="0" * 64,
             )
 
+    def test_stability_retry_evidence_projects_without_rewriting_training_facts(self):
+        reference = (
+            "evidence/p7-t2-real-training/remediation-v3-stability/"
+            "real-training-evidence.json"
+        )
+        source_payload = (ROOT / reference).read_bytes()
+        source = json.loads(source_payload)
+
+        projected = BUILDER.build_evaluation_compatibility_evidence(
+            source_payload,
+            source_reference=reference,
+            expected_source_sha256=(
+                "710584c0bc23beba0c0e76f17472eb4aea09351b04f7c93ed08dc535eed17937"
+            ),
+        )
+
+        self.assertEqual(source["candidateId"], projected["candidateId"])
+        self.assertEqual(source["trainingRunIdentity"], projected["trainingRunIdentity"])
+        self.assertEqual(source["metrics"], projected["metrics"])
+        self.assertEqual(source["actualTraining"], projected["actualTraining"])
+        self.assertEqual(
+            reference,
+            projected["remediationSourceEvidence"]["reference"],
+        )
+        self.assertEqual(
+            projected["artifactIdentity"],
+            BUILDER.P7T4.artifact_identity(projected),
+        )
+
     def test_remediation_bundle_sources_map_new_evidence_to_frozen_logical_paths(self):
         sources = BUILDER.bundle_sources(ROOT, remediation=True)
 
@@ -100,6 +129,32 @@ class P7T4ResearchEvaluationBundleTests(unittest.TestCase):
             "evidence/p7-t2-real-training/remediation-v2/training-metadata.json",
             sources,
         )
+
+    def test_stability_retry_bundle_sources_preserve_old_failures_and_bind_new_candidate(self):
+        sources = BUILDER.bundle_sources(ROOT, stability_retry=True)
+
+        self.assertEqual(
+            ROOT
+            / "config/p7-t4-research-independent-evaluation-remediation-v3-stability.json",
+            sources["config/p7-t4-research-independent-evaluation.json"],
+        )
+        self.assertEqual(
+            ROOT
+            / "evidence/p7-t2-real-training/remediation-v3-stability/adapter-manifest.json",
+            sources["evidence/p7-t2-real-training/adapter-manifest.json"],
+        )
+        self.assertIn(
+            "evidence/p7-t2-real-training/remediation-v3-stability/real-training-evidence.json",
+            sources,
+        )
+        self.assertNotIn(
+            "evidence/p7-t4-research-independent-evaluation/automatic-fail-remediation-v2/comparison.json",
+            sources,
+        )
+
+    def test_bundle_sources_reject_multiple_candidate_modes(self):
+        with self.assertRaisesRegex(BUILDER.BundleBuildError, "one candidate mode"):
+            BUILDER.bundle_sources(ROOT, remediation=True, stability_retry=True)
 
     def test_bundle_preflight_resolves_suite_paths_from_staged_bundle(self):
         with tempfile.TemporaryDirectory() as temporary_directory:

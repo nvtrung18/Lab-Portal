@@ -1,5 +1,5 @@
 {
-  "artifactIdentity": "2bb26557cecb897b615fd12f1a699e5b2daefa8c2004b061f22e8ca4359b2b3d",
+  "artifactIdentity": "ac58428868577c2cdc7dc0cf2d6f531b78fa7e54436e221652f5fcf0631de0d8",
   "artifactType": "P7-T4-RESEARCH-REMEDIATION",
   "evaluationFreeze": {
     "preflightIdentity": "dd0635dc9c5a59c0ea360481712ab10b40e9d7c33255cf3e79ceeb547206b3c4",
@@ -157,6 +157,21 @@
     "state": "AUTOMATIC_FAIL",
     "summaryReference": "evidence/p7-t4-research-independent-evaluation/automatic-fail-remediation-v2/summary.json"
   },
+  "stabilityReevaluation": {
+    "allAdapterCasesMustPass": true,
+    "automaticThresholdRelaxationAllowed": false,
+    "candidateId": "34e3d50b8bf91d27569305fff47247feaf0de487f9b4e78fd94f7ed64dbc62bd",
+    "evaluationConfigReference": "config/p7-t4-research-independent-evaluation-remediation-v3-stability.json",
+    "humanEvaluationRequired": true,
+    "independentReviewerRequired": true,
+    "repetitions": [
+      "R01",
+      "R02",
+      "R03"
+    ],
+    "state": "READY_FOR_EXTERNAL_REEVALUATION",
+    "task": "P7-T4"
+  },
   "remediationPolicy": {
     "automaticEvidenceMayBeRewritten": false,
     "frozenEvaluationTrainingUseAllowed": false,
@@ -261,6 +276,38 @@
     "trainingConfigReference": "config/p7-t2-training-pipeline-t4-remediation.json",
     "trainingRunIdentity": "e8c3b34b22297d3ae52426d43d021445948742b4f752e8769d8317d42b9c42fc"
   },
+  "stabilityRetryTraining": {
+    "adapterIdentity": "9cbd0840c697488cba3cee7aab1e0c463ddf65a208766cc26f658242bcdd20e1",
+    "adapterManifestReference": "evidence/p7-t2-real-training/remediation-v3-stability/adapter-manifest.json",
+    "adapterManifestSha256": "0a494f4daf2e057f65194ec04ebf3d16f08eba3f2e1a743624889de31539faae",
+    "archiveSha256": "caf3a89833ae4e0f3104d938de73573201e5ed44c80f34dacec10f17168e6dfe",
+    "archiveSha256Reference": "evidence/p7-t2-real-training/remediation-v3-stability/p7-t2-research-remediation-v3-stability-output.zip.sha256",
+    "bestCheckpoint": "checkpoint-00000104",
+    "candidateId": "34e3d50b8bf91d27569305fff47247feaf0de487f9b4e78fd94f7ed64dbc62bd",
+    "datasetIdentity": "430390b22936bdea27c7e5b4022795ef483b55ac21f84e3e52cc663b9aaf9d10",
+    "evidenceArtifactIdentity": "0245c43c2d1f064e4dafddf56265305c95c79a7b305954f26d9025e18cea4c26",
+    "evidenceReference": "evidence/p7-t2-real-training/remediation-v3-stability/real-training-evidence.json",
+    "evidenceSha256": "710584c0bc23beba0c0e76f17472eb4aea09351b04f7c93ed08dc535eed17937",
+    "executionApprovalIdentity": "67520e81e5c0bc9a326f17b437c1b4193a4f4ebf9b8a79d515d7b99266debfda",
+    "executionApprovalReference": "evidence/p7-t2-real-training/remediation-v3-quarantine/stability-retry-approval.json",
+    "executionRequestIdentity": "517f170d595d68bd813a6c805da54cf8ebe68b2f3c30ea326af9da492c561b21",
+    "executionRequestReference": "config/p7-t4-research-remediation-governance-v3/stability-retry-approval-request.json",
+    "freshBaseModelStartRequired": true,
+    "gradientScalerInitialScale": 32768,
+    "incidentIdentity": "d8e26eeacbf4a46dc81facef7ec3a12987148d874b6aeb409dc0ee266f3588d0",
+    "incidentReference": "evidence/p7-t2-real-training/remediation-v3-quarantine/incident.json",
+    "metadataReference": "evidence/p7-t2-real-training/remediation-v3-stability/training-metadata.json",
+    "metadataSha256": "f0a72c778949a385407624b99e221116a7dc46f998c45a72d9c5adf8f5d00ea1",
+    "quarantinedCandidateId": "9e6409fd012b28191ddab55c90ee5f17800c2ae683994bc9312757e29c8d4188",
+    "resumeFrom": null,
+    "sourceCommit": "949a50403677ba78f7d14423505b810dedc36dba",
+    "sourceTask": "P7-T2",
+    "state": "REAL_TRAINING_COMPLETE",
+    "trainingApprovalIdentity": "a1f92aec9caca9b053daf780c1bfde951abdb88e2fe3e92f4f2545c676d45015",
+    "trainingConfigIdentity": "58f945c432208e032edcd4180116de8540b429cc4a5d070a4c90e7f9a8111667",
+    "trainingConfigReference": "config/p7-t2-training-pipeline-t4-remediation-v3-stability.json",
+    "trainingRunIdentity": "961521eff75736427b4d9b405e6616dd0b989af41cf5d5a017ba3d2a64a94005"
+  },
   "rootCause": {
     "adapterParseErrorsPerRepetition": {
       "R01": {
@@ -307,5 +354,5 @@
     }
   },
   "schemaVersion": "1.0.0",
-  "state": "REMEDIATION_V3_READY_FOR_EXTERNAL_REAL_TRAINING"
+  "state": "REMEDIATION_V3_STABILITY_TRAINING_COMPLETE"
 }

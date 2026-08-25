@@ -52,3 +52,26 @@ Stop conditions
 - The output validator rejects any preserved checkpoint whose trainer_state.json contains a non-finite metric.
 - Do not repair generated outputs manually.
 - Do not archive a failed output as a candidate and do not run P7-T4 until validated REAL_TRAINING_COMPLETE output is ingested and bound.
+
+Materialized retry result
+- The approved one-run retry completed on Tesla T4 with no resume source.
+- Output validator state: REAL_TRAINING_COMPLETE.
+- Candidate: 34e3d50b8bf91d27569305fff47247feaf0de487f9b4e78fd94f7ed64dbc62bd.
+- Training run: 961521eff75736427b4d9b405e6616dd0b989af41cf5d5a017ba3d2a64a94005.
+- Adapter identity: 9cbd0840c697488cba3cee7aab1e0c463ddf65a208766cc26f658242bcdd20e1.
+- Output archive SHA-256: caf3a89833ae4e0f3104d938de73573201e5ed44c80f34dacec10f17168e6dfe.
+- Best checkpoint: checkpoint-00000104.
+- Final validation loss: 0.13674721121788025.
+- The prior v2 candidate remains AUTOMATIC_FAIL and the first v3 candidate remains quarantined.
+- This candidate remains CANDIDATE_ONLY and promotionAllowed=false.
+
+After committing the exact materialized binding, build from that committed HEAD:
+  python scripts/build-p7-t4-research-evaluation-bundle.py \
+    --root . \
+    --adapter-directory .artifacts/p7-t2/34e3d50b8bf91d27569305fff47247feaf0de487f9b4e78fd94f7ed64dbc62bd/p7-t2-real-training-output/adapter \
+    --output-parent .artifacts/p7-t4-stability-ready \
+    --remediation-v3-stability
+
+Then validate the portable bundle before any external inference:
+  python scripts/validate-p7-t4-research-evaluation-bundle.py \
+    --bundle-root .artifacts/p7-t4-stability-ready/p7-t4-research-evaluation

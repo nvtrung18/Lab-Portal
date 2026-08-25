@@ -38,6 +38,9 @@ class P7T4ResearchRemediationTests(unittest.TestCase):
             validator.REMEDIATION_TRAINING_PIPELINE_REFERENCE,
             validator.SERVING_PROFILE_REFERENCE,
             validator.SERVING_SCHEMA_REFERENCE,
+            validator.STABILITY_RETRY_EVALUATION_CONFIG_REFERENCE,
+            validator.STABILITY_RETRY_REAL_TRAINING_REFERENCE,
+            validator.STABILITY_RETRY_TRAINING_CONFIG_REFERENCE,
         }
         for reference in sorted(file_references):
             source = ROOT / reference
@@ -72,22 +75,26 @@ class P7T4ResearchRemediationTests(unittest.TestCase):
             shutil.copy2(source, target)
         return copied_root
 
-    def test_checked_in_remediation_records_v3_ready_after_second_failure(self):
+    def test_checked_in_remediation_records_validated_stability_training(self):
         result = self.validator().validate_remediation(ROOT, CONFIG_PATH)
 
         self.assertEqual(
-            "REMEDIATION_V3_READY_FOR_EXTERNAL_REAL_TRAINING",
+            "REMEDIATION_V3_STABILITY_TRAINING_COMPLETE",
             result["state"],
         )
         self.assertEqual(
-            "COMMIT_AND_BUILD_P7_T2_REMEDIATION_V3_BUNDLE",
+            "COMMIT_AND_BUILD_P7_T4_STABILITY_REEVALUATION_BUNDLE",
             result["nextAction"],
         )
-        self.assertTrue(result["trainingAllowed"])
+        self.assertFalse(result["trainingAllowed"])
         self.assertFalse(result["promotionAllowed"])
         self.assertEqual(
             self.config()["replacementV3"]["governanceRequestIdentity"],
             result["governanceRequestIdentity"],
+        )
+        self.assertEqual(
+            "67520e81e5c0bc9a326f17b437c1b4193a4f4ebf9b8a79d515d7b99266debfda",
+            result["executionApprovalIdentity"],
         )
 
     def test_v3_readiness_binds_approved_materialized_dataset_and_training_config(self):
@@ -109,6 +116,40 @@ class P7T4ResearchRemediationTests(unittest.TestCase):
         )
         self.assertEqual(270, replacement["sourceRecordCount"])
         self.assertIsNone(replacement["candidateId"])
+
+    def test_stability_retry_binds_new_candidate_without_rewriting_prior_failures(self):
+        config = self.config()
+        training = config["stabilityRetryTraining"]
+        reevaluation = config["stabilityReevaluation"]
+
+        self.assertEqual("REAL_TRAINING_COMPLETE", training["state"])
+        self.assertEqual(
+            "34e3d50b8bf91d27569305fff47247feaf0de487f9b4e78fd94f7ed64dbc62bd",
+            training["candidateId"],
+        )
+        self.assertEqual(
+            "961521eff75736427b4d9b405e6616dd0b989af41cf5d5a017ba3d2a64a94005",
+            training["trainingRunIdentity"],
+        )
+        self.assertEqual(
+            "67520e81e5c0bc9a326f17b437c1b4193a4f4ebf9b8a79d515d7b99266debfda",
+            training["executionApprovalIdentity"],
+        )
+        self.assertEqual("READY_FOR_EXTERNAL_REEVALUATION", reevaluation["state"])
+        self.assertEqual(training["candidateId"], reevaluation["candidateId"])
+        self.assertEqual("AUTOMATIC_FAIL", config["reevaluation"]["state"])
+        self.assertEqual(
+            config["replacementTraining"]["candidateId"],
+            config["reevaluationResult"]["candidateId"],
+        )
+        self.assertNotEqual(
+            training["candidateId"],
+            config["failedCandidate"]["candidateId"],
+        )
+        self.assertNotEqual(
+            training["candidateId"],
+            config["replacementTraining"]["candidateId"],
+        )
 
     def test_completed_training_binds_a_new_failed_candidate_without_changing_first_failure(self):
         config = self.config()
@@ -360,6 +401,50 @@ class P7T4ResearchRemediationTests(unittest.TestCase):
             with self.assertRaisesRegex(
                 validator.RemediationValidationError,
                 "replacementTraining",
+            ):
+                validator.validate_document(copied_root, config)
+
+    def test_validator_rejects_tampered_stability_retry_evidence(self):
+        validator = self.validator()
+        config = self.config()
+
+        with tempfile.TemporaryDirectory() as directory:
+            copied_root = self.copied_validation_root(validator, Path(directory))
+            metadata_path = (
+                copied_root / validator.STABILITY_RETRY_TRAINING_METADATA_REFERENCE
+            )
+            metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+            metadata["metrics"]["validationLoss"] = 0.0
+            metadata_path.write_text(
+                json.dumps(metadata, ensure_ascii=False, indent=2) + "\n",
+                encoding="utf-8",
+            )
+
+            with self.assertRaisesRegex(
+                validator.RemediationValidationError,
+                "stabilityRetryTraining",
+            ):
+                validator.validate_document(copied_root, config)
+
+    def test_validator_rejects_stability_evaluation_contract_drift(self):
+        validator = self.validator()
+        config = self.config()
+
+        with tempfile.TemporaryDirectory() as directory:
+            copied_root = self.copied_validation_root(validator, Path(directory))
+            evaluation_path = (
+                copied_root / validator.STABILITY_RETRY_EVALUATION_CONFIG_REFERENCE
+            )
+            evaluation = json.loads(evaluation_path.read_text(encoding="utf-8"))
+            evaluation["comparisonPolicy"]["allAdapterCasesMustPass"] = False
+            evaluation_path.write_text(
+                json.dumps(evaluation, ensure_ascii=False, indent=2) + "\n",
+                encoding="utf-8",
+            )
+
+            with self.assertRaisesRegex(
+                validator.RemediationValidationError,
+                "stabilityRetryTraining",
             ):
                 validator.validate_document(copied_root, config)
 

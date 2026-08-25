@@ -215,6 +215,84 @@ EXPECTED_REMEDIATION_V3_TRAINING_CONFIG_IDENTITY = (
 EXPECTED_REMEDIATION_V3_TRAINING_RUN_IDENTITY = (
     "8487c2bff555e06682cb7b0b2dfdf5a34ebd17009667f7154c3c485672519593"
 )
+STABILITY_RETRY_TRAINING_CONFIG_REFERENCE = (
+    "config/p7-t2-training-pipeline-t4-remediation-v3-stability.json"
+)
+STABILITY_RETRY_REAL_TRAINING_REFERENCE = (
+    "scripts/p7-t2-real-training-remediation-v3.py"
+)
+STABILITY_RETRY_REQUEST_REFERENCE = (
+    "config/p7-t4-research-remediation-governance-v3/"
+    "stability-retry-approval-request.json"
+)
+STABILITY_RETRY_APPROVAL_REFERENCE = (
+    "evidence/p7-t2-real-training/remediation-v3-quarantine/"
+    "stability-retry-approval.json"
+)
+STABILITY_RETRY_INCIDENT_REFERENCE = (
+    "evidence/p7-t2-real-training/remediation-v3-quarantine/incident.json"
+)
+STABILITY_RETRY_EVALUATION_CONFIG_REFERENCE = (
+    "config/p7-t4-research-independent-evaluation-remediation-v3-stability.json"
+)
+STABILITY_RETRY_EVIDENCE_ROOT = (
+    "evidence/p7-t2-real-training/remediation-v3-stability"
+)
+STABILITY_RETRY_ADAPTER_MANIFEST_REFERENCE = (
+    f"{STABILITY_RETRY_EVIDENCE_ROOT}/adapter-manifest.json"
+)
+STABILITY_RETRY_REAL_EVIDENCE_REFERENCE = (
+    f"{STABILITY_RETRY_EVIDENCE_ROOT}/real-training-evidence.json"
+)
+STABILITY_RETRY_TRAINING_METADATA_REFERENCE = (
+    f"{STABILITY_RETRY_EVIDENCE_ROOT}/training-metadata.json"
+)
+STABILITY_RETRY_ARCHIVE_SHA256_REFERENCE = (
+    f"{STABILITY_RETRY_EVIDENCE_ROOT}/"
+    "p7-t2-research-remediation-v3-stability-output.zip.sha256"
+)
+EXPECTED_STABILITY_RETRY_REQUEST_IDENTITY = (
+    "517f170d595d68bd813a6c805da54cf8ebe68b2f3c30ea326af9da492c561b21"
+)
+EXPECTED_STABILITY_RETRY_APPROVAL_IDENTITY = (
+    "67520e81e5c0bc9a326f17b437c1b4193a4f4ebf9b8a79d515d7b99266debfda"
+)
+EXPECTED_STABILITY_RETRY_INCIDENT_IDENTITY = (
+    "d8e26eeacbf4a46dc81facef7ec3a12987148d874b6aeb409dc0ee266f3588d0"
+)
+EXPECTED_STABILITY_RETRY_QUARANTINED_CANDIDATE_ID = (
+    "9e6409fd012b28191ddab55c90ee5f17800c2ae683994bc9312757e29c8d4188"
+)
+EXPECTED_STABILITY_RETRY_CANDIDATE_ID = (
+    "34e3d50b8bf91d27569305fff47247feaf0de487f9b4e78fd94f7ed64dbc62bd"
+)
+EXPECTED_STABILITY_RETRY_ADAPTER_IDENTITY = (
+    "9cbd0840c697488cba3cee7aab1e0c463ddf65a208766cc26f658242bcdd20e1"
+)
+EXPECTED_STABILITY_RETRY_ADAPTER_MANIFEST_SHA256 = (
+    "0a494f4daf2e057f65194ec04ebf3d16f08eba3f2e1a743624889de31539faae"
+)
+EXPECTED_STABILITY_RETRY_TRAINING_CONFIG_IDENTITY = (
+    "58f945c432208e032edcd4180116de8540b429cc4a5d070a4c90e7f9a8111667"
+)
+EXPECTED_STABILITY_RETRY_TRAINING_RUN_IDENTITY = (
+    "961521eff75736427b4d9b405e6616dd0b989af41cf5d5a017ba3d2a64a94005"
+)
+EXPECTED_STABILITY_RETRY_EVIDENCE_IDENTITY = (
+    "0245c43c2d1f064e4dafddf56265305c95c79a7b305954f26d9025e18cea4c26"
+)
+EXPECTED_STABILITY_RETRY_EVIDENCE_SHA256 = (
+    "710584c0bc23beba0c0e76f17472eb4aea09351b04f7c93ed08dc535eed17937"
+)
+EXPECTED_STABILITY_RETRY_METADATA_SHA256 = (
+    "f0a72c778949a385407624b99e221116a7dc46f998c45a72d9c5adf8f5d00ea1"
+)
+EXPECTED_STABILITY_RETRY_ARCHIVE_SHA256 = (
+    "caf3a89833ae4e0f3104d938de73573201e5ed44c80f34dacec10f17168e6dfe"
+)
+EXPECTED_STABILITY_RETRY_SOURCE_COMMIT = (
+    "949a50403677ba78f7d14423505b810dedc36dba"
+)
 EVALUATION_FREEZE_REFERENCES = (
     "config/p6-t5-benchmark.yaml",
     "config/p6-t5-benchmark-kaggle-linux-cp312.yaml",
@@ -1549,6 +1627,318 @@ def _validate_v3_readiness(
         )
 
 
+def _expected_stability_retry_training() -> dict[str, Any]:
+    return {
+        "adapterIdentity": EXPECTED_STABILITY_RETRY_ADAPTER_IDENTITY,
+        "adapterManifestReference": STABILITY_RETRY_ADAPTER_MANIFEST_REFERENCE,
+        "adapterManifestSha256": EXPECTED_STABILITY_RETRY_ADAPTER_MANIFEST_SHA256,
+        "archiveSha256": EXPECTED_STABILITY_RETRY_ARCHIVE_SHA256,
+        "archiveSha256Reference": STABILITY_RETRY_ARCHIVE_SHA256_REFERENCE,
+        "bestCheckpoint": "checkpoint-00000104",
+        "candidateId": EXPECTED_STABILITY_RETRY_CANDIDATE_ID,
+        "datasetIdentity": EXPECTED_REMEDIATION_V3_DATASET_IDENTITY,
+        "evidenceArtifactIdentity": EXPECTED_STABILITY_RETRY_EVIDENCE_IDENTITY,
+        "evidenceReference": STABILITY_RETRY_REAL_EVIDENCE_REFERENCE,
+        "evidenceSha256": EXPECTED_STABILITY_RETRY_EVIDENCE_SHA256,
+        "executionApprovalIdentity": EXPECTED_STABILITY_RETRY_APPROVAL_IDENTITY,
+        "executionApprovalReference": STABILITY_RETRY_APPROVAL_REFERENCE,
+        "executionRequestIdentity": EXPECTED_STABILITY_RETRY_REQUEST_IDENTITY,
+        "executionRequestReference": STABILITY_RETRY_REQUEST_REFERENCE,
+        "freshBaseModelStartRequired": True,
+        "gradientScalerInitialScale": 32768,
+        "incidentIdentity": EXPECTED_STABILITY_RETRY_INCIDENT_IDENTITY,
+        "incidentReference": STABILITY_RETRY_INCIDENT_REFERENCE,
+        "metadataReference": STABILITY_RETRY_TRAINING_METADATA_REFERENCE,
+        "metadataSha256": EXPECTED_STABILITY_RETRY_METADATA_SHA256,
+        "quarantinedCandidateId": EXPECTED_STABILITY_RETRY_QUARANTINED_CANDIDATE_ID,
+        "resumeFrom": None,
+        "sourceCommit": EXPECTED_STABILITY_RETRY_SOURCE_COMMIT,
+        "sourceTask": "P7-T2",
+        "state": "REAL_TRAINING_COMPLETE",
+        "trainingApprovalIdentity": EXPECTED_REMEDIATION_V3_APPROVAL_IDENTITY,
+        "trainingConfigIdentity": EXPECTED_STABILITY_RETRY_TRAINING_CONFIG_IDENTITY,
+        "trainingConfigReference": STABILITY_RETRY_TRAINING_CONFIG_REFERENCE,
+        "trainingRunIdentity": EXPECTED_STABILITY_RETRY_TRAINING_RUN_IDENTITY,
+    }
+
+
+def _expected_stability_reevaluation() -> dict[str, Any]:
+    return {
+        "allAdapterCasesMustPass": True,
+        "automaticThresholdRelaxationAllowed": False,
+        "candidateId": EXPECTED_STABILITY_RETRY_CANDIDATE_ID,
+        "evaluationConfigReference": STABILITY_RETRY_EVALUATION_CONFIG_REFERENCE,
+        "humanEvaluationRequired": True,
+        "independentReviewerRequired": True,
+        "repetitions": list(EXPECTED_REPETITIONS),
+        "state": "READY_FOR_EXTERNAL_REEVALUATION",
+        "task": "P7-T4",
+    }
+
+
+def _validate_completed_stability_retry_training(
+    root: Path,
+    binding: object,
+    failed_candidate: object,
+    previous_remediation: object,
+    diagnostics: list[str],
+) -> None:
+    if binding != _expected_stability_retry_training():
+        diagnostics.append(
+            "remediation/stabilityRetryTraining: exact completed retry binding required"
+        )
+        return
+
+    try:
+        config = _load_json(
+            root / STABILITY_RETRY_TRAINING_CONFIG_REFERENCE,
+            "stability retry training config",
+        )
+        request = _load_json(
+            root / STABILITY_RETRY_REQUEST_REFERENCE,
+            "stability retry request",
+        )
+        approval = _load_json(
+            root / STABILITY_RETRY_APPROVAL_REFERENCE,
+            "stability retry approval",
+        )
+        incident = _load_json(
+            root / STABILITY_RETRY_INCIDENT_REFERENCE,
+            "stability retry incident",
+        )
+        manifest_path = root / STABILITY_RETRY_ADAPTER_MANIFEST_REFERENCE
+        evidence_path = root / STABILITY_RETRY_REAL_EVIDENCE_REFERENCE
+        metadata_path = root / STABILITY_RETRY_TRAINING_METADATA_REFERENCE
+        archive_path = root / STABILITY_RETRY_ARCHIVE_SHA256_REFERENCE
+        manifest = _load_json(manifest_path, "stability retry adapter manifest")
+        evidence = _load_json(evidence_path, "stability retry evidence")
+        metadata = _load_json(metadata_path, "stability retry metadata")
+        evaluation_config = _load_json(
+            root / STABILITY_RETRY_EVALUATION_CONFIG_REFERENCE,
+            "stability retry evaluation config",
+        )
+        training = _load_module(
+            "p7_t2_stability_retry_for_completion_gate",
+            root / STABILITY_RETRY_REAL_TRAINING_REFERENCE,
+        )
+        evaluator = _load_module(
+            "p7_t4_for_stability_retry_completion_gate",
+            root / "scripts/research-independent-evaluation-p7-t4.py",
+        )
+        training.validate_real_metadata_contract(metadata, config)
+        evaluator.validate_evaluation_config(evaluation_config, manifest)
+    except (OSError, ValueError, RemediationValidationError) as error:
+        diagnostics.append(
+            f"remediation/stabilityRetryTraining: completed evidence invalid: {error}"
+        )
+        return
+
+    manifest_artifacts = manifest.get("artifacts")
+    adapter_identity = (
+        hashlib.sha256(canonical_bytes(manifest_artifacts)).hexdigest()
+        if isinstance(manifest_artifacts, list)
+        else None
+    )
+    candidate_id = (
+        hashlib.sha256(
+            canonical_bytes(
+                {
+                    "trainingRunIdentity": manifest.get("trainingRunIdentity"),
+                    "adapterIdentity": adapter_identity,
+                }
+            )
+        ).hexdigest()
+        if adapter_identity is not None
+        else None
+    )
+    evidence_export = evidence.get("exportedArtifacts")
+    evidence_adapter_artifacts = (
+        [
+            item
+            for item in evidence_export
+            if isinstance(item, dict) and item.get("filename") != "adapter-manifest.json"
+        ]
+        if isinstance(evidence_export, list)
+        else None
+    )
+    evidence_reference = metadata.get("realTrainingEvidence")
+
+    if (
+        hashlib.sha256(manifest_path.read_bytes()).hexdigest()
+        != EXPECTED_STABILITY_RETRY_ADAPTER_MANIFEST_SHA256
+        or manifest.get("schemaVersion") != "1.0.0"
+        or manifest.get("backend") != "REAL_QLORA"
+        or manifest.get("realTraining") is not True
+        or manifest.get("adapterDisposition") != "CANDIDATE_ONLY"
+        or manifest.get("adapterIdentity") != EXPECTED_STABILITY_RETRY_ADAPTER_IDENTITY
+        or manifest.get("adapterIdentity") != adapter_identity
+        or manifest.get("candidateId") != EXPECTED_STABILITY_RETRY_CANDIDATE_ID
+        or manifest.get("candidateId") != candidate_id
+        or manifest.get("trainingRunIdentity")
+        != EXPECTED_STABILITY_RETRY_TRAINING_RUN_IDENTITY
+        or manifest.get("datasetIdentity") != EXPECTED_REMEDIATION_V3_DATASET_IDENTITY
+        or manifest.get("trainingConfigIdentity")
+        != EXPECTED_STABILITY_RETRY_TRAINING_CONFIG_IDENTITY
+        or manifest.get("artifacts") != evidence_adapter_artifacts
+    ):
+        diagnostics.append(
+            "remediation/stabilityRetryTraining: adapter identity or inventory mismatch"
+        )
+
+    if (
+        evidence.get("artifactType")
+        != "P7-T2-REMEDIATION-REAL-TRAINING-EXECUTION-EVIDENCE"
+        or evidence.get("schemaVersion") != "2.0.0"
+        or evidence.get("artifactIdentity") != EXPECTED_STABILITY_RETRY_EVIDENCE_IDENTITY
+        or evidence.get("artifactIdentity") != artifact_identity(evidence)
+        or hashlib.sha256(evidence_path.read_bytes()).hexdigest()
+        != EXPECTED_STABILITY_RETRY_EVIDENCE_SHA256
+        or evidence.get("candidateId") != EXPECTED_STABILITY_RETRY_CANDIDATE_ID
+        or evidence.get("trainingRunIdentity")
+        != EXPECTED_STABILITY_RETRY_TRAINING_RUN_IDENTITY
+        or evidence.get("datasetIdentity") != EXPECTED_REMEDIATION_V3_DATASET_IDENTITY
+        or evidence.get("trainingConfigIdentity")
+        != EXPECTED_STABILITY_RETRY_TRAINING_CONFIG_IDENTITY
+    ):
+        diagnostics.append(
+            "remediation/stabilityRetryTraining: real-training evidence identity mismatch"
+        )
+
+    metrics = metadata.get("metrics")
+    metrics_are_finite = isinstance(metrics, dict) and all(
+        isinstance(value, (int, float))
+        and not isinstance(value, bool)
+        and math.isfinite(float(value))
+        for value in metrics.values()
+    )
+    if (
+        hashlib.sha256(metadata_path.read_bytes()).hexdigest()
+        != EXPECTED_STABILITY_RETRY_METADATA_SHA256
+        or metadata.get("candidateId") != EXPECTED_STABILITY_RETRY_CANDIDATE_ID
+        or metadata.get("trainingRunIdentity")
+        != EXPECTED_STABILITY_RETRY_TRAINING_RUN_IDENTITY
+        or metadata.get("trainingConfigIdentity")
+        != EXPECTED_STABILITY_RETRY_TRAINING_CONFIG_IDENTITY
+        or metadata.get("sourceCommit") != EXPECTED_STABILITY_RETRY_SOURCE_COMMIT
+        or metadata.get("resumeSource") is not None
+        or metadata.get("adapterDisposition") != "CANDIDATE_ONLY"
+        or metadata.get("exportedArtifacts") != evidence_export
+        or metadata.get("actualTraining") != evidence.get("actualTraining")
+        or metadata.get("metrics") != evidence.get("metrics")
+        or metadata.get("trainingParameters") != config.get("training")
+        or metadata.get("trainingParameters", {}).get("gradientScalerInitialScale")
+        != 32768
+        or metadata.get("actualTraining", {}).get("contractHoldoutUsedForOptimization")
+        is not False
+        or metadata.get("actualTraining", {}).get("bestCheckpoint")
+        != "checkpoint-00000104"
+        or not metrics_are_finite
+        or not isinstance(evidence_reference, dict)
+        or evidence_reference.get("artifactIdentity")
+        != EXPECTED_STABILITY_RETRY_EVIDENCE_IDENTITY
+        or evidence_reference.get("sha256") != EXPECTED_STABILITY_RETRY_EVIDENCE_SHA256
+    ):
+        diagnostics.append(
+            "remediation/stabilityRetryTraining: training metadata binding mismatch"
+        )
+
+    expected_archive_line = (
+        f"{EXPECTED_STABILITY_RETRY_ARCHIVE_SHA256}  "
+        "p7-t2-research-remediation-v3-stability-output.zip\n"
+    )
+    if archive_path.read_text(encoding="utf-8") != expected_archive_line:
+        diagnostics.append(
+            "remediation/stabilityRetryTraining: output archive digest mismatch"
+        )
+
+    proposed_retry = request.get("proposedRetry")
+    approval_scope = approval.get("scope")
+    stability_change = approval.get("stabilityChange")
+    if (
+        request.get("requestIdentity") != EXPECTED_STABILITY_RETRY_REQUEST_IDENTITY
+        or _identity_without(request, "requestIdentity")
+        != EXPECTED_STABILITY_RETRY_REQUEST_IDENTITY
+        or request.get("status") != "PENDING_USER_APPROVAL"
+        or not isinstance(proposed_retry, dict)
+        or proposed_retry.get("maximumRuns") != 1
+        or proposed_retry.get("freshBaseModelStartRequired") is not True
+        or proposed_retry.get("resumeFromQuarantinedCheckpointAllowed") is not False
+        or proposed_retry.get("trainingConfigIdentity")
+        != EXPECTED_STABILITY_RETRY_TRAINING_CONFIG_IDENTITY
+        or proposed_retry.get("trainingRunIdentity")
+        != EXPECTED_STABILITY_RETRY_TRAINING_RUN_IDENTITY
+    ):
+        diagnostics.append(
+            "remediation/stabilityRetryTraining: retry request binding mismatch"
+        )
+    if (
+        approval.get("artifactIdentity") != EXPECTED_STABILITY_RETRY_APPROVAL_IDENTITY
+        or _identity_without(approval, "artifactIdentity")
+        != EXPECTED_STABILITY_RETRY_APPROVAL_IDENTITY
+        or approval.get("requestIdentity") != EXPECTED_STABILITY_RETRY_REQUEST_IDENTITY
+        or approval.get("status") != "APPROVED"
+        or approval.get("approval", {}).get("decision") != "APPROVED"
+        or approval.get("revocation", {}).get("status") != "ACTIVE"
+        or not isinstance(approval_scope, dict)
+        or approval_scope.get("maximumRuns") != 1
+        or approval_scope.get("freshBaseModelStartRequired") is not True
+        or approval_scope.get("resumeFromQuarantinedCheckpointAllowed") is not False
+        or approval_scope.get("candidateDispositionAfterTraining") != "CANDIDATE_ONLY"
+        or approval_scope.get("promotionAllowed") is not False
+        or not isinstance(stability_change, dict)
+        or stability_change.get("gradientScalerInitialScale") != 32768
+        or stability_change.get("trainingConfigIdentity")
+        != EXPECTED_STABILITY_RETRY_TRAINING_CONFIG_IDENTITY
+        or stability_change.get("trainingRunIdentity")
+        != EXPECTED_STABILITY_RETRY_TRAINING_RUN_IDENTITY
+    ):
+        diagnostics.append(
+            "remediation/stabilityRetryTraining: active one-run approval mismatch"
+        )
+
+    if (
+        incident.get("incidentIdentity") != EXPECTED_STABILITY_RETRY_INCIDENT_IDENTITY
+        or _identity_without(incident, "incidentIdentity")
+        != EXPECTED_STABILITY_RETRY_INCIDENT_IDENTITY
+        or incident.get("candidateId")
+        != EXPECTED_STABILITY_RETRY_QUARANTINED_CANDIDATE_ID
+        or incident.get("trainingRunIdentity") != EXPECTED_REMEDIATION_V3_TRAINING_RUN_IDENTITY
+        or incident.get("disposition") != "CANDIDATE_OUTPUT_QUARANTINED"
+        or incident.get("nonFiniteMetric", {}).get("value") != "nan"
+    ):
+        diagnostics.append(
+            "remediation/stabilityRetryTraining: quarantined incident binding mismatch"
+        )
+
+    frozen_config = _load_json(
+        root / "config/p7-t4-research-independent-evaluation.json",
+        "frozen P7-T4 evaluation config",
+    )
+    expected_evaluation_config = copy.deepcopy(frozen_config)
+    expected_evaluation_config["adapter"]["candidateId"] = (
+        EXPECTED_STABILITY_RETRY_CANDIDATE_ID
+    )
+    expected_evaluation_config["adapter"]["adapterIdentity"] = (
+        EXPECTED_STABILITY_RETRY_ADAPTER_IDENTITY
+    )
+    if evaluation_config != expected_evaluation_config:
+        diagnostics.append(
+            "remediation/stabilityReevaluation: frozen contract changed beyond candidate binding"
+        )
+
+    historical_candidates = {
+        failed_candidate.get("candidateId") if isinstance(failed_candidate, dict) else None,
+        previous_remediation.get("candidateId")
+        if isinstance(previous_remediation, dict)
+        else None,
+        EXPECTED_STABILITY_RETRY_QUARANTINED_CANDIDATE_ID,
+    }
+    if EXPECTED_STABILITY_RETRY_CANDIDATE_ID in historical_candidates:
+        diagnostics.append(
+            "remediation/stabilityRetryTraining: distinct candidate identity required"
+        )
+
+
 def validate_document(root: Path, document: dict[str, Any]) -> dict[str, Any]:
     root = root.resolve()
     diagnostics: list[str] = []
@@ -1565,6 +1955,8 @@ def validate_document(root: Path, document: dict[str, Any]) -> dict[str, Any]:
         "replacementV3",
         "rootCause",
         "schemaVersion",
+        "stabilityReevaluation",
+        "stabilityRetryTraining",
         "state",
     }
     if not _exact_fields(document, root_fields, "remediation", diagnostics):
@@ -1573,9 +1965,9 @@ def validate_document(root: Path, document: dict[str, Any]) -> dict[str, Any]:
         diagnostics.append("remediation/artifactType: unsupported contract")
     if document.get("schemaVersion") != "1.0.0":
         diagnostics.append("remediation/schemaVersion: unsupported version")
-    if document.get("state") != "REMEDIATION_V3_READY_FOR_EXTERNAL_REAL_TRAINING":
+    if document.get("state") != "REMEDIATION_V3_STABILITY_TRAINING_COMPLETE":
         diagnostics.append(
-            "remediation/state: REMEDIATION_V3_READY_FOR_EXTERNAL_REAL_TRAINING required"
+            "remediation/state: REMEDIATION_V3_STABILITY_TRAINING_COMPLETE required"
         )
     if document.get("artifactIdentity") != artifact_identity(document):
         diagnostics.append("remediation/artifactIdentity: identity mismatch")
@@ -1896,6 +2288,17 @@ def validate_document(root: Path, document: dict[str, Any]) -> dict[str, Any]:
     )
     _validate_completed_replacement_training(root, failed, diagnostics)
     _validate_v3_readiness(root, document.get("replacementV3"), diagnostics)
+    if document.get("stabilityReevaluation") != _expected_stability_reevaluation():
+        diagnostics.append(
+            "remediation/stabilityReevaluation: unchanged P7-T4 gate required"
+        )
+    _validate_completed_stability_retry_training(
+        root,
+        document.get("stabilityRetryTraining"),
+        failed,
+        document.get("replacementTraining"),
+        diagnostics,
+    )
 
     try:
         expected_root_cause = {
@@ -1918,13 +2321,15 @@ def validate_document(root: Path, document: dict[str, Any]) -> dict[str, Any]:
     assert isinstance(reevaluation_result, dict)
     return {
         "artifactIdentity": document["artifactIdentity"],
+        "candidateId": EXPECTED_STABILITY_RETRY_CANDIDATE_ID,
         "comparisonIdentity": reevaluation_result["comparisonIdentity"],
+        "executionApprovalIdentity": EXPECTED_STABILITY_RETRY_APPROVAL_IDENTITY,
         "failedCandidateId": reevaluation_result["candidateId"],
         "governanceRequestIdentity": EXPECTED_REMEDIATION_V3_REQUEST_IDENTITY,
-        "nextAction": "COMMIT_AND_BUILD_P7_T2_REMEDIATION_V3_BUNDLE",
+        "nextAction": "COMMIT_AND_BUILD_P7_T4_STABILITY_REEVALUATION_BUNDLE",
         "promotionAllowed": False,
-        "state": "REMEDIATION_V3_READY_FOR_EXTERNAL_REAL_TRAINING",
-        "trainingAllowed": True,
+        "state": "REMEDIATION_V3_STABILITY_TRAINING_COMPLETE",
+        "trainingAllowed": False,
     }
 
 
