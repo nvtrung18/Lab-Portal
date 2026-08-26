@@ -1,0 +1,52 @@
+artifactType: P7-T4-RESEARCH-DATA-GOVERNANCE-CONTRACT
+schemaVersion: 1.0.0
+status: APPROVED_FOR_V4_DATASET_PREPARATION
+approvalReference: evidence/p7-t4-research-remediation-v4-governance-approval.json
+requestIdentity: acb5c41075b2808c84b98f3179c68cc3519e261c6a8cb9bf06ee8669d2c74ac7
+basedOn:
+  reference: docs/architecture/ai/data-governance.yml
+  sha256: ca90acae20bd02ac3fbd5c5d420af3cc722f90501efcdfdf529c43d2ba21cff4
+  contractVersion: 1.0.0
+  amendmentRule: A governance amendment creates a new governance version and never edits prior recorded evidence.
+contract:
+  contract_version: 2.0.0
+  schema_version: 1.0.0
+  amendment_mode: ADDITIVE_VERSIONED_OVERLAY
+  base_contract_reference: docs/architecture/ai/data-governance.yml
+  base_contract_sha256: ca90acae20bd02ac3fbd5c5d420af3cc722f90501efcdfdf529c43d2ba21cff4
+  preserved_category_assertions:
+  - category_id: CAT_RESEARCH_REPORT_METADATA
+    use_decision: DEFERRED
+    permitted_purposes: []
+    prohibited_purposes:
+    - TRAINING
+    - EVALUATION
+    - BENCHMARK
+    - HUMAN_EVALUATION
+    - DEVELOPMENT_TEST
+    sanitization_disposition: DEFERRED_NO_EXPORT
+  data_governance_matrix_additions:
+  - category_id: CAT_RESEARCH_REPORT_REVIEW_SYNTHETIC
+    display_label: Synthetic research report review context
+    source_partition: RESEARCH_ASSISTANT
+    source_data_owner: RESEARCH_GOVERNANCE_DOMAIN_DATA_OWNER
+    dataset_steward: RESEARCH_GOVERNANCE_DATASET_STEWARD
+    approval_authority: RESEARCH_GOVERNANCE_DATA_GOVERNANCE_APPROVAL_AUTHORITY
+    classification: SENSITIVE
+    use_decision: SYNTHETIC_ONLY
+    permitted_purposes:
+    - TRAINING
+    - DEVELOPMENT_TEST
+    prohibited_purposes: []
+    retention_class: EPHEMERAL_DEVELOPMENT
+    visibility: RESEARCH_ASSISTANT_ONLY
+    sanitization_disposition: SYNTHETIC_GENERATION_ONLY
+    use_case_ids:
+    - RESEARCH_UC_006
+  p6_t1_traceability_overrides:
+  - use_case_id: RESEARCH_UC_006
+    assistant_key: RESEARCH_ASSISTANT
+    category_ids:
+    - CAT_RESEARCH_REPORT_METADATA
+    - CAT_RESEARCH_REPORT_REVIEW_SYNTHETIC
+artifactIdentity: 326a575f1402fb962bde2803c0000f89e7664261e5cf2f429dc02c7c5f3b6242

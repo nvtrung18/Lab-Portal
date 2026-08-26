@@ -1,0 +1,82 @@
+{
+  "adapter": {
+    "lora": {
+      "alpha": 32,
+      "bias": "none",
+      "dropout": 0.05,
+      "rank": 16,
+      "targetModules": [
+        "q_proj",
+        "k_proj",
+        "v_proj",
+        "o_proj"
+      ]
+    },
+    "method": "QLORA",
+    "quantization": {
+      "bits": 4,
+      "computeDtype": "float16",
+      "doubleQuantization": true,
+      "quantType": "nf4"
+    }
+  },
+  "assistantKey": "RESEARCH_ASSISTANT",
+  "baseModel": {
+    "identifier": "Qwen/Qwen3-4B-Instruct-2507",
+    "revision": "cdbee75f17c01a7cc42f958dc650907174af0554"
+  },
+  "contractGates": {
+    "frozenEvaluationTrainingUseAllowed": false,
+    "independentHoldout": {
+      "split": "evaluation",
+      "useForBestCheckpointSelection": false,
+      "useForEarlyStopping": false,
+      "useForOptimization": false
+    },
+    "preparedRuntimeContract": {
+      "assistantProfileReference": "ai-service/config/assistant-profiles.json",
+      "assistantProfileSha256": "115fa97380aa5f90abb9b5732f37bd157da3d2349467002150ee0e323a8d6703",
+      "schemaBundle": "research-assistant-output-v2",
+      "schemaReference": "config/p7-t4-research-remediation-governance-v4/structured-output-schema.approved.json",
+      "schemaSha256": "b7448bbfa39b18c7b154169587e413fa14f7adc9f8f8dae3f09889fa2c6b57bd"
+    },
+    "trainingApprovalIdentity": "fb14df19e4a0156d148b4c1f06fcfd67c673d7a086d6f1545fc8b0a4d2a21787",
+    "trainingApprovalReference": "evidence/p7-t1c-research-remediation-v4-training-governance-approval.json",
+    "trainingContractIdentity": "c535dca968c54b9206b91eb7969036d4c6973ab91a3b8bc5f9b165699b4f79e5",
+    "trainingContractReference": "datasets/p7-t4-research-remediation-source-v4/training-contract.json"
+  },
+  "dataset": {
+    "identity": "d8e4792f43de2319acbd2eefb3518aff597ef24530b074434f8c9336ad7f51e4",
+    "manifestReference": "datasets/p7-research-synthetic-training-dataset-v4/manifest.approved.json"
+  },
+  "output": {
+    "checkpointDirectory": "checkpoints",
+    "exportDirectory": "adapter",
+    "metadataFilename": "training-metadata.json"
+  },
+  "pipelineVersion": "4.0.0",
+  "schemaVersion": "4.0.0",
+  "seed": 20260826,
+  "splits": {
+    "contractHoldout": "evaluation",
+    "training": "train",
+    "validation": "validation"
+  },
+  "training": {
+    "batchSize": 1,
+    "earlyStoppingPatience": 2,
+    "earlyStoppingThreshold": 0.0,
+    "epochs": 4,
+    "evaluationStrategy": "epoch",
+    "gradientAccumulation": 8,
+    "gradientScalerInitialScale": 32768,
+    "greaterIsBetter": false,
+    "learningRate": 0.0001,
+    "loadBestModelAtEnd": true,
+    "maxSteps": null,
+    "metricForBestModel": "eval_loss",
+    "precision": "float16",
+    "saveStrategy": "epoch",
+    "saveTotalLimit": 2
+  }
+}

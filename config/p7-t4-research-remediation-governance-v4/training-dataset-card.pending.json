@@ -1,0 +1,29 @@
+{
+  "approval_references": [],
+  "approval_status": "PENDING",
+  "approved_purposes": [],
+  "assistant_key": "RESEARCH_ASSISTANT",
+  "category_ids": [
+    "CAT_RESEARCH_ASSIGNED_TASK",
+    "CAT_RESEARCH_DRAFT_CONTEXT",
+    "CAT_RESEARCH_REPORT_REVIEW_SYNTHETIC"
+  ],
+  "dataset_id": "p7-research-synthetic-training-dataset",
+  "dataset_version": "4.0.0",
+  "lifecycle_status": "PENDING_APPROVAL",
+  "manifest_identity": "2389e2b8c97dd719cce0bd98e51b3769e333489d637096b4e40c68bf3826a9ae",
+  "manifest_reference": "datasets/p7-research-synthetic-training-dataset-v4/manifest.json",
+  "permitted_purposes": [
+    "DEVELOPMENT_TEST"
+  ],
+  "prohibited_purposes": [
+    "TRAINING_WITHOUT_SEPARATE_APPROVAL"
+  ],
+  "source_permission_references": [
+    "evidence/p7-t4-research-remediation-v4-governance-approval.json"
+  ],
+  "source_permission_status": "VERIFIED_FOR_DATASET_PREPARATION_ONLY",
+  "title": "Pending P7-T4 remediation v4 synthetic Research dataset",
+  "trainingAuthorized": false,
+  "use_decision": "SYNTHETIC_ONLY"
+}

@@ -1,0 +1,33 @@
+{
+  "approval": null,
+  "approvalAuthority": "RESEARCH_GOVERNANCE_DATA_GOVERNANCE_APPROVAL_AUTHORITY",
+  "approvedAt": null,
+  "approvedBy": null,
+  "artifactType": "P7-T1C-RESEARCH-REMEDIATION-V4-TRAINING-GOVERNANCE-REQUEST",
+  "currentState": {
+    "datasetMaterialized": true,
+    "evaluationAllowed": false,
+    "externalTrainingAllowed": false,
+    "promotionAllowed": false,
+    "trainingAuthorized": false
+  },
+  "dataset": {
+    "datasetId": "p7-research-synthetic-training-dataset",
+    "datasetVersion": "4.0.0",
+    "manifestIdentity": "2389e2b8c97dd719cce0bd98e51b3769e333489d637096b4e40c68bf3826a9ae",
+    "manifestReference": "datasets/p7-research-synthetic-training-dataset-v4/manifest.json",
+    "recordCount": 144
+  },
+  "governanceAmendmentApprovalReference": "evidence/p7-t4-research-remediation-v4-governance-approval.json",
+  "requestIdentity": "d052e13698d1d4902a0b5018b2563889d2ea8fb52c55f0112d193efd088f6a9e",
+  "requestedPurpose": "TRAINING",
+  "schemaVersion": "1.0.0",
+  "source": {
+    "contentIdentity": "b3a9814071b8344c33e350d7217a0286d3136248d2ec79c98f7379f097a2f4c4",
+    "contractIdentity": "c535dca968c54b9206b91eb7969036d4c6973ab91a3b8bc5f9b165699b4f79e5",
+    "provenanceIdentity": "1652394aa1542dd5a5fb809d3ca70a78e7e374c9c6f029cd57825db93a7cc336",
+    "reference": "datasets/p7-t4-research-remediation-source-v4/source-export.json",
+    "sha256": "d4ade7ef34df3cff59d99e63842ae1879b51d2d8693adbf25e25be8723b8f6b3"
+  },
+  "status": "PENDING_USER_APPROVAL"
+}
