@@ -92,6 +92,26 @@ STABILITY_RETRY_ARCHIVE_SHA256_REFERENCE = (
 STABILITY_RETRY_REAL_EVIDENCE_SHA256 = (
     "710584c0bc23beba0c0e76f17472eb4aea09351b04f7c93ed08dc535eed17937"
 )
+REMEDIATION_V4_CONFIG_REFERENCE = (
+    "config/p7-t4-research-independent-evaluation-remediation-v4.json"
+)
+REMEDIATION_V4_EVIDENCE_ROOT = "evidence/p7-t2-real-training/remediation-v4"
+REMEDIATION_V4_ADAPTER_MANIFEST_REFERENCE = (
+    f"{REMEDIATION_V4_EVIDENCE_ROOT}/adapter-manifest.json"
+)
+REMEDIATION_V4_REAL_EVIDENCE_REFERENCE = (
+    f"{REMEDIATION_V4_EVIDENCE_ROOT}/real-training-evidence.json"
+)
+REMEDIATION_V4_TRAINING_METADATA_REFERENCE = (
+    f"{REMEDIATION_V4_EVIDENCE_ROOT}/training-metadata.json"
+)
+REMEDIATION_V4_ARCHIVE_SHA256_REFERENCE = (
+    f"{REMEDIATION_V4_EVIDENCE_ROOT}/"
+    "p7-t2-research-remediation-v4-output.zip.sha256"
+)
+REMEDIATION_V4_REAL_EVIDENCE_SHA256 = (
+    "44c1fb82cf0f5d2f2edc04454b47de6abe5c4911f158fb0edeb014ce608f2e65"
+)
 CANONICAL_EVALUATION_CONFIG_REFERENCE = (
     "config/p7-t4-research-independent-evaluation.json"
 )
@@ -112,15 +132,22 @@ def bundle_sources(
     *,
     remediation: bool = False,
     stability_retry: bool = False,
+    remediation_v4: bool = False,
 ) -> dict[str, Path]:
     root = root.resolve()
     sources = {relative: root / relative for relative in SOURCE_FILES}
-    if remediation and stability_retry:
+    if sum((remediation, stability_retry, remediation_v4)) > 1:
         raise BundleBuildError("select exactly one candidate mode")
-    if not remediation and not stability_retry:
+    if not any((remediation, stability_retry, remediation_v4)):
         return sources
 
-    if stability_retry:
+    if remediation_v4:
+        config_reference = REMEDIATION_V4_CONFIG_REFERENCE
+        manifest_reference = REMEDIATION_V4_ADAPTER_MANIFEST_REFERENCE
+        evidence_reference = REMEDIATION_V4_REAL_EVIDENCE_REFERENCE
+        metadata_reference = REMEDIATION_V4_TRAINING_METADATA_REFERENCE
+        archive_reference = REMEDIATION_V4_ARCHIVE_SHA256_REFERENCE
+    elif stability_retry:
         config_reference = STABILITY_RETRY_CONFIG_REFERENCE
         manifest_reference = STABILITY_RETRY_ADAPTER_MANIFEST_REFERENCE
         evidence_reference = STABILITY_RETRY_REAL_EVIDENCE_REFERENCE
@@ -263,6 +290,7 @@ def build_bundle(
     *,
     remediation: bool = False,
     stability_retry: bool = False,
+    remediation_v4: bool = False,
 ) -> tuple[Path, Path, dict[str, Any]]:
     root = root.resolve()
     output_parent = output_parent.resolve()
@@ -274,6 +302,7 @@ def build_bundle(
         root,
         remediation=remediation,
         stability_retry=stability_retry,
+        remediation_v4=remediation_v4,
     )
     missing = [relative for relative, source in sources.items() if not source.is_file()]
     if missing:
@@ -285,17 +314,16 @@ def build_bundle(
             destination = bundle_root / relative
             destination.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(source, destination)
-        if remediation or stability_retry:
-            source_reference = (
-                STABILITY_RETRY_REAL_EVIDENCE_REFERENCE
-                if stability_retry
-                else REMEDIATION_REAL_EVIDENCE_REFERENCE
-            )
-            source_sha256 = (
-                STABILITY_RETRY_REAL_EVIDENCE_SHA256
-                if stability_retry
-                else REMEDIATION_REAL_EVIDENCE_SHA256
-            )
+        if remediation or stability_retry or remediation_v4:
+            if remediation_v4:
+                source_reference = REMEDIATION_V4_REAL_EVIDENCE_REFERENCE
+                source_sha256 = REMEDIATION_V4_REAL_EVIDENCE_SHA256
+            elif stability_retry:
+                source_reference = STABILITY_RETRY_REAL_EVIDENCE_REFERENCE
+                source_sha256 = STABILITY_RETRY_REAL_EVIDENCE_SHA256
+            else:
+                source_reference = REMEDIATION_REAL_EVIDENCE_REFERENCE
+                source_sha256 = REMEDIATION_REAL_EVIDENCE_SHA256
             source_path = root / source_reference
             compatibility_evidence = build_evaluation_compatibility_evidence(
                 source_path.read_bytes(),
@@ -340,6 +368,7 @@ def main() -> int:
     candidate_mode = parser.add_mutually_exclusive_group()
     candidate_mode.add_argument("--remediation", action="store_true")
     candidate_mode.add_argument("--remediation-v3-stability", action="store_true")
+    candidate_mode.add_argument("--remediation-v4", action="store_true")
     args = parser.parse_args()
     try:
         bundle_root, archive_path, manifest = build_bundle(
@@ -348,6 +377,7 @@ def main() -> int:
             args.output_parent,
             remediation=args.remediation,
             stability_retry=args.remediation_v3_stability,
+            remediation_v4=args.remediation_v4,
         )
         print(
             json.dumps(

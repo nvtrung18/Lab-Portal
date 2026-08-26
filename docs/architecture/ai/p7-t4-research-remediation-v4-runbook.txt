@@ -38,6 +38,22 @@ Execution order
      --run-output /content/p7-t2-research-remediation-v4-output
 10. Archive and download the complete output directory plus a SHA-256 sidecar.
 
+Repository ingestion and P7-T4 reevaluation
+- Verify the downloaded archive against its SHA-256 sidecar before extraction.
+- Store the complete output under
+  .artifacts/p7-t2/e8b72a056c9d0a06268cf5ac825e304b60d4e4aaeac2b0030fc686ac33888241/
+  p7-t2-real-training-output/.
+- Store only the adapter manifest, real-training evidence, training metadata, and archive SHA-256
+  under evidence/p7-t2-real-training/remediation-v4/.
+- Build the unchanged independent evaluation bundle with:
+  python scripts/build-p7-t4-research-evaluation-bundle.py \
+    --root . \
+    --adapter-directory .artifacts/p7-t2/e8b72a056c9d0a06268cf5ac825e304b60d4e4aaeac2b0030fc686ac33888241/p7-t2-real-training-output/adapter \
+    --output-parent .artifacts/p7-t4-remediation-v4-ready \
+    --remediation-v4
+- Run all SHARED_BASE and RESEARCH_ADAPTER R01-R03 repetitions on the locked Tesla T4 runtime.
+- Automatic PASS is still required before human and independent review; training success alone is not PASS.
+
 Training policy
 - Four finite epochs maximum; no fixed maxSteps and no unapproved epoch increase.
 - Float16 gradient scaler starts at 32768, based on the prior non-finite-gradient incident.

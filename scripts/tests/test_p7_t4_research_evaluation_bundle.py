@@ -152,9 +152,56 @@ class P7T4ResearchEvaluationBundleTests(unittest.TestCase):
             sources,
         )
 
+    def test_remediation_v4_bundle_sources_bind_v4_candidate_to_frozen_logical_paths(self):
+        sources = BUILDER.bundle_sources(ROOT, remediation_v4=True)
+
+        self.assertEqual(
+            ROOT
+            / "config/p7-t4-research-independent-evaluation-remediation-v4.json",
+            sources["config/p7-t4-research-independent-evaluation.json"],
+        )
+        self.assertEqual(
+            ROOT
+            / "evidence/p7-t2-real-training/remediation-v4/adapter-manifest.json",
+            sources["evidence/p7-t2-real-training/adapter-manifest.json"],
+        )
+        self.assertIn(
+            "evidence/p7-t2-real-training/remediation-v4/real-training-evidence.json",
+            sources,
+        )
+        self.assertIn(
+            "evidence/p7-t2-real-training/remediation-v4/training-metadata.json",
+            sources,
+        )
+
+    def test_remediation_v4_evidence_projects_without_rewriting_training_facts(self):
+        reference = (
+            "evidence/p7-t2-real-training/remediation-v4/real-training-evidence.json"
+        )
+        source_payload = (ROOT / reference).read_bytes()
+        source = json.loads(source_payload)
+
+        projected = BUILDER.build_evaluation_compatibility_evidence(
+            source_payload,
+            source_reference=reference,
+            expected_source_sha256=BUILDER.REMEDIATION_V4_REAL_EVIDENCE_SHA256,
+        )
+
+        self.assertEqual(source["candidateId"], projected["candidateId"])
+        self.assertEqual(source["trainingRunIdentity"], projected["trainingRunIdentity"])
+        self.assertEqual(source["metrics"], projected["metrics"])
+        self.assertEqual(source["actualTraining"], projected["actualTraining"])
+        self.assertEqual(
+            source["artifactIdentity"],
+            projected["remediationSourceEvidence"]["artifactIdentity"],
+        )
+
     def test_bundle_sources_reject_multiple_candidate_modes(self):
         with self.assertRaisesRegex(BUILDER.BundleBuildError, "one candidate mode"):
             BUILDER.bundle_sources(ROOT, remediation=True, stability_retry=True)
+
+        with self.assertRaisesRegex(BUILDER.BundleBuildError, "one candidate mode"):
+            BUILDER.bundle_sources(ROOT, stability_retry=True, remediation_v4=True)
 
     def test_bundle_preflight_resolves_suite_paths_from_staged_bundle(self):
         with tempfile.TemporaryDirectory() as temporary_directory:
