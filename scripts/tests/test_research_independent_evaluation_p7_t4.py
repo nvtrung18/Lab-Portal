@@ -16,6 +16,13 @@ SPEC = importlib.util.spec_from_file_location(
 MODULE = importlib.util.module_from_spec(SPEC)
 assert SPEC.loader is not None
 SPEC.loader.exec_module(MODULE)
+V6_SPEC = importlib.util.spec_from_file_location(
+    "p7t4_v6",
+    ROOT / "scripts" / "research-independent-evaluation-p7-t4-v6.py",
+)
+V6_MODULE = importlib.util.module_from_spec(V6_SPEC)
+assert V6_SPEC.loader is not None
+V6_SPEC.loader.exec_module(V6_MODULE)
 
 
 class P7T4ResearchIndependentEvaluationTests(unittest.TestCase):
@@ -320,6 +327,41 @@ class P7T4ResearchIndependentEvaluationTests(unittest.TestCase):
             execution_approval["authorization"]["externalEvaluationExecutionAllowed"]
         )
         self.assertFalse(execution_approval["authorization"]["promotionAllowed"])
+
+    def test_v6_contract_loads_approved_prompt_profile_for_evaluation_only(self):
+        config = json.loads(
+            (
+                ROOT
+                / "config/p7-t4-research-independent-evaluation-remediation-v6.json"
+            ).read_text(encoding="utf-8")
+        )
+        manifest = json.loads(
+            (
+                ROOT
+                / "evidence/p7-t2-real-training/remediation-v6/adapter-manifest.json"
+            ).read_text(encoding="utf-8")
+        )
+
+        V6_MODULE.validate_evaluation_config(config, manifest)
+        _, _, execution_approval = V6_MODULE.load_v2_evaluation_contract(
+            ROOT,
+            config,
+            json.loads(
+                (ROOT / "evals/p6-t4-evaluation-suite.lock.json").read_text(
+                    encoding="utf-8"
+                )
+            ),
+            self.gap_suite,
+        )
+
+        self.assertTrue(
+            execution_approval["authorization"][
+                "promptProfileV3EvaluationUseAllowed"
+            ]
+        )
+        self.assertFalse(
+            execution_approval["authorization"]["productionPromptingAllowed"]
+        )
 
     def test_v2_evaluator_accepts_the_approved_report_review_draft(self):
         suite = json.loads(

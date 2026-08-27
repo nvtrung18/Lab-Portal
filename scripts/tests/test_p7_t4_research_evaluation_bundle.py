@@ -233,12 +233,61 @@ class P7T4ResearchEvaluationBundleTests(unittest.TestCase):
         self.assertEqual(source["trainingRunIdentity"], projected["trainingRunIdentity"])
         self.assertEqual(source["contractGates"], projected["contractGates"])
 
+    def test_remediation_v6_bundle_sources_bind_candidate_prompt_and_v2_contracts(self):
+        sources = BUILDER.bundle_sources(ROOT, remediation_v6=True)
+
+        self.assertEqual(
+            ROOT / "config/p7-t4-research-independent-evaluation-remediation-v6.json",
+            sources["config/p7-t4-research-independent-evaluation.json"],
+        )
+        self.assertEqual(
+            ROOT / "evidence/p7-t2-real-training/remediation-v6/adapter-manifest.json",
+            sources["evidence/p7-t2-real-training/adapter-manifest.json"],
+        )
+        self.assertEqual(
+            ROOT / "scripts/research-independent-evaluation-p7-t4-v6.py",
+            sources["scripts/research-independent-evaluation-p7-t4.py"],
+        )
+        self.assertEqual(
+            ROOT / "scripts/research-independent-evaluation-p7-t4.py",
+            sources["scripts/research-independent-evaluation-p7-t4-base.py"],
+        )
+        for reference in (
+            "config/p7-t4-research-remediation-governance-v6/"
+            "external-evaluation-approval-request.json",
+            "config/p7-t4-research-remediation-governance-v6/"
+            "research-prompt-profile-v3.approved.json",
+            "evidence/p7-t4-research-remediation-v6-external-evaluation-approval.json",
+            "evidence/p7-t2-real-training/remediation-v6/real-training-evidence.json",
+        ):
+            self.assertIn(reference, sources)
+
+    def test_remediation_v6_evidence_projects_without_rewriting_training_facts(self):
+        reference = (
+            "evidence/p7-t2-real-training/remediation-v6/real-training-evidence.json"
+        )
+        source_payload = (ROOT / reference).read_bytes()
+        source = json.loads(source_payload)
+
+        projected = BUILDER.build_evaluation_compatibility_evidence(
+            source_payload,
+            source_reference=reference,
+            expected_source_sha256=BUILDER.REMEDIATION_V6_REAL_EVIDENCE_SHA256,
+        )
+
+        self.assertEqual(source["candidateId"], projected["candidateId"])
+        self.assertEqual(source["trainingRunIdentity"], projected["trainingRunIdentity"])
+        self.assertEqual(source["actualTraining"], projected["actualTraining"])
+
     def test_bundle_sources_reject_multiple_candidate_modes(self):
         with self.assertRaisesRegex(BUILDER.BundleBuildError, "one candidate mode"):
             BUILDER.bundle_sources(ROOT, remediation=True, stability_retry=True)
 
         with self.assertRaisesRegex(BUILDER.BundleBuildError, "one candidate mode"):
             BUILDER.bundle_sources(ROOT, stability_retry=True, remediation_v4=True)
+
+        with self.assertRaisesRegex(BUILDER.BundleBuildError, "one candidate mode"):
+            BUILDER.bundle_sources(ROOT, remediation_v5=True, remediation_v6=True)
 
     def test_bundle_preflight_resolves_suite_paths_from_staged_bundle(self):
         with tempfile.TemporaryDirectory() as temporary_directory:
