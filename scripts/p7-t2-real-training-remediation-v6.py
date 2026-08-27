@@ -172,10 +172,41 @@ def tokenize_records_with_eos(records: list[dict[str, Any]], tokenizer: Any):
     eos_token_id = getattr(tokenizer, "eos_token_id", None)
     if not isinstance(eos_token_id, int) or isinstance(eos_token_id, bool):
         raise ValueError("tokenizer chat template: EOS token id required")
+    post_eos_tokens_masked = 0
     for index in range(len(dataset)):
-        labels = dataset[index].get("labels")
-        if not isinstance(labels, list):
-            raise ValueError("tokenizer chat template: labels required")
+        example = dataset[index]
+        labels = example.get("labels")
+        input_ids = example.get("input_ids")
+        if not isinstance(labels, list) or not isinstance(input_ids, list):
+            raise ValueError("tokenizer chat template: token ids and labels required")
+        eos_positions = [
+            position
+            for position, value in enumerate(labels)
+            if value == eos_token_id
+        ]
+        if len(eos_positions) != 1:
+            raise ValueError(
+                "tokenizer chat template: exactly one terminal supervised EOS required"
+            )
+        eos_position = eos_positions[0]
+        trailing_positions = [
+            position
+            for position in range(eos_position + 1, len(labels))
+            if labels[position] != -100
+        ]
+        if trailing_positions:
+            trailing_ids = [input_ids[position] for position in trailing_positions]
+            trailing_text = tokenizer.decode(
+                trailing_ids,
+                skip_special_tokens=False,
+            )
+            if not isinstance(trailing_text, str) or not trailing_text.isspace():
+                raise ValueError(
+                    "tokenizer chat template: non-whitespace supervised tokens after EOS"
+                )
+            for position in trailing_positions:
+                labels[position] = -100
+            post_eos_tokens_masked += len(trailing_positions)
         supervised = [item for item in labels if item != -100]
         if (
             not supervised
@@ -185,7 +216,7 @@ def tokenize_records_with_eos(records: list[dict[str, Any]], tokenizer: Any):
             raise ValueError(
                 "tokenizer chat template: exactly one terminal supervised EOS required"
             )
-    return dataset, metrics
+    return dataset, {**metrics, "postEosWhitespaceTokensMasked": post_eos_tokens_masked}
 
 
 BASE.load_training_inputs = load_training_inputs

@@ -59,6 +59,8 @@ Stop conditions
 - Stop if the runtime is not CPython 3.13.15 or the GPU is not Tesla T4.
 - Stop if the prompt profile identity or training approval identity differs.
 - Stop on non-finite metrics or missing/excess terminal supervised EOS.
+- Preserve Qwen chat-template whitespace after EOS in input IDs but mask it
+  from labels, so EOS is the final supervised target token.
 - Stop if any holdout record is used for optimization or checkpoint selection.
 - Do not claim evaluation PASS or promotion from training output.
 

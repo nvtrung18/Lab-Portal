@@ -124,6 +124,19 @@ class FakeTokenizer:
         return [10, 11, 20, 21, self.eos_token_id]
 
 
+class FakeQwenTokenizerWithPostEosNewline:
+    eos_token_id = 151645
+
+    def apply_chat_template(self, messages, *, tokenize, add_generation_prompt):
+        if len(messages) == 2:
+            return [10, 11]
+        return [10, 11, 20, self.eos_token_id, 198]
+
+    def decode(self, token_ids, *, skip_special_tokens):
+        assert skip_special_tokens is False
+        return "\n" if token_ids == [198] else ""
+
+
 class P7T2ResearchRemediationV6TrainingBundleTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -178,6 +191,22 @@ class P7T2ResearchRemediationV6TrainingBundleTests(unittest.TestCase):
         self.assertEqual(99, supervised[-1])
         self.assertEqual(1, supervised.count(99))
         self.assertEqual(5, metrics["maximumTokens"])
+
+    def test_qwen_post_eos_newline_is_present_but_not_supervised(self):
+        record = json.loads(
+            (DATASET_MANIFEST.parent / "train.jsonl")
+            .read_text(encoding="utf-8")
+            .splitlines()[0]
+        )
+        dataset, metrics = self.backend.tokenize_records_with_eos(
+            [record], FakeQwenTokenizerWithPostEosNewline()
+        )
+        example = dataset[0]
+        self.assertEqual([10, 11, 20, 151645, 198], example["input_ids"])
+        self.assertEqual([-100, -100, 20, 151645, -100], example["labels"])
+        supervised = [value for value in example["labels"] if value != -100]
+        self.assertEqual([20, 151645], supervised)
+        self.assertEqual(1, metrics["postEosWhitespaceTokensMasked"])
 
     def test_bundle_is_deterministic_valid_and_weight_free(self):
         with tempfile.TemporaryDirectory() as directory:
