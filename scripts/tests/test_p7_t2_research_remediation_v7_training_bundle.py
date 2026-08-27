@@ -178,6 +178,11 @@ class P7T2ResearchRemediationV7TrainingBundleTests(unittest.TestCase):
                 messages[2]["content"],
             )
 
+    def test_backend_runtime_validator_uses_v7_record_counts(self):
+        self.assertEqual(384, self.backend.BASE.EXPECTED_TRAIN_RECORDS)
+        self.assertEqual(64, self.backend.BASE.EXPECTED_VALIDATION_RECORDS)
+        self.assertEqual(64, self.backend.BASE.EXPECTED_CONTRACT_HOLDOUT_RECORDS)
+
     def test_tokenization_supervises_exactly_one_terminal_eos(self):
         record = json.loads(
             (DATASET_MANIFEST.parent / "train.jsonl")
