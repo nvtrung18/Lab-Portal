@@ -1,0 +1,14 @@
+{
+  "artifactIdentity": "5a5cdb6bd49a139b5530ff2a87624558669f171b2e440d0874dd642acdc1e3a0",
+  "artifactType": "P7-T4-RESEARCH-REMEDIATION-V7-DATASET-CARD",
+  "baseDatasetIdentity": "7a0c264196889beb0c91414cd10195681df895073dc7ce3aeef586123de751c1",
+  "datasetIdentity": "b973bf0a387b35b84140a2db1d2bbf7c5c0d7f054102a968c10bd1df6faeff23",
+  "disposition": "PENDING_TRAINING_APPROVAL",
+  "recordCounts": {
+    "evaluation": 64,
+    "train": 384,
+    "validation": 64
+  },
+  "remediationPriority": "TARGETED_DATASET_QUALITY_ONLY",
+  "schemaVersion": "1.0.0"
+}

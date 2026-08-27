@@ -1,0 +1,68 @@
+P7-T4 Research remediation v7 - governed retention-first training runbook
+
+STATE
+
+- Dataset v7 is approved for external single-T4 QLoRA training only.
+- Dataset identity: b973bf0a387b35b84140a2db1d2bbf7c5c0d7f054102a968c10bd1df6faeff23
+- Training approval identity: 627f4043fe2c2dcaff21cb0b38d923752d8c928ef8d184b7535f3fe07b2bb3f5
+- Prompt profile identity: 32b6fb0d9786cff93175a8f2e844f76989db12b5173e1d878a79365ac9bbea4d
+- Runtime normalization and constrained decoding remain disabled.
+- Evaluation and promotion remain unauthorized.
+
+RETENTION-FIRST CONTRACT
+
+- Preserve 288 train, 48 validation, and 48 evaluation records from v6 byte-for-byte.
+- Add only 96 train, 16 validation, and 16 evaluation records targeting
+  RESEARCH_UC_004 and RESEARCH_UC_005.
+- The evaluation split is a contract holdout and must never be used for
+  optimization, early stopping, or best-checkpoint selection.
+- Training must start from the pinned fresh base-model revision.
+
+PINNED RUNTIME
+
+- CPython 3.13.15
+- Tesla T4, CUDA device cuda:0
+- Dependencies are installed from
+  requirements/p7-t2-real-training-t4-cp313-requirements.txt.
+- Base model: Qwen/Qwen3-4B-Instruct-2507
+- Revision: cdbee75f17c01a7cc42f958dc650907174af0554
+
+BUNDLE
+
+Build only from committed governed sources:
+
+python scripts/build-p7-t2-research-remediation-v7-bundle.py \
+  --source-root . \
+  --output-parent .artifacts/p7-t2-remediation-v7-ready
+
+Validate before upload:
+
+python scripts/validate-p7-t2-research-remediation-v7-bundle.py \
+  --bundle-root .artifacts/p7-t2-remediation-v7-ready/p7-t2-research-remediation-v7-t4
+
+COLAB EXECUTION ORDER
+
+1. Connect a Tesla T4 runtime running CPython 3.13.15.
+2. Upload and extract p7-t2-research-remediation-v7-t4.zip.
+3. Validate the bundle before dependency installation.
+4. Install the pinned requirements, then restart the whole runtime.
+5. Revalidate runtime and bundle after restart.
+6. Download the pinned base-model revision, then switch to offline mode.
+7. Run pipeline preflight with the approved manifest and config.
+8. Start real training once, from the fresh pinned base model.
+9. Validate the real output before archiving it.
+
+FAIL-CLOSED STOPS
+
+- Stop on any identity, checksum, inventory, runtime, GPU, split, retention,
+  prompt-profile, evaluator-contract, or approval mismatch.
+- Stop on non-finite training or checkpoint metrics.
+- Do not reuse a failed or partial checkpoint.
+- Do not evaluate or promote the candidate from this training approval.
+- A completed output remains CANDIDATE_ONLY until separately approved external
+  independent evaluation is completed.
+
+LOCAL VERIFICATION
+
+python -m unittest scripts.tests.test_p7_t2_research_remediation_v7_training_bundle
+python scripts/validate-p7-t4-research-remediation-v7-dataset.py

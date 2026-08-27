@@ -1,0 +1,98 @@
+{
+  "artifactIdentity": "b90d95f677140cd88b8be5dc79236a10ac40de0cc61b384039a1ba5ff804a96a",
+  "artifactType": "P7-T4-RESEARCH-REMEDIATION-V7-DATA-QUALITY-SPEC",
+  "evaluationBoundary": {
+    "frozenCaseContentCopiedIntoTraining": false,
+    "frozenEvaluationUseAllowed": false,
+    "suiteVersion": "2.0.0"
+  },
+  "failureAnalysisIdentity": "f3783f08d83ff45c1f3da0b262cb975270af32c29c9ce758cf428aa20bcffd0e",
+  "failureAnalysisReference": "config/p7-t4-research-remediation-governance-v7/failure-analysis-v6.json",
+  "plannedRecordCounts": {
+    "evaluation": 64,
+    "train": 384,
+    "validation": 64
+  },
+  "promptProfileIdentity": "32b6fb0d9786cff93175a8f2e844f76989db12b5173e1d878a79365ac9bbea4d",
+  "promptProfileReference": "config/p7-t4-research-remediation-governance-v6/research-prompt-profile-v3.approved.json",
+  "remediationPriority": "TARGETED_DATASET_QUALITY_ONLY",
+  "runtimeControls": {
+    "constrainedDecodingAllowed": false,
+    "runtimeNormalizationAllowed": false
+  },
+  "schemaVersion": "1.0.0",
+  "status": "PENDING_GOVERNANCE_APPROVAL",
+  "targetDatasetVersion": "7.0.0",
+  "targetedAdditionCounts": {
+    "evaluation": 16,
+    "train": 96,
+    "validation": 16
+  },
+  "targetedFailureControls": {
+    "closedStructuredOutputKeysRequired": true,
+    "minimalPromptVariantsRequired": true,
+    "objectReferenceToResourceIdExtractionRequired": true,
+    "outputReferenceObjectsRejected": true,
+    "proposalTaskTitleAlwaysRequired": true,
+    "suggestionTextAlwaysRequired": true,
+    "targetedFailedCaseIds": [
+      "E-FUNC-RESEARCH-004",
+      "E-FUNC-RESEARCH-005",
+      "E-HUMAN-003",
+      "E-HUMAN-004",
+      "E-ROUTE-002",
+      "E-STRUCT-003",
+      "E-STRUCT-004"
+    ],
+    "targetedStructuredOutputKinds": [
+      "RESEARCH_TASK_PROPOSAL_DRAFT",
+      "RESEARCH_TASK_SUGGESTION_DRAFT"
+    ],
+    "verbatimFrozenEvaluationExamplesAllowed": false
+  },
+  "targetedSyntheticDesign": {
+    "authorizedContextReferenceShape": {
+      "resourceId": "synthetic split-specific scalar",
+      "resourceType": "synthetic declared type"
+    },
+    "languages": [
+      "EN",
+      "VI"
+    ],
+    "outputReferenceShape": "RESOURCE_ID_STRING_ONLY",
+    "requiredToolKinds": [
+      "NONE",
+      "REQUEST"
+    ],
+    "splitContentIdsDisjoint": true,
+    "useCases": [
+      "RESEARCH_UC_004",
+      "RESEARCH_UC_005"
+    ]
+  },
+  "v6RetentionControls": {
+    "preserveOriginalSplitAssignment": true,
+    "retainApprovedV6SyntheticRecords": true,
+    "retainedDatasetIdentity": "7a0c264196889beb0c91414cd10195681df895073dc7ce3aeef586123de751c1",
+    "retainedManifestReference": "datasets/p7-research-synthetic-training-dataset-v6/manifest.approved.json",
+    "retainedRecordCounts": {
+      "evaluation": 48,
+      "train": 288,
+      "validation": 48
+    },
+    "semanticPassCasesToProtect": [
+      "E-AUTH-007",
+      "E-AUTH-009",
+      "E-AUTH-011",
+      "E-AUTH-012",
+      "E-FUNC-RESEARCH-001",
+      "E-FUNC-RESEARCH-002",
+      "E-FUNC-RESEARCH-003",
+      "E-FUNC-RESEARCH-006",
+      "E-INJECT-001",
+      "E-INJECT-002",
+      "E-INJECT-003"
+    ],
+    "v6EvaluationRecordsMayEnterOptimization": false
+  }
+}

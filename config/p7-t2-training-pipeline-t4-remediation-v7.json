@@ -1,0 +1,87 @@
+{
+  "adapter": {
+    "lora": {
+      "alpha": 32,
+      "bias": "none",
+      "dropout": 0.05,
+      "rank": 16,
+      "targetModules": [
+        "q_proj",
+        "k_proj",
+        "v_proj",
+        "o_proj"
+      ]
+    },
+    "method": "QLORA",
+    "quantization": {
+      "bits": 4,
+      "computeDtype": "float16",
+      "doubleQuantization": true,
+      "quantType": "nf4"
+    }
+  },
+  "assistantKey": "RESEARCH_ASSISTANT",
+  "baseModel": {
+    "identifier": "Qwen/Qwen3-4B-Instruct-2507",
+    "revision": "cdbee75f17c01a7cc42f958dc650907174af0554"
+  },
+  "contractGates": {
+    "frozenEvaluationTrainingUseAllowed": false,
+    "independentHoldout": {
+      "split": "evaluation",
+      "useForBestCheckpointSelection": false,
+      "useForEarlyStopping": false,
+      "useForOptimization": false
+    },
+    "preparedRuntimeContract": {
+      "constrainedDecodingAllowed": false,
+      "evaluationSuiteIdentity": "65c87149ec97bf34a04257a80af0cba1114b48fe9702f6b3cacb253b573931a8",
+      "evaluationSuiteReference": "config/p7-t4-research-remediation-governance-v5/evaluation-suite-v2.approved.json",
+      "evaluatorContractIdentity": "99230c674b9064f1e06247dedd014f6e3da0714ca679017c07b3d877f1e285d3",
+      "evaluatorContractReference": "config/p7-t4-research-remediation-governance-v5/evaluator-contract-v2.approved.json",
+      "evaluatorSuiteApprovalIdentity": "53d48c6489ecd7bb4f7a4a1c85bbe2813454c94c520310f28c74499d4bfdae05",
+      "evaluatorSuiteApprovalReference": "evidence/p7-t4-research-remediation-v5-evaluator-governance-approval.json",
+      "promptProfileIdentity": "32b6fb0d9786cff93175a8f2e844f76989db12b5173e1d878a79365ac9bbea4d",
+      "promptProfileReference": "config/p7-t4-research-remediation-governance-v6/research-prompt-profile-v3.approved.json",
+      "runtimeNormalizationAllowed": false
+    },
+    "trainingApprovalIdentity": "627f4043fe2c2dcaff21cb0b38d923752d8c928ef8d184b7535f3fe07b2bb3f5",
+    "trainingApprovalReference": "evidence/p7-t1c-research-remediation-v7-training-governance-approval.json",
+    "trainingContractIdentity": "81be449d83a56303f42e55128f7d6ea4cd79fc606616334d3387a52fe47b8b8d",
+    "trainingContractReference": "datasets/p7-t4-research-remediation-source-v7/training-contract.json"
+  },
+  "dataset": {
+    "identity": "b973bf0a387b35b84140a2db1d2bbf7c5c0d7f054102a968c10bd1df6faeff23",
+    "manifestReference": "datasets/p7-research-synthetic-training-dataset-v7/manifest.approved.json"
+  },
+  "output": {
+    "checkpointDirectory": "checkpoints",
+    "exportDirectory": "adapter",
+    "metadataFilename": "training-metadata.json"
+  },
+  "pipelineVersion": "7.0.0",
+  "schemaVersion": "7.0.0",
+  "seed": 20260827,
+  "splits": {
+    "contractHoldout": "evaluation",
+    "training": "train",
+    "validation": "validation"
+  },
+  "training": {
+    "batchSize": 1,
+    "earlyStoppingPatience": 2,
+    "earlyStoppingThreshold": 0.0,
+    "epochs": 4,
+    "evaluationStrategy": "epoch",
+    "gradientAccumulation": 8,
+    "gradientScalerInitialScale": 32768,
+    "greaterIsBetter": false,
+    "learningRate": 0.0001,
+    "loadBestModelAtEnd": true,
+    "maxSteps": null,
+    "metricForBestModel": "eval_loss",
+    "precision": "float16",
+    "saveStrategy": "epoch",
+    "saveTotalLimit": 2
+  }
+}
