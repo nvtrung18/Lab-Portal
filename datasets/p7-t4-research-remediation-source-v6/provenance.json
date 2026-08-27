@@ -1,0 +1,10 @@
+{
+  "artifactIdentity": "8a0462abf6e8d0128ce487dff6776776e2349fb76262456f2862c80dcbaa94d6",
+  "artifactType": "P7-T4-RESEARCH-REMEDIATION-V6-SYNTHETIC-PROVENANCE",
+  "datasetIdentity": "7a0c264196889beb0c91414cd10195681df895073dc7ce3aeef586123de751c1",
+  "generatorReference": "scripts/build-p7-t4-research-remediation-source-v6.py",
+  "independentSyntheticGeneration": true,
+  "noFrozenEvaluationContentCopied": true,
+  "preparationApprovalIdentity": "5522f5f68b4f7d85c15a0a139625dc79d4b80a0bb60665480797e3485b78e91c",
+  "schemaVersion": "1.0.0"
+}

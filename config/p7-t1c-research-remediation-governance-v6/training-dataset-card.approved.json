@@ -1,0 +1,19 @@
+{
+  "artifactIdentity": "a16f2a6848adc9b6a1f4595287db8d84933c52480afdc48109542a540e382823",
+  "artifactType": "P7-T4-RESEARCH-REMEDIATION-V6-DATASET-CARD",
+  "datasetIdentity": "7a0c264196889beb0c91414cd10195681df895073dc7ce3aeef586123de751c1",
+  "disposition": "APPROVED_FOR_TRAINING_ONLY",
+  "evaluationAllowed": false,
+  "preparedCardIdentity": "544eb15afee0b9a009dbfeafa77cdb39a9249d035350cc5a666b4c2e524e1625",
+  "promotionAllowed": false,
+  "recordCounts": {
+    "evaluation": 48,
+    "train": 288,
+    "validation": 48
+  },
+  "remediationPriority": "DATASET_QUALITY_PRIMARY",
+  "schemaVersion": "1.0.0",
+  "trainingApprovalIdentity": "d5a2ac0cd0f3aa969fbde0113639ffae8c8045aa9cea2c02b696251e9110c370",
+  "trainingApprovalReference": "evidence/p7-t1c-research-remediation-v6-training-governance-approval.json",
+  "trainingAuthorized": true
+}

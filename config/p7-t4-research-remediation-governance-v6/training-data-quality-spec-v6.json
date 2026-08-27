@@ -1,0 +1,134 @@
+{
+  "artifactIdentity": "e5471fbf05010f389d0c16fd407bff2c2b8811ed997c3284d1c6daa580b2f4dc",
+  "artifactType": "P7-T4-RESEARCH-REMEDIATION-V6-DATA-QUALITY-SPEC",
+  "canonicalOutputControls": {
+    "closedJsonRequired": true,
+    "earlyEosRejected": true,
+    "exactTopLevelKeysRequired": true,
+    "nonFiniteNumbersRejected": true,
+    "proseOrMarkdownOutsideJsonRejected": true
+  },
+  "coverageControls": {
+    "authorizedAndDeniedPairsRequired": true,
+    "independentSyntheticRecordsRequired": true,
+    "promptInjectionCoveragePreserved": true,
+    "sameIdentifierAcrossSplitsAllowed": false,
+    "trainValidationEvaluationContentIdsDisjoint": true
+  },
+  "crossVersionLessonsIdentity": "681164394951fe5e97781d2593dee4958f0a62e16456c5ae2cc0af9e1cd8a933",
+  "crossVersionLessonsReference": "config/p7-t4-research-remediation-governance-v6/cross-version-lessons-v1-v5.json",
+  "evaluationBoundary": {
+    "frozenCaseContentCopiedIntoTraining": false,
+    "frozenEvaluationUseAllowed": false,
+    "suiteVersion": "2.0.0"
+  },
+  "historicalPassRetentionControls": {
+    "frozenPromptOrExpectedOutputCopyAllowed": false,
+    "independentSyntheticParaphrasesRequired": true,
+    "preservedSemanticFamiliesReference": "config/p7-t4-research-remediation-governance-v6/cross-version-lessons-v1-v5.json"
+  },
+  "identityControls": {
+    "declaredReferencesOnly": true,
+    "undeclaredIdCopyingRejected": true
+  },
+  "minimumRecordCounts": {
+    "evaluation": 48,
+    "train": 288,
+    "validation": 48
+  },
+  "minimumTrainRecordsPerStructuredOutputKind": {
+    "RESEARCH_REPORT_REVIEW_DRAFT": 32,
+    "RESEARCH_TASK_PROPOSAL_DRAFT": 32,
+    "RESEARCH_TASK_SUGGESTION_DRAFT": 32
+  },
+  "minimumTrainRecordsPerToolKind": {
+    "NONE": 48,
+    "REJECTED": 48,
+    "REQUEST": 48
+  },
+  "minimumTrainRecordsPerUseCasePerLanguagePair": 48,
+  "newRemediationControls": {
+    "authorizationCounterfactualPairsRequired": true,
+    "bilingualSemanticPairsRequired": true,
+    "declaredVsUndeclaredReferencePairsRequired": true,
+    "multiDefectCompositionalCasesRequired": true,
+    "noneRequestRejectedToolTriadsRequired": true,
+    "structuredDraftSchemaTriadsRequired": true
+  },
+  "postTrainingSyntheticHoldoutInferenceGate": {
+    "deterministicRepetitions": 3,
+    "failureDisposition": "BLOCK_EXTERNAL_P7_T4",
+    "maximumUndeclaredReferenceCount": 0,
+    "minimumExactContractPassRate": 1.0,
+    "minimumJsonParseRate": 1.0,
+    "minimumPassRatePerSemanticFamily": 1.0,
+    "split": "evaluation",
+    "usedForOptimization": false
+  },
+  "promptAlignmentControls": {
+    "trainingAndEvaluationSystemInstructionIdentityMustMatch": true,
+    "trainingAndEvaluationUserEnvelopeFieldsMustMatch": true
+  },
+  "regressionPreventionControls": {
+    "allHistoricallyPersistentFailureFamiliesRequireHardNegatives": true,
+    "preservePreviouslyPassingSemanticFamilies": true,
+    "semanticVariationRequired": true,
+    "verbatimFrozenEvaluationCaseCopyingAllowed": false
+  },
+  "remediationPriority": "DATASET_QUALITY_PRIMARY",
+  "requiredStructuredOutputKinds": [
+    "RESEARCH_REPORT_REVIEW_DRAFT",
+    "RESEARCH_TASK_PROPOSAL_DRAFT",
+    "RESEARCH_TASK_SUGGESTION_DRAFT"
+  ],
+  "requiredToolKinds": [
+    "NONE",
+    "REJECTED",
+    "REQUEST"
+  ],
+  "requiredUseCases": [
+    "RESEARCH_UC_001",
+    "RESEARCH_UC_002",
+    "RESEARCH_UC_003",
+    "RESEARCH_UC_004",
+    "RESEARCH_UC_005",
+    "RESEARCH_UC_006"
+  ],
+  "runtimeControls": {
+    "constrainedDecodingAllowed": false,
+    "runtimeNormalizationAllowed": false
+  },
+  "schemaVersion": "1.0.0",
+  "status": "PENDING_GOVERNANCE_APPROVAL",
+  "targetDatasetVersion": "6.0.0",
+  "targetSerializationControls": {
+    "canonicalKeyOrderingRequired": true,
+    "eosInsideJsonRejected": true,
+    "exactlyOneTerminalEosRequired": true,
+    "jsonRoundTripIdentityRequired": true
+  },
+  "toolRequestContracts": {
+    "NONE": [
+      "kind"
+    ],
+    "REJECTED": [
+      "group",
+      "intent",
+      "kind",
+      "name",
+      "reason"
+    ],
+    "REQUEST": [
+      "group",
+      "intent",
+      "kind",
+      "name"
+    ]
+  },
+  "trainCurriculumComposition": {
+    "canonicalClosureAndEos": 24,
+    "compositionalHardNegatives": 48,
+    "historicalPassRetention": 72,
+    "persistentFailureRemediation": 144
+  }
+}
