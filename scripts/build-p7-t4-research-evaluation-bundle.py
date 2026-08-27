@@ -112,6 +112,34 @@ REMEDIATION_V4_ARCHIVE_SHA256_REFERENCE = (
 REMEDIATION_V4_REAL_EVIDENCE_SHA256 = (
     "44c1fb82cf0f5d2f2edc04454b47de6abe5c4911f158fb0edeb014ce608f2e65"
 )
+REMEDIATION_V5_CONFIG_REFERENCE = (
+    "config/p7-t4-research-independent-evaluation-remediation-v5.json"
+)
+REMEDIATION_V5_EVIDENCE_ROOT = "evidence/p7-t2-real-training/remediation-v5"
+REMEDIATION_V5_ADAPTER_MANIFEST_REFERENCE = (
+    f"{REMEDIATION_V5_EVIDENCE_ROOT}/adapter-manifest.json"
+)
+REMEDIATION_V5_REAL_EVIDENCE_REFERENCE = (
+    f"{REMEDIATION_V5_EVIDENCE_ROOT}/real-training-evidence.json"
+)
+REMEDIATION_V5_TRAINING_METADATA_REFERENCE = (
+    f"{REMEDIATION_V5_EVIDENCE_ROOT}/training-metadata.json"
+)
+REMEDIATION_V5_ARCHIVE_SHA256_REFERENCE = (
+    f"{REMEDIATION_V5_EVIDENCE_ROOT}/"
+    "p7-t2-research-remediation-v5-output.zip.sha256"
+)
+REMEDIATION_V5_REAL_EVIDENCE_SHA256 = (
+    "568aeee2c4b22c0404cfdb5a353bf7e2d18a3b4c56a8a567254f84c7e60451fb"
+)
+REMEDIATION_V5_CONTRACT_SOURCES = (
+    "config/p7-t4-research-remediation-governance-v5/external-evaluation-approval-request.json",
+    "config/p7-t4-research-remediation-governance-v5/evaluator-contract-v2.approved.json",
+    "config/p7-t4-research-remediation-governance-v5/evaluation-suite-v2.approved.json",
+    "evidence/p7-t4-research-remediation-v5-evaluator-governance-approval.json",
+    "evidence/p7-t4-research-remediation-v5-external-evaluation-approval.json",
+    "scripts/validate-p7-t4-research-evaluation-v2.py",
+)
 CANONICAL_EVALUATION_CONFIG_REFERENCE = (
     "config/p7-t4-research-independent-evaluation.json"
 )
@@ -133,15 +161,24 @@ def bundle_sources(
     remediation: bool = False,
     stability_retry: bool = False,
     remediation_v4: bool = False,
+    remediation_v5: bool = False,
 ) -> dict[str, Path]:
     root = root.resolve()
     sources = {relative: root / relative for relative in SOURCE_FILES}
-    if sum((remediation, stability_retry, remediation_v4)) > 1:
+    if sum((remediation, stability_retry, remediation_v4, remediation_v5)) > 1:
         raise BundleBuildError("select exactly one candidate mode")
-    if not any((remediation, stability_retry, remediation_v4)):
+    if not any((remediation, stability_retry, remediation_v4, remediation_v5)):
         return sources
 
-    if remediation_v4:
+    if remediation_v5:
+        config_reference = REMEDIATION_V5_CONFIG_REFERENCE
+        manifest_reference = REMEDIATION_V5_ADAPTER_MANIFEST_REFERENCE
+        evidence_reference = REMEDIATION_V5_REAL_EVIDENCE_REFERENCE
+        metadata_reference = REMEDIATION_V5_TRAINING_METADATA_REFERENCE
+        archive_reference = REMEDIATION_V5_ARCHIVE_SHA256_REFERENCE
+        for relative in REMEDIATION_V5_CONTRACT_SOURCES:
+            sources[relative] = root / relative
+    elif remediation_v4:
         config_reference = REMEDIATION_V4_CONFIG_REFERENCE
         manifest_reference = REMEDIATION_V4_ADAPTER_MANIFEST_REFERENCE
         evidence_reference = REMEDIATION_V4_REAL_EVIDENCE_REFERENCE
@@ -291,6 +328,7 @@ def build_bundle(
     remediation: bool = False,
     stability_retry: bool = False,
     remediation_v4: bool = False,
+    remediation_v5: bool = False,
 ) -> tuple[Path, Path, dict[str, Any]]:
     root = root.resolve()
     output_parent = output_parent.resolve()
@@ -303,6 +341,7 @@ def build_bundle(
         remediation=remediation,
         stability_retry=stability_retry,
         remediation_v4=remediation_v4,
+        remediation_v5=remediation_v5,
     )
     missing = [relative for relative, source in sources.items() if not source.is_file()]
     if missing:
@@ -314,8 +353,11 @@ def build_bundle(
             destination = bundle_root / relative
             destination.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(source, destination)
-        if remediation or stability_retry or remediation_v4:
-            if remediation_v4:
+        if remediation or stability_retry or remediation_v4 or remediation_v5:
+            if remediation_v5:
+                source_reference = REMEDIATION_V5_REAL_EVIDENCE_REFERENCE
+                source_sha256 = REMEDIATION_V5_REAL_EVIDENCE_SHA256
+            elif remediation_v4:
                 source_reference = REMEDIATION_V4_REAL_EVIDENCE_REFERENCE
                 source_sha256 = REMEDIATION_V4_REAL_EVIDENCE_SHA256
             elif stability_retry:
@@ -369,6 +411,7 @@ def main() -> int:
     candidate_mode.add_argument("--remediation", action="store_true")
     candidate_mode.add_argument("--remediation-v3-stability", action="store_true")
     candidate_mode.add_argument("--remediation-v4", action="store_true")
+    candidate_mode.add_argument("--remediation-v5", action="store_true")
     args = parser.parse_args()
     try:
         bundle_root, archive_path, manifest = build_bundle(
@@ -378,6 +421,7 @@ def main() -> int:
             remediation=args.remediation,
             stability_retry=args.remediation_v3_stability,
             remediation_v4=args.remediation_v4,
+            remediation_v5=args.remediation_v5,
         )
         print(
             json.dumps(

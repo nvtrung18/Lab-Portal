@@ -7,7 +7,7 @@ State
 - Composed evaluation suite: 2.0.0, APPROVED_FOR_USE.
 - Dataset: 5.0.0, APPROVED_FOR_TRAINING.
 - Training authorized: true for one fresh CANDIDATE_ONLY training flow.
-- External evaluation execution authorized: false.
+- External evaluation execution authorized: true for the exact imported v5 candidate and six locked T4 runs.
 - Runtime normalization or constrained decoding authorized: false.
 - Promotion allowed: false.
 
@@ -71,3 +71,34 @@ Post-approval sequence
 8. Run SHARED_BASE and RESEARCH_ADAPTER independently for R01, R02, and R03.
 9. Require all adapter automatic cases to PASS before human and independent
    review. Do not claim PASS or promotion before every gate is complete.
+
+Candidate v5 import and external evaluation approval
+----------------------------------------------------
+
+The validated real-training output is imported as CANDIDATE_ONLY:
+
+candidateId: 714270ddeb336a0be24caffcd8fe609c464e90d232d5e96fb9dc5fa9a5e8e114
+trainingRunIdentity: 06633cfd985acca95c8057c3ac128e2274759f8b0f1f08679e3564c3dcfab429
+archiveSha256: 373c7f162afcdda903eada55fd0837a11cc5771a98145986ba4f94263e577e0d
+
+External evaluation approval request:
+
+config/p7-t4-research-remediation-governance-v5/external-evaluation-approval-request.json
+requestIdentity: 597084ab82b8d3bc575490b021f34f5b693a963571b907bfdf72e83650f41c9d
+
+External evaluation approval:
+
+evidence/p7-t4-research-remediation-v5-external-evaluation-approval.json
+approvalIdentity: 9d711b97932ecd5bb273aabf06325e87ab226e04a31d75813924f2cf7cc3e25e
+
+This approval permits exactly the six SHARED_BASE and RESEARCH_ADAPTER R01-R03
+runs on the locked Tesla T4/CPython 3.13.15 runtime. It does not permit
+promotion, constrained decoding, or runtime normalization.
+
+After committing these exact sources, build the distributable evaluation bundle:
+
+python scripts/build-p7-t4-research-evaluation-bundle.py \
+  --root . \
+  --adapter-directory .artifacts/p7-t2/714270ddeb336a0be24caffcd8fe609c464e90d232d5e96fb9dc5fa9a5e8e114/p7-t2-real-training-output/adapter \
+  --output-parent .artifacts/p7-t4-remediation-v5-ready \
+  --remediation-v5

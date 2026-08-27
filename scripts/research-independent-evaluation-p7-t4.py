@@ -124,6 +124,10 @@ def artifact_identity(value: dict[str, Any]) -> str:
     return sha256_bytes(canonical_bytes({key: item for key, item in value.items() if key != "artifactIdentity"}))
 
 
+def request_identity(value: dict[str, Any]) -> str:
+    return sha256_bytes(canonical_bytes({key: item for key, item in value.items() if key != "requestIdentity"}))
+
+
 def _suite_identity(value: dict[str, Any]) -> str:
     return sha256_bytes(canonical_bytes({key: item for key, item in value.items() if key != "suiteDigest"}))
 
@@ -205,15 +209,24 @@ def validate_adapter_candidate(
 
 
 def validate_evaluation_config(config: dict[str, Any], adapter_manifest: dict[str, Any]) -> None:
-    required = {
+    base_fields = {
         "artifactType", "schemaVersion", "assistantKey", "baseModel", "adapter",
         "evaluationSources", "execution", "comparisonPolicy", "review",
     }
-    if not isinstance(config, dict) or set(config) != required:
+    if not isinstance(config, dict):
+        raise P7T4Error("evaluation config fields are not closed")
+    schema_version = config.get("schemaVersion")
+    required = (
+        base_fields
+        if schema_version == SCHEMA_VERSION
+        else base_fields | {"evaluationContract", "executionApproval", "runtimeControls"}
+        if schema_version == "2.0.0"
+        else set()
+    )
+    if set(config) != required:
         raise P7T4Error("evaluation config fields are not closed")
     if (
         config.get("artifactType") != "P7-T4-RESEARCH-INDEPENDENT-EVALUATION-CONFIG"
-        or config.get("schemaVersion") != SCHEMA_VERSION
         or config.get("assistantKey") != ASSISTANT_KEY
         or config.get("baseModel") != adapter_manifest.get("baseModel")
     ):
@@ -279,6 +292,42 @@ def validate_evaluation_config(config: dict[str, Any], adapter_manifest: dict[st
         "promotionWithoutReviewAllowed": False,
     }:
         raise P7T4Error("evaluation review policy invalid")
+    if schema_version == "2.0.0":
+        contract = config.get("evaluationContract")
+        if not isinstance(contract, dict) or set(contract) != {
+            "approvalIdentity", "approvalReference", "evaluatorIdentity",
+            "evaluatorReference", "evaluatorVersion", "suiteIdentity",
+            "suiteReference", "suiteVersion",
+        }:
+            raise P7T4Error("evaluation v2 contract binding invalid")
+        if (
+            contract.get("evaluatorVersion") != "2.0.0"
+            or contract.get("suiteVersion") != "2.0.0"
+            or any(
+                not isinstance(contract.get(field), str)
+                or not SHA256_PATTERN.fullmatch(contract[field])
+                for field in ("approvalIdentity", "evaluatorIdentity", "suiteIdentity")
+            )
+        ):
+            raise P7T4Error("evaluation v2 contract identity invalid")
+        approval = config.get("executionApproval")
+        if not isinstance(approval, dict) or approval != {
+            "approvalReference": "evidence/p7-t4-research-remediation-v5-external-evaluation-approval.json",
+            "required": True,
+        }:
+            raise P7T4Error("external evaluation approval binding invalid")
+        controls = config.get("runtimeControls")
+        if controls != {
+            "constrainedDecodingAllowed": False,
+            "runtimeNormalizationAllowed": False,
+        }:
+            raise P7T4Error("unapproved evaluation runtime controls")
+        for reference in (
+            contract["approvalReference"], contract["evaluatorReference"],
+            contract["suiteReference"], approval["approvalReference"],
+        ):
+            if Path(reference).is_absolute() or ".." in Path(reference).parts:
+                raise P7T4Error("evaluation v2 references must be repository-relative")
 
 
 def compose_research_evaluation_suite(
@@ -373,6 +422,113 @@ def compose_research_evaluation_suite(
     return suite
 
 
+def evaluator_for_suite(root: Path, suite: dict[str, Any]):
+    contract = suite.get("evaluatorContract")
+    if contract is None:
+        return P6_EVALUATOR
+    if not isinstance(contract, dict) or set(contract) != {
+        "id", "identity", "reference", "version",
+    }:
+        raise P7T4Error("evaluation suite evaluator binding invalid")
+    reference = contract.get("reference")
+    if (
+        contract.get("id") != "P7-T4-RESEARCH-EVALUATOR"
+        or contract.get("version") != "2.0.0"
+        or not isinstance(contract.get("identity"), str)
+        or not SHA256_PATTERN.fullmatch(contract["identity"])
+        or not isinstance(reference, str)
+        or Path(reference).is_absolute()
+        or ".." in Path(reference).parts
+    ):
+        raise P7T4Error("evaluation suite evaluator identity invalid")
+    evaluator = _load_module("p7t4_v2_evaluator_for_execution", root / "scripts/validate-p7-t4-research-evaluation-v2.py")
+    if (
+        evaluator.EVALUATOR_ID != contract["id"]
+        or evaluator.EVALUATOR_VERSION != contract["version"]
+    ):
+        raise P7T4Error("evaluation v2 implementation identity invalid")
+    return evaluator
+
+
+def load_v2_evaluation_contract(
+    root: Path,
+    config: dict[str, Any],
+    base_lock: dict[str, Any],
+    gap_suite: dict[str, Any],
+) -> tuple[dict[str, Any], object, dict[str, Any]]:
+    contract = config["evaluationContract"]
+    evaluator_contract = _load_json(root / contract["evaluatorReference"])
+    suite = _load_json(root / contract["suiteReference"])
+    amendment_approval = _load_json(root / contract["approvalReference"])
+    execution_approval = _load_json(
+        root / config["executionApproval"]["approvalReference"]
+    )
+    execution_request = _load_json(root / execution_approval["requestReference"])
+    if (
+        evaluator_contract.get("artifactIdentity") != artifact_identity(evaluator_contract)
+        or evaluator_contract.get("artifactIdentity") != contract["evaluatorIdentity"]
+        or evaluator_contract.get("evaluatorVersion") != contract["evaluatorVersion"]
+        or evaluator_contract.get("status") != "APPROVED"
+        or evaluator_contract.get("useAllowed") is not True
+        or evaluator_contract.get("runtimeNormalizationAllowed") is not False
+        or evaluator_contract.get("constrainedDecodingAllowed") is not False
+    ):
+        raise P7T4Error("approved evaluator v2 contract invalid")
+    if (
+        suite.get("suiteDigest") != _suite_identity(suite)
+        or suite.get("suiteDigest") != contract["suiteIdentity"]
+        or suite.get("suiteVersion") != contract["suiteVersion"]
+        or suite.get("status") != "APPROVED"
+        or suite.get("activationAllowed") is not True
+        or suite.get("externalExecutionAllowed") is not False
+        or suite.get("EVALUATION_ONLY") is not True
+        or suite.get("TRAINING_PROHIBITED") is not True
+        or suite.get("sourceSuites", {}).get("base", {}).get("digest")
+        != base_lock.get("suiteDigest")
+        or suite.get("sourceSuites", {}).get("gap", {}).get("digest")
+        != gap_suite.get("suiteDigest")
+    ):
+        raise P7T4Error("approved evaluation suite v2 invalid")
+    approved_artifacts = amendment_approval.get("approvedArtifacts", {})
+    amendment_authorization = amendment_approval.get("authorization", {})
+    if (
+        amendment_approval.get("artifactIdentity") != artifact_identity(amendment_approval)
+        or amendment_approval.get("artifactIdentity") != contract["approvalIdentity"]
+        or amendment_approval.get("status") != "APPROVED"
+        or approved_artifacts.get("evaluatorIdentity") != contract["evaluatorIdentity"]
+        or approved_artifacts.get("suiteIdentity") != contract["suiteIdentity"]
+        or amendment_authorization.get("evaluatorV2UseAllowed") is not True
+        or amendment_authorization.get("suiteV2UseAllowed") is not True
+        or amendment_authorization.get("externalEvaluationExecutionAllowed") is not False
+    ):
+        raise P7T4Error("evaluator and suite amendment approval invalid")
+    authorization = execution_approval.get("authorization")
+    if (
+        execution_request.get("requestIdentity") != request_identity(execution_request)
+        or execution_approval.get("artifactIdentity") != artifact_identity(execution_approval)
+        or execution_approval.get("requestIdentity") != execution_request["requestIdentity"]
+        or execution_approval.get("status") != "APPROVED"
+        or execution_approval.get("approval", {}).get("decision") != "APPROVED"
+        or execution_approval.get("approvedCandidate", {}).get("candidateId")
+        != config["adapter"]["candidateId"]
+        or execution_approval.get("approvedEvaluationContract", {}).get("evaluatorIdentity")
+        != contract["evaluatorIdentity"]
+        or execution_approval.get("approvedEvaluationContract", {}).get("suiteIdentity")
+        != contract["suiteIdentity"]
+        or authorization != {
+            "constrainedDecodingAllowed": False,
+            "externalEvaluationExecutionAllowed": True,
+            "promotionAllowed": False,
+            "runtimeNormalizationAllowed": False,
+        }
+    ):
+        raise P7T4Error("external evaluation execution approval invalid")
+    evaluator = evaluator_for_suite(root, suite)
+    if suite["evaluatorContract"]["identity"] != evaluator_contract["artifactIdentity"]:
+        raise P7T4Error("suite and evaluator v2 binding mismatch")
+    return suite, evaluator, execution_approval
+
+
 def preflight(root: Path, adapter_directory: Path) -> dict[str, Any]:
     """Validate governed sources and the exact real adapter without model loading."""
     root = root.resolve()
@@ -456,12 +612,18 @@ def preflight(root: Path, adapter_directory: Path) -> dict[str, Any]:
         )
     except Exception as error:
         raise P7T4Error(f"evaluation suite lock invalid: {error}") from error
-    suite = compose_research_evaluation_suite(
-        base_suite,
-        gap_suite,
-        _load_json(root / sources["reportGovernanceRequest"]),
-        _load_json(root / sources["reportGovernanceApproval"]),
-    )
+    if config["schemaVersion"] == "2.0.0":
+        suite, _, execution_approval = load_v2_evaluation_contract(
+            root, config, base_lock, gap_suite
+        )
+    else:
+        suite = compose_research_evaluation_suite(
+            base_suite,
+            gap_suite,
+            _load_json(root / sources["reportGovernanceRequest"]),
+            _load_json(root / sources["reportGovernanceApproval"]),
+        )
+        execution_approval = None
     requirements_path = root / config["execution"]["requirementsReference"]
     try:
         requirements_text = requirements_path.read_text(encoding="utf-8")
@@ -489,6 +651,14 @@ def preflight(root: Path, adapter_directory: Path) -> dict[str, Any]:
         },
         "composedSuite": suite,
     }
+    if execution_approval is not None:
+        report["sourceIdentities"].update(
+            {
+                "evaluatorContract": config["evaluationContract"]["evaluatorIdentity"],
+                "evaluationSuite": config["evaluationContract"]["suiteIdentity"],
+                "externalEvaluationApproval": execution_approval["artifactIdentity"],
+            }
+        )
     report["artifactIdentity"] = artifact_identity(report)
     return report
 
@@ -1143,7 +1313,9 @@ def run_model_variant(
             },
             "cases": candidate_cases,
         }
-        findings, automatic = P6_EVALUATOR.score_candidate(suite, candidate_run)
+        findings, automatic = evaluator_for_suite(root, suite).score_candidate(
+            suite, candidate_run
+        )
     except P7T4Error:
         raise
     except Exception as error:

@@ -196,6 +196,43 @@ class P7T4ResearchEvaluationBundleTests(unittest.TestCase):
             projected["remediationSourceEvidence"]["artifactIdentity"],
         )
 
+    def test_remediation_v5_bundle_sources_bind_candidate_and_v2_contracts(self):
+        sources = BUILDER.bundle_sources(ROOT, remediation_v5=True)
+
+        self.assertEqual(
+            ROOT / "config/p7-t4-research-independent-evaluation-remediation-v5.json",
+            sources["config/p7-t4-research-independent-evaluation.json"],
+        )
+        self.assertEqual(
+            ROOT / "evidence/p7-t2-real-training/remediation-v5/adapter-manifest.json",
+            sources["evidence/p7-t2-real-training/adapter-manifest.json"],
+        )
+        for reference in (
+            "scripts/validate-p7-t4-research-evaluation-v2.py",
+            "config/p7-t4-research-remediation-governance-v5/evaluator-contract-v2.approved.json",
+            "config/p7-t4-research-remediation-governance-v5/evaluation-suite-v2.approved.json",
+            "evidence/p7-t4-research-remediation-v5-external-evaluation-approval.json",
+            "evidence/p7-t2-real-training/remediation-v5/real-training-evidence.json",
+        ):
+            self.assertIn(reference, sources)
+
+    def test_remediation_v5_evidence_projects_without_rewriting_training_facts(self):
+        reference = (
+            "evidence/p7-t2-real-training/remediation-v5/real-training-evidence.json"
+        )
+        source_payload = (ROOT / reference).read_bytes()
+        source = json.loads(source_payload)
+
+        projected = BUILDER.build_evaluation_compatibility_evidence(
+            source_payload,
+            source_reference=reference,
+            expected_source_sha256=BUILDER.REMEDIATION_V5_REAL_EVIDENCE_SHA256,
+        )
+
+        self.assertEqual(source["candidateId"], projected["candidateId"])
+        self.assertEqual(source["trainingRunIdentity"], projected["trainingRunIdentity"])
+        self.assertEqual(source["contractGates"], projected["contractGates"])
+
     def test_bundle_sources_reject_multiple_candidate_modes(self):
         with self.assertRaisesRegex(BUILDER.BundleBuildError, "one candidate mode"):
             BUILDER.bundle_sources(ROOT, remediation=True, stability_retry=True)

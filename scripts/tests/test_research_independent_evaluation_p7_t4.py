@@ -288,6 +288,81 @@ class P7T4ResearchIndependentEvaluationTests(unittest.TestCase):
         self.assertTrue(config["review"]["independentReviewerRequired"])
         self.assertIsNone(config["comparisonPolicy"]["resourceIncreaseThreshold"])
 
+    def test_v2_contract_loads_approved_suite_evaluator_and_execution_approval(self):
+        config = json.loads(
+            (
+                ROOT
+                / "config/p7-t4-research-independent-evaluation-remediation-v5.json"
+            ).read_text(encoding="utf-8")
+        )
+        manifest = json.loads(
+            (
+                ROOT
+                / "evidence/p7-t2-real-training/remediation-v5/adapter-manifest.json"
+            ).read_text(encoding="utf-8")
+        )
+
+        MODULE.validate_evaluation_config(config, manifest)
+        suite, evaluator, execution_approval = MODULE.load_v2_evaluation_contract(
+            ROOT,
+            config,
+            json.loads(
+                (ROOT / "evals/p6-t4-evaluation-suite.lock.json").read_text(
+                    encoding="utf-8"
+                )
+            ),
+            self.gap_suite,
+        )
+
+        self.assertEqual("2.0.0", suite["suiteVersion"])
+        self.assertEqual("2.0.0", evaluator.EVALUATOR_VERSION)
+        self.assertTrue(
+            execution_approval["authorization"]["externalEvaluationExecutionAllowed"]
+        )
+        self.assertFalse(execution_approval["authorization"]["promotionAllowed"])
+
+    def test_v2_evaluator_accepts_the_approved_report_review_draft(self):
+        suite = json.loads(
+            (
+                ROOT
+                / "config/p7-t4-research-remediation-governance-v5/evaluation-suite-v2.approved.json"
+            ).read_text(encoding="utf-8")
+        )
+        cases = []
+        for case in suite["caseInventory"]:
+            expected = suite["expectedObservations"][case["expectedObservationId"]]
+            cases.append(
+                {
+                    "evalCaseId": case["evalCaseId"],
+                    "response": {
+                        "language": expected["responseContract"]["language"],
+                        "markers": expected["responseContract"]["markers"],
+                        "mode": expected["responseContract"]["mode"],
+                        "text": "Synthetic governed response.",
+                    },
+                    "observedBehavior": expected["behavior"],
+                    "observedActionRisk": expected["actionRisk"],
+                    "toolRequest": expected["toolRequest"],
+                    "structuredOutput": expected["structuredOutput"],
+                    "referencedContextIds": expected["referencedContextIds"],
+                }
+            )
+        candidate = {
+            "suiteId": suite["suiteId"],
+            "suiteVersion": suite["suiteVersion"],
+            "candidateRunId": "v2-contract-test",
+            "modelMetadata": {},
+            "cases": cases,
+        }
+
+        evaluator = MODULE.evaluator_for_suite(ROOT, suite)
+        findings, report = evaluator.score_candidate(suite, candidate)
+
+        self.assertEqual([], findings)
+        self.assertTrue(
+            all(item["automaticState"] == "PASS" for item in report["automaticReport"])
+        )
+
     def completed_human_report(self, suite, run, outcome="PASS"):
         rubric = yaml.safe_load(
             (ROOT / "evals" / "human-eval-rubric.yaml").read_text(encoding="utf-8")
