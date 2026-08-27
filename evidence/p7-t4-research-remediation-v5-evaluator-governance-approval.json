@@ -1,0 +1,72 @@
+{
+  "approval": {
+    "approvedAt": "2026-08-27",
+    "approvedBy": "RESEARCH_GOVERNANCE_EVALUATION_APPROVAL_AUTHORITY",
+    "decision": "APPROVED"
+  },
+  "approvalAuthority": "RESEARCH_GOVERNANCE_EVALUATION_APPROVAL_AUTHORITY",
+  "approvedArtifacts": {
+    "datasetQualityIdentity": "815f1199263f2dfbb1fa3d295ff08cac78ca722243dbdbabdc934b43fde18cec",
+    "datasetQualityReference": "config/p7-t4-research-remediation-governance-v5/training-data-quality-spec-v5.json",
+    "evaluatorIdentity": "99230c674b9064f1e06247dedd014f6e3da0714ca679017c07b3d877f1e285d3",
+    "evaluatorReference": "config/p7-t4-research-remediation-governance-v5/evaluator-contract-v2.approved.json",
+    "pendingEvaluatorIdentity": "a7199199a3163c0139d1769b316b943d45053297aa522c11fc8a806ff3b62ef3",
+    "pendingSuiteIdentity": "9162aa37f13a65d6c0522e099525d58db232501c0d1fa0bdefd63f2cc0701e80",
+    "suiteIdentity": "65c87149ec97bf34a04257a80af0cba1114b48fe9702f6b3cacb253b573931a8",
+    "suiteReference": "config/p7-t4-research-remediation-governance-v5/evaluation-suite-v2.approved.json"
+  },
+  "artifactIdentity": "53d48c6489ecd7bb4f7a4a1c85bbe2813454c94c520310f28c74499d4bfdae05",
+  "artifactType": "P7-T4-RESEARCH-REMEDIATION-V5-EVALUATOR-GOVERNANCE-APPROVAL",
+  "authorization": {
+    "constrainedDecodingAllowed": false,
+    "datasetV5PreparationAllowed": true,
+    "evaluatorV2UseAllowed": true,
+    "externalEvaluationExecutionAllowed": false,
+    "externalTrainingAllowed": false,
+    "promotionAllowed": false,
+    "runtimeNormalizationAllowed": false,
+    "separateExternalEvaluationApprovalRequired": true,
+    "separateTrainingApprovalRequired": true,
+    "suiteV2UseAllowed": true
+  },
+  "preservedFrozenInputs": [
+    {
+      "reference": "evals/p6-t4-evaluation-suites.yaml",
+      "sha256": "ce7b6269190ed6a654cd62356f8831afbb159c81267dcd4f511b0cd6c323608c",
+      "unchanged": true
+    },
+    {
+      "reference": "evals/p6-t4-evaluation-suite.lock.json",
+      "sha256": "7bc4b4d6da72349646d5675d32d5845500e06456836654231eb7b7562b172610",
+      "unchanged": true
+    },
+    {
+      "reference": "evals/p7-t3-research-gap-evaluation-suite.json",
+      "sha256": "3655c8ecc8c282f90e7a1b3bf6c460553398fa93e00a15ae461349fc681d74b5",
+      "unchanged": true
+    },
+    {
+      "reference": "evals/p7-t3-research-gap-evaluation-suite.lock.json",
+      "sha256": "2b9d2d723aa2eacbc8b464214a812b106c0ac746b42c7b2d5218363abdebdae2",
+      "unchanged": true
+    },
+    {
+      "reference": "evidence/p7-t1c-frozen-evaluation-governance-approval.json",
+      "sha256": "caabacd19a15545842264f2ab90bf0a306540c91758c89a4af84aa79657ba5ca",
+      "unchanged": true
+    },
+    {
+      "reference": "evidence/p7-t3-research-report-eval-governance-approval-v2.json",
+      "sha256": "cf54d011c2bffe6ea152f2dcca35cf4941eb569bceb9492475cb0bcdd4cf987c",
+      "unchanged": true
+    }
+  ],
+  "requestIdentity": "4a9ceb3be319bc2fb96b3d856bfdcb2c6c263a325fab5863f45265b4fe52d93f",
+  "requestReference": "config/p7-t4-research-remediation-governance-v5/governance-amendment-request.json",
+  "revocation": {
+    "authority": "RESEARCH_GOVERNANCE_EVALUATION_APPROVAL_AUTHORITY",
+    "status": "ACTIVE"
+  },
+  "schemaVersion": "1.0.0",
+  "status": "APPROVED"
+}

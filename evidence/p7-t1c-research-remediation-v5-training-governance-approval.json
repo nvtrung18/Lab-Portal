@@ -1,0 +1,68 @@
+{
+  "approval": {
+    "approvedAt": "2026-08-27T03:32:19Z",
+    "approvedBy": "RESEARCH_GOVERNANCE_DATA_GOVERNANCE_APPROVAL_AUTHORITY",
+    "decision": "APPROVED"
+  },
+  "approvalAuthority": "RESEARCH_GOVERNANCE_DATA_GOVERNANCE_APPROVAL_AUTHORITY",
+  "artifactIdentity": "19a405ca049b7bc15b8f2b96d5b2c85eb364f138309b5528a71518ee86632dba",
+  "artifactType": "P7-T1C-RESEARCH-REMEDIATION-V5-TRAINING-GOVERNANCE-APPROVAL",
+  "authorization": {
+    "constrainedDecodingAllowed": false,
+    "evaluationAllowed": false,
+    "externalTrainingAllowed": true,
+    "productionPromptingAllowed": false,
+    "promotionAllowed": false,
+    "runtimeNormalizationAllowed": false,
+    "separateEvaluationApprovalRequired": true
+  },
+  "dataset": {
+    "datasetId": "p7-research-synthetic-training-dataset",
+    "datasetVersion": "5.0.0",
+    "manifestIdentity": "460d7fcfe0574832f3a1e1ec6f58299b739bba005d32f13754eb6512c8189ac4",
+    "manifestReference": "datasets/p7-research-synthetic-training-dataset-v5/manifest.json",
+    "recordCount": 192
+  },
+  "evaluationSuiteIdentity": "65c87149ec97bf34a04257a80af0cba1114b48fe9702f6b3cacb253b573931a8",
+  "evaluationSuiteReference": "config/p7-t4-research-remediation-governance-v5/evaluation-suite-v2.approved.json",
+  "evaluatorIdentity": "99230c674b9064f1e06247dedd014f6e3da0714ca679017c07b3d877f1e285d3",
+  "evaluatorReference": "config/p7-t4-research-remediation-governance-v5/evaluator-contract-v2.approved.json",
+  "evaluatorSuiteApprovalIdentity": "53d48c6489ecd7bb4f7a4a1c85bbe2813454c94c520310f28c74499d4bfdae05",
+  "evaluatorSuiteApprovalReference": "evidence/p7-t4-research-remediation-v5-evaluator-governance-approval.json",
+  "purpose": "TRAINING",
+  "requestIdentity": "780a5deeb83e30a38e229d91c54cbb8c0c56fd0ef1717a402df8440bc23e06f0",
+  "requestReference": "config/p7-t4-research-remediation-governance-v5/training-approval-request.json",
+  "revocation": {
+    "authority": "RESEARCH_GOVERNANCE_DATA_GOVERNANCE_APPROVAL_AUTHORITY",
+    "status": "ACTIVE"
+  },
+  "schemaVersion": "1.0.0",
+  "scope": {
+    "assistantKey": "RESEARCH_ASSISTANT",
+    "candidateDispositionAfterTraining": "CANDIDATE_ONLY",
+    "contractHoldoutUsedForOptimization": false,
+    "freshBaseModelStartRequired": true,
+    "frozenEvaluationTrainingUseAllowed": false,
+    "fullySyntheticOnly": true,
+    "includedUseCases": [
+      "RESEARCH_UC_003",
+      "RESEARCH_UC_004",
+      "RESEARCH_UC_005",
+      "RESEARCH_UC_006"
+    ],
+    "privateResearchDocumentUseAllowed": false,
+    "productionDataUseAllowed": false,
+    "syntheticCategories": [
+      "CAT_RESEARCH_REPORT_REVIEW_SYNTHETIC",
+      "CAT_RESEARCH_TASKS"
+    ]
+  },
+  "source": {
+    "contentIdentity": "5979c4f157aa1dbba347ea9e4a68ec1cdfa6b4753ca2c3433a0c47d383c1b28b",
+    "contractIdentity": "c3e90ed16695cde5fb08f33d2d80a30e8d59db6f9a9652d051316a15dc6d8e18",
+    "provenanceIdentity": "578c8dc88fed5ea3ef4b12cab291c1400fab93ac9d7bb2e91caefba80941c5d2",
+    "reference": "datasets/p7-t4-research-remediation-source-v5/source-export.json",
+    "sha256": "b2193e262202f942789fc57f198bb8eb83902297e6adc3030d91e0e664aaeb3b"
+  },
+  "status": "APPROVED"
+}

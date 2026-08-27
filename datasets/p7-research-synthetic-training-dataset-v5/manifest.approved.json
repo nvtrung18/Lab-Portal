@@ -1,0 +1,80 @@
+{
+  "approval_authority": "RESEARCH_GOVERNANCE_DATA_GOVERNANCE_APPROVAL_AUTHORITY",
+  "approval_references": [
+    "evidence/p7-t1c-research-remediation-v5-training-governance-approval.json"
+  ],
+  "approval_status": "APPROVED",
+  "approved_purposes": [
+    "TRAINING"
+  ],
+  "artifacts": [
+    {
+      "filename": "evaluation.jsonl",
+      "recordCount": 24,
+      "sha256": "f7ecb1dee4129298bbd07309587789a677b42cc9e666095782e28a018008b43c"
+    },
+    {
+      "filename": "rejections.jsonl",
+      "recordCount": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "filename": "train.jsonl",
+      "recordCount": 144,
+      "sha256": "0cc81281d7c1c28c9bd578ca11f0f60e70ab82166b427089a3d14474c4a2789c"
+    },
+    {
+      "filename": "validation.jsonl",
+      "recordCount": 24,
+      "sha256": "80c39215c17d7f468f363ef0a1838dafccecf4f893e6fac807832df6914159b8"
+    }
+  ],
+  "assistant_key": "RESEARCH_ASSISTANT",
+  "card_reference": "config/p7-t1c-research-remediation-governance-v5/training-dataset-card.approved.json",
+  "checksum": "591ded79431b4ffbba786a63fdffe7486f2a19fe787ef91261b26d8c33e01f67",
+  "checksum_algorithm": "SHA-256",
+  "contractHoldout": {
+    "frozenP7T4Evaluation": false,
+    "split": "evaluation",
+    "usedForOptimization": false
+  },
+  "counts": {
+    "acceptedRecords": 192,
+    "rejectedRecords": 0,
+    "sourceRecords": 192,
+    "splits": {
+      "evaluation": 24,
+      "train": 144,
+      "validation": 24
+    }
+  },
+  "dataset_id": "p7-research-synthetic-training-dataset",
+  "dataset_version": "5.0.0",
+  "lifecycle_status": "APPROVED",
+  "permitted_purposes": [
+    "DEVELOPMENT_TEST",
+    "TRAINING"
+  ],
+  "prepared_manifest_identity": "460d7fcfe0574832f3a1e1ec6f58299b739bba005d32f13754eb6512c8189ac4",
+  "prohibited_purposes": [
+    "EVALUATION_WITHOUT_SEPARATE_APPROVAL",
+    "PROMOTION"
+  ],
+  "provenance_identity": "578c8dc88fed5ea3ef4b12cab291c1400fab93ac9d7bb2e91caefba80941c5d2",
+  "provenance_reference": "datasets/p7-t4-research-remediation-source-v5/provenance.json",
+  "source_content_identity": "5979c4f157aa1dbba347ea9e4a68ec1cdfa6b4753ca2c3433a0c47d383c1b28b",
+  "source_reference": "datasets/p7-t4-research-remediation-source-v5/source-export.json",
+  "source_sha256": "b2193e262202f942789fc57f198bb8eb83902297e6adc3030d91e0e664aaeb3b",
+  "split_configuration": {
+    "perUseCaseLanguage": {
+      "evaluation": 3,
+      "train": 18,
+      "validation": 3
+    },
+    "strategy": "CONTENT_ID_ORDERED_STRATIFIED"
+  },
+  "trainingAuthorized": true,
+  "training_approval_identity": "19a405ca049b7bc15b8f2b96d5b2c85eb364f138309b5528a71518ee86632dba",
+  "training_contract_identity": "c3e90ed16695cde5fb08f33d2d80a30e8d59db6f9a9652d051316a15dc6d8e18",
+  "training_contract_reference": "datasets/p7-t4-research-remediation-source-v5/training-contract.json"
+}

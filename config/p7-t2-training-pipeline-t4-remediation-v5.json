@@ -1,0 +1,85 @@
+{
+  "adapter": {
+    "lora": {
+      "alpha": 32,
+      "bias": "none",
+      "dropout": 0.05,
+      "rank": 16,
+      "targetModules": [
+        "q_proj",
+        "k_proj",
+        "v_proj",
+        "o_proj"
+      ]
+    },
+    "method": "QLORA",
+    "quantization": {
+      "bits": 4,
+      "computeDtype": "float16",
+      "doubleQuantization": true,
+      "quantType": "nf4"
+    }
+  },
+  "assistantKey": "RESEARCH_ASSISTANT",
+  "baseModel": {
+    "identifier": "Qwen/Qwen3-4B-Instruct-2507",
+    "revision": "cdbee75f17c01a7cc42f958dc650907174af0554"
+  },
+  "contractGates": {
+    "frozenEvaluationTrainingUseAllowed": false,
+    "independentHoldout": {
+      "split": "evaluation",
+      "useForBestCheckpointSelection": false,
+      "useForEarlyStopping": false,
+      "useForOptimization": false
+    },
+    "preparedRuntimeContract": {
+      "constrainedDecodingAllowed": false,
+      "evaluationSuiteIdentity": "65c87149ec97bf34a04257a80af0cba1114b48fe9702f6b3cacb253b573931a8",
+      "evaluationSuiteReference": "config/p7-t4-research-remediation-governance-v5/evaluation-suite-v2.approved.json",
+      "evaluatorContractIdentity": "99230c674b9064f1e06247dedd014f6e3da0714ca679017c07b3d877f1e285d3",
+      "evaluatorContractReference": "config/p7-t4-research-remediation-governance-v5/evaluator-contract-v2.approved.json",
+      "evaluatorSuiteApprovalIdentity": "53d48c6489ecd7bb4f7a4a1c85bbe2813454c94c520310f28c74499d4bfdae05",
+      "evaluatorSuiteApprovalReference": "evidence/p7-t4-research-remediation-v5-evaluator-governance-approval.json",
+      "runtimeNormalizationAllowed": false
+    },
+    "trainingApprovalIdentity": "19a405ca049b7bc15b8f2b96d5b2c85eb364f138309b5528a71518ee86632dba",
+    "trainingApprovalReference": "evidence/p7-t1c-research-remediation-v5-training-governance-approval.json",
+    "trainingContractIdentity": "c3e90ed16695cde5fb08f33d2d80a30e8d59db6f9a9652d051316a15dc6d8e18",
+    "trainingContractReference": "datasets/p7-t4-research-remediation-source-v5/training-contract.json"
+  },
+  "dataset": {
+    "identity": "591ded79431b4ffbba786a63fdffe7486f2a19fe787ef91261b26d8c33e01f67",
+    "manifestReference": "datasets/p7-research-synthetic-training-dataset-v5/manifest.approved.json"
+  },
+  "output": {
+    "checkpointDirectory": "checkpoints",
+    "exportDirectory": "adapter",
+    "metadataFilename": "training-metadata.json"
+  },
+  "pipelineVersion": "5.0.0",
+  "schemaVersion": "5.0.0",
+  "seed": 20260827,
+  "splits": {
+    "contractHoldout": "evaluation",
+    "training": "train",
+    "validation": "validation"
+  },
+  "training": {
+    "batchSize": 1,
+    "earlyStoppingPatience": 2,
+    "earlyStoppingThreshold": 0.0,
+    "epochs": 4,
+    "evaluationStrategy": "epoch",
+    "gradientAccumulation": 8,
+    "gradientScalerInitialScale": 32768,
+    "greaterIsBetter": false,
+    "learningRate": 0.0001,
+    "loadBestModelAtEnd": true,
+    "maxSteps": null,
+    "metricForBestModel": "eval_loss",
+    "precision": "float16",
+    "saveStrategy": "epoch",
+    "saveTotalLimit": 2
+  }
+}

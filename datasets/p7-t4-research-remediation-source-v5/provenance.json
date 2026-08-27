@@ -1,0 +1,22 @@
+{
+  "artifactIdentity": "578c8dc88fed5ea3ef4b12cab291c1400fab93ac9d7bb2e91caefba80941c5d2",
+  "artifactType": "P7-T4-RESEARCH-REMEDIATION-V5-SOURCE-PROVENANCE",
+  "contentIdentity": "5979c4f157aa1dbba347ea9e4a68ec1cdfa6b4753ca2c3433a0c47d383c1b28b",
+  "evaluationDerived": false,
+  "evaluationSuiteIdentity": "65c87149ec97bf34a04257a80af0cba1114b48fe9702f6b3cacb253b573931a8",
+  "evaluatorIdentity": "99230c674b9064f1e06247dedd014f6e3da0714ca679017c07b3d877f1e285d3",
+  "evaluatorSuiteApprovalIdentity": "53d48c6489ecd7bb4f7a4a1c85bbe2813454c94c520310f28c74499d4bfdae05",
+  "evaluatorSuiteApprovalReference": "evidence/p7-t4-research-remediation-v5-evaluator-governance-approval.json",
+  "frozenEvaluationContentUsed": false,
+  "fullySynthetic": true,
+  "governanceApprovalIdentity": "ee8576fa361c3617dba9a019579a1e19b73eac0d1cd9d01226c519e7f3fa52e3",
+  "governanceApprovalReference": "evidence/p7-t4-research-remediation-v4-governance-approval.json",
+  "privateResearchDocumentsUsed": false,
+  "productionDataUsed": false,
+  "qualitySpecificationIdentity": "815f1199263f2dfbb1fa3d295ff08cac78ca722243dbdbabdc934b43fde18cec",
+  "recordCount": 192,
+  "schemaVersion": "5.0.0",
+  "sourceId": "p7-t4-research-remediation-source",
+  "sourceVersion": "5.0.0",
+  "trainingAuthorized": false
+}

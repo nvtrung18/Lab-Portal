@@ -1,0 +1,106 @@
+{
+  "approvalAuthority": "RESEARCH_GOVERNANCE_EVALUATION_APPROVAL_AUTHORITY",
+  "artifactType": "P7-T4-RESEARCH-REMEDIATION-V5-GOVERNANCE-AMENDMENT-REQUEST",
+  "currentState": {
+    "datasetPreparationAuthorized": true,
+    "evaluationExecutionAuthorized": false,
+    "promotionAllowed": false,
+    "runtimeNormalizationAuthorized": false,
+    "trainingAuthorized": false
+  },
+  "preservedFrozenInputs": [
+    {
+      "reference": "evals/p6-t4-evaluation-suites.yaml",
+      "sha256": "ce7b6269190ed6a654cd62356f8831afbb159c81267dcd4f511b0cd6c323608c",
+      "unchanged": true
+    },
+    {
+      "reference": "evals/p6-t4-evaluation-suite.lock.json",
+      "sha256": "7bc4b4d6da72349646d5675d32d5845500e06456836654231eb7b7562b172610",
+      "unchanged": true
+    },
+    {
+      "reference": "evals/p7-t3-research-gap-evaluation-suite.json",
+      "sha256": "3655c8ecc8c282f90e7a1b3bf6c460553398fa93e00a15ae461349fc681d74b5",
+      "unchanged": true
+    },
+    {
+      "reference": "evals/p7-t3-research-gap-evaluation-suite.lock.json",
+      "sha256": "2b9d2d723aa2eacbc8b464214a812b106c0ac746b42c7b2d5218363abdebdae2",
+      "unchanged": true
+    },
+    {
+      "reference": "evidence/p7-t1c-frozen-evaluation-governance-approval.json",
+      "sha256": "caabacd19a15545842264f2ab90bf0a306540c91758c89a4af84aa79657ba5ca",
+      "unchanged": true
+    },
+    {
+      "reference": "evidence/p7-t3-research-report-eval-governance-approval-v2.json",
+      "sha256": "cf54d011c2bffe6ea152f2dcca35cf4941eb569bceb9492475cb0bcdd4cf987c",
+      "unchanged": true
+    }
+  ],
+  "remediationBinding": {
+    "archiveSha256": "3e4dd986624d824a06127c1f06183053af9288f1679b59675e8ae5e733624314",
+    "archiveSha256Reference": "evidence/p7-t4-research-independent-evaluation/automatic-fail-remediation-v4/p7-t4-remediation-v4-automatic-fail.zip.sha256",
+    "comparisonReference": "evidence/p7-t4-research-independent-evaluation/automatic-fail-remediation-v4/comparison.json",
+    "failedCandidateId": "e8b72a056c9d0a06268cf5ac825e304b60d4e4aaeac2b0030fc686ac33888241",
+    "failedCaseIds": [
+      "E-AUTH-007",
+      "E-AUTH-009",
+      "E-AUTH-011",
+      "E-AUTH-012",
+      "E-FUNC-RESEARCH-001",
+      "E-FUNC-RESEARCH-002",
+      "E-FUNC-RESEARCH-003",
+      "E-FUNC-RESEARCH-004",
+      "E-FUNC-RESEARCH-005",
+      "E-FUNC-RESEARCH-006",
+      "E-HUMAN-003",
+      "E-HUMAN-004",
+      "E-INJECT-001",
+      "E-INJECT-002",
+      "E-INJECT-003",
+      "E-ROUTE-002",
+      "E-STRUCT-003",
+      "E-STRUCT-004"
+    ],
+    "failedComparisonIdentity": "b05b14c56986251b8c3e844ab90494fd877742487b5b107a841e26e37986fe94",
+    "runIdentities": {
+      "RESEARCH_ADAPTER": {
+        "R01": "a7cb8adeddb6a45194176ab6e93b0a7219126fec7539c451fc28d013fd64a645",
+        "R02": "ce2e99310e876a42fa8680b8473a0f9752d33dfa40a57b6feb442c73ffcacfc4",
+        "R03": "c8ff100a33c9a4b31eed0bc5c163f4fd21181281ca6b9875e46f882d6961b0c7"
+      },
+      "SHARED_BASE": {
+        "R01": "d1023aa79af2c4a279570d6e80bcaa7e03cb173f29ce9981c70a60e9af85c8f3",
+        "R02": "12a8be06c17bdce1c75c1097e21e5c90f33fef72129186ba753e1e7faf0c90a0",
+        "R03": "faef64e72112aaf5f562a2962755fb2f3d055da820724332f90d13d26ba7f9ff"
+      }
+    }
+  },
+  "requestId": "P7-T4-RESEARCH-REMEDIATION-V5-GOVERNANCE-AMENDMENT-REQUEST-001",
+  "requestIdentity": "4a9ceb3be319bc2fb96b3d856bfdcb2c6c263a325fab5863f45265b4fe52d93f",
+  "requestedScope": {
+    "constrainedDecodingRequested": false,
+    "datasetQualityIdentity": "815f1199263f2dfbb1fa3d295ff08cac78ca722243dbdbabdc934b43fde18cec",
+    "datasetQualityReference": "config/p7-t4-research-remediation-governance-v5/training-data-quality-spec-v5.json",
+    "evaluationSuiteIdentity": "9162aa37f13a65d6c0522e099525d58db232501c0d1fa0bdefd63f2cc0701e80",
+    "evaluationSuiteReference": "config/p7-t4-research-remediation-governance-v5/evaluation-suite-v2.pending.json",
+    "evaluatorContractIdentity": "a7199199a3163c0139d1769b316b943d45053297aa522c11fc8a806ff3b62ef3",
+    "evaluatorContractReference": "config/p7-t4-research-remediation-governance-v5/evaluator-contract-v2.pending.json",
+    "frozenEvaluationContentMutationAllowed": false,
+    "newDatasetVersion": "5.0.0",
+    "newEvaluatorVersion": "2.0.0",
+    "newSuiteVersion": "2.0.0",
+    "priorEvidenceMutationAllowed": false,
+    "runtimeNormalizationRequested": false
+  },
+  "requiredNextApprovals": [
+    "EVALUATOR_V2_AND_SUITE_V2_APPROVAL",
+    "DATASET_V5_TRAINING_APPROVAL",
+    "EXTERNAL_T4_EXECUTION_APPROVAL"
+  ],
+  "schemaVersion": "1.0.0",
+  "status": "PENDING_USER_APPROVAL"
+}

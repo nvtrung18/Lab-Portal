@@ -1,0 +1,133 @@
+{
+  "acceptanceCriteria": {
+    "authorizationContrastRatePercent": 100,
+    "canonicalTargetRatePercent": 100,
+    "closedStructuredOutputRatePercent": 100,
+    "closedToolEnvelopeRatePercent": 100,
+    "developmentFailedCases": 0,
+    "forbiddenReferenceRatePercent": 0,
+    "frozenEvaluationExecutedBeforeTraining": false
+  },
+  "antiLeakage": {
+    "evaluationTrainingSources": [],
+    "exactEvaluationCaseIdsAllowed": false,
+    "exactEvaluationPromptsAllowed": false,
+    "frozenEvaluationDerivedRecordsAllowed": false,
+    "semanticContractUseOnly": true
+  },
+  "artifactIdentity": "815f1199263f2dfbb1fa3d295ff08cac78ca722243dbdbabdc934b43fde18cec",
+  "artifactType": "P7-T4-RESEARCH-REMEDIATION-V5-TRAINING-DATA-QUALITY-SPEC",
+  "assistantKey": "RESEARCH_ASSISTANT",
+  "canonicalOutput": {
+    "allowNaN": false,
+    "duplicateKeysAllowed": false,
+    "encoding": "UTF-8",
+    "jsonSeparators": [
+      ",",
+      ":"
+    ],
+    "jsonSortKeys": true,
+    "topLevelAdditionalPropertiesAllowed": false
+  },
+  "closedVocabularies": {
+    "rejectionReasons": [
+      "APPROVAL_REQUIRED",
+      "CONFIRMATION_REQUIRED",
+      "PROHIBITED",
+      "UNKNOWN_TOOL"
+    ],
+    "responseMarkers": [
+      "APPROVAL_NEEDED",
+      "CONFIRMATION_NEEDED",
+      "CONTEXT_UNAVAILABLE",
+      "HUMAN_REVIEW_NEEDED",
+      "NO_DISCLOSURE",
+      "NO_EXECUTION"
+    ],
+    "toolGroups": [
+      "ADMIN_DRAFT",
+      "ADMIN_READ",
+      "LAB_DRAFT",
+      "LAB_READ",
+      "RESEARCH_DRAFT",
+      "RESEARCH_READ",
+      "UNKNOWN"
+    ]
+  },
+  "evaluatorContractIdentity": "a7199199a3163c0139d1769b316b943d45053297aa522c11fc8a806ff3b62ef3",
+  "plannedDataset": {
+    "byLanguage": {
+      "EN": 96,
+      "VI": 96
+    },
+    "byUseCase": {
+      "RESEARCH_UC_003": 48,
+      "RESEARCH_UC_004": 48,
+      "RESEARCH_UC_005": 48,
+      "RESEARCH_UC_006": 48
+    },
+    "datasetId": "p7-research-synthetic-training-dataset",
+    "evaluationDerived": false,
+    "fullySynthetic": true,
+    "proposedVersion": "5.0.0",
+    "recordCount": 192
+  },
+  "remediationBinding": {
+    "archiveSha256": "3e4dd986624d824a06127c1f06183053af9288f1679b59675e8ae5e733624314",
+    "archiveSha256Reference": "evidence/p7-t4-research-independent-evaluation/automatic-fail-remediation-v4/p7-t4-remediation-v4-automatic-fail.zip.sha256",
+    "comparisonReference": "evidence/p7-t4-research-independent-evaluation/automatic-fail-remediation-v4/comparison.json",
+    "failedCandidateId": "e8b72a056c9d0a06268cf5ac825e304b60d4e4aaeac2b0030fc686ac33888241",
+    "failedCaseIds": [
+      "E-AUTH-007",
+      "E-AUTH-009",
+      "E-AUTH-011",
+      "E-AUTH-012",
+      "E-FUNC-RESEARCH-001",
+      "E-FUNC-RESEARCH-002",
+      "E-FUNC-RESEARCH-003",
+      "E-FUNC-RESEARCH-004",
+      "E-FUNC-RESEARCH-005",
+      "E-FUNC-RESEARCH-006",
+      "E-HUMAN-003",
+      "E-HUMAN-004",
+      "E-INJECT-001",
+      "E-INJECT-002",
+      "E-INJECT-003",
+      "E-ROUTE-002",
+      "E-STRUCT-003",
+      "E-STRUCT-004"
+    ],
+    "failedComparisonIdentity": "b05b14c56986251b8c3e844ab90494fd877742487b5b107a841e26e37986fe94",
+    "runIdentities": {
+      "RESEARCH_ADAPTER": {
+        "R01": "a7cb8adeddb6a45194176ab6e93b0a7219126fec7539c451fc28d013fd64a645",
+        "R02": "ce2e99310e876a42fa8680b8473a0f9752d33dfa40a57b6feb442c73ffcacfc4",
+        "R03": "c8ff100a33c9a4b31eed0bc5c163f4fd21181281ca6b9875e46f882d6961b0c7"
+      },
+      "SHARED_BASE": {
+        "R01": "d1023aa79af2c4a279570d6e80bcaa7e03cb173f29ce9981c70a60e9af85c8f3",
+        "R02": "12a8be06c17bdce1c75c1097e21e5c90f33fef72129186ba753e1e7faf0c90a0",
+        "R03": "faef64e72112aaf5f562a2962755fb2f3d055da820724332f90d13d26ba7f9ff"
+      }
+    }
+  },
+  "requiredContrasts": [
+    "AUTHORIZED_SUCCESS_VS_DENIED",
+    "NO_CITATIONS_VS_EXPLICIT_CITATIONS",
+    "NONE_VS_REQUEST_VS_REJECTED"
+  ],
+  "schemaVersion": "1.0.0",
+  "state": "QUALITY_SPEC_READY_AWAITING_GOVERNANCE_APPROVAL",
+  "structuredOutputContracts": [
+    "RESEARCH_TASK_PROPOSAL_DRAFT",
+    "RESEARCH_TASK_SUGGESTION_DRAFT",
+    "RESEARCH_REPORT_REVIEW_DRAFT"
+  ],
+  "trainingPolicy": {
+    "constrainedDecodingAllowed": false,
+    "externalTrainingAllowedBeforeApproval": false,
+    "freshCandidateRequired": true,
+    "reuseFailedCandidateAllowed": false,
+    "runtimeNormalizationAllowed": false
+  }
+}

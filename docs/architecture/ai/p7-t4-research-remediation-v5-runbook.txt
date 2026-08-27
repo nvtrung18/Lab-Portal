@@ -1,0 +1,73 @@
+P7-T4 Research remediation v5 — governance and dataset preparation runbook
+
+State
+-----
+
+- Evaluator contract: 2.0.0, APPROVED_FOR_USE.
+- Composed evaluation suite: 2.0.0, APPROVED_FOR_USE.
+- Dataset: 5.0.0, APPROVED_FOR_TRAINING.
+- Training authorized: true for one fresh CANDIDATE_ONLY training flow.
+- External evaluation execution authorized: false.
+- Runtime normalization or constrained decoding authorized: false.
+- Promotion allowed: false.
+
+Purpose
+-------
+
+This amendment fixes the evaluator-contract gap for the already approved
+RESEARCH_REPORT_REVIEW_DRAFT shape and prepares a fully synthetic, evaluation-
+disjoint dataset. It does not modify the P6-T4 frozen suite, the P7-T3 gap suite,
+their locks, their approvals, or any prior P7-T4 evidence.
+
+Local verification
+------------------
+
+python -m unittest scripts.tests.test_p7_t4_research_remediation_v5 scripts.tests.test_research_independent_evaluation_p7_t4
+python -m unittest scripts.tests.test_p7_t2_research_remediation_v5_training_bundle
+python scripts/validate-p7-t4-research-remediation-v5-dataset.py
+
+Expected validator state
+------------------------
+
+The immutable prepared-source validator remains
+PREPARED_AWAITING_TRAINING_APPROVAL. The approved manifest and training approval
+are separate append-only artifacts; the v5 training pipeline contract gates
+must return PASS before any GPU work starts.
+
+Governance approval gate
+------------------------
+
+Evaluator/suite amendment approval materialized:
+
+evidence/p7-t4-research-remediation-v5-evaluator-governance-approval.json
+requestIdentity: 4a9ceb3be319bc2fb96b3d856bfdcb2c6c263a325fab5863f45265b4fe52d93f
+approvalIdentity: 53d48c6489ecd7bb4f7a4a1c85bbe2813454c94c520310f28c74499d4bfdae05
+
+Training approval materialized:
+
+config/p7-t4-research-remediation-governance-v5/governance-amendment-request.json
+config/p7-t4-research-remediation-governance-v5/evaluator-contract-v2.pending.json
+config/p7-t4-research-remediation-governance-v5/evaluation-suite-v2.pending.json
+config/p7-t4-research-remediation-governance-v5/training-data-quality-spec-v5.json
+config/p7-t4-research-remediation-governance-v5/training-approval-request.json
+requestIdentity: 780a5deeb83e30a38e229d91c54cbb8c0c56fd0ef1717a402df8440bc23e06f0
+approvalIdentity: 19a405ca049b7bc15b8f2b96d5b2c85eb364f138309b5528a71518ee86632dba
+
+The final external bundle must be built from a commit containing every governed
+v5 source. External T4 evaluation remains a separate gate. Pending artifacts
+and prior evidence must not be rewritten.
+
+Post-approval sequence
+----------------------
+
+1. Commit the exact governed v5 sources without unrelated local files.
+2. Build p7-t2-research-remediation-v5-t4.zip from that exact commit.
+3. Run a fresh single-T4 QLoRA training flow from the base model; do not
+   resume any failed v4 candidate.
+4. Validate finite gradients and the isolated contract holdout.
+5. Import the new candidate as CANDIDATE_ONLY.
+6. Build a new P7-T4 bundle bound to evaluator/suite 2.0.0.
+7. Obtain the separate external evaluation execution approval.
+8. Run SHARED_BASE and RESEARCH_ADAPTER independently for R01, R02, and R03.
+9. Require all adapter automatic cases to PASS before human and independent
+   review. Do not claim PASS or promotion before every gate is complete.
