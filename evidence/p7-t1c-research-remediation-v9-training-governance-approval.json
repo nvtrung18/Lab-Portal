@@ -1,0 +1,61 @@
+{
+  "approval": {
+    "approvedAt": "2026-08-29T12:20:34Z",
+    "approvedBy": "RESEARCH_GOVERNANCE_TRAINING_APPROVAL_AUTHORITY",
+    "decision": "APPROVED"
+  },
+  "approvalAuthority": "RESEARCH_GOVERNANCE_TRAINING_APPROVAL_AUTHORITY",
+  "artifactIdentity": "b3402cab5c4dfbe7d30c3bace1debbe28932da04a9c6f539f85a2865b58add34",
+  "artifactType": "P7-T1C-RESEARCH-REMEDIATION-V9-TRAINING-GOVERNANCE-APPROVAL",
+  "authorization": {
+    "constrainedDecodingAllowed": false,
+    "evaluationAllowed": false,
+    "externalTrainingAllowed": true,
+    "productionPromptingAllowed": false,
+    "promotionAllowed": false,
+    "runtimeNormalizationAllowed": false,
+    "separateEvaluationApprovalRequired": true
+  },
+  "datasetIdentity": "6091c1be0a482bda5bc51d51e64583bd4a87bd4befe71b1f220535d6d03216a3",
+  "datasetManifestReference": "datasets/p7-research-synthetic-training-dataset-v9/manifest.json",
+  "preparationApprovalIdentity": "a0987f0dc499b489838b854d0ca01f5aaa25fb144235c75e5577d0e548638440",
+  "preparationApprovalReference": "evidence/p7-t4-research-remediation-v9-governance-approval.json",
+  "promptProfileIdentity": "32b6fb0d9786cff93175a8f2e844f76989db12b5173e1d878a79365ac9bbea4d",
+  "purpose": "TRAINING",
+  "qualityIdentity": "2f49d629fd1620183c35ef33bcbeb154dee32b998b3d1775de720cacee3268fc",
+  "requestIdentity": "bdd4227a12c9695071ce397ff19e20eb7b9972dadd70bf9d7cb2952c90d73c63",
+  "requestReference": "config/p7-t4-research-remediation-governance-v9/training-approval-request.json",
+  "revocation": {
+    "authority": "RESEARCH_GOVERNANCE_TRAINING_APPROVAL_AUTHORITY",
+    "status": "ACTIVE"
+  },
+  "schemaVersion": "1.0.0",
+  "scope": {
+    "assistantKey": "RESEARCH_ASSISTANT",
+    "candidateDispositionAfterTraining": "CANDIDATE_ONLY",
+    "contractHoldoutUsedForOptimization": false,
+    "freshBaseModelStartRequired": true,
+    "frozenEvaluationTrainingUseAllowed": false,
+    "fullySyntheticOnly": true,
+    "includedUseCases": [
+      "RESEARCH_UC_001",
+      "RESEARCH_UC_002",
+      "RESEARCH_UC_003",
+      "RESEARCH_UC_004",
+      "RESEARCH_UC_005",
+      "RESEARCH_UC_006"
+    ],
+    "privateResearchDocumentUseAllowed": false,
+    "productionDataUseAllowed": false,
+    "retainedV8RecordsUnchanged": true,
+    "targetedEvaluationCaseIds": [
+      "E-FUNC-RESEARCH-006"
+    ],
+    "targetedUseCases": [
+      "RESEARCH_UC_006"
+    ]
+  },
+  "status": "APPROVED",
+  "trainingContractIdentity": "4d3e2f9685afffb8b1ac26f33e140251e17df4924c041dab6a2a2600255a715c",
+  "trainingContractReference": "datasets/p7-t4-research-remediation-source-v9/training-contract.json"
+}

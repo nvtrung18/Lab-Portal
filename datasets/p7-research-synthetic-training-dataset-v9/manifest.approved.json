@@ -1,0 +1,62 @@
+{
+  "approval_status": "APPROVED",
+  "artifactIdentity": "dec74dcc5d1f552ee7a445eb63c83f1c2c654f3306e929dced909f392f48adb0",
+  "artifacts": [
+    {
+      "filename": "evaluation.jsonl",
+      "recordCount": 80,
+      "sha256": "a3697bc9afbadb1bb66654c851b1d434272b199026c777cd32d23e7be9152c93"
+    },
+    {
+      "filename": "rejections.jsonl",
+      "recordCount": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "filename": "train.jsonl",
+      "recordCount": 480,
+      "sha256": "9d381b6940d23c8f0c3df26b7828d2eed1a46ad01b98c8c59c1d036bfe1d22ae"
+    },
+    {
+      "filename": "validation.jsonl",
+      "recordCount": 80,
+      "sha256": "c1d29922fcb3d16413d3e2d701838d77c136c22f8930793e9447025b5c1b3134"
+    }
+  ],
+  "baseDatasetIdentity": "44fb5a05d9a13c4f6e8d39fe7b8fe5a9189dc077b9850da700a17ea76e609b3d",
+  "contractHoldout": {
+    "recordCount": 80,
+    "split": "evaluation",
+    "usedForOptimization": false
+  },
+  "datasetIdentity": "6091c1be0a482bda5bc51d51e64583bd4a87bd4befe71b1f220535d6d03216a3",
+  "preparationApprovalIdentity": "a0987f0dc499b489838b854d0ca01f5aaa25fb144235c75e5577d0e548638440",
+  "preparedManifestIdentity": "a117c87b8cb6e6799a4df3dc190deebda4cca2e514af2ac389414e778e35c21c",
+  "promptProfileIdentity": "32b6fb0d9786cff93175a8f2e844f76989db12b5173e1d878a79365ac9bbea4d",
+  "qualityIdentity": "2f49d629fd1620183c35ef33bcbeb154dee32b998b3d1775de720cacee3268fc",
+  "recordCounts": {
+    "evaluation": 80,
+    "train": 480,
+    "validation": 80
+  },
+  "retainedRecordCounts": {
+    "evaluation": 72,
+    "train": 432,
+    "validation": 72
+  },
+  "schemaVersion": "9.0.0",
+  "status": "APPROVED_FOR_TRAINING_ONLY",
+  "targetedAdditionCounts": {
+    "evaluation": 8,
+    "train": 48,
+    "validation": 8
+  },
+  "targetedEvaluationCaseIds": [
+    "E-FUNC-RESEARCH-006"
+  ],
+  "trainingApprovalIdentity": "b3402cab5c4dfbe7d30c3bace1debbe28932da04a9c6f539f85a2865b58add34",
+  "trainingApprovalReference": "evidence/p7-t1c-research-remediation-v9-training-governance-approval.json",
+  "trainingAuthorized": true,
+  "trainingContractIdentity": "4d3e2f9685afffb8b1ac26f33e140251e17df4924c041dab6a2a2600255a715c",
+  "trainingContractReference": "datasets/p7-t4-research-remediation-source-v9/training-contract.json"
+}

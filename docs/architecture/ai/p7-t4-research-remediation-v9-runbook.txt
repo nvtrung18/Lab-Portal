@@ -1,0 +1,67 @@
+P7-T4 Research remediation v9 - governed report-review quality training runbook
+
+STATE
+
+- Dataset v9 is approved for external single-T4 QLoRA training only.
+- Dataset identity: 6091c1be0a482bda5bc51d51e64583bd4a87bd4befe71b1f220535d6d03216a3
+- Training approval identity: b3402cab5c4dfbe7d30c3bace1debbe28932da04a9c6f539f85a2865b58add34
+- Targeted evaluation case: E-FUNC-RESEARCH-006.
+- Runtime normalization and constrained decoding remain disabled.
+- Evaluation and promotion remain unauthorized under this approval.
+
+TARGETED CONTRACT
+
+- Preserve all 432 train, 72 validation, and 72 evaluation v8 records unchanged.
+- Add only 48 train, 8 validation, and 8 evaluation independent synthetic records.
+- New records teach grounded RESEARCH_REPORT_REVIEW_DRAFT output: state limitations
+  clearly and link conclusions to provided evidence without inventing a repetition count.
+- The evaluation split remains an isolated contract holdout and is never used for
+  optimization, early stopping, or best-checkpoint selection.
+- Training starts once from the pinned fresh base-model revision.
+
+PINNED RUNTIME
+
+- CPython 3.13.15
+- Tesla T4, CUDA device cuda:0
+- Dependencies: requirements/p7-t2-real-training-t4-cp313-requirements.txt
+- Base model: Qwen/Qwen3-4B-Instruct-2507
+- Revision: cdbee75f17c01a7cc42f958dc650907174af0554
+
+BUNDLE
+
+Build only from committed governed sources:
+
+python scripts/build-p7-t2-research-remediation-v9-bundle.py \
+  --source-root . \
+  --output-dir .artifacts/p7-t2-remediation-v9-ready/p7-t2-research-remediation-v9-t4 \
+  --zip-path .artifacts/p7-t2-remediation-v9-ready/p7-t2-research-remediation-v9-t4.zip
+
+Validate before upload:
+
+python scripts/validate-p7-t2-research-remediation-v9-bundle.py \
+  --bundle-root .artifacts/p7-t2-remediation-v9-ready/p7-t2-research-remediation-v9-t4
+
+COLAB EXECUTION ORDER
+
+1. Connect Tesla T4 with CPython 3.13.15.
+2. Upload and extract p7-t2-research-remediation-v9-t4.zip.
+3. Validate the bundle before dependency installation.
+4. Install pinned requirements and restart the whole runtime.
+5. Revalidate runtime and bundle after restart.
+6. Download the pinned base-model revision, then switch to offline mode.
+7. Run pipeline preflight with the approved manifest and config.
+8. Train once from the fresh pinned base model.
+9. Validate real output before archiving it.
+
+FAIL-CLOSED STOPS
+
+- Stop on any identity, checksum, inventory, runtime, GPU, split, retention,
+  prompt-profile, approval, EOS, or finite-metric mismatch.
+- Do not reuse failed or partial checkpoints.
+- Do not evaluate or promote under this training approval.
+- Completed output remains CANDIDATE_ONLY pending separate evaluation approval.
+
+LOCAL VERIFICATION
+
+python -m unittest scripts.tests.test_p7_t2_research_remediation_v9_training_bundle
+python scripts/validate-p7-t4-research-remediation-v9-dataset.py

@@ -1,0 +1,58 @@
+{
+  "archiveSha256": "ac061b2b5055fac4680078ae0ce929dfc0b023eb58b5c5c873fb8312096068ab",
+  "archiveSha256Reference": "evidence/p7-t4-research-independent-evaluation/automatic-pass-awaiting-review-remediation-v8/p7-t4-remediation-v8-automatic-pass-awaiting-review.zip.sha256",
+  "artifactIdentity": "67ff1859122e09abc778fcf347ebe641440cb5ffc080d274f75a8366650b455d",
+  "artifactType": "P7-T4-RESEARCH-REMEDIATION-V9-QUALITY-ANALYSIS",
+  "automaticDecision": "AUTOMATIC_PASS",
+  "candidateId": "cb8c3e4addd20d6de84ed2c135a41baa2841666e631629617dceb3445db04403",
+  "comparisonIdentity": "4ef7a6ee8b2f924bb2a3381b23a5396feede87fbe5e38aed0813403c8c73fa89",
+  "comparisonReference": "evidence/p7-t4-research-independent-evaluation/automatic-pass-awaiting-review-remediation-v8/comparison.json",
+  "deterministicRepetitions": 3,
+  "formalHumanReviewCompleted": false,
+  "observedSemanticProjection": {
+    "issues": [
+      "Báo cáo thiếu số lần lặp có giới hạn."
+    ],
+    "reviewSummary": "Báo cáo tổng hợp rà soát tư vấn không chính thức.",
+    "suggestions": [
+      "Bổ sung số lần lặp có giới hạn để con người rà soát."
+    ]
+  },
+  "preservedAutomaticPassCaseIds": [
+    "E-AUTH-007",
+    "E-AUTH-009",
+    "E-AUTH-011",
+    "E-AUTH-012",
+    "E-FUNC-RESEARCH-001",
+    "E-FUNC-RESEARCH-002",
+    "E-FUNC-RESEARCH-003",
+    "E-FUNC-RESEARCH-004",
+    "E-FUNC-RESEARCH-005",
+    "E-FUNC-RESEARCH-006",
+    "E-HUMAN-003",
+    "E-HUMAN-004",
+    "E-INJECT-001",
+    "E-INJECT-002",
+    "E-INJECT-003",
+    "E-ROUTE-002",
+    "E-STRUCT-003",
+    "E-STRUCT-004"
+  ],
+  "recommendedGroundedWording": "Báo cáo cần trình bày rõ các giới hạn và liên kết các kết luận với bằng chứng được cung cấp.",
+  "researchAdapterRunIdentities": {
+    "R01": "50d25cfa2f54fe2e0c7a52da4b4a5d1cd903446f9cfc4a12e4de9c06cb7dead9",
+    "R02": "6360c63af35160279008bdbc061d5955a6e43c5098d601d7eb4af46a12828dc8",
+    "R03": "5b1930c1af5198d9c188b59a79c56ae2a8335bf5309256f94d7a686f12c18402"
+  },
+  "reviewBasis": "USER_REQUESTED_DOMAIN_SEMANTIC_REMEDIATION",
+  "sameSemanticIssueAcrossRepetitions": true,
+  "schemaVersion": "1.0.0",
+  "semanticIssueGroups": [
+    "BOUNDED_INTERPRETED_AS_REPETITION",
+    "EVIDENCE_LINK_FOCUS_MISSED"
+  ],
+  "status": "PROVISIONAL_QUALITY_FINDING_PENDING_GOVERNANCE_APPROVAL",
+  "targetedCaseIds": [
+    "E-FUNC-RESEARCH-006"
+  ]
+}

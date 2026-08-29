@@ -1,0 +1,27 @@
+{
+  "approvalAuthority": "RESEARCH_GOVERNANCE_TRAINING_APPROVAL_AUTHORITY",
+  "artifactType": "P7-T1C-RESEARCH-REMEDIATION-V9-TRAINING-APPROVAL-REQUEST",
+  "datasetIdentity": "6091c1be0a482bda5bc51d51e64583bd4a87bd4befe71b1f220535d6d03216a3",
+  "datasetManifestReference": "datasets/p7-research-synthetic-training-dataset-v9/manifest.json",
+  "externalTrainingAllowed": false,
+  "preparationApprovalIdentity": "a0987f0dc499b489838b854d0ca01f5aaa25fb144235c75e5577d0e548638440",
+  "preparationApprovalReference": "evidence/p7-t4-research-remediation-v9-governance-approval.json",
+  "promptProfileIdentity": "32b6fb0d9786cff93175a8f2e844f76989db12b5173e1d878a79365ac9bbea4d",
+  "qualityIdentity": "2f49d629fd1620183c35ef33bcbeb154dee32b998b3d1775de720cacee3268fc",
+  "requestId": "P7-T1C-RESEARCH-REMEDIATION-V9-TRAINING-APPROVAL-REQUEST-001",
+  "requestIdentity": "bdd4227a12c9695071ce397ff19e20eb7b9972dadd70bf9d7cb2952c90d73c63",
+  "requestedScope": {
+    "datasetVersion": "9.0.0",
+    "externalSingleT4Training": true,
+    "freshBaseModelStartRequired": true,
+    "retainedV8RecordsUnchanged": true,
+    "syntheticHoldoutInferenceGateRequired": true,
+    "targetedEvaluationCaseIds": [
+      "E-FUNC-RESEARCH-006"
+    ],
+    "trainingMethod": "QLORA"
+  },
+  "schemaVersion": "1.0.0",
+  "status": "PENDING_USER_APPROVAL",
+  "trainingAuthorized": false
+}

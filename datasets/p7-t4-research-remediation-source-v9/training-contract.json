@@ -1,0 +1,14 @@
+{
+  "artifactIdentity": "4d3e2f9685afffb8b1ac26f33e140251e17df4924c041dab6a2a2600255a715c",
+  "artifactType": "P7-T4-RESEARCH-REMEDIATION-V9-TRAINING-CONTRACT",
+  "baseDatasetIdentity": "44fb5a05d9a13c4f6e8d39fe7b8fe5a9189dc077b9850da700a17ea76e609b3d",
+  "constrainedDecodingAllowed": false,
+  "datasetIdentity": "6091c1be0a482bda5bc51d51e64583bd4a87bd4befe71b1f220535d6d03216a3",
+  "evaluationRecordCount": 80,
+  "frozenEvaluationUseAllowed": false,
+  "promptProfileIdentity": "32b6fb0d9786cff93175a8f2e844f76989db12b5173e1d878a79365ac9bbea4d",
+  "runtimeNormalizationAllowed": false,
+  "schemaVersion": "1.0.0",
+  "trainingRecordCount": 480,
+  "validationRecordCount": 80
+}
