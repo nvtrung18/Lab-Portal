@@ -7,7 +7,14 @@ STATE
 - Training approval identity: bdcc8337530fa85cde395977c7e8f76f84ddd63c67b8b282be9e903b6c2276d8
 - Prompt profile identity: 32b6fb0d9786cff93175a8f2e844f76989db12b5173e1d878a79365ac9bbea4d
 - Runtime normalization and constrained decoding remain disabled.
-- Promotion and external evaluation remain unauthorized.
+- The externally executed output passed the remediation-v8 output validator.
+- Imported candidate: cb8c3e4addd20d6de84ed2c135a41baa2841666e631629617dceb3445db04403
+- Imported training run: d5cacf3fdd4aceafcd1825a2aa0b6021a4516ee9d2bccdef55388ccc7cd9d5d8
+- Canonical archive SHA-256:
+  9903ae132ecc300f5cfd4a926a46cb2adacb19797df9ab5392a999eeef8c8ded
+- External six-run evaluation is authorized by approval identity
+  5253a4468c82ad29d76ef330feb65a1b8a350c093db43ccdd4bacf9317a7e026.
+- Promotion remains unauthorized.
 
 SINGLE-FAILURE CONTRACT
 
@@ -64,7 +71,23 @@ FAIL-CLOSED STOPS
 - Completed output remains CANDIDATE_ONLY pending a separate external evaluation
   approval and the locked six-run P7-T4 evaluation.
 
+EXTERNAL EVALUATION BUNDLE
+
+After committing the exact imported evidence, approval, runner, and bundle
+bindings, extract only the validated output archive's adapter directory and run:
+
+python scripts/build-p7-t4-research-evaluation-bundle.py \
+  --adapter-directory .artifacts/p7-t4-v8-adapter/adapter \
+  --output-parent .artifacts/p7-t4-v8-ready \
+  --remediation-v8
+
+Validate the resulting p7-t4-research-evaluation bundle before upload. Execute
+all six locked runs: SHARED_BASE and RESEARCH_ADAPTER for R01, R02, and R03.
+Automatic PASS still does not authorize promotion; human and independent review
+remain mandatory.
+
 LOCAL VERIFICATION
 
 python -m unittest scripts.tests.test_p7_t2_research_remediation_v8_training_bundle
 python scripts/validate-p7-t4-research-remediation-v8-dataset.py
+python -m unittest scripts.tests.test_p7_t4_research_remediation_v8_evaluation_preparation
