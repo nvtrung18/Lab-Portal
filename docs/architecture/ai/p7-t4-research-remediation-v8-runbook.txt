@@ -35,7 +35,8 @@ Build only from committed governed sources:
 
 python scripts/build-p7-t2-research-remediation-v8-bundle.py \
   --source-root . \
-  --output-parent .artifacts/p7-t2-remediation-v8-ready
+  --output-dir .artifacts/p7-t2-remediation-v8-ready/p7-t2-research-remediation-v8-t4 \
+  --zip-path .artifacts/p7-t2-remediation-v8-ready/p7-t2-research-remediation-v8-t4.zip
 
 Validate before upload:
 
