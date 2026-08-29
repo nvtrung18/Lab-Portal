@@ -10,10 +10,11 @@ from typing import Any
 
 
 THIS_PATH = Path(__file__).resolve()
+STAGED_BASE_PATH = THIS_PATH.with_name("research-independent-evaluation-p7-t4-base.py")
 BASE_PATH = (
-    THIS_PATH.with_name("research-independent-evaluation-p7-t4.py")
-    if THIS_PATH.name == "research-independent-evaluation-p7-t4-v6.py"
-    else THIS_PATH.with_name("research-independent-evaluation-p7-t4-base.py")
+    STAGED_BASE_PATH
+    if STAGED_BASE_PATH.is_file()
+    else THIS_PATH.with_name("research-independent-evaluation-p7-t4.py")
 )
 V6_PROMPT_REFERENCE = (
     "config/p7-t4-research-remediation-governance-v6/"

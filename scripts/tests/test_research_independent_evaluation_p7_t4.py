@@ -23,6 +23,13 @@ V6_SPEC = importlib.util.spec_from_file_location(
 V6_MODULE = importlib.util.module_from_spec(V6_SPEC)
 assert V6_SPEC.loader is not None
 V6_SPEC.loader.exec_module(V6_MODULE)
+V7_SPEC = importlib.util.spec_from_file_location(
+    "p7t4_v7",
+    ROOT / "scripts" / "research-independent-evaluation-p7-t4-v7.py",
+)
+V7_MODULE = importlib.util.module_from_spec(V7_SPEC)
+assert V7_SPEC.loader is not None
+V7_SPEC.loader.exec_module(V7_MODULE)
 
 
 class P7T4ResearchIndependentEvaluationTests(unittest.TestCase):
@@ -362,6 +369,41 @@ class P7T4ResearchIndependentEvaluationTests(unittest.TestCase):
         self.assertFalse(
             execution_approval["authorization"]["productionPromptingAllowed"]
         )
+
+    def test_v7_contract_loads_exact_candidate_evaluation_approval(self):
+        config = json.loads(
+            (
+                ROOT
+                / "config/p7-t4-research-independent-evaluation-remediation-v7.json"
+            ).read_text(encoding="utf-8")
+        )
+        manifest = json.loads(
+            (
+                ROOT
+                / "evidence/p7-t2-real-training/remediation-v7/adapter-manifest.json"
+            ).read_text(encoding="utf-8")
+        )
+
+        V7_MODULE.validate_evaluation_config(config, manifest)
+        _, _, execution_approval = V7_MODULE.load_v2_evaluation_contract(
+            ROOT,
+            config,
+            json.loads(
+                (ROOT / "evals/p6-t4-evaluation-suite.lock.json").read_text(
+                    encoding="utf-8"
+                )
+            ),
+            self.gap_suite,
+        )
+
+        self.assertEqual(
+            "b2e61ccba5e79dde268d5cb96e1426fbd0d42136a0b8cdfbd1f4a414e523a9e0",
+            execution_approval["approvedCandidate"]["candidateId"],
+        )
+        self.assertTrue(
+            execution_approval["authorization"]["externalEvaluationExecutionAllowed"]
+        )
+        self.assertFalse(execution_approval["authorization"]["promotionAllowed"])
 
     def test_v2_evaluator_accepts_the_approved_report_review_draft(self):
         suite = json.loads(

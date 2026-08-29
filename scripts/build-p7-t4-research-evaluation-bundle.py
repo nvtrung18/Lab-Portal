@@ -169,6 +169,35 @@ REMEDIATION_V6_CONTRACT_SOURCES = (
     "evidence/p7-t4-research-remediation-v6-external-evaluation-approval.json",
     "scripts/validate-p7-t4-research-evaluation-v2.py",
 )
+REMEDIATION_V7_CONFIG_REFERENCE = (
+    "config/p7-t4-research-independent-evaluation-remediation-v7.json"
+)
+REMEDIATION_V7_EVIDENCE_ROOT = "evidence/p7-t2-real-training/remediation-v7"
+REMEDIATION_V7_ADAPTER_MANIFEST_REFERENCE = (
+    f"{REMEDIATION_V7_EVIDENCE_ROOT}/adapter-manifest.json"
+)
+REMEDIATION_V7_REAL_EVIDENCE_REFERENCE = (
+    f"{REMEDIATION_V7_EVIDENCE_ROOT}/real-training-evidence.json"
+)
+REMEDIATION_V7_TRAINING_METADATA_REFERENCE = (
+    f"{REMEDIATION_V7_EVIDENCE_ROOT}/training-metadata.json"
+)
+REMEDIATION_V7_ARCHIVE_SHA256_REFERENCE = (
+    f"{REMEDIATION_V7_EVIDENCE_ROOT}/"
+    "p7-t2-research-remediation-v7-output.zip.sha256"
+)
+REMEDIATION_V7_REAL_EVIDENCE_SHA256 = (
+    "5ec7794c1bb56f99f1fe5c258e8580a9265b491415ccc403440af0d94eea2424"
+)
+REMEDIATION_V7_CONTRACT_SOURCES = (
+    "config/p7-t4-research-remediation-governance-v5/evaluator-contract-v2.approved.json",
+    "config/p7-t4-research-remediation-governance-v5/evaluation-suite-v2.approved.json",
+    "config/p7-t4-research-remediation-governance-v6/research-prompt-profile-v3.approved.json",
+    "config/p7-t4-research-remediation-governance-v7/external-evaluation-approval-request.json",
+    "evidence/p7-t4-research-remediation-v5-evaluator-governance-approval.json",
+    "evidence/p7-t4-research-remediation-v7-external-evaluation-approval.json",
+    "scripts/validate-p7-t4-research-evaluation-v2.py",
+)
 CANONICAL_EVALUATION_CONFIG_REFERENCE = (
     "config/p7-t4-research-independent-evaluation.json"
 )
@@ -192,15 +221,51 @@ def bundle_sources(
     remediation_v4: bool = False,
     remediation_v5: bool = False,
     remediation_v6: bool = False,
+    remediation_v7: bool = False,
 ) -> dict[str, Path]:
     root = root.resolve()
     sources = {relative: root / relative for relative in SOURCE_FILES}
-    if sum((remediation, stability_retry, remediation_v4, remediation_v5, remediation_v6)) > 1:
+    if sum(
+        (
+            remediation,
+            stability_retry,
+            remediation_v4,
+            remediation_v5,
+            remediation_v6,
+            remediation_v7,
+        )
+    ) > 1:
         raise BundleBuildError("select exactly one candidate mode")
-    if not any((remediation, stability_retry, remediation_v4, remediation_v5, remediation_v6)):
+    if not any(
+        (
+            remediation,
+            stability_retry,
+            remediation_v4,
+            remediation_v5,
+            remediation_v6,
+            remediation_v7,
+        )
+    ):
         return sources
 
-    if remediation_v6:
+    if remediation_v7:
+        config_reference = REMEDIATION_V7_CONFIG_REFERENCE
+        manifest_reference = REMEDIATION_V7_ADAPTER_MANIFEST_REFERENCE
+        evidence_reference = REMEDIATION_V7_REAL_EVIDENCE_REFERENCE
+        metadata_reference = REMEDIATION_V7_TRAINING_METADATA_REFERENCE
+        archive_reference = REMEDIATION_V7_ARCHIVE_SHA256_REFERENCE
+        for relative in REMEDIATION_V7_CONTRACT_SOURCES:
+            sources[relative] = root / relative
+        sources["scripts/research-independent-evaluation-p7-t4.py"] = (
+            root / "scripts/research-independent-evaluation-p7-t4-v7.py"
+        )
+        sources["scripts/research-independent-evaluation-p7-t4-v6.py"] = (
+            root / "scripts/research-independent-evaluation-p7-t4-v6.py"
+        )
+        sources["scripts/research-independent-evaluation-p7-t4-base.py"] = (
+            root / "scripts/research-independent-evaluation-p7-t4.py"
+        )
+    elif remediation_v6:
         config_reference = REMEDIATION_V6_CONFIG_REFERENCE
         manifest_reference = REMEDIATION_V6_ADAPTER_MANIFEST_REFERENCE
         evidence_reference = REMEDIATION_V6_REAL_EVIDENCE_REFERENCE
@@ -374,6 +439,7 @@ def build_bundle(
     remediation_v4: bool = False,
     remediation_v5: bool = False,
     remediation_v6: bool = False,
+    remediation_v7: bool = False,
 ) -> tuple[Path, Path, dict[str, Any]]:
     root = root.resolve()
     output_parent = output_parent.resolve()
@@ -388,6 +454,7 @@ def build_bundle(
         remediation_v4=remediation_v4,
         remediation_v5=remediation_v5,
         remediation_v6=remediation_v6,
+        remediation_v7=remediation_v7,
     )
     missing = [relative for relative, source in sources.items() if not source.is_file()]
     if missing:
@@ -399,8 +466,20 @@ def build_bundle(
             destination = bundle_root / relative
             destination.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(source, destination)
-        if remediation or stability_retry or remediation_v4 or remediation_v5 or remediation_v6:
-            if remediation_v6:
+        if any(
+            (
+                remediation,
+                stability_retry,
+                remediation_v4,
+                remediation_v5,
+                remediation_v6,
+                remediation_v7,
+            )
+        ):
+            if remediation_v7:
+                source_reference = REMEDIATION_V7_REAL_EVIDENCE_REFERENCE
+                source_sha256 = REMEDIATION_V7_REAL_EVIDENCE_SHA256
+            elif remediation_v6:
                 source_reference = REMEDIATION_V6_REAL_EVIDENCE_REFERENCE
                 source_sha256 = REMEDIATION_V6_REAL_EVIDENCE_SHA256
             elif remediation_v5:
@@ -462,6 +541,7 @@ def main() -> int:
     candidate_mode.add_argument("--remediation-v4", action="store_true")
     candidate_mode.add_argument("--remediation-v5", action="store_true")
     candidate_mode.add_argument("--remediation-v6", action="store_true")
+    candidate_mode.add_argument("--remediation-v7", action="store_true")
     args = parser.parse_args()
     try:
         bundle_root, archive_path, manifest = build_bundle(
@@ -473,6 +553,7 @@ def main() -> int:
             remediation_v4=args.remediation_v4,
             remediation_v5=args.remediation_v5,
             remediation_v6=args.remediation_v6,
+            remediation_v7=args.remediation_v7,
         )
         print(
             json.dumps(

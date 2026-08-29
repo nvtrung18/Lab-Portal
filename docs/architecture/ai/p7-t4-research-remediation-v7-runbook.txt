@@ -7,7 +7,32 @@ STATE
 - Training approval identity: 627f4043fe2c2dcaff21cb0b38d923752d8c928ef8d184b7535f3fe07b2bb3f5
 - Prompt profile identity: 32b6fb0d9786cff93175a8f2e844f76989db12b5173e1d878a79365ac9bbea4d
 - Runtime normalization and constrained decoding remain disabled.
-- Evaluation and promotion remain unauthorized.
+- External independent evaluation is authorized only for the exact materialized
+  v7 candidate and the locked six-run Tesla T4 execution boundary.
+- Promotion remains unauthorized.
+
+MATERIALIZED REAL-TRAINING OUTPUT
+
+- The externally executed output passed the remediation-v7 bundle/output
+  validator and remains CANDIDATE_ONLY.
+- Candidate ID: b2e61ccba5e79dde268d5cb96e1426fbd0d42136a0b8cdfbd1f4a414e523a9e0
+- Training run identity:
+  89484f250ddff555617b7440fc55e471c4590eeb57629c470f23ca731b0f3b42
+- Output archive SHA-256:
+  a9add325e062e8dbbf871575dfe6a4ca309488ebc493c3ef3c7816629754f586
+- Imported evidence root: evidence/p7-t2-real-training/remediation-v7
+- External evaluation request:
+  config/p7-t4-research-remediation-governance-v7/
+  external-evaluation-approval-request.json
+- External evaluation request status: APPROVED.
+- External evaluation approval identity:
+  be93ee5e0e23718d56dc92002edd440f51c23f32890db5987f1fb0b795d993fd
+- Runtime normalization, constrained decoding, production prompting, and
+  promotion remain prohibited by the approval.
+- Build the committed evaluation sources with
+  scripts/build-p7-t4-research-evaluation-bundle.py --remediation-v7 and the
+  exact validated adapter directory. Revalidate the portable bundle before
+  external execution.
 
 RETENTION-FIRST CONTRACT
 
