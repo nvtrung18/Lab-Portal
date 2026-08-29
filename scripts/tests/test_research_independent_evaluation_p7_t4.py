@@ -37,6 +37,13 @@ V8_SPEC = importlib.util.spec_from_file_location(
 V8_MODULE = importlib.util.module_from_spec(V8_SPEC)
 assert V8_SPEC.loader is not None
 V8_SPEC.loader.exec_module(V8_MODULE)
+V9_SPEC = importlib.util.spec_from_file_location(
+    "p7t4_v9",
+    ROOT / "scripts" / "research-independent-evaluation-p7-t4-v9.py",
+)
+V9_MODULE = importlib.util.module_from_spec(V9_SPEC)
+assert V9_SPEC.loader is not None
+V9_SPEC.loader.exec_module(V9_MODULE)
 
 
 class P7T4ResearchIndependentEvaluationTests(unittest.TestCase):
@@ -440,6 +447,41 @@ class P7T4ResearchIndependentEvaluationTests(unittest.TestCase):
 
         self.assertEqual(
             "cb8c3e4addd20d6de84ed2c135a41baa2841666e631629617dceb3445db04403",
+            execution_approval["approvedCandidate"]["candidateId"],
+        )
+        self.assertTrue(
+            execution_approval["authorization"]["externalEvaluationExecutionAllowed"]
+        )
+        self.assertFalse(execution_approval["authorization"]["promotionAllowed"])
+
+    def test_v9_contract_loads_exact_candidate_evaluation_approval(self):
+        config = json.loads(
+            (
+                ROOT
+                / "config/p7-t4-research-independent-evaluation-remediation-v9.json"
+            ).read_text(encoding="utf-8")
+        )
+        manifest = json.loads(
+            (
+                ROOT
+                / "evidence/p7-t2-real-training/remediation-v9/adapter-manifest.json"
+            ).read_text(encoding="utf-8")
+        )
+
+        V9_MODULE.validate_evaluation_config(config, manifest)
+        _, _, execution_approval = V9_MODULE.load_v2_evaluation_contract(
+            ROOT,
+            config,
+            json.loads(
+                (ROOT / "evals/p6-t4-evaluation-suite.lock.json").read_text(
+                    encoding="utf-8"
+                )
+            ),
+            self.gap_suite,
+        )
+
+        self.assertEqual(
+            "99596dcf3c00c6a25a4c38f01de7f12d917100e539cf4ea777556ef0c0a055c2",
             execution_approval["approvedCandidate"]["candidateId"],
         )
         self.assertTrue(
