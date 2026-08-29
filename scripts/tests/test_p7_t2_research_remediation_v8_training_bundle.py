@@ -1,0 +1,238 @@
+import hashlib
+import importlib.util
+import json
+import tempfile
+import unittest
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[2]
+FINALIZER_PATH = (
+    ROOT / "scripts" / "finalize-p7-t1c-research-remediation-governance-v8.py"
+)
+REQUEST_IDENTITY = "e486eb298d44ec2bc1c7db767a9ce4222c65084856090b9ba8e6f04bad6368d0"
+APPROVAL_AUTHORITY = "RESEARCH_GOVERNANCE_TRAINING_APPROVAL_AUTHORITY"
+DATASET_IDENTITY = "44fb5a05d9a13c4f6e8d39fe7b8fe5a9189dc077b9850da700a17ea76e609b3d"
+PROMPT_PROFILE_IDENTITY = "32b6fb0d9786cff93175a8f2e844f76989db12b5173e1d878a79365ac9bbea4d"
+TRAINING_APPROVAL_IDENTITY = "bdcc8337530fa85cde395977c7e8f76f84ddd63c67b8b282be9e903b6c2276d8"
+PIPELINE_PATH = ROOT / "scripts" / "training-pipeline-p7-t2-remediation-v8.py"
+BACKEND_PATH = ROOT / "scripts" / "p7-t2-real-training-remediation-v8.py"
+BUILDER_PATH = ROOT / "scripts" / "build-p7-t2-research-remediation-v8-bundle.py"
+VALIDATOR_PATH = ROOT / "scripts" / "validate-p7-t2-research-remediation-v8-bundle.py"
+CONFIG_PATH = ROOT / "config" / "p7-t2-training-pipeline-t4-remediation-v8.json"
+DATASET_MANIFEST = (
+    ROOT
+    / "datasets"
+    / "p7-research-synthetic-training-dataset-v8"
+    / "manifest.approved.json"
+)
+PROMPT_PROFILE_PATH = (
+    ROOT
+    / "config"
+    / "p7-t4-research-remediation-governance-v6"
+    / "research-prompt-profile-v3.approved.json"
+)
+
+
+def load_module(name: str, path: Path):
+    specification = importlib.util.spec_from_file_location(name, path)
+    if specification is None or specification.loader is None:
+        raise AssertionError(f"cannot load {path}")
+    module = importlib.util.module_from_spec(specification)
+    specification.loader.exec_module(module)
+    return module
+
+
+class P7T2ResearchRemediationV8TrainingGovernanceTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.finalizer = load_module("p7_t1c_remediation_finalizer_v8", FINALIZER_PATH)
+
+    def test_finalizer_binds_only_the_approved_single_failure_request(self):
+        documents = self.finalizer.build_documents(
+            request_identity=REQUEST_IDENTITY,
+            approved_by=APPROVAL_AUTHORITY,
+            approved_at="2026-08-29T12:00:00Z",
+        )
+        self.finalizer.validate_documents(documents)
+
+        approval = documents[self.finalizer.TRAINING_APPROVAL_REFERENCE]
+        self.assertEqual(REQUEST_IDENTITY, approval["requestIdentity"])
+        self.assertEqual(DATASET_IDENTITY, approval["datasetIdentity"])
+        self.assertEqual(PROMPT_PROFILE_IDENTITY, approval["promptProfileIdentity"])
+        self.assertTrue(approval["authorization"]["externalTrainingAllowed"])
+        self.assertFalse(approval["authorization"]["evaluationAllowed"])
+        self.assertFalse(approval["authorization"]["promotionAllowed"])
+        self.assertFalse(approval["authorization"]["runtimeNormalizationAllowed"])
+        self.assertFalse(approval["authorization"]["constrainedDecodingAllowed"])
+        self.assertTrue(approval["scope"]["retainedV7RecordsUnchanged"])
+        self.assertEqual(
+            ["E-INJECT-001"], approval["scope"]["targetedEvaluationCaseIds"]
+        )
+        self.assertEqual(
+            "CANDIDATE_ONLY", approval["scope"]["candidateDispositionAfterTraining"]
+        )
+
+        manifest = documents[self.finalizer.APPROVED_MANIFEST_REFERENCE]
+        self.assertTrue(manifest["trainingAuthorized"])
+        self.assertEqual("APPROVED", manifest["approval_status"])
+        self.assertEqual(
+            {"evaluation": 72, "train": 432, "validation": 72},
+            manifest["recordCounts"],
+        )
+        self.assertEqual(
+            {"evaluation": 64, "train": 384, "validation": 64},
+            manifest["retainedRecordCounts"],
+        )
+        self.assertEqual(
+            manifest["artifactIdentity"], self.finalizer.artifact_identity(manifest)
+        )
+
+    def test_finalizer_rejects_any_other_request_identity(self):
+        with self.assertRaisesRegex(self.finalizer.FinalizationError, "request identity"):
+            self.finalizer.build_documents(
+                request_identity="0" * 64,
+                approved_by=APPROVAL_AUTHORITY,
+                approved_at="2026-08-29T12:00:00Z",
+            )
+
+    def test_checked_in_approval_reproduces_byte_for_byte(self):
+        approval = json.loads(
+            (ROOT / self.finalizer.TRAINING_APPROVAL_REFERENCE).read_text(
+                encoding="utf-8"
+            )
+        )
+        documents = self.finalizer.build_documents(
+            request_identity=REQUEST_IDENTITY,
+            approved_by=APPROVAL_AUTHORITY,
+            approved_at=approval["approval"]["approvedAt"],
+        )
+        for reference, document in documents.items():
+            self.assertEqual(
+                self.finalizer.json_bytes(document), (ROOT / reference).read_bytes()
+            )
+
+
+class FakeTokenizer:
+    eos_token_id = 99
+
+    def apply_chat_template(self, messages, *, tokenize, add_generation_prompt):
+        if len(messages) == 2:
+            return [10, 11]
+        return [10, 11, 20, 21, self.eos_token_id]
+
+
+class P7T2ResearchRemediationV8TrainingBundleTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.pipeline = load_module("p7_t2_remediation_pipeline_v8", PIPELINE_PATH)
+        cls.backend = load_module("p7_t2_remediation_backend_v8", BACKEND_PATH)
+        cls.builder = load_module("p7_t2_remediation_bundle_builder_v8", BUILDER_PATH)
+        cls.validator = load_module(
+            "p7_t2_remediation_bundle_validator_v8", VALIDATOR_PATH
+        )
+        cls.config = json.loads(CONFIG_PATH.read_text(encoding="utf-8"))
+        cls.profile = json.loads(PROMPT_PROFILE_PATH.read_text(encoding="utf-8"))
+
+    def test_config_dataset_and_single_failure_retention_gates_pass(self):
+        self.pipeline.validate_training_config(self.config)
+        gates = self.pipeline.validate_dataset_and_contract_gates(
+            DATASET_MANIFEST, self.config, ROOT
+        )
+        self.assertEqual(
+            {"train": 432, "validation": 72, "evaluation": 72}, gates["counts"]
+        )
+        self.assertEqual(
+            {"train": 384, "validation": 64, "evaluation": 64},
+            gates["retention"]["retainedRecordCounts"],
+        )
+        self.assertEqual(
+            {"train": 48, "validation": 8, "evaluation": 8},
+            gates["retention"]["targetedAdditionCounts"],
+        )
+        self.assertEqual(["E-INJECT-001"], gates["targetedEvaluationCaseIds"])
+        self.assertEqual(PROMPT_PROFILE_IDENTITY, gates["promptProfile"]["identity"])
+        self.assertFalse(gates["runtimeControls"]["runtimeNormalizationAllowed"])
+        self.assertFalse(gates["runtimeControls"]["constrainedDecodingAllowed"])
+
+    def test_backend_accepts_retained_v7_and_targeted_v8_records(self):
+        records = [
+            json.loads(line)
+            for line in (DATASET_MANIFEST.parent / "train.jsonl")
+            .read_text(encoding="utf-8")
+            .splitlines()
+        ]
+        retained = next(record for record in records if record["schemaVersion"] == "7.0.0")
+        targeted = next(record for record in records if record["schemaVersion"] == "8.0.0")
+        for record in (retained, targeted):
+            messages = self.backend.training_messages(record)
+            expected = self.profile["assistantProfiles"]["RESEARCH_ASSISTANT"][
+                "systemInstruction"
+            ]
+            self.assertEqual(expected, messages[0]["content"])
+            self.assertEqual(
+                self.backend.canonical_bytes(record["trainingTarget"]).decode("utf-8"),
+                messages[2]["content"],
+            )
+
+    def test_backend_runtime_validator_uses_v8_record_counts(self):
+        self.assertEqual(432, self.backend.BASE.EXPECTED_TRAIN_RECORDS)
+        self.assertEqual(72, self.backend.BASE.EXPECTED_VALIDATION_RECORDS)
+        self.assertEqual(72, self.backend.BASE.EXPECTED_CONTRACT_HOLDOUT_RECORDS)
+
+    def test_tokenization_supervises_exactly_one_terminal_eos(self):
+        record = json.loads(
+            (DATASET_MANIFEST.parent / "train.jsonl")
+            .read_text(encoding="utf-8")
+            .splitlines()[-1]
+        )
+        dataset, metrics = self.backend.tokenize_records_with_eos(
+            [record], FakeTokenizer()
+        )
+        supervised = [value for value in dataset[0]["labels"] if value != -100]
+        self.assertEqual(99, supervised[-1])
+        self.assertEqual(1, supervised.count(99))
+        self.assertEqual(5, metrics["maximumTokens"])
+
+    def test_bundle_is_deterministic_valid_and_weight_free(self):
+        with tempfile.TemporaryDirectory() as directory:
+            first = Path(directory) / "first" / self.builder.BUNDLE_NAME
+            second = Path(directory) / "second" / self.builder.BUNDLE_NAME
+            first_zip = first.parent / f"{self.builder.BUNDLE_NAME}.zip"
+            second_zip = second.parent / f"{self.builder.BUNDLE_NAME}.zip"
+            kwargs = {
+                "source_root": ROOT,
+                "source_commit": "0" * 40,
+                "enforce_committed_sources": False,
+            }
+            first_manifest = self.builder.build_bundle(
+                output_dir=first, zip_path=first_zip, **kwargs
+            )
+            second_manifest = self.builder.build_bundle(
+                output_dir=second, zip_path=second_zip, **kwargs
+            )
+            self.assertEqual(first_manifest, second_manifest)
+            self.assertEqual(first_zip.read_bytes(), second_zip.read_bytes())
+            self.assertEqual(
+                hashlib.sha256(first_zip.read_bytes()).hexdigest(),
+                hashlib.sha256(second_zip.read_bytes()).hexdigest(),
+            )
+            self.assertEqual(first_manifest, self.validator.validate_bundle(first))
+            paths = {item["path"] for item in first_manifest["fileInventory"]}
+            self.assertIn(
+                "datasets/p7-research-synthetic-training-dataset-v8/train.jsonl", paths
+            )
+            self.assertIn(
+                "config/p7-t4-research-remediation-governance-v6/"
+                "research-prompt-profile-v3.approved.json",
+                paths,
+            )
+            self.assertFalse(
+                any(
+                    path.endswith((".safetensors", ".bin", ".pt", ".ckpt"))
+                    for path in paths
+                )
+            )
+
+if __name__ == "__main__":
+    unittest.main()

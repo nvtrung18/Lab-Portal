@@ -1,0 +1,107 @@
+{
+  "artifactIdentity": "ee5b6dd46d6db2f40fba561e6f7d142bbd965dc3b563945ff88bbdbac9c27f22",
+  "artifactType": "P7-T4-RESEARCH-REMEDIATION-V8-DATA-QUALITY-SPEC",
+  "evaluationBoundary": {
+    "frozenCaseContentCopiedIntoTraining": false,
+    "frozenEvaluationUseAllowed": false,
+    "suiteVersion": "2.0.0"
+  },
+  "failureAnalysisIdentity": "be167808f03548b5de7b613bd292a740c2d9f18fbbb5628ce08c9ba8376ef0f4",
+  "failureAnalysisReference": "config/p7-t4-research-remediation-governance-v8/failure-analysis-v7.json",
+  "plannedRecordCounts": {
+    "evaluation": 72,
+    "train": 432,
+    "validation": 72
+  },
+  "promptProfileIdentity": "32b6fb0d9786cff93175a8f2e844f76989db12b5173e1d878a79365ac9bbea4d",
+  "promptProfileReference": "config/p7-t4-research-remediation-governance-v6/research-prompt-profile-v3.approved.json",
+  "remediationPriority": "SINGLE_FAILED_CASE_DATASET_QUALITY_ONLY",
+  "runtimeControls": {
+    "constrainedDecodingAllowed": false,
+    "runtimeNormalizationAllowed": false
+  },
+  "schemaVersion": "1.0.0",
+  "status": "PENDING_GOVERNANCE_APPROVAL",
+  "targetDatasetVersion": "8.0.0",
+  "targetedAdditionCounts": {
+    "evaluation": 8,
+    "train": 48,
+    "validation": 8
+  },
+  "targetedFailureControls": {
+    "compactSafeRefusalRequired": true,
+    "exactSevenRootFieldsRequired": true,
+    "rejectedToolContractRequired": true,
+    "structuredOutputNullRequired": true,
+    "targetedFailedCaseIds": [
+      "E-INJECT-001"
+    ],
+    "verbatimFrozenEvaluationExamplesAllowed": false
+  },
+  "targetedSyntheticDesign": {
+    "assistantKey": "RESEARCH_ASSISTANT",
+    "closedRootFields": [
+      "evalCaseId",
+      "observedActionRisk",
+      "observedBehavior",
+      "referencedContextIds",
+      "response",
+      "structuredOutput",
+      "toolRequest"
+    ],
+    "languages": [
+      "EN",
+      "VI"
+    ],
+    "requiredResponse": {
+      "markers": [
+        "NO_DISCLOSURE",
+        "NO_EXECUTION"
+      ],
+      "mode": "SAFE_REFUSAL"
+    },
+    "requiredToolKinds": [
+      "REJECTED"
+    ],
+    "scenarioFamilies": [
+      "SYNTHETIC_NULL_CONTEXT_PROMPT_INJECTION",
+      "SYNTHETIC_UNTRUSTED_ROLE_OVERRIDE",
+      "SYNTHETIC_SECRET_DISCLOSURE_REQUEST",
+      "SYNTHETIC_UNAUTHORIZED_EXECUTION_REQUEST"
+    ],
+    "semanticFamily": "SYNTHETIC_PROMPT_INJECTION_CLOSED_ENVELOPE_REMEDIATION",
+    "splitContentIdsDisjoint": true,
+    "structuredOutput": null
+  },
+  "v7RetentionControls": {
+    "preserveOriginalSplitAssignment": true,
+    "retainApprovedV7SyntheticRecords": true,
+    "retainedDatasetIdentity": "b973bf0a387b35b84140a2db1d2bbf7c5c0d7f054102a968c10bd1df6faeff23",
+    "retainedManifestReference": "datasets/p7-research-synthetic-training-dataset-v7/manifest.approved.json",
+    "retainedRecordCounts": {
+      "evaluation": 64,
+      "train": 384,
+      "validation": 64
+    },
+    "semanticPassCasesToProtect": [
+      "E-AUTH-007",
+      "E-AUTH-009",
+      "E-AUTH-011",
+      "E-AUTH-012",
+      "E-FUNC-RESEARCH-001",
+      "E-FUNC-RESEARCH-002",
+      "E-FUNC-RESEARCH-003",
+      "E-FUNC-RESEARCH-004",
+      "E-FUNC-RESEARCH-005",
+      "E-FUNC-RESEARCH-006",
+      "E-HUMAN-003",
+      "E-HUMAN-004",
+      "E-INJECT-002",
+      "E-INJECT-003",
+      "E-ROUTE-002",
+      "E-STRUCT-003",
+      "E-STRUCT-004"
+    ],
+    "v7EvaluationRecordsMayEnterOptimization": false
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "artifactIdentity": "97479f54ddb180ac75d8de70a864276f5e90f7f73785ec79517d4dd4ee42347a",
+  "artifactType": "P7-T4-RESEARCH-REMEDIATION-V8-DATASET-CARD",
+  "baseDatasetIdentity": "b973bf0a387b35b84140a2db1d2bbf7c5c0d7f054102a968c10bd1df6faeff23",
+  "datasetIdentity": "44fb5a05d9a13c4f6e8d39fe7b8fe5a9189dc077b9850da700a17ea76e609b3d",
+  "disposition": "PENDING_TRAINING_APPROVAL",
+  "recordCounts": {
+    "evaluation": 72,
+    "train": 432,
+    "validation": 72
+  },
+  "remediationPriority": "SINGLE_FAILED_CASE_DATASET_QUALITY_ONLY",
+  "schemaVersion": "1.0.0",
+  "targetedEvaluationCaseIds": [
+    "E-INJECT-001"
+  ]
+}
