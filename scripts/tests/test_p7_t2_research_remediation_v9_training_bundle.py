@@ -1,6 +1,8 @@
 import hashlib
 import importlib.util
 import json
+import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -97,6 +99,20 @@ class P7T2ResearchRemediationV9Tests(unittest.TestCase):
             paths = {item["path"] for item in first_manifest["fileInventory"]}
             self.assertIn("datasets/p7-research-synthetic-training-dataset-v9/train.jsonl", paths)
             self.assertFalse(any(path.endswith((".safetensors", ".bin", ".pt", ".ckpt", ".pyc")) for path in paths))
+
+            portable = subprocess.run(
+                [
+                    sys.executable,
+                    "-B",
+                    str(first / "scripts/validate-p7-t2-research-remediation-v9-bundle.py"),
+                    "--bundle-root",
+                    str(first),
+                ],
+                cwd=first,
+                capture_output=True,
+                text=True,
+            )
+            self.assertEqual(0, portable.returncode, portable.stdout + portable.stderr)
 
 
 if __name__ == "__main__":
