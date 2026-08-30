@@ -73,11 +73,16 @@ class _ManagedSummary(_ContextModel):
     active_booking_count: int = Field(ge=0)
 
 
+class _CheckinPolicySnapshot(_ContextModel):
+    end_inclusive: datetime
+
+
 class _LabContext(_ContextModel):
     laboratory: _Laboratory
     slot: _Slot | None
     booking: _Booking | None
     managed_summary: _ManagedSummary | None
+    checkin_policy_snapshot: _CheckinPolicySnapshot | None
     draft_only: bool
     policy_or_draft_eligibility_label: str | None
 
@@ -191,6 +196,7 @@ class LabAssistantMvp:
                 context.slot is None
                 and context.booking is None
                 and context.managed_summary is None
+                and context.checkin_policy_snapshot is None
                 and not context.draft_only
                 and context.policy_or_draft_eligibility_label == "POLICY_INFORMATION_ONLY"
             )
@@ -200,13 +206,23 @@ class LabAssistantMvp:
                 context.slot is not None
                 and context.booking is None
                 and context.managed_summary is None
+                and context.checkin_policy_snapshot is None
                 and context.policy_or_draft_eligibility_label == expected_label
             )
-        if tool_id in {"lab.own.booking.read", "lab.checkin.guidance"}:
+        if tool_id == "lab.own.booking.read":
             return (
                 context.slot is None
                 and context.booking is not None
                 and context.managed_summary is None
+                and context.checkin_policy_snapshot is None
+                and context.policy_or_draft_eligibility_label is None
+            )
+        if tool_id == "lab.checkin.guidance":
+            return (
+                context.slot is None
+                and context.booking is not None
+                and context.managed_summary is None
+                and context.checkin_policy_snapshot is not None
                 and context.policy_or_draft_eligibility_label is None
             )
         if tool_id == "lab.managed.summary":
@@ -214,6 +230,7 @@ class LabAssistantMvp:
                 context.slot is None
                 and context.booking is None
                 and context.managed_summary is not None
+                and context.checkin_policy_snapshot is None
                 and context.policy_or_draft_eligibility_label is None
             )
         return False

@@ -43,6 +43,7 @@ class AiLabAssistantContextBuilderTest {
         AiLabContext context = (AiLabContext) builder.build(checkinInput(readAt, endInclusive));
 
         assertEquals(30L, context.booking().id());
+        assertEquals(endInclusive, context.checkinPolicySnapshot().endInclusive());
         verify(bookings).findAiContextCheckinBooking(7L, 10L, 30L, readAt, endInclusive, "STUDENT");
     }
     @Test void staleManagedLabFailsClosedBeforeAggregateCounts() {

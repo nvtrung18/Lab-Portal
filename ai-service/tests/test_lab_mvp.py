@@ -66,6 +66,7 @@ def _request(tool_id: str, resource_type: str, resource_id: int):
         "slot": None,
         "booking": None,
         "managedSummary": None,
+        "checkinPolicySnapshot": None,
         "draftOnly": tool_id == "lab.booking.draft",
         "policyOrDraftEligibilityLabel": None,
     }
@@ -87,6 +88,8 @@ def _request(tool_id: str, resource_type: str, resource_id: int):
                 "status": "BOOKED",
             },
         }
+        if tool_id == "lab.checkin.guidance":
+            context["checkinPolicySnapshot"] = {"endInclusive": "2026-09-01T09:15:00Z"}
     if tool_id == "lab.managed.summary":
         context["managedSummary"] = {"activeSlotCount": 4, "activeBookingCount": 2}
     if tool_id == "lab.policy.read":
@@ -228,6 +231,18 @@ def test_capability_context_with_unrelated_booking_data_fails_closed() -> None:
         "status": "APPROVED",
         "slot": request["authorizedContext"]["context"]["slot"],
     }
+
+    response = _client(backend).post("/v1/assistants/chat", json=request)
+
+    assert response.status_code == 200
+    assert response.json()["metadata"] == {"safeRefusal": True}
+    assert backend.calls == 0
+
+
+def test_checkin_guidance_without_policy_snapshot_fails_closed() -> None:
+    backend = StubGenerationBackend("Must not infer a missing policy snapshot")
+    request = _request("lab.checkin.guidance", "BOOKING", 21)
+    request["authorizedContext"]["context"]["checkinPolicySnapshot"] = None
 
     response = _client(backend).post("/v1/assistants/chat", json=request)
 
