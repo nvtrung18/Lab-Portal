@@ -108,7 +108,15 @@ def model_info(request: Request) -> ModelInfoResponse:
 )
 def chat(request: Request, payload: AssistantRequest) -> JSONResponse:
     request.app.state.profile_loader.get_profile(payload.assistant_key)
-    request.app.state.artifact_loader.get_state(payload.assistant_key)
+    artifact_state = request.app.state.artifact_loader.get_state(payload.assistant_key)
+    if artifact_state.ready:
+        return _error_response(
+            request,
+            error_code="AI_SERVICE_NOT_READY",
+            message="AI chat generation is not available.",
+            retryable=False,
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+        )
     return _error_response(
         request,
         error_code="AI_MODEL_NOT_READY",

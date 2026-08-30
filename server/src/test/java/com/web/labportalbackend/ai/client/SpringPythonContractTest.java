@@ -159,6 +159,7 @@ class SpringPythonContractTest {
     @Test
     void sharedRuntimeAndToolStatesCannotBeMistakenForReadinessOrApproval() {
         JsonNode runtime = CONTRACT.path("runtimeStates");
+        JsonNode artifactReady = runtime.path("artifactReady");
         JsonNode tool = CONTRACT.path("toolValidation");
         JsonNode authority = CONTRACT.path("authority");
 
@@ -167,6 +168,11 @@ class SpringPythonContractTest {
         assertFalse(runtime.path("ready").path("expectedFields").path("ready").asBoolean());
         assertEquals("NOT_LOADED",
                 runtime.path("modelInfo").path("expectedFields").path("status").asText());
+        assertEquals(200, artifactReady.path("ready").path("statusCode").asInt());
+        assertEquals("READY", artifactReady.path("ready").path("expectedFields").path("status").asText());
+        assertEquals("APPROVED",
+                artifactReady.path("modelInfo").path("expectedFields").path("artifactState").asText());
+        assertEquals("AI_SERVICE_NOT_READY", CONTRACT.path("artifactReadyPostErrors").path("chat").asText());
         assertEquals("REQUIRES_SPRING_AUTHORIZATION",
                 tool.path("expected").path("executionEligibility").asText());
         assertFalse(tool.path("expected").path("executable").asBoolean());

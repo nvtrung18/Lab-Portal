@@ -36,6 +36,41 @@ def _client(*, timeout: float = 5.0, authenticated: bool = True) -> TestClient:
     return TestClient(create_app(_settings(timeout=timeout)), headers=headers)
 
 
+def _artifact_ready_client() -> TestClient:
+    app = create_app(_settings())
+    delegate = app.state.artifact_loader
+
+    class ArtifactReadyLoader:
+        model_status = "READY"
+        base_artifact_status = "APPROVED"
+        base_artifact_identity = "596f707d711e040f5bd1cbab1ab0370e3ce1ba3314072bf76e73cb1cc2677706"
+        artifact_validated = True
+        model_loaded = True
+        adapter_loaded = True
+        ready = True
+        states = {
+            key: state.model_copy(
+                update={
+                    "adapter_loaded": state.adapter_status == "APPROVED",
+                    "ready": state.adapter_status in {"APPROVED", "NOT_AVAILABLE"},
+                }
+            )
+            for key, state in delegate.states.items()
+        }
+
+        def __getattr__(self, name):
+            return getattr(delegate, name)
+
+        def get_state(self, assistant_key):
+            return self.states[AssistantKey(assistant_key)]
+
+    app.state.artifact_loader = ArtifactReadyLoader()
+    return TestClient(
+        app,
+        headers={CONTRACT["headers"]["internalServiceToken"]: INTERNAL_TOKEN},
+    )
+
+
 def _error_case(error_code: str) -> dict[str, object]:
     return next(
         case
@@ -64,7 +99,7 @@ def test_shared_manifest_matches_python_assistant_and_tool_catalogs() -> None:
     profiles = ProfileLoader.from_file(settings.profile_config_path)
     registry = OutputSchemaRegistry.from_file(settings.output_schema_config_path, profiles)
 
-    assert CONTRACT["schemaVersion"] == "1.0.0"
+    assert CONTRACT["schemaVersion"] == "1.1.0"
     assert set(CONTRACT["assistantKeys"]) == {key.value for key in AssistantKey}
     assert set(CONTRACT["assistantKeys"]) == {key.value for key in profiles.profiles}
     assert set(CONTRACT["toolIds"]) == set(registry.tools)
@@ -199,6 +234,28 @@ def test_health_ready_and_model_info_keep_liveness_separate_from_readiness() -> 
     assert CONTRACT["runtimeStates"]["health"]["statusCode"] == 200
     assert CONTRACT["runtimeStates"]["ready"]["statusCode"] == 503
     assert CONTRACT["runtimeStates"]["modelInfo"]["expectedFields"]["artifactState"] == "METADATA_ONLY"
+
+
+def test_artifact_ready_responses_match_the_shared_spring_contract() -> None:
+    client = _artifact_ready_client()
+    expected = CONTRACT["runtimeStates"]["artifactReady"]
+
+    for route_name in ("ready", "modelInfo"):
+        route = CONTRACT["routes"][route_name]
+        response = client.request(route["method"], route["path"])
+
+        assert response.status_code == expected[route_name]["statusCode"]
+        assert expected[route_name]["expectedFields"].items() <= response.json().items()
+
+
+def test_loaded_model_with_unimplemented_chat_returns_service_not_ready() -> None:
+    response = _artifact_ready_client().post(
+        CONTRACT["routes"]["chat"]["path"],
+        json=CONTRACT["assistantRequest"]["example"] | {"assistantKey": "RESEARCH_ASSISTANT"},
+        headers={CONTRACT["headers"]["requestId"]: REQUEST_ID},
+    )
+
+    _assert_error(response, CONTRACT["artifactReadyPostErrors"]["chat"])
 
 
 def test_all_current_error_statuses_use_the_shared_safe_envelope() -> None:

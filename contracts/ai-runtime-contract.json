@@ -1,5 +1,5 @@
 {
-  "schemaVersion": "1.0.0",
+  "schemaVersion": "1.1.0",
   "headers": {
     "internalServiceToken": "X-Internal-Service-Token",
     "requestId": "X-Request-Id",
@@ -88,6 +88,7 @@
         "statusCode": 503,
         "body": {"errorCode": "AI_SERVICE_NOT_READY", "message": "AI tool requests are not available.", "retryable": false, "requestId": "contract-request-123"},
         "allowedMessages": [
+          "AI chat generation is not available.",
           "AI tool requests are not available.",
           "AI suggestions are not available."
         ]
@@ -128,10 +129,45 @@
         "adapterLoaded": false,
         "ready": false
       }
+    },
+    "artifactReady": {
+      "ready": {
+        "statusCode": 200,
+        "expectedFields": {
+          "status": "READY",
+          "serviceStatus": "READY",
+          "modelStatus": "READY",
+          "profileLoaded": true,
+          "artifactValidated": true,
+          "modelLoaded": true,
+          "adapterLoaded": true,
+          "ready": true
+        }
+      },
+      "modelInfo": {
+        "statusCode": 200,
+        "expectedFields": {
+          "status": "READY",
+          "source": "SERVING_ARTIFACT_DESCRIPTOR",
+          "artifactState": "APPROVED",
+          "artifactIdentity": "596f707d711e040f5bd1cbab1ab0370e3ce1ba3314072bf76e73cb1cc2677706",
+          "profileLoaded": true,
+          "artifactValidated": true,
+          "modelLoaded": true,
+          "adapterLoaded": true,
+          "ready": true
+        }
+      }
     }
   },
   "postErrors": {
     "chat": "AI_MODEL_NOT_READY",
+    "toolRequest": "AI_SERVICE_NOT_READY",
+    "suggestions": "AI_SERVICE_NOT_READY",
+    "legacySuggestions": "AI_SERVICE_NOT_READY"
+  },
+  "artifactReadyPostErrors": {
+    "chat": "AI_SERVICE_NOT_READY",
     "toolRequest": "AI_SERVICE_NOT_READY",
     "suggestions": "AI_SERVICE_NOT_READY",
     "legacySuggestions": "AI_SERVICE_NOT_READY"
