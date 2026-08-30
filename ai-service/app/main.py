@@ -4,7 +4,7 @@ from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
-from app.artifacts import ArtifactLoader
+from app.artifacts import ArtifactLoader, RuntimeArtifactBackend
 from app.config import Settings
 from app.output_validation import OutputSchemaRegistry, StructuredOutputValidator
 from app.profiles import ProfileLoader
@@ -32,7 +32,10 @@ async def unexpected_error_handler(request: Request, _exception: Exception) -> J
     )
 
 
-def create_app(settings: Settings | None = None) -> FastAPI:
+def create_app(
+    settings: Settings | None = None,
+    runtime_backend: RuntimeArtifactBackend | None = None,
+) -> FastAPI:
     resolved_settings = settings or Settings.from_env()
     profile_loader = ProfileLoader.from_file(resolved_settings.profile_config_path)
     artifact_loader = ArtifactLoader.from_file(
@@ -40,6 +43,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         resolved_settings.artifact_root,
         profile_loader,
     )
+    if resolved_settings.runtime_load_enabled:
+        if runtime_backend is None:
+            from app.runtime import TransformersRuntimeBackend
+
+            runtime_backend = TransformersRuntimeBackend(device=resolved_settings.runtime_device)
+        artifact_loader.activate(runtime_backend)
     output_schema_registry = OutputSchemaRegistry.from_file(
         resolved_settings.output_schema_config_path,
         profile_loader,

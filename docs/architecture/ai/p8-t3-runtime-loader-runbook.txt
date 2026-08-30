@@ -1,0 +1,35 @@
+P8-T3 approved model and adapter runtime loader
+
+The default descriptor remains metadata-only so a developer machine can start
+without an 8 GB model. Runtime activation is explicit and offline-only.
+
+Provision AI_MODEL_ARTIFACT_ROOT with both immutable directories:
+
+- shared-base/cdbee75f17c01a7cc42f958dc650907174af0554
+- research-assistant/1.0.0
+
+The shared-base directory must contain exactly the revision-pinned files listed
+in ai-service/config/model-artifacts.runtime-t4.json. The Research adapter must
+come from the finalized P7-T5 payload. The loader recalculates every SHA-256
+before importing Transformers or allocating CUDA memory.
+
+Install the reviewed T4 runtime separately from the lightweight API test stack:
+
+  python -m pip install -r ai-service/requirements-runtime-t4.txt
+
+Deployment environment:
+
+  AI_MODEL_ARTIFACT_ROOT=<provisioned immutable root>
+  AI_MODEL_ARTIFACTS_PATH=ai-service/config/model-artifacts.runtime-t4.json
+  AI_RUNTIME_LOAD_ENABLED=true
+  AI_RUNTIME_DEVICE=cuda:0
+  HF_HUB_OFFLINE=1
+  TRANSFORMERS_OFFLINE=1
+  HF_DATASETS_OFFLINE=1
+
+No serving process may download a model. Missing, unapproved, corrupt, offloaded,
+or partially loaded artifacts keep /ready at HTTP 503. Runtime state is committed
+only after the base and every approved adapter load successfully.
+
+The separate requirements file keeps heavy CUDA dependencies out of the
+lightweight API test environment.

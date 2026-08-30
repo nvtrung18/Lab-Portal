@@ -47,17 +47,25 @@ def health(request: Request) -> HealthResponse:
 @router.get(
     "/ready",
     response_model=ReadinessResponse,
-    status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+    responses={status.HTTP_503_SERVICE_UNAVAILABLE: {"model": ReadinessResponse}},
 )
-def ready(request: Request) -> ReadinessResponse:
+def ready(request: Request) -> ReadinessResponse | JSONResponse:
     artifacts = request.app.state.artifact_loader
-    return ReadinessResponse(
+    response = ReadinessResponse(
+        status="READY" if artifacts.ready else "NOT_READY",
         service=_settings(request).service_name,
+        model_status=artifacts.model_status,
         profile_loaded=artifacts.profile_loaded,
         artifact_validated=artifacts.artifact_validated,
         model_loaded=artifacts.model_loaded,
         adapter_loaded=artifacts.adapter_loaded,
         ready=artifacts.ready,
+    )
+    if artifacts.ready:
+        return response
+    return JSONResponse(
+        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+        content=response.model_dump(by_alias=True, mode="json"),
     )
 
 
@@ -65,6 +73,7 @@ def ready(request: Request) -> ReadinessResponse:
 def model_info(request: Request) -> ModelInfoResponse:
     artifacts = request.app.state.artifact_loader
     return ModelInfoResponse(
+        status=artifacts.model_status,
         model_name=artifacts.base_model_identifier,
         model_version=artifacts.base_model_revision,
         model_revision=artifacts.base_model_revision,
@@ -99,7 +108,15 @@ def model_info(request: Request) -> ModelInfoResponse:
 )
 def chat(request: Request, payload: AssistantRequest) -> JSONResponse:
     request.app.state.profile_loader.get_profile(payload.assistant_key)
-    request.app.state.artifact_loader.get_state(payload.assistant_key)
+    artifact_state = request.app.state.artifact_loader.get_state(payload.assistant_key)
+    if artifact_state.ready:
+        return _error_response(
+            request,
+            error_code="AI_SERVICE_NOT_READY",
+            message="AI chat generation is not available.",
+            retryable=False,
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+        )
     return _error_response(
         request,
         error_code="AI_MODEL_NOT_READY",

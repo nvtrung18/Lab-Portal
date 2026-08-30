@@ -2,9 +2,10 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 from pathlib import Path, PurePosixPath, PureWindowsPath
 from types import MappingProxyType
-from typing import Annotated, Literal, Mapping
+from typing import Annotated, Literal, Mapping, Protocol
 
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints, ValidationError, field_validator
 
@@ -46,6 +47,12 @@ class UnknownAssistantArtifactError(LookupError):
 
     def __init__(self) -> None:
         super().__init__("Unknown assistant artifact state.")
+
+
+class RuntimeArtifactBackend(Protocol):
+    def load_base_model(self, artifact_path: Path, identifier: str, revision: str) -> None: ...
+
+    def load_adapter(self, assistant_key: AssistantKey, artifact_path: Path, identifier: str) -> None: ...
 
 
 class ArtifactModel(BaseModel):
@@ -212,6 +219,11 @@ def _validate_physical_artifact(artifact: PhysicalArtifact, artifact_root: Path)
             raise ArtifactConfigurationError("ARTIFACT_CHECKSUM_MISMATCH")
 
 
+def _physical_artifact_directory(artifact: PhysicalArtifact, artifact_root: Path) -> Path:
+    parents = [(artifact_root / entry.path).resolve(strict=True).parent for entry in artifact.files]
+    return Path(os.path.commonpath([str(parent) for parent in parents]))
+
+
 class ArtifactLoader:
     def __init__(
         self,
@@ -222,8 +234,11 @@ class ArtifactLoader:
     ) -> None:
         self._bundle = bundle
         self._artifact_identity = artifact_identity
+        self._artifact_root = artifact_root.resolve()
         self._profile_loader = profile_loader
         self._base_artifact_validated = False
+        self._model_loaded = False
+        self._runtime_activation_failed = False
 
         if bundle.base_model.status == "APPROVED" and bundle.base_model.artifact is None:
             raise ArtifactConfigurationError("ARTIFACT_APPROVAL_INVALID")
@@ -378,7 +393,15 @@ class ArtifactLoader:
 
     @property
     def model_loaded(self) -> bool:
-        return False
+        return self._model_loaded
+
+    @property
+    def model_status(self) -> Literal["NOT_LOADED", "READY", "ERROR"]:
+        if self._model_loaded:
+            return "READY"
+        if self._runtime_activation_failed:
+            return "ERROR"
+        return "NOT_LOADED"
 
     @property
     def adapter_loaded(self) -> bool:
@@ -387,6 +410,57 @@ class ArtifactLoader:
     @property
     def ready(self) -> bool:
         return self.model_loaded and all(state.ready for state in self._states.values())
+
+    def activate(self, backend: RuntimeArtifactBackend) -> bool:
+        if self.ready:
+            return True
+        base_artifact = self._bundle.base_model.artifact
+        if not self._base_artifact_validated or base_artifact is None:
+            self._runtime_activation_failed = True
+            return False
+        if any(
+            state.adapter_status not in {"APPROVED", "NOT_AVAILABLE"}
+            or (state.adapter_status == "APPROVED" and not state.adapter_artifact_validated)
+            for state in self._states.values()
+        ):
+            self._runtime_activation_failed = True
+            return False
+
+        try:
+            backend.load_base_model(
+                _physical_artifact_directory(base_artifact, self._artifact_root),
+                self.base_model_identifier,
+                self.base_model_revision,
+            )
+            for assistant_key, state in self._states.items():
+                if state.adapter_status != "APPROVED":
+                    continue
+                adapter = self._bundle.assistant_adapters[assistant_key.value]
+                if adapter.artifact is None or adapter.identifier is None:
+                    raise ArtifactConfigurationError("ADAPTER_APPROVAL_INVALID", assistant_key)
+                backend.load_adapter(
+                    assistant_key,
+                    _physical_artifact_directory(adapter.artifact, self._artifact_root),
+                    adapter.identifier,
+                )
+        except Exception:
+            self._runtime_activation_failed = True
+            return False
+
+        self._model_loaded = True
+        self._runtime_activation_failed = False
+        self._states = MappingProxyType(
+            {
+                assistant_key: state.model_copy(
+                    update={
+                        "adapter_loaded": state.adapter_status == "APPROVED",
+                        "ready": state.adapter_status in {"APPROVED", "NOT_AVAILABLE"},
+                    }
+                )
+                for assistant_key, state in self._states.items()
+            }
+        )
+        return self.ready
 
     @property
     def states(self) -> Mapping[AssistantKey, AssistantArtifactState]:
