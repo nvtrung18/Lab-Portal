@@ -1,0 +1,26 @@
+{
+  "approval": {
+    "approvedBy": "19thMarch",
+    "decision": "APPROVED",
+    "recordedAt": "2026-08-30"
+  },
+  "approvalAuthority": "RESEARCH_MODEL_PROMOTION_APPROVAL_AUTHORITY",
+  "artifactType": "P7-T5-RESEARCH-PROMOTION-APPROVAL",
+  "authorization": {
+    "adapterCopyAllowed": true,
+    "promotionAllowed": true,
+    "registryMaterializationAllowed": true,
+    "researchProfileActivationAllowed": true,
+    "servingLoadAllowed": false
+  },
+  "candidateId": "3cd324ad97530ce535073be761e1713cb627e15d55cb9395d55729cd93595de4",
+  "requestIdentity": "e40580fbfccd40bdebb8bf72acf0d53f066f6952effb8cb0d7550218f6845f42",
+  "revocation": {
+    "active": false,
+    "revokedAt": null,
+    "reason": null
+  },
+  "schemaVersion": "1.0.0",
+  "status": "APPROVED",
+  "artifactIdentity": "07ed190878b7c32a4c8b448b5cfae29bf75be051b13326ba4e49a8f0bac57047"
+}

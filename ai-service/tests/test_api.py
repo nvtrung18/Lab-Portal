@@ -118,8 +118,11 @@ def test_model_info_reports_validated_metadata_without_claiming_a_loaded_model()
     assert {key: value["status"] for key, value in body["assistantAdapters"].items()} == {
         "ADMIN_ASSISTANT": "NOT_AVAILABLE",
         "LAB_ASSISTANT": "NOT_AVAILABLE",
-        "RESEARCH_ASSISTANT": "BLOCKED",
+        "RESEARCH_ASSISTANT": "APPROVED",
     }
+    research = body["assistantAdapters"]["RESEARCH_ASSISTANT"]
+    assert research["artifactValidated"] is True
+    assert research["adapterLoaded"] is False
 
 
 def test_chat_accepts_authorized_contract_and_returns_model_not_ready() -> None:

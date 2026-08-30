@@ -36,7 +36,8 @@ def test_each_required_assistant_profile_loads(assistant_key: AssistantKey) -> N
     profile = ProfileLoader.from_file(DEFAULT_PROFILE_CONFIG_PATH).get_profile(assistant_key)
 
     assert profile.assistant_key is assistant_key
-    assert profile.profile_version == "1.0.0"
+    expected_version = "2.0.0" if assistant_key is AssistantKey.RESEARCH_ASSISTANT else "1.0.0"
+    assert profile.profile_version == expected_version
     assert profile.prompt.system_prompt
     assert profile.model_profile.base_model_identifier == "Qwen/Qwen3-4B-Instruct-2507"
     assert profile.model_profile.base_model_revision == "cdbee75f17c01a7cc42f958dc650907174af0554"
@@ -169,10 +170,13 @@ def test_malformed_adapter_reference_fails_closed(tmp_path: Path) -> None:
     _assert_invalid(tmp_path, config, "PROFILE_SCHEMA_INVALID")
 
 
-def test_research_profile_does_not_claim_an_approved_adapter() -> None:
+def test_research_profile_references_approved_adapter_but_remains_metadata_only() -> None:
     profile = ProfileLoader.from_file(DEFAULT_PROFILE_CONFIG_PATH).get_profile(AssistantKey.RESEARCH_ASSISTANT)
 
-    assert profile.adapter is None
+    assert profile.adapter is not None
+    assert profile.adapter.identifier == "research-assistant-adapter"
+    assert profile.adapter.version == "1.0.0"
+    assert profile.adapter.artifact_checksum == "8c080cac001798a0826d5c72b553b791c31b7e32f9b10d4dd8b93d4f4f92830d"
     assert profile.model_profile.serving_mode == "METADATA_ONLY"
 
 

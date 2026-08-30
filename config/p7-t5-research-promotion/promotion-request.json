@@ -1,0 +1,34 @@
+{
+  "artifactType": "P7-T5-RESEARCH-PROMOTION-REQUEST",
+  "assistantKey": "RESEARCH_ASSISTANT",
+  "candidateId": "3cd324ad97530ce535073be761e1713cb627e15d55cb9395d55729cd93595de4",
+  "evaluationBinding": {
+    "comparisonIdentity": "6eed18733834894cc19621cee41ab552a051270c799e2e880dd95b6701bf162b",
+    "decision": "PASS",
+    "decisionIdentity": "9e2b29668e549819daf4f087dbe1f268d96978f5fe47f13716e65c6c4b14e43e",
+    "promotionAllowed": true,
+    "unresolvedCaseIds": []
+  },
+  "modelManifest": {
+    "identity": "fe246ae31d96638494fa73ef0add30122faa750d311aff2a30e9355c08df1092",
+    "reference": "config/p7-t5-research-promotion/model-manifest.pending.json"
+  },
+  "registryRules": {
+    "identity": "0842cfb6133f6cbe31adbf3368e766a50ab100990e97426a2c830b43133f00d6",
+    "reference": "config/p7-t5-research-promotion/model-registry-rules.json"
+  },
+  "requestedAuthorization": {
+    "activateResearchProfile": true,
+    "copyValidatedAdapterIntoRegistry": true,
+    "materializeModelRegistry": true,
+    "promoteCandidate": true,
+    "servingLoadAllowed": false
+  },
+  "rollback": {
+    "identity": "bee7ff7575f4fbc639c9414264cb1606574643d2c999d98fa63135698f799de4",
+    "reference": "config/p7-t5-research-promotion/rollback-manifest.pending.json"
+  },
+  "schemaVersion": "1.0.0",
+  "status": "PENDING_APPROVER_GATE",
+  "requestIdentity": "e40580fbfccd40bdebb8bf72acf0d53f066f6952effb8cb0d7550218f6845f42"
+}

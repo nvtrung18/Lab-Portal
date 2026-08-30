@@ -1,0 +1,37 @@
+{
+  "allowedLifecycleStates": [
+    "CANDIDATE",
+    "APPROVED",
+    "REJECTED",
+    "ROLLED_BACK"
+  ],
+  "artifactType": "P7-MODEL-REGISTRY-RULES",
+  "requirements": {
+    "approvalEvidence": true,
+    "assistantIsolation": true,
+    "checksumValidation": true,
+    "independentEvaluation": true,
+    "immutableArtifacts": true,
+    "rollbackRequired": true,
+    "servingRuntimeCompatibility": true
+  },
+  "schemaVersion": "1.0.0",
+  "status": "PROPOSED_PENDING_P7_T5_APPROVAL",
+  "supportedAssistantKeys": [
+    "RESEARCH_ASSISTANT",
+    "LAB_ASSISTANT",
+    "ADMIN_ASSISTANT"
+  ],
+  "transitionRules": {
+    "APPROVED": [
+      "ROLLED_BACK"
+    ],
+    "CANDIDATE": [
+      "APPROVED",
+      "REJECTED"
+    ],
+    "REJECTED": [],
+    "ROLLED_BACK": []
+  },
+  "artifactIdentity": "0842cfb6133f6cbe31adbf3368e766a50ab100990e97426a2c830b43133f00d6"
+}

@@ -1,0 +1,16 @@
+{
+  "approvalIdentity": "07ed190878b7c32a4c8b448b5cfae29bf75be051b13326ba4e49a8f0bac57047",
+  "artifactType": "P7-T5-RESEARCH-PROMOTION-DECISION",
+  "assistantKey": "RESEARCH_ASSISTANT",
+  "candidateId": "3cd324ad97530ce535073be761e1713cb627e15d55cb9395d55729cd93595de4",
+  "modelManifestIdentity": "5091a85f6da4b9081239837ffc7624c766bc32acac67f7a8c285c9a18c991105",
+  "outcome": "ADAPTER_APPROVED",
+  "promotionAllowed": true,
+  "registryIdentity": "f3a9890b16d682afbdaf855c2b5dc3e92de71c216cf389ed8c72d9104568b64a",
+  "requestIdentity": "e40580fbfccd40bdebb8bf72acf0d53f066f6952effb8cb0d7550218f6845f42",
+  "rollbackManifestIdentity": "996819b93073b00e0a7285cdd34eea1938cc7eb90961ca14baac03b4eb94db81",
+  "schemaVersion": "1.0.0",
+  "servingLoadAllowed": false,
+  "state": "COMPLETE",
+  "artifactIdentity": "3918488ca342a2b5bc6cd73c1d2a56e42358f758c4c2f50b759b99f14548619e"
+}

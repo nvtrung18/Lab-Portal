@@ -98,6 +98,10 @@ qa/
 # P7-T4 portable evaluation bundles and raw comparison/review evidence stay local.
 .artifacts/p7-t4*/
 
+# P7-T5/P8 runtime model registry payloads are immutable deployment artifacts, not Git source.
+# Tracked manifests and checksums live under config/evidence; provision payloads via AI_MODEL_ARTIFACT_ROOT.
+ai-service/artifacts/
+
 # Python local environments and test/build artifacts
 .venv/
 __pycache__/

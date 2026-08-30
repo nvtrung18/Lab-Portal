@@ -42,24 +42,64 @@
     },
     "RESEARCH_ASSISTANT": {
       "assistantKey": "RESEARCH_ASSISTANT",
-      "identifier": null,
-      "version": null,
+      "identifier": "research-assistant-adapter",
+      "version": "1.0.0",
       "baseModelIdentifier": "Qwen/Qwen3-4B-Instruct-2507",
       "baseModelRevision": "cdbee75f17c01a7cc42f958dc650907174af0554",
-      "status": "BLOCKED",
-      "artifact": null,
-      "sourceDecision": {
-        "reference": "config/p7-t3-research-model-decision.json",
-        "identity": "3b57340a2e97903f6ccafa48d06f04ad21f7d92ebde6548a163f779ff7fcb30e",
-        "outcome": "ADAPTER_REQUIRED+CANDIDATE_BUILD_BLOCKED"
+      "status": "APPROVED",
+      "artifact": {
+        "files": [
+          {
+            "path": "research-assistant/1.0.0/README.md",
+            "sha256": "d45715220c0a9000c8d9e4f5c43a4236f703116a7eae854a9550f185452e664b"
+          },
+          {
+            "path": "research-assistant/1.0.0/adapter_config.json",
+            "sha256": "00f47a277c2fc8e2e2dbfd37cb9a8abb2ea5f5594eb6c27cea2957626932a049"
+          },
+          {
+            "path": "research-assistant/1.0.0/adapter_model.safetensors",
+            "sha256": "0565e19232204afc409e3384bb430e55c51daefa61f1a07bbbe9eb9320ba5b18"
+          },
+          {
+            "path": "research-assistant/1.0.0/added_tokens.json",
+            "sha256": "c0284b582e14987fbd3d5a2cb2bd139084371ed9acbae488829a1c900833c680"
+          },
+          {
+            "path": "research-assistant/1.0.0/merges.txt",
+            "sha256": "8831e4f1a044471340f7c0a83d7bd71306a5b867e95fd870f74d0c5308a904d5"
+          },
+          {
+            "path": "research-assistant/1.0.0/special_tokens_map.json",
+            "sha256": "76862e765266b85aa9459767e33cbaf13970f327a0e88d1c65846c2ddd3a1ecd"
+          },
+          {
+            "path": "research-assistant/1.0.0/tokenizer.json",
+            "sha256": "aeb13307a71acd8fe81861d94ad54ab689df773318809eed3cbe794b4492dae4"
+          },
+          {
+            "path": "research-assistant/1.0.0/tokenizer_config.json",
+            "sha256": "fed1bd317e1d5c4b32af689a7dec579e51392ba41942ec94a8dfba8ba85deefd"
+          },
+          {
+            "path": "research-assistant/1.0.0/vocab.json",
+            "sha256": "ca10d7e9fb3ed18575dd1e277a2579c16d108e32f27439684afa0e10b1440910"
+          }
+        ],
+        "identity": "8c080cac001798a0826d5c72b553b791c31b7e32f9b10d4dd8b93d4f4f92830d"
       },
-      "sourceRegistryReference": null
+      "sourceDecision": {
+        "identity": "3918488ca342a2b5bc6cd73c1d2a56e42358f758c4c2f50b759b99f14548619e",
+        "outcome": "ADAPTER_APPROVED",
+        "reference": "evidence/p7-t5-research-promotion/decision.json"
+      },
+      "sourceRegistryReference": "config/p7-t5-research-promotion/model-registry.json"
     }
   },
   "sourceDecision": {
-    "reference": "config/p7-t3-research-model-decision.json",
-    "identity": "3b57340a2e97903f6ccafa48d06f04ad21f7d92ebde6548a163f779ff7fcb30e",
-    "outcome": "ADAPTER_REQUIRED+CANDIDATE_BUILD_BLOCKED"
+    "identity": "3918488ca342a2b5bc6cd73c1d2a56e42358f758c4c2f50b759b99f14548619e",
+    "outcome": "ADAPTER_APPROVED",
+    "reference": "evidence/p7-t5-research-promotion/decision.json"
   },
-  "sourceRegistryReference": null
+  "sourceRegistryReference": "config/p7-t5-research-promotion/model-registry.json"
 }
