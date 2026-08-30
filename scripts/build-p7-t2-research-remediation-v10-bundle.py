@@ -59,6 +59,9 @@ V10_FILES = (
     "docs/architecture/ai/p7-t4-research-remediation-v10-runbook.txt",
     "evidence/p7-t1c-research-remediation-v10-training-governance-approval.json",
     "evidence/p7-t4-research-remediation-v10-governance-approval.json",
+    "scripts/build-p7-t2-research-remediation-bundle.py",
+    "scripts/build-p7-t2-research-remediation-v8-bundle.py",
+    "scripts/build-p7-t2-research-remediation-v9-bundle.py",
     "scripts/build-p7-t2-research-remediation-v10-bundle.py",
     "scripts/p7-t2-real-training-remediation-v10.py", PIPELINE, VALIDATOR,
 )

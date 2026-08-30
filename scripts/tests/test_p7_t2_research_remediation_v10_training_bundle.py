@@ -105,6 +105,9 @@ class P7T2ResearchRemediationV10Tests(unittest.TestCase):
         self.assertEqual(PARENT_ADAPTER, self.builder.PARENT_ADAPTER_IDENTITY)
         self.assertIn("parent-adapter/adapter_model.safetensors", self.validator.REQUIRED_FILES)
         self.assertIn("parent-adapter/adapter-manifest.json", self.validator.REQUIRED_FILES)
+        self.assertIn("scripts/build-p7-t2-research-remediation-bundle.py", self.builder.SOURCE_FILES)
+        self.assertIn("scripts/build-p7-t2-research-remediation-v8-bundle.py", self.builder.SOURCE_FILES)
+        self.assertIn("scripts/build-p7-t2-research-remediation-v9-bundle.py", self.builder.SOURCE_FILES)
 
 
 if __name__ == "__main__":
