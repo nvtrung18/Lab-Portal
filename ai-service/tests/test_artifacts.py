@@ -10,8 +10,8 @@ import shutil
 import pytest
 from fastapi.testclient import TestClient
 
-from app.artifacts import ArtifactConfigurationError, ArtifactLoader
-from app.config import DEFAULT_ARTIFACT_CONFIG_PATH, DEFAULT_ARTIFACT_ROOT, DEFAULT_PROFILE_CONFIG_PATH
+from app.artifacts import ArtifactBundle, ArtifactConfigurationError, ArtifactLoader, _artifact_manifest_identity
+from app.config import DEFAULT_ARTIFACT_CONFIG_PATH, DEFAULT_ARTIFACT_ROOT, DEFAULT_PROFILE_CONFIG_PATH, Settings
 from app.main import create_app
 from app.models import AssistantKey
 from app.profiles import ProfileLoader
@@ -19,6 +19,7 @@ from app.profiles import ProfileLoader
 
 BASE_MODEL = "Qwen/Qwen3-4B-Instruct-2507"
 BASE_REVISION = "cdbee75f17c01a7cc42f958dc650907174af0554"
+RUNTIME_ARTIFACT_CONFIG_PATH = DEFAULT_ARTIFACT_CONFIG_PATH.with_name("model-artifacts.runtime-t4.json")
 
 
 def _config() -> dict:
@@ -106,6 +107,21 @@ def _load_with_root(tmp_path: Path, config: dict) -> ArtifactLoader:
     return ArtifactLoader.from_file(descriptor_path, artifact_root, _profiles())
 
 
+class RecordingRuntimeBackend:
+    def __init__(self, *, fail_adapter: bool = False) -> None:
+        self.fail_adapter = fail_adapter
+        self.base_loads: list[tuple[Path, str, str]] = []
+        self.adapter_loads: list[tuple[AssistantKey, Path, str]] = []
+
+    def load_base_model(self, artifact_path: Path, identifier: str, revision: str) -> None:
+        self.base_loads.append((artifact_path, identifier, revision))
+
+    def load_adapter(self, assistant_key: AssistantKey, artifact_path: Path, identifier: str) -> None:
+        self.adapter_loads.append((assistant_key, artifact_path, identifier))
+        if self.fail_adapter:
+            raise RuntimeError("private backend detail")
+
+
 def test_checked_in_descriptor_loads_deterministically() -> None:
     first = ArtifactLoader.from_file(DEFAULT_ARTIFACT_CONFIG_PATH, DEFAULT_ARTIFACT_ROOT, _profiles())
     second = ArtifactLoader.from_file(DEFAULT_ARTIFACT_CONFIG_PATH, DEFAULT_ARTIFACT_ROOT, _profiles())
@@ -114,6 +130,21 @@ def test_checked_in_descriptor_loads_deterministically() -> None:
     assert len(first.artifact_identity) == 64
     assert first.base_model_identifier == BASE_MODEL
     assert first.base_model_revision == BASE_REVISION
+
+
+def test_runtime_descriptor_has_deterministic_base_and_promoted_adapter_inventories() -> None:
+    bundle = ArtifactBundle.model_validate(
+        json.loads(RUNTIME_ARTIFACT_CONFIG_PATH.read_text(encoding="utf-8"))
+    )
+    base_artifact = bundle.base_model.artifact
+    research_artifact = bundle.assistant_adapters["RESEARCH_ASSISTANT"].artifact
+
+    assert bundle.base_model.status == "APPROVED"
+    assert base_artifact is not None
+    assert base_artifact.identity == _artifact_manifest_identity(base_artifact)
+    assert research_artifact is not None
+    assert research_artifact.identity == "8c080cac001798a0826d5c72b553b791c31b7e32f9b10d4dd8b93d4f4f92830d"
+    assert research_artifact.identity == _artifact_manifest_identity(research_artifact)
 
 
 def test_metadata_only_base_model_is_valid_metadata_but_not_loaded() -> None:
@@ -216,6 +247,91 @@ def test_approved_physical_base_artifact_is_checksum_validated_but_not_runtime_l
     assert loader.artifact_validated is True
     assert loader.model_loaded is False
     assert loader.ready is False
+
+
+def test_runtime_activation_loads_only_checksum_validated_approved_artifacts(tmp_path: Path) -> None:
+    config = _config()
+    artifact_root = tmp_path / "artifacts"
+    config["baseModel"]["status"] = "APPROVED"
+    config["baseModel"]["artifact"] = _physical_artifact(artifact_root)
+    loader = _load_with_root(tmp_path, config)
+    backend = RecordingRuntimeBackend()
+
+    assert loader.activate(backend) is True
+
+    assert backend.base_loads == [(artifact_root / "base", BASE_MODEL, BASE_REVISION)]
+    assert backend.adapter_loads == [
+        (
+            AssistantKey.RESEARCH_ASSISTANT,
+            artifact_root / "research-assistant" / "1.0.0",
+            "research-assistant-adapter",
+        )
+    ]
+    assert loader.model_loaded is True
+    assert loader.adapter_loaded is True
+    assert loader.ready is True
+    assert all(state.ready for state in loader.states.values())
+    assert loader.get_state(AssistantKey.RESEARCH_ASSISTANT).adapter_loaded is True
+
+
+def test_runtime_activation_is_atomic_and_fails_closed_on_adapter_error(tmp_path: Path) -> None:
+    config = _config()
+    config["baseModel"]["status"] = "APPROVED"
+    config["baseModel"]["artifact"] = _physical_artifact(tmp_path / "artifacts")
+    loader = _load_with_root(tmp_path, config)
+
+    assert loader.activate(RecordingRuntimeBackend(fail_adapter=True)) is False
+
+    assert loader.model_loaded is False
+    assert loader.adapter_loaded is False
+    assert loader.ready is False
+    assert loader.model_status == "ERROR"
+    assert all(not state.ready for state in loader.states.values())
+
+
+def test_runtime_activation_does_not_call_backend_for_metadata_only_base() -> None:
+    loader = ArtifactLoader.from_file(DEFAULT_ARTIFACT_CONFIG_PATH, DEFAULT_ARTIFACT_ROOT, _profiles())
+    backend = RecordingRuntimeBackend()
+
+    assert loader.activate(backend) is False
+
+    assert backend.base_loads == []
+    assert backend.adapter_loads == []
+    assert loader.model_status == "ERROR"
+
+
+def test_runtime_enabled_application_reports_ready_after_atomic_activation(tmp_path: Path) -> None:
+    config = _config()
+    artifact_root = tmp_path / "artifacts"
+    config["baseModel"]["status"] = "APPROVED"
+    config["baseModel"]["artifact"] = _physical_artifact(artifact_root)
+    descriptor_path = tmp_path / "model-artifacts.json"
+    descriptor_path.write_text(json.dumps(config), encoding="utf-8")
+    _seed_checked_in_adapter_artifacts(config, artifact_root)
+    settings = Settings(
+        internal_service_token="test-only-internal-service-token",
+        artifact_config_path=descriptor_path,
+        artifact_root=artifact_root,
+        runtime_load_enabled=True,
+    )
+
+    response = TestClient(
+        create_app(settings, runtime_backend=RecordingRuntimeBackend()),
+        headers={"X-Internal-Service-Token": "test-only-internal-service-token"},
+    ).get("/ready")
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "status": "READY",
+        "service": "ai-service",
+        "serviceStatus": "READY",
+        "modelStatus": "READY",
+        "profileLoaded": True,
+        "artifactValidated": True,
+        "modelLoaded": True,
+        "adapterLoaded": True,
+        "ready": True,
+    }
 
 
 def test_artifact_checksum_mismatch_fails_closed(tmp_path: Path) -> None:

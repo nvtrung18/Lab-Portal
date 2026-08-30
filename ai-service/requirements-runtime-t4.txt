@@ -1,0 +1,10 @@
+-r requirements.txt
+--extra-index-url https://download.pytorch.org/whl/cu118
+
+accelerate==1.6.0
+bitsandbytes==0.48.1
+numpy==2.5.2
+peft==0.15.2
+safetensors==0.5.3
+torch==2.7.1+cu118
+transformers==4.51.3

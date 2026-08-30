@@ -29,6 +29,8 @@ class Settings(BaseModel):
     artifact_config_path: Path = DEFAULT_ARTIFACT_CONFIG_PATH
     artifact_root: Path = DEFAULT_ARTIFACT_ROOT
     output_schema_config_path: Path = DEFAULT_OUTPUT_SCHEMA_CONFIG_PATH
+    runtime_load_enabled: bool = False
+    runtime_device: NonBlankText = "cuda:0"
 
     @field_validator("internal_service_token")
     @classmethod
@@ -50,6 +52,8 @@ class Settings(BaseModel):
             "artifact_config_path": "AI_MODEL_ARTIFACTS_PATH",
             "artifact_root": "AI_MODEL_ARTIFACT_ROOT",
             "output_schema_config_path": "AI_OUTPUT_SCHEMAS_PATH",
+            "runtime_load_enabled": "AI_RUNTIME_LOAD_ENABLED",
+            "runtime_device": "AI_RUNTIME_DEVICE",
         }
         for field_name, environment_name in environment_names.items():
             value = os.getenv(environment_name)

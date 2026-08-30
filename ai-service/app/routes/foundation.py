@@ -47,17 +47,25 @@ def health(request: Request) -> HealthResponse:
 @router.get(
     "/ready",
     response_model=ReadinessResponse,
-    status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+    responses={status.HTTP_503_SERVICE_UNAVAILABLE: {"model": ReadinessResponse}},
 )
-def ready(request: Request) -> ReadinessResponse:
+def ready(request: Request) -> ReadinessResponse | JSONResponse:
     artifacts = request.app.state.artifact_loader
-    return ReadinessResponse(
+    response = ReadinessResponse(
+        status="READY" if artifacts.ready else "NOT_READY",
         service=_settings(request).service_name,
+        model_status=artifacts.model_status,
         profile_loaded=artifacts.profile_loaded,
         artifact_validated=artifacts.artifact_validated,
         model_loaded=artifacts.model_loaded,
         adapter_loaded=artifacts.adapter_loaded,
         ready=artifacts.ready,
+    )
+    if artifacts.ready:
+        return response
+    return JSONResponse(
+        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+        content=response.model_dump(by_alias=True, mode="json"),
     )
 
 
@@ -65,6 +73,7 @@ def ready(request: Request) -> ReadinessResponse:
 def model_info(request: Request) -> ModelInfoResponse:
     artifacts = request.app.state.artifact_loader
     return ModelInfoResponse(
+        status=artifacts.model_status,
         model_name=artifacts.base_model_identifier,
         model_version=artifacts.base_model_revision,
         model_revision=artifacts.base_model_revision,
