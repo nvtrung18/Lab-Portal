@@ -34,7 +34,7 @@ use_cases:
     name: "System status summary"
     goal: "Summarize an authorized system-status projection."
     actors: ["ADMIN"]
-    runtimeAvailability: "CATALOG_DISABLED"
+    runtimeAvailability: "CONDITIONALLY_AVAILABLE"
     resourceScope: "Authorized system-summary context only."
     inputs: ["Resolved assistant", "Authenticated actor", "Authorized system-status context"]
     trustedDataSources: ["Spring-authorized bounded system-status projection", "Approved tool result"]
@@ -53,14 +53,14 @@ use_cases:
     futureEvaluationTags: ["FUNCTIONAL", "AUTHORIZATION", "SAFE_REFUSAL", "MISSING_CONTEXT"]
     laterMvp: "P10C_ADMIN"
     sourceAuthority: ["AiCapability.ADMIN_SYSTEM_SUMMARY", "CANONICAL_CATALOG: ADMIN_SYSTEM_SUMMARY -> ADMIN_READ", "three-assistant-contract.yml: assistant_registry"]
-    notes: "Admin is architecture-eligible only; catalog-disabled is not a permission grant or an invocation claim."
+    notes: "Admin availability still requires an enabled active configuration, quota approval, ADMIN role, fresh capability authorization, and bounded context."
 
   - id: "ADMIN_UC_002"
     assistantKey: "ADMIN_ASSISTANT"
     name: "Audit summary"
     goal: "Summarize an authorized audit-summary projection with minimization."
     actors: ["ADMIN"]
-    runtimeAvailability: "CATALOG_DISABLED"
+    runtimeAvailability: "CONDITIONALLY_AVAILABLE"
     resourceScope: "Authorized audit-summary projection only."
     inputs: ["Resolved assistant", "Authenticated actor", "Authorized audit-summary context"]
     trustedDataSources: ["Spring-authorized bounded audit-summary projection", "Approved tool result"]
@@ -86,7 +86,7 @@ use_cases:
     name: "User-status lookup"
     goal: "Return a bounded status lookup for an authorized user reference."
     actors: ["ADMIN"]
-    runtimeAvailability: "CATALOG_DISABLED"
+    runtimeAvailability: "CONDITIONALLY_AVAILABLE"
     resourceScope: "Resolved authorized user reference only."
     inputs: ["Resolved assistant", "Authenticated actor", "Authorized user reference"]
     trustedDataSources: ["Spring-authorized bounded user-status projection", "Approved tool result"]
@@ -100,7 +100,7 @@ use_cases:
     failureBehavior: ["DENY", "SAFE_REFUSAL", "NO_CONTEXT"]
     safeRefusalBehavior: "Refuse without confirming user existence, membership, private fields, or access-policy detail."
     metrics: ["AUTHORIZATION_CORRECTNESS", "FUNCTIONAL_CORRECTNESS", "SAFE_REFUSAL_ACCURACY"]
-    nonGoals: ["Account modification", "Credential access", "Broad user dump", "Runtime availability claim"]
+    nonGoals: ["Account modification", "Credential access", "Broad user dump", "Unconditional availability claim"]
     dependencies: ["Spring capability resolution", "Fresh read-only authorization", "Bounded authorized context"]
     futureEvaluationTags: ["FUNCTIONAL", "AUTHORIZATION", "SAFE_REFUSAL", "MISSING_CONTEXT"]
     laterMvp: "P10C_ADMIN"
@@ -112,7 +112,7 @@ use_cases:
     name: "Configuration-change draft"
     goal: "Produce a non-official configuration-change draft template without asserting current configuration-policy data."
     actors: ["ADMIN"]
-    runtimeAvailability: "CATALOG_DISABLED"
+    runtimeAvailability: "CONDITIONALLY_AVAILABLE"
     resourceScope: "Source-limited: current context supplies no configuration or policy projection."
     inputs: ["Resolved assistant", "Authenticated actor", "Draft request"]
     trustedDataSources: ["Spring-authorized bounded system-summary context", "Approved tool result"]
@@ -138,7 +138,7 @@ use_cases:
     name: "Account-action draft"
     goal: "Produce a non-official account-action draft from authorized target-user status context."
     actors: ["ADMIN"]
-    runtimeAvailability: "CATALOG_DISABLED"
+    runtimeAvailability: "CONDITIONALLY_AVAILABLE"
     resourceScope: "Authorized target-user status context only; account-policy content is source-limited."
     inputs: ["Resolved assistant", "Authenticated actor", "Authorized user reference", "Draft request"]
     trustedDataSources: ["Spring-authorized bounded account-status context", "Approved tool result"]
@@ -533,6 +533,10 @@ downstream_traceability:
       useCases: ["LAB_UC_001", "LAB_UC_002", "LAB_UC_003", "LAB_UC_004", "LAB_UC_005", "LAB_UC_006"]
     P10C_ADMIN:
       useCases: ["ADMIN_UC_001", "ADMIN_UC_002", "ADMIN_UC_003", "ADMIN_UC_004", "ADMIN_UC_005"]
+      sourceLimitedTraceability:
+        system_and_audit_summary: "COVERED_BY_CURRENT_SOURCE: Spring supplies bounded system counts and minimized daily audit buckets only; raw audit records and secrets remain excluded."
+        target_user_status: "COVERED_BY_CURRENT_SOURCE: user lookup and account draft are bound to the single Spring-authorized target-user projection."
+        administrative_drafts: "COVERED_BY_CURRENT_SOURCE: drafts are non-official, require human review, have no executor, and configuration/account policy content remains unavailable unless present in an approved bounded projection."
 
 mvp_and_rag_boundary:
   mvp_context: "Only Spring-authorized bounded context, approved existing business-service or tool results, or safe refusal when context is absent or unauthorized."
@@ -545,7 +549,8 @@ review_checklist:
   - "Every current capability appears once with its exact fixed tool group and READ_ONLY or DRAFT_ONLY risk."
   - "Every current row includes all required fields and false confirmation/approval flags."
   - "freshReauthorizationRequired means current read-only reauthorization before context/tool-policy projection, not a write-execution promise."
-  - "Admin remains CATALOG_DISABLED; Lab and Research remain CONDITIONALLY_AVAILABLE."
+  - "Admin, Lab, and Research remain conditionally available behind active configuration, role, quota, capability, and resource-scope checks."
+  - "P10C covers all five Admin MVP use cases without adding an executor, secret access, raw audit export, configuration mutation, or account mutation."
   - "Safe refusals avoid unauthorized resource existence, membership, audit detail, private booking data, secrets, and protected metadata."
   - "Future lifecycle entries contain no current capabilities, tool groups, executor, persistence, or approver claims."
   - "P10A allowed-group context and bounded overdue/blocked task traceability are covered by Spring-authorized projections."

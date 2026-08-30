@@ -70,7 +70,7 @@ public class AiAssistantRegistryServiceImpl implements AiAssistantRegistry {
 
     static List<AiAssistantProfile> defaultCatalog() {
         return List.of(
-                new AiAssistantProfile(AiAssistantKey.ADMIN_ASSISTANT, AiAssistantDomain.ADMIN, false,
+                new AiAssistantProfile(AiAssistantKey.ADMIN_ASSISTANT, AiAssistantDomain.ADMIN, true,
                         Set.of(AiAssistantSystemRole.ADMIN), "admin", "admin-v1", null, "admin",
                         AiQuotaPolicyReference.AI_CONFIG_QUOTA,
                         Set.of(AiAssistantToolGroup.ADMIN_READ, AiAssistantToolGroup.ADMIN_DRAFT),

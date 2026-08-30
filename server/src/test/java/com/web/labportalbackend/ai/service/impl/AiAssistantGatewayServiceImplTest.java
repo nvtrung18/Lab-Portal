@@ -17,6 +17,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.web.labportalbackend.ai.client.AiChatResponse;
 import com.web.labportalbackend.ai.client.AiGatewayClient;
 import com.web.labportalbackend.ai.client.AiGatewayRequest;
+import com.web.labportalbackend.ai.context.AiAdminContext;
 import com.web.labportalbackend.ai.context.AiAuthorizedContext;
 import com.web.labportalbackend.ai.context.AiBoundedList;
 import com.web.labportalbackend.ai.context.AiContextBuildRequest;
@@ -76,6 +77,34 @@ class AiAssistantGatewayServiceImplTest {
     private final ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
     private final AiAssistantGatewayServiceImpl service = new AiAssistantGatewayServiceImpl(
             availabilityService, contextFacade, gatewayClient, objectMapper, auditUsageService);
+
+    @Test
+    void adminSystemSummaryProjectsOnlyBoundedAuthorizedContextToPython() {
+        AiAssistantProfile profile = profile(AiAssistantKey.ADMIN_ASSISTANT);
+        AiAssistantAvailability availability = new AiAssistantAvailability(
+                profile, 1L, AiAssistantSystemRole.ADMIN);
+        AiAssistantChatRequest publicRequest = request(AiCapability.ADMIN_SYSTEM_SUMMARY, null, null);
+        AiCapabilityRequest capabilityRequest = capabilityRequest(
+                AiAssistantKey.ADMIN_ASSISTANT, 1L, AiCapability.ADMIN_SYSTEM_SUMMARY, null, null);
+        when(availabilityService.requireAvailableForActor(AiAssistantKey.ADMIN_ASSISTANT)).thenReturn(availability);
+        when(contextFacade.build(any())).thenReturn(context(capabilityRequest));
+        when(gatewayClient.chat(any())).thenReturn(new AiChatResponse(
+                AiAssistantKey.ADMIN_ASSISTANT.name(), "Bounded summary", 3, 2, Map.of()));
+
+        service.chat(AiAssistantKey.ADMIN_ASSISTANT, publicRequest, "request-admin");
+
+        ArgumentCaptor<AiGatewayRequest> gatewayRequest = ArgumentCaptor.forClass(AiGatewayRequest.class);
+        verify(gatewayClient).chat(gatewayRequest.capture());
+        JsonNode authorized = gatewayRequest.getValue().payload().path("authorizedContext");
+        assertEquals("ADMIN", authorized.path("domain").asText());
+        assertEquals("admin.system.summary", authorized.path("allowedTools").get(0).path("toolId").asText());
+        assertEquals("SYSTEM", authorized.path("resources").get(0).path("resourceType").asText());
+        assertTrue(authorized.path("resources").get(0).path("resourceId").isNull());
+        assertEquals(8L, authorized.path("context").path("systemSummary").path("activeUserCount").asLong());
+        assertEquals(10L, authorized.path("context").path("systemSummary").path("registeredUserCount").asLong());
+        assertTrue(authorized.path("context").path("targetUser").isNull());
+        assertEquals(0, authorized.path("context").path("auditBuckets").path("items").size());
+    }
 
     @Test
     void authorizedContextToolsAndResourcesAreProjectedBeforeCallingPython() throws Exception {
@@ -339,15 +368,21 @@ class AiAssistantGatewayServiceImplTest {
                     capability == AiCapability.RESEARCH_TASK_PROPOSAL_DRAFT
                             ? request.parentResource().id() : 20L,
                     request.resource().id(), null, AiResourceScope.GROUP_MEMBER);
-            case ADMIN -> throw new IllegalArgumentException("Admin context is not used by this test");
+            case ADMIN -> new AiCapabilityDecision.ResolvedResource(
+                    capability.resourceType(), request.resource().id(),
+                    null, null, null, null, AiResourceScope.GLOBAL);
         };
-        AiDomainContext projectedContext = capability.domain() == AiAssistantDomain.LAB
-                ? new AiLabContext(new AiLabContext.Laboratory(10L, "Authorized Lab", null),
+        AiDomainContext projectedContext = switch (capability.domain()) {
+            case ADMIN -> new AiAdminContext(
+                    new AiAdminContext.SystemSummary(8L, 10L), null,
+                    AiBoundedList.fromOverfetch(List.of(), 14), false);
+            case LAB -> new AiLabContext(new AiLabContext.Laboratory(10L, "Authorized Lab", null),
                         new AiLabContext.Slot(request.resource().id(), Instant.parse("2026-01-01T00:00:00Z"),
                                 Instant.parse("2026-01-01T01:00:00Z"), null),
                         null, null, null, null, capability.riskBoundary() == AiActionRiskBoundary.DRAFT_ONLY,
-                        "AUTHORIZED_ONLY")
-                : researchContext(request.resource().id());
+                        "AUTHORIZED_ONLY");
+            case RESEARCH -> researchContext(request.resource().id());
+        };
         return new AiAuthorizedContext("request-123", request.assistantKey(), capability.domain(), capability,
                 resource, new AiAuthorizedToolPolicy(new AiToolRegistryServiceImpl().get(capability)),
                 "P5A-T5-v1", Instant.parse("2026-01-01T00:00:00Z"),
