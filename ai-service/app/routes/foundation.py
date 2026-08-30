@@ -6,7 +6,9 @@ from fastapi.responses import JSONResponse
 from app.config import Settings
 from app.models import (
     AdapterArtifactInfoResponse,
+    AssistantKey,
     AssistantRequest,
+    ChatResponse,
     ErrorResponse,
     HealthResponse,
     ModelInfoResponse,
@@ -103,12 +105,15 @@ def model_info(request: Request) -> ModelInfoResponse:
 
 @router.post(
     "/v1/assistants/chat",
-    response_model=ErrorResponse,
-    status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+    response_model=ChatResponse,
+    responses={status.HTTP_503_SERVICE_UNAVAILABLE: {"model": ErrorResponse}},
 )
-def chat(request: Request, payload: AssistantRequest) -> JSONResponse:
+def chat(request: Request, payload: AssistantRequest) -> ChatResponse | JSONResponse:
     request.app.state.profile_loader.get_profile(payload.assistant_key)
     artifact_state = request.app.state.artifact_loader.get_state(payload.assistant_key)
+    research_mvp = request.app.state.research_mvp
+    if artifact_state.ready and payload.assistant_key is AssistantKey.RESEARCH_ASSISTANT and research_mvp is not None:
+        return research_mvp.respond(payload)
     if artifact_state.ready:
         return _error_response(
             request,

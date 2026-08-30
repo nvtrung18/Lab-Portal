@@ -172,7 +172,7 @@ class SpringPythonContractTest {
         assertEquals("READY", artifactReady.path("ready").path("expectedFields").path("status").asText());
         assertEquals("APPROVED",
                 artifactReady.path("modelInfo").path("expectedFields").path("artifactState").asText());
-        assertEquals("AI_SERVICE_NOT_READY", CONTRACT.path("artifactReadyPostErrors").path("chat").asText());
+        assertEquals(200, CONTRACT.path("artifactReadyPostResponses").path("chat").path("statusCode").asInt());
         assertEquals("REQUIRES_SPRING_AUTHORIZATION",
                 tool.path("expected").path("executionEligibility").asText());
         assertFalse(tool.path("expected").path("executable").asBoolean());
@@ -180,6 +180,24 @@ class SpringPythonContractTest {
         assertFalse(authority.path("assistantKeyAuthorizes").asBoolean());
         assertFalse(authority.path("pythonAuthorizesResources").asBoolean());
         assertFalse(authority.path("pythonExecutesTools").asBoolean());
+    }
+
+    @Test
+    void researchMvpSuccessFixtureDecodesThroughTheActiveSpringClient() {
+        JsonNode expected = CONTRACT.path("chatResponse").path("example");
+        AiGatewayClient client = client(request -> Mono.just(ClientResponse.create(HttpStatusCode.valueOf(200))
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .body(expected.toString())
+                .build()));
+
+        AiChatResponse response = client.chat(new AiGatewayRequest(
+                CONTRACT.path("researchMvpRequest"), "contract-request-123"));
+
+        assertEquals(expected.path("assistantKey").asText(), response.assistantKey());
+        assertEquals(expected.path("answer").asText(), response.answer());
+        assertEquals(expected.path("promptTokens").asInt(), response.promptTokens());
+        assertEquals(expected.path("completionTokens").asInt(), response.completionTokens());
+        assertEquals(Set.of("resourceReferences"), response.metadata().keySet());
     }
 
     private static AiGatewayClient client(ExchangeFunction exchangeFunction) {

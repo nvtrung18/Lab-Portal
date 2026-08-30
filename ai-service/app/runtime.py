@@ -1,9 +1,17 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, Mapping, Sequence
 
 from app.models.contracts import AssistantKey
+
+
+@dataclass(frozen=True)
+class RuntimeGeneration:
+    text: str
+    prompt_tokens: int
+    completion_tokens: int
 
 
 class TransformersRuntimeBackend:
@@ -62,3 +70,42 @@ class TransformersRuntimeBackend:
             local_files_only=True,
         )
         self.model.train(False)
+
+    def generate(
+        self,
+        assistant_key: AssistantKey,
+        messages: Sequence[Mapping[str, str]],
+        *,
+        json_output: bool,
+    ) -> RuntimeGeneration:
+        del json_output
+        if self.model is None or self.tokenizer is None:
+            raise RuntimeError("Model runtime is not loaded.")
+        set_adapter = getattr(self.model, "set_adapter", None)
+        if assistant_key is AssistantKey.RESEARCH_ASSISTANT:
+            if not callable(set_adapter):
+                raise RuntimeError("Approved Research adapter is not loaded.")
+            set_adapter(assistant_key.value)
+
+        encoded = self.tokenizer.apply_chat_template(
+            list(messages),
+            add_generation_prompt=True,
+            return_tensors="pt",
+            return_dict=True,
+        ).to(self.device)
+        input_ids = encoded["input_ids"]
+        prompt_tokens = input_ids.shape[-1] if hasattr(input_ids, "shape") else len(input_ids[0])
+        generated = self.model.generate(
+            **encoded,
+            max_new_tokens=512,
+            do_sample=False,
+        )
+        completion_ids = generated[0][prompt_tokens:]
+        text = self.tokenizer.decode(completion_ids, skip_special_tokens=True).strip()
+        if not text:
+            raise RuntimeError("Model returned an empty response.")
+        return RuntimeGeneration(
+            text=text,
+            prompt_tokens=prompt_tokens,
+            completion_tokens=len(completion_ids),
+        )

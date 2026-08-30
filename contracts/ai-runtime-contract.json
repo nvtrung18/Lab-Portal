@@ -1,5 +1,5 @@
 {
-  "schemaVersion": "1.1.0",
+  "schemaVersion": "1.2.0",
   "headers": {
     "internalServiceToken": "X-Internal-Service-Token",
     "requestId": "X-Request-Id",
@@ -58,6 +58,45 @@
         "resources": [
           {"resourceType": "TIME_SLOT", "resourceId": "slot-17"}
         ]
+      }
+    }
+  },
+  "researchMvpRequest": {
+    "assistantKey": "RESEARCH_ASSISTANT",
+    "input": "Summarize only the authorized group context.",
+    "authorizedContext": {
+      "domain": "RESEARCH",
+      "contextVersion": "P5A-T5-v1",
+      "context": {
+        "research": {"project": {"id": 20, "name": "Authorized project"}},
+        "groups": {"items": [], "truncated": false},
+        "milestones": {"items": [], "truncated": false},
+        "tasks": {"items": [], "truncated": false},
+        "selectedResourceId": 30,
+        "draftOnly": false
+      },
+      "allowedTools": [
+        {
+          "toolId": "research.group.summary",
+          "schemaVersion": "v1",
+          "resourceType": "GROUP",
+          "parentResourceType": null,
+          "argumentNames": ["resource"],
+          "riskBoundary": "READ_ONLY"
+        }
+      ],
+      "resources": [{"resourceType": "GROUP", "resourceId": 30}]
+    }
+  },
+  "chatResponse": {
+    "requiredFields": ["assistantKey", "answer", "promptTokens", "completionTokens", "metadata"],
+    "example": {
+      "assistantKey": "RESEARCH_ASSISTANT",
+      "answer": "Authorized group summary.",
+      "promptTokens": 23,
+      "completionTokens": 11,
+      "metadata": {
+        "resourceReferences": [{"resourceType": "GROUP", "resourceId": 30}]
       }
     }
   },
@@ -167,10 +206,15 @@
     "legacySuggestions": "AI_SERVICE_NOT_READY"
   },
   "artifactReadyPostErrors": {
-    "chat": "AI_SERVICE_NOT_READY",
     "toolRequest": "AI_SERVICE_NOT_READY",
     "suggestions": "AI_SERVICE_NOT_READY",
     "legacySuggestions": "AI_SERVICE_NOT_READY"
+  },
+  "artifactReadyPostResponses": {
+    "chat": {
+      "statusCode": 200,
+      "bodyReference": "chatResponse.example"
+    }
   },
   "toolValidation": {
     "candidate": {
