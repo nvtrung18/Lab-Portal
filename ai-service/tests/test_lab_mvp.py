@@ -66,6 +66,7 @@ def _request(tool_id: str, resource_type: str, resource_id: int):
         "slot": None,
         "booking": None,
         "managedSummary": None,
+        "labPolicySnapshot": None,
         "checkinPolicySnapshot": None,
         "draftOnly": tool_id == "lab.booking.draft",
         "policyOrDraftEligibilityLabel": None,
@@ -94,6 +95,13 @@ def _request(tool_id: str, resource_type: str, resource_id: int):
         context["managedSummary"] = {"activeSlotCount": 4, "activeBookingCount": 2}
     if tool_id == "lab.policy.read":
         context["policyOrDraftEligibilityLabel"] = "POLICY_INFORMATION_ONLY"
+        context["labPolicySnapshot"] = {
+            "checkinWindowMinutes": 10,
+            "cancelBeforeMinutes": 30,
+            "hidePastSlots": True,
+            "hideCancelledSlots": True,
+            "disableBookingForInactiveLab": True,
+        }
     if tool_id == "lab.booking.draft":
         context["policyOrDraftEligibilityLabel"] = "DRAFT_ONLY_NO_BOOKING_WRITE"
 
@@ -197,13 +205,28 @@ def test_lab_booking_draft_with_unapproved_lab_reference_fails_closed() -> None:
     assert response.json()["metadata"] == {"safeRefusal": True}
 
 
-def test_policy_read_refuses_without_policy_content_and_does_not_run_model() -> None:
-    backend = StubGenerationBackend("Must not invent policy content")
+def test_policy_read_returns_guidance_from_authorized_policy_snapshot() -> None:
+    backend = StubGenerationBackend("Check-in is allowed for 10 minutes after the slot starts.")
 
     response = _client(backend).post(
         "/v1/assistants/chat",
         json=_request("lab.policy.read", "LABORATORY", 10),
     )
+
+    assert response.status_code == 200
+    assert response.json()["answer"] == "Check-in is allowed for 10 minutes after the slot starts."
+    assert response.json()["metadata"] == {
+        "resourceReferences": [{"resourceType": "LABORATORY", "resourceId": 10}],
+    }
+    assert backend.calls == 1
+
+
+def test_policy_read_without_authorized_policy_snapshot_refuses() -> None:
+    backend = StubGenerationBackend("Must not invent policy content")
+    request = _request("lab.policy.read", "LABORATORY", 10)
+    request["authorizedContext"]["context"]["labPolicySnapshot"] = None
+
+    response = _client(backend).post("/v1/assistants/chat", json=request)
 
     assert response.status_code == 200
     assert response.json()["metadata"] == {"safeRefusal": True}

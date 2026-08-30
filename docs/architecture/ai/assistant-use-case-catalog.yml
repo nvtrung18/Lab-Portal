@@ -167,7 +167,7 @@ use_cases:
     runtimeAvailability: "CONDITIONALLY_AVAILABLE"
     resourceScope: "Actor- and lab-scoped policy context only."
     inputs: ["Resolved assistant", "Authenticated actor", "Authorized lab reference", "Question"]
-    trustedDataSources: ["Spring-authorized bounded lab-policy context", "Approved tool result"]
+    trustedDataSources: ["Spring-authorized bounded lab-policy context", "Current SystemConfig booking/lab policy snapshot", "Approved tool result"]
     requiredCapabilities: ["LAB_POLICY_READ"]
     allowedToolGroups: ["LAB_READ"]
     outputType: "GUIDANCE"

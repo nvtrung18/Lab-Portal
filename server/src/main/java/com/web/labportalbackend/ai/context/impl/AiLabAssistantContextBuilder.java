@@ -8,6 +8,7 @@ import com.web.labportalbackend.ai.context.TrustedContextInput;
 import com.web.labportalbackend.ai.enums.AiAssistantDomain;
 import com.web.labportalbackend.ai.enums.AiCapability;
 import com.web.labportalbackend.ai.enums.AiResourceScope;
+import com.web.labportalbackend.admin.systemconfig.service.SystemConfigService;
 import com.web.labportalbackend.booking.repository.BookingRepository;
 import com.web.labportalbackend.booking.repository.TimeSlotRepository;
 import com.web.labportalbackend.lab.repository.LaboratoryRepository;
@@ -20,13 +21,16 @@ public class AiLabAssistantContextBuilder implements AiDomainContextBuilder {
     private final LaboratoryRepository laboratoryRepository;
     private final TimeSlotRepository timeSlotRepository;
     private final BookingRepository bookingRepository;
+    private final SystemConfigService systemConfigService;
 
     public AiLabAssistantContextBuilder(LaboratoryRepository laboratoryRepository,
                                         TimeSlotRepository timeSlotRepository,
-                                        BookingRepository bookingRepository) {
+                                        BookingRepository bookingRepository,
+                                        SystemConfigService systemConfigService) {
         this.laboratoryRepository = laboratoryRepository;
         this.timeSlotRepository = timeSlotRepository;
         this.bookingRepository = bookingRepository;
+        this.systemConfigService = systemConfigService;
     }
 
     @Override public AiAssistantDomain domain() { return AiAssistantDomain.LAB; }
@@ -48,8 +52,15 @@ public class AiLabAssistantContextBuilder implements AiDomainContextBuilder {
         AiLabContext.Slot slot = null;
         AiLabContext.OwnBooking booking = null;
         AiLabContext.ManagedSummary managedSummary = null;
+        AiLabContext.LabPolicySnapshot labPolicySnapshot = null;
         AiLabContext.CheckinPolicySnapshot checkinPolicySnapshot = null;
-        if (Set.of(AiCapability.LAB_SLOT_READ, AiCapability.LAB_BOOKING_DRAFT).contains(capability)) {
+        if (capability == AiCapability.LAB_POLICY_READ) {
+            var config = systemConfigService.getConfig();
+            labPolicySnapshot = new AiLabContext.LabPolicySnapshot(
+                    config.booking().checkinWindowMinutes(), config.booking().cancelBeforeMinutes(),
+                    config.booking().hidePastSlots(), config.booking().hideCancelledSlots(),
+                    config.lab().disableBookingForInactiveLab());
+        } else if (Set.of(AiCapability.LAB_SLOT_READ, AiCapability.LAB_BOOKING_DRAFT).contains(capability)) {
             boolean draft = capability == AiCapability.LAB_BOOKING_DRAFT;
             slot = timeSlotRepository.findAiContextSlot(input.actorId(), labId,
                     input.decision().resolvedResource().id(), managedScope, draft, input.builtAt(), selectedRoleName)
@@ -75,7 +86,7 @@ public class AiLabAssistantContextBuilder implements AiDomainContextBuilder {
                     timeSlotRepository.countAiContextManagedSlots(input.actorId(), labId, selectedRoleName),
                     bookingRepository.countAiContextManagedBookings(input.actorId(), labId, selectedRoleName));
         }
-        return new AiLabContext(lab, slot, booking, managedSummary, checkinPolicySnapshot,
+        return new AiLabContext(lab, slot, booking, managedSummary, labPolicySnapshot, checkinPolicySnapshot,
                 capability.action().name().equals("DRAFT"), policyOrDraftEligibilityLabel(capability));
     }
 

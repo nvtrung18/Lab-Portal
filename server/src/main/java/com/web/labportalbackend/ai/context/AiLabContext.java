@@ -10,6 +10,7 @@ public record AiLabContext(
         Slot slot,
         OwnBooking booking,
         ManagedSummary managedSummary,
+        LabPolicySnapshot labPolicySnapshot,
         CheckinPolicySnapshot checkinPolicySnapshot,
         boolean draftOnly,
         String policyOrDraftEligibilityLabel) implements AiDomainContext {
@@ -25,6 +26,15 @@ public record AiLabContext(
 
     /** Aggregate-only managed-lab view; no booking or membership rows are represented. */
     public record ManagedSummary(long activeSlotCount, long activeBookingCount) {
+    }
+
+    /** Public operational policy subset; account, upload, and research settings are excluded. */
+    public record LabPolicySnapshot(
+            int checkinWindowMinutes,
+            int cancelBeforeMinutes,
+            boolean hidePastSlots,
+            boolean hideCancelledSlots,
+            boolean disableBookingForInactiveLab) {
     }
 
     public record CheckinPolicySnapshot(Instant endInclusive) {

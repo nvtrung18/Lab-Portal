@@ -61,7 +61,7 @@ class AiAuthorizedContextTest {
     }
 
     private static AiDomainContext domainContext() {
-        return new AiLabContext(new AiLabContext.Laboratory(10L, "Lab", null), null, null, null, null,
+        return new AiLabContext(new AiLabContext.Laboratory(10L, "Lab", null), null, null, null, null, null,
                 false, "POLICY_INFORMATION_ONLY");
     }
 }
