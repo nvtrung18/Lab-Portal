@@ -1,0 +1,64 @@
+{
+  "approval_status": "APPROVED",
+  "artifactIdentity": "c313ee583bc1b2ff2c20df7463b3d7e1767dbebbe4a431794d7f63c63a602603",
+  "artifacts": [
+    {
+      "filename": "evaluation.jsonl",
+      "recordCount": 8,
+      "sha256": "5f4ace1ae2f8bf95999e03dc536309987bf319d1029e47a7e432cc78088eac17"
+    },
+    {
+      "filename": "rejections.jsonl",
+      "recordCount": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "filename": "train.jsonl",
+      "recordCount": 96,
+      "sha256": "b5d3d2b651de687a5bf2a07e40c417a7695304875250579dfe46a720d13b708b"
+    },
+    {
+      "filename": "validation.jsonl",
+      "recordCount": 20,
+      "sha256": "82c99e454735a59eb785adea8f469597d8a6f9ea7a57299955f6f24a7864864d"
+    }
+  ],
+  "baseDatasetIdentity": "6091c1be0a482bda5bc51d51e64583bd4a87bd4befe71b1f220535d6d03216a3",
+  "contractHoldout": {
+    "recordCount": 8,
+    "split": "evaluation",
+    "usedForEarlyStopping": false,
+    "usedForOptimization": false
+  },
+  "datasetIdentity": "abce232c1721788bae5a1686f9d017f295a6892555193140ae74c5a044e0a409",
+  "preparationApprovalIdentity": "1740232600ee81580e993cf46d4efb5a62a6bd8b6f201327f25dbca70cec7a11",
+  "preparedManifestIdentity": "fbde87e52ecdfcab485db5f89c257614314111566e5bcaaf4f1a6af91d1516c0",
+  "promptProfileIdentity": "32b6fb0d9786cff93175a8f2e844f76989db12b5173e1d878a79365ac9bbea4d",
+  "qualityIdentity": "cf9cb97f7acfd0eac2250ae206d9408f8d9b5e9ab2f70412621f5eff9d896b2b",
+  "recordCounts": {
+    "evaluation": 8,
+    "train": 96,
+    "validation": 20
+  },
+  "replayGuardCounts": {
+    "evaluation": 0,
+    "train": 48,
+    "validation": 12
+  },
+  "schemaVersion": "10.0.0",
+  "status": "APPROVED_FOR_TRAINING_ONLY",
+  "targetedAdditionCounts": {
+    "evaluation": 8,
+    "train": 48,
+    "validation": 8
+  },
+  "targetedEvaluationCaseIds": [
+    "E-FUNC-RESEARCH-006"
+  ],
+  "trainingApprovalIdentity": "fc9fd2b0d53ae50ce7568abdb2894f7d70c81b6e7e46d7ea65c5e333c480c553",
+  "trainingApprovalReference": "evidence/p7-t1c-research-remediation-v10-training-governance-approval.json",
+  "trainingAuthorized": true,
+  "trainingContractIdentity": "3b924bb766dd6936c7e9aa5d0387c928856b9582e6283b06dbf5d36e2f3fa042",
+  "trainingContractReference": "datasets/p7-t4-research-remediation-source-v10/training-contract.json",
+  "warmStartParentAdapterIdentity": "ceab7b262b050cf9195001e4d7e5f40aa7ef67011e0e7271e62d250ffe96c717"
+}

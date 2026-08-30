@@ -1,0 +1,72 @@
+{
+  "approval": {
+    "approvedAt": "2026-08-30T03:46:15Z",
+    "approvedBy": "RESEARCH_GOVERNANCE_TRAINING_APPROVAL_AUTHORITY",
+    "decision": "APPROVED"
+  },
+  "approvalAuthority": "RESEARCH_GOVERNANCE_TRAINING_APPROVAL_AUTHORITY",
+  "artifactIdentity": "fc9fd2b0d53ae50ce7568abdb2894f7d70c81b6e7e46d7ea65c5e333c480c553",
+  "artifactType": "P7-T1C-RESEARCH-REMEDIATION-V10-TRAINING-GOVERNANCE-APPROVAL",
+  "authorization": {
+    "constrainedDecodingAllowed": false,
+    "evaluationAllowed": false,
+    "externalTrainingAllowed": true,
+    "productionPromptingAllowed": false,
+    "promotionAllowed": false,
+    "runtimeNormalizationAllowed": false,
+    "separateEvaluationApprovalRequired": true
+  },
+  "datasetIdentity": "abce232c1721788bae5a1686f9d017f295a6892555193140ae74c5a044e0a409",
+  "datasetManifestReference": "datasets/p7-research-synthetic-training-dataset-v10/manifest.json",
+  "preparationApprovalIdentity": "1740232600ee81580e993cf46d4efb5a62a6bd8b6f201327f25dbca70cec7a11",
+  "preparationApprovalReference": "evidence/p7-t4-research-remediation-v10-governance-approval.json",
+  "promptProfileIdentity": "32b6fb0d9786cff93175a8f2e844f76989db12b5173e1d878a79365ac9bbea4d",
+  "purpose": "TRAINING",
+  "qualityIdentity": "cf9cb97f7acfd0eac2250ae206d9408f8d9b5e9ab2f70412621f5eff9d896b2b",
+  "requestIdentity": "1cc572882386fc684e66df553dcd381303820852f8b5fc3af396e0f7171a0c91",
+  "requestReference": "config/p7-t4-research-remediation-governance-v10/training-approval-request.json",
+  "revocation": {
+    "authority": "RESEARCH_GOVERNANCE_TRAINING_APPROVAL_AUTHORITY",
+    "status": "ACTIVE"
+  },
+  "schemaVersion": "1.0.0",
+  "scope": {
+    "candidateDispositionAfterTraining": "CANDIDATE_ONLY",
+    "contractHoldoutUsedForEarlyStopping": false,
+    "contractHoldoutUsedForOptimization": false,
+    "earlyStoppingPatience": 1,
+    "externalSingleT4Training": true,
+    "freshAdapterInitializationRequired": false,
+    "freshBaseModelLoadRequired": true,
+    "learningRateMaximum": 2e-05,
+    "maximumRuns": 1,
+    "maximumSteps": 48,
+    "newCandidateIdentityRequired": true,
+    "newTrainingEvidenceRequired": true,
+    "parentAdapterIdentity": "ceab7b262b050cf9195001e4d7e5f40aa7ef67011e0e7271e62d250ffe96c717",
+    "parentCandidateId": "99596dcf3c00c6a25a4c38f01de7f12d917100e539cf4ea777556ef0c0a055c2",
+    "parentOutputArchiveSha256": "f6c3e5d4ca52643f8c26941a61407444f7004b5e1e22c08445307821dbee767f",
+    "parentTrainingRunIdentity": "9ee7cd3cb56cb5b18c096ce8764fe14a23d69bdd39ef027a8f1472710b152314",
+    "replayGuardCaseIds": [
+      "E-AUTH-011",
+      "E-AUTH-012",
+      "E-FUNC-RESEARCH-004",
+      "E-FUNC-RESEARCH-005",
+      "E-HUMAN-003",
+      "E-HUMAN-004",
+      "E-INJECT-001",
+      "E-INJECT-002",
+      "E-INJECT-003",
+      "E-ROUTE-002",
+      "E-STRUCT-003",
+      "E-STRUCT-004"
+    ],
+    "targetedEvaluationCaseIds": [
+      "E-FUNC-RESEARCH-006"
+    ],
+    "trainingMethod": "QLORA_ADAPTER_CONTINUATION"
+  },
+  "status": "APPROVED",
+  "trainingContractIdentity": "3b924bb766dd6936c7e9aa5d0387c928856b9582e6283b06dbf5d36e2f3fa042",
+  "trainingContractReference": "datasets/p7-t4-research-remediation-source-v10/training-contract.json"
+}
