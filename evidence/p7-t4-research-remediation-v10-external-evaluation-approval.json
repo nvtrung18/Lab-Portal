@@ -1,0 +1,53 @@
+{
+  "approval": {
+    "approvedAt": "2026-08-30",
+    "approvedBy": "RESEARCH_GOVERNANCE_EXTERNAL_EVALUATION_APPROVAL_AUTHORITY",
+    "decision": "APPROVED"
+  },
+  "approvalAuthority": "RESEARCH_GOVERNANCE_EXTERNAL_EVALUATION_APPROVAL_AUTHORITY",
+  "approvedCandidate": {
+    "adapterIdentity": "79d267453862e78659bf249cf571760030388725362f3c0ab9a5565324acf6e2",
+    "candidateId": "3cd324ad97530ce535073be761e1713cb627e15d55cb9395d55729cd93595de4",
+    "evidenceIdentity": "bfce986c0b3bf575d7a4a75ce3de8f0b873ef70df8a3918dfa9c67f1f144c992",
+    "parentAdapterIdentity": "ceab7b262b050cf9195001e4d7e5f40aa7ef67011e0e7271e62d250ffe96c717",
+    "trainingRunIdentity": "8af8cfc47469457e6f22c554ed28f297ef6d97c2b9bddeabbf62a1607ecd8616"
+  },
+  "approvedEvaluationContract": {
+    "evaluatorIdentity": "99230c674b9064f1e06247dedd014f6e3da0714ca679017c07b3d877f1e285d3",
+    "evaluatorVersion": "2.0.0",
+    "suiteIdentity": "65c87149ec97bf34a04257a80af0cba1114b48fe9702f6b3cacb253b573931a8",
+    "suiteVersion": "2.0.0"
+  },
+  "approvedPromptProfile": {
+    "evaluationUseAllowed": true,
+    "identity": "32b6fb0d9786cff93175a8f2e844f76989db12b5173e1d878a79365ac9bbea4d",
+    "productionActivationAllowed": false,
+    "reference": "config/p7-t4-research-remediation-governance-v6/research-prompt-profile-v3.approved.json",
+    "version": "3.0.0"
+  },
+  "artifactIdentity": "606bec5b03389f29e1fc26da7d0d93b42f6a8e04c05839539e5749ab3664e4b5",
+  "artifactType": "P7-T4-RESEARCH-REMEDIATION-V10-EXTERNAL-EVALUATION-APPROVAL",
+  "authorization": {
+    "constrainedDecodingAllowed": false,
+    "externalEvaluationExecutionAllowed": true,
+    "productionPromptingAllowed": false,
+    "promotionAllowed": false,
+    "promptProfileV3EvaluationUseAllowed": true,
+    "runtimeNormalizationAllowed": false
+  },
+  "executionBoundary": {
+    "gpuModel": "Tesla T4",
+    "modelVariants": ["SHARED_BASE", "RESEARCH_ADAPTER"],
+    "pythonVersion": "3.13.15",
+    "repetitions": ["R01", "R02", "R03"],
+    "requiredRunCount": 6
+  },
+  "requestIdentity": "268e3786bcc8a0d2d7f8e9c662d79d82ca9c4bd88fffa76dfc8d43ae48446ae1",
+  "requestReference": "config/p7-t4-research-remediation-governance-v10/external-evaluation-approval-request.json",
+  "revocation": {
+    "authority": "RESEARCH_GOVERNANCE_EXTERNAL_EVALUATION_APPROVAL_AUTHORITY",
+    "status": "ACTIVE"
+  },
+  "schemaVersion": "1.0.0",
+  "status": "APPROVED"
+}

@@ -44,6 +44,13 @@ V9_SPEC = importlib.util.spec_from_file_location(
 V9_MODULE = importlib.util.module_from_spec(V9_SPEC)
 assert V9_SPEC.loader is not None
 V9_SPEC.loader.exec_module(V9_MODULE)
+V10_SPEC = importlib.util.spec_from_file_location(
+    "p7t4_v10",
+    ROOT / "scripts" / "research-independent-evaluation-p7-t4-v10.py",
+)
+V10_MODULE = importlib.util.module_from_spec(V10_SPEC)
+assert V10_SPEC.loader is not None
+V10_SPEC.loader.exec_module(V10_MODULE)
 
 
 class P7T4ResearchIndependentEvaluationTests(unittest.TestCase):
@@ -487,6 +494,27 @@ class P7T4ResearchIndependentEvaluationTests(unittest.TestCase):
         self.assertTrue(
             execution_approval["authorization"]["externalEvaluationExecutionAllowed"]
         )
+        self.assertFalse(execution_approval["authorization"]["promotionAllowed"])
+
+    def test_v10_contract_loads_exact_candidate_evaluation_approval(self):
+        config = json.loads(
+            (ROOT / "config/p7-t4-research-independent-evaluation-remediation-v10.json").read_text(encoding="utf-8")
+        )
+        manifest = json.loads(
+            (ROOT / "evidence/p7-t2-real-training/remediation-v10/adapter-manifest.json").read_text(encoding="utf-8")
+        )
+        V10_MODULE.validate_evaluation_config(config, manifest)
+        _, _, execution_approval = V10_MODULE.load_v2_evaluation_contract(
+            ROOT,
+            config,
+            json.loads((ROOT / "evals/p6-t4-evaluation-suite.lock.json").read_text(encoding="utf-8")),
+            self.gap_suite,
+        )
+        self.assertEqual(
+            "3cd324ad97530ce535073be761e1713cb627e15d55cb9395d55729cd93595de4",
+            execution_approval["approvedCandidate"]["candidateId"],
+        )
+        self.assertTrue(execution_approval["authorization"]["externalEvaluationExecutionAllowed"])
         self.assertFalse(execution_approval["authorization"]["promotionAllowed"])
 
     def test_v2_evaluator_accepts_the_approved_report_review_draft(self):
