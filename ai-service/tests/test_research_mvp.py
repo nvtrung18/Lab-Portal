@@ -22,9 +22,11 @@ class StubGenerationBackend:
     def __init__(self, output: str) -> None:
         self.output = output
         self.calls = 0
+        self.messages = None
 
     def generate(self, assistant_key, messages, *, json_output):
         self.calls += 1
+        self.messages = messages
         assert assistant_key is AssistantKey.RESEARCH_ASSISTANT
         assert messages[0]["role"] == "system"
         assert "Spring-authorized" in messages[0]["content"]
@@ -94,6 +96,21 @@ def _request(tool_id: str, resource_type: str, resource_id: int, *, parent_id: i
             "resources": resources,
         },
     }
+
+
+def _report_request(report_id: int = 40):
+    request = _request("research.report.review.draft", "REPORT", report_id)
+    request["authorizedContext"]["context"]["report"] = {
+        "id": report_id,
+        "title": "Authorized report",
+        "contentDone": "Completed the bounded experiment.",
+        "result": "Observed a repeatable result.",
+        "difficulty": "The sample size is limited.",
+        "nextPlan": "Repeat with a larger bounded sample.",
+        "selfAssessment": "Needs additional evidence.",
+        "status": "SUBMITTED",
+    }
+    return request
 
 
 @pytest.mark.parametrize(
@@ -193,7 +210,30 @@ def test_missing_authorized_context_refuses_without_running_model() -> None:
     assert backend.calls == 0
 
 
-def test_report_review_refuses_while_report_content_is_source_limited() -> None:
+def test_report_review_returns_grounded_non_official_draft() -> None:
+    draft = {
+        "kind": "RESEARCH_REPORT_REVIEW_DRAFT",
+        "reportRef": 40,
+        "reviewSummary": "The result is described but needs stronger evidence.",
+        "issues": ["The sample size is limited."],
+        "suggestions": ["Add evidence from the bounded repeat."],
+        "advisoryOnly": True,
+        "requiresHumanReview": True,
+    }
+    backend = StubGenerationBackend(json.dumps(draft))
+
+    response = _client(backend).post(
+        "/v1/assistants/chat",
+        json=_report_request(),
+    )
+
+    assert response.status_code == 200
+    assert json.loads(response.json()["answer"]) == draft
+    assert response.json()["metadata"]["draftOnly"] is True
+    assert backend.calls == 1
+
+
+def test_report_review_without_authorized_report_content_refuses() -> None:
     backend = StubGenerationBackend("Must not fabricate a review")
 
     response = _client(backend).post(
@@ -204,6 +244,46 @@ def test_report_review_refuses_while_report_content_is_source_limited() -> None:
     assert response.status_code == 200
     assert response.json()["metadata"] == {"safeRefusal": True}
     assert backend.calls == 0
+
+
+def test_report_review_rejects_model_reference_outside_authorized_report() -> None:
+    draft = {
+        "kind": "RESEARCH_REPORT_REVIEW_DRAFT",
+        "reportRef": 41,
+        "reviewSummary": "Must not bind to a different report.",
+        "issues": [],
+        "suggestions": [],
+        "advisoryOnly": True,
+        "requiresHumanReview": True,
+    }
+    backend = StubGenerationBackend(json.dumps(draft))
+
+    response = _client(backend).post("/v1/assistants/chat", json=_report_request(40))
+
+    assert response.status_code == 200
+    assert response.json()["metadata"] == {"safeRefusal": True}
+
+
+def test_summary_uses_only_spring_derived_blocked_and_overdue_signals() -> None:
+    backend = StubGenerationBackend("One authorized task is blocked and overdue.")
+    request = _request("research.project.summary", "PROJECT", 20)
+    request["authorizedContext"]["context"]["tasks"] = {
+        "items": [{
+            "id": 31,
+            "status": "BLOCKED",
+            "blockedReason": "Waiting for an authorized sample.",
+            "overdue": True,
+        }],
+        "truncated": False,
+    }
+
+    response = _client(backend).post("/v1/assistants/chat", json=request)
+
+    assert response.status_code == 200
+    assert backend.messages is not None
+    assert "never infer or recalculate" in backend.messages[0]["content"]
+    assert '"overdue":true' in backend.messages[1]["content"]
+    assert '"blockedReason":"Waiting for an authorized sample."' in backend.messages[1]["content"]
 
 
 def test_phase_10b_lab_runtime_rejects_research_authorized_context() -> None:

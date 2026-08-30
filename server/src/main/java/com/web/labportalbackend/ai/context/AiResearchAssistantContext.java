@@ -8,6 +8,7 @@ public record AiResearchAssistantContext(
         AiBoundedList<AiResearchContext.Group> groups,
         AiBoundedList<AiResearchContext.Milestone> milestones,
         AiBoundedList<AiResearchContext.Task> tasks,
+        AiResearchReportContext report,
         Long selectedResourceId,
         boolean draftOnly) implements AiDomainContext {
 }

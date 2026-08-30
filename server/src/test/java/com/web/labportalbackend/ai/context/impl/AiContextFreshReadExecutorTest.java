@@ -272,6 +272,6 @@ class AiContextFreshReadExecutorTest {
                 com.web.labportalbackend.ai.context.AiBoundedList.fromOverfetch(List.of(), 20),
                 com.web.labportalbackend.ai.context.AiBoundedList.fromOverfetch(List.of(), 20),
                 com.web.labportalbackend.ai.context.AiBoundedList.fromOverfetch(List.of(), 25),
-                30L, false);
+                null, 30L, false);
     }
 }

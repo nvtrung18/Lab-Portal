@@ -1,5 +1,6 @@
 package com.web.labportalbackend.research.repository;
 
+import com.web.labportalbackend.ai.context.AiResearchReportContext;
 import com.web.labportalbackend.research.entity.ReportEntity;
 import com.web.labportalbackend.research.enums.ReportStatus;
 import jakarta.persistence.LockModeType;
@@ -230,4 +231,36 @@ public interface ReportRepository extends JpaRepository<ReportEntity, Long> {
             """)
     boolean existsAiContextReport(@Param("actorId") Long actorId, @Param("projectId") Long projectId,
                                   @Param("reportId") Long reportId, @Param("selectedRoleName") String selectedRoleName);
+
+    @Query("""
+            SELECT new com.web.labportalbackend.ai.context.AiResearchReportContext(
+                r.id, r.projectId, r.groupId, r.milestoneId, r.taskId, r.version, r.title,
+                r.contentDone, r.result, r.difficulty, r.nextPlan, r.selfAssessment, r.evidenceLink, r.status)
+            FROM ReportEntity r JOIN ProjectEntity p ON p.id = r.projectId
+            JOIN p.lab l JOIN GroupEntity g ON g.id = r.groupId JOIN MilestoneEntity m ON m.id = r.milestoneId
+            LEFT JOIN TaskEntity t ON t.id = r.taskId
+            WHERE r.id = :reportId AND r.projectId = :projectId AND r.active = true AND r.deleted = false
+              AND p.active = true AND p.deleted = false AND l.active = true AND l.deleted = false
+              AND g.active = true AND g.deleted = false AND g.lab.id = l.id
+              AND (g.project.id = p.id OR p.group.id = g.id)
+              AND (g.project IS NULL OR g.project.id = p.id)
+              AND (p.group IS NULL OR p.group.id = g.id)
+              AND m.active = true AND m.deleted = false AND m.project.id = p.id AND m.group.id = g.id
+              AND (t IS NULL OR (t.active = true AND t.deleted = false AND t.projectId = p.id
+                                AND t.groupId = g.id AND t.milestoneId = m.id))
+              AND EXISTS (SELECT role.id FROM User roleActor JOIN roleActor.roles role
+                          WHERE roleActor.id = :actorId AND role.name = :selectedRoleName)
+              AND ((:selectedRoleName = 'LAB_MANAGER' AND l.manager.id = :actorId)
+                   OR (:selectedRoleName = 'STUDENT' AND EXISTS (SELECT gm.id FROM GroupMemberEntity gm
+                                                      WHERE gm.group.id = g.id AND gm.user.id = :actorId
+                                                        AND gm.active = true AND gm.deleted = false
+                                                        AND gm.role = com.web.labportalbackend.research.enums.GroupRole.LEADER
+                                                        AND r.submittedById <> :actorId)))
+              AND EXISTS (SELECT actor.id FROM User actor WHERE actor.id = :actorId AND actor.active = true
+                          AND actor.deleted = false AND actor.status = com.web.labportalbackend.common.enums.UserStatus.ACTIVE)
+            """)
+    Optional<AiResearchReportContext> findAiContextReport(@Param("actorId") Long actorId,
+                                                          @Param("projectId") Long projectId,
+                                                          @Param("reportId") Long reportId,
+                                                          @Param("selectedRoleName") String selectedRoleName);
 }

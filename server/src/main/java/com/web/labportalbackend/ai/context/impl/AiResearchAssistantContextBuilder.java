@@ -6,6 +6,7 @@ import com.web.labportalbackend.ai.context.AiDomainContext;
 import com.web.labportalbackend.ai.context.AiDomainContextBuilder;
 import com.web.labportalbackend.ai.context.AiLabContext;
 import com.web.labportalbackend.ai.context.AiResearchAssistantContext;
+import com.web.labportalbackend.ai.context.AiResearchReportContext;
 import com.web.labportalbackend.ai.context.TrustedContextInput;
 import com.web.labportalbackend.ai.enums.AiAssistantDomain;
 import com.web.labportalbackend.ai.enums.AiCapability;
@@ -62,7 +63,7 @@ public class AiResearchAssistantContextBuilder implements AiDomainContextBuilder
         Long actorId = input.actorId();
         String selectedRoleName = input.decision().selectedSystemRole().name();
         Long projectId = resource.projectId();
-        requireSelectedCurrent(input, projectId, selectedRoleName);
+        AiResearchReportContext report = requireSelectedCurrent(input, projectId, selectedRoleName);
         AiResearchContext.Project project = projectRepository.findAiContextProject(actorId, resource.labId(), projectId, selectedRoleName)
                 .orElseThrow(AiContextReadDeniedException::new);
         AiLabContext.Laboratory lab = laboratoryRepository.findAiContextLaboratory(actorId, resource.labId(), selectedRoleName)
@@ -87,21 +88,28 @@ public class AiResearchAssistantContextBuilder implements AiDomainContextBuilder
                 boundedGroups.values(), boundedMilestones.values(), boundedTasks.values());
         return new AiResearchAssistantContext(research,
                 boundedGroups, boundedMilestones, boundedTasks,
+                report,
                 resource.id(), input.decision().capability().action().name().equals("DRAFT"));
     }
 
-    private void requireSelectedCurrent(TrustedContextInput input, Long projectId, String selectedRoleName) {
+    private AiResearchReportContext requireSelectedCurrent(TrustedContextInput input, Long projectId,
+                                                            String selectedRoleName) {
         var resource = input.decision().resolvedResource();
         Long id = resource.id();
+        if (resource.type() == AiResourceType.REPORT) {
+            if (id == null) {
+                throw new AiContextReadDeniedException();
+            }
+            return reportRepository.findAiContextReport(input.actorId(), projectId, id, selectedRoleName)
+                    .orElseThrow(AiContextReadDeniedException::new);
+        }
         boolean allowed = switch (resource.type()) {
             case PROJECT -> true;
             case GROUP -> id != null && groupRepository.findAiContextGroup(input.actorId(), projectId, id, selectedRoleName).isPresent();
             case TASK -> id != null && taskRepository.existsAiContextTask(input.actorId(), projectId, id, selectedRoleName);
-            case REPORT -> id != null && reportRepository.existsAiContextReport(input.actorId(), projectId, id, selectedRoleName);
             default -> false;
         };
-        if (!allowed) {
-            throw new AiContextReadDeniedException();
-        }
+        if (!allowed) throw new AiContextReadDeniedException();
+        return null;
     }
 }

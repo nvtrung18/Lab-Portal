@@ -14,6 +14,7 @@ import com.web.labportalbackend.ai.service.AiCapabilityDecision;
 import com.web.labportalbackend.ai.service.AiResearchContext;
 import com.web.labportalbackend.lab.repository.LaboratoryRepository;
 import com.web.labportalbackend.research.enums.ProjectStatus;
+import com.web.labportalbackend.research.enums.ReportStatus;
 import com.web.labportalbackend.research.repository.*;
 import java.time.Instant;
 import java.util.List;
@@ -133,6 +134,38 @@ class AiResearchAssistantContextBuilderTest {
         verifyNoInteractions(groups, milestones, tasks, reports, labs);
     }
 
+    @Test
+    void reportReviewProjectsOnlyTheFreshlyAuthorizedReportContent() {
+        ProjectRepository projects = mock(ProjectRepository.class); GroupRepository groups = mock(GroupRepository.class);
+        MilestoneRepository milestones = mock(MilestoneRepository.class); TaskRepository tasks = mock(TaskRepository.class);
+        ReportRepository reports = mock(ReportRepository.class); LaboratoryRepository labs = mock(LaboratoryRepository.class);
+        AiResearchReportContext report = new AiResearchReportContext(
+                40L, 20L, 30L, 35L, 31L, 2, "Authorized report", "Completed work",
+                "Bounded result", "Limited sample", "Repeat experiment", "Needs evidence",
+                "https://evidence.example/report-40", ReportStatus.SUBMITTED);
+        when(reports.findAiContextReport(7L, 20L, 40L, STUDENT_ROLE)).thenReturn(Optional.of(report));
+        when(projects.findAiContextProject(7L, 10L, 20L, STUDENT_ROLE)).thenReturn(Optional.of(
+                new AiResearchContext.Project(20L, "P", "Project", ProjectStatus.ONGOING, null, null)));
+        when(labs.findAiContextLaboratory(7L, 10L, STUDENT_ROLE)).thenReturn(Optional.of(
+                new AiLabContext.Laboratory(10L, "Lab", null)));
+        when(groups.findAiContextGroups(org.mockito.ArgumentMatchers.eq(7L), org.mockito.ArgumentMatchers.eq(20L),
+                org.mockito.ArgumentMatchers.eq(30L), any(), org.mockito.ArgumentMatchers.eq(STUDENT_ROLE))).thenReturn(List.of());
+        when(milestones.findAiContextMilestones(org.mockito.ArgumentMatchers.eq(7L), org.mockito.ArgumentMatchers.eq(20L),
+                org.mockito.ArgumentMatchers.eq(30L), org.mockito.ArgumentMatchers.isNull(),
+                org.mockito.ArgumentMatchers.eq(40L), any(), org.mockito.ArgumentMatchers.eq(STUDENT_ROLE))).thenReturn(List.of());
+        when(tasks.findAiContextTasks(org.mockito.ArgumentMatchers.eq(7L), org.mockito.ArgumentMatchers.eq(20L),
+                org.mockito.ArgumentMatchers.eq(30L), org.mockito.ArgumentMatchers.isNull(),
+                org.mockito.ArgumentMatchers.eq(40L), any(), org.mockito.ArgumentMatchers.eq(STUDENT_ROLE))).thenReturn(List.of());
+        AiResearchAssistantContextBuilder builder = new AiResearchAssistantContextBuilder(
+                projects, groups, milestones, tasks, reports, labs);
+
+        AiResearchAssistantContext context = (AiResearchAssistantContext) builder.build(reportInput());
+
+        assertEquals(report, context.report());
+        assertEquals(40L, context.selectedResourceId());
+        assertEquals(true, context.draftOnly());
+    }
+
     private static TrustedContextInput input() {
         AiCapabilityDecision d = new AiCapabilityDecision(true, 7L, com.web.labportalbackend.ai.enums.AiAssistantSystemRole.STUDENT, AiAssistantKey.RESEARCH_ASSISTANT,
                 AiAssistantDomain.RESEARCH, AiCapability.RESEARCH_PROJECT_SUMMARY,
@@ -160,6 +193,17 @@ class AiResearchAssistantContextBuilderTest {
                         null, AiResourceScope.MANAGED_LAB),
                 AiCapabilityDecisionReason.ALLOWED_BY_EFFECTIVE_PERMISSION, null,
                 AiActionRiskBoundary.READ_ONLY, Set.of(), null);
+        return new TrustedContextInput(decision, 7L, null, Instant.now());
+    }
+
+    private static TrustedContextInput reportInput() {
+        AiCapabilityDecision decision = new AiCapabilityDecision(true, 7L, AiAssistantSystemRole.STUDENT,
+                AiAssistantKey.RESEARCH_ASSISTANT, AiAssistantDomain.RESEARCH,
+                AiCapability.RESEARCH_REPORT_REVIEW_DRAFT,
+                new AiCapabilityDecision.ResolvedResource(AiResourceType.REPORT, 40L, 10L, 20L, 30L,
+                        31L, AiResourceScope.GROUP_LEADER),
+                AiCapabilityDecisionReason.ALLOWED_BY_EFFECTIVE_PERMISSION, null,
+                AiActionRiskBoundary.DRAFT_ONLY, Set.of(), null);
         return new TrustedContextInput(decision, 7L, null, Instant.now());
     }
 }

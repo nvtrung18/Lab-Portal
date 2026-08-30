@@ -624,6 +624,9 @@ class StructuredOutputValidator:
             "RESEARCH_TASK_SUGGESTION_DRAFT": [
                 {"resourceType": "TASK", "resourceId": candidate.get("taskRef")},
             ],
+            "RESEARCH_REPORT_REVIEW_DRAFT": [
+                {"resourceType": "REPORT", "resourceId": candidate.get("reportRef")},
+            ],
         }
         references = draft_references.get(kind) if isinstance(kind, str) else None
         return _reference_set(references) if references is not None else None
