@@ -58,14 +58,12 @@ def test_required_routes_are_registered() -> None:
         "/v1/assistants/suggestions",
     }.issubset(schema["paths"])
     assert "/v1/research/suggestions" not in schema["paths"]
-    for path in (
-        "/v1/assistants/chat",
-        "/v1/assistants/tool-request",
-        "/v1/assistants/suggestions",
-    ):
+    for path in ("/v1/assistants/tool-request", "/v1/assistants/suggestions"):
         responses = schema["paths"][path]["post"]["responses"]
         assert "503" in responses
         assert "200" not in responses
+    chat_responses = schema["paths"]["/v1/assistants/chat"]["post"]["responses"]
+    assert {"200", "503"}.issubset(chat_responses)
 
 
 def test_health_is_up_independently_of_model_readiness() -> None:

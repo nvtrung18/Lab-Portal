@@ -41,6 +41,14 @@ class AssistantRequest(ContractModel):
     authorized_context: dict[str, JsonValue] = Field(default_factory=dict)
 
 
+class ChatResponse(ContractModel):
+    assistant_key: AssistantKey
+    answer: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=32_768)]
+    prompt_tokens: int = Field(ge=0)
+    completion_tokens: int = Field(ge=0)
+    metadata: dict[str, JsonValue]
+
+
 class HealthResponse(ContractModel):
     status: Literal["UP"] = "UP"
     service: str

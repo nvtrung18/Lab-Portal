@@ -135,8 +135,18 @@
             "additionalProperties": false,
             "properties": {
               "kind": {"const": "RESEARCH_TASK_PROPOSAL_DRAFT"},
-              "projectRef": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"},
-              "groupRef": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"},
+              "projectRef": {
+                "oneOf": [
+                  {"type": "integer", "minimum": 1},
+                  {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"}
+                ]
+              },
+              "groupRef": {
+                "oneOf": [
+                  {"type": "integer", "minimum": 1},
+                  {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"}
+                ]
+              },
               "taskTitle": {"type": "string", "minLength": 1, "maxLength": 200},
               "requiresHumanReview": {"const": true}
             }
@@ -147,7 +157,12 @@
             "additionalProperties": false,
             "properties": {
               "kind": {"const": "RESEARCH_TASK_SUGGESTION_DRAFT"},
-              "taskRef": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"},
+              "taskRef": {
+                "oneOf": [
+                  {"type": "integer", "minimum": 1},
+                  {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"}
+                ]
+              },
               "suggestion": {"type": "string", "minLength": 1, "maxLength": 4000},
               "requiresHumanReview": {"const": true}
             }

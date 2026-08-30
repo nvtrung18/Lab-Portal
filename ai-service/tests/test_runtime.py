@@ -114,3 +114,56 @@ def test_transformers_backend_rejects_cpu_or_disk_offload(monkeypatch, tmp_path:
         assert "offload" in str(error).lower()
     else:
         raise AssertionError("CPU offload must fail closed")
+
+
+def test_transformers_backend_generates_with_selected_research_adapter() -> None:
+    calls: dict[str, object] = {}
+
+    class Encoded(dict):
+        def to(self, device):
+            calls["device"] = device
+            return self
+
+    class Tokenizer:
+        def apply_chat_template(self, messages, **kwargs):
+            calls["messages"] = messages
+            calls["templateOptions"] = kwargs
+            return Encoded(input_ids=[[1, 2, 3]])
+
+        def decode(self, tokens, **kwargs):
+            calls["decode"] = (tokens, kwargs)
+            return " Grounded answer "
+
+    class Model:
+        def set_adapter(self, adapter_name):
+            calls["adapter"] = adapter_name
+
+        def generate(self, **kwargs):
+            calls["generationOptions"] = kwargs
+            return [[1, 2, 3, 4, 5]]
+
+    backend = TransformersRuntimeBackend(device="cuda:0")
+    backend.tokenizer = Tokenizer()
+    backend.model = Model()
+
+    result = backend.generate(
+        AssistantKey.RESEARCH_ASSISTANT,
+        (
+            {"role": "system", "content": "Use bounded context."},
+            {"role": "user", "content": "Summarize it."},
+        ),
+        json_output=False,
+    )
+
+    assert result.text == "Grounded answer"
+    assert result.prompt_tokens == 3
+    assert result.completion_tokens == 2
+    assert calls["adapter"] == "RESEARCH_ASSISTANT"
+    assert calls["device"] == "cuda:0"
+    assert calls["templateOptions"] == {
+        "add_generation_prompt": True,
+        "return_tensors": "pt",
+        "return_dict": True,
+    }
+    assert calls["generationOptions"]["do_sample"] is False
+    assert calls["generationOptions"]["max_new_tokens"] == 512

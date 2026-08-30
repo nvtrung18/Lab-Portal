@@ -14,6 +14,7 @@ from app.main import create_app
 from app.models import AssistantKey, AssistantRequest
 from app.output_validation import OutputSchemaRegistry, StructuredOutputValidator
 from app.profiles import ProfileLoader
+from app.runtime import RuntimeGeneration
 
 
 CONTRACT_PATH = Path(__file__).resolve().parents[2] / "contracts" / "ai-runtime-contract.json"
@@ -37,7 +38,13 @@ def _client(*, timeout: float = 5.0, authenticated: bool = True) -> TestClient:
 
 
 def _artifact_ready_client() -> TestClient:
-    app = create_app(_settings())
+    class GenerationBackend:
+        def generate(self, assistant_key, messages, *, json_output):
+            assert assistant_key is AssistantKey.RESEARCH_ASSISTANT
+            assert json_output is False
+            return RuntimeGeneration("Authorized group summary.", 23, 11)
+
+    app = create_app(_settings(), runtime_backend=GenerationBackend())
     delegate = app.state.artifact_loader
 
     class ArtifactReadyLoader:
@@ -99,7 +106,7 @@ def test_shared_manifest_matches_python_assistant_and_tool_catalogs() -> None:
     profiles = ProfileLoader.from_file(settings.profile_config_path)
     registry = OutputSchemaRegistry.from_file(settings.output_schema_config_path, profiles)
 
-    assert CONTRACT["schemaVersion"] == "1.1.0"
+    assert CONTRACT["schemaVersion"] == "1.2.0"
     assert set(CONTRACT["assistantKeys"]) == {key.value for key in AssistantKey}
     assert set(CONTRACT["assistantKeys"]) == {key.value for key in profiles.profiles}
     assert set(CONTRACT["toolIds"]) == set(registry.tools)
@@ -248,14 +255,15 @@ def test_artifact_ready_responses_match_the_shared_spring_contract() -> None:
         assert expected[route_name]["expectedFields"].items() <= response.json().items()
 
 
-def test_loaded_model_with_unimplemented_chat_returns_service_not_ready() -> None:
+def test_loaded_research_model_returns_the_shared_mvp_chat_response() -> None:
     response = _artifact_ready_client().post(
         CONTRACT["routes"]["chat"]["path"],
-        json=CONTRACT["assistantRequest"]["example"] | {"assistantKey": "RESEARCH_ASSISTANT"},
+        json=CONTRACT["researchMvpRequest"],
         headers={CONTRACT["headers"]["requestId"]: REQUEST_ID},
     )
 
-    _assert_error(response, CONTRACT["artifactReadyPostErrors"]["chat"])
+    assert response.status_code == CONTRACT["artifactReadyPostResponses"]["chat"]["statusCode"]
+    assert response.json() == CONTRACT["chatResponse"]["example"]
 
 
 def test_all_current_error_statuses_use_the_shared_safe_envelope() -> None:

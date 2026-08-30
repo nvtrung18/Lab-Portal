@@ -8,6 +8,7 @@ from app.artifacts import ArtifactLoader, RuntimeArtifactBackend
 from app.config import Settings
 from app.output_validation import OutputSchemaRegistry, StructuredOutputValidator
 from app.profiles import ProfileLoader
+from app.research_mvp import ResearchAssistantMvp
 from app.routes.foundation import router
 from app.security import InternalSecurityMiddleware, safe_error_response
 
@@ -60,6 +61,11 @@ def create_app(
     application.state.artifact_loader = artifact_loader
     application.state.output_schema_registry = output_schema_registry
     application.state.output_validator = output_validator
+    application.state.research_mvp = (
+        ResearchAssistantMvp(profile_loader, output_validator, runtime_backend)
+        if runtime_backend is not None
+        else None
+    )
     application.include_router(router)
     application.add_middleware(InternalSecurityMiddleware, settings=resolved_settings)
     application.add_exception_handler(RequestValidationError, validation_error_handler)
