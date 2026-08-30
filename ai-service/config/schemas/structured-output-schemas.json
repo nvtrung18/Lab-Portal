@@ -113,8 +113,18 @@
         "additionalProperties": false,
         "properties": {
           "kind": {"const": "LAB_BOOKING_DRAFT"},
-          "labRef": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"},
-          "slotRef": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"},
+          "labRef": {
+            "oneOf": [
+              {"type": "integer", "minimum": 1},
+              {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"}
+            ]
+          },
+          "slotRef": {
+            "oneOf": [
+              {"type": "integer", "minimum": 1},
+              {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"}
+            ]
+          },
           "requestedPurpose": {"type": "string", "minLength": 1, "maxLength": 2000},
           "requiresHumanReview": {"const": true}
         }

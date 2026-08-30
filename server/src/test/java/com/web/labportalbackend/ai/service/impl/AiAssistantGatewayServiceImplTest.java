@@ -345,7 +345,7 @@ class AiAssistantGatewayServiceImplTest {
                 ? new AiLabContext(new AiLabContext.Laboratory(10L, "Authorized Lab", null),
                         new AiLabContext.Slot(request.resource().id(), Instant.parse("2026-01-01T00:00:00Z"),
                                 Instant.parse("2026-01-01T01:00:00Z"), null),
-                        null, null, capability.riskBoundary() == AiActionRiskBoundary.DRAFT_ONLY,
+                        null, null, null, capability.riskBoundary() == AiActionRiskBoundary.DRAFT_ONLY,
                         "AUTHORIZED_ONLY")
                 : researchContext(request.resource().id());
         return new AiAuthorizedContext("request-123", request.assistantKey(), capability.domain(), capability,

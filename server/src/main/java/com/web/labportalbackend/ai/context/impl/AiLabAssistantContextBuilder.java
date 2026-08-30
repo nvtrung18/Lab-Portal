@@ -48,6 +48,7 @@ public class AiLabAssistantContextBuilder implements AiDomainContextBuilder {
         AiLabContext.Slot slot = null;
         AiLabContext.OwnBooking booking = null;
         AiLabContext.ManagedSummary managedSummary = null;
+        AiLabContext.CheckinPolicySnapshot checkinPolicySnapshot = null;
         if (Set.of(AiCapability.LAB_SLOT_READ, AiCapability.LAB_BOOKING_DRAFT).contains(capability)) {
             boolean draft = capability == AiCapability.LAB_BOOKING_DRAFT;
             slot = timeSlotRepository.findAiContextSlot(input.actorId(), labId,
@@ -65,6 +66,7 @@ public class AiLabAssistantContextBuilder implements AiDomainContextBuilder {
             booking = bookingRepository.findAiContextCheckinBooking(input.actorId(), labId,
                     input.decision().resolvedResource().id(), input.builtAt(), snapshot.endInclusive(), selectedRoleName)
                     .orElseThrow(AiContextReadDeniedException::new);
+            checkinPolicySnapshot = new AiLabContext.CheckinPolicySnapshot(snapshot.endInclusive());
         } else if (capability == AiCapability.LAB_MANAGED_SUMMARY) {
             if (!managedScope) {
                 throw new AiContextReadDeniedException();
@@ -73,7 +75,7 @@ public class AiLabAssistantContextBuilder implements AiDomainContextBuilder {
                     timeSlotRepository.countAiContextManagedSlots(input.actorId(), labId, selectedRoleName),
                     bookingRepository.countAiContextManagedBookings(input.actorId(), labId, selectedRoleName));
         }
-        return new AiLabContext(lab, slot, booking, managedSummary,
+        return new AiLabContext(lab, slot, booking, managedSummary, checkinPolicySnapshot,
                 capability.action().name().equals("DRAFT"), policyOrDraftEligibilityLabel(capability));
     }
 

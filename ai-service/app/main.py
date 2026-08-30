@@ -6,6 +6,7 @@ from fastapi.responses import JSONResponse
 
 from app.artifacts import ArtifactLoader, RuntimeArtifactBackend
 from app.config import Settings
+from app.lab_mvp import LabAssistantMvp
 from app.output_validation import OutputSchemaRegistry, StructuredOutputValidator
 from app.profiles import ProfileLoader
 from app.research_mvp import ResearchAssistantMvp
@@ -61,6 +62,11 @@ def create_app(
     application.state.artifact_loader = artifact_loader
     application.state.output_schema_registry = output_schema_registry
     application.state.output_validator = output_validator
+    application.state.lab_mvp = (
+        LabAssistantMvp(profile_loader, output_validator, runtime_backend)
+        if runtime_backend is not None
+        else None
+    )
     application.state.research_mvp = (
         ResearchAssistantMvp(profile_loader, output_validator, runtime_backend)
         if runtime_backend is not None

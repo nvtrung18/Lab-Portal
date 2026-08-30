@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from types import ModuleType, SimpleNamespace
+from contextlib import contextmanager
 import sys
 
 from app.models import AssistantKey
@@ -167,3 +168,42 @@ def test_transformers_backend_generates_with_selected_research_adapter() -> None
     }
     assert calls["generationOptions"]["do_sample"] is False
     assert calls["generationOptions"]["max_new_tokens"] == 512
+
+
+def test_transformers_backend_disables_loaded_adapter_for_lab_shared_base() -> None:
+    calls: list[str] = []
+
+    class Encoded(dict):
+        def to(self, _device):
+            return self
+
+    class Tokenizer:
+        def apply_chat_template(self, _messages, **_kwargs):
+            return Encoded(input_ids=[[1, 2]])
+
+        def decode(self, _tokens, **_kwargs):
+            return "Lab answer"
+
+    class Model:
+        @contextmanager
+        def disable_adapter(self):
+            calls.append("disabled")
+            yield
+            calls.append("restored")
+
+        def generate(self, **_kwargs):
+            calls.append("generated")
+            return [[1, 2, 3]]
+
+    backend = TransformersRuntimeBackend(device="cuda:0")
+    backend.tokenizer = Tokenizer()
+    backend.model = Model()
+
+    result = backend.generate(
+        AssistantKey.LAB_ASSISTANT,
+        ({"role": "user", "content": "Show the authorized slot."},),
+        json_output=False,
+    )
+
+    assert result.text == "Lab answer"
+    assert calls == ["disabled", "generated", "restored"]
