@@ -206,12 +206,12 @@ def test_report_review_refuses_while_report_content_is_source_limited() -> None:
     assert backend.calls == 0
 
 
-def test_phase_10a_does_not_activate_lab_assistant_generation() -> None:
+def test_phase_10b_lab_runtime_rejects_research_authorized_context() -> None:
     backend = StubGenerationBackend("Must not activate Lab yet")
     request = _request("research.group.summary", "GROUP", 30) | {"assistantKey": "LAB_ASSISTANT"}
 
     response = _client(backend).post("/v1/assistants/chat", json=request)
 
-    assert response.status_code == 503
-    assert response.json()["errorCode"] == "AI_SERVICE_NOT_READY"
+    assert response.status_code == 200
+    assert response.json()["metadata"] == {"safeRefusal": True}
     assert backend.calls == 0

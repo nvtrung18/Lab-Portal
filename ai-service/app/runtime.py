@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from contextlib import nullcontext
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Mapping, Sequence
@@ -87,6 +88,12 @@ class TransformersRuntimeBackend:
                 raise RuntimeError("Approved Research adapter is not loaded.")
             set_adapter(assistant_key.value)
 
+        adapter_context = nullcontext()
+        if assistant_key is AssistantKey.LAB_ASSISTANT:
+            disable_adapter = getattr(self.model, "disable_adapter", None)
+            if callable(disable_adapter):
+                adapter_context = disable_adapter()
+
         encoded = self.tokenizer.apply_chat_template(
             list(messages),
             add_generation_prompt=True,
@@ -95,11 +102,12 @@ class TransformersRuntimeBackend:
         ).to(self.device)
         input_ids = encoded["input_ids"]
         prompt_tokens = input_ids.shape[-1] if hasattr(input_ids, "shape") else len(input_ids[0])
-        generated = self.model.generate(
-            **encoded,
-            max_new_tokens=512,
-            do_sample=False,
-        )
+        with adapter_context:
+            generated = self.model.generate(
+                **encoded,
+                max_new_tokens=512,
+                do_sample=False,
+            )
         completion_ids = generated[0][prompt_tokens:]
         text = self.tokenizer.decode(completion_ids, skip_special_tokens=True).strip()
         if not text:
