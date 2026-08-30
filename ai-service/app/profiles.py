@@ -9,6 +9,7 @@ from typing import Annotated, Literal, Mapping
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints, ValidationError, field_validator
 
 from app.models.contracts import AssistantKey, to_camel
+from app.rag_namespaces import namespace_for
 
 
 SemanticVersion = Annotated[
@@ -204,6 +205,10 @@ class ProfileLoader:
             allowed_schemas = TOOL_SCHEMAS_BY_ASSISTANT[definition.assistant_key]
             if not set(definition.allowed_tool_schemas).issubset(allowed_schemas):
                 raise ProfileConfigurationError("PROFILE_TOOL_SCHEMA_INVALID", definition.assistant_key)
+            if definition.retrieval_namespace != namespace_for(definition.assistant_key).value:
+                raise ProfileConfigurationError(
+                    "PROFILE_RETRIEVAL_NAMESPACE_MISMATCH", definition.assistant_key
+                )
             profile = AssistantProfile.model_validate(
                 {
                     **definition.model_dump(by_alias=True, mode="json"),

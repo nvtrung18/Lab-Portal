@@ -136,6 +136,16 @@ def test_invalid_retrieval_namespace_fails_without_exposing_value(tmp_path: Path
     assert machine_path not in str(error.value)
 
 
+def test_cross_domain_retrieval_namespace_is_rejected(tmp_path: Path) -> None:
+    config = _config()
+    config["profiles"]["LAB_ASSISTANT"]["retrievalNamespace"] = "research-knowledge"
+
+    with pytest.raises(ProfileConfigurationError) as error:
+        _load_from(tmp_path, config)
+
+    assert error.value.code == "PROFILE_RETRIEVAL_NAMESPACE_MISMATCH"
+
+
 def test_invalid_or_duplicate_tool_allowlist_fails_closed(tmp_path: Path) -> None:
     invalid = _config()
     invalid["profiles"]["LAB_ASSISTANT"]["allowedToolSchemas"].append("admin.system.summary")
