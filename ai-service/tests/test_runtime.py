@@ -170,7 +170,7 @@ def test_transformers_backend_generates_with_selected_research_adapter() -> None
     assert calls["generationOptions"]["max_new_tokens"] == 512
 
 
-def test_transformers_backend_disables_loaded_adapter_for_lab_shared_base() -> None:
+def test_transformers_backend_disables_loaded_adapter_for_shared_base_assistants() -> None:
     calls: list[str] = []
 
     class Encoded(dict):
@@ -199,11 +199,16 @@ def test_transformers_backend_disables_loaded_adapter_for_lab_shared_base() -> N
     backend.tokenizer = Tokenizer()
     backend.model = Model()
 
-    result = backend.generate(
-        AssistantKey.LAB_ASSISTANT,
-        ({"role": "user", "content": "Show the authorized slot."},),
-        json_output=False,
-    )
+    for assistant_key in (AssistantKey.LAB_ASSISTANT, AssistantKey.ADMIN_ASSISTANT):
+        result = backend.generate(
+            assistant_key,
+            ({"role": "user", "content": "Show the authorized context."},),
+            json_output=False,
+        )
 
-    assert result.text == "Lab answer"
-    assert calls == ["disabled", "generated", "restored"]
+        assert result.text == "Lab answer"
+
+    assert calls == [
+        "disabled", "generated", "restored",
+        "disabled", "generated", "restored",
+    ]

@@ -4,6 +4,7 @@ from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
+from app.admin_mvp import AdminAssistantMvp
 from app.artifacts import ArtifactLoader, RuntimeArtifactBackend
 from app.config import Settings
 from app.lab_mvp import LabAssistantMvp
@@ -62,6 +63,11 @@ def create_app(
     application.state.artifact_loader = artifact_loader
     application.state.output_schema_registry = output_schema_registry
     application.state.output_validator = output_validator
+    application.state.admin_mvp = (
+        AdminAssistantMvp(profile_loader, output_validator, runtime_backend)
+        if runtime_backend is not None
+        else None
+    )
     application.state.lab_mvp = (
         LabAssistantMvp(profile_loader, output_validator, runtime_backend)
         if runtime_backend is not None

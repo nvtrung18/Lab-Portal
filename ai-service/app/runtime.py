@@ -89,7 +89,7 @@ class TransformersRuntimeBackend:
             set_adapter(assistant_key.value)
 
         adapter_context = nullcontext()
-        if assistant_key is AssistantKey.LAB_ASSISTANT:
+        if assistant_key in {AssistantKey.ADMIN_ASSISTANT, AssistantKey.LAB_ASSISTANT}:
             disable_adapter = getattr(self.model, "disable_adapter", None)
             if callable(disable_adapter):
                 adapter_context = disable_adapter()
