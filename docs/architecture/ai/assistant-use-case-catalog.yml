@@ -448,12 +448,12 @@ use_cases:
   - id: "RESEARCH_UC_006"
     assistantKey: "RESEARCH_ASSISTANT"
     name: "Report-review draft"
-    goal: "Produce a non-official report-review draft from an authorized report reference; report content is source-limited."
+    goal: "Produce a non-official report-review draft from freshly authorized bounded report content."
     actors: ["ADMIN", "LAB_MANAGER", "STUDENT"]
     runtimeAvailability: "CONDITIONALLY_AVAILABLE"
-    resourceScope: "Authorized report reference/existence with resolved project and group context and bounded milestone metadata only; report content is not currently projected."
-    inputs: ["Resolved assistant", "Authenticated actor", "Authorized report reference", "Draft request"]
-    trustedDataSources: ["Spring-authorized report existence check", "Spring-authorized bounded project, group, task, and milestone metadata context", "Approved tool result"]
+    resourceScope: "Freshly authorized selected report content with resolved project, group, task, and milestone context only."
+    inputs: ["Resolved assistant", "Authenticated actor", "Authorized bounded report content", "Draft request"]
+    trustedDataSources: ["Spring-authorized selected report projection", "Spring-authorized bounded project, group, task, and milestone metadata context", "Approved tool result"]
     requiredCapabilities: ["RESEARCH_REPORT_REVIEW_DRAFT"]
     allowedToolGroups: ["RESEARCH_DRAFT"]
     outputType: "NON_OFFICIAL_STRUCTURED_DRAFT"
@@ -468,8 +468,8 @@ use_cases:
     dependencies: ["Spring capability resolution", "Fresh read-only authorization", "Human review outside this catalog"]
     futureEvaluationTags: ["STRUCTURED_OUTPUT", "AUTHORIZATION", "CROSS_DOMAIN", "SAFE_REFUSAL", "HUMAN_EVAL"]
     laterMvp: "P10A_RESEARCH"
-    sourceAuthority: ["AiCapability.RESEARCH_REPORT_REVIEW_DRAFT", "CANONICAL_CATALOG: RESEARCH_REPORT_REVIEW_DRAFT -> RESEARCH_DRAFT", "AiResearchAssistantContextBuilder.requireSelectedCurrent: report existence check; build: no report-content projection", "three-assistant-contract.yml: prohibited_capabilities"]
-    notes: "Report content is FUTURE_SOURCE_LIMITED; a report review is draft-only, and autonomous approval, rejection, and official writes are prohibited."
+    sourceAuthority: ["AiCapability.RESEARCH_REPORT_REVIEW_DRAFT", "CANONICAL_CATALOG: RESEARCH_REPORT_REVIEW_DRAFT -> RESEARCH_DRAFT", "AiResearchAssistantContextBuilder.requireSelectedCurrent: actor-bound selected-report projection", "three-assistant-contract.yml: prohibited_capabilities"]
+    notes: "Only the freshly authorized selected report is projected; the review is advisory and draft-only, while autonomous approval, rejection, and official writes remain prohibited."
 
 future_lifecycle_and_boundaries:
   current_state: "FUTURE_POLICY_ONLY; no current capability, tool group, executor, persistence, approver, authorization expansion, or transaction implementation is represented here."
@@ -528,7 +528,7 @@ downstream_traceability:
       useCases: ["RESEARCH_UC_001", "RESEARCH_UC_002", "RESEARCH_UC_003", "RESEARCH_UC_004", "RESEARCH_UC_005", "RESEARCH_UC_006"]
       sourceLimitedTraceability:
         allowed_group_context: "COVERED_BY_CURRENT_SOURCE: only resolved GROUP_WHEN_ALLOWED or otherwise adapter-authorized group context; no default student whole-project access."
-        overdue_and_blocked_tasks: "SOURCE_LIMITED: current AiCapability inventory supplies no overdue/blocked task capability or status semantics. P10A may define them only through a separately approved source and authorization design."
+        overdue_and_blocked_tasks: "COVERED_BY_CURRENT_SOURCE: bounded authorized task projections carry persisted BLOCKED status/blockedReason and the existing business-derived overdue flag (deadline before current date, excluding DONE and CANCELLED)."
     P10B_LAB:
       useCases: ["LAB_UC_001", "LAB_UC_002", "LAB_UC_003", "LAB_UC_004", "LAB_UC_005", "LAB_UC_006"]
     P10C_ADMIN:
@@ -548,5 +548,5 @@ review_checklist:
   - "Admin remains CATALOG_DISABLED; Lab and Research remain CONDITIONALLY_AVAILABLE."
   - "Safe refusals avoid unauthorized resource existence, membership, audit detail, private booking data, secrets, and protected metadata."
   - "Future lifecycle entries contain no current capabilities, tool groups, executor, persistence, or approver claims."
-  - "P10A allowed-group context is covered-by-source and overdue/blocked task traceability is explicitly source-limited."
+  - "P10A allowed-group context and bounded overdue/blocked task traceability are covered by Spring-authorized projections."
   - "P11 RAG is optional and false for MVP; no dataset, evaluation, training, model, or runtime work is implied."

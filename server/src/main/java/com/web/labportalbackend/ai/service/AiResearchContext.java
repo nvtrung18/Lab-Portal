@@ -50,6 +50,6 @@ public record AiResearchContext(
 
     public record Task(Long id, String title, TaskStatus status, TaskPriority priority,
                        TaskType type, LocalDate dueDate, LocalDate deadline,
-                       Integer progressPercent) {
+                       Integer progressPercent, String blockedReason, boolean overdue) {
     }
 }

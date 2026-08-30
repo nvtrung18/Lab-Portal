@@ -225,7 +225,15 @@ public class AiContextServiceImpl implements AiContextService {
 
     private AiResearchContext.Task toTask(TaskEntity task) {
         return new AiResearchContext.Task(task.getId(), task.getTitle(), task.getStatus(), task.getPriority(),
-                task.getType(), task.getDueDate(), task.getDeadline(), task.getProgressPercent());
+                task.getType(), task.getDueDate(), task.getDeadline(), task.getProgressPercent(),
+                task.getBlockedReason(), isOverdue(task));
+    }
+
+    private boolean isOverdue(TaskEntity task) {
+        return task.getDeadline() != null
+                && task.getDeadline().isBefore(java.time.LocalDate.now())
+                && task.getStatus() != com.web.labportalbackend.research.enums.TaskStatus.DONE
+                && task.getStatus() != com.web.labportalbackend.research.enums.TaskStatus.CANCELLED;
     }
 
     private static final class Scope {

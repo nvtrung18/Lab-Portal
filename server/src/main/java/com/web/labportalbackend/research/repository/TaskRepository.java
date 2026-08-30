@@ -393,7 +393,12 @@ public interface TaskRepository extends JpaRepository<TaskEntity, Long> {
 
     @Query("""
             SELECT new com.web.labportalbackend.ai.service.AiResearchContext$Task(
-                t.id, t.title, t.status, t.priority, t.type, t.dueDate, t.deadline, t.progressPercent)
+                t.id, t.title, t.status, t.priority, t.type, t.dueDate, t.deadline, t.progressPercent,
+                t.blockedReason,
+                CASE WHEN t.deadline IS NOT NULL AND t.deadline < CURRENT_DATE
+                          AND t.status NOT IN (com.web.labportalbackend.research.enums.TaskStatus.DONE,
+                                               com.web.labportalbackend.research.enums.TaskStatus.CANCELLED)
+                     THEN true ELSE false END)
             FROM TaskEntity t JOIN ProjectEntity p ON p.id = t.projectId JOIN p.lab l
             JOIN GroupEntity g ON g.id = t.groupId JOIN MilestoneEntity m ON m.id = t.milestoneId
             WHERE t.projectId = :projectId AND t.active = true AND t.deleted = false

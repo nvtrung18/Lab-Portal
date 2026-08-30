@@ -364,7 +364,7 @@ class AiAssistantGatewayServiceImplTest {
         return new AiResearchAssistantContext(research,
                 AiBoundedList.fromOverfetch(List.of(), 20),
                 AiBoundedList.fromOverfetch(List.of(), 20),
-                AiBoundedList.fromOverfetch(List.of(), 25), selectedId, true);
+                AiBoundedList.fromOverfetch(List.of(), 25), null, selectedId, true);
     }
 
     private static AiAssistantProfile profile(AiAssistantKey key) {

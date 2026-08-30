@@ -176,6 +176,33 @@
               "suggestion": {"type": "string", "minLength": 1, "maxLength": 4000},
               "requiresHumanReview": {"const": true}
             }
+          },
+          {
+            "type": "object",
+            "required": ["kind", "reportRef", "reviewSummary", "issues", "suggestions", "advisoryOnly", "requiresHumanReview"],
+            "additionalProperties": false,
+            "properties": {
+              "kind": {"const": "RESEARCH_REPORT_REVIEW_DRAFT"},
+              "reportRef": {
+                "oneOf": [
+                  {"type": "integer", "minimum": 1},
+                  {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"}
+                ]
+              },
+              "reviewSummary": {"type": "string", "minLength": 1, "maxLength": 4000},
+              "issues": {
+                "type": "array",
+                "items": {"type": "string", "minLength": 1, "maxLength": 1000},
+                "maxItems": 20
+              },
+              "suggestions": {
+                "type": "array",
+                "items": {"type": "string", "minLength": 1, "maxLength": 1000},
+                "maxItems": 20
+              },
+              "advisoryOnly": {"const": true},
+              "requiresHumanReview": {"const": true}
+            }
           }
         ]
       }

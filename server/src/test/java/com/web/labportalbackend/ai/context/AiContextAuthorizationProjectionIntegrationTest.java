@@ -382,17 +382,21 @@ class AiContextAuthorizationProjectionIntegrationTest {
 
         assertTrue(tasks.existsAiContextTask(actor.getId(), project.getId(), task.getId(), STUDENT_ROLE));
         assertTrue(reports.existsAiContextReport(actor.getId(), project.getId(), report.getId(), STUDENT_ROLE));
+        assertEquals(report.getContentDone(), reports.findAiContextReport(
+                actor.getId(), project.getId(), report.getId(), STUDENT_ROLE).orElseThrow().contentDone());
 
         membership.setActive(false);
         entityManager.flush();
         assertFalse(tasks.existsAiContextTask(actor.getId(), project.getId(), task.getId(), STUDENT_ROLE));
         assertFalse(reports.existsAiContextReport(actor.getId(), project.getId(), report.getId(), STUDENT_ROLE));
+        assertTrue(reports.findAiContextReport(actor.getId(), project.getId(), report.getId(), STUDENT_ROLE).isEmpty());
 
         membership.setActive(true);
         task.setProjectId(project.getId() + 1000L);
         entityManager.flush();
         assertFalse(tasks.existsAiContextTask(actor.getId(), project.getId(), task.getId(), STUDENT_ROLE));
         assertFalse(reports.existsAiContextReport(actor.getId(), project.getId(), report.getId(), STUDENT_ROLE));
+        assertTrue(reports.findAiContextReport(actor.getId(), project.getId(), report.getId(), STUDENT_ROLE).isEmpty());
     }
 
     @Test
@@ -454,6 +458,7 @@ class AiContextAuthorizationProjectionIntegrationTest {
                 null, null, PageRequest.of(0, 25), MANAGER_ROLE).stream().map(value -> value.id()).collect(Collectors.toSet()));
         assertTrue(tasks.existsAiContextTask(manager.getId(), project.getId(), task.getId(), MANAGER_ROLE));
         assertTrue(reports.existsAiContextReport(manager.getId(), project.getId(), report.getId(), MANAGER_ROLE));
+        assertTrue(reports.findAiContextReport(manager.getId(), project.getId(), report.getId(), MANAGER_ROLE).isPresent());
 
         manager.removeRole(managerRole);
         users.saveAndFlush(manager);
@@ -466,6 +471,7 @@ class AiContextAuthorizationProjectionIntegrationTest {
                 null, null, PageRequest.of(0, 25), MANAGER_ROLE).isEmpty());
         assertFalse(tasks.existsAiContextTask(manager.getId(), project.getId(), task.getId(), MANAGER_ROLE));
         assertFalse(reports.existsAiContextReport(manager.getId(), project.getId(), report.getId(), MANAGER_ROLE));
+        assertTrue(reports.findAiContextReport(manager.getId(), project.getId(), report.getId(), MANAGER_ROLE).isEmpty());
     }
 
     @Test

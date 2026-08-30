@@ -65,6 +65,9 @@ class AiContextServiceImplTest {
         GroupEntity group = group(100L, project, 2L);
         MilestoneEntity milestone = milestone(10L, project, group);
         TaskEntity task = task(20L, 50L, 100L, 10L, 7L);
+        task.setStatus(TaskStatus.BLOCKED);
+        task.setBlockedReason("Waiting for an authorized sample.");
+        task.setDeadline(LocalDate.now().minusDays(1));
         when(userRepository.findByUsername("manager")).thenReturn(Optional.of(manager));
         when(projectRepository.findByIdAndDeletedFalseAndActiveTrue(50L)).thenReturn(Optional.of(project));
         when(permissionHelper.canViewProjectContext(7L, project)).thenReturn(true);
@@ -86,6 +89,8 @@ class AiContextServiceImplTest {
         assertEquals(null, context.groups().getFirst().role());
         assertEquals(List.of(10L), context.milestones().stream().map(AiResearchContext.Milestone::id).toList());
         assertEquals(List.of(20L), context.tasks().stream().map(AiResearchContext.Task::id).toList());
+        assertEquals("Waiting for an authorized sample.", context.tasks().getFirst().blockedReason());
+        assertEquals(true, context.tasks().getFirst().overdue());
         verify(permissionHelper).canViewProjectContext(7L, project);
         verify(permissionHelper).canViewTask(7L, task);
     }
