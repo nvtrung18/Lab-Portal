@@ -47,7 +47,7 @@ class AiAssistantRegistryServiceImplTest {
         AiAssistantProfile lab = registry.getProfile(AiAssistantKey.LAB_ASSISTANT);
         AiAssistantProfile research = registry.getProfile(AiAssistantKey.RESEARCH_ASSISTANT);
 
-        assertProfile(admin, AiAssistantDomain.ADMIN, false, Set.of(AiAssistantSystemRole.ADMIN), "admin", "admin-v1",
+        assertProfile(admin, AiAssistantDomain.ADMIN, true, Set.of(AiAssistantSystemRole.ADMIN), "admin", "admin-v1",
                 "admin", Set.of(AiAssistantToolGroup.ADMIN_READ, AiAssistantToolGroup.ADMIN_DRAFT),
                 "admin-assistant-v1");
         assertProfile(lab, AiAssistantDomain.LAB, true,
@@ -85,12 +85,16 @@ class AiAssistantRegistryServiceImplTest {
     }
 
     @Test
-    void keepsAdminUnavailableEvenForItsAllowedRoleWithoutConfigurationLookup() {
-        AiAssistantRegistryException exception = assertThrows(AiAssistantRegistryException.class,
-                () -> registry.getAvailableProfile(AiAssistantKey.ADMIN_ASSISTANT, AiAssistantSystemRole.ADMIN));
+    void returnsAvailableAdminProfileOnlyForAnEnabledActiveConfiguration() {
+        when(assistantConfigRepository.findByAssistantKeyAndActiveTrueAndDeletedFalse(AiAssistantKey.ADMIN_ASSISTANT))
+                .thenReturn(Optional.of(config(AiAssistantKey.ADMIN_ASSISTANT, true)));
 
-        assertEquals(AiAssistantRegistryFailure.ASSISTANT_UNAVAILABLE, exception.failure());
-        verifyNoInteractions(assistantConfigRepository);
+        AiAssistantProfile profile = registry.getAvailableProfile(AiAssistantKey.ADMIN_ASSISTANT,
+                AiAssistantSystemRole.ADMIN);
+
+        assertEquals(AiAssistantKey.ADMIN_ASSISTANT, profile.key());
+        verify(assistantConfigRepository)
+                .findByAssistantKeyAndActiveTrueAndDeletedFalse(AiAssistantKey.ADMIN_ASSISTANT);
     }
 
     @Test

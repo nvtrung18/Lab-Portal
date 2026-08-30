@@ -111,8 +111,11 @@ def model_info(request: Request) -> ModelInfoResponse:
 def chat(request: Request, payload: AssistantRequest) -> ChatResponse | JSONResponse:
     request.app.state.profile_loader.get_profile(payload.assistant_key)
     artifact_state = request.app.state.artifact_loader.get_state(payload.assistant_key)
+    admin_mvp = request.app.state.admin_mvp
     lab_mvp = request.app.state.lab_mvp
     research_mvp = request.app.state.research_mvp
+    if artifact_state.ready and payload.assistant_key is AssistantKey.ADMIN_ASSISTANT and admin_mvp is not None:
+        return admin_mvp.respond(payload)
     if artifact_state.ready and payload.assistant_key is AssistantKey.LAB_ASSISTANT and lab_mvp is not None:
         return lab_mvp.respond(payload)
     if artifact_state.ready and payload.assistant_key is AssistantKey.RESEARCH_ASSISTANT and research_mvp is not None:

@@ -175,7 +175,7 @@ class AiCapabilityResolverImplTest {
     }
 
     @Test
-    void mapsUnchangedRealRegistryAdminDisablementBeforeAdminAdapter() {
+    void mapsMissingAdminConfigurationToAssistantDisabledAfterAdminAuthorization() {
         AiAssistantConfigRepository configRepository = mock(AiAssistantConfigRepository.class);
         AiCapabilityResolverImpl realRegistryResolver = new AiCapabilityResolverImpl(
                 new AiAssistantRegistryServiceImpl(configRepository), userRepository,
