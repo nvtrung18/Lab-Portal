@@ -1,0 +1,646 @@
+{
+  "artifactType": "P7-T4-HUMAN-REVIEW-PACKET",
+  "schemaVersion": "1.0.0",
+  "modelVariant": "RESEARCH_ADAPTER",
+  "repetition": "R01",
+  "runIdentity": "2f831d4232d2f544a94f3f870b6f89fefc0e2444bb29b3ff8741193a0b0aeb89",
+  "candidateOutputDigest": "0d2ae1d16f656a2d2ac7901e9d7c55bac3cdefb3066eefbff239ef505d0b1a77",
+  "humanReview": {
+    "suiteId": "P7-T4-RESEARCH-INDEPENDENT-EVALUATION",
+    "suiteVersion": "2.0.0",
+    "candidateRunId": "3cd324ad97530ce535073be761e1713cb627e15d55cb9395d55729cd93595de4-RESEARCH_ADAPTER-R01",
+    "rubricVersion": "1.0.0",
+    "humanReviewState": "PENDING_HUMAN_REVIEW",
+    "applicableCaseIds": [
+      "E-AUTH-011",
+      "E-AUTH-012",
+      "E-FUNC-RESEARCH-004",
+      "E-FUNC-RESEARCH-005",
+      "E-FUNC-RESEARCH-006",
+      "E-HUMAN-003",
+      "E-HUMAN-004",
+      "E-INJECT-001",
+      "E-INJECT-002",
+      "E-INJECT-003",
+      "E-ROUTE-002",
+      "E-STRUCT-003",
+      "E-STRUCT-004"
+    ],
+    "reviewedCaseIds": [],
+    "pendingCaseIds": [
+      "E-AUTH-011",
+      "E-AUTH-012",
+      "E-FUNC-RESEARCH-004",
+      "E-FUNC-RESEARCH-005",
+      "E-FUNC-RESEARCH-006",
+      "E-HUMAN-003",
+      "E-HUMAN-004",
+      "E-INJECT-001",
+      "E-INJECT-002",
+      "E-INJECT-003",
+      "E-ROUTE-002",
+      "E-STRUCT-003",
+      "E-STRUCT-004"
+    ],
+    "records": []
+  },
+  "sidecarTemplate": {
+    "candidateOutputDigest": "0d2ae1d16f656a2d2ac7901e9d7c55bac3cdefb3066eefbff239ef505d0b1a77",
+    "review": {
+      "suiteId": "P7-T4-RESEARCH-INDEPENDENT-EVALUATION",
+      "suiteVersion": "2.0.0",
+      "candidateRunId": "3cd324ad97530ce535073be761e1713cb627e15d55cb9395d55729cd93595de4-RESEARCH_ADAPTER-R01",
+      "rubricVersion": "1.0.0",
+      "records": [
+        {
+          "evalCaseId": "E-AUTH-011",
+          "candidateCaseDigest": "7b5446e18d7f1c0434ebe6112cb722b4b4c27ac14af64a1fa5dcc1a44e5ef1e6",
+          "profileId": "REFUSAL",
+          "dimensions": [
+            {
+              "dimension": "SAFE_REFUSAL_QUALITY",
+              "outcome": null,
+              "rationale": null,
+              "evidenceRefs": []
+            },
+            {
+              "dimension": "SCOPE_COMPLIANCE",
+              "outcome": null,
+              "rationale": null,
+              "evidenceRefs": []
+            },
+            {
+              "dimension": "HALLUCINATION_AVOIDANCE",
+              "outcome": null,
+              "rationale": null,
+              "evidenceRefs": []
+            },
+            {
+              "dimension": "VIETNAMESE_QUALITY",
+              "outcome": null,
+              "rationale": null,
+              "evidenceRefs": []
+            }
+          ],
+          "overall": null,
+          "reviewerRationale": null,
+          "evidenceRefs": []
+        },
+        {
+          "evalCaseId": "E-AUTH-012",
+          "candidateCaseDigest": "e3b72f15db8578849b780156860be69fa713a7371d8141defbc2ca651a860213",
+          "profileId": "REFUSAL",
+          "dimensions": [
+            {
+              "dimension": "SAFE_REFUSAL_QUALITY",
+              "outcome": null,
+              "rationale": null,
+              "evidenceRefs": []
+            },
+            {
+              "dimension": "SCOPE_COMPLIANCE",
+              "outcome": null,
+              "rationale": null,
+              "evidenceRefs": []
+            },
+            {
+              "dimension": "HALLUCINATION_AVOIDANCE",
+              "outcome": null,
+              "rationale": null,
+              "evidenceRefs": []
+            },
+            {
+              "dimension": "VIETNAMESE_QUALITY",
+              "outcome": null,
+              "rationale": null,
+              "evidenceRefs": []
+            }
+          ],
+          "overall": null,
+          "reviewerRationale": null,
+          "evidenceRefs": []
+        },
+        {
+          "evalCaseId": "E-FUNC-RESEARCH-004",
+          "candidateCaseDigest": "2421b1552c89884d2ced07f803fbabee5a6592320cfe83631876dd20799df547",
+          "profileId": "DRAFT_RESEARCH",
+          "dimensions": [
+            {
+              "dimension": "TASK_CORRECTNESS",
+              "outcome": null,
+              "rationale": null,
+              "evidenceRefs": []
+            },
+            {
+              "dimension": "CONTEXT_GROUNDEDNESS",
+              "outcome": null,
+              "rationale": null,
+              "evidenceRefs": []
+            },
+            {
+              "dimension": "HALLUCINATION_AVOIDANCE",
+              "outcome": null,
+              "rationale": null,
+              "evidenceRefs": []
+            },
+            {
+              "dimension": "SCOPE_COMPLIANCE",
+              "outcome": null,
+              "rationale": null,
+              "evidenceRefs": []
+            },
+            {
+              "dimension": "STRUCTURED_CLARITY",
+              "outcome": null,
+              "rationale": null,
+              "evidenceRefs": []
+            },
+            {
+              "dimension": "VIETNAMESE_QUALITY",
+              "outcome": null,
+              "rationale": null,
+              "evidenceRefs": []
+            },
+            {
+              "dimension": "USEFULNESS",
+              "outcome": null,
+              "rationale": null,
+              "evidenceRefs": []
+            }
+          ],
+          "overall": null,
+          "reviewerRationale": null,
+          "evidenceRefs": []
+        },
+        {
+          "evalCaseId": "E-FUNC-RESEARCH-005",
+          "candidateCaseDigest": "c91fc4d2af6c1839f5a728cc347a3fb0f8ff75418585ef3d7eca82b8d8e56152",
+          "profileId": "DRAFT_RESEARCH",
+          "dimensions": [
+            {
+              "dimension": "TASK_CORRECTNESS",
+              "outcome": null,
+              "rationale": null,
+              "evidenceRefs": []
+            },
+            {
+              "dimension": "CONTEXT_GROUNDEDNESS",
+              "outcome": null,
+              "rationale": null,
+              "evidenceRefs": []
+            },
+            {
+              "dimension": "HALLUCINATION_AVOIDANCE",
+              "outcome": null,
+              "rationale": null,
+              "evidenceRefs": []
+            },
+            {
+              "dimension": "SCOPE_COMPLIANCE",
+              "outcome": null,
+              "rationale": null,
+              "evidenceRefs": []
+            },
+            {
+              "dimension": "STRUCTURED_CLARITY",
+              "outcome": null,
+              "rationale": null,
+              "evidenceRefs": []
+            },
+            {
+              "dimension": "VIETNAMESE_QUALITY",
+              "outcome": null,
+              "rationale": null,
+              "evidenceRefs": []
+            },
+            {
+              "dimension": "USEFULNESS",
+              "outcome": null,
+              "rationale": null,
+              "evidenceRefs": []
+            }
+          ],
+          "overall": null,
+          "reviewerRationale": null,
+          "evidenceRefs": []
+        },
+        {
+          "evalCaseId": "E-FUNC-RESEARCH-006",
+          "candidateCaseDigest": "bab0b6ad9803731c7fee3d58a68c3ee86531f4758118dcae26c833abf0a3976a",
+          "profileId": "DRAFT_RESEARCH",
+          "dimensions": [
+            {
+              "dimension": "TASK_CORRECTNESS",
+              "outcome": null,
+              "rationale": null,
+              "evidenceRefs": []
+            },
+            {
+              "dimension": "CONTEXT_GROUNDEDNESS",
+              "outcome": null,
+              "rationale": null,
+              "evidenceRefs": []
+            },
+            {
+              "dimension": "HALLUCINATION_AVOIDANCE",
+              "outcome": null,
+              "rationale": null,
+              "evidenceRefs": []
+            },
+            {
+              "dimension": "SCOPE_COMPLIANCE",
+              "outcome": null,
+              "rationale": null,
+              "evidenceRefs": []
+            },
+            {
+              "dimension": "STRUCTURED_CLARITY",
+              "outcome": null,
+              "rationale": null,
+              "evidenceRefs": []
+            },
+            {
+              "dimension": "VIETNAMESE_QUALITY",
+              "outcome": null,
+              "rationale": null,
+              "evidenceRefs": []
+            },
+            {
+              "dimension": "USEFULNESS",
+              "outcome": null,
+              "rationale": null,
+              "evidenceRefs": []
+            }
+          ],
+          "overall": null,
+          "reviewerRationale": null,
+          "evidenceRefs": []
+        },
+        {
+          "evalCaseId": "E-HUMAN-003",
+          "candidateCaseDigest": "705223d0ed4269a55598c2e5f88abcbb4a07e34397f187195de53942c8fe9382",
+          "profileId": "DRAFT_RESEARCH",
+          "dimensions": [
+            {
+              "dimension": "TASK_CORRECTNESS",
+              "outcome": null,
+              "rationale": null,
+              "evidenceRefs": []
+            },
+            {
+              "dimension": "CONTEXT_GROUNDEDNESS",
+              "outcome": null,
+              "rationale": null,
+              "evidenceRefs": []
+            },
+            {
+              "dimension": "HALLUCINATION_AVOIDANCE",
+              "outcome": null,
+              "rationale": null,
+              "evidenceRefs": []
+            },
+            {
+              "dimension": "SCOPE_COMPLIANCE",
+              "outcome": null,
+              "rationale": null,
+              "evidenceRefs": []
+            },
+            {
+              "dimension": "STRUCTURED_CLARITY",
+              "outcome": null,
+              "rationale": null,
+              "evidenceRefs": []
+            },
+            {
+              "dimension": "VIETNAMESE_QUALITY",
+              "outcome": null,
+              "rationale": null,
+              "evidenceRefs": []
+            },
+            {
+              "dimension": "USEFULNESS",
+              "outcome": null,
+              "rationale": null,
+              "evidenceRefs": []
+            }
+          ],
+          "overall": null,
+          "reviewerRationale": null,
+          "evidenceRefs": []
+        },
+        {
+          "evalCaseId": "E-HUMAN-004",
+          "candidateCaseDigest": "9258d421e3ee184e47a7dfb9309d37f1aaab85dc6471f0f97abb28a0e19f888a",
+          "profileId": "DRAFT_RESEARCH",
+          "dimensions": [
+            {
+              "dimension": "TASK_CORRECTNESS",
+              "outcome": null,
+              "rationale": null,
+              "evidenceRefs": []
+            },
+            {
+              "dimension": "CONTEXT_GROUNDEDNESS",
+              "outcome": null,
+              "rationale": null,
+              "evidenceRefs": []
+            },
+            {
+              "dimension": "HALLUCINATION_AVOIDANCE",
+              "outcome": null,
+              "rationale": null,
+              "evidenceRefs": []
+            },
+            {
+              "dimension": "SCOPE_COMPLIANCE",
+              "outcome": null,
+              "rationale": null,
+              "evidenceRefs": []
+            },
+            {
+              "dimension": "STRUCTURED_CLARITY",
+              "outcome": null,
+              "rationale": null,
+              "evidenceRefs": []
+            },
+            {
+              "dimension": "VIETNAMESE_QUALITY",
+              "outcome": null,
+              "rationale": null,
+              "evidenceRefs": []
+            },
+            {
+              "dimension": "USEFULNESS",
+              "outcome": null,
+              "rationale": null,
+              "evidenceRefs": []
+            }
+          ],
+          "overall": null,
+          "reviewerRationale": null,
+          "evidenceRefs": []
+        },
+        {
+          "evalCaseId": "E-INJECT-001",
+          "candidateCaseDigest": "e9aeb624bff83ceec429c5b2f9f3e43d5668d49c564f0b5713b1c97b52dd530d",
+          "profileId": "REFUSAL",
+          "dimensions": [
+            {
+              "dimension": "SAFE_REFUSAL_QUALITY",
+              "outcome": null,
+              "rationale": null,
+              "evidenceRefs": []
+            },
+            {
+              "dimension": "SCOPE_COMPLIANCE",
+              "outcome": null,
+              "rationale": null,
+              "evidenceRefs": []
+            },
+            {
+              "dimension": "HALLUCINATION_AVOIDANCE",
+              "outcome": null,
+              "rationale": null,
+              "evidenceRefs": []
+            },
+            {
+              "dimension": "VIETNAMESE_QUALITY",
+              "outcome": null,
+              "rationale": null,
+              "evidenceRefs": []
+            }
+          ],
+          "overall": null,
+          "reviewerRationale": null,
+          "evidenceRefs": []
+        },
+        {
+          "evalCaseId": "E-INJECT-002",
+          "candidateCaseDigest": "b6cdfef3d21183c647701b378fd0622744ead4236c9ed06b33387138afaecdbf",
+          "profileId": "REFUSAL",
+          "dimensions": [
+            {
+              "dimension": "SAFE_REFUSAL_QUALITY",
+              "outcome": null,
+              "rationale": null,
+              "evidenceRefs": []
+            },
+            {
+              "dimension": "SCOPE_COMPLIANCE",
+              "outcome": null,
+              "rationale": null,
+              "evidenceRefs": []
+            },
+            {
+              "dimension": "HALLUCINATION_AVOIDANCE",
+              "outcome": null,
+              "rationale": null,
+              "evidenceRefs": []
+            },
+            {
+              "dimension": "VIETNAMESE_QUALITY",
+              "outcome": null,
+              "rationale": null,
+              "evidenceRefs": []
+            }
+          ],
+          "overall": null,
+          "reviewerRationale": null,
+          "evidenceRefs": []
+        },
+        {
+          "evalCaseId": "E-INJECT-003",
+          "candidateCaseDigest": "129d64d082f8a201d9f1b06827d6cb9802b745100494c8006fb0829e0b12b471",
+          "profileId": "REFUSAL",
+          "dimensions": [
+            {
+              "dimension": "SAFE_REFUSAL_QUALITY",
+              "outcome": null,
+              "rationale": null,
+              "evidenceRefs": []
+            },
+            {
+              "dimension": "SCOPE_COMPLIANCE",
+              "outcome": null,
+              "rationale": null,
+              "evidenceRefs": []
+            },
+            {
+              "dimension": "HALLUCINATION_AVOIDANCE",
+              "outcome": null,
+              "rationale": null,
+              "evidenceRefs": []
+            },
+            {
+              "dimension": "VIETNAMESE_QUALITY",
+              "outcome": null,
+              "rationale": null,
+              "evidenceRefs": []
+            }
+          ],
+          "overall": null,
+          "reviewerRationale": null,
+          "evidenceRefs": []
+        },
+        {
+          "evalCaseId": "E-ROUTE-002",
+          "candidateCaseDigest": "864419941fed2691a27da7233a149cc649b5692cda1086f2945fdbb2cb0d86be",
+          "profileId": "DRAFT_RESEARCH",
+          "dimensions": [
+            {
+              "dimension": "TASK_CORRECTNESS",
+              "outcome": null,
+              "rationale": null,
+              "evidenceRefs": []
+            },
+            {
+              "dimension": "CONTEXT_GROUNDEDNESS",
+              "outcome": null,
+              "rationale": null,
+              "evidenceRefs": []
+            },
+            {
+              "dimension": "HALLUCINATION_AVOIDANCE",
+              "outcome": null,
+              "rationale": null,
+              "evidenceRefs": []
+            },
+            {
+              "dimension": "SCOPE_COMPLIANCE",
+              "outcome": null,
+              "rationale": null,
+              "evidenceRefs": []
+            },
+            {
+              "dimension": "STRUCTURED_CLARITY",
+              "outcome": null,
+              "rationale": null,
+              "evidenceRefs": []
+            },
+            {
+              "dimension": "VIETNAMESE_QUALITY",
+              "outcome": null,
+              "rationale": null,
+              "evidenceRefs": []
+            },
+            {
+              "dimension": "USEFULNESS",
+              "outcome": null,
+              "rationale": null,
+              "evidenceRefs": []
+            }
+          ],
+          "overall": null,
+          "reviewerRationale": null,
+          "evidenceRefs": []
+        },
+        {
+          "evalCaseId": "E-STRUCT-003",
+          "candidateCaseDigest": "70356a255f7d22fb893afd52b440ba918d214290b4f97d3df6b6cfe23129019f",
+          "profileId": "DRAFT_RESEARCH",
+          "dimensions": [
+            {
+              "dimension": "TASK_CORRECTNESS",
+              "outcome": null,
+              "rationale": null,
+              "evidenceRefs": []
+            },
+            {
+              "dimension": "CONTEXT_GROUNDEDNESS",
+              "outcome": null,
+              "rationale": null,
+              "evidenceRefs": []
+            },
+            {
+              "dimension": "HALLUCINATION_AVOIDANCE",
+              "outcome": null,
+              "rationale": null,
+              "evidenceRefs": []
+            },
+            {
+              "dimension": "SCOPE_COMPLIANCE",
+              "outcome": null,
+              "rationale": null,
+              "evidenceRefs": []
+            },
+            {
+              "dimension": "STRUCTURED_CLARITY",
+              "outcome": null,
+              "rationale": null,
+              "evidenceRefs": []
+            },
+            {
+              "dimension": "VIETNAMESE_QUALITY",
+              "outcome": null,
+              "rationale": null,
+              "evidenceRefs": []
+            },
+            {
+              "dimension": "USEFULNESS",
+              "outcome": null,
+              "rationale": null,
+              "evidenceRefs": []
+            }
+          ],
+          "overall": null,
+          "reviewerRationale": null,
+          "evidenceRefs": []
+        },
+        {
+          "evalCaseId": "E-STRUCT-004",
+          "candidateCaseDigest": "8dd041c6a4094ef0a6022c6357fd08bd496ce3d83726d2758babefbe7ae10eae",
+          "profileId": "DRAFT_RESEARCH",
+          "dimensions": [
+            {
+              "dimension": "TASK_CORRECTNESS",
+              "outcome": null,
+              "rationale": null,
+              "evidenceRefs": []
+            },
+            {
+              "dimension": "CONTEXT_GROUNDEDNESS",
+              "outcome": null,
+              "rationale": null,
+              "evidenceRefs": []
+            },
+            {
+              "dimension": "HALLUCINATION_AVOIDANCE",
+              "outcome": null,
+              "rationale": null,
+              "evidenceRefs": []
+            },
+            {
+              "dimension": "SCOPE_COMPLIANCE",
+              "outcome": null,
+              "rationale": null,
+              "evidenceRefs": []
+            },
+            {
+              "dimension": "STRUCTURED_CLARITY",
+              "outcome": null,
+              "rationale": null,
+              "evidenceRefs": []
+            },
+            {
+              "dimension": "VIETNAMESE_QUALITY",
+              "outcome": null,
+              "rationale": null,
+              "evidenceRefs": []
+            },
+            {
+              "dimension": "USEFULNESS",
+              "outcome": null,
+              "rationale": null,
+              "evidenceRefs": []
+            }
+          ],
+          "overall": null,
+          "reviewerRationale": null,
+          "evidenceRefs": []
+        }
+      ]
+    }
+  },
+  "instruction": "Complete every applicable record from visible candidate evidence; do not synthesize outcomes.",
+  "artifactIdentity": "2e59cf9e680d14e48e382cf4dd549ba121d38e5f33ec7acfbbf18447da5b8328"
+}

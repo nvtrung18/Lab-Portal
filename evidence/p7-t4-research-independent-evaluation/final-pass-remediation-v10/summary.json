@@ -1,0 +1,28 @@
+{
+  "artifactType": "P7-T4-FINAL-PASS-HANDOFF",
+  "schemaVersion": "1.0.0",
+  "sourceCommit": "05cc20104fe504056cc534ff9d314d8a340f3a45",
+  "candidateId": "3cd324ad97530ce535073be761e1713cb627e15d55cb9395d55729cd93595de4",
+  "preflightIdentity": "60a656fd35767ddc06da46bf34696b17ce96f2c151241a401805b31fe9777b9f",
+  "comparisonIdentity": "6eed18733834894cc19621cee41ab552a051270c799e2e880dd95b6701bf162b",
+  "decisionIdentity": "9e2b29668e549819daf4f087dbe1f268d96978f5fe47f13716e65c6c4b14e43e",
+  "automaticDecision": "AUTOMATIC_PASS",
+  "evaluationDecision": "PASS",
+  "promotionAllowed": true,
+  "adapterFailedCaseIds": [],
+  "unresolvedCaseIds": [],
+  "humanReviewIdentities": {
+    "SHARED_BASE": "c793bdcf00aee214fb9a1a4c950b49b3f44243fb5b50c2f1bb3ffec699b8709f",
+    "RESEARCH_ADAPTER": "2d7333cd7b9ecfb07142614485416b21cacc415556f945a5468471f02f7bb2a5"
+  },
+  "independentReview": {
+    "reviewerId": "antigravity-claude-opus-4-20250725",
+    "reviewedAt": "2026-08-30T13:52:30+07:00",
+    "decision": "PASS",
+    "resourceUseAccepted": true
+  },
+  "archive": {
+    "fileName": "p7-t4-remediation-v10-final-pass.zip",
+    "sha256": "910e4de4a521928ff0edf3f1621f6f54619a2100ebebb6ef85eb7deec34a97bb"
+  }
+}
