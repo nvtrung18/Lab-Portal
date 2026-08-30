@@ -1,0 +1,92 @@
+{
+  "artifactIdentity": "cf9cb97f7acfd0eac2250ae206d9408f8d9b5e9ab2f70412621f5eff9d896b2b",
+  "artifactType": "P7-T4-RESEARCH-REMEDIATION-V10-TARGETED-CONTINUATION-SPEC",
+  "datasetProposal": {
+    "contractHoldoutCounts": {
+      "evaluation": 8
+    },
+    "frozenSuiteContentCopiedIntoTraining": false,
+    "plannedRecordCounts": {
+      "evaluation": 8,
+      "train": 96,
+      "validation": 20
+    },
+    "replayGuardCaseIds": [
+      "E-AUTH-011",
+      "E-AUTH-012",
+      "E-FUNC-RESEARCH-004",
+      "E-FUNC-RESEARCH-005",
+      "E-HUMAN-003",
+      "E-HUMAN-004",
+      "E-INJECT-001",
+      "E-INJECT-002",
+      "E-INJECT-003",
+      "E-ROUTE-002",
+      "E-STRUCT-003",
+      "E-STRUCT-004"
+    ],
+    "replayGuardSelectionCounts": {
+      "train": 48,
+      "validation": 12
+    },
+    "splitContentIdsDisjoint": true,
+    "syntheticOnly": true,
+    "targetedAdditionCounts": {
+      "evaluation": 8,
+      "train": 48,
+      "validation": 8
+    },
+    "targetedCaseIds": [
+      "E-FUNC-RESEARCH-006"
+    ],
+    "v9EvaluationRecordsAllowedForOptimization": false,
+    "v9ReplaySourceSplits": "TRAIN_AND_VALIDATION_ONLY"
+  },
+  "evaluationContract": {
+    "evaluatorIdentity": "99230c674b9064f1e06247dedd014f6e3da0714ca679017c07b3d877f1e285d3",
+    "evaluatorReference": "config/p7-t4-research-remediation-governance-v5/evaluator-contract-v2.approved.json",
+    "evaluatorVersion": "2.0.0",
+    "suiteIdentity": "65c87149ec97bf34a04257a80af0cba1114b48fe9702f6b3cacb253b573931a8",
+    "suiteReference": "config/p7-t4-research-remediation-governance-v5/evaluation-suite-v2.approved.json",
+    "suiteVersion": "2.0.0"
+  },
+  "humanFindingIdentity": "d386af416427370246b6ae734f46a827f832b0ee6717154e3c44a7f35b23af1a",
+  "humanFindingReference": "config/p7-t4-research-remediation-governance-v10/human-review-finding-v9.json",
+  "promptProfile": {
+    "identity": "32b6fb0d9786cff93175a8f2e844f76989db12b5173e1d878a79365ac9bbea4d",
+    "reference": "config/p7-t4-research-remediation-governance-v6/research-prompt-profile-v3.approved.json",
+    "version": "3.0.0"
+  },
+  "runtimeControls": {
+    "constrainedDecodingAllowed": false,
+    "runtimeNormalizationAllowed": false
+  },
+  "schemaVersion": "1.0.0",
+  "status": "PENDING_GOVERNANCE_APPROVAL",
+  "trainingProposal": {
+    "candidateDispositionAfterTraining": "CANDIDATE_ONLY",
+    "contractHoldoutSplit": "evaluation",
+    "contractHoldoutUsedForEarlyStopping": false,
+    "contractHoldoutUsedForOptimization": false,
+    "earlyStoppingPatience": 1,
+    "earlyStoppingSplit": "validation",
+    "learningRateMaximum": 2e-05,
+    "maximumRuns": 1,
+    "maximumSteps": 48,
+    "newCandidateIdentityRequired": true,
+    "newTrainingEvidenceRequired": true
+  },
+  "warmStartProposal": {
+    "authorized": false,
+    "freshAdapterInitializationRequired": false,
+    "freshBaseModelLoadRequired": true,
+    "method": "QLORA_ADAPTER_CONTINUATION",
+    "parentAdapterIdentity": "ceab7b262b050cf9195001e4d7e5f40aa7ef67011e0e7271e62d250ffe96c717",
+    "parentCandidateId": "99596dcf3c00c6a25a4c38f01de7f12d917100e539cf4ea777556ef0c0a055c2",
+    "parentOutputArchiveSha256": "f6c3e5d4ca52643f8c26941a61407444f7004b5e1e22c08445307821dbee767f",
+    "parentOutputSha256Reference": "evidence/p7-t2-real-training/remediation-v9/p7-t2-research-remediation-v9-output.zip.sha256",
+    "parentTrainingEvidenceIdentity": "dc8622368cfc2301625abee45271b5f101eab36db536f184c5f2e9d025317c2a",
+    "parentTrainingEvidenceReference": "evidence/p7-t2-real-training/remediation-v9/real-training-evidence.json",
+    "parentTrainingRunIdentity": "9ee7cd3cb56cb5b18c096ce8764fe14a23d69bdd39ef027a8f1472710b152314"
+  }
+}
