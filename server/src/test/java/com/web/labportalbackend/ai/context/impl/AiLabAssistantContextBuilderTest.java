@@ -10,6 +10,8 @@ import static org.mockito.Mockito.when;
 import com.web.labportalbackend.ai.context.*;
 import com.web.labportalbackend.ai.enums.*;
 import com.web.labportalbackend.ai.service.AiCapabilityDecision;
+import com.web.labportalbackend.admin.systemconfig.dto.SystemConfigResponse;
+import com.web.labportalbackend.admin.systemconfig.service.SystemConfigService;
 import com.web.labportalbackend.booking.repository.BookingRepository;
 import com.web.labportalbackend.booking.repository.TimeSlotRepository;
 import com.web.labportalbackend.lab.repository.LaboratoryRepository;
@@ -22,10 +24,13 @@ class AiLabAssistantContextBuilderTest {
     @Test void currentAcceptedActorIsBoundToLabProjection() {
         LaboratoryRepository labs = mock(LaboratoryRepository.class);
         when(labs.findAiContextLaboratory(7L, 10L, "STUDENT")).thenReturn(Optional.of(new AiLabContext.Laboratory(10L, "Lab", null)));
-        AiLabAssistantContextBuilder builder = new AiLabAssistantContextBuilder(labs, mock(TimeSlotRepository.class), mock(BookingRepository.class));
+        SystemConfigService configs = policyConfig();
+        AiLabAssistantContextBuilder builder = new AiLabAssistantContextBuilder(labs, mock(TimeSlotRepository.class), mock(BookingRepository.class), configs);
         AiLabContext context = (AiLabContext) builder.build(input());
         assertEquals(10L, context.laboratory().id());
         assertEquals("POLICY_INFORMATION_ONLY", context.policyOrDraftEligibilityLabel());
+        assertEquals(10, context.labPolicySnapshot().checkinWindowMinutes());
+        assertEquals(30, context.labPolicySnapshot().cancelBeforeMinutes());
         verify(labs).findAiContextLaboratory(7L, 10L, "STUDENT");
     }
 
@@ -38,7 +43,7 @@ class AiLabAssistantContextBuilderTest {
         when(bookings.findAiContextCheckinBooking(7L, 10L, 30L, readAt, endInclusive, "STUDENT"))
                 .thenReturn(Optional.of(new AiLabContext.OwnBooking(30L,
                         com.web.labportalbackend.common.enums.BookingStatus.APPROVED, null)));
-        AiLabAssistantContextBuilder builder = new AiLabAssistantContextBuilder(labs, mock(TimeSlotRepository.class), bookings);
+        AiLabAssistantContextBuilder builder = new AiLabAssistantContextBuilder(labs, mock(TimeSlotRepository.class), bookings, mock(SystemConfigService.class));
 
         AiLabContext context = (AiLabContext) builder.build(checkinInput(readAt, endInclusive));
 
@@ -53,7 +58,7 @@ class AiLabAssistantContextBuilderTest {
         when(labs.findAiContextLaboratory(7L, 10L, "LAB_MANAGER"))
                 .thenReturn(Optional.of(new AiLabContext.Laboratory(10L, "Lab", null)));
         when(labs.existsAiContextManagedLab(7L, 10L, "LAB_MANAGER")).thenReturn(false);
-        AiLabAssistantContextBuilder builder = new AiLabAssistantContextBuilder(labs, slots, bookings);
+        AiLabAssistantContextBuilder builder = new AiLabAssistantContextBuilder(labs, slots, bookings, mock(SystemConfigService.class));
 
         assertThrows(AiContextReadDeniedException.class, () -> builder.build(managedSummaryInput()));
 
@@ -72,7 +77,7 @@ class AiLabAssistantContextBuilderTest {
                 org.mockito.ArgumentMatchers.eq(true), org.mockito.ArgumentMatchers.any(),
                 org.mockito.ArgumentMatchers.eq("STUDENT")))
                 .thenReturn(Optional.of(new AiLabContext.Slot(20L, Instant.now(), Instant.now(), null)));
-        AiLabAssistantContextBuilder builder = new AiLabAssistantContextBuilder(labs, slots, mock(BookingRepository.class));
+        AiLabAssistantContextBuilder builder = new AiLabAssistantContextBuilder(labs, slots, mock(BookingRepository.class), mock(SystemConfigService.class));
         AiCapabilityDecision decision = new AiCapabilityDecision(true, 7L, com.web.labportalbackend.ai.enums.AiAssistantSystemRole.STUDENT, AiAssistantKey.LAB_ASSISTANT,
                 AiAssistantDomain.LAB, AiCapability.LAB_BOOKING_DRAFT,
                 new AiCapabilityDecision.ResolvedResource(AiResourceType.TIME_SLOT, 20L, 10L,
@@ -91,6 +96,17 @@ class AiLabAssistantContextBuilderTest {
                 new AiCapabilityDecision.ResolvedResource(AiResourceType.LABORATORY, 10L, 10L, null, null, null, AiResourceScope.EXISTING_BUSINESS_PERMISSION),
                 AiCapabilityDecisionReason.ALLOWED_BY_EFFECTIVE_PERMISSION, null, AiActionRiskBoundary.READ_ONLY, Set.of(), null);
         return new TrustedContextInput(d, 7L, null, Instant.now());
+    }
+
+    private static SystemConfigService policyConfig() {
+        SystemConfigService service = mock(SystemConfigService.class);
+        when(service.getConfig()).thenReturn(new SystemConfigResponse(
+                null,
+                new SystemConfigResponse.LabConfig(true, true, true, true),
+                new SystemConfigResponse.BookingConfig(10, 30, true, true),
+                null,
+                null));
+        return service;
     }
 
     private static TrustedContextInput checkinInput(Instant readAt, Instant endInclusive) {

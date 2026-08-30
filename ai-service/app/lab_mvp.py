@@ -73,6 +73,14 @@ class _ManagedSummary(_ContextModel):
     active_booking_count: int = Field(ge=0)
 
 
+class _LabPolicySnapshot(_ContextModel):
+    checkin_window_minutes: int = Field(gt=0)
+    cancel_before_minutes: int = Field(ge=0)
+    hide_past_slots: bool
+    hide_cancelled_slots: bool
+    disable_booking_for_inactive_lab: bool
+
+
 class _CheckinPolicySnapshot(_ContextModel):
     end_inclusive: datetime
 
@@ -82,6 +90,7 @@ class _LabContext(_ContextModel):
     slot: _Slot | None
     booking: _Booking | None
     managed_summary: _ManagedSummary | None
+    lab_policy_snapshot: _LabPolicySnapshot | None
     checkin_policy_snapshot: _CheckinPolicySnapshot | None
     draft_only: bool
     policy_or_draft_eligibility_label: str | None
@@ -111,9 +120,6 @@ class LabAssistantMvp:
         if selected is None:
             return self._safe_refusal()
         tool_id, context, resources = selected
-        if tool_id == _POLICY_TOOL:
-            return self._safe_refusal()
-
         json_output = tool_id == _DRAFT_TOOL
         generation = self._backend.generate(
             AssistantKey.LAB_ASSISTANT,
@@ -196,6 +202,7 @@ class LabAssistantMvp:
                 context.slot is None
                 and context.booking is None
                 and context.managed_summary is None
+                and context.lab_policy_snapshot is not None
                 and context.checkin_policy_snapshot is None
                 and not context.draft_only
                 and context.policy_or_draft_eligibility_label == "POLICY_INFORMATION_ONLY"
@@ -206,6 +213,7 @@ class LabAssistantMvp:
                 context.slot is not None
                 and context.booking is None
                 and context.managed_summary is None
+                and context.lab_policy_snapshot is None
                 and context.checkin_policy_snapshot is None
                 and context.policy_or_draft_eligibility_label == expected_label
             )
@@ -214,6 +222,7 @@ class LabAssistantMvp:
                 context.slot is None
                 and context.booking is not None
                 and context.managed_summary is None
+                and context.lab_policy_snapshot is None
                 and context.checkin_policy_snapshot is None
                 and context.policy_or_draft_eligibility_label is None
             )
@@ -222,6 +231,7 @@ class LabAssistantMvp:
                 context.slot is None
                 and context.booking is not None
                 and context.managed_summary is None
+                and context.lab_policy_snapshot is None
                 and context.checkin_policy_snapshot is not None
                 and context.policy_or_draft_eligibility_label is None
             )
@@ -230,6 +240,7 @@ class LabAssistantMvp:
                 context.slot is None
                 and context.booking is None
                 and context.managed_summary is not None
+                and context.lab_policy_snapshot is None
                 and context.checkin_policy_snapshot is None
                 and context.policy_or_draft_eligibility_label is None
             )

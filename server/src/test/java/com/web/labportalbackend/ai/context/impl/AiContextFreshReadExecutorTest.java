@@ -258,7 +258,7 @@ class AiContextFreshReadExecutorTest {
     }
 
     private static AiLabContext context() {
-        return new AiLabContext(new AiLabContext.Laboratory(10L, "L", null), null, null, null, null,
+        return new AiLabContext(new AiLabContext.Laboratory(10L, "L", null), null, null, null, null, null,
                 false, "POLICY_INFORMATION_ONLY");
     }
 

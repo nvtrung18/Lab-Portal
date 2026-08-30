@@ -50,7 +50,7 @@ class AiAuthorizedContextReadToolHandlerTest {
                 capability.resourceType(), 17L, 10L, null, null, null,
                 AiResourceScope.EXISTING_BUSINESS_PERMISSION);
         AiLabContext context = new AiLabContext(
-                new AiLabContext.Laboratory(10L, "Lab", null), null, null, null, null,
+                new AiLabContext.Laboratory(10L, "Lab", null), null, null, null, null, null,
                 capability.riskBoundary() == AiActionRiskBoundary.DRAFT_ONLY, null);
         return new AiAuthorizedContext("request", AiAssistantKey.LAB_ASSISTANT, AiAssistantDomain.LAB,
                 capability, resource, new AiAuthorizedToolPolicy(registry.get(capability)),
