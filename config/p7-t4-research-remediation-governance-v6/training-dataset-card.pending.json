@@ -1,0 +1,13 @@
+{
+  "artifactIdentity": "544eb15afee0b9a009dbfeafa77cdb39a9249d035350cc5a666b4c2e524e1625",
+  "artifactType": "P7-T4-RESEARCH-REMEDIATION-V6-DATASET-CARD",
+  "datasetIdentity": "7a0c264196889beb0c91414cd10195681df895073dc7ce3aeef586123de751c1",
+  "disposition": "PENDING_TRAINING_APPROVAL",
+  "recordCounts": {
+    "evaluation": 48,
+    "train": 288,
+    "validation": 48
+  },
+  "remediationPriority": "DATASET_QUALITY_PRIMARY",
+  "schemaVersion": "1.0.0"
+}

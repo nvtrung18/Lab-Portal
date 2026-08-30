@@ -1,0 +1,140 @@
+{
+  "activationAllowed": false,
+  "artifactIdentity": "702e3e0d5d330cd5649ced03032903dc95b73ef6402aa1b924d97e737599ee45",
+  "artifactType": "P7-T4-RESEARCH-STRUCTURED-OUTPUT-SCHEMA-AMENDMENT",
+  "basedOn": {
+    "reference": "ai-service/config/schemas/structured-output-schemas.json",
+    "schemaId": "research-assistant-output-v1",
+    "schemaVersion": "1.0.0",
+    "sha256": "be16c67a61a12b37e2eb70eb4771a44c1bee37d3ca8800ad623d0d4e00bc08c8"
+  },
+  "changeScope": "ADDITIVE_REPORT_REVIEW_VARIANT_ONLY",
+  "schemaVersion": "1.0.0",
+  "schemas": [
+    {
+      "assistantKey": "RESEARCH_ASSISTANT",
+      "outputType": "STRUCTURED_DRAFT",
+      "schema": {
+        "$id": "https://lab-portal.local/schemas/p8/research-structured-draft/2.0.0",
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "oneOf": [
+          {
+            "additionalProperties": false,
+            "properties": {
+              "groupRef": {
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              "kind": {
+                "const": "RESEARCH_TASK_PROPOSAL_DRAFT"
+              },
+              "projectRef": {
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              "requiresHumanReview": {
+                "const": true
+              },
+              "taskTitle": {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              }
+            },
+            "required": [
+              "kind",
+              "projectRef",
+              "groupRef",
+              "taskTitle",
+              "requiresHumanReview"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "kind": {
+                "const": "RESEARCH_TASK_SUGGESTION_DRAFT"
+              },
+              "requiresHumanReview": {
+                "const": true
+              },
+              "suggestion": {
+                "maxLength": 4000,
+                "minLength": 1,
+                "type": "string"
+              },
+              "taskRef": {
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+                "type": "string"
+              }
+            },
+            "required": [
+              "kind",
+              "taskRef",
+              "suggestion",
+              "requiresHumanReview"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "advisoryOnly": {
+                "const": true
+              },
+              "issues": {
+                "items": {
+                  "maxLength": 300,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "maxItems": 5,
+                "minItems": 1,
+                "type": "array"
+              },
+              "kind": {
+                "const": "RESEARCH_REPORT_REVIEW_DRAFT"
+              },
+              "reportRef": {
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              "requiresHumanReview": {
+                "const": true
+              },
+              "reviewSummary": {
+                "maxLength": 800,
+                "minLength": 1,
+                "type": "string"
+              },
+              "suggestions": {
+                "items": {
+                  "maxLength": 300,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "maxItems": 5,
+                "minItems": 1,
+                "type": "array"
+              }
+            },
+            "required": [
+              "kind",
+              "reportRef",
+              "reviewSummary",
+              "issues",
+              "suggestions",
+              "requiresHumanReview",
+              "advisoryOnly"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "schemaId": "research-assistant-output-v2",
+      "schemaVersion": "2.0.0"
+    }
+  ],
+  "status": "PENDING_GOVERNANCE_APPROVAL"
+}

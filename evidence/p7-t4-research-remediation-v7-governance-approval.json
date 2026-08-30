@@ -1,0 +1,59 @@
+{
+  "approval": {
+    "approvedAt": "2026-08-27",
+    "approvedBy": "RESEARCH_GOVERNANCE_EVALUATION_APPROVAL_AUTHORITY",
+    "decision": "APPROVED"
+  },
+  "approvalAuthority": "RESEARCH_GOVERNANCE_EVALUATION_APPROVAL_AUTHORITY",
+  "approvedArtifacts": {
+    "failureAnalysisIdentity": "f3783f08d83ff45c1f3da0b262cb975270af32c29c9ce758cf428aa20bcffd0e",
+    "failureAnalysisReference": "config/p7-t4-research-remediation-governance-v7/failure-analysis-v6.json",
+    "trainingDataQualityIdentity": "b90d95f677140cd88b8be5dc79236a10ac40de0cc61b384039a1ba5ff804a96a",
+    "trainingDataQualityReference": "config/p7-t4-research-remediation-governance-v7/training-data-quality-spec-v7.json"
+  },
+  "artifactIdentity": "5bd1863605ea5b929c832864bcff168afae91eee3643a44516fe8301e68e54b5",
+  "artifactType": "P7-T4-RESEARCH-REMEDIATION-V7-GOVERNANCE-APPROVAL",
+  "authorization": {
+    "approvedV6RetentionReuseAllowed": true,
+    "constrainedDecodingAllowed": false,
+    "datasetV7PreparationAllowed": true,
+    "evaluatorOrSuiteMutationAllowed": false,
+    "externalEvaluationExecutionAllowed": false,
+    "externalTrainingAllowed": false,
+    "promotionAllowed": false,
+    "promptProfileV3ReuseAllowed": true,
+    "runtimeNormalizationAllowed": false,
+    "separateExternalEvaluationApprovalRequired": true,
+    "separateTrainingApprovalRequired": true
+  },
+  "preservedInputs": [
+    {
+      "reference": "datasets/p7-research-synthetic-training-dataset-v6/manifest.approved.json",
+      "sha256": "21e3db72e1eb0289ab59192c91b618279e8573b224237a79fed88427a82fad01",
+      "unchanged": true
+    },
+    {
+      "reference": "config/p7-t4-research-remediation-governance-v6/research-prompt-profile-v3.approved.json",
+      "sha256": "7b0be79e1e618642ece0e22d3e361579cb3d33564b1b0b42bb36508ba2ad9bcd",
+      "unchanged": true
+    },
+    {
+      "reference": "config/p7-t4-research-remediation-governance-v5/evaluator-contract-v2.approved.json",
+      "sha256": "b45c95030076f397d406599cbd2385adbb823dda8be7c99d34fba6f2bc31650d",
+      "unchanged": true
+    },
+    {
+      "reference": "config/p7-t4-research-remediation-governance-v5/evaluation-suite-v2.approved.json",
+      "sha256": "4e4aec1601077734db81dd7e00c1950573106802e4fd8abd992be718fb55e10b",
+      "unchanged": true
+    }
+  ],
+  "requestIdentity": "4ecf97b220aca189ff807b8b86288f9458bf96fd421152c6ed1a9f4a839913ba",
+  "requestReference": "config/p7-t4-research-remediation-governance-v7/governance-amendment-request.json",
+  "revocation": {
+    "authority": "RESEARCH_GOVERNANCE_EVALUATION_APPROVAL_AUTHORITY",
+    "status": "ACTIVE"
+  },
+  "schemaVersion": "1.0.0",
+  "status": "APPROVED"
+}

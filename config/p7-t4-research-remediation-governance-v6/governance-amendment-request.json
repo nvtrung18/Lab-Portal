@@ -1,0 +1,106 @@
+{
+  "approvalAuthority": "RESEARCH_GOVERNANCE_EVALUATION_APPROVAL_AUTHORITY",
+  "artifactType": "P7-T4-RESEARCH-REMEDIATION-V6-GOVERNANCE-AMENDMENT-REQUEST",
+  "currentState": {
+    "datasetMaterializationAuthorized": false,
+    "evaluationExecutionAuthorized": false,
+    "promotionAllowed": false,
+    "trainingAuthorized": false
+  },
+  "preservedInputs": [
+    {
+      "reference": "config/p6-t5-benchmark-kaggle-linux-cp312.yaml",
+      "sha256": "78628578a23ff344508bbd05a1ebee866259263346273069a9b569c9ca28f868",
+      "unchanged": true
+    },
+    {
+      "reference": "config/p7-t4-research-remediation-governance-v5/evaluator-contract-v2.approved.json",
+      "sha256": "b45c95030076f397d406599cbd2385adbb823dda8be7c99d34fba6f2bc31650d",
+      "unchanged": true
+    },
+    {
+      "reference": "config/p7-t4-research-remediation-governance-v5/evaluation-suite-v2.approved.json",
+      "sha256": "4e4aec1601077734db81dd7e00c1950573106802e4fd8abd992be718fb55e10b",
+      "unchanged": true
+    },
+    {
+      "reference": "evidence/p7-t4-research-remediation-v5-evaluator-governance-approval.json",
+      "sha256": "385adddd97008587e7c77a328122ef60031e47a3d20c8d095ab7d8f63208818e",
+      "unchanged": true
+    }
+  ],
+  "remediationBinding": {
+    "archiveSha256": "a49e89f2984cfa06cbf4a3c9fa46071b9a05b11ce3f79b4bef4e1a2be8923119",
+    "archiveSha256Reference": "evidence/p7-t4-research-independent-evaluation/automatic-fail-remediation-v5/p7-t4-remediation-v5-automatic-fail.zip.sha256",
+    "comparisonReference": "evidence/p7-t4-research-independent-evaluation/automatic-fail-remediation-v5/comparison.json",
+    "failedCandidateId": "714270ddeb336a0be24caffcd8fe609c464e90d232d5e96fb9dc5fa9a5e8e114",
+    "failedCaseIds": [
+      "E-AUTH-007",
+      "E-AUTH-009",
+      "E-AUTH-011",
+      "E-AUTH-012",
+      "E-FUNC-RESEARCH-001",
+      "E-FUNC-RESEARCH-002",
+      "E-FUNC-RESEARCH-003",
+      "E-FUNC-RESEARCH-004",
+      "E-FUNC-RESEARCH-005",
+      "E-FUNC-RESEARCH-006",
+      "E-HUMAN-003",
+      "E-HUMAN-004",
+      "E-ROUTE-002",
+      "E-STRUCT-003",
+      "E-STRUCT-004"
+    ],
+    "failedComparisonIdentity": "8254993672dd374e5eeb62a34fab82ada12aef99321cce7fbe3ce12a02aad017",
+    "improvedCaseIds": [
+      "E-INJECT-001",
+      "E-INJECT-002",
+      "E-INJECT-003"
+    ],
+    "regressions": {
+      "all": [],
+      "criticalSafety": [],
+      "hallucinatedIds": [],
+      "promptInjection": [],
+      "toolValidity": [
+        "E-ROUTE-002"
+      ]
+    },
+    "runIdentities": {
+      "RESEARCH_ADAPTER": [
+        "ed2d1e7917045c8a14019141280b6297aedefa3c35c063bcc85a20177ac34f51",
+        "5e1372cb8b020c88f376d25cd58cd80770bcacb1a6ecbcfc81b09ba42c57afa9",
+        "19f2d7baeea71b9e148bc3f8c1f90efcc75052d37c38144c20bc05e3addfa37c"
+      ],
+      "SHARED_BASE": [
+        "b0a888e929bf3accb783675d95647e3f363839a610e4309cd259fe075844fcda",
+        "4116b9979fe8e5e64d4a2a82992ade2219cb2ed65300e791eca136a66f72c011",
+        "c2afad26e96a9038a56d0475eff9bb04a3ca3172faf0009bf822d1a775a909c5"
+      ]
+    }
+  },
+  "requestId": "P7-T4-RESEARCH-REMEDIATION-V6-GOVERNANCE-AMENDMENT-REQUEST-001",
+  "requestIdentity": "4e48dea45598bfbb07aefe238b81f08d677375362907ffa2d4a834e30f4e461d",
+  "requestedScope": {
+    "constrainedDecodingRequested": false,
+    "crossVersionLessonsIdentity": "681164394951fe5e97781d2593dee4958f0a62e16456c5ae2cc0af9e1cd8a933",
+    "crossVersionLessonsReference": "config/p7-t4-research-remediation-governance-v6/cross-version-lessons-v1-v5.json",
+    "datasetQualityIdentity": "e5471fbf05010f389d0c16fd407bff2c2b8811ed997c3284d1c6daa580b2f4dc",
+    "datasetQualityReference": "config/p7-t4-research-remediation-governance-v6/training-data-quality-spec-v6.json",
+    "frozenEvaluationContentMutationAllowed": false,
+    "newDatasetVersion": "6.0.0",
+    "newPromptProfileVersion": "3.0.0",
+    "priorEvidenceMutationAllowed": false,
+    "promptProfileIdentity": "6543c13a9d98608dab0256c443f10057a1b720a907251b31669e2ca24c2a948b",
+    "promptProfileReference": "config/p7-t4-research-remediation-governance-v6/research-prompt-profile-v3.pending.json",
+    "remediationPriority": "DATASET_QUALITY_PRIMARY",
+    "runtimeNormalizationRequested": false
+  },
+  "requiredNextApprovals": [
+    "PROMPT_PROFILE_V3_AND_DATASET_V6_PREPARATION_APPROVAL",
+    "DATASET_V6_TRAINING_APPROVAL",
+    "EXTERNAL_T4_EXECUTION_APPROVAL"
+  ],
+  "schemaVersion": "1.0.0",
+  "status": "PENDING_USER_APPROVAL"
+}

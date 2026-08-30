@@ -29,6 +29,7 @@ ROOT = Path(__file__).resolve().parents[1]
 GOVERNANCE_PATH = ROOT / "docs/architecture/ai/data-governance.yml"
 PIPELINE_SCHEMA_VERSION = "1.0.0"
 PIPELINE_VERSION = "1.0.0"
+P7T1C_TRAINING_APPROVAL_ARTIFACT_TYPE = "P7-T1C-RESEARCH-TRAINING-GOVERNANCE-APPROVAL"
 SPRING_AUTHORIZATION_BOUNDARY = "SPRING_AUTHORIZED_CONTEXT"
 SPLIT_STRATEGY = "SHA256_CONTENT_BUCKET"
 SANITIZER_VERSION = "p6-t3-root-allowlist-v1"
@@ -131,6 +132,140 @@ def _local_path_diagnostics(value: object, path: str = "card") -> list[str]:
     elif isinstance(value, list):
         for index, child in enumerate(value):
             diagnostics.extend(_local_path_diagnostics(child, f"{path}/{index}"))
+    return diagnostics
+
+
+def _canonical_identity(value: dict[str, Any], identity_field: str) -> str:
+    return sha256_bytes(canonical_bytes({key: item for key, item in value.items() if key != identity_field}))
+
+
+def _repository_reference_path(reference: object, label: str, diagnostics: list[str]) -> Path | None:
+    _require_reference(reference, label, diagnostics)
+    if not isinstance(reference, str) or not reference.strip() or _contains_local_path(reference):
+        return None
+    candidate = (ROOT / reference).resolve()
+    try:
+        candidate.relative_to(ROOT.resolve())
+    except ValueError:
+        diagnostics.append(f"{label}: repository-relative reference required")
+        return None
+    return candidate
+
+
+def _validate_source_approval(
+    export: dict[str, Any],
+    card: dict[str, Any],
+    source_approval: object,
+    source_approval_reference: object,
+    source_export_sha256: object,
+    require_durable_source_approval: bool,
+) -> list[str]:
+    diagnostics: list[str] = []
+    if not isinstance(source_approval, dict):
+        return [
+            "export/source/sourcePermissionReference and approvalReference: "
+            "approved source approval sidecar required"
+        ]
+    required_fields = {
+        "artifactType", "schemaVersion", "status", "requestIdentity", "requestReference", "purpose",
+        "approvalAuthority", "source", "dataset", "scope", "sourcePermission", "approval", "revocation",
+        "sourceCommit", "artifactIdentity",
+    }
+    if set(source_approval) != required_fields:
+        diagnostics.append("source approval: exact fields required")
+    if (
+        source_approval.get("artifactType") != P7T1C_TRAINING_APPROVAL_ARTIFACT_TYPE
+        or source_approval.get("schemaVersion") != PIPELINE_SCHEMA_VERSION
+        or source_approval.get("status") != "APPROVED"
+        or source_approval.get("purpose") != "TRAINING"
+    ):
+        diagnostics.append("source approval: exact approved TRAINING artifact required")
+    if source_approval.get("artifactIdentity") != _canonical_identity(source_approval, "artifactIdentity"):
+        diagnostics.append("source approval: canonical artifact identity mismatch")
+
+    approval_path = _repository_reference_path(
+        source_approval_reference, "source approval/reference", diagnostics
+    )
+    if source_approval_reference not in card.get("source_permission_references", []):
+        diagnostics.append("source approval: verified card source-permission reference required")
+    if source_approval_reference not in card.get("approval_references", []):
+        diagnostics.append("source approval: approved card reference required")
+    if approval_path is None or not approval_path.is_file():
+        if require_durable_source_approval:
+            diagnostics.append("source approval: durable repository evidence required")
+    else:
+        try:
+            stored_approval = load_document(approval_path)
+        except DatasetPipelineError as error:
+            diagnostics.extend(error.diagnostics)
+        else:
+            if stored_approval != source_approval:
+                diagnostics.append("source approval: sidecar does not match durable repository evidence")
+
+    request_path = _repository_reference_path(
+        source_approval.get("requestReference"), "source approval/requestReference", diagnostics
+    )
+    request: object = None
+    if request_path is None or not request_path.is_file():
+        diagnostics.append("source approval: durable request evidence required")
+    else:
+        request = load_document(request_path)
+    if not isinstance(request, dict):
+        diagnostics.append("source approval: request object required")
+        request = {}
+    request_identity = request.get("requestIdentity")
+    if (
+        source_approval.get("requestIdentity") != request_identity
+        or request_identity != _canonical_identity(request, "requestIdentity")
+    ):
+        diagnostics.append("source approval: exact request identity binding required")
+    if request.get("status") != "PENDING_USER_APPROVAL" or request.get("approvalAuthority") != card.get("approval_authority"):
+        diagnostics.append("source approval: authoritative pending request required")
+    if request.get("source") != source_approval.get("source"):
+        diagnostics.append("source approval: exact request source binding required")
+    requested_scope = request.get("requestedScope", {})
+    approval_scope = source_approval.get("scope", {})
+    if (
+        not isinstance(requested_scope, dict)
+        or requested_scope.get("permittedPurposes") != ["TRAINING"]
+        or not isinstance(approval_scope, dict)
+        or approval_scope.get("permittedPurposes") != ["TRAINING"]
+    ):
+        diagnostics.append("source approval: exact TRAINING scope required")
+
+    approval_authority = source_approval.get("approvalAuthority")
+    approval_record = source_approval.get("approval")
+    if (
+        approval_authority != card.get("approval_authority")
+        or not isinstance(approval_record, dict)
+        or approval_record.get("decision") != "APPROVED"
+        or approval_record.get("approvedBy") != approval_authority
+        or not _nonempty_string(approval_record.get("approvedAt"))
+    ):
+        diagnostics.append("source approval: exact authority decision required")
+    permission = source_approval.get("sourcePermission")
+    if (
+        not isinstance(permission, dict)
+        or permission.get("status") != "VERIFIED"
+        or permission.get("sourceDataOwner") != card.get("source_data_owner")
+        or permission.get("evidenceReference") != source_approval_reference
+    ):
+        diagnostics.append("source approval: verified source permission required")
+    source = source_approval.get("source")
+    if not isinstance(source, dict):
+        diagnostics.append("source approval: source object required")
+        source = {}
+    if source.get("sourceSha256") != source_export_sha256 or source_export_sha256 != card.get("integrity", {}).get("checksum"):
+        diagnostics.append("source approval: exact source SHA-256 binding required")
+    if source.get("contentIdentity") != sha256_bytes(canonical_bytes(export.get("records"))):
+        diagnostics.append("source approval: exact source content identity required")
+    dataset = source_approval.get("dataset")
+    if (
+        not isinstance(dataset, dict)
+        or dataset.get("datasetId") != card.get("dataset_id")
+        or dataset.get("datasetVersion") != card.get("dataset_version")
+    ):
+        diagnostics.append("source approval: exact dataset binding required")
     return diagnostics
 
 
@@ -427,7 +562,15 @@ def validate_card(card: object, evaluation_manifest: object | None) -> None:
         raise DatasetPipelineError(diagnostics)
 
 
-def validate_controlled_export(export: object, card: dict[str, Any]) -> list[dict[str, Any]]:
+def validate_controlled_export(
+    export: object,
+    card: dict[str, Any],
+    *,
+    source_approval: object | None = None,
+    source_approval_reference: str | None = None,
+    source_export_sha256: str | None = None,
+    require_durable_source_approval: bool = True,
+) -> list[dict[str, Any]]:
     if not isinstance(export, dict):
         raise DatasetPipelineError("export: object required")
     diagnostics: list[str] = []
@@ -451,10 +594,28 @@ def validate_controlled_export(export: object, card: dict[str, Any]) -> list[dic
         diagnostics.append("export/source/authorizationBoundary: SPRING_AUTHORIZED_CONTEXT required")
     if source.get("sourceDataOwner") != card.get("source_data_owner"):
         diagnostics.append("export/source/sourceDataOwner: dataset card owner mismatch")
-    if source.get("sourcePermissionReference") not in card.get("source_permission_references", []):
-        diagnostics.append("export/source/sourcePermissionReference: verified card evidence required")
-    if source.get("approvalReference") not in card.get("approval_references", []):
-        diagnostics.append("export/source/approvalReference: approved card evidence required")
+    inline_permission = source.get("sourcePermissionReference")
+    inline_approval = source.get("approvalReference")
+    if inline_permission is None and inline_approval is None:
+        diagnostics.extend(
+            _validate_source_approval(
+                export,
+                card,
+                source_approval,
+                source_approval_reference,
+                source_export_sha256,
+                require_durable_source_approval,
+            )
+        )
+    elif inline_permission is None or inline_approval is None:
+        diagnostics.append("export/source: inline permission and approval references must be paired")
+    else:
+        if source_approval is not None or source_approval_reference is not None:
+            diagnostics.append("export/source: sidecar approval is forbidden when inline evidence exists")
+        if inline_permission not in card.get("source_permission_references", []):
+            diagnostics.append("export/source/sourcePermissionReference: verified card evidence required")
+        if inline_approval not in card.get("approval_references", []):
+            diagnostics.append("export/source/approvalReference: approved card evidence required")
     records = export.get("records")
     if not isinstance(records, list) or any(not isinstance(record, dict) for record in records):
         diagnostics.append("export/records: array of record objects required")
@@ -635,12 +796,22 @@ def build_dataset(
     config: object,
     output_directory: Path,
     evaluation_manifest: object | None = None,
+    *,
+    source_approval: object | None = None,
+    source_approval_reference: str | None = None,
+    source_export_sha256: str | None = None,
 ) -> dict[str, Any]:
     validate_config(config)
     validate_card(card, evaluation_manifest)
     assert isinstance(card, dict)
     assert isinstance(config, dict)
-    records = validate_controlled_export(export, card)
+    records = validate_controlled_export(
+        export,
+        card,
+        source_approval=source_approval,
+        source_approval_reference=source_approval_reference,
+        source_export_sha256=source_export_sha256,
+    )
     assert isinstance(export, dict) and isinstance(export["source"], dict)
 
     accepted, rejections, duplicates_removed, canonical_export_digest = prepare_records(records)
@@ -666,8 +837,10 @@ def build_dataset(
                 "identity": export["source"]["identity"],
                 "authorizationBoundary": export["source"]["authorizationBoundary"],
                 "sourceDataOwner": export["source"]["sourceDataOwner"],
-                "sourcePermissionReference": export["source"]["sourcePermissionReference"],
-                "approvalReference": export["source"]["approvalReference"],
+                "sourcePermissionReference": (
+                    export["source"]["sourcePermissionReference"] or source_approval_reference
+                ),
+                "approvalReference": export["source"]["approvalReference"] or source_approval_reference,
                 "canonicalSanitizedRecordsSha256": canonical_export_digest,
             },
             "pipeline_configuration": copy.deepcopy(config),
@@ -698,15 +871,24 @@ def main() -> int:
     parser.add_argument("--card", required=True, type=Path, help="approved P6-T2 dataset card (JSON or YAML)")
     parser.add_argument("--config", required=True, type=Path, help="deterministic P7-T1 pipeline config")
     parser.add_argument("--evaluation-manifest", type=Path, help="required frozen evaluation manifest for TRAINING")
+    parser.add_argument(
+        "--source-approval",
+        type=Path,
+        help="approved sidecar for an immutable source whose inline approval fields remain unresolved",
+    )
     parser.add_argument("--output", required=True, type=Path, help="new artifact directory")
     args = parser.parse_args()
     try:
+        export = load_document(args.export)
         manifest = build_dataset(
-            load_document(args.export),
+            export,
             load_document(args.card),
             load_document(args.config),
             args.output,
             load_document(args.evaluation_manifest) if args.evaluation_manifest else None,
+            source_approval=load_document(args.source_approval) if args.source_approval else None,
+            source_approval_reference=args.source_approval.as_posix() if args.source_approval else None,
+            source_export_sha256=sha256_bytes(args.export.read_bytes()),
         )
         print(f"PASS {manifest['dataset_id']} checksum={manifest['checksum']}")
         return 0

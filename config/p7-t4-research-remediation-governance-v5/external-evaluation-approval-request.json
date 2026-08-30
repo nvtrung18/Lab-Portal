@@ -1,0 +1,51 @@
+{
+  "artifactType": "P7-T4-RESEARCH-REMEDIATION-V5-EXTERNAL-EVALUATION-APPROVAL-REQUEST",
+  "candidate": {
+    "adapterIdentity": "f8bd9ab21fcf4d8b99418a18f0bc3d7370ae7024219c3c1f61a887fdcfc6ccd0",
+    "archiveSha256": "373c7f162afcdda903eada55fd0837a11cc5771a98145986ba4f94263e577e0d",
+    "candidateId": "714270ddeb336a0be24caffcd8fe609c464e90d232d5e96fb9dc5fa9a5e8e114",
+    "datasetIdentity": "591ded79431b4ffbba786a63fdffe7486f2a19fe787ef91261b26d8c33e01f67",
+    "evidenceIdentity": "42164c0c9bf7d1fdd3dcd4bc808c03dd24d4faea5004c630683bb28435414b2e",
+    "evidenceReference": "evidence/p7-t2-real-training/remediation-v5/real-training-evidence.json",
+    "manifestReference": "evidence/p7-t2-real-training/remediation-v5/adapter-manifest.json",
+    "trainingRunIdentity": "06633cfd985acca95c8057c3ac128e2274759f8b0f1f08679e3564c3dcfab429"
+  },
+  "evaluationContract": {
+    "approvalIdentity": "53d48c6489ecd7bb4f7a4a1c85bbe2813454c94c520310f28c74499d4bfdae05",
+    "approvalReference": "evidence/p7-t4-research-remediation-v5-evaluator-governance-approval.json",
+    "evaluatorIdentity": "99230c674b9064f1e06247dedd014f6e3da0714ca679017c07b3d877f1e285d3",
+    "evaluatorReference": "config/p7-t4-research-remediation-governance-v5/evaluator-contract-v2.approved.json",
+    "evaluatorVersion": "2.0.0",
+    "suiteIdentity": "65c87149ec97bf34a04257a80af0cba1114b48fe9702f6b3cacb253b573931a8",
+    "suiteReference": "config/p7-t4-research-remediation-governance-v5/evaluation-suite-v2.approved.json",
+    "suiteVersion": "2.0.0"
+  },
+  "execution": {
+    "gpuModel": "Tesla T4",
+    "modelVariants": [
+      "SHARED_BASE",
+      "RESEARCH_ADAPTER"
+    ],
+    "pythonVersion": "3.13.15",
+    "repetitions": [
+      "R01",
+      "R02",
+      "R03"
+    ],
+    "requiredRunCount": 6
+  },
+  "priorApprovals": {
+    "evaluatorSuiteApprovalIdentity": "53d48c6489ecd7bb4f7a4a1c85bbe2813454c94c520310f28c74499d4bfdae05",
+    "trainingApprovalIdentity": "19a405ca049b7bc15b8f2b96d5b2c85eb364f138309b5528a71518ee86632dba"
+  },
+  "requestIdentity": "597084ab82b8d3bc575490b021f34f5b693a963571b907bfdf72e83650f41c9d",
+  "requestedAuthorization": {
+    "constrainedDecodingAllowed": false,
+    "externalEvaluationExecutionAllowed": true,
+    "promotionAllowed": false,
+    "runtimeNormalizationAllowed": false
+  },
+  "schemaVersion": "1.0.0",
+  "sourceCommit": "e35abd606f9751f9e4c74b169bab1960e75de22c",
+  "status": "PENDING_USER_APPROVAL"
+}

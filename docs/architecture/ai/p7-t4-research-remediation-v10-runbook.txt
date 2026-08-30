@@ -1,0 +1,36 @@
+P7-T2 RESEARCH REMEDIATION V10 TARGETED CONTINUATION RUNBOOK
+
+Status: APPROVED_FOR_EXTERNAL_TRAINING_ONLY
+Runtime: Google Colab, CPython 3.13.15, Tesla T4, CUDA 11.8
+
+Purpose
+- Continue the exact governed v9 QLoRA adapter to address E-FUNC-RESEARCH-006.
+- Replay twelve representative cases that passed previously to guard regressions.
+- Keep the independent evaluation holdout outside optimization and early stopping.
+
+Immutable controls
+- Parent candidate: 99596dcf3c00c6a25a4c38f01de7f12d917100e539cf4ea777556ef0c0a055c2
+- Parent adapter identity: ceab7b262b050cf9195001e4d7e5f40aa7ef67011e0e7271e62d250ffe96c717
+- Dataset identity: abce232c1721788bae5a1686f9d017f295a6892555193140ae74c5a044e0a409
+- Maximum learning rate: 0.00002
+- Maximum steps: 48
+- Maximum runs: 1
+- Fresh base-model load is required; fresh adapter initialization is forbidden.
+- Runtime normalization and constrained decoding remain forbidden.
+
+Execution sequence
+1. Upload and extract p7-t2-research-remediation-v10-t4.zip.
+2. Validate the bundle before dependency installation.
+3. Install the locked CPython 3.13/T4 dependencies and restart the whole runtime.
+4. Validate runtime and bundle again.
+5. Download the exact locked base-model revision.
+6. Run offline preflight. Confirm the parent adapter identity and holdout exclusions.
+7. Run training exactly once. Do not resume from an optimizer checkpoint.
+8. Validate real output and finite metrics before archiving.
+9. Treat the result as CANDIDATE_ONLY. A new full P7-T4 evaluation is required.
+
+Stop conditions
+- Any identity, checksum, runtime, parent-adapter, split, or governance mismatch.
+- Any NaN or infinite metric.
+- Any attempt to use evaluation records for optimization or early stopping.
+- Any attempt to evaluate or promote using only this training approval.

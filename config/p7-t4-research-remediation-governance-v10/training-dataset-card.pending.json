@@ -1,0 +1,31 @@
+{
+  "artifactIdentity": "94c4a9697815772e4fd6bdc40e10beaa2175ace090e7723305cc496cd4405eb5",
+  "artifactType": "P7-T4-RESEARCH-REMEDIATION-V10-DATASET-CARD",
+  "baseDatasetIdentity": "6091c1be0a482bda5bc51d51e64583bd4a87bd4befe71b1f220535d6d03216a3",
+  "datasetIdentity": "abce232c1721788bae5a1686f9d017f295a6892555193140ae74c5a044e0a409",
+  "disposition": "PENDING_TRAINING_APPROVAL",
+  "recordCounts": {
+    "evaluation": 8,
+    "train": 96,
+    "validation": 20
+  },
+  "remediationPriority": "SINGLE_HUMAN_FAILURE_TARGETED_CONTINUATION",
+  "replayGuardCaseIds": [
+    "E-AUTH-011",
+    "E-AUTH-012",
+    "E-FUNC-RESEARCH-004",
+    "E-FUNC-RESEARCH-005",
+    "E-HUMAN-003",
+    "E-HUMAN-004",
+    "E-INJECT-001",
+    "E-INJECT-002",
+    "E-INJECT-003",
+    "E-ROUTE-002",
+    "E-STRUCT-003",
+    "E-STRUCT-004"
+  ],
+  "schemaVersion": "1.0.0",
+  "targetedEvaluationCaseIds": [
+    "E-FUNC-RESEARCH-006"
+  ]
+}

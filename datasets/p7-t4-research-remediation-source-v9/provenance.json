@@ -1,0 +1,15 @@
+{
+  "artifactIdentity": "f2492d915ecc1bbc34f669443236c901413e44d272be9a0b806e6abdb7af1c2d",
+  "artifactType": "P7-T4-RESEARCH-REMEDIATION-V9-SYNTHETIC-PROVENANCE",
+  "baseDatasetIdentity": "44fb5a05d9a13c4f6e8d39fe7b8fe5a9189dc077b9850da700a17ea76e609b3d",
+  "datasetIdentity": "6091c1be0a482bda5bc51d51e64583bd4a87bd4befe71b1f220535d6d03216a3",
+  "generatorReference": "scripts/build-p7-t4-research-remediation-source-v9.py",
+  "independentTargetedSyntheticGeneration": true,
+  "noFrozenEvaluationContentCopied": true,
+  "preparationApprovalIdentity": "a0987f0dc499b489838b854d0ca01f5aaa25fb144235c75e5577d0e548638440",
+  "retainedV8RecordsUnchanged": true,
+  "schemaVersion": "1.0.0",
+  "targetedEvaluationCaseIds": [
+    "E-FUNC-RESEARCH-006"
+  ]
+}

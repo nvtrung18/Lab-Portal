@@ -1,0 +1,176 @@
+{
+  "approval_authority": "RESEARCH_GOVERNANCE_DATA_GOVERNANCE_APPROVAL_AUTHORITY",
+  "approval_references": [
+    "evidence/p7-t1c-research-remediation-v3-training-governance-approval.json"
+  ],
+  "approval_status": "APPROVED",
+  "approved_purposes": [
+    "TRAINING"
+  ],
+  "artifacts": [
+    {
+      "filename": "evaluation.jsonl",
+      "recordCount": 34,
+      "sha256": "cb45999b01079356541433ebd02d3631c3b0fdee136597fb7c6e670d6e4ce620"
+    },
+    {
+      "filename": "rejections.jsonl",
+      "recordCount": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "filename": "train.jsonl",
+      "recordCount": 214,
+      "sha256": "22259afa821810d71a934f456038232bf06c9324b96285b272e0fdf930332b20"
+    },
+    {
+      "filename": "validation.jsonl",
+      "recordCount": 22,
+      "sha256": "bedeec15a7fe9f08d8004d5d0a98688eb605d00263d11bee240e9412a635ba9c"
+    }
+  ],
+  "assistant_key": "RESEARCH_ASSISTANT",
+  "card_reference": "config/p7-t1c-research-remediation-governance-v3/training-dataset-card.approved.json",
+  "category_ids": [
+    "CAT_RESEARCH_ASSIGNED_TASK",
+    "CAT_RESEARCH_DRAFT_CONTEXT"
+  ],
+  "checksum": "430390b22936bdea27c7e5b4022795ef483b55ac21f84e3e52cc663b9aaf9d10",
+  "checksum_algorithm": "SHA-256",
+  "classification": "SENSITIVE",
+  "counts": {
+    "acceptedRecords": 270,
+    "duplicatesRemoved": 0,
+    "rejectedRecords": 0,
+    "sourceRecords": 270,
+    "splits": {
+      "evaluation": 34,
+      "train": 214,
+      "validation": 22
+    }
+  },
+  "dataset_id": "p7-research-synthetic-training-dataset",
+  "dataset_steward": "RESEARCH_GOVERNANCE_DATASET_STEWARD",
+  "dataset_version": "3.0.0",
+  "evaluation_freeze_prerequisite": {
+    "evaluation_approval_reference": "evidence/p7-t1c-frozen-evaluation-governance-approval.json",
+    "evaluation_dataset_id": "P6-T4-EVALUATION-SUITES",
+    "evaluation_dataset_version": "1.0.0",
+    "evaluation_freeze_status": "FROZEN",
+    "evaluation_integrity_checksum": "8b75d356890a8a5c2318305589301b6ee6d73fbd3665b9af2063f98e13ea7417",
+    "evaluation_lifecycle_status": "FROZEN",
+    "evaluation_purpose": "EVALUATION"
+  },
+  "freeze_status": "NOT_REQUIRED",
+  "integrity": {
+    "checksum": "fa0e0ae6a10379e6e5b16a45a2fb8b1adc5963902b3ad94d6b573103622bb7bf",
+    "checksum_algorithm": "SHA-256",
+    "verified_at_reference": "evidence/p7-t1c-research-remediation-v3-training-governance-approval.json#/source/sourceSha256"
+  },
+  "lifecycle_status": "APPROVED",
+  "lineage": {
+    "source_references": [
+      "datasets/p7-t4-research-remediation-source-v3/source-export.json#sha256=fa0e0ae6a10379e6e5b16a45a2fb8b1adc5963902b3ad94d6b573103622bb7bf",
+      "datasets/p7-t4-research-remediation-source-v3/provenance.json#identity=6f7ddabd49be23afccf19911b0ac9498fe4d8c71b4b2544f5a51a279d38e9361",
+      "datasets/p7-t4-research-remediation-source-v3/training-contract.json#identity=4431a4dea11dc3e9f420cbc21070abb6d351db95a4507668e5c189f9040643ad",
+      "p7-t4-remediation-v3-content-sha256:5f0b65c3026f19e99058c7e15ed180aa304f1d91db8b69195ac828b65932b84c"
+    ],
+    "transform_references": [
+      "scripts/build-p7-t4-research-remediation-source-v3.py"
+    ]
+  },
+  "manifest_created_at_reference": "NOT_RECORDED_REPRODUCIBLE_BUILD",
+  "model_development_operation": "ADAPTER_FINE_TUNING",
+  "model_development_purpose": "TRAINING",
+  "partition": "RESEARCH_ASSISTANT",
+  "permitted_purposes": [
+    "DEVELOPMENT_TEST",
+    "TRAINING"
+  ],
+  "pipeline_configuration": {
+    "approvalReference": "evidence/p7-t1c-research-remediation-v3-training-governance-approval.json",
+    "cardReference": "config/p7-t1c-research-remediation-governance-v3/training-dataset-card.approved.json",
+    "contractReference": "datasets/p7-t4-research-remediation-source-v3/training-contract.json",
+    "pipelineVersion": "2.0.0",
+    "schemaVersion": "2.0.0",
+    "sourceReference": "datasets/p7-t4-research-remediation-source-v3/source-export.json",
+    "split": {
+      "evaluationWeight": 10,
+      "seed": "lab-portal-p7-t4-remediation-v3",
+      "strategy": "SHA256_CONTENT_BUCKET",
+      "trainWeight": 80,
+      "validationWeight": 10
+    }
+  },
+  "pipeline_configuration_sha256": "c8a50111b77ba2cc4d749615c4e40aca2e347bdc3ff4056c95849594281efa87",
+  "pipeline_schema_version": "2.0.0",
+  "pipeline_version": "2.0.0",
+  "prohibited_purposes": [],
+  "provenance": {
+    "type": "SYNTHETIC"
+  },
+  "retention": {
+    "disposition_action": "DELETE",
+    "disposition_owner": "RESEARCH_GOVERNANCE_DATASET_STEWARD",
+    "evidence_reference": "datasets/p7-t4-research-remediation-source-v3/provenance.json#/governance",
+    "recheck_or_expiry_reference": "evidence/p7-t1c-research-remediation-v3-training-governance-approval.json#/revocation",
+    "retention_class": "EPHEMERAL_DEVELOPMENT",
+    "start_reference": "evidence/p7-t1c-research-remediation-v3-training-governance-approval.json#/approval/approvedAt",
+    "trigger_reference": "evidence/p7-t1c-research-remediation-v3-training-governance-approval.json#/approval"
+  },
+  "revocation_reference": "evidence/p7-t1c-research-remediation-v3-training-governance-approval.json#/revocation",
+  "sanitization": {
+    "disposition": "SYNTHETIC_GENERATION_ONLY",
+    "field_decisions": [
+      {
+        "category_id": "CAT_RESEARCH_ASSIGNED_TASK",
+        "field_decision": "SYNTHETIC_REPLACE",
+        "residual_risk_reference": "datasets/p7-t4-research-remediation-source-v3/provenance.json#/coverage",
+        "result_reference": "datasets/p7-t4-research-remediation-source-v3/provenance.json#/antiLeakage",
+        "reviewer_reference": "evidence/p7-t1c-research-remediation-v3-training-governance-approval.json",
+        "transform_reference": "scripts/build-p7-t4-research-remediation-source-v3.py"
+      },
+      {
+        "category_id": "CAT_RESEARCH_DRAFT_CONTEXT",
+        "field_decision": "SYNTHETIC_REPLACE",
+        "residual_risk_reference": "datasets/p7-t4-research-remediation-source-v3/provenance.json#/coverage",
+        "result_reference": "datasets/p7-t4-research-remediation-source-v3/provenance.json#/antiLeakage",
+        "reviewer_reference": "evidence/p7-t1c-research-remediation-v3-training-governance-approval.json",
+        "transform_reference": "scripts/build-p7-t4-research-remediation-source-v3.py"
+      }
+    ],
+    "residual_risk_reference": "datasets/p7-t4-research-remediation-source-v3/provenance.json#/coverage",
+    "result_reference": "datasets/p7-t4-research-remediation-source-v3/provenance.json#/antiLeakage",
+    "reviewer_reference": "evidence/p7-t1c-research-remediation-v3-training-governance-approval.json",
+    "transform_reference": "scripts/build-p7-t4-research-remediation-source-v3.py"
+  },
+  "serialization": {
+    "encoding": "UTF-8",
+    "format": "JSONL",
+    "newline": "LF",
+    "version": "canonical-jsonl-utf8-lf-v1"
+  },
+  "source_data_owner": "RESEARCH_GOVERNANCE_DOMAIN_DATA_OWNER",
+  "source_export": {
+    "contentIdentity": "5f0b65c3026f19e99058c7e15ed180aa304f1d91db8b69195ac828b65932b84c",
+    "provenanceIdentity": "6f7ddabd49be23afccf19911b0ac9498fe4d8c71b4b2544f5a51a279d38e9361",
+    "reference": "datasets/p7-t4-research-remediation-source-v3/source-export.json",
+    "sha256": "fa0e0ae6a10379e6e5b16a45a2fb8b1adc5963902b3ad94d6b573103622bb7bf"
+  },
+  "source_permission_references": [
+    "evidence/p7-t1c-research-remediation-v3-training-governance-approval.json"
+  ],
+  "source_permission_status": "VERIFIED",
+  "split_configuration": {
+    "evaluationWeight": 10,
+    "seed": "lab-portal-p7-t4-remediation-v3",
+    "strategy": "SHA256_CONTENT_BUCKET",
+    "trainWeight": 80,
+    "validationWeight": 10
+  },
+  "training_approval_identity": "a1f92aec9caca9b053daf780c1bfde951abdb88e2fe3e92f4f2545c676d45015",
+  "training_contract_identity": "4431a4dea11dc3e9f420cbc21070abb6d351db95a4507668e5c189f9040643ad",
+  "training_contract_reference": "datasets/p7-t4-research-remediation-source-v3/training-contract.json",
+  "use_decision": "SYNTHETIC_ONLY",
+  "visibility": "RESEARCH_ASSISTANT_ONLY"
+}

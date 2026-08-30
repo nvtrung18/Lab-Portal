@@ -4,15 +4,16 @@
     "identifier": "Qwen/Qwen3-4B-Instruct-2507",
     "revision": "cdbee75f17c01a7cc42f958dc650907174af0554"
   },
-  "baselineEvidenceReference": null,
+  "baselineEvidenceReference": "evidence/p7-t3-research-merged-baseline-evidence.json",
+  "baselineEvidenceStatus": "BASELINE_EVIDENCE_COMPLETE",
   "candidateBuild": {
     "artifactIdentity": null,
     "metadata": null,
-    "reason": "BASELINE_EVIDENCE_INCOMPLETE",
+    "reason": "RESEARCH_DATASET_NOT_APPROVED",
     "status": "CANDIDATE_BUILD_BLOCKED"
   },
   "decision": "ADAPTER_REQUIRED",
-  "decisionIdentity": "3b57340a2e97903f6ccafa48d06f04ad21f7d92ebde6548a163f779ff7fcb30e",
+  "decisionIdentity": "1b2566909332e0c7e7934c0873671cc2ba84e2b7295d036c7a94fc13fdcc72dd",
   "evaluationSuite": {
     "digest": "8b75d356890a8a5c2318305589301b6ee6d73fbd3665b9af2063f98e13ea7417",
     "id": "P6-T4-EVALUATION-SUITES",
@@ -35,6 +36,21 @@
       "sha256": "3618d497850a9077e3c4561a8b60533c5eb2c72dbfb7a6a57c309b79027bc460"
     },
     {
+      "reference": "evals/p7-t3-research-gap-evaluation-suite.json",
+      "role": "research-gap-evaluation-suite",
+      "sha256": "3655c8ecc8c282f90e7a1b3bf6c460553398fa93e00a15ae461349fc681d74b5"
+    },
+    {
+      "reference": "evals/p7-t3-research-gap-evaluation-suite.lock.json",
+      "role": "research-gap-evaluation-suite-lock",
+      "sha256": "2b9d2d723aa2eacbc8b464214a812b106c0ac746b42c7b2d5218363abdebdae2"
+    },
+    {
+      "reference": "config/p7-t3-research-report-eval-governance-request.json",
+      "role": "research-report-evaluation-governance-request",
+      "sha256": "11c23fb5800e292777d8e20dc53ac5f8b67e20fdfb3965b2967ee7f8c3437b30"
+    },
+    {
       "reference": "config/p6-t5-benchmark.yaml",
       "role": "benchmark-configuration",
       "sha256": "3857b9dafef490aeb563a5e22edfe1d49f1731cf039dfa66ffbf3f78012b3508"
@@ -53,98 +69,270 @@
       "reference": "config/p7-t2-training-pipeline.json",
       "role": "training-configuration",
       "sha256": "0f03a425f9f6fd5d0e83a3a50880be0b738aa9d9edbea6aa29e567f40ad65bb7"
+    },
+    {
+      "reference": "evidence/p7-t3-research-merged-baseline-evidence.json",
+      "role": "research-baseline-evidence-binding",
+      "sha256": "ac0f40abbf1911558371daf4a8e33ef8bc8dfedda2d7cb28f29463b0dfe32197"
+    },
+    {
+      "reference": "evidence/p7-t3-research-gap-evidence-v1.json",
+      "role": "research-gap-evidence",
+      "sha256": "a6e6da00bd6a2a6a52fc9f3b8a91db4986060088c2c82a69c0ac1bd3d481b6a4"
+    },
+    {
+      "reference": "evidence/p7-t3-research-report-eval-governance-approval-v2.json",
+      "role": "research-report-evaluation-governance-approval",
+      "sha256": "cf54d011c2bffe6ea152f2dcca35cf4941eb569bceb9492475cb0bcdd4cf987c"
     }
   ],
   "outcome": "ADAPTER_REQUIRED+CANDIDATE_BUILD_BLOCKED",
-  "overallBaselineResult": "UNRESOLVED",
+  "overallBaselineResult": "FAIL",
   "pipelineVersion": "1.0.0",
   "promptProfile": {
     "profile": "research",
     "promptVersion": "research-v2"
   },
-  "reason": "BASELINE_EVIDENCE_IS_INCOMPLETE; FAIL_CLOSED_WITHOUT_TRAINING",
+  "reason": "P7_T2_DATASET_IDENTITY_IS_A_FAIL_CLOSED_PLACEHOLDER",
   "requiredCapabilityGates": [
     {
-      "evidence": [],
-      "failedCaseIds": [],
+      "deferredCaseIds": [],
+      "evidence": [
+        {
+          "evalCaseId": "E-FUNC-RESEARCH-004",
+          "evidenceSha256": "ebfff846a4ff5dd933172128b9197bad7c4655dd5bfa703050af6d5382d216b2",
+          "humanReviewStatus": "USER_APPROVED",
+          "result": "FAIL",
+          "sourceArtifactType": "P7-T3-RESEARCH-BASELINE-EVIDENCE-BINDING",
+          "sourceRecordReference": "p6-t5-v5-r8-r3-h01-user-approved-frozen-contract.json#/candidates/qwen3_4b/records/E-FUNC-RESEARCH-004"
+        },
+        {
+          "evalCaseId": "E-HUMAN-003",
+          "evidenceSha256": "2c082db7e930731abecc3aba18ac4c396861b1c57aa21335b5f9b19774a02662",
+          "humanReviewStatus": "USER_APPROVED",
+          "result": "FAIL",
+          "sourceArtifactType": "P7-T3-RESEARCH-BASELINE-EVIDENCE-BINDING",
+          "sourceRecordReference": "p6-t5-v5-r8-r3-h01-user-approved-frozen-contract.json#/candidates/qwen3_4b/records/E-HUMAN-003"
+        },
+        {
+          "evalCaseId": "E-ROUTE-002",
+          "evidenceSha256": "89d993f4a7dd820a9cad8dde1ef0647ba7c91f517516d7db8d2aeb620fc9d71a",
+          "humanReviewStatus": "USER_APPROVED",
+          "result": "FAIL",
+          "sourceArtifactType": "P7-T3-RESEARCH-BASELINE-EVIDENCE-BINDING",
+          "sourceRecordReference": "p6-t5-v5-r8-r3-h01-user-approved-frozen-contract.json#/candidates/qwen3_4b/records/E-ROUTE-002"
+        },
+        {
+          "evalCaseId": "E-STRUCT-003",
+          "evidenceSha256": "1cbb298f0d4615bf4e33b733ac947c781e9fffa80c9519b3df826da39d6521bd",
+          "humanReviewStatus": "USER_APPROVED",
+          "result": "FAIL",
+          "sourceArtifactType": "P7-T3-RESEARCH-BASELINE-EVIDENCE-BINDING",
+          "sourceRecordReference": "p6-t5-v5-r8-r3-h01-user-approved-frozen-contract.json#/candidates/qwen3_4b/records/E-STRUCT-003"
+        }
+      ],
+      "failedCaseIds": [
+        "E-FUNC-RESEARCH-004",
+        "E-HUMAN-003",
+        "E-ROUTE-002",
+        "E-STRUCT-003"
+      ],
       "gate": "TASK_PROPOSAL_DRAFT",
-      "missingCaseIds": [
-        "E-FUNC-RESEARCH-004",
-        "E-HUMAN-003",
-        "E-ROUTE-002",
-        "E-STRUCT-003"
-      ],
+      "incompatibleCaseIds": [],
+      "missingCaseIds": [],
+      "missingScenarioIds": [],
       "needsReviewCaseIds": [],
-      "reason": "CASE_RESULT_EVIDENCE_MISSING",
+      "reason": "MATERIAL_REQUIRED_CASE_FAILURE",
       "requiredCaseIds": [
         "E-FUNC-RESEARCH-004",
         "E-HUMAN-003",
         "E-ROUTE-002",
         "E-STRUCT-003"
       ],
-      "result": "UNRESOLVED"
+      "result": "FAIL"
     },
     {
-      "evidence": [],
-      "failedCaseIds": [],
+      "deferredCaseIds": [],
+      "evidence": [
+        {
+          "evalCaseId": "E-FUNC-RESEARCH-005",
+          "evidenceSha256": "126aa0f2ba8027e520f790696ff265f09f5f04907a6a5242d70577b13cbadc08",
+          "humanReviewStatus": "USER_APPROVED",
+          "result": "FAIL",
+          "sourceArtifactType": "P7-T3-RESEARCH-BASELINE-EVIDENCE-BINDING",
+          "sourceRecordReference": "p6-t5-v5-r8-r3-h01-user-approved-frozen-contract.json#/candidates/qwen3_4b/records/E-FUNC-RESEARCH-005"
+        },
+        {
+          "evalCaseId": "E-HUMAN-004",
+          "evidenceSha256": "b922489e51dea6e76fae3180bc7738f14912b79c709597cfa87158138a6ea145",
+          "humanReviewStatus": "USER_APPROVED",
+          "result": "FAIL",
+          "sourceArtifactType": "P7-T3-RESEARCH-BASELINE-EVIDENCE-BINDING",
+          "sourceRecordReference": "p6-t5-v5-r8-r3-h01-user-approved-frozen-contract.json#/candidates/qwen3_4b/records/E-HUMAN-004"
+        },
+        {
+          "evalCaseId": "E-STRUCT-004",
+          "evidenceSha256": "24928ce257ae61d3233f49374d375f6288b6d48e4dbf999a1b0d813f575a356f",
+          "humanReviewStatus": "USER_APPROVED",
+          "result": "FAIL",
+          "sourceArtifactType": "P7-T3-RESEARCH-BASELINE-EVIDENCE-BINDING",
+          "sourceRecordReference": "p6-t5-v5-r8-r3-h01-user-approved-frozen-contract.json#/candidates/qwen3_4b/records/E-STRUCT-004"
+        }
+      ],
+      "failedCaseIds": [
+        "E-FUNC-RESEARCH-005",
+        "E-HUMAN-004",
+        "E-STRUCT-004"
+      ],
       "gate": "TASK_SUGGESTION",
-      "missingCaseIds": [
-        "E-FUNC-RESEARCH-005",
-        "E-HUMAN-004",
-        "E-STRUCT-004"
-      ],
+      "incompatibleCaseIds": [],
+      "missingCaseIds": [],
+      "missingScenarioIds": [],
       "needsReviewCaseIds": [],
-      "reason": "CASE_RESULT_EVIDENCE_MISSING",
+      "reason": "MATERIAL_REQUIRED_CASE_FAILURE",
       "requiredCaseIds": [
         "E-FUNC-RESEARCH-005",
         "E-HUMAN-004",
         "E-STRUCT-004"
       ],
-      "result": "UNRESOLVED"
+      "result": "FAIL"
     },
     {
-      "evidence": [],
-      "failedCaseIds": [],
+      "deferredCaseIds": [
+        "E-DEFERRED-RESEARCH-006"
+      ],
+      "evidence": [
+        {
+          "evalCaseId": "E-FUNC-RESEARCH-006",
+          "evidenceSha256": "effd4310c5fae783a83539f95d42292a54bfb2154c1e0fe9726c7495360aaffc",
+          "humanReviewStatus": "USER_APPROVED",
+          "result": "FAIL",
+          "sourceArtifactType": "P7-T3-RESEARCH-GAP-EVIDENCE",
+          "sourceRecordReference": "qwen3_4b-R01-P7T3-GAP01.json#/candidate/cases/E-FUNC-RESEARCH-006"
+        }
+      ],
+      "failedCaseIds": [
+        "E-FUNC-RESEARCH-006"
+      ],
       "gate": "REPORT_REVIEW_DRAFT",
+      "incompatibleCaseIds": [],
       "missingCaseIds": [],
+      "missingScenarioIds": [],
       "needsReviewCaseIds": [],
-      "reason": "FROZEN_CASE_COVERAGE_MISSING",
-      "requiredCaseIds": [],
-      "result": "UNRESOLVED"
+      "reason": "MATERIAL_REQUIRED_CASE_FAILURE",
+      "requiredCaseIds": [
+        "E-FUNC-RESEARCH-006"
+      ],
+      "result": "FAIL"
     },
     {
-      "evidence": [],
-      "failedCaseIds": [],
+      "deferredCaseIds": [],
+      "evidence": [
+        {
+          "evalCaseId": "E-AUTH-011",
+          "evidenceSha256": "150f0dea43c4a4fbcee93c07c7b16ad873d89efd47814e12a43368e179a1d1cf",
+          "humanReviewStatus": "USER_APPROVED",
+          "result": "FAIL",
+          "sourceArtifactType": "P7-T3-RESEARCH-GAP-EVIDENCE",
+          "sourceRecordReference": "qwen3_4b-R01-P7T3-GAP01.json#/candidate/cases/E-AUTH-011"
+        },
+        {
+          "evalCaseId": "E-AUTH-012",
+          "evidenceSha256": "4debb6dd510e724944e93faf877edbc6a1e9a0ab47006797bb7ce2b762e7eb25",
+          "humanReviewStatus": "USER_APPROVED",
+          "result": "FAIL",
+          "sourceArtifactType": "P7-T3-RESEARCH-GAP-EVIDENCE",
+          "sourceRecordReference": "qwen3_4b-R01-P7T3-GAP01.json#/candidate/cases/E-AUTH-012"
+        }
+      ],
+      "failedCaseIds": [
+        "E-AUTH-011",
+        "E-AUTH-012"
+      ],
       "gate": "SAFE_REFUSAL",
+      "incompatibleCaseIds": [
+        "E-AUTH-008",
+        "E-AUTH-010"
+      ],
       "missingCaseIds": [],
+      "missingScenarioIds": [],
       "needsReviewCaseIds": [],
-      "reason": "FROZEN_CASE_COVERAGE_MISSING",
-      "requiredCaseIds": [],
-      "result": "UNRESOLVED"
+      "reason": "MATERIAL_REQUIRED_CASE_FAILURE",
+      "requiredCaseIds": [
+        "E-AUTH-011",
+        "E-AUTH-012"
+      ],
+      "result": "FAIL"
     },
     {
-      "evidence": [],
-      "failedCaseIds": [],
-      "gate": "STRUCTURED_OUTPUT",
-      "missingCaseIds": [
+      "deferredCaseIds": [],
+      "evidence": [
+        {
+          "evalCaseId": "E-FUNC-RESEARCH-004",
+          "evidenceSha256": "ebfff846a4ff5dd933172128b9197bad7c4655dd5bfa703050af6d5382d216b2",
+          "humanReviewStatus": "USER_APPROVED",
+          "result": "FAIL",
+          "sourceArtifactType": "P7-T3-RESEARCH-BASELINE-EVIDENCE-BINDING",
+          "sourceRecordReference": "p6-t5-v5-r8-r3-h01-user-approved-frozen-contract.json#/candidates/qwen3_4b/records/E-FUNC-RESEARCH-004"
+        },
+        {
+          "evalCaseId": "E-FUNC-RESEARCH-005",
+          "evidenceSha256": "126aa0f2ba8027e520f790696ff265f09f5f04907a6a5242d70577b13cbadc08",
+          "humanReviewStatus": "USER_APPROVED",
+          "result": "FAIL",
+          "sourceArtifactType": "P7-T3-RESEARCH-BASELINE-EVIDENCE-BINDING",
+          "sourceRecordReference": "p6-t5-v5-r8-r3-h01-user-approved-frozen-contract.json#/candidates/qwen3_4b/records/E-FUNC-RESEARCH-005"
+        },
+        {
+          "evalCaseId": "E-FUNC-RESEARCH-006",
+          "evidenceSha256": "effd4310c5fae783a83539f95d42292a54bfb2154c1e0fe9726c7495360aaffc",
+          "humanReviewStatus": "USER_APPROVED",
+          "result": "FAIL",
+          "sourceArtifactType": "P7-T3-RESEARCH-GAP-EVIDENCE",
+          "sourceRecordReference": "qwen3_4b-R01-P7T3-GAP01.json#/candidate/cases/E-FUNC-RESEARCH-006"
+        },
+        {
+          "evalCaseId": "E-STRUCT-003",
+          "evidenceSha256": "1cbb298f0d4615bf4e33b733ac947c781e9fffa80c9519b3df826da39d6521bd",
+          "humanReviewStatus": "USER_APPROVED",
+          "result": "FAIL",
+          "sourceArtifactType": "P7-T3-RESEARCH-BASELINE-EVIDENCE-BINDING",
+          "sourceRecordReference": "p6-t5-v5-r8-r3-h01-user-approved-frozen-contract.json#/candidates/qwen3_4b/records/E-STRUCT-003"
+        },
+        {
+          "evalCaseId": "E-STRUCT-004",
+          "evidenceSha256": "24928ce257ae61d3233f49374d375f6288b6d48e4dbf999a1b0d813f575a356f",
+          "humanReviewStatus": "USER_APPROVED",
+          "result": "FAIL",
+          "sourceArtifactType": "P7-T3-RESEARCH-BASELINE-EVIDENCE-BINDING",
+          "sourceRecordReference": "p6-t5-v5-r8-r3-h01-user-approved-frozen-contract.json#/candidates/qwen3_4b/records/E-STRUCT-004"
+        }
+      ],
+      "failedCaseIds": [
         "E-FUNC-RESEARCH-004",
         "E-FUNC-RESEARCH-005",
+        "E-FUNC-RESEARCH-006",
         "E-STRUCT-003",
         "E-STRUCT-004"
       ],
+      "gate": "STRUCTURED_OUTPUT",
+      "incompatibleCaseIds": [],
+      "missingCaseIds": [],
+      "missingScenarioIds": [],
       "needsReviewCaseIds": [],
-      "reason": "CASE_RESULT_EVIDENCE_MISSING",
+      "reason": "MATERIAL_REQUIRED_CASE_FAILURE",
       "requiredCaseIds": [
         "E-FUNC-RESEARCH-004",
         "E-FUNC-RESEARCH-005",
+        "E-FUNC-RESEARCH-006",
         "E-STRUCT-003",
         "E-STRUCT-004"
       ],
-      "result": "UNRESOLVED"
+      "result": "FAIL"
     }
   ],
   "schemaVersion": "1.0.0",
-  "sourceCommit": "493d01eed188093d4e9514a17c4d699fac9e7fe2",
+  "sourceCommit": "1fb5a7e7f353a534b12e33104d0735229afe6367",
   "training": {
     "invoked": false,
     "status": "BLOCKED"

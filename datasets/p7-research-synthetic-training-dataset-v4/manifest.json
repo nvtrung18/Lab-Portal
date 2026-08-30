@@ -1,0 +1,67 @@
+{
+  "approval_references": [],
+  "approval_status": "PENDING",
+  "approved_purposes": [],
+  "artifacts": [
+    {
+      "filename": "evaluation.jsonl",
+      "recordCount": 16,
+      "sha256": "490face12d713cc55c2dc8049a583cacb235593cfd7ae7ccc735b1b0d3511a36"
+    },
+    {
+      "filename": "rejections.jsonl",
+      "recordCount": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "filename": "train.jsonl",
+      "recordCount": 112,
+      "sha256": "b33fb49817952dd66001424a5bc2604f2e37ab809355b4f0b981c5990e01f319"
+    },
+    {
+      "filename": "validation.jsonl",
+      "recordCount": 16,
+      "sha256": "bc8437a3d4464e09b7c5aae5aa7be0c3a3c97c6ef0850104a0f7cd1c7d010211"
+    }
+  ],
+  "assistant_key": "RESEARCH_ASSISTANT",
+  "card_reference": "config/p7-t4-research-remediation-governance-v4/training-dataset-card.pending.json",
+  "contractHoldout": {
+    "frozenP7T4Evaluation": false,
+    "split": "evaluation",
+    "usedForOptimization": false
+  },
+  "counts": {
+    "acceptedRecords": 144,
+    "rejectedRecords": 0,
+    "sourceRecords": 144,
+    "splits": {
+      "evaluation": 16,
+      "train": 112,
+      "validation": 16
+    }
+  },
+  "dataset_id": "p7-research-synthetic-training-dataset",
+  "dataset_version": "4.0.0",
+  "lifecycle_status": "PENDING_TRAINING_APPROVAL",
+  "manifestIdentity": "2389e2b8c97dd719cce0bd98e51b3769e333489d637096b4e40c68bf3826a9ae",
+  "permitted_purposes": [
+    "DEVELOPMENT_TEST"
+  ],
+  "provenance_identity": "1652394aa1542dd5a5fb809d3ca70a78e7e374c9c6f029cd57825db93a7cc336",
+  "provenance_reference": "datasets/p7-t4-research-remediation-source-v4/provenance.json",
+  "source_content_identity": "b3a9814071b8344c33e350d7217a0286d3136248d2ec79c98f7379f097a2f4c4",
+  "source_reference": "datasets/p7-t4-research-remediation-source-v4/source-export.json",
+  "source_sha256": "d4ade7ef34df3cff59d99e63842ae1879b51d2d8693adbf25e25be8723b8f6b3",
+  "split_configuration": {
+    "perUseCaseLanguage": {
+      "evaluation": 2,
+      "train": 14,
+      "validation": 2
+    },
+    "strategy": "CONTENT_ID_ORDERED_STRATIFIED"
+  },
+  "trainingAuthorized": false,
+  "training_contract_identity": "c535dca968c54b9206b91eb7969036d4c6973ab91a3b8bc5f9b165699b4f79e5",
+  "training_contract_reference": "datasets/p7-t4-research-remediation-source-v4/training-contract.json"
+}

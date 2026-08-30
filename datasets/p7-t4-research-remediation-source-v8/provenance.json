@@ -1,0 +1,15 @@
+{
+  "artifactIdentity": "1cbf8dd131cef2414e7cfbe5bdea3010cde6f1b91b2cb31e3789e95f24a33c03",
+  "artifactType": "P7-T4-RESEARCH-REMEDIATION-V8-SYNTHETIC-PROVENANCE",
+  "baseDatasetIdentity": "b973bf0a387b35b84140a2db1d2bbf7c5c0d7f054102a968c10bd1df6faeff23",
+  "datasetIdentity": "44fb5a05d9a13c4f6e8d39fe7b8fe5a9189dc077b9850da700a17ea76e609b3d",
+  "generatorReference": "scripts/build-p7-t4-research-remediation-source-v8.py",
+  "independentTargetedSyntheticGeneration": true,
+  "noFrozenEvaluationContentCopied": true,
+  "preparationApprovalIdentity": "482525b6de1fa7dcea165d522bf8745d7e18b57aa12303fed46832969cc0d82c",
+  "retainedV7RecordsUnchanged": true,
+  "schemaVersion": "1.0.0",
+  "targetedEvaluationCaseIds": [
+    "E-INJECT-001"
+  ]
+}

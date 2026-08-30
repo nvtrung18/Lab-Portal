@@ -1,0 +1,50 @@
+{
+  "approval_status": "APPROVED",
+  "artifacts": [
+    {
+      "filename": "evaluation.jsonl",
+      "recordCount": 48,
+      "sha256": "aa506c05f67ff0aa7848169a198cc38e79134a0094e5fe7ce27e46441a99b9e2"
+    },
+    {
+      "filename": "rejections.jsonl",
+      "recordCount": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "filename": "train.jsonl",
+      "recordCount": 288,
+      "sha256": "623d23faf548c52aa9bd0273908a23ebe2dbdfa30e7c745e3241cb4701d73599"
+    },
+    {
+      "filename": "validation.jsonl",
+      "recordCount": 48,
+      "sha256": "2f6d66a81ba79cbc95cb80d47a8e502cb3538138f4c8a56c9651c09fedab2124"
+    }
+  ],
+  "checksum": "422ccde21b875f7612213671b7ea037bb4cf3670f6b55f57ad6904bc4c4d5ec9",
+  "contractHoldout": {
+    "recordCount": 48,
+    "split": "evaluation",
+    "usedForOptimization": false
+  },
+  "crossVersionLessonsIdentity": "681164394951fe5e97781d2593dee4958f0a62e16456c5ae2cc0af9e1cd8a933",
+  "datasetIdentity": "7a0c264196889beb0c91414cd10195681df895073dc7ce3aeef586123de751c1",
+  "preparationApprovalIdentity": "5522f5f68b4f7d85c15a0a139625dc79d4b80a0bb60665480797e3485b78e91c",
+  "preparedManifestIdentity": "7963f1661e4d49cd6845026451fbad208243604462f5ef3e5a0ee4e3f6fd33a0",
+  "promptProfileIdentity": "32b6fb0d9786cff93175a8f2e844f76989db12b5173e1d878a79365ac9bbea4d",
+  "promptProfileReference": "config/p7-t4-research-remediation-governance-v6/research-prompt-profile-v3.approved.json",
+  "qualityIdentity": "e5471fbf05010f389d0c16fd407bff2c2b8811ed997c3284d1c6daa580b2f4dc",
+  "recordCounts": {
+    "evaluation": 48,
+    "train": 288,
+    "validation": 48
+  },
+  "schemaVersion": "6.0.0",
+  "status": "APPROVED_FOR_TRAINING_ONLY",
+  "trainingApprovalIdentity": "d5a2ac0cd0f3aa969fbde0113639ffae8c8045aa9cea2c02b696251e9110c370",
+  "trainingApprovalReference": "evidence/p7-t1c-research-remediation-v6-training-governance-approval.json",
+  "trainingAuthorized": true,
+  "trainingContractIdentity": "960db4ecf481348361ade47e90e46447ab777597edc12600db56f28080e09335",
+  "trainingContractReference": "datasets/p7-t4-research-remediation-source-v6/training-contract.json"
+}

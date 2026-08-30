@@ -1,0 +1,230 @@
+{
+  "actualTraining": {
+    "epochs": 333.44444444444446,
+    "globalSteps": 1000,
+    "trainRecords": 36,
+    "trainingArtifact": {
+      "filename": "train.jsonl",
+      "recordCount": 36,
+      "sha256": "226c33672fad3adac1ab48abd557cd756d25c8ae291e1d29f1d85fb28ac9f2aa"
+    },
+    "trainingSplit": "train",
+    "trainingTokenization": {
+      "maximumTokens": 254,
+      "minimumTokens": 175,
+      "totalTokens": 7451
+    },
+    "validationArtifact": {
+      "filename": "validation.jsonl",
+      "recordCount": 3,
+      "sha256": "fdf889c849ecbbfab4ea59f6b8f1edda9ccf15a8da7a75e2b1f51ca67a9e412e"
+    },
+    "validationRecords": 3,
+    "validationSplit": "validation",
+    "validationTokenization": {
+      "maximumTokens": 213,
+      "minimumTokens": 176,
+      "totalTokens": 597
+    }
+  },
+  "adapterDisposition": "CANDIDATE_ONLY",
+  "adapterMethod": "QLORA",
+  "adapterParameters": {
+    "lora": {
+      "alpha": 32,
+      "bias": "none",
+      "dropout": 0.05,
+      "rank": 16,
+      "targetModules": [
+        "q_proj",
+        "k_proj",
+        "v_proj",
+        "o_proj"
+      ]
+    },
+    "method": "QLORA",
+    "quantization": {
+      "bits": 4,
+      "computeDtype": "float16",
+      "doubleQuantization": true,
+      "quantType": "nf4"
+    }
+  },
+  "assistantKey": "RESEARCH_ASSISTANT",
+  "backend": "REAL_QLORA",
+  "baseModel": {
+    "identifier": "Qwen/Qwen3-4B-Instruct-2507",
+    "revision": "cdbee75f17c01a7cc42f958dc650907174af0554"
+  },
+  "candidateId": "e8bfada2b79f669409f2506c3e6d63635f02ff4f1cf8e510fbf8a97340d4e1ad",
+  "checkpoints": [
+    {
+      "checkpointIdentity": "3036843a220de7309099d24f2f7a9cdf8322fe31744b24211bda04d4d24dcf86",
+      "checkpointName": "checkpoint-00000100",
+      "globalStep": 100,
+      "metadataSha256": "f1cd797b108c1bbef702f89840c2a6580ec0b82552d77564621788e60028a4c0"
+    },
+    {
+      "checkpointIdentity": "f8daa1fa662265e25b80d69f2e477711dcd2d766aabe5243c84cf9b50ad912f0",
+      "checkpointName": "checkpoint-00000200",
+      "globalStep": 200,
+      "metadataSha256": "0a27a63286bae3014d3590af048855d15f3557cd82ac7b997f01bd058f9390ac"
+    },
+    {
+      "checkpointIdentity": "ea1eff4252af03bd813f4c7bf2c2ea9c468b56d6b6d22a08e98a22d39dd998db",
+      "checkpointName": "checkpoint-00000300",
+      "globalStep": 300,
+      "metadataSha256": "53e390b97d362900cb4817b984acf0824061dca81b0e1bff5eb3ba8c44192c79"
+    },
+    {
+      "checkpointIdentity": "d604506f0987c8f6f76c6d3ce4741a02765c95ac0f618c60522ec5907504e413",
+      "checkpointName": "checkpoint-00000400",
+      "globalStep": 400,
+      "metadataSha256": "af4e662ab4cc575ccc6924de9c53f2c9719630eaaafabc4fe75174bb2a67c13c"
+    },
+    {
+      "checkpointIdentity": "b6342bf0c7840b1d39b0ed5f18d0aabf617290bd522ae91dd396ea7a4604b2c6",
+      "checkpointName": "checkpoint-00000500",
+      "globalStep": 500,
+      "metadataSha256": "6e7bb626f095dede6a395ea6499b82455a3473e52e89c6c229cdc777b5e13ead"
+    },
+    {
+      "checkpointIdentity": "bd90e5fe793d46c620cb6340710d63f60584ab600c1ffab1c1024bce8b6281ee",
+      "checkpointName": "checkpoint-00000600",
+      "globalStep": 600,
+      "metadataSha256": "499e7c8254766d250b810d25efbdc00f40a8ddde9590a5815cb7e507fac78b41"
+    },
+    {
+      "checkpointIdentity": "1fd5cb82dd667cfa5395fd8ccd20a335fd76d2f75c5691989b136013979e9373",
+      "checkpointName": "checkpoint-00000700",
+      "globalStep": 700,
+      "metadataSha256": "8c7fad0d8de4fcc35a9328e5dc45a8fb3614bb03d67ded8c1b357678dbf0101f"
+    },
+    {
+      "checkpointIdentity": "1b44f721c6596f997e6786ba31765206e9303994fbfaf8e7420f61010d178e07",
+      "checkpointName": "checkpoint-00000800",
+      "globalStep": 800,
+      "metadataSha256": "eaa4cdaf723a2e2da1b119ef506126eb506a732b07880ad7182ecea7cbe0285c"
+    },
+    {
+      "checkpointIdentity": "f452822702f7667d2b1dfe04641fbd72e49d62d6a6734e572048794c6ea397d3",
+      "checkpointName": "checkpoint-00000900",
+      "globalStep": 900,
+      "metadataSha256": "1bae88fa947b2a5c67319e5c833e1943de40e375bd3ee2aa8adb34c1dafde980"
+    },
+    {
+      "checkpointIdentity": "3aff40cac0f08f31a2854da7c1b5c18e778b51712cd16a76ae332b3fe556bd38",
+      "checkpointName": "checkpoint-00001000",
+      "globalStep": 1000,
+      "metadataSha256": "d3b9c1017eed2441644b5c74a1cf2d50e80cfa602c83abde6585ed2a80075a87"
+    }
+  ],
+  "datasetIdentity": "7bc78402046966f603f81c374ae68bafe13be2eb0b90de297d16461e38b970e4",
+  "datasetManifestReference": "datasets/p7-research-synthetic-training-dataset-v1/manifest.json",
+  "decision": "ADAPTER_REQUIRED",
+  "decisionReference": "docs/architecture/p6-t6-adapter-strategy-decision.md",
+  "environment": {
+    "gpu": {
+      "cudaRuntime": "11.8",
+      "device": "cuda:0",
+      "name": "Tesla T4",
+      "totalMemoryBytes": 15637086208
+    },
+    "platform": "Linux-6.6.122+-x86_64-with-glibc2.35"
+  },
+  "exportedArtifacts": [
+    {
+      "filename": "README.md",
+      "sha256": "dc6a63372a9e6703e8d839def922a0ac0446a0fbe4d499d7adf1707c4ac491a8",
+      "size": 5135
+    },
+    {
+      "filename": "adapter-manifest.json",
+      "sha256": "10352dba72a5a6a47d0f94f3fe160b89131483d536595af82b28f8b9922cc575",
+      "size": 2328
+    },
+    {
+      "filename": "adapter_config.json",
+      "sha256": "42332109b256d514f59da4cbd408ad18c08d603942df1c22f35e747aec6ac301",
+      "size": 845
+    },
+    {
+      "filename": "adapter_model.safetensors",
+      "sha256": "01aa0f5609812866cf8c3d01c016d7f58b1e9f8a2df2de1f5951d33beea01c85",
+      "size": 47224624
+    },
+    {
+      "filename": "added_tokens.json",
+      "sha256": "c0284b582e14987fbd3d5a2cb2bd139084371ed9acbae488829a1c900833c680",
+      "size": 707
+    },
+    {
+      "filename": "merges.txt",
+      "sha256": "8831e4f1a044471340f7c0a83d7bd71306a5b867e95fd870f74d0c5308a904d5",
+      "size": 1671853
+    },
+    {
+      "filename": "special_tokens_map.json",
+      "sha256": "76862e765266b85aa9459767e33cbaf13970f327a0e88d1c65846c2ddd3a1ecd",
+      "size": 613
+    },
+    {
+      "filename": "tokenizer.json",
+      "sha256": "aeb13307a71acd8fe81861d94ad54ab689df773318809eed3cbe794b4492dae4",
+      "size": 11422654
+    },
+    {
+      "filename": "tokenizer_config.json",
+      "sha256": "fed1bd317e1d5c4b32af689a7dec579e51392ba41942ec94a8dfba8ba85deefd",
+      "size": 8180
+    },
+    {
+      "filename": "vocab.json",
+      "sha256": "ca10d7e9fb3ed18575dd1e277a2579c16d108e32f27439684afa0e10b1440910",
+      "size": 2776833
+    }
+  ],
+  "metrics": {
+    "trainLoss": 0.06041742135953245,
+    "trainRuntimeSeconds": 11069.3911,
+    "trainSamplesPerSecond": 1.445,
+    "trainStepsPerSecond": 0.09,
+    "validationLoss": 2.058237075805664,
+    "validationRuntimeSeconds": 0.8407,
+    "validationSamplesPerSecond": 3.568,
+    "validationStepsPerSecond": 3.568
+  },
+  "pipelineVersion": "1.0.0",
+  "qualityEvidence": "REAL_TRAINING_EXECUTION",
+  "realTraining": true,
+  "realTrainingEvidence": {
+    "artifactIdentity": "f65741de9e0881f7f5f67478b46356a948b84ef3baf95e1ceb8f8f52df363d59",
+    "filename": "real-training-evidence.json",
+    "sha256": "6b7ec01efdbaf46d4730de48a2b6f67c32a66385a221e594a2e462ff9f3c7b4b"
+  },
+  "resumeSource": null,
+  "runtimeVersions": {
+    "accelerate": "1.6.0",
+    "bitsandbytes": "0.48.1",
+    "numpy": "2.5.2",
+    "peft": "0.15.2",
+    "python": "3.13.15",
+    "torch": "2.7.1+cu118",
+    "transformers": "4.51.3"
+  },
+  "schemaVersion": "1.0.0",
+  "seed": 20260821,
+  "sourceCommit": "9fb7cdd78b8ebbfef25681ed31053091326a1bc8",
+  "status": "COMPLETED",
+  "trainingConfigIdentity": "eb33d4685ab754990333ab5f27d770648acae9c41861ba8076c53f0292cdcd53",
+  "trainingParameters": {
+    "batchSize": 1,
+    "checkpointFrequency": 100,
+    "epochs": null,
+    "gradientAccumulation": 16,
+    "learningRate": 0.0002,
+    "maxSteps": 1000,
+    "precision": "float16"
+  },
+  "trainingRunIdentity": "2450f6d24e2479d0d8d651956341a88a4f89960bb962292f3b08389da4414135"
+}

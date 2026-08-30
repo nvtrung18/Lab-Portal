@@ -18,6 +18,7 @@
       "POS-RESEARCH-003",
       "POS-RESEARCH-004",
       "POS-RESEARCH-005",
+      "POS-RESEARCH-006",
       "SAFE-READ-DENY-ADMIN-001",
       "SAFE-READ-REFUSAL-LAB-003",
       "SAFE-READ-NOCONTEXT-RESEARCH-002",
@@ -46,6 +47,7 @@
       "NEG-SHARED-USECASE-ID-ISOLATED",
       "NEG-BRANCH-GOVERNANCE-CONSTANT-ISOLATED",
       "NEG-EXTRA-PAYLOAD-FIELD",
+      "NEG-REPORT-006-EXTRA-PRIVATE-FIELD",
       "NEG-INPUT-MISSING-OBSERVATION-ADMIN-001",
       "NEG-INPUT-MISSING-REF-LAB-002",
       "NEG-INPUT-MISSING-TASK-RESEARCH-004",
@@ -1144,6 +1146,78 @@
       },
       "expected": true,
       "assertion": "minimal exact branch/projection"
+    },
+    {
+      "id": "POS-RESEARCH-006",
+      "schema": "research",
+      "record": {
+        "schemaVersion": "1.0.0",
+        "recordId": "record-research-uc-006",
+        "domain": "RESEARCH",
+        "recordType": "REPORT_REVIEW_DRAFT",
+        "visibility": "RESEARCH_ASSISTANT_ONLY",
+        "useCaseId": "RESEARCH_UC_006",
+        "input": {
+          "reportRef": {
+            "resourceType": "REPORT",
+            "resourceId": "synthetic-report-006"
+          },
+          "projectRef": {
+            "resourceType": "PROJECT",
+            "resourceId": "synthetic-project-006"
+          },
+          "groupRef": {
+            "resourceType": "PROJECT_GROUP",
+            "resourceId": "synthetic-group-006"
+          },
+          "reportMetadata": {
+            "title": "Synthetic report on bounded laboratory observations",
+            "summary": "A synthetic draft reports two controlled observations and asks for clearer limitations and evidence links.",
+            "status": "SUBMITTED",
+            "submittedAt": "2026-08-21T00:00:00Z"
+          }
+        },
+        "payload": {
+          "draftKind": "REPORT_REVIEW_DRAFT"
+        },
+        "expectedOutput": {
+          "behavior": "DRAFT_ONLY",
+          "contentType": "NON_OFFICIAL_STRUCTURED_DRAFT",
+          "draft": {
+            "kind": "REPORT_REVIEW_DRAFT",
+            "title": "Synthetic report review draft",
+            "steps": [
+              "Clarify the limitations and link each conclusion to the supplied synthetic observations."
+            ]
+          },
+          "actionRisk": "DRAFT_ONLY"
+        },
+        "governance": {
+          "categoryIds": [
+            "CAT_RESEARCH_REPORT_METADATA"
+          ],
+          "categoryGovernance": [
+            {
+              "categoryId": "CAT_RESEARCH_REPORT_METADATA",
+              "classification": "SENSITIVE",
+              "datasetUsePermission": "DEFERRED",
+              "visibility": "RESEARCH_ASSISTANT_ONLY",
+              "sanitization": {
+                "disposition": "DEFERRED_NO_EXPORT"
+              },
+              "provenance": {
+                "type": "SYNTHETIC"
+              },
+              "modelDevelopmentPurpose": []
+            }
+          ]
+        },
+        "metadata": {
+          "synthetic": true
+        }
+      },
+      "expected": true,
+      "assertion": "closed synthetic report projection remains deferred until scoped governance approval"
     },
     {
       "id": "SAFE-READ-DENY-ADMIN-001",
@@ -2669,6 +2743,21 @@
       },
       "expected": false,
       "assertion": "forbidden payload field"
+    },
+    {
+      "id": "NEG-REPORT-006-EXTRA-PRIVATE-FIELD",
+      "schema": "research",
+      "recordMutation": {
+        "sourceCaseId": "POS-RESEARCH-006",
+        "operation": "add",
+        "path": [
+          "input",
+          "privateIdentity"
+        ],
+        "value": "synthetic-private-identifier"
+      },
+      "expected": false,
+      "assertion": "closed report projection rejects unrelated private fields"
     },
     {
       "id": "NEG-INPUT-MISSING-OBSERVATION-ADMIN-001",

@@ -1,0 +1,15 @@
+{
+  "approvalReference": "evidence/p7-t1c-research-remediation-v3-training-governance-approval.json",
+  "cardReference": "config/p7-t1c-research-remediation-governance-v3/training-dataset-card.approved.json",
+  "contractReference": "datasets/p7-t4-research-remediation-source-v3/training-contract.json",
+  "pipelineVersion": "2.0.0",
+  "schemaVersion": "2.0.0",
+  "sourceReference": "datasets/p7-t4-research-remediation-source-v3/source-export.json",
+  "split": {
+    "evaluationWeight": 10,
+    "seed": "lab-portal-p7-t4-remediation-v3",
+    "strategy": "SHA256_CONTENT_BUCKET",
+    "trainWeight": 80,
+    "validationWeight": 10
+  }
+}

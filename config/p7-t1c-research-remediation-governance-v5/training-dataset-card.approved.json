@@ -1,0 +1,36 @@
+{
+  "approval_references": [
+    "evidence/p7-t1c-research-remediation-v5-training-governance-approval.json"
+  ],
+  "approval_status": "APPROVED",
+  "approved_purposes": [
+    "TRAINING"
+  ],
+  "assistant_key": "RESEARCH_ASSISTANT",
+  "category_ids": [
+    "CAT_RESEARCH_REPORT_REVIEW_SYNTHETIC",
+    "CAT_RESEARCH_TASKS"
+  ],
+  "created_at_reference": "evidence/p7-t1c-research-remediation-v5-training-governance-approval.json#/approval/approvedAt",
+  "dataset_id": "p7-research-synthetic-training-dataset",
+  "dataset_version": "5.0.0",
+  "lifecycle_status": "APPROVED",
+  "manifest_identity": "460d7fcfe0574832f3a1e1ec6f58299b739bba005d32f13754eb6512c8189ac4",
+  "manifest_reference": "datasets/p7-research-synthetic-training-dataset-v5/manifest.json",
+  "permitted_purposes": [
+    "DEVELOPMENT_TEST",
+    "TRAINING"
+  ],
+  "prohibited_purposes": [
+    "EVALUATION_WITHOUT_SEPARATE_APPROVAL",
+    "PROMOTION"
+  ],
+  "revocation_reference": "evidence/p7-t1c-research-remediation-v5-training-governance-approval.json#/revocation",
+  "source_permission_references": [
+    "evidence/p7-t1c-research-remediation-v5-training-governance-approval.json"
+  ],
+  "source_permission_status": "VERIFIED",
+  "title": "Approved P7-T4 remediation v5 synthetic Research training dataset",
+  "trainingAuthorized": true,
+  "use_decision": "SYNTHETIC_ONLY"
+}

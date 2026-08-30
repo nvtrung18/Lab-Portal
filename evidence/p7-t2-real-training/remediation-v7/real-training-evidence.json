@@ -1,0 +1,182 @@
+{
+  "actualTraining": {
+    "bestCheckpoint": "checkpoint-00000192",
+    "bestMetricName": "eval_loss",
+    "bestValidationMetric": 0.00011791763972723857,
+    "configuredEpochs": 4,
+    "contractHoldoutArtifact": {
+      "filename": "evaluation.jsonl",
+      "recordCount": 64,
+      "sha256": "112f2492a5adefbe1e3645e25adb41fac3b2d90527cf2631deb31a16871ca287"
+    },
+    "contractHoldoutRecords": 64,
+    "contractHoldoutSplit": "evaluation",
+    "contractHoldoutUsedForOptimization": false,
+    "earlyStopped": false,
+    "epochs": 4.0,
+    "globalSteps": 192,
+    "trainRecords": 384,
+    "trainingArtifact": {
+      "filename": "train.jsonl",
+      "recordCount": 384,
+      "sha256": "2a4cc3e44258f5fe86a3a696f299a8157346993f4d6f8a837bbea89139a4115c"
+    },
+    "trainingSplit": "train",
+    "trainingTokenization": {
+      "maximumTokens": 1402,
+      "minimumTokens": 1055,
+      "postEosWhitespaceTokensMasked": 384,
+      "totalTokens": 444512
+    },
+    "validationArtifact": {
+      "filename": "validation.jsonl",
+      "recordCount": 64,
+      "sha256": "b1f157ae4b19fb8950adfb0b57e05eeb92de58a9a06d5d9e69fc75898e673412"
+    },
+    "validationRecords": 64,
+    "validationSplit": "validation",
+    "validationTokenization": {
+      "maximumTokens": 1388,
+      "minimumTokens": 1058,
+      "postEosWhitespaceTokensMasked": 64,
+      "totalTokens": 74383
+    }
+  },
+  "artifactIdentity": "925ce29672545818621566e49bb58086c712c47b734ac32afd13a0214bf693cd",
+  "artifactType": "P7-T2-REMEDIATION-REAL-TRAINING-EXECUTION-EVIDENCE",
+  "backend": "REAL_QLORA",
+  "baseModel": {
+    "identifier": "Qwen/Qwen3-4B-Instruct-2507",
+    "revision": "cdbee75f17c01a7cc42f958dc650907174af0554"
+  },
+  "candidateId": "b2e61ccba5e79dde268d5cb96e1426fbd0d42136a0b8cdfbd1f4a414e523a9e0",
+  "checkpoints": [
+    {
+      "checkpointIdentity": "e9700332cb8287e0b8fa7bcd42c2514ca39a6b0b98be2d26834f0aff15759502",
+      "checkpointName": "checkpoint-00000144",
+      "globalStep": 144,
+      "metadataSha256": "175856100a6e354f3b0794e8fba83dcdc17b59345297b5cbe9aa9596c10e71d7"
+    },
+    {
+      "checkpointIdentity": "b5d24c71856ad24fb12209747b196c9f89cc325461a75e58137b8d72ec5fd60b",
+      "checkpointName": "checkpoint-00000192",
+      "globalStep": 192,
+      "metadataSha256": "1b20380eb8dba616ae83d6875ba9caddb065cc1300eafffc1d8baa239afcf4fd"
+    }
+  ],
+  "contractGates": {
+    "frozenEvaluationTrainingUseAllowed": false,
+    "independentHoldout": {
+      "split": "evaluation",
+      "useForBestCheckpointSelection": false,
+      "useForEarlyStopping": false,
+      "useForOptimization": false
+    },
+    "preparedRuntimeContract": {
+      "constrainedDecodingAllowed": false,
+      "evaluationSuiteIdentity": "65c87149ec97bf34a04257a80af0cba1114b48fe9702f6b3cacb253b573931a8",
+      "evaluationSuiteReference": "config/p7-t4-research-remediation-governance-v5/evaluation-suite-v2.approved.json",
+      "evaluatorContractIdentity": "99230c674b9064f1e06247dedd014f6e3da0714ca679017c07b3d877f1e285d3",
+      "evaluatorContractReference": "config/p7-t4-research-remediation-governance-v5/evaluator-contract-v2.approved.json",
+      "evaluatorSuiteApprovalIdentity": "53d48c6489ecd7bb4f7a4a1c85bbe2813454c94c520310f28c74499d4bfdae05",
+      "evaluatorSuiteApprovalReference": "evidence/p7-t4-research-remediation-v5-evaluator-governance-approval.json",
+      "promptProfileIdentity": "32b6fb0d9786cff93175a8f2e844f76989db12b5173e1d878a79365ac9bbea4d",
+      "promptProfileReference": "config/p7-t4-research-remediation-governance-v6/research-prompt-profile-v3.approved.json",
+      "runtimeNormalizationAllowed": false
+    },
+    "trainingApprovalIdentity": "627f4043fe2c2dcaff21cb0b38d923752d8c928ef8d184b7535f3fe07b2bb3f5",
+    "trainingApprovalReference": "evidence/p7-t1c-research-remediation-v7-training-governance-approval.json",
+    "trainingContractIdentity": "81be449d83a56303f42e55128f7d6ea4cd79fc606616334d3387a52fe47b8b8d",
+    "trainingContractReference": "datasets/p7-t4-research-remediation-source-v7/training-contract.json"
+  },
+  "datasetIdentity": "b973bf0a387b35b84140a2db1d2bbf7c5c0d7f054102a968c10bd1df6faeff23",
+  "decision": "ADAPTER_REQUIRED",
+  "decisionReference": "docs/architecture/p6-t6-adapter-strategy-decision.md",
+  "environment": {
+    "gpu": {
+      "cudaRuntime": "11.8",
+      "device": "cuda:0",
+      "name": "Tesla T4",
+      "totalMemoryBytes": 15637086208
+    },
+    "platform": "Linux-6.6.122+-x86_64-with-glibc2.35"
+  },
+  "exportedArtifacts": [
+    {
+      "filename": "README.md",
+      "sha256": "af6e3625a03cec94e2575f3fe54f060f29272159ac44267ced5f6c45a1cde175",
+      "size": 5150
+    },
+    {
+      "filename": "adapter-manifest.json",
+      "sha256": "73b1d484fa71e24a746dc6519a62c5993c41ee44c14f7f8cc6f6464278942c8c",
+      "size": 2328
+    },
+    {
+      "filename": "adapter_config.json",
+      "sha256": "deee657eb32a6ce0d0d09821b5fbd17a45bd133f838e92d724d93b1f5c820f0f",
+      "size": 860
+    },
+    {
+      "filename": "adapter_model.safetensors",
+      "sha256": "280e4579f08617085193dd6942816bd554ef43e3543abf2f3716dad4d54a178e",
+      "size": 47224624
+    },
+    {
+      "filename": "added_tokens.json",
+      "sha256": "c0284b582e14987fbd3d5a2cb2bd139084371ed9acbae488829a1c900833c680",
+      "size": 707
+    },
+    {
+      "filename": "merges.txt",
+      "sha256": "8831e4f1a044471340f7c0a83d7bd71306a5b867e95fd870f74d0c5308a904d5",
+      "size": 1671853
+    },
+    {
+      "filename": "special_tokens_map.json",
+      "sha256": "76862e765266b85aa9459767e33cbaf13970f327a0e88d1c65846c2ddd3a1ecd",
+      "size": 613
+    },
+    {
+      "filename": "tokenizer.json",
+      "sha256": "aeb13307a71acd8fe81861d94ad54ab689df773318809eed3cbe794b4492dae4",
+      "size": 11422654
+    },
+    {
+      "filename": "tokenizer_config.json",
+      "sha256": "fed1bd317e1d5c4b32af689a7dec579e51392ba41942ec94a8dfba8ba85deefd",
+      "size": 8180
+    },
+    {
+      "filename": "vocab.json",
+      "sha256": "ca10d7e9fb3ed18575dd1e277a2579c16d108e32f27439684afa0e10b1440910",
+      "size": 2776833
+    }
+  ],
+  "metrics": {
+    "trainLoss": 0.052180887114976336,
+    "trainRuntimeSeconds": 8328.2644,
+    "trainSamplesPerSecond": 0.184,
+    "trainStepsPerSecond": 0.023,
+    "validationLoss": 0.00011791763972723857,
+    "validationRuntimeSeconds": 90.1598,
+    "validationSamplesPerSecond": 0.71,
+    "validationStepsPerSecond": 0.71
+  },
+  "qualityEvidence": "REAL_TRAINING_EXECUTION",
+  "realTraining": true,
+  "runtimeVersions": {
+    "accelerate": "1.6.0",
+    "bitsandbytes": "0.48.1",
+    "numpy": "2.5.2",
+    "peft": "0.15.2",
+    "python": "3.13.15",
+    "torch": "2.7.1+cu118",
+    "transformers": "4.51.3"
+  },
+  "schemaVersion": "2.0.0",
+  "seed": 20260827,
+  "sourceCommit": "942386e9600b742d45b2c0a8174930cafedbdf66",
+  "trainingConfigIdentity": "a4bb8dc3bdbdd89f493b168ba98c79fcf8ce37403cd9860b267daaffbde6c744",
+  "trainingRunIdentity": "89484f250ddff555617b7440fc55e471c4590eeb57629c470f23ca731b0f3b42"
+}

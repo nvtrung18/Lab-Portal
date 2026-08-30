@@ -1,0 +1,86 @@
+{
+  "artifactIdentity": "2f49d629fd1620183c35ef33bcbeb154dee32b998b3d1775de720cacee3268fc",
+  "artifactType": "P7-T4-RESEARCH-REMEDIATION-V9-DATA-QUALITY-SPEC",
+  "evaluationBoundary": {
+    "frozenCaseContentCopiedIntoTraining": false,
+    "frozenEvaluationUseAllowed": false,
+    "suiteVersion": "2.0.0"
+  },
+  "failureAnalysisIdentity": "67ff1859122e09abc778fcf347ebe641440cb5ffc080d274f75a8366650b455d",
+  "failureAnalysisReference": "config/p7-t4-research-remediation-governance-v9/failure-analysis-v8.json",
+  "plannedRecordCounts": {
+    "evaluation": 80,
+    "train": 480,
+    "validation": 80
+  },
+  "promptProfileIdentity": "32b6fb0d9786cff93175a8f2e844f76989db12b5173e1d878a79365ac9bbea4d",
+  "promptProfileReference": "config/p7-t4-research-remediation-governance-v6/research-prompt-profile-v3.approved.json",
+  "remediationPriority": "SINGLE_HUMAN_SEMANTIC_QUALITY_FINDING_DATASET_ONLY",
+  "runtimeControls": {
+    "constrainedDecodingAllowed": false,
+    "runtimeNormalizationAllowed": false
+  },
+  "schemaVersion": "1.0.0",
+  "status": "PENDING_GOVERNANCE_APPROVAL",
+  "targetDatasetVersion": "9.0.0",
+  "targetedAdditionCounts": {
+    "evaluation": 8,
+    "train": 48,
+    "validation": 8
+  },
+  "targetedFailureControls": {
+    "boundedMustNotImplyRepetition": true,
+    "groundedReportReviewRequired": true,
+    "limitationsAndEvidenceLinksRequired": true,
+    "targetedCaseIds": [
+      "E-FUNC-RESEARCH-006"
+    ],
+    "unknownMustNotBecomeConfirmedMissing": true,
+    "verbatimFrozenEvaluationExamplesAllowed": false
+  },
+  "targetedSyntheticDesign": {
+    "assistantKey": "RESEARCH_ASSISTANT",
+    "requiredStructuredOutputKind": "RESEARCH_REPORT_REVIEW_DRAFT",
+    "scenarioFamilies": [
+      "SYNTHETIC_ADVISORY_REPORT_REVIEW_GROUNDEDNESS",
+      "SYNTHETIC_BOUNDED_OBSERVATION_NOT_REPETITION",
+      "SYNTHETIC_LIMITATION_AND_EVIDENCE_LINK_REVIEW",
+      "SYNTHETIC_UNKNOWN_VS_CONFIRMED_MISSING"
+    ],
+    "semanticFamily": "SYNTHETIC_REPORT_REVIEW_GROUNDEDNESS_REMEDIATION",
+    "splitContentIdsDisjoint": true
+  },
+  "v8RetentionControls": {
+    "automaticPassCasesToProtect": [
+      "E-AUTH-007",
+      "E-AUTH-009",
+      "E-AUTH-011",
+      "E-AUTH-012",
+      "E-FUNC-RESEARCH-001",
+      "E-FUNC-RESEARCH-002",
+      "E-FUNC-RESEARCH-003",
+      "E-FUNC-RESEARCH-004",
+      "E-FUNC-RESEARCH-005",
+      "E-FUNC-RESEARCH-006",
+      "E-HUMAN-003",
+      "E-HUMAN-004",
+      "E-INJECT-001",
+      "E-INJECT-002",
+      "E-INJECT-003",
+      "E-ROUTE-002",
+      "E-STRUCT-003",
+      "E-STRUCT-004"
+    ],
+    "preserveOriginalSplitAssignment": true,
+    "retainApprovedV8SyntheticRecords": true,
+    "retainedDatasetIdentity": "44fb5a05d9a13c4f6e8d39fe7b8fe5a9189dc077b9850da700a17ea76e609b3d",
+    "retainedManifestReference": "datasets/p7-research-synthetic-training-dataset-v8/manifest.json",
+    "retainedRecordCounts": {
+      "evaluation": 72,
+      "train": 432,
+      "validation": 72
+    },
+    "trainingApprovalReference": "evidence/p7-t1c-research-remediation-v8-training-governance-approval.json",
+    "v8EvaluationRecordsMayEnterOptimization": false
+  }
+}

@@ -1,0 +1,111 @@
+{
+  "approval_authority": "RESEARCH_GOVERNANCE_DATA_GOVERNANCE_APPROVAL_AUTHORITY",
+  "approval_references": [
+    "evidence/p7-t1c-research-remediation-v3-training-governance-approval.json"
+  ],
+  "approval_status": "APPROVED",
+  "approved_purposes": [
+    "TRAINING"
+  ],
+  "assistant_key": "RESEARCH_ASSISTANT",
+  "category_ids": [
+    "CAT_RESEARCH_ASSIGNED_TASK",
+    "CAT_RESEARCH_DRAFT_CONTEXT"
+  ],
+  "classification": "SENSITIVE",
+  "contract_version": "1.0.0",
+  "created_at_reference": "evidence/p7-t1c-research-remediation-v3-training-governance-approval.json#/approval/approvedAt",
+  "dataset_id": "p7-research-synthetic-training-dataset",
+  "dataset_steward": "RESEARCH_GOVERNANCE_DATASET_STEWARD",
+  "dataset_version": "3.0.0",
+  "deduplication": {
+    "disposition": "NO_CANDIDATE_OVERLAP"
+  },
+  "description": "Independent synthetic UC003-UC005 contract variants approved exclusively for P7-T1C/P7-T2 remediation TRAINING.",
+  "evaluation_freeze_prerequisite": {
+    "evaluation_approval_reference": "evidence/p7-t1c-frozen-evaluation-governance-approval.json",
+    "evaluation_dataset_id": "P6-T4-EVALUATION-SUITES",
+    "evaluation_dataset_version": "1.0.0",
+    "evaluation_freeze_status": "FROZEN",
+    "evaluation_integrity_checksum": "8b75d356890a8a5c2318305589301b6ee6d73fbd3665b9af2063f98e13ea7417",
+    "evaluation_lifecycle_status": "FROZEN",
+    "evaluation_purpose": "EVALUATION"
+  },
+  "freeze_status": "NOT_REQUIRED",
+  "integrity": {
+    "checksum": "fa0e0ae6a10379e6e5b16a45a2fb8b1adc5963902b3ad94d6b573103622bb7bf",
+    "checksum_algorithm": "SHA-256",
+    "verified_at_reference": "evidence/p7-t1c-research-remediation-v3-training-governance-approval.json#/source/sourceSha256"
+  },
+  "lifecycle_status": "APPROVED",
+  "limitations_and_bias": "datasets/p7-t4-research-remediation-source-v3/provenance.json#/coverage",
+  "lineage": {
+    "source_references": [
+      "datasets/p7-t4-research-remediation-source-v3/source-export.json#sha256=fa0e0ae6a10379e6e5b16a45a2fb8b1adc5963902b3ad94d6b573103622bb7bf",
+      "datasets/p7-t4-research-remediation-source-v3/provenance.json#identity=6f7ddabd49be23afccf19911b0ac9498fe4d8c71b4b2544f5a51a279d38e9361",
+      "datasets/p7-t4-research-remediation-source-v3/training-contract.json#identity=4431a4dea11dc3e9f420cbc21070abb6d351db95a4507668e5c189f9040643ad",
+      "p7-t4-remediation-v3-content-sha256:5f0b65c3026f19e99058c7e15ed180aa304f1d91db8b69195ac828b65932b84c"
+    ],
+    "transform_references": [
+      "scripts/build-p7-t4-research-remediation-source-v3.py"
+    ]
+  },
+  "model_development_operation": "ADAPTER_FINE_TUNING",
+  "model_development_purpose": "TRAINING",
+  "partition": "RESEARCH_ASSISTANT",
+  "permitted_purposes": [
+    "DEVELOPMENT_TEST",
+    "TRAINING"
+  ],
+  "prohibited_purposes": [],
+  "provenance": {
+    "type": "SYNTHETIC"
+  },
+  "retention": {
+    "disposition_action": "DELETE",
+    "disposition_owner": "RESEARCH_GOVERNANCE_DATASET_STEWARD",
+    "evidence_reference": "datasets/p7-t4-research-remediation-source-v3/provenance.json#/governance",
+    "recheck_or_expiry_reference": "evidence/p7-t1c-research-remediation-v3-training-governance-approval.json#/revocation",
+    "retention_class": "EPHEMERAL_DEVELOPMENT",
+    "start_reference": "evidence/p7-t1c-research-remediation-v3-training-governance-approval.json#/approval/approvedAt",
+    "trigger_reference": "evidence/p7-t1c-research-remediation-v3-training-governance-approval.json#/approval"
+  },
+  "revocation_reference": "evidence/p7-t1c-research-remediation-v3-training-governance-approval.json#/revocation",
+  "sanitization": {
+    "disposition": "SYNTHETIC_GENERATION_ONLY",
+    "field_decisions": [
+      {
+        "category_id": "CAT_RESEARCH_ASSIGNED_TASK",
+        "field_decision": "SYNTHETIC_REPLACE",
+        "residual_risk_reference": "datasets/p7-t4-research-remediation-source-v3/provenance.json#/coverage",
+        "result_reference": "datasets/p7-t4-research-remediation-source-v3/provenance.json#/antiLeakage",
+        "reviewer_reference": "evidence/p7-t1c-research-remediation-v3-training-governance-approval.json",
+        "transform_reference": "scripts/build-p7-t4-research-remediation-source-v3.py"
+      },
+      {
+        "category_id": "CAT_RESEARCH_DRAFT_CONTEXT",
+        "field_decision": "SYNTHETIC_REPLACE",
+        "residual_risk_reference": "datasets/p7-t4-research-remediation-source-v3/provenance.json#/coverage",
+        "result_reference": "datasets/p7-t4-research-remediation-source-v3/provenance.json#/antiLeakage",
+        "reviewer_reference": "evidence/p7-t1c-research-remediation-v3-training-governance-approval.json",
+        "transform_reference": "scripts/build-p7-t4-research-remediation-source-v3.py"
+      }
+    ],
+    "residual_risk_reference": "datasets/p7-t4-research-remediation-source-v3/provenance.json#/coverage",
+    "result_reference": "datasets/p7-t4-research-remediation-source-v3/provenance.json#/antiLeakage",
+    "reviewer_reference": "evidence/p7-t1c-research-remediation-v3-training-governance-approval.json",
+    "transform_reference": "scripts/build-p7-t4-research-remediation-source-v3.py"
+  },
+  "schema_version": "1.0.0",
+  "source_data_owner": "RESEARCH_GOVERNANCE_DOMAIN_DATA_OWNER",
+  "source_permission_references": [
+    "evidence/p7-t1c-research-remediation-v3-training-governance-approval.json"
+  ],
+  "source_permission_status": "VERIFIED",
+  "split": {
+    "label": "TRAIN"
+  },
+  "title": "Approved bilingual public-contract Research remediation dataset",
+  "use_decision": "SYNTHETIC_ONLY",
+  "visibility": "RESEARCH_ASSISTANT_ONLY"
+}

@@ -1,0 +1,70 @@
+P7-T2 RESEARCH REMEDIATION V4 - EXTERNAL TESLA T4 RUNBOOK
+
+Status boundary
+- This bundle authorizes one fresh governed P7-T2 candidate-training run only.
+- Dataset v4 contains 144 fully synthetic UC003-UC006 contract records.
+- The evaluation split is a contract holdout, not the frozen P7-T4 evaluation suite.
+- Frozen P7-T4 prompts, case IDs, outputs, and private/production Research data are not training input.
+- Training completion does not establish P7-T4 PASS or permit promotion.
+- The adapter remains CANDIDATE_ONLY until a separate unchanged P7-T4 evaluation and review pass.
+
+Locked runtime
+- Google Colab
+- CPython 3.13.15
+- Tesla T4, CUDA 11.8
+- Qwen/Qwen3-4B-Instruct-2507
+- revision cdbee75f17c01a7cc42f958dc650907174af0554
+
+Execution order
+1. Upload p7-t2-research-remediation-v4-t4.zip and extract it under /content.
+2. Validate the extracted bundle:
+   python scripts/validate-p7-t2-research-remediation-v4-bundle.py --bundle-root /content/p7-t2-research-remediation-v4-t4
+3. Install requirements/p7-t2-real-training-t4-cp313-requirements.txt with hashes.
+4. Restart the whole Colab runtime.
+5. Revalidate Python, Tesla T4, pinned packages, and the bundle.
+6. Download the exact base-model revision locally, then enable offline mode.
+7. Run preflight:
+   python scripts/training-pipeline-p7-t2-remediation-v4.py \
+     --config config/p7-t2-training-pipeline-t4-remediation-v4.json \
+     --decisions config/p6-t6-adapter-decisions.json \
+     --dataset-manifest datasets/p7-research-synthetic-training-dataset-v4/manifest.approved.json \
+     --output /content/p7-t2-research-remediation-v4-output \
+     --model-path /content/p7-t2-remediation-v4-model/cdbee75f17c01a7cc42f958dc650907174af0554 \
+     --preflight-only
+8. Run the same command without --preflight-only and with --source-commit set to bundle-manifest.json sourceCommit.
+9. Validate real output:
+   python scripts/validate-p7-t2-research-remediation-v4-bundle.py \
+     --bundle-root /content/p7-t2-research-remediation-v4-t4 \
+     --run-output /content/p7-t2-research-remediation-v4-output
+10. Archive and download the complete output directory plus a SHA-256 sidecar.
+
+Repository ingestion and P7-T4 reevaluation
+- Verify the downloaded archive against its SHA-256 sidecar before extraction.
+- Store the complete output under
+  .artifacts/p7-t2/e8b72a056c9d0a06268cf5ac825e304b60d4e4aaeac2b0030fc686ac33888241/
+  p7-t2-real-training-output/.
+- Store only the adapter manifest, real-training evidence, training metadata, and archive SHA-256
+  under evidence/p7-t2-real-training/remediation-v4/.
+- Build the unchanged independent evaluation bundle with:
+  python scripts/build-p7-t4-research-evaluation-bundle.py \
+    --root . \
+    --adapter-directory .artifacts/p7-t2/e8b72a056c9d0a06268cf5ac825e304b60d4e4aaeac2b0030fc686ac33888241/p7-t2-real-training-output/adapter \
+    --output-parent .artifacts/p7-t4-remediation-v4-ready \
+    --remediation-v4
+- Run all SHARED_BASE and RESEARCH_ADAPTER R01-R03 repetitions on the locked Tesla T4 runtime.
+- Automatic PASS is still required before human and independent review; training success alone is not PASS.
+
+Training policy
+- Four finite epochs maximum; no fixed maxSteps and no unapproved epoch increase.
+- Float16 gradient scaler starts at 32768, based on the prior non-finite-gradient incident.
+- Training must start from the exact fresh base model; no checkpoint resume is permitted.
+- Validation is evaluated each epoch; early stopping patience is two epochs.
+- Best checkpoint is selected only by validation loss.
+- The evaluation split is never used for optimization, early stopping, or checkpoint selection.
+- The approved v2 structured-output schema is training-only and remains inactive at runtime.
+
+Stop conditions
+- Stop on inventory/checksum/identity mismatch, wrong Python/GPU/model revision, package mismatch,
+  CUDA error, NaN/Inf metric, missing best checkpoint, contract-holdout contamination, or schema failure.
+- Do not repair generated output manually and do not resume a stopped candidate.
+- Do not run P7-T4 until validated REAL_TRAINING_COMPLETE output is ingested into the repository.

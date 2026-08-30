@@ -1,0 +1,46 @@
+{
+  "approval": {
+    "approvedAt": "2026-08-22T02:24:16Z",
+    "approvedBy": "RESEARCH_GOVERNANCE_DATA_GOVERNANCE_APPROVAL_AUTHORITY",
+    "decision": "APPROVED"
+  },
+  "approvalAuthority": "RESEARCH_GOVERNANCE_DATA_GOVERNANCE_APPROVAL_AUTHORITY",
+  "artifactIdentity": "3ee4fa0f0dabee3ca8602e659c1c9b6a5fe0a30c523c88d99535a40036765479",
+  "artifactType": "P7-T1C-FROZEN-EVALUATION-GOVERNANCE-APPROVAL",
+  "purpose": "EVALUATION",
+  "requestIdentity": "9f9b38c038c7c2ed2afaadc5496e5049f904fd3f26eac4c2feaee7ed0d8e0dba",
+  "requestReference": "config/p7-t1b-research-governance-packet-v1/frozen-evaluation-approval-request.json",
+  "revocation": {
+    "authority": "RESEARCH_GOVERNANCE_DATA_GOVERNANCE_APPROVAL_AUTHORITY",
+    "status": "ACTIVE"
+  },
+  "schemaVersion": "1.0.0",
+  "scope": {
+    "externalSharingAllowed": false,
+    "forbiddenPurposes": [
+      "TRAINING"
+    ],
+    "freezeStatus": "FROZEN",
+    "lifecycleStatus": "FROZEN",
+    "permittedPurposes": [
+      "EVALUATION"
+    ],
+    "productionPromptingAllowed": false,
+    "purposeMode": "EVALUATION_ONLY",
+    "ragIngestionAllowed": false,
+    "retentionClass": "FROZEN_EVALUATION",
+    "trainingAllowed": false
+  },
+  "sourceCommit": "1aa4d2e158046d8fe08a94f36ceb7d811c54b716",
+  "status": "APPROVED",
+  "suite": {
+    "bindingReference": "evals/p6-t4-evaluation-freeze.binding.yaml",
+    "canonicalInventoryDigest": "8bec7e6d2c726bb19ce14cc60eb82323e728852249159d70e8533180c28b69c2",
+    "lockReference": "evals/p6-t4-evaluation-suite.lock.json",
+    "lockVersion": "1.0.0",
+    "suiteDigest": "8b75d356890a8a5c2318305589301b6ee6d73fbd3665b9af2063f98e13ea7417",
+    "suiteId": "P6-T4-EVALUATION-SUITES",
+    "suiteReference": "evals/p6-t4-evaluation-suites.yaml",
+    "suiteVersion": "1.0.0"
+  }
+}

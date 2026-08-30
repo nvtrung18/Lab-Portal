@@ -1,0 +1,45 @@
+{
+  "approval": {
+    "approvedAt": "2026-08-25T03:09:02Z",
+    "approvedBy": "RESEARCH_GOVERNANCE_DATA_GOVERNANCE_APPROVAL_AUTHORITY",
+    "decision": "APPROVED"
+  },
+  "approvalAuthority": "RESEARCH_GOVERNANCE_DATA_GOVERNANCE_APPROVAL_AUTHORITY",
+  "artifactIdentity": "67520e81e5c0bc9a326f17b437c1b4193a4f4ebf9b8a79d515d7b99266debfda",
+  "artifactType": "P7-T2-REMEDIATION-V3-NUMERICAL-STABILITY-RETRY-APPROVAL",
+  "incident": {
+    "archiveSha256": "18d54f55675e9df7814106b346b7e24431f812e60d2dfdffd3550c5d6026870c",
+    "candidateId": "9e6409fd012b28191ddab55c90ee5f17800c2ae683994bc9312757e29c8d4188",
+    "incidentIdentity": "d8e26eeacbf4a46dc81facef7ec3a12987148d874b6aeb409dc0ee266f3588d0",
+    "reason": "NON_FINITE_GRADIENT_METRIC",
+    "reference": "evidence/p7-t2-real-training/remediation-v3-quarantine/incident.json"
+  },
+  "purpose": "ONE_EXTERNAL_T4_NUMERICAL_STABILITY_RETRY",
+  "requestIdentity": "517f170d595d68bd813a6c805da54cf8ebe68b2f3c30ea326af9da492c561b21",
+  "requestReference": "config/p7-t4-research-remediation-governance-v3/stability-retry-approval-request.json",
+  "revocation": {
+    "authority": "RESEARCH_GOVERNANCE_DATA_GOVERNANCE_APPROVAL_AUTHORITY",
+    "status": "ACTIVE"
+  },
+  "scope": {
+    "assistantKey": "RESEARCH_ASSISTANT",
+    "candidateDispositionAfterTraining": "CANDIDATE_ONLY",
+    "externalSharingAllowed": false,
+    "freshBaseModelStartRequired": true,
+    "maximumRuns": 1,
+    "p7T4AutomaticPassClaimAllowed": false,
+    "productionActivationAllowed": false,
+    "promotionAllowed": false,
+    "resumeFromQuarantinedCheckpointAllowed": false
+  },
+  "stabilityChange": {
+    "gradientScalerInitialScale": 32768,
+    "preservesDatasetAndSplits": true,
+    "preservesFrozenEvaluation": true,
+    "preservesLearningRateAndSchedule": true,
+    "trainingConfigIdentity": "58f945c432208e032edcd4180116de8540b429cc4a5d070a4c90e7f9a8111667",
+    "trainingConfigReference": "config/p7-t2-training-pipeline-t4-remediation-v3-stability.json",
+    "trainingRunIdentity": "961521eff75736427b4d9b405e6616dd0b989af41cf5d5a017ba3d2a64a94005"
+  },
+  "status": "APPROVED"
+}

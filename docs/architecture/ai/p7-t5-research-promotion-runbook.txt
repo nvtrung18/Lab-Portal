@@ -1,0 +1,88 @@
+P7-T5 Research promotion and reusable model registry foundation
+
+Current state
+
+- Candidate: 3cd324ad97530ce535073be761e1713cb627e15d55cb9395d55729cd93595de4
+- Adapter identity: 79d267453862e78659bf249cf571760030388725362f3c0ab9a5565324acf6e2
+- P7-T4 decision: PASS
+- P7-T4 decision identity: 9e2b29668e549819daf4f087dbe1f268d96978f5fe47f13716e65c6c4b14e43e
+- Promotion request: e40580fbfccd40bdebb8bf72acf0d53f066f6952effb8cb0d7550218f6845f42
+- Approval identity: 07ed190878b7c32a4c8b448b5cfae29bf75be051b13326ba4e49a8f0bac57047
+- Promotion decision: 3918488ca342a2b5bc6cd73c1d2a56e42358f758c4c2f50b759b99f14548619e
+- Registry identity: f3a9890b16d682afbdaf855c2b5dc3e92de71c216cf389ed8c72d9104568b64a
+- State: COMPLETE
+- Serving remains disabled until P8-T3 implements the model/adapter loader.
+
+Repository artifacts
+
+- config/p7-t5-research-promotion/promotion-request.json
+- config/p7-t5-research-promotion/model-manifest.pending.json
+- config/p7-t5-research-promotion/model-registry-rules.json
+- config/p7-t5-research-promotion/rollback-manifest.pending.json
+- config/p7-t5-research-promotion/model-manifest.json
+- config/p7-t5-research-promotion/model-registry.json
+- config/p7-t5-research-promotion/rollback-manifest.json
+- evidence/p7-t5-research-promotion-approval.json
+- evidence/p7-t5-research-promotion/decision.json
+- scripts/build-p7-t5-research-promotion-request.py
+- scripts/validate-p7-t5-research-promotion.py
+- scripts/finalize-p7-t5-research-promotion.py
+
+Verify deterministic metadata
+
+  python scripts/build-p7-t5-research-promotion-request.py --check
+  python -m unittest scripts.tests.test_p7_t5_research_promotion_request
+  python -m unittest scripts.tests.test_p7_t5_research_promotion_validation
+
+Verify the physical candidate before approval/materialization
+
+  python scripts/validate-p7-t5-research-promotion.py --adapter-root <validated-v10-adapter-directory>
+
+The immutable request remains PENDING_APPROVER_GATE as historical request
+evidence. The exact approval and final decision transition the registry record
+to APPROVED without mutating that request.
+
+Completed approver gate
+
+The approver explicitly approved the exact request identity above. The
+materialized approval preserves all of these restrictions:
+
+- Only RESEARCH_ASSISTANT candidate v10 may be promoted.
+- The P7-T4 frozen evidence and decision may not be mutated.
+- The nine adapter files must match their size and SHA-256 inventory.
+- Registry materialization and adapter copy are allowed only after approval.
+- Serving load remains disallowed in P7-T5; P8-T3 owns runtime loading.
+- Rollback disables Research Assistant and restores BLOCKED because no older
+  Research adapter has complete independent approval evidence.
+
+Registry storage
+
+Physical adapter payloads are provisioned under AI_MODEL_ARTIFACT_ROOT and are
+ignored by Git. Git stores deterministic manifests, checksums, approval evidence,
+and registry records. A missing, corrupt, unapproved, or mismatched payload must
+fail readiness.
+
+Final verification
+
+  python scripts/finalize-p7-t5-research-promotion.py --check
+  python -m unittest scripts.tests.test_p7_t5_research_promotion_finalization
+  cd ai-service
+  python -m pytest tests/test_profiles.py tests/test_artifacts.py -q
+
+An approved and checksum-validated adapter is still reported as not loaded and
+not ready. P8-T3 must implement the runtime loader before serving can become
+ready.
+
+License evidence
+
+The base revision license was verified from the revision-pinned upstream LICENSE:
+
+  Apache-2.0
+  SHA-256: 832dd9e00a68dd83b3c3fb9f5588dad7dcf337a0db50f7d9483f310cd292e92e
+  Size: 11343 bytes
+
+Rollback
+
+The first Research promotion has no previously approved adapter. Its rollback
+artifact therefore disables Research Assistant and restores adapter status
+BLOCKED. It does not claim that the shared base passed the Research evaluation.

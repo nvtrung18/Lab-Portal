@@ -1,0 +1,39 @@
+{
+  "archive": {
+    "filename": "p7-t2-research-remediation-v3-quarantined-nonfinite-gradient.zip",
+    "sha256": "18d54f55675e9df7814106b346b7e24431f812e60d2dfdffd3550c5d6026870c",
+    "size": 316694381
+  },
+  "artifactType": "P7-T2-REMEDIATION-V3-NON-FINITE-GRADIENT-INCIDENT",
+  "candidateId": "9e6409fd012b28191ddab55c90ee5f17800c2ae683994bc9312757e29c8d4188",
+  "disposition": "CANDIDATE_OUTPUT_QUARANTINED",
+  "incidentIdentity": "d8e26eeacbf4a46dc81facef7ec3a12987148d874b6aeb409dc0ee266f3588d0",
+  "nonFiniteMetric": {
+    "epoch": 0.22,
+    "globalStep": 6,
+    "learningRate": 0.00009519230769230769,
+    "metric": "grad_norm",
+    "occurrences": 1,
+    "value": "nan"
+  },
+  "quarantineArtifactIdentity": "54d42ae77ccbbaed03631705537693feaf578c1eaa839943fb00bc2038ad17e0",
+  "rootCauseAssessment": {
+    "classification": "INFERENCE",
+    "evidence": {
+      "gradientScalerBackoffFactor": 0.5,
+      "gradientScalerCheckpointScale": 32768.0,
+      "gradientScalerGrowthInterval": 2000,
+      "learningRateRepeatedAfterNonFiniteEvent": true
+    },
+    "finding": "CONSISTENT_WITH_ONE_FP16_GRADIENT_OVERFLOW_AND_SKIPPED_OPTIMIZER_STEP",
+    "verifiedRootCause": false
+  },
+  "schemaVersion": "1.0.0",
+  "sourceCommit": "304804c096fe2c0299d4ec4e229eca637dc9a5c0",
+  "trainingConfigIdentity": "3ac3f242586d8254d86d8e4412503a8ddbb80e2ce0e64094df559a666a37a8fd",
+  "trainingLog": {
+    "sha256": "e8af686a98fe4d564e4da555b434090e4e4a60e3452bbd4ea6bdc19b875ff487",
+    "size": 44549
+  },
+  "trainingRunIdentity": "8487c2bff555e06682cb7b0b2dfdf5a34ebd17009667f7154c3c485672519593"
+}

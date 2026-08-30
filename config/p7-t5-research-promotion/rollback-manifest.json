@@ -1,0 +1,15 @@
+{
+  "action": "DISABLE_ASSISTANT",
+  "artifactType": "P7-T5-RESEARCH-ROLLBACK-MANIFEST",
+  "assistantKey": "RESEARCH_ASSISTANT",
+  "candidateId": "3cd324ad97530ce535073be761e1713cb627e15d55cb9395d55729cd93595de4",
+  "reason": "No previously approved Research adapter exists; rollback fails closed.",
+  "restoredAdapterIdentity": null,
+  "restoredAdapterStatus": "BLOCKED",
+  "schemaVersion": "1.0.0",
+  "servingAllowed": false,
+  "status": "APPROVED",
+  "version": "1.0.0",
+  "artifactIdentity": "996819b93073b00e0a7285cdd34eea1938cc7eb90961ca14baac03b4eb94db81",
+  "approvalIdentity": "07ed190878b7c32a4c8b448b5cfae29bf75be051b13326ba4e49a8f0bac57047"
+}

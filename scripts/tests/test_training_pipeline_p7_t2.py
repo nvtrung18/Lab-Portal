@@ -149,7 +149,8 @@ class P7T2TrainingPipelineTests(unittest.TestCase):
             "pipeline_version": "1.0.0",
             "dataset_id": f"approved-research-training-{suffix}",
             "dataset_version": "1.0.0",
-            "partition": "RESEARCH",
+            "assistant_key": "RESEARCH_ASSISTANT",
+            "partition": "RESEARCH_ASSISTANT",
             "approval_status": "APPROVED",
             "model_development_purpose": "TRAINING",
             "checksum_algorithm": "SHA-256",
@@ -211,6 +212,19 @@ class P7T2TrainingPipelineTests(unittest.TestCase):
             self.assertEqual("COMPLETED", result["status"])
             self.assertTrue((output / "adapter" / "adapter-manifest.json").is_file())
             self.assertEqual("SMOKE_ONLY_NO_MODEL_QUALITY_EVIDENCE", result["qualityEvidence"])
+
+    def test_real_execution_is_default_and_requires_an_exact_model_snapshot(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            manifest_path, manifest = self.write_dataset(temporary_directory)
+            with self.assertRaisesRegex(MODULE.TrainingPipelineError, "model-path"):
+                MODULE.run_pipeline(
+                    self.config(manifest["checksum"]),
+                    self.decisions(),
+                    manifest_path,
+                    Path(temporary_directory) / "real",
+                    smoke=False,
+                    source_commit="5" * 40,
+                )
 
     def test_base_only_approved_returns_deterministic_skipped_result(self):
         with tempfile.TemporaryDirectory() as temporary_directory:
@@ -449,13 +463,30 @@ class P7T2TrainingPipelineTests(unittest.TestCase):
     def test_checked_in_training_config_and_decision_manifest_are_valid(self):
         training_config = json.loads((ROOT / "config" / "p7-t2-training-pipeline.json").read_text(encoding="utf-8"))
         decision_manifest = json.loads((ROOT / "config" / "p6-t6-adapter-decisions.json").read_text(encoding="utf-8"))
+        manifest_path = ROOT / training_config["dataset"]["manifestReference"]
 
         MODULE.validate_training_config(training_config)
         MODULE.validate_decision_manifest(decision_manifest)
+        manifest = MODULE.validate_dataset_manifest(
+            manifest_path,
+            training_config["dataset"]["identity"],
+            training_config["assistantKey"],
+            {training_config["splits"]["training"], training_config["splits"]["evaluation"]},
+        )
         self.assertEqual("QLORA", training_config["adapter"]["method"])
+        self.assertEqual("Qwen/Qwen3-4B-Instruct-2507", training_config["baseModel"]["identifier"])
+        self.assertEqual("cdbee75f17c01a7cc42f958dc650907174af0554", training_config["baseModel"]["revision"])
+        self.assertEqual(manifest["checksum"], training_config["dataset"]["identity"])
         self.assertEqual("ADAPTER_REQUIRED", decision_manifest["decisions"]["RESEARCH_ASSISTANT"])
         self.assertEqual("BASE_ONLY_APPROVED", decision_manifest["decisions"]["LAB_ASSISTANT"])
         self.assertEqual("BASE_ONLY_APPROVED", decision_manifest["decisions"]["ADMIN_ASSISTANT"])
+
+    def test_qlora_compute_dtype_must_match_training_precision(self):
+        config = self.config("1" * 64)
+        config["training"]["precision"] = "float16"
+
+        with self.assertRaisesRegex(MODULE.TrainingPipelineError, "computeDtype.*precision"):
+            MODULE.validate_training_config(config)
 
 
 if __name__ == "__main__":

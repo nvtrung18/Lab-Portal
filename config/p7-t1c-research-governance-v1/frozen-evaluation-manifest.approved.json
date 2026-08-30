@@ -1,0 +1,19 @@
+{
+  "approval_references": [
+    "evidence/p7-t1c-frozen-evaluation-governance-approval.json"
+  ],
+  "approval_status": "APPROVED",
+  "dataset_id": "P6-T4-EVALUATION-SUITES",
+  "dataset_version": "1.0.0",
+  "freeze_status": "FROZEN",
+  "integrity": {
+    "checksum": "8b75d356890a8a5c2318305589301b6ee6d73fbd3665b9af2063f98e13ea7417",
+    "checksum_algorithm": "SHA-256",
+    "verified_at_reference": "evals/p6-t4-evaluation-suite.lock.json"
+  },
+  "lifecycle_status": "FROZEN",
+  "model_development_purpose": "EVALUATION",
+  "retention": {
+    "retention_class": "FROZEN_EVALUATION"
+  }
+}

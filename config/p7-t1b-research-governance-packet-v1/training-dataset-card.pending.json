@@ -1,0 +1,103 @@
+{
+  "approval_authority": "RESEARCH_GOVERNANCE_DATA_GOVERNANCE_APPROVAL_AUTHORITY",
+  "approval_references": [],
+  "approval_status": "PENDING",
+  "approved_purposes": [],
+  "assistant_key": "RESEARCH_ASSISTANT",
+  "category_ids": [
+    "CAT_RESEARCH_ASSIGNED_TASK",
+    "CAT_RESEARCH_DRAFT_CONTEXT"
+  ],
+  "classification": "SENSITIVE",
+  "contract_version": "1.0.0",
+  "created_at_reference": "P7-T1B-NOT-RECORDED-DETERMINISTIC-REQUEST",
+  "dataset_id": "p7-research-synthetic-training-dataset",
+  "dataset_steward": "RESEARCH_GOVERNANCE_DATASET_STEWARD",
+  "dataset_version": "1.0.0",
+  "deduplication": {
+    "disposition": "NO_CANDIDATE_OVERLAP"
+  },
+  "description": "P7-T1A synthetic Research source candidate; no approval or training authorization is asserted.",
+  "evaluation_freeze_prerequisite": {
+    "evaluation_approval_reference": null,
+    "evaluation_dataset_id": "P6-T4-EVALUATION-SUITES",
+    "evaluation_dataset_version": "1.0.0",
+    "evaluation_freeze_status": "FROZEN",
+    "evaluation_integrity_checksum": "8b75d356890a8a5c2318305589301b6ee6d73fbd3665b9af2063f98e13ea7417",
+    "evaluation_lifecycle_status": "FROZEN",
+    "evaluation_purpose": "EVALUATION"
+  },
+  "freeze_status": "NOT_REQUIRED",
+  "integrity": {
+    "checksum": "7b5744e1e49925b228d346cf60817e2fbf976283b72c1673aedb329449503436",
+    "checksum_algorithm": "SHA-256",
+    "verified_at_reference": "P7-T1B-DETERMINISTIC-SOURCE-VERIFICATION"
+  },
+  "lifecycle_status": "PENDING_APPROVAL",
+  "limitations_and_bias": "datasets/p7-t1a-research-synthetic-source-v1/provenance.json#/coverage",
+  "lineage": {
+    "source_references": [
+      "datasets/p7-t1a-research-synthetic-source-v1/source-export.json#sha256=7b5744e1e49925b228d346cf60817e2fbf976283b72c1673aedb329449503436",
+      "datasets/p7-t1a-research-synthetic-source-v1/provenance.json#identity=04ed322cf9604d753c1fdb2ab03120aa06c4856b185fb98d387f26e969c6ed1b",
+      "p7-t1a-content-sha256:c8dc56a1cbff71dd8c15c1eff6f561e1d6d1d4152326bbb24f99cdf2e4753722"
+    ],
+    "transform_references": [
+      "scripts/build-p7-t1a-research-synthetic-source.py"
+    ]
+  },
+  "model_development_operation": "ADAPTER_FINE_TUNING",
+  "model_development_purpose": "TRAINING",
+  "partition": "RESEARCH_ASSISTANT",
+  "permitted_purposes": [
+    "DEVELOPMENT_TEST"
+  ],
+  "prohibited_purposes": [],
+  "provenance": {
+    "type": "SYNTHETIC"
+  },
+  "retention": {
+    "disposition_action": "DELETE",
+    "disposition_owner": "RESEARCH_GOVERNANCE_DATASET_STEWARD",
+    "evidence_reference": "P7-T1B-RETENTION-EVIDENCE-REQUIRED",
+    "recheck_or_expiry_reference": "P7-T1B-POST-EXPERIMENT-RECHECK-REQUIRED",
+    "retention_class": "EPHEMERAL_DEVELOPMENT",
+    "start_reference": "P7-T1B-RETENTION-START-REFERENCE-REQUIRED",
+    "trigger_reference": "P7-T2-TRAINING-COMPLETION-OR-REQUEST-DISPOSITION"
+  },
+  "revocation_reference": "P7-T1B-REVOCATION-EVIDENCE-REQUIRED",
+  "sanitization": {
+    "disposition": "SYNTHETIC_GENERATION_ONLY",
+    "field_decisions": [
+      {
+        "category_id": "CAT_RESEARCH_ASSIGNED_TASK",
+        "field_decision": "SYNTHETIC_REPLACE",
+        "residual_risk_reference": "datasets/p7-t1a-research-synthetic-source-v1/provenance.json#/coverage",
+        "result_reference": "datasets/p7-t1a-research-synthetic-source-v1/provenance.json#/antiLeakage",
+        "reviewer_reference": "P7-T1B-AWAITING-GOVERNANCE-REVIEW",
+        "transform_reference": "scripts/build-p7-t1a-research-synthetic-source.py"
+      },
+      {
+        "category_id": "CAT_RESEARCH_DRAFT_CONTEXT",
+        "field_decision": "SYNTHETIC_REPLACE",
+        "residual_risk_reference": "datasets/p7-t1a-research-synthetic-source-v1/provenance.json#/coverage",
+        "result_reference": "datasets/p7-t1a-research-synthetic-source-v1/provenance.json#/antiLeakage",
+        "reviewer_reference": "P7-T1B-AWAITING-GOVERNANCE-REVIEW",
+        "transform_reference": "scripts/build-p7-t1a-research-synthetic-source.py"
+      }
+    ],
+    "residual_risk_reference": "datasets/p7-t1a-research-synthetic-source-v1/provenance.json#/coverage",
+    "result_reference": "datasets/p7-t1a-research-synthetic-source-v1/provenance.json#/antiLeakage",
+    "reviewer_reference": "P7-T1B-AWAITING-GOVERNANCE-REVIEW",
+    "transform_reference": "scripts/build-p7-t1a-research-synthetic-source.py"
+  },
+  "schema_version": "1.0.0",
+  "source_data_owner": "RESEARCH_GOVERNANCE_DOMAIN_DATA_OWNER",
+  "source_permission_references": [],
+  "source_permission_status": "NOT_ASSESSED",
+  "split": {
+    "label": "TRAIN"
+  },
+  "title": "Pending project-owned synthetic Research training dataset",
+  "use_decision": "SYNTHETIC_ONLY",
+  "visibility": "RESEARCH_ASSISTANT_ONLY"
+}

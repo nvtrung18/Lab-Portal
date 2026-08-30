@@ -1,5 +1,5 @@
 {
-  "cardReference": "replace-with-approved-dataset-card-reference",
+  "cardReference": "config/p7-t1c-research-governance-v1/training-dataset-card.approved.json",
   "schemaVersion": "1.0.0",
   "split": {
     "evaluationWeight": 10,

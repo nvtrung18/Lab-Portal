@@ -1,0 +1,21 @@
+{
+  "artifactIdentity": "c3e90ed16695cde5fb08f33d2d80a30e8d59db6f9a9652d051316a15dc6d8e18",
+  "artifactType": "P7-T4-RESEARCH-REMEDIATION-V5-TRAINING-CONTRACT",
+  "assistantKey": "RESEARCH_ASSISTANT",
+  "datasetVersion": "5.0.0",
+  "evaluationSuiteIdentity": "65c87149ec97bf34a04257a80af0cba1114b48fe9702f6b3cacb253b573931a8",
+  "evaluationSuiteReference": "config/p7-t4-research-remediation-governance-v5/evaluation-suite-v2.approved.json",
+  "evaluatorIdentity": "99230c674b9064f1e06247dedd014f6e3da0714ca679017c07b3d877f1e285d3",
+  "evaluatorImplementationReference": "scripts/validate-p7-t4-research-evaluation-v2.py",
+  "evaluatorReference": "config/p7-t4-research-remediation-governance-v5/evaluator-contract-v2.approved.json",
+  "evaluatorSuiteApprovalIdentity": "53d48c6489ecd7bb4f7a4a1c85bbe2813454c94c520310f28c74499d4bfdae05",
+  "evaluatorSuiteApprovalReference": "evidence/p7-t4-research-remediation-v5-evaluator-governance-approval.json",
+  "externalTrainingAllowed": false,
+  "frozenEvaluationUseAllowed": false,
+  "qualitySpecificationReference": "config/p7-t4-research-remediation-governance-v5/training-data-quality-spec-v5.json",
+  "recordCount": 192,
+  "runtimeNormalizationAllowed": false,
+  "schemaVersion": "5.0.0",
+  "state": "PREPARED_AWAITING_TRAINING_APPROVAL",
+  "trainingAuthorized": false
+}

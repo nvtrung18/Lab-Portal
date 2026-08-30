@@ -1,0 +1,190 @@
+{
+  "antiLeakage": {
+    "exactCanonicalNodeDuplicates": 0,
+    "exactSubstantialStringDuplicates": 0,
+    "exactTrainingContentDuplicates": 0
+  },
+  "artifactType": "P7-T4-RESEARCH-REMEDIATION-SOURCE-PROVENANCE",
+  "artifacts": [
+    {
+      "filename": "training-contract.json",
+      "sha256": "20c0199a6ea95c1ac82104ca059221311856b4758a858fc7dc5afc459aff050f"
+    },
+    {
+      "filename": "source-export.json",
+      "recordCount": 45,
+      "sha256": "6654416e24e190d6614fab7881e28ddd83a63284e08f1eef56c06b68de235bdb"
+    }
+  ],
+  "assistantKey": "RESEARCH_ASSISTANT",
+  "contentIdentity": "243352c24fb4aa5c95fad616a8cbd2e4062652854ec69619d3c426fb23f871af",
+  "contractIdentity": "89e49c43fd6488a6d47473141ad9070bd0dd785e309bbdaf26246e41d277a145",
+  "coverage": {
+    "advisoryDraftOnly": true,
+    "excludedUseCases": {
+      "RESEARCH_UC_006": "TRAINING_PROHIBITED_BY_CURRENT_GOVERNANCE"
+    },
+    "includedCategories": [
+      "CAT_RESEARCH_ASSIGNED_TASK",
+      "CAT_RESEARCH_DRAFT_CONTEXT"
+    ],
+    "includedUseCases": [
+      "RESEARCH_UC_003",
+      "RESEARCH_UC_004",
+      "RESEARCH_UC_005"
+    ],
+    "toolExecutionExamples": 0
+  },
+  "governance": {
+    "approvalAuthority": "RESEARCH_GOVERNANCE_DATA_GOVERNANCE_APPROVAL_AUTHORITY",
+    "approvalReference": null,
+    "approvalStatus": "PENDING",
+    "currentPermittedPurposes": [
+      "DEVELOPMENT_TEST"
+    ],
+    "lifecycleStatus": "PENDING_APPROVAL",
+    "materializationAuthorized": false,
+    "proposedPurposes": [
+      "TRAINING"
+    ],
+    "sourcePermissionReference": null,
+    "sourcePermissionStatus": "NOT_ASSESSED",
+    "trainingAuthorized": false
+  },
+  "governanceState": "AWAITING_GOVERNANCE_APPROVAL",
+  "inventory": {
+    "byObservedBehavior": {
+      "DENY": 6,
+      "NO_CONTEXT": 3,
+      "SAFE_REFUSAL": 6,
+      "SUCCESS": 30
+    },
+    "byUseCase": {
+      "RESEARCH_UC_003": 15,
+      "RESEARCH_UC_004": 15,
+      "RESEARCH_UC_005": 15
+    },
+    "recordCount": 45,
+    "recordIds": [
+      "record-p7t4r-r003-001",
+      "record-p7t4r-r003-002",
+      "record-p7t4r-r003-003",
+      "record-p7t4r-r003-004",
+      "record-p7t4r-r003-005",
+      "record-p7t4r-r003-006",
+      "record-p7t4r-r003-007",
+      "record-p7t4r-r003-008",
+      "record-p7t4r-r003-009",
+      "record-p7t4r-r003-010",
+      "record-p7t4r-r003-011",
+      "record-p7t4r-r003-012",
+      "record-p7t4r-r003-013",
+      "record-p7t4r-r003-014",
+      "record-p7t4r-r003-015",
+      "record-p7t4r-r004-001",
+      "record-p7t4r-r004-002",
+      "record-p7t4r-r004-003",
+      "record-p7t4r-r004-004",
+      "record-p7t4r-r004-005",
+      "record-p7t4r-r004-006",
+      "record-p7t4r-r004-007",
+      "record-p7t4r-r004-008",
+      "record-p7t4r-r004-009",
+      "record-p7t4r-r004-010",
+      "record-p7t4r-r004-011",
+      "record-p7t4r-r004-012",
+      "record-p7t4r-r004-013",
+      "record-p7t4r-r004-014",
+      "record-p7t4r-r004-015",
+      "record-p7t4r-r005-001",
+      "record-p7t4r-r005-002",
+      "record-p7t4r-r005-003",
+      "record-p7t4r-r005-004",
+      "record-p7t4r-r005-005",
+      "record-p7t4r-r005-006",
+      "record-p7t4r-r005-007",
+      "record-p7t4r-r005-008",
+      "record-p7t4r-r005-009",
+      "record-p7t4r-r005-010",
+      "record-p7t4r-r005-011",
+      "record-p7t4r-r005-012",
+      "record-p7t4r-r005-013",
+      "record-p7t4r-r005-014",
+      "record-p7t4r-r005-015"
+    ],
+    "trainingCaseIds": [
+      "TRAIN-P7T4R-003-001",
+      "TRAIN-P7T4R-003-002",
+      "TRAIN-P7T4R-003-003",
+      "TRAIN-P7T4R-003-004",
+      "TRAIN-P7T4R-003-005",
+      "TRAIN-P7T4R-003-006",
+      "TRAIN-P7T4R-003-007",
+      "TRAIN-P7T4R-003-008",
+      "TRAIN-P7T4R-003-009",
+      "TRAIN-P7T4R-003-010",
+      "TRAIN-P7T4R-003-011",
+      "TRAIN-P7T4R-003-012",
+      "TRAIN-P7T4R-003-013",
+      "TRAIN-P7T4R-003-014",
+      "TRAIN-P7T4R-003-015",
+      "TRAIN-P7T4R-004-001",
+      "TRAIN-P7T4R-004-002",
+      "TRAIN-P7T4R-004-003",
+      "TRAIN-P7T4R-004-004",
+      "TRAIN-P7T4R-004-005",
+      "TRAIN-P7T4R-004-006",
+      "TRAIN-P7T4R-004-007",
+      "TRAIN-P7T4R-004-008",
+      "TRAIN-P7T4R-004-009",
+      "TRAIN-P7T4R-004-010",
+      "TRAIN-P7T4R-004-011",
+      "TRAIN-P7T4R-004-012",
+      "TRAIN-P7T4R-004-013",
+      "TRAIN-P7T4R-004-014",
+      "TRAIN-P7T4R-004-015",
+      "TRAIN-P7T4R-005-001",
+      "TRAIN-P7T4R-005-002",
+      "TRAIN-P7T4R-005-003",
+      "TRAIN-P7T4R-005-004",
+      "TRAIN-P7T4R-005-005",
+      "TRAIN-P7T4R-005-006",
+      "TRAIN-P7T4R-005-007",
+      "TRAIN-P7T4R-005-008",
+      "TRAIN-P7T4R-005-009",
+      "TRAIN-P7T4R-005-010",
+      "TRAIN-P7T4R-005-011",
+      "TRAIN-P7T4R-005-012",
+      "TRAIN-P7T4R-005-013",
+      "TRAIN-P7T4R-005-014",
+      "TRAIN-P7T4R-005-015"
+    ]
+  },
+  "lineage": {
+    "contractReferences": [
+      "ai-service/config/assistant-profiles.json",
+      "ai-service/config/schemas/structured-output-schemas.json",
+      "docs/architecture/ai/assistant-use-case-catalog.yml",
+      "docs/architecture/ai/data-governance.yml"
+    ],
+    "evaluationTrainingSources": [],
+    "semanticSourceReferences": [
+      "datasets/p7-t1a-research-synthetic-source-v1/source-export.json",
+      "datasets/p7-t1a-research-synthetic-source-v1/provenance.json",
+      "scripts/build-p7-t1a-research-synthetic-source.py"
+    ]
+  },
+  "provenanceIdentity": "359b5836a34eb7fc1a91249df60583d687dad82104ab3dfe701b6057f01f4cc5",
+  "schemaVersion": "2.0.0",
+  "sourceId": "p7-t4-research-remediation-source",
+  "sourceState": "SOURCE_READY",
+  "sourceVersion": "2.0.0",
+  "syntheticData": {
+    "evaluationMaterialCopied": false,
+    "fullySynthetic": true,
+    "independentlyAuthoredSemanticSource": true,
+    "privateResearchDocumentsUsed": false,
+    "productionDataUsed": false,
+    "userDataUsed": false
+  }
+}

@@ -1,0 +1,67 @@
+{
+  "adapterDisposition": "CANDIDATE_ONLY",
+  "adapterIdentity": "798dc56e9b1eb4480ce3418e4cd4227b2e328e4d8864fa5942f7162006276643",
+  "artifacts": [
+    {
+      "filename": "README.md",
+      "sha256": "3eaccc793497c1bfaf3b122a892d433570a3858d417a32332168353acf63b443",
+      "size": 5150
+    },
+    {
+      "filename": "adapter_config.json",
+      "sha256": "147aba36f8bd2123b54f81fb749d4a1c843c89477bf7a0c17b88fd5780c5f0be",
+      "size": 860
+    },
+    {
+      "filename": "adapter_model.safetensors",
+      "sha256": "fcedfb776fbdcb23f610b9d60c8a7dd949f0da89fa1584937de2c61aa7c0ccfe",
+      "size": 47224624
+    },
+    {
+      "filename": "added_tokens.json",
+      "sha256": "c0284b582e14987fbd3d5a2cb2bd139084371ed9acbae488829a1c900833c680",
+      "size": 707
+    },
+    {
+      "filename": "merges.txt",
+      "sha256": "8831e4f1a044471340f7c0a83d7bd71306a5b867e95fd870f74d0c5308a904d5",
+      "size": 1671853
+    },
+    {
+      "filename": "special_tokens_map.json",
+      "sha256": "76862e765266b85aa9459767e33cbaf13970f327a0e88d1c65846c2ddd3a1ecd",
+      "size": 613
+    },
+    {
+      "filename": "tokenizer.json",
+      "sha256": "aeb13307a71acd8fe81861d94ad54ab689df773318809eed3cbe794b4492dae4",
+      "size": 11422654
+    },
+    {
+      "filename": "tokenizer_config.json",
+      "sha256": "fed1bd317e1d5c4b32af689a7dec579e51392ba41942ec94a8dfba8ba85deefd",
+      "size": 8180
+    },
+    {
+      "filename": "vocab.json",
+      "sha256": "ca10d7e9fb3ed18575dd1e277a2579c16d108e32f27439684afa0e10b1440910",
+      "size": 2776833
+    }
+  ],
+  "assistantKey": "RESEARCH_ASSISTANT",
+  "backend": "REAL_QLORA",
+  "baseModel": {
+    "identifier": "Qwen/Qwen3-4B-Instruct-2507",
+    "revision": "cdbee75f17c01a7cc42f958dc650907174af0554"
+  },
+  "candidateId": "e8b72a056c9d0a06268cf5ac825e304b60d4e4aaeac2b0030fc686ac33888241",
+  "datasetIdentity": "d8e4792f43de2319acbd2eefb3518aff597ef24530b074434f8c9336ad7f51e4",
+  "pipelineVersion": "4.0.0",
+  "qualityEvidence": "REAL_TRAINING_EXECUTION",
+  "realTraining": true,
+  "schemaVersion": "1.0.0",
+  "seed": 20260826,
+  "sourceCommit": "e31486d50f2eb97e503fba428a42aee9ba149af6",
+  "trainingConfigIdentity": "d9fbc57809505d557df8e212425af818a18d7a00a7d914822b6ed11de939d44a",
+  "trainingRunIdentity": "21202704a68b670c24a32c35f794ef2cc00144e047589ac8b42187659f7f8ff4"
+}

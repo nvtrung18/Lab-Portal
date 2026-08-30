@@ -1,0 +1,113 @@
+P7-T4 Research remediation v6 - governed training runbook
+
+State
+-----
+
+- Dataset: 6.0.0, APPROVED_FOR_TRAINING_ONLY.
+- Prompt profile: 3.0.0, bound to training but not activated in production.
+- Training authorized: true for one fresh CANDIDATE_ONLY single-T4 QLoRA flow.
+- External evaluation execution authorized: true for the exact imported v6
+  candidate and six locked T4 runs.
+- Runtime normalization or constrained decoding authorized: false.
+- Promotion allowed: false.
+
+Purpose
+-------
+
+Version 6 combines independently generated synthetic retention examples with
+new remediation examples for canonical JSON, NONE/REQUEST/REJECTED tool
+contracts, authorization denial, three Research draft schemas, and terminal
+EOS supervision. It does not modify the frozen suites or prior evidence.
+
+Approval binding
+----------------
+
+Training request:
+config/p7-t4-research-remediation-governance-v6/training-approval-request.json
+requestIdentity: 2f5e30613ec08a5ff14444cc45dfe4e35b2daae8bcea728e64e54785548a75c8
+
+Training approval:
+evidence/p7-t1c-research-remediation-v6-training-governance-approval.json
+approvalIdentity: d5a2ac0cd0f3aa969fbde0113639ffae8c8045aa9cea2c02b696251e9110c370
+
+Dataset identity:
+7a0c264196889beb0c91414cd10195681df895073dc7ce3aeef586123de751c1
+
+Prompt profile identity:
+32b6fb0d9786cff93175a8f2e844f76989db12b5173e1d878a79365ac9bbea4d
+
+Required sequence
+-----------------
+
+1. Commit the exact governed v6 sources without unrelated files.
+2. Build p7-t2-research-remediation-v6-t4.zip from that exact commit.
+3. Validate the bundle on CPython 3.13.15 with a Tesla T4.
+4. Install the locked CPython 3.13/T4 requirements and restart the runtime.
+5. Download the pinned base-model revision.
+6. Run offline preflight; require all contract gates to PASS.
+7. Train once from the fresh base model. Resume is forbidden.
+8. Require finite metrics, exactly one terminal supervised EOS per target,
+   and a validated best checkpoint.
+9. Archive the validated output as CANDIDATE_ONLY.
+10. Import the candidate into the repository under a separate governed step.
+11. Create and approve a new external P7-T4 evaluation request before any
+    SHARED_BASE or RESEARCH_ADAPTER run.
+
+Imported candidate and external evaluation approval
+---------------------------------------------------
+
+The validated real-training output is imported as CANDIDATE_ONLY:
+
+candidateId: 1813b08c81e4ab2cb987367346941605fe98f9e5ff42ff877e3376b8e462f630
+trainingRunIdentity: 3a49fc0f9836eb4b687c55a466a852158cc77dcb3d5c69a5e16969ed89a7683f
+archiveSha256: 4eef13a46695c54039de73e04d037925adbf25f1ff911a275cfe74fbc4be7d3d
+
+The full runtime output remains local under:
+
+.artifacts/p7-t2/1813b08c81e4ab2cb987367346941605fe98f9e5ff42ff877e3376b8e462f630/p7-t2-real-training-output/
+
+External evaluation approval request:
+
+config/p7-t4-research-remediation-governance-v6/external-evaluation-approval-request.json
+requestIdentity: 6e30bb12f30e759109f8d64ec986757f5cc42476f078d09659c2c47419854910
+request status: PENDING_USER_APPROVAL
+
+External evaluation approval:
+
+evidence/p7-t4-research-remediation-v6-external-evaluation-approval.json
+approvalIdentity: 281567424f51da2497fef99fd76114e296153dd1100d5d34e93853191a798c31
+status: APPROVED
+
+The approval binds evaluator/suite 2.0.0 and prompt profile 3.0.0 for evaluation
+only. It permits exactly SHARED_BASE and RESEARCH_ADAPTER R01-R03 on Tesla T4
+with CPython 3.13.15. It does not permit production prompt activation,
+promotion, constrained decoding, or runtime normalization.
+
+After committing the exact approved sources, build the evaluation bundle:
+
+python scripts/build-p7-t4-research-evaluation-bundle.py \
+  --root . \
+  --adapter-directory .artifacts/p7-t2/1813b08c81e4ab2cb987367346941605fe98f9e5ff42ff877e3376b8e462f630/p7-t2-real-training-output/adapter \
+  --output-parent .artifacts/p7-t4-remediation-v6-ready \
+  --remediation-v6
+
+Stop conditions
+---------------
+
+- Stop on any bundle inventory or checksum mismatch.
+- Stop if the runtime is not CPython 3.13.15 or the GPU is not Tesla T4.
+- Stop if the prompt profile identity or training approval identity differs.
+- Stop on non-finite metrics or missing/excess terminal supervised EOS.
+- Preserve Qwen chat-template whitespace after EOS in input IDs but mask it
+  from labels, so EOS is the final supervised target token.
+- Stop if any holdout record is used for optimization or checkpoint selection.
+- Do not claim evaluation PASS or promotion from training output.
+
+Local verification
+------------------
+
+python -m unittest scripts.tests.test_p7_t2_research_remediation_v6_training_bundle
+python scripts/validate-p7-t4-research-remediation-v6-dataset.py
+
+The final distributable bundle must be produced only after the governed sources
+are committed, so bundle sourceCommit provenance is exact.

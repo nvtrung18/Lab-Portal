@@ -1,0 +1,23 @@
+{
+  "artifactIdentity": "b9a321b8ae7bcd513df6290cf641796e647c6839ddf3dc127a7941d13f2f9532",
+  "artifactType": "P7-T4-RESEARCH-REMEDIATION-V9-DATASET-CARD",
+  "baseDatasetIdentity": "44fb5a05d9a13c4f6e8d39fe7b8fe5a9189dc077b9850da700a17ea76e609b3d",
+  "datasetIdentity": "6091c1be0a482bda5bc51d51e64583bd4a87bd4befe71b1f220535d6d03216a3",
+  "disposition": "APPROVED_FOR_TRAINING_ONLY",
+  "evaluationAllowed": false,
+  "preparedCardIdentity": "da1b8a82aac0fa902aa0c71f987be6ea01971beb8d09cb362a53c9e2a9606df6",
+  "promotionAllowed": false,
+  "recordCounts": {
+    "evaluation": 80,
+    "train": 480,
+    "validation": 80
+  },
+  "remediationPriority": "SINGLE_HUMAN_SEMANTIC_QUALITY_FINDING_DATASET_ONLY",
+  "schemaVersion": "1.0.0",
+  "targetedEvaluationCaseIds": [
+    "E-FUNC-RESEARCH-006"
+  ],
+  "trainingApprovalIdentity": "b3402cab5c4dfbe7d30c3bace1debbe28932da04a9c6f539f85a2865b58add34",
+  "trainingApprovalReference": "evidence/p7-t1c-research-remediation-v9-training-governance-approval.json",
+  "trainingAuthorized": true
+}

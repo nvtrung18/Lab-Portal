@@ -1,0 +1,108 @@
+{
+  "artifactType": "P7-T4-RESEARCH-REMEDIATION-TRAINING-CONTRACT",
+  "assistantKey": "RESEARCH_ASSISTANT",
+  "contractIdentity": "89e49c43fd6488a6d47473141ad9070bd0dd785e309bbdaf26246e41d277a145",
+  "inputContract": {
+    "authorizedContextRule": "USE_ONLY_VISIBLE_SYNTHETIC_CONTEXT",
+    "caseIdField": "evalCaseId",
+    "caseIdRule": "COPY_VISIBLE_TRAINING_CASE_ID_EXACTLY",
+    "closedKeys": [
+      "assistantKey",
+      "evalCaseId",
+      "useCaseId",
+      "input",
+      "authorizedContext",
+      "allowedTool",
+      "rejectedTool",
+      "structuredOutputContract",
+      "responseContract",
+      "referencedContextIds"
+    ],
+    "toolDecisionFields": [
+      "allowedTool",
+      "rejectedTool"
+    ]
+  },
+  "lineage": {
+    "contractBuilderReference": "scripts/build-p7-t4-research-remediation-source.py",
+    "evaluationTrainingSources": [],
+    "semanticSourceGeneratorReference": "scripts/build-p7-t1a-research-synthetic-source.py",
+    "semanticSourceReference": "datasets/p7-t1a-research-synthetic-source-v1/source-export.json"
+  },
+  "outputContract": {
+    "closedKeys": [
+      "evalCaseId",
+      "response",
+      "observedBehavior",
+      "observedActionRisk",
+      "toolRequest",
+      "structuredOutput",
+      "referencedContextIds"
+    ],
+    "observedActionRisks": [
+      "READ_ONLY",
+      "DRAFT_ONLY",
+      "CONFIRM_REQUIRED",
+      "APPROVAL_REQUIRED",
+      "PROHIBITED"
+    ],
+    "observedBehaviors": [
+      "SUCCESS",
+      "SAFE_REFUSAL",
+      "DENY",
+      "NO_CONTEXT",
+      "REQUIRE_CONFIRMATION",
+      "REQUIRE_APPROVAL"
+    ],
+    "responseModes": [
+      "ANSWER",
+      "DRAFT_PRESENTATION",
+      "SAFE_REFUSAL",
+      "NO_CONTEXT_NOTICE",
+      "CONFIRMATION_REQUEST",
+      "APPROVAL_REQUEST"
+    ],
+    "serialization": "RAW_CANONICAL_JSON_OBJECT_ONLY",
+    "toolKinds": [
+      "NONE",
+      "REQUEST",
+      "REJECTED"
+    ]
+  },
+  "preparedRuntimeContract": {
+    "activationState": "PREPARED_NOT_ACTIVE",
+    "assistantProfileReference": "ai-service/config/assistant-profiles.json",
+    "schemaBundle": "research-assistant-output-v1",
+    "schemaReference": "ai-service/config/schemas/structured-output-schemas.json",
+    "structuredOutputKinds": [
+      "RESEARCH_TASK_PROPOSAL_DRAFT",
+      "RESEARCH_TASK_SUGGESTION_DRAFT"
+    ],
+    "toolIds": [
+      "research.assigned.task.read",
+      "research.task.proposal.draft",
+      "research.task.suggestion.draft"
+    ]
+  },
+  "purpose": "TRAINING_SPECIFICATION",
+  "schemaVersion": "2.0.0",
+  "scope": {
+    "evaluationOnlyMaterialTrainingProhibited": true,
+    "excludedUseCases": {
+      "RESEARCH_UC_006": "TRAINING_PROHIBITED_BY_CURRENT_GOVERNANCE"
+    },
+    "frozenEvaluationDerivedRecordsAllowed": false,
+    "includedUseCases": [
+      "RESEARCH_UC_003",
+      "RESEARCH_UC_004",
+      "RESEARCH_UC_005"
+    ]
+  },
+  "state": "PROPOSED_FOR_GOVERNANCE",
+  "trainingRules": {
+    "authorizationExpansionAllowed": false,
+    "draftExecutionAllowed": false,
+    "hiddenIdentifierSynthesisAllowed": false,
+    "humanReviewRequiredForDrafts": true
+  }
+}

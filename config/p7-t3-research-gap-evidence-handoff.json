@@ -1,0 +1,142 @@
+{
+  "artifactType": "P7-T3-RESEARCH-GAP-EVIDENCE-COLLECTION-HANDOFF",
+  "schemaVersion": "1.1.0",
+  "status": "READY_FOR_USER_APPROVAL",
+  "safeRefusalExecutionStatus": "READY_FOR_RUNTIME_PROVISIONING",
+  "safeRefusalBlocker": "EVIDENCE_EXECUTION_ENVIRONMENT_REQUIRED",
+  "currentEnvironment": {
+    "pythonVersion": "3.12.10",
+    "torch": "UNAVAILABLE",
+    "transformers": "UNAVAILABLE",
+    "modelSnapshot": "UNAVAILABLE",
+    "automaticDownloadAllowed": false
+  },
+  "candidate": {
+    "id": "qwen3_4b",
+    "sourceRunId": "qwen3_4b-R01",
+    "gapRunId": "qwen3_4b-R01-P7T3-GAP01",
+    "model": {
+      "identifier": "Qwen/Qwen3-4B-Instruct-2507",
+      "revision": "cdbee75f17c01a7cc42f958dc650907174af0554"
+    }
+  },
+  "suite": {
+    "id": "P7-T3-RESEARCH-GAP-EVALUATION",
+    "version": "1.1.0",
+    "digest": "95ff79e0ec38c6d8ebfbcca05f0320b49819bf4f61e99c5b3b5c52cd559c83a5",
+    "lockReference": "evals/p7-t3-research-gap-evaluation-suite.lock.json",
+    "base": {
+      "id": "P6-T4-EVALUATION-SUITES",
+      "version": "1.0.0",
+      "digest": "8b75d356890a8a5c2318305589301b6ee6d73fbd3665b9af2063f98e13ea7417"
+    }
+  },
+  "caseSelection": {
+    "preApproval": [
+      "E-AUTH-011",
+      "E-AUTH-012"
+    ],
+    "postApproval": [
+      "E-AUTH-011",
+      "E-AUTH-012",
+      "E-FUNC-RESEARCH-006"
+    ],
+    "unrelatedCasesAllowed": false
+  },
+  "governance": {
+    "categoryId": "CAT_RESEARCH_REPORT_METADATA",
+    "originalState": {
+      "classification": "SENSITIVE",
+      "useDecision": "DEFERRED",
+      "permittedPurposes": [],
+      "prohibitedPurposes": [
+        "BENCHMARK",
+        "DEVELOPMENT_TEST",
+        "EVALUATION",
+        "HUMAN_EVALUATION",
+        "TRAINING"
+      ],
+      "retentionClass": "QUARANTINE_UNTIL_DISPOSITION",
+      "sanitizationDisposition": "DEFERRED_NO_EXPORT"
+    },
+    "requestReference": "config/p7-t3-research-report-eval-governance-request.json",
+    "requestIdentity": "961957f646e9a8ae0d5ee9a8846dfdb85c554101a072eef3e833600121449114",
+    "requestStatus": "PENDING_USER_APPROVAL",
+    "approvalArtifact": "evidence/p7-t3-research-report-eval-governance-approval-v1.json",
+    "approvalCommand": "python scripts/research-report-eval-governance-p7-t3.py --request config/p7-t3-research-report-eval-governance-request.json --approved-by \"<EXPLICIT_GOVERNANCE_APPROVER>\" --approved-at \"<UTC_TIMESTAMP>\" --output evidence/p7-t3-research-report-eval-governance-approval-v1.json",
+    "approvalCommandInvoked": false
+  },
+  "reportReview": {
+    "historicalEvalCaseId": "E-DEFERRED-RESEARCH-006",
+    "proposedEvalCaseId": "E-FUNC-RESEARCH-006",
+    "useCaseId": "RESEARCH_UC_006",
+    "fixtureCaseId": "POS-RESEARCH-006",
+    "fixtureSha256": "51d482f9744ffdb4cc7eb5144c4911ed37fd03487ed4b2d033331011f5d79ff3",
+    "schemaId": "https://lab-portal.local/schemas/p6-t3/domain-dataset-schemas/1.0.0",
+    "schemaSha256": "2a89de660bc407a7102f6f25e257aaf66981aa6b402607fb68b1aedae8e76cf4",
+    "caseSha256": "ca596bcbd2373575e3b4a593c8a6fbcb60de45f0a26bc53d26f5d667b93991e2",
+    "status": "AWAITING_GOVERNANCE_APPROVAL",
+    "actionRisk": "DRAFT_ONLY",
+    "officialApprovalOrStatusMutationAllowed": false
+  },
+  "runtimeProvisioning": {
+    "modelPath": "PREPROVISIONED_QWEN3_4B_SNAPSHOT",
+    "identityMetadataFile": "p7-t3-model-identity.json",
+    "identityMetadata": {
+      "identifier": "Qwen/Qwen3-4B-Instruct-2507",
+      "revision": "cdbee75f17c01a7cc42f958dc650907174af0554"
+    },
+    "requiredLocalFiles": [
+      "config.json",
+      "p7-t3-model-identity.json",
+      "tokenizer_config.json",
+      "tokenizer.json|tokenizer.model",
+      "*.safetensors|pytorch_model*.bin"
+    ],
+    "networkAccess": "PROHIBITED",
+    "localFilesOnly": true,
+    "supportedDevices": [
+      "cpu",
+      "cuda:0"
+    ]
+  },
+  "preflightCommands": {
+    "safeRefusal": "python scripts/research-gap-evidence-p7-t3.py --preflight --case-id E-AUTH-011 --case-id E-AUTH-012 --model-path PREPROVISIONED_QWEN3_4B_SNAPSHOT --device cpu --output-dir evidence/p7-t3-gap-run-safe",
+    "approvedThreeCase": "python scripts/research-gap-evidence-p7-t3.py --preflight --case-id E-AUTH-011 --case-id E-AUTH-012 --case-id E-FUNC-RESEARCH-006 --governance-approval evidence/p7-t3-research-report-eval-governance-approval-v1.json --model-path PREPROVISIONED_QWEN3_4B_SNAPSHOT --device cpu --output-dir evidence/p7-t3-gap-run-approved"
+  },
+  "executionCommands": {
+    "safeRefusal": "python scripts/research-gap-evidence-p7-t3.py --run --case-id E-AUTH-011 --case-id E-AUTH-012 --model-path PREPROVISIONED_QWEN3_4B_SNAPSHOT --device cpu --output-dir evidence/p7-t3-gap-run-safe",
+    "approvedThreeCase": "python scripts/research-gap-evidence-p7-t3.py --run --case-id E-AUTH-011 --case-id E-AUTH-012 --case-id E-FUNC-RESEARCH-006 --governance-approval evidence/p7-t3-research-report-eval-governance-approval-v1.json --model-path PREPROVISIONED_QWEN3_4B_SNAPSHOT --device cpu --output-dir evidence/p7-t3-gap-run-approved"
+  },
+  "expectedArtifacts": {
+    "safeRun": "evidence/p7-t3-gap-run-safe/qwen3_4b-R01-P7T3-GAP01.json",
+    "safeReviewInput": "evidence/p7-t3-gap-run-safe/qwen3_4b-R01-P7T3-GAP01-review-input.json",
+    "approvedRun": "evidence/p7-t3-gap-run-approved/qwen3_4b-R01-P7T3-GAP01.json",
+    "approvedReviewInput": "evidence/p7-t3-gap-run-approved/qwen3_4b-R01-P7T3-GAP01-review-input.json",
+    "safeFrozenGapEvidence": "evidence/p7-t3-research-gap-evidence-v1.json",
+    "approvedFrozenGapEvidence": "evidence/p7-t3-research-gap-evidence-v2.json",
+    "approvedMergedEvidence": "evidence/p7-t3-research-merged-baseline-evidence-v2.json"
+  },
+  "humanReview": {
+    "required": true,
+    "caseIdsAfterApproval": [
+      "E-AUTH-011",
+      "E-AUTH-012",
+      "E-FUNC-RESEARCH-006"
+    ],
+    "profiles": [
+      "DRAFT_RESEARCH",
+      "REFUSAL"
+    ],
+    "rubricReference": "evals/human-eval-rubric.yaml",
+    "checkpoint": "AWAITING_USER:HUMAN_EVALUATION",
+    "approvalRequired": "USER_APPROVED",
+    "aiApprovalProhibited": true
+  },
+  "freezeCommands": {
+    "safeRefusal": "python scripts/research-gap-evidence-p7-t3.py --freeze --run-artifact evidence/p7-t3-gap-run-safe/qwen3_4b-R01-P7T3-GAP01.json --review evidence/p7-t3-gap-run-safe/qwen3_4b-R01-P7T3-GAP01-review.json --baseline-evidence evidence/p7-t3-research-baseline-evidence.json --source-commit SOURCE_COMMIT --output evidence/p7-t3-research-gap-evidence-v1.json",
+    "approvedThreeCase": "python scripts/research-gap-evidence-p7-t3.py --freeze --run-artifact evidence/p7-t3-gap-run-approved/qwen3_4b-R01-P7T3-GAP01.json --review evidence/p7-t3-gap-run-approved/qwen3_4b-R01-P7T3-GAP01-review.json --baseline-evidence evidence/p7-t3-research-baseline-evidence.json --governance-approval evidence/p7-t3-research-report-eval-governance-approval-v1.json --source-commit SOURCE_COMMIT --output evidence/p7-t3-research-gap-evidence-v2.json"
+  },
+  "mergeCommand": "python scripts/research-model-decision-p7-t3.py --baseline-evidence evidence/p7-t3-research-baseline-evidence.json --gap-evidence evidence/p7-t3-research-gap-evidence-v2.json --governance-approval evidence/p7-t3-research-report-eval-governance-approval-v1.json --merged-evidence-output evidence/p7-t3-research-merged-baseline-evidence-v2.json --output config/p7-t3-research-model-decision.json",
+  "handoffIdentity": "e3444247da3a8ac490be3d4a5592c0a9efa3d61633be73a1b7bc98eb83f9abb7"
+}

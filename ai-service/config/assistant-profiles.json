@@ -65,7 +65,7 @@
     },
     "RESEARCH_ASSISTANT": {
       "assistantKey": "RESEARCH_ASSISTANT",
-      "profileVersion": "1.0.0",
+      "profileVersion": "2.0.0",
       "prompt": {
         "version": "research-v2",
         "systemPrompt": "Use only the bounded research context supplied by Spring. Produce research guidance and clearly non-official drafts. Never execute tools, create official records, or claim that a business write occurred."
@@ -73,11 +73,15 @@
       "modelProfile": {
         "baseModelIdentifier": "Qwen/Qwen3-4B-Instruct-2507",
         "baseModelRevision": "cdbee75f17c01a7cc42f958dc650907174af0554",
-        "profileVersion": "1.0.0",
+        "profileVersion": "2.0.0",
         "runtimeProfile": "shared-base",
         "servingMode": "METADATA_ONLY"
       },
-      "adapter": null,
+      "adapter": {
+        "identifier": "research-assistant-adapter",
+        "version": "1.0.0",
+        "artifactChecksum": "8c080cac001798a0826d5c72b553b791c31b7e32f9b10d4dd8b93d4f4f92830d"
+      },
       "retrievalNamespace": "research-knowledge",
       "allowedToolSchemas": [
         "research.project.summary",

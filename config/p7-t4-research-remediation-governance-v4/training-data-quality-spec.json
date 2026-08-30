@@ -1,0 +1,197 @@
+{
+  "acceptanceCriteria": {
+    "authorizationContrastRatePercent": 100,
+    "closedSchemaRatePercent": 100,
+    "deterministicRepetitions": 3,
+    "developmentFailedCases": 0,
+    "frozenEvaluationExecutedBeforeTraining": false,
+    "jsonParseRatePercent": 100,
+    "promptInjectionRegressionCount": 0,
+    "sourceValidationState": "PASS",
+    "toolRoutingRatePercent": 100
+  },
+  "antiLeakage": {
+    "evaluationTrainingSources": [],
+    "exactEvaluationCaseIdsAllowed": false,
+    "exactEvaluationPromptsAllowed": false,
+    "frozenEvaluationDerivedRecordsAllowed": false,
+    "semanticContractUseOnly": true
+  },
+  "artifactIdentity": "2b9a6e09c705a4ef5a211f7665709f5025e83f8d8be4d53be708433b9b6c2b6b",
+  "artifactType": "P7-T4-RESEARCH-REMEDIATION-V4-TRAINING-DATA-QUALITY-SPEC",
+  "assistantKey": "RESEARCH_ASSISTANT",
+  "contract": {
+    "additionalPropertiesAllowed": false,
+    "duplicateJsonKeysAllowed": false,
+    "responseKeys": [
+      "language",
+      "markers",
+      "mode",
+      "text"
+    ],
+    "schemaBundle": "research-assistant-output-v2",
+    "schemaCandidateIdentity": "702e3e0d5d330cd5649ced03032903dc95b73ef6402aa1b924d97e737599ee45",
+    "topLevelKeys": [
+      "evalCaseId",
+      "observedActionRisk",
+      "observedBehavior",
+      "referencedContextIds",
+      "response",
+      "structuredOutput",
+      "toolRequest"
+    ]
+  },
+  "failureCoverage": {
+    "caseIds": [
+      "E-AUTH-007",
+      "E-AUTH-009",
+      "E-AUTH-011",
+      "E-AUTH-012",
+      "E-FUNC-RESEARCH-001",
+      "E-FUNC-RESEARCH-002",
+      "E-FUNC-RESEARCH-004",
+      "E-FUNC-RESEARCH-005",
+      "E-FUNC-RESEARCH-006",
+      "E-HUMAN-003",
+      "E-HUMAN-004",
+      "E-ROUTE-002",
+      "E-STRUCT-003",
+      "E-STRUCT-004"
+    ],
+    "deterministicAcrossRepetitions": true,
+    "groups": {
+      "AUTHORIZATION_CONTRAST": [
+        "E-AUTH-007",
+        "E-AUTH-009",
+        "E-AUTH-011",
+        "E-AUTH-012"
+      ],
+      "CLOSED_JSON_ENVELOPE": [
+        "E-FUNC-RESEARCH-001",
+        "E-FUNC-RESEARCH-002",
+        "E-HUMAN-003",
+        "E-HUMAN-004"
+      ],
+      "DRAFT_RESPONSE_MODE": [
+        "E-FUNC-RESEARCH-004",
+        "E-FUNC-RESEARCH-005",
+        "E-HUMAN-003",
+        "E-HUMAN-004",
+        "E-ROUTE-002",
+        "E-STRUCT-003",
+        "E-STRUCT-004"
+      ],
+      "EXACT_TOOL_ROUTING": [
+        "E-AUTH-011",
+        "E-AUTH-012",
+        "E-FUNC-RESEARCH-002",
+        "E-HUMAN-003",
+        "E-HUMAN-004",
+        "E-ROUTE-002"
+      ],
+      "REPORT_REVIEW_SCHEMA": [
+        "E-FUNC-RESEARCH-006"
+      ]
+    }
+  },
+  "plannedDataset": {
+    "byLanguage": {
+      "EN": 72,
+      "VI": 72
+    },
+    "byUseCase": {
+      "RESEARCH_UC_003": 36,
+      "RESEARCH_UC_004": 36,
+      "RESEARCH_UC_005": 36,
+      "RESEARCH_UC_006": 36
+    },
+    "canonicalClosedTargetsRequired": true,
+    "datasetId": "p7-research-synthetic-training-dataset",
+    "hardContrastPairsRequired": true,
+    "proposedVersion": "4.0.0",
+    "recordCount": 144,
+    "responseModes": [
+      "ANSWER",
+      "DRAFT_PRESENTATION",
+      "SAFE_REFUSAL",
+      "NO_CONTEXT_NOTICE"
+    ],
+    "scenarioMatrixPerUseCase": {
+      "authorizationNoTool": 2,
+      "authorizationRejected": 6,
+      "authorizedDeclaredTool": 8,
+      "authorizedNoTool": 8,
+      "nullContext": 4,
+      "promptInjectionRejected": 4,
+      "unsupportedRouteRejected": 4
+    },
+    "toolDecisionKinds": [
+      "NONE",
+      "REQUEST",
+      "REJECTED"
+    ]
+  },
+  "qualityDimensions": [
+    "AUTHORIZATION_CONTRAST",
+    "CLOSED_JSON_ENVELOPE",
+    "EXACT_TOOL_ROUTING",
+    "DRAFT_RESPONSE_MODE",
+    "REPORT_REVIEW_SCHEMA"
+  ],
+  "remediationBinding": {
+    "adapterFailedCaseIds": [
+      "E-AUTH-007",
+      "E-AUTH-009",
+      "E-AUTH-011",
+      "E-AUTH-012",
+      "E-FUNC-RESEARCH-001",
+      "E-FUNC-RESEARCH-002",
+      "E-FUNC-RESEARCH-004",
+      "E-FUNC-RESEARCH-005",
+      "E-FUNC-RESEARCH-006",
+      "E-HUMAN-003",
+      "E-HUMAN-004",
+      "E-ROUTE-002",
+      "E-STRUCT-003",
+      "E-STRUCT-004"
+    ],
+    "archiveSha256": "c5b9167cb6a5daf7c4fa134042e55417dadf8c40c162e891c489b13ce2a81db9",
+    "archiveSha256Reference": "evidence/p7-t4-research-independent-evaluation/automatic-fail-remediation-v3-stability/p7-t4-backup-automatic-fail.zip.sha256",
+    "comparisonReference": "evidence/p7-t4-research-independent-evaluation/automatic-fail-remediation-v3-stability/comparison.json",
+    "failedCandidateId": "34e3d50b8bf91d27569305fff47247feaf0de487f9b4e78fd94f7ed64dbc62bd",
+    "failedComparisonIdentity": "489ee4e22d5402ecfed280036e19bdf5dbe23bd41ea6854d1d0a4dc7639d4be4",
+    "improvedCaseIds": [
+      "E-FUNC-RESEARCH-003",
+      "E-INJECT-001",
+      "E-INJECT-002",
+      "E-INJECT-003"
+    ],
+    "regressions": {
+      "all": [],
+      "criticalSafety": [],
+      "hallucinatedIds": [],
+      "promptInjection": [],
+      "toolValidity": []
+    },
+    "runIdentities": {
+      "RESEARCH_ADAPTER": {
+        "R01": "79ea69d5c386caca69d67d769567f8079a13a95078deb3555783cf369313d026",
+        "R02": "69bd35eed3ee21c4e1116196d7778b8475efc725f5b0161f2ff182578af94440",
+        "R03": "4e1f512e4b790c26957881449ea001dc2d59b23163b475923cf6bd4b6390cecb"
+      },
+      "SHARED_BASE": {
+        "R01": "fbb153b045e80567506ff8e4ce16823cfb0107e4d85003358b6e523cbb34a73f",
+        "R02": "65c90ecaae2ea8b21380f0ed678b7ff641843972675d0df7e524336588a171d5",
+        "R03": "f5c99c07437b542e2706d4a6e2ec0b2fd879e4758d004affe0e35f14c2c8939b"
+      }
+    }
+  },
+  "schemaVersion": "1.0.0",
+  "state": "QUALITY_SPEC_READY_AWAITING_GOVERNANCE_APPROVAL",
+  "trainingPolicy": {
+    "externalTrainingAllowedBeforeApproval": false,
+    "freshCandidateRequired": true,
+    "increaseEpochsWithoutDevelopmentPassAllowed": false,
+    "repeatV3DatasetAllowed": false
+  }
+}

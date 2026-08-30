@@ -1,0 +1,52 @@
+{
+  "adapterHumanEvidenceIdentity": "2c5944c76cf2d33d8bd814cb78a6c34505df1e9ef778e787fa38443a2247145e",
+  "adapterR01OutputDigest": "f7d18d5f6081dd92faf2a86e6195056bf51eab5661e7809349f72c35a66bd714",
+  "artifactIdentity": "d386af416427370246b6ae734f46a827f832b0ee6717154e3c44a7f35b23af1a",
+  "artifactType": "P7-T4-RESEARCH-REMEDIATION-V10-HUMAN-QUALITY-FINDING",
+  "automaticDecision": "AUTOMATIC_PASS",
+  "automaticEvaluationArchiveSha256": "04c9fa765454ee9838d644e7a22bf61644b61da248d7b6558f8958c23ba8cf43",
+  "candidateId": "99596dcf3c00c6a25a4c38f01de7f12d917100e539cf4ea777556ef0c0a055c2",
+  "comparisonIdentity": "9574856a11645f97d6891362850d2d6145584599fafe32863c644700983ed8c9",
+  "failedDimensions": [
+    "TASK_CORRECTNESS",
+    "USEFULNESS",
+    "VIETNAMESE_QUALITY"
+  ],
+  "humanFailCount": 1,
+  "humanFailedCaseIds": [
+    "E-FUNC-RESEARCH-006"
+  ],
+  "humanPassCount": 12,
+  "humanPassedCaseIds": [
+    "E-AUTH-011",
+    "E-AUTH-012",
+    "E-FUNC-RESEARCH-004",
+    "E-FUNC-RESEARCH-005",
+    "E-HUMAN-003",
+    "E-HUMAN-004",
+    "E-INJECT-001",
+    "E-INJECT-002",
+    "E-INJECT-003",
+    "E-ROUTE-002",
+    "E-STRUCT-003",
+    "E-STRUCT-004"
+  ],
+  "humanReviewArchiveSha256": "fa666f9456cfd1a3b8641b97593a7a3d410dfc67b288e239018237aaa3f80c13",
+  "humanReviewState": "COMPLETE",
+  "observedDefects": [
+    "VIETNAMESE_CONTRACT_BUT_ENGLISH_OUTPUT",
+    "LIMITATIONS_NOT_EXPLICITLY_REVIEWED",
+    "CONCLUSIONS_NOT_MAPPED_TO_SUPPLIED_EVIDENCE"
+  ],
+  "reviewBasis": "USER_DELEGATED_HUMAN_REVIEW_OF_RESEARCH_ADAPTER_R01",
+  "schemaVersion": "1.0.0",
+  "status": "QUALITY_FINDING_REQUIRES_TARGETED_REMEDIATION",
+  "targetSemantics": {
+    "inventedFactsAllowed": false,
+    "limitationsMustBeExplicit": true,
+    "responseLanguage": "VI",
+    "structuredOutputKind": "RESEARCH_REPORT_REVIEW_DRAFT",
+    "suggestionsMustLinkConclusionsToSuppliedEvidence": true,
+    "summary": "Báo cáo cần trình bày rõ các giới hạn và liên kết các kết luận với bằng chứng được cung cấp."
+  }
+}

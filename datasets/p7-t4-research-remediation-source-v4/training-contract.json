@@ -1,0 +1,16 @@
+{
+  "artifactIdentity": "c535dca968c54b9206b91eb7969036d4c6973ab91a3b8bc5f9b165699b4f79e5",
+  "artifactType": "P7-T4-RESEARCH-REMEDIATION-V4-TRAINING-CONTRACT",
+  "assistantKey": "RESEARCH_ASSISTANT",
+  "datasetVersion": "4.0.0",
+  "externalTrainingAllowed": false,
+  "frozenEvaluationUseAllowed": false,
+  "governanceReference": "config/p7-t4-research-remediation-governance-v4/data-governance-v2.approved.yml",
+  "qualitySpecificationReference": "config/p7-t4-research-remediation-governance-v4/training-data-quality-spec.json",
+  "recordCount": 144,
+  "schemaBundle": "research-assistant-output-v2",
+  "schemaReference": "config/p7-t4-research-remediation-governance-v4/structured-output-schema.approved.json",
+  "schemaVersion": "4.0.0",
+  "state": "PREPARED_AWAITING_TRAINING_APPROVAL",
+  "trainingAuthorized": false
+}

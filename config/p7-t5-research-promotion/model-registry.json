@@ -1,0 +1,30 @@
+{
+  "approvalIdentity": "07ed190878b7c32a4c8b448b5cfae29bf75be051b13326ba4e49a8f0bac57047",
+  "artifactType": "P7-MODEL-REGISTRY",
+  "entries": {
+    "ADMIN_ASSISTANT": {
+      "assistantKey": "ADMIN_ASSISTANT",
+      "status": "NOT_AVAILABLE"
+    },
+    "LAB_ASSISTANT": {
+      "assistantKey": "LAB_ASSISTANT",
+      "status": "NOT_AVAILABLE"
+    },
+    "RESEARCH_ASSISTANT": {
+      "adapterIdentity": "79d267453862e78659bf249cf571760030388725362f3c0ab9a5565324acf6e2",
+      "assistantKey": "RESEARCH_ASSISTANT",
+      "candidateId": "3cd324ad97530ce535073be761e1713cb627e15d55cb9395d55729cd93595de4",
+      "manifestIdentity": "5091a85f6da4b9081239837ffc7624c766bc32acac67f7a8c285c9a18c991105",
+      "manifestReference": "config/p7-t5-research-promotion/model-manifest.json",
+      "servingArtifactIdentity": "8c080cac001798a0826d5c72b553b791c31b7e32f9b10d4dd8b93d4f4f92830d",
+      "status": "APPROVED",
+      "version": "1.0.0"
+    }
+  },
+  "rulesIdentity": "0842cfb6133f6cbe31adbf3368e766a50ab100990e97426a2c830b43133f00d6",
+  "rulesReference": "config/p7-t5-research-promotion/model-registry-rules.json",
+  "schemaVersion": "1.0.0",
+  "status": "APPROVED",
+  "version": "1.0.0",
+  "artifactIdentity": "f3a9890b16d682afbdaf855c2b5dc3e92de71c216cf389ed8c72d9104568b64a"
+}

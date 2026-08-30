@@ -1,0 +1,17 @@
+{
+  "artifactIdentity": "da1b8a82aac0fa902aa0c71f987be6ea01971beb8d09cb362a53c9e2a9606df6",
+  "artifactType": "P7-T4-RESEARCH-REMEDIATION-V9-DATASET-CARD",
+  "baseDatasetIdentity": "44fb5a05d9a13c4f6e8d39fe7b8fe5a9189dc077b9850da700a17ea76e609b3d",
+  "datasetIdentity": "6091c1be0a482bda5bc51d51e64583bd4a87bd4befe71b1f220535d6d03216a3",
+  "disposition": "PENDING_TRAINING_APPROVAL",
+  "recordCounts": {
+    "evaluation": 80,
+    "train": 480,
+    "validation": 80
+  },
+  "remediationPriority": "SINGLE_HUMAN_SEMANTIC_QUALITY_FINDING_DATASET_ONLY",
+  "schemaVersion": "1.0.0",
+  "targetedEvaluationCaseIds": [
+    "E-FUNC-RESEARCH-006"
+  ]
+}

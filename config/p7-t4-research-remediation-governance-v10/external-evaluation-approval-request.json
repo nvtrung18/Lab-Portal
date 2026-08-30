@@ -1,0 +1,55 @@
+{
+  "artifactType": "P7-T4-RESEARCH-REMEDIATION-V10-EXTERNAL-EVALUATION-APPROVAL-REQUEST",
+  "candidate": {
+    "adapterIdentity": "79d267453862e78659bf249cf571760030388725362f3c0ab9a5565324acf6e2",
+    "archiveSha256": "11363c390b960e9f391cf6ca54c49b4b466fb2add54aafc708d7022b5d597abe",
+    "candidateId": "3cd324ad97530ce535073be761e1713cb627e15d55cb9395d55729cd93595de4",
+    "datasetIdentity": "abce232c1721788bae5a1686f9d017f295a6892555193140ae74c5a044e0a409",
+    "evidenceIdentity": "bfce986c0b3bf575d7a4a75ce3de8f0b873ef70df8a3918dfa9c67f1f144c992",
+    "evidenceReference": "evidence/p7-t2-real-training/remediation-v10/real-training-evidence.json",
+    "manifestReference": "evidence/p7-t2-real-training/remediation-v10/adapter-manifest.json",
+    "parentAdapterIdentity": "ceab7b262b050cf9195001e4d7e5f40aa7ef67011e0e7271e62d250ffe96c717",
+    "trainingConfigIdentity": "2e2cf99620cf7cd6ad467c6067b12ce8a7ad8b948dcb19d5edb92ea8df812df3",
+    "trainingRunIdentity": "8af8cfc47469457e6f22c554ed28f297ef6d97c2b9bddeabbf62a1607ecd8616"
+  },
+  "evaluationContract": {
+    "approvalIdentity": "53d48c6489ecd7bb4f7a4a1c85bbe2813454c94c520310f28c74499d4bfdae05",
+    "approvalReference": "evidence/p7-t4-research-remediation-v5-evaluator-governance-approval.json",
+    "evaluatorIdentity": "99230c674b9064f1e06247dedd014f6e3da0714ca679017c07b3d877f1e285d3",
+    "evaluatorReference": "config/p7-t4-research-remediation-governance-v5/evaluator-contract-v2.approved.json",
+    "evaluatorVersion": "2.0.0",
+    "suiteIdentity": "65c87149ec97bf34a04257a80af0cba1114b48fe9702f6b3cacb253b573931a8",
+    "suiteReference": "config/p7-t4-research-remediation-governance-v5/evaluation-suite-v2.approved.json",
+    "suiteVersion": "2.0.0"
+  },
+  "execution": {
+    "gpuModel": "Tesla T4",
+    "modelVariants": ["SHARED_BASE", "RESEARCH_ADAPTER"],
+    "pythonVersion": "3.13.15",
+    "repetitions": ["R01", "R02", "R03"],
+    "requiredRunCount": 6
+  },
+  "priorApprovals": {
+    "evaluatorSuiteApprovalIdentity": "53d48c6489ecd7bb4f7a4a1c85bbe2813454c94c520310f28c74499d4bfdae05",
+    "promptProfilePreparationApprovalIdentity": "5522f5f68b4f7d85c15a0a139625dc79d4b80a0bb60665480797e3485b78e91c",
+    "trainingApprovalIdentity": "fc9fd2b0d53ae50ce7568abdb2894f7d70c81b6e7e46d7ea65c5e333c480c553"
+  },
+  "promptProfile": {
+    "identity": "32b6fb0d9786cff93175a8f2e844f76989db12b5173e1d878a79365ac9bbea4d",
+    "productionActivationRequested": false,
+    "reference": "config/p7-t4-research-remediation-governance-v6/research-prompt-profile-v3.approved.json",
+    "version": "3.0.0"
+  },
+  "requestIdentity": "268e3786bcc8a0d2d7f8e9c662d79d82ca9c4bd88fffa76dfc8d43ae48446ae1",
+  "requestedAuthorization": {
+    "constrainedDecodingAllowed": false,
+    "externalEvaluationExecutionAllowed": true,
+    "productionPromptingAllowed": false,
+    "promotionAllowed": false,
+    "promptProfileV3EvaluationUseAllowed": true,
+    "runtimeNormalizationAllowed": false
+  },
+  "schemaVersion": "1.0.0",
+  "sourceCommit": "e8ab77e51285b7bcec491effcd8ff08c099c83e9",
+  "status": "PENDING_USER_APPROVAL"
+}

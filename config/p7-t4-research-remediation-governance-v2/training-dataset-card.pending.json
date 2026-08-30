@@ -1,0 +1,104 @@
+{
+  "approval_authority": "RESEARCH_GOVERNANCE_DATA_GOVERNANCE_APPROVAL_AUTHORITY",
+  "approval_references": [],
+  "approval_status": "PENDING",
+  "approved_purposes": [],
+  "assistant_key": "RESEARCH_ASSISTANT",
+  "category_ids": [
+    "CAT_RESEARCH_ASSIGNED_TASK",
+    "CAT_RESEARCH_DRAFT_CONTEXT"
+  ],
+  "classification": "SENSITIVE",
+  "contract_version": "1.0.0",
+  "created_at_reference": "P7-T4-REMEDIATION-NOT-RECORDED-DETERMINISTIC-REQUEST",
+  "dataset_id": "p7-research-synthetic-training-dataset",
+  "dataset_steward": "RESEARCH_GOVERNANCE_DATASET_STEWARD",
+  "dataset_version": "2.0.0",
+  "deduplication": {
+    "disposition": "NO_CANDIDATE_OVERLAP"
+  },
+  "description": "Synthetic UC003-UC005 candidate for a new P7-T2 run; no approval, training authorization, or P7-T4 PASS is asserted.",
+  "evaluation_freeze_prerequisite": {
+    "evaluation_approval_reference": "evidence/p7-t1c-frozen-evaluation-governance-approval.json",
+    "evaluation_dataset_id": "P6-T4-EVALUATION-SUITES",
+    "evaluation_dataset_version": "1.0.0",
+    "evaluation_freeze_status": "FROZEN",
+    "evaluation_integrity_checksum": "8b75d356890a8a5c2318305589301b6ee6d73fbd3665b9af2063f98e13ea7417",
+    "evaluation_lifecycle_status": "FROZEN",
+    "evaluation_purpose": "EVALUATION"
+  },
+  "freeze_status": "NOT_REQUIRED",
+  "integrity": {
+    "checksum": "6654416e24e190d6614fab7881e28ddd83a63284e08f1eef56c06b68de235bdb",
+    "checksum_algorithm": "SHA-256",
+    "verified_at_reference": "P7-T4-REMEDIATION-DETERMINISTIC-SOURCE-VERIFICATION"
+  },
+  "lifecycle_status": "PENDING_APPROVAL",
+  "limitations_and_bias": "datasets/p7-t4-research-remediation-source-v2/provenance.json#/coverage",
+  "lineage": {
+    "source_references": [
+      "datasets/p7-t4-research-remediation-source-v2/source-export.json#sha256=6654416e24e190d6614fab7881e28ddd83a63284e08f1eef56c06b68de235bdb",
+      "datasets/p7-t4-research-remediation-source-v2/provenance.json#identity=359b5836a34eb7fc1a91249df60583d687dad82104ab3dfe701b6057f01f4cc5",
+      "datasets/p7-t4-research-remediation-source-v2/training-contract.json#identity=89e49c43fd6488a6d47473141ad9070bd0dd785e309bbdaf26246e41d277a145",
+      "p7-t4-remediation-content-sha256:243352c24fb4aa5c95fad616a8cbd2e4062652854ec69619d3c426fb23f871af"
+    ],
+    "transform_references": [
+      "scripts/build-p7-t4-research-remediation-source.py"
+    ]
+  },
+  "model_development_operation": "ADAPTER_FINE_TUNING",
+  "model_development_purpose": "TRAINING",
+  "partition": "RESEARCH_ASSISTANT",
+  "permitted_purposes": [
+    "DEVELOPMENT_TEST"
+  ],
+  "prohibited_purposes": [],
+  "provenance": {
+    "type": "SYNTHETIC"
+  },
+  "retention": {
+    "disposition_action": "DELETE",
+    "disposition_owner": "RESEARCH_GOVERNANCE_DATASET_STEWARD",
+    "evidence_reference": "P7-T4-REMEDIATION-RETENTION-EVIDENCE-REQUIRED",
+    "recheck_or_expiry_reference": "P7-T4-REMEDIATION-POST-EXPERIMENT-RECHECK-REQUIRED",
+    "retention_class": "EPHEMERAL_DEVELOPMENT",
+    "start_reference": "P7-T4-REMEDIATION-RETENTION-START-REFERENCE-REQUIRED",
+    "trigger_reference": "P7-T4-REMEDIATION-TRAINING-COMPLETION-OR-REQUEST-DISPOSITION"
+  },
+  "revocation_reference": "P7-T4-REMEDIATION-REVOCATION-EVIDENCE-REQUIRED",
+  "sanitization": {
+    "disposition": "SYNTHETIC_GENERATION_ONLY",
+    "field_decisions": [
+      {
+        "category_id": "CAT_RESEARCH_ASSIGNED_TASK",
+        "field_decision": "SYNTHETIC_REPLACE",
+        "residual_risk_reference": "datasets/p7-t4-research-remediation-source-v2/provenance.json#/coverage",
+        "result_reference": "datasets/p7-t4-research-remediation-source-v2/provenance.json#/antiLeakage",
+        "reviewer_reference": "P7-T4-REMEDIATION-AWAITING-GOVERNANCE-REVIEW",
+        "transform_reference": "scripts/build-p7-t4-research-remediation-source.py"
+      },
+      {
+        "category_id": "CAT_RESEARCH_DRAFT_CONTEXT",
+        "field_decision": "SYNTHETIC_REPLACE",
+        "residual_risk_reference": "datasets/p7-t4-research-remediation-source-v2/provenance.json#/coverage",
+        "result_reference": "datasets/p7-t4-research-remediation-source-v2/provenance.json#/antiLeakage",
+        "reviewer_reference": "P7-T4-REMEDIATION-AWAITING-GOVERNANCE-REVIEW",
+        "transform_reference": "scripts/build-p7-t4-research-remediation-source.py"
+      }
+    ],
+    "residual_risk_reference": "datasets/p7-t4-research-remediation-source-v2/provenance.json#/coverage",
+    "result_reference": "datasets/p7-t4-research-remediation-source-v2/provenance.json#/antiLeakage",
+    "reviewer_reference": "P7-T4-REMEDIATION-AWAITING-GOVERNANCE-REVIEW",
+    "transform_reference": "scripts/build-p7-t4-research-remediation-source.py"
+  },
+  "schema_version": "1.0.0",
+  "source_data_owner": "RESEARCH_GOVERNANCE_DOMAIN_DATA_OWNER",
+  "source_permission_references": [],
+  "source_permission_status": "NOT_ASSESSED",
+  "split": {
+    "label": "TRAIN"
+  },
+  "title": "Pending contract-aligned synthetic Research remediation dataset",
+  "use_decision": "SYNTHETIC_ONLY",
+  "visibility": "RESEARCH_ASSISTANT_ONLY"
+}

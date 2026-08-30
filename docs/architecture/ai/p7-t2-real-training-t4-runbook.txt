@@ -1,0 +1,195 @@
+# P7-T2 portable real QLoRA execution on Google Colab Tesla T4
+
+This additive profile preserves the approved dataset, exact base-model revision,
+QLoRA parameters, seed, split separation, and 1000 configured steps. It changes
+only quantization compute dtype and Trainer precision from bfloat16 to float16
+because Tesla T4 does not provide native bfloat16 execution.
+
+Use a private Google Colab notebook. Select the latest hosted `GPU T4` runtime
+with CPython 3.13.15 before running these cells. Never add `--smoke`.
+
+## Cell 1 - inspect the accelerator
+
+```python
+import shutil
+import subprocess
+import sys
+
+assert sys.version_info[:3] == (3, 13, 15), sys.version
+assert shutil.which("nvidia-smi") is not None, "NVIDIA GPU runtime required"
+subprocess.run(["nvidia-smi"], check=True)
+```
+
+## Cell 2 - upload and safely extract the T4 bundle
+
+```python
+from google.colab import files
+from pathlib import Path
+import os
+import zipfile
+
+uploaded = files.upload()
+assert set(uploaded) == {"p7-t2-real-training-t4.zip"}, uploaded.keys()
+working = Path("/content").resolve()
+bundle_zip = working / "p7-t2-real-training-t4.zip"
+bundle_zip.write_bytes(uploaded[bundle_zip.name])
+bundle_root = working / "p7-t2-real-training-t4"
+assert not bundle_root.exists(), "Use a clean T4 bundle directory"
+bundle_root.mkdir()
+with zipfile.ZipFile(bundle_zip) as archive:
+    for member in archive.infolist():
+        target = (bundle_root / member.filename).resolve()
+        assert target == bundle_root or bundle_root in target.parents, member.filename
+    archive.extractall(bundle_root)
+bundle_zip.unlink()
+os.chdir(bundle_root)
+```
+
+```python
+%cd /content/p7-t2-real-training-t4
+```
+
+Verify the uploaded ZIP SHA-256 against the out-of-band value printed by the
+repository bundle builder before continuing.
+
+## Cell 3 - install the pinned CPython 3.13.15 / CUDA 11.8 runtime
+
+```python
+import sys
+assert sys.version_info[:3] == (3, 13, 15), sys.version
+```
+
+```python
+!python -m pip install --disable-pip-version-check --no-cache-dir --force-reinstall --only-binary=:all: --require-hashes --extra-index-url https://download.pytorch.org/whl/cu118 -r requirements/p7-t2-real-training-requirements.txt
+```
+
+Restart the Colab session after installation, then return to
+`/content/p7-t2-real-training-t4`.
+
+## Cell 4 - validate the bundle and Tesla T4 runtime
+
+```python
+%cd /content/p7-t2-real-training-t4
+```
+
+```python
+!python scripts/validate-p7-t2-real-training-bundle.py --bundle-root /content/p7-t2-real-training-t4
+```
+
+```python
+import importlib.util
+import json
+from pathlib import Path
+
+config = json.loads(Path("config/p7-t2-training-pipeline.json").read_text(encoding="utf-8"))
+assert config["training"]["precision"] == "float16"
+assert config["adapter"]["quantization"]["computeDtype"] == "float16"
+path = Path("scripts/p7-t2-real-training.py")
+spec = importlib.util.spec_from_file_location("p7_t2_real", path)
+module = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(module)
+runtime = module._runtime_modules("float16")
+assert "T4" in runtime["gpu"]["name"], runtime["gpu"]
+print(runtime["versions"])
+print(runtime["gpu"])
+```
+
+## Cell 5 - provision only the exact immutable base revision
+
+Keep Internet enabled only for this cell. Read `HF_TOKEN` from notebook secrets
+only if authentication is required; never persist it in bundle or output.
+
+```python
+from huggingface_hub import snapshot_download
+from pathlib import Path
+import json
+import os
+
+model_id = "Qwen/Qwen3-4B-Instruct-2507"
+revision = "cdbee75f17c01a7cc42f958dc650907174af0554"
+model_path = Path("/content/p7-t2-model") / revision
+assert not model_path.exists(), model_path
+downloaded = Path(snapshot_download(
+    repo_id=model_id,
+    revision=revision,
+    local_dir=model_path,
+    token=os.environ.get("HF_TOKEN"),
+)).resolve()
+assert downloaded == model_path.resolve(), (downloaded, model_path)
+(model_path / "p7-t2-model-identity.json").write_text(
+    json.dumps({"identifier": model_id, "revision": revision}, sort_keys=True, indent=2) + "\n",
+    encoding="utf-8",
+)
+```
+
+## Cell 6 - force offline training
+
+```python
+%env HF_HUB_OFFLINE=1
+%env TRANSFORMERS_OFFLINE=1
+%env HF_HUB_DISABLE_TELEMETRY=1
+%env WANDB_DISABLED=true
+%env TOKENIZERS_PARALLELISM=false
+%env CUDA_VISIBLE_DEVICES=0
+%env CUBLAS_WORKSPACE_CONFIG=:4096:8
+```
+
+## Cell 7 - execute canonical real P7-T2 training with the T4 profile
+
+```python
+from pathlib import Path
+import json
+import subprocess
+
+bundle = json.loads(Path("bundle-manifest.json").read_text(encoding="utf-8"))
+output = Path("/content/p7-t2-real-training-output")
+assert not output.exists(), output
+command = [
+    "python", "scripts/training-pipeline-p7-t2.py",
+    "--config", "config/p7-t2-training-pipeline.json",
+    "--decisions", "config/p6-t6-adapter-decisions.json",
+    "--dataset-manifest", "datasets/p7-research-synthetic-training-dataset-v1/manifest.json",
+    "--model-path", "/content/p7-t2-model/cdbee75f17c01a7cc42f958dc650907174af0554",
+    "--output", str(output),
+    "--source-commit", bundle["sourceCommit"],
+]
+assert "--smoke" not in command
+subprocess.run(command, check=True)
+```
+
+The optimization input is exactly the 36-record `train.jsonl`. The 3-record
+`validation.jsonl` is evaluated only after training. Frozen evaluation data is
+never an optimization input.
+
+## Cell 8 - validate real-training evidence and adapter integrity
+
+```python
+!python scripts/validate-p7-t2-real-training-bundle.py --bundle-root /content/p7-t2-real-training-t4 --run-output /content/p7-t2-real-training-output
+```
+
+The validator must report `REAL_TRAINING_COMPLETE`, backend `REAL_QLORA`, and
+`realTraining: true`.
+
+## Cell 9 - create and download the return archive
+
+```python
+from google.colab import files
+from pathlib import Path
+import zipfile
+
+output = Path("/content/p7-t2-real-training-output")
+archive_path = Path("/content/p7-t2-real-training-output.zip")
+assert output.is_dir() and not archive_path.exists()
+with zipfile.ZipFile(archive_path, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=9) as archive:
+    for path in sorted(item for item in output.rglob("*") if item.is_file()):
+        info = zipfile.ZipInfo(
+            f"p7-t2-real-training-output/{path.relative_to(output).as_posix()}",
+            date_time=(1980, 1, 1, 0, 0, 0),
+        )
+        info.compress_type = zipfile.ZIP_DEFLATED
+        info.external_attr = 0o100644 << 16
+        archive.writestr(info, path.read_bytes(), compress_type=zipfile.ZIP_DEFLATED, compresslevel=9)
+files.download(str(archive_path))
+```
+
+Do not download or return the base model or Hugging Face cache.

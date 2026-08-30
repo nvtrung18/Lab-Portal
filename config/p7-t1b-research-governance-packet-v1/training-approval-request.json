@@ -1,0 +1,64 @@
+{
+  "approval": null,
+  "approvalAuthority": "RESEARCH_GOVERNANCE_DATA_GOVERNANCE_APPROVAL_AUTHORITY",
+  "approvedAt": null,
+  "approvedBy": null,
+  "artifactType": "P7-T1B-RESEARCH-TRAINING-GOVERNANCE-REQUEST",
+  "candidateCard": {
+    "candidateCardIdentity": "4436771c6afc3ebe2fc33a82496f1f988778b370227d206615ccef8710ccdc8d",
+    "datasetId": "p7-research-synthetic-training-dataset",
+    "datasetVersion": "1.0.0",
+    "reference": "config/p7-t1b-research-governance-packet-v1/training-dataset-card.pending.json"
+  },
+  "currentState": {
+    "approvalStatus": "PENDING",
+    "currentPermittedPurposes": [
+      "DEVELOPMENT_TEST"
+    ],
+    "governanceState": "AWAITING_GOVERNANCE_APPROVAL",
+    "lifecycleStatus": "PENDING_APPROVAL",
+    "sourcePermissionStatus": "NOT_ASSESSED",
+    "sourceState": "SOURCE_READY",
+    "trainingAuthorized": false
+  },
+  "requestId": "P7-T1B-RESEARCH-TRAINING-GOVERNANCE-REQUEST-001",
+  "requestIdentity": "32a766b69cd4410854c1285fc3b9b8e55d4d36cdf54352c27545f49d2fccc9b9",
+  "requestedScope": {
+    "assistantKey": "RESEARCH_ASSISTANT",
+    "datasetSteward": "RESEARCH_GOVERNANCE_DATASET_STEWARD",
+    "externalSharingAllowed": false,
+    "intendedDownstreamUse": [
+      "P7-T1_DATASET_MATERIALIZATION",
+      "P7-T2_RESEARCH_LORA_QLORA_TRAINING"
+    ],
+    "modelDevelopmentOperation": "ADAPTER_FINE_TUNING",
+    "permittedPurposes": [
+      "TRAINING"
+    ],
+    "productionPromptingAllowed": false,
+    "projectOnly": true,
+    "ragIngestionAllowed": false,
+    "repositoryProhibitedPurposes": [],
+    "requestedRetentionClass": "EPHEMERAL_DEVELOPMENT",
+    "requestedUseDecision": "SYNTHETIC_ONLY",
+    "sourceDataOwner": "RESEARCH_GOVERNANCE_DOMAIN_DATA_OWNER"
+  },
+  "requester": "P7_T1B_IMPLEMENTATION_AGENT",
+  "schemaVersion": "1.0.0",
+  "source": {
+    "contentIdentity": "c8dc56a1cbff71dd8c15c1eff6f561e1d6d1d4152326bbb24f99cdf2e4753722",
+    "fullySynthetic": true,
+    "independentlyAuthored": true,
+    "projectOwned": true,
+    "provenanceIdentity": "04ed322cf9604d753c1fdb2ab03120aa06c4856b185fb98d387f26e969c6ed1b",
+    "provenanceReference": "datasets/p7-t1a-research-synthetic-source-v1/provenance.json",
+    "recordCount": 45,
+    "sourceCommit": "f9de3c1f3838ec2815276fabce3460b0824e0909",
+    "sourceId": "p7-t1a-research-synthetic-source",
+    "sourceReference": "datasets/p7-t1a-research-synthetic-source-v1/source-export.json",
+    "sourceSha256": "7b5744e1e49925b228d346cf60817e2fbf976283b72c1673aedb329449503436",
+    "sourceVersion": "1.0.0"
+  },
+  "sourceCommit": "f9de3c1f3838ec2815276fabce3460b0824e0909",
+  "status": "PENDING_USER_APPROVAL"
+}

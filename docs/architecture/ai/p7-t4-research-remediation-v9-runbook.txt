@@ -1,0 +1,96 @@
+P7-T4 Research remediation v9 - governed report-review quality training runbook
+
+STATE
+
+- External single-T4 QLoRA training completed and the output was validated.
+- Dataset identity: 6091c1be0a482bda5bc51d51e64583bd4a87bd4befe71b1f220535d6d03216a3
+- Training approval identity: b3402cab5c4dfbe7d30c3bace1debbe28932da04a9c6f539f85a2865b58add34
+- Candidate ID: 99596dcf3c00c6a25a4c38f01de7f12d917100e539cf4ea777556ef0c0a055c2
+- Training run identity: 9ee7cd3cb56cb5b18c096ce8764fe14a23d69bdd39ef027a8f1472710b152314
+- External evaluation request identity: 327def990c319fce2ed00255454babfddad944f0ab8d8c3bc01fcc25af41f2e2
+- External evaluation approval identity: e1b3099e65a7a8d634d81381f8567d1dc31bdee87099f08a6702e736fd2ef88b
+- Targeted evaluation case: E-FUNC-RESEARCH-006.
+- Runtime normalization and constrained decoding remain disabled.
+- Six external P7-T4 runs are authorized on Tesla T4: shared base and Research
+  adapter, each at R01-R03.
+- Promotion remains unauthorized; automatic PASS still requires human and
+  independent review.
+
+TARGETED CONTRACT
+
+- Preserve all 432 train, 72 validation, and 72 evaluation v8 records unchanged.
+- Add only 48 train, 8 validation, and 8 evaluation independent synthetic records.
+- New records teach grounded RESEARCH_REPORT_REVIEW_DRAFT output: state limitations
+  clearly and link conclusions to provided evidence without inventing a repetition count.
+- The evaluation split remains an isolated contract holdout and is never used for
+  optimization, early stopping, or best-checkpoint selection.
+- Training starts once from the pinned fresh base-model revision.
+
+PINNED RUNTIME
+
+- CPython 3.13.15
+- Tesla T4, CUDA device cuda:0
+- Dependencies: requirements/p7-t2-real-training-t4-cp313-requirements.txt
+- Base model: Qwen/Qwen3-4B-Instruct-2507
+- Revision: cdbee75f17c01a7cc42f958dc650907174af0554
+
+BUNDLE
+
+Build only from committed governed sources:
+
+python scripts/build-p7-t2-research-remediation-v9-bundle.py \
+  --source-root . \
+  --output-dir .artifacts/p7-t2-remediation-v9-ready/p7-t2-research-remediation-v9-t4 \
+  --zip-path .artifacts/p7-t2-remediation-v9-ready/p7-t2-research-remediation-v9-t4.zip
+
+Validate before upload:
+
+python scripts/validate-p7-t2-research-remediation-v9-bundle.py \
+  --bundle-root .artifacts/p7-t2-remediation-v9-ready/p7-t2-research-remediation-v9-t4
+
+COLAB EXECUTION ORDER
+
+1. Connect Tesla T4 with CPython 3.13.15.
+2. Upload and extract p7-t2-research-remediation-v9-t4.zip.
+3. Validate the bundle before dependency installation.
+4. Install pinned requirements and restart the whole runtime.
+5. Revalidate runtime and bundle after restart.
+6. Download the pinned base-model revision, then switch to offline mode.
+7. Run pipeline preflight with the approved manifest and config.
+8. Train once from the fresh pinned base model.
+9. Validate real output before archiving it.
+
+FAIL-CLOSED STOPS
+
+- Stop on any identity, checksum, inventory, runtime, GPU, split, retention,
+  prompt-profile, approval, EOS, or finite-metric mismatch.
+- Do not reuse failed or partial checkpoints.
+- Do not evaluate or promote under this training approval.
+- Completed output remains CANDIDATE_ONLY during evaluation and review.
+
+P7-T4 EVALUATION BUNDLE
+
+After committing the approved evaluation sources, build with the exact v9 adapter:
+
+python scripts/build-p7-t4-research-evaluation-bundle.py \
+  --root . \
+  --adapter-directory .artifacts/p7-t2-remediation-v9-import/p7-t2-research-remediation-v9-output/adapter \
+  --output-parent .artifacts/p7-t4-v9-ready \
+  --remediation-v9
+
+Validate before upload:
+
+python scripts/validate-p7-t4-research-evaluation-bundle.py \
+  --bundle-root .artifacts/p7-t4-v9-ready/p7-t4-research-evaluation
+
+Run the locked external workflow in this order: preflight, SHARED_BASE R01-R03,
+RESEARCH_ADAPTER R01-R03, comparison, review packet preparation. Stop on any
+automatic failure or regression. Never infer promotion from automatic PASS.
+
+LOCAL VERIFICATION
+
+python -m unittest scripts.tests.test_p7_t2_research_remediation_v9_training_bundle
+python -m unittest scripts.tests.test_p7_t4_research_remediation_v9_evaluation_preparation
+python -m unittest scripts.tests.test_p7_t4_research_evaluation_bundle
+python -m unittest scripts.tests.test_research_independent_evaluation_p7_t4
+python scripts/validate-p7-t4-research-remediation-v9-dataset.py

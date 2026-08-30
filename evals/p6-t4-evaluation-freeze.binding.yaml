@@ -7,6 +7,6 @@ requiredLifecycle: FROZEN
 requiredFreezeStatus: FROZEN
 requiredRetention: FROZEN_EVALUATION
 transitionOwner: P7-T1
-governanceState: GOVERNED_EVIDENCE_PENDING
-approvalReference: null
+governanceState: GOVERNED_EVIDENCE_APPROVED
+approvalReference: evidence/p7-t1c-frozen-evaluation-governance-approval.json
 suiteDigest: 8b75d356890a8a5c2318305589301b6ee6d73fbd3665b9af2063f98e13ea7417

@@ -35,6 +35,7 @@ BRANCHES = {
     "RESEARCH_UC_003": ("RESEARCH", "RESEARCH_ASSISTANT_ONLY", "ASSIGNED_TASK_LOOKUP", "LOOKUP"),
     "RESEARCH_UC_004": ("RESEARCH", "RESEARCH_ASSISTANT_ONLY", "TASK_PROPOSAL_DRAFT", "DRAFT"),
     "RESEARCH_UC_005": ("RESEARCH", "RESEARCH_ASSISTANT_ONLY", "TASK_SUGGESTION_DRAFT", "DRAFT"),
+    "RESEARCH_UC_006": ("RESEARCH", "RESEARCH_ASSISTANT_ONLY", "REPORT_REVIEW_DRAFT", "DRAFT"),
 }
 INPUT_KEYS = {
     "ADMIN_UC_001": {"systemStatus"}, "ADMIN_UC_002": {"auditSummary"},
@@ -49,6 +50,7 @@ INPUT_KEYS = {
     "RESEARCH_UC_003": {"taskRef", "assignedTask"},
     "RESEARCH_UC_004": {"projectRef", "groupRef", "groupProgress", "task"},
     "RESEARCH_UC_005": {"taskRef", "assignedTask", "task"},
+    "RESEARCH_UC_006": {"reportRef", "projectRef", "groupRef", "reportMetadata"},
 }
 PAYLOAD_KEYS = {
     "ADMIN_UC_001": {"resourceRef", "subjectKind"}, "ADMIN_UC_002": {"resourceRef", "subjectKind"},
@@ -59,6 +61,7 @@ PAYLOAD_KEYS = {
     "RESEARCH_UC_001": {"resourceRef"}, "RESEARCH_UC_002": {"resourceRef"},
     "RESEARCH_UC_003": {"resourceRef"}, "RESEARCH_UC_004": {"proposalKind"},
     "RESEARCH_UC_005": {"proposalKind"},
+    "RESEARCH_UC_006": {"draftKind"},
 }
 EXPECTED_CATEGORY_IDS = {
     "ADMIN_UC_001": ["CAT_ADMIN_SYSTEM_STATUS"], "ADMIN_UC_002": ["CAT_ADMIN_AUDIT_SUMMARY"],
@@ -70,6 +73,7 @@ EXPECTED_CATEGORY_IDS = {
     "LAB_UC_006": ["CAT_CHECKIN_POLICY"], "RESEARCH_UC_001": ["CAT_RESEARCH_PROJECT_PROGRESS"],
     "RESEARCH_UC_002": ["CAT_RESEARCH_GROUP_PROGRESS"], "RESEARCH_UC_003": ["CAT_RESEARCH_ASSIGNED_TASK"],
     "RESEARCH_UC_004": ["CAT_RESEARCH_DRAFT_CONTEXT"], "RESEARCH_UC_005": ["CAT_RESEARCH_DRAFT_CONTEXT"],
+    "RESEARCH_UC_006": ["CAT_RESEARCH_REPORT_METADATA"],
 }
 CATEGORY_RULES = {
     "CAT_ADMIN_SYSTEM_STATUS": ("INTERNAL", "ELIGIBLE_AFTER_APPROVAL", "ADMIN_ASSISTANT_ONLY", "SANITIZED_DERIVATIVE_REQUIRED"),
@@ -87,6 +91,7 @@ CATEGORY_RULES = {
     "CAT_RESEARCH_GROUP_PROGRESS": ("SENSITIVE", "ELIGIBLE_AFTER_APPROVAL", "RESEARCH_ASSISTANT_ONLY", "SANITIZED_DERIVATIVE_REQUIRED"),
     "CAT_RESEARCH_ASSIGNED_TASK": ("SENSITIVE", "SYNTHETIC_ONLY", "RESEARCH_ASSISTANT_ONLY", "SYNTHETIC_GENERATION_ONLY"),
     "CAT_RESEARCH_DRAFT_CONTEXT": ("SENSITIVE", "SYNTHETIC_ONLY", "RESEARCH_ASSISTANT_ONLY", "SYNTHETIC_GENERATION_ONLY"),
+    "CAT_RESEARCH_REPORT_METADATA": ("SENSITIVE", "DEFERRED", "RESEARCH_ASSISTANT_ONLY", "DEFERRED_NO_EXPORT"),
 }
 
 
@@ -148,16 +153,17 @@ def branch_errors(record: object) -> list[str]:
         if rule and (item.get("classification"), item.get("datasetUsePermission"), item.get("visibility"),
                      item.get("sanitization", {}).get("disposition") if isinstance(item.get("sanitization"), dict) else None) != rule:
             errors.append(f"/governance/categoryGovernance/{index}: exact P6-T2 tuple required")
-        if item.get("datasetUsePermission") not in ACTIVE_PERMISSION:
+        if use_case != "RESEARCH_UC_006" and item.get("datasetUsePermission") not in ACTIVE_PERMISSION:
             errors.append(f"/governance/categoryGovernance/{index}/datasetUsePermission: inactive permission")
         disposition = item.get("sanitization", {}).get("disposition") if isinstance(item.get("sanitization"), dict) else None
-        if disposition not in ACTIVE_DISPOSITION:
+        if use_case != "RESEARCH_UC_006" and disposition not in ACTIVE_DISPOSITION:
             errors.append(f"/governance/categoryGovernance/{index}/sanitization/disposition: inactive disposition")
         provenance = item.get("provenance", {}).get("type") if isinstance(item.get("provenance"), dict) else None
         expected_provenance = "INTERNAL_SANITIZED" if disposition == "SANITIZED_DERIVATIVE_REQUIRED" else "SYNTHETIC"
         if provenance != expected_provenance:
             errors.append(f"/governance/categoryGovernance/{index}/provenance/type: disposition mismatch")
-        if item.get("modelDevelopmentPurpose") != ["DEVELOPMENT_TEST"]:
+        expected_purpose = [] if use_case == "RESEARCH_UC_006" else ["DEVELOPMENT_TEST"]
+        if item.get("modelDevelopmentPurpose") != expected_purpose:
             errors.append(f"/governance/categoryGovernance/{index}/modelDevelopmentPurpose: exact purpose required")
     output = record.get("expectedOutput")
     if isinstance(output, dict):

@@ -5,12 +5,13 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import shutil
 
 import pytest
 from fastapi.testclient import TestClient
 
 from app.artifacts import ArtifactConfigurationError, ArtifactLoader
-from app.config import DEFAULT_ARTIFACT_CONFIG_PATH, DEFAULT_PROFILE_CONFIG_PATH
+from app.config import DEFAULT_ARTIFACT_CONFIG_PATH, DEFAULT_ARTIFACT_ROOT, DEFAULT_PROFILE_CONFIG_PATH
 from app.main import create_app
 from app.models import AssistantKey
 from app.profiles import ProfileLoader
@@ -32,11 +33,39 @@ def _profile_config() -> dict:
     return json.loads(DEFAULT_PROFILE_CONFIG_PATH.read_text(encoding="utf-8"))
 
 
+def _seed_checked_in_adapter_artifacts(config: dict, artifact_root: Path) -> None:
+    resolved_default_root = DEFAULT_ARTIFACT_ROOT.resolve(strict=True)
+    for descriptor in config["assistantAdapters"].values():
+        artifact = descriptor.get("artifact")
+        if not isinstance(artifact, dict):
+            continue
+        for entry in artifact.get("files", []):
+            relative_path = entry.get("path")
+            if not isinstance(relative_path, str):
+                continue
+            source = DEFAULT_ARTIFACT_ROOT / relative_path
+            try:
+                resolved_source = source.resolve(strict=True)
+            except OSError:
+                continue
+            if not resolved_source.is_relative_to(resolved_default_root) or not resolved_source.is_file():
+                continue
+            destination = artifact_root / relative_path
+            if destination.exists():
+                continue
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            try:
+                os.link(resolved_source, destination)
+            except OSError:
+                shutil.copyfile(resolved_source, destination)
+
+
 def _load_from(tmp_path: Path, config: dict) -> ArtifactLoader:
     descriptor_path = tmp_path / "model-artifacts.json"
     descriptor_path.write_text(json.dumps(config, indent=2) + "\n", encoding="utf-8")
     artifact_root = tmp_path / "artifacts"
     artifact_root.mkdir(exist_ok=True)
+    _seed_checked_in_adapter_artifacts(config, artifact_root)
     return ArtifactLoader.from_file(descriptor_path, artifact_root, _profiles())
 
 
@@ -72,12 +101,14 @@ def _physical_artifact(
 def _load_with_root(tmp_path: Path, config: dict) -> ArtifactLoader:
     descriptor_path = tmp_path / "model-artifacts.json"
     descriptor_path.write_text(json.dumps(config, indent=2) + "\n", encoding="utf-8")
-    return ArtifactLoader.from_file(descriptor_path, tmp_path / "artifacts", _profiles())
+    artifact_root = tmp_path / "artifacts"
+    _seed_checked_in_adapter_artifacts(config, artifact_root)
+    return ArtifactLoader.from_file(descriptor_path, artifact_root, _profiles())
 
 
 def test_checked_in_descriptor_loads_deterministically() -> None:
-    first = ArtifactLoader.from_file(DEFAULT_ARTIFACT_CONFIG_PATH, DEFAULT_ARTIFACT_CONFIG_PATH.parent, _profiles())
-    second = ArtifactLoader.from_file(DEFAULT_ARTIFACT_CONFIG_PATH, DEFAULT_ARTIFACT_CONFIG_PATH.parent, _profiles())
+    first = ArtifactLoader.from_file(DEFAULT_ARTIFACT_CONFIG_PATH, DEFAULT_ARTIFACT_ROOT, _profiles())
+    second = ArtifactLoader.from_file(DEFAULT_ARTIFACT_CONFIG_PATH, DEFAULT_ARTIFACT_ROOT, _profiles())
 
     assert first.artifact_identity == second.artifact_identity
     assert len(first.artifact_identity) == 64
@@ -88,7 +119,7 @@ def test_checked_in_descriptor_loads_deterministically() -> None:
 def test_metadata_only_base_model_is_valid_metadata_but_not_loaded() -> None:
     loader = ArtifactLoader.from_file(
         DEFAULT_ARTIFACT_CONFIG_PATH,
-        DEFAULT_ARTIFACT_CONFIG_PATH.parent,
+        DEFAULT_ARTIFACT_ROOT,
         _profiles(),
     )
 
@@ -105,7 +136,7 @@ def test_metadata_only_base_model_is_valid_metadata_but_not_loaded() -> None:
     [
         (AssistantKey.ADMIN_ASSISTANT, "NOT_AVAILABLE"),
         (AssistantKey.LAB_ASSISTANT, "NOT_AVAILABLE"),
-        (AssistantKey.RESEARCH_ASSISTANT, "BLOCKED"),
+        (AssistantKey.RESEARCH_ASSISTANT, "APPROVED"),
     ],
 )
 def test_each_assistant_has_truthful_optional_adapter_state(
@@ -114,26 +145,30 @@ def test_each_assistant_has_truthful_optional_adapter_state(
 ) -> None:
     loader = ArtifactLoader.from_file(
         DEFAULT_ARTIFACT_CONFIG_PATH,
-        DEFAULT_ARTIFACT_CONFIG_PATH.parent,
+        DEFAULT_ARTIFACT_ROOT,
         _profiles(),
     )
 
     state = loader.get_state(assistant_key)
 
     assert state.adapter_status == expected_status
-    assert state.adapter_identity is None
-    assert state.adapter_artifact_validated is False
+    if assistant_key is AssistantKey.RESEARCH_ASSISTANT:
+        assert state.adapter_identity == "8c080cac001798a0826d5c72b553b791c31b7e32f9b10d4dd8b93d4f4f92830d"
+        assert state.adapter_artifact_validated is True
+    else:
+        assert state.adapter_identity is None
+        assert state.adapter_artifact_validated is False
     assert state.adapter_loaded is False
     assert state.ready is False
 
 
-def test_research_descriptor_does_not_claim_a_promoted_adapter() -> None:
+def test_research_descriptor_binds_approved_but_not_loaded_adapter() -> None:
     config = _config()
     research = config["assistantAdapters"]["RESEARCH_ASSISTANT"]
 
-    assert research["status"] == "BLOCKED"
-    assert research["artifact"] is None
-    assert research["sourceDecision"]["outcome"] == "ADAPTER_REQUIRED+CANDIDATE_BUILD_BLOCKED"
+    assert research["status"] == "APPROVED"
+    assert research["artifact"]["identity"] == "8c080cac001798a0826d5c72b553b791c31b7e32f9b10d4dd8b93d4f4f92830d"
+    assert research["sourceDecision"]["outcome"] == "ADAPTER_APPROVED"
 
 
 @pytest.mark.parametrize("status", ["CANDIDATE_ONLY", "BLOCKED", "PENDING"])
@@ -328,10 +363,8 @@ def test_duplicate_adapter_entry_fails_closed(tmp_path: Path) -> None:
 def test_candidate_decision_cannot_be_presented_as_approved_adapter(tmp_path: Path) -> None:
     config = _config()
     research = config["assistantAdapters"]["RESEARCH_ASSISTANT"]
-    research["status"] = "APPROVED"
-    research["identifier"] = "research-adapter"
-    research["version"] = "1.0.0"
     research["artifact"] = _physical_artifact(tmp_path / "artifacts", "research/adapter.bin")
+    research["sourceDecision"]["outcome"] = "CANDIDATE_ONLY"
 
     _assert_invalid(tmp_path, config, "ADAPTER_APPROVAL_CONFLICT")
 

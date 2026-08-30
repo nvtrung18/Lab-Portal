@@ -1,0 +1,104 @@
+{
+  "approvalReference": "evidence/p7-t4-research-remediation-v5-evaluator-governance-approval.json",
+  "artifactIdentity": "99230c674b9064f1e06247dedd014f6e3da0714ca679017c07b3d877f1e285d3",
+  "artifactType": "P7-T4-RESEARCH-EVALUATOR-CONTRACT",
+  "basedOn": {
+    "approvedSchemaIdentity": "7e8e436bb27681a6fc49bd752632b418e668da35f860874bbaec337c8a0f637d",
+    "approvedSchemaReference": "config/p7-t4-research-remediation-governance-v4/structured-output-schema.approved.json",
+    "evaluatorReference": "scripts/validate-evaluation-suites.py",
+    "evaluatorSha256": "c02d9b62f456921d1c23a9a58d99ae3f7fe96f21d42d32abcc95d1f39a838bef"
+  },
+  "changeScope": "ADDITIVE_REPORT_REVIEW_VALIDATION_ONLY",
+  "comparisonPolicyUnchanged": true,
+  "constrainedDecodingAllowed": false,
+  "evaluatorId": "P7-T4-RESEARCH-EVALUATOR",
+  "evaluatorVersion": "2.0.0",
+  "implementationReference": "scripts/validate-p7-t4-research-evaluation-v2.py",
+  "requestIdentity": "4a9ceb3be319bc2fb96b3d856bfdcb2c6c263a325fab5863f45265b4fe52d93f",
+  "runtimeNormalizationAllowed": false,
+  "schemaVersion": "1.0.0",
+  "status": "APPROVED",
+  "structuredOutputContracts": [
+    {
+      "kind": "RESEARCH_TASK_PROPOSAL_DRAFT"
+    },
+    {
+      "kind": "RESEARCH_TASK_SUGGESTION_DRAFT"
+    },
+    {
+      "kind": "RESEARCH_REPORT_REVIEW_DRAFT",
+      "schema": {
+        "additionalProperties": false,
+        "properties": {
+          "advisoryOnly": {
+            "const": true
+          },
+          "issues": {
+            "items": {
+              "maxLength": 300,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 5,
+            "minItems": 1,
+            "type": "array"
+          },
+          "kind": {
+            "const": "RESEARCH_REPORT_REVIEW_DRAFT"
+          },
+          "reportRef": {
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+            "type": "string"
+          },
+          "requiresHumanReview": {
+            "const": true
+          },
+          "reviewSummary": {
+            "maxLength": 800,
+            "minLength": 1,
+            "type": "string"
+          },
+          "suggestions": {
+            "items": {
+              "maxLength": 300,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 5,
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "kind",
+          "reportRef",
+          "reviewSummary",
+          "issues",
+          "suggestions",
+          "requiresHumanReview",
+          "advisoryOnly"
+        ],
+        "type": "object"
+      }
+    }
+  ],
+  "toolContracts": {
+    "NONE": [
+      "kind"
+    ],
+    "REJECTED": [
+      "group",
+      "intent",
+      "kind",
+      "name",
+      "reason"
+    ],
+    "REQUEST": [
+      "group",
+      "intent",
+      "kind",
+      "name"
+    ]
+  },
+  "useAllowed": true
+}
