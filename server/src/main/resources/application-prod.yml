@@ -44,6 +44,12 @@ ai:
     base-url: ${AI_GATEWAY_BASE_URL}
     internal-service-token: ${AI_INTERNAL_SERVICE_TOKEN}
 
+face:
+  service:
+    base-url: ${FACE_SERVICE_BASE_URL}
+    internal-service-token: ${FACE_INTERNAL_SERVICE_TOKEN}
+  embedding-encryption-key: ${FACE_EMBEDDING_ENCRYPTION_KEY}
+
 logging:
   level:
     root: INFO

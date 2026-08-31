@@ -30,3 +30,9 @@ ai:
   gateway:
     base-url: http://ai-gateway.test.invalid
     internal-service-token: test-internal-service-token
+
+face:
+  service:
+    base-url: http://face-service.test.invalid
+    internal-service-token: test-face-internal-service-token
+  embedding-encryption-key: MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=

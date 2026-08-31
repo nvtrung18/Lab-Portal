@@ -1,0 +1,159 @@
+package com.web.labportalbackend.face.service;
+
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.web.labportalbackend.admin.systemconfig.dto.SystemConfigResponse;
+import com.web.labportalbackend.admin.systemconfig.service.SystemConfigService;
+import com.web.labportalbackend.auth.entity.User;
+import com.web.labportalbackend.auth.repository.UserRepository;
+import com.web.labportalbackend.booking.entity.Booking;
+import com.web.labportalbackend.booking.entity.TimeSlot;
+import com.web.labportalbackend.booking.repository.BookingRepository;
+import com.web.labportalbackend.common.enums.BookingStatus;
+import com.web.labportalbackend.common.enums.TimeSlotStatus;
+import com.web.labportalbackend.face.client.FaceMatchRequest;
+import com.web.labportalbackend.face.client.FaceMatchResponse;
+import com.web.labportalbackend.face.client.FaceProcessingClient;
+import com.web.labportalbackend.face.dto.request.FaceCheckinRequest;
+import com.web.labportalbackend.face.entity.FaceConsentLogEntity;
+import com.web.labportalbackend.face.entity.FaceProfileEntity;
+import com.web.labportalbackend.face.entity.FaceSecurityConfigEntity;
+import com.web.labportalbackend.face.enums.FaceConsentStatus;
+import com.web.labportalbackend.face.enums.FaceProfileStatus;
+import com.web.labportalbackend.face.repository.FaceConsentLogRepository;
+import com.web.labportalbackend.face.repository.FaceProfileRepository;
+import com.web.labportalbackend.face.repository.FaceSecurityConfigRepository;
+import com.web.labportalbackend.face.security.FaceEmbeddingCipher;
+import com.web.labportalbackend.face.service.impl.FaceCheckinServiceImpl;
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.util.Base64;
+import java.util.List;
+import java.util.Optional;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+
+class FaceCheckinServiceImplTest {
+
+    private static final String KEY = "MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=";
+
+    private final UserRepository userRepository = mock(UserRepository.class);
+    private final BookingRepository bookingRepository = mock(BookingRepository.class);
+    private final FaceConsentLogRepository consentRepository = mock(FaceConsentLogRepository.class);
+    private final FaceProfileRepository profileRepository = mock(FaceProfileRepository.class);
+    private final FaceSecurityConfigRepository configRepository = mock(FaceSecurityConfigRepository.class);
+    private final SystemConfigService systemConfigService = mock(SystemConfigService.class);
+    private final FaceProcessingClient processingClient = mock(FaceProcessingClient.class);
+    private final FaceEmbeddingCipher cipher = new FaceEmbeddingCipher(KEY);
+    private final FaceCheckinWriter writer = mock(FaceCheckinWriter.class);
+    private final User student = mock(User.class);
+    private final Booking booking = mock(Booking.class);
+    private FaceCheckinServiceImpl service;
+
+    @BeforeEach
+    void setUp() {
+        service = new FaceCheckinServiceImpl(userRepository, bookingRepository, consentRepository,
+                profileRepository, configRepository, systemConfigService, processingClient, cipher,
+                writer, new ObjectMapper());
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken("student", "n/a", List.of()));
+        when(userRepository.findByEmailOrUsername("student", "student")).thenReturn(Optional.of(student));
+        when(student.getId()).thenReturn(7L);
+        when(student.hasRole("STUDENT")).thenReturn(true);
+        when(bookingRepository.findById(11L)).thenReturn(Optional.of(booking));
+        when(booking.getUser()).thenReturn(student);
+        when(booking.getStatus()).thenReturn(BookingStatus.APPROVED);
+        when(booking.getStartTime()).thenReturn(Instant.now().minusSeconds(60));
+        TimeSlot slot = mock(TimeSlot.class);
+        when(slot.getStatus()).thenReturn(TimeSlotStatus.AVAILABLE);
+        when(booking.getTimeSlot()).thenReturn(slot);
+        when(systemConfigService.getConfig()).thenReturn(systemConfig(10));
+        when(consentRepository.findFirstByUserIdOrderByCreatedAtDescIdDesc(7L)).thenReturn(Optional.of(
+                FaceConsentLogEntity.builder().consentStatus(FaceConsentStatus.GRANTED).build()));
+        FaceProfileEntity profile = mock(FaceProfileEntity.class);
+        when(profile.getEncryptedEmbedding()).thenReturn(cipher.encrypt("[0.1,0.2]"));
+        when(profileRepository.findByUserIdAndProfileStatusAndActiveTrueAndDeletedFalse(
+                7L, FaceProfileStatus.ACTIVE)).thenReturn(Optional.of(profile));
+        when(configRepository.findAllByActiveTrueAndDeletedFalse()).thenReturn(List.of(config()));
+    }
+
+    @AfterEach
+    void tearDown() {
+        SecurityContextHolder.clearContext();
+    }
+
+    @Test
+    void matchingOwnedApprovedBookingInsideWindowCommitsCheckin() {
+        when(processingClient.match(any())).thenReturn(new FaceMatchResponse("MATCH", 0.91, 0.88, null));
+        when(writer.complete(7L, 11L, 0.91, 0.88)).thenReturn(Instant.parse("2026-08-31T00:00:00Z"));
+
+        var response = service.checkIn(request());
+
+        assertTrue(response.checkedIn());
+        ArgumentCaptor<FaceMatchRequest> forwarded = ArgumentCaptor.forClass(FaceMatchRequest.class);
+        verify(processingClient).match(forwarded.capture());
+        assertTrue(forwarded.getValue().referenceEmbedding().equals(List.of(0.1, 0.2)));
+        verify(writer).complete(7L, 11L, 0.91, 0.88);
+    }
+
+    @Test
+    void belowThresholdResultIsLoggedWithoutChangingBookingStatus() {
+        when(processingClient.match(any())).thenReturn(new FaceMatchResponse("MATCH", 0.7, 0.88, null));
+
+        var response = service.checkIn(request());
+
+        assertFalse(response.checkedIn());
+        verify(writer).recordFailure(7L, 11L, 0.7, 0.88, "NO_MATCH");
+        verify(writer, never()).complete(any(), any(), any(), any());
+    }
+
+    @Test
+    void anotherUsersBookingIsDeniedBeforeBiometricProcessing() {
+        User other = mock(User.class);
+        when(other.getId()).thenReturn(8L);
+        when(booking.getUser()).thenReturn(other);
+
+        assertThrows(AccessDeniedException.class, () -> service.checkIn(request()));
+
+        verify(processingClient, never()).match(any());
+    }
+
+    private FaceCheckinRequest request() {
+        return new FaceCheckinRequest(11L,
+                Base64.getEncoder().encodeToString("image".getBytes()), "image/jpeg");
+    }
+
+    private FaceSecurityConfigEntity config() {
+        return FaceSecurityConfigEntity.builder()
+                .configKey("test")
+                .faceEnabled(true)
+                .confidenceThreshold(new BigDecimal("0.8500"))
+                .livenessThreshold(new BigDecimal("0.7000"))
+                .livenessRequired(true)
+                .qrWhenFaceDisabled(true)
+                .qrWhenServiceUnavailable(true)
+                .qrWhenProfileUnavailable(true)
+                .manualOverrideEnabled(true)
+                .build();
+    }
+
+    private SystemConfigResponse systemConfig(int checkinWindowMinutes) {
+        return new SystemConfigResponse(null, null,
+                new SystemConfigResponse.BookingConfig(checkinWindowMinutes, 0, false, false),
+                null, null);
+    }
+}

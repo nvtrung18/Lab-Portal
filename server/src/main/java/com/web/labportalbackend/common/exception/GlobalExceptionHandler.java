@@ -5,6 +5,7 @@ import com.web.labportalbackend.ai.context.AiContextReadDeniedException;
 import com.web.labportalbackend.ai.service.AiAssistantAvailabilityException;
 import com.web.labportalbackend.ai.service.AiAssistantAvailabilityFailure;
 import com.web.labportalbackend.ai.service.AiCapabilityDeniedException;
+import com.web.labportalbackend.face.client.FaceServiceException;
 import com.web.labportalbackend.common.dto.Response;
 import com.web.labportalbackend.research.exception.TaskProposalReviewConflictException;
 import lombok.extern.slf4j.Slf4j;
@@ -64,6 +65,14 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
                 .body(Response.error(HttpStatus.SERVICE_UNAVAILABLE.value(),
                         "AI assistant is temporarily unavailable"));
+    }
+
+    @ExceptionHandler(FaceServiceException.class)
+    public ResponseEntity<Response<Void>> handleFaceService(FaceServiceException ex) {
+        log.warn("Face service request failed");
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                .body(Response.error(HttpStatus.SERVICE_UNAVAILABLE.value(),
+                        "Face service is temporarily unavailable"));
     }
 
     // ---- Validation ----
