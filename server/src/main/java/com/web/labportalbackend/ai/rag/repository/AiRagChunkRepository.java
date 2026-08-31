@@ -11,5 +11,7 @@ public interface AiRagChunkRepository extends JpaRepository<AiRagChunkEntity, Lo
 
     List<AiRagChunkEntity> findByDocumentIdAndActiveTrueAndDeletedFalseOrderByChunkIndex(Long documentId);
 
+    List<AiRagChunkEntity> findByDocumentIdAndDeletedFalseOrderByChunkIndex(Long documentId);
+
     List<AiRagChunkEntity> findByNamespaceAndActiveTrueAndDeletedFalse(String namespace, Pageable pageable);
 }

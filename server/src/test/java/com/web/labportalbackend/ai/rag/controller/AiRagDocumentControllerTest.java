@@ -2,10 +2,13 @@ package com.web.labportalbackend.ai.rag.controller;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -79,6 +82,32 @@ class AiRagDocumentControllerTest {
                 .andExpect(status().isBadRequest());
 
         verifyNoInteractions(ingestionService);
+    }
+
+    @Test
+    void managerCanReindexAndRevokeManagedDocument() throws Exception {
+        when(ingestionService.reindex(any(), any())).thenReturn(new AiRagDocumentResponse(
+                101L, "lab-knowledge", AiAssistantDomain.LAB, "policy-1", 2,
+                "LAB_POLICY", AiRagVisibility.LAB_MEMBERS, 1));
+
+        mockMvc.perform(put("/api/ai/rag/documents/100")
+                        .contextPath("/api")
+                        .with(csrf())
+                        .with(user("manager").roles("LAB_MANAGER"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(validBody().replace("\"version\":1", "\"version\":2")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.documentId").value(101L))
+                .andExpect(jsonPath("$.data.version").value(2));
+
+        mockMvc.perform(delete("/api/ai/rag/documents/101")
+                        .contextPath("/api")
+                        .with(csrf())
+                        .with(user("manager").roles("LAB_MANAGER")))
+                .andExpect(status().isOk());
+
+        verify(ingestionService).reindex(org.mockito.ArgumentMatchers.eq(100L), any());
+        verify(ingestionService).revoke(101L);
     }
 
     private static String validBody() {

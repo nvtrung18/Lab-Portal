@@ -1,5 +1,8 @@
 package com.web.labportalbackend.ai.rag.service.impl;
 
+import com.web.labportalbackend.admin.audit.enums.AuditAction;
+import com.web.labportalbackend.admin.audit.enums.AuditModule;
+import com.web.labportalbackend.admin.audit.service.AuditLogService;
 import com.web.labportalbackend.ai.enums.AiAssistantDomain;
 import com.web.labportalbackend.ai.rag.dto.request.AiRagDocumentIngestRequest;
 import com.web.labportalbackend.ai.rag.dto.response.AiRagDocumentResponse;
@@ -23,12 +26,14 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
 import java.util.List;
+import java.util.Objects;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import jakarta.persistence.EntityNotFoundException;
 
 @Service
 public class AiRagIngestionServiceImpl implements AiRagIngestionService {
@@ -40,6 +45,7 @@ public class AiRagIngestionServiceImpl implements AiRagIngestionService {
     private final LaboratoryRepository laboratoryRepository;
     private final ProjectRepository projectRepository;
     private final GroupRepository groupRepository;
+    private final AuditLogService auditLogService;
 
     public AiRagIngestionServiceImpl(AiRagDocumentRepository documentRepository,
                                      AiRagChunkRepository chunkRepository,
@@ -47,7 +53,8 @@ public class AiRagIngestionServiceImpl implements AiRagIngestionService {
                                      UserRepository userRepository,
                                      LaboratoryRepository laboratoryRepository,
                                      ProjectRepository projectRepository,
-                                     GroupRepository groupRepository) {
+                                     GroupRepository groupRepository,
+                                     AuditLogService auditLogService) {
         this.documentRepository = documentRepository;
         this.chunkRepository = chunkRepository;
         this.chunker = chunker;
@@ -55,6 +62,7 @@ public class AiRagIngestionServiceImpl implements AiRagIngestionService {
         this.laboratoryRepository = laboratoryRepository;
         this.projectRepository = projectRepository;
         this.groupRepository = groupRepository;
+        this.auditLogService = auditLogService;
     }
 
     @Override
@@ -72,6 +80,54 @@ public class AiRagIngestionServiceImpl implements AiRagIngestionService {
                 namespace, resourceId)) {
             throw new IllegalArgumentException("An active RAG document already exists for the resource");
         }
+        AiRagDocumentResponse response = persist(request, actor.getId(), namespace, resourceId);
+        auditLogService.log(actor, AuditAction.AI_RAG_INGEST, AuditModule.AI,
+                "AI_RAG_DOCUMENT", response.documentId(), "Ingested an authorized RAG document");
+        return response;
+    }
+
+    @Override
+    @Transactional
+    public AiRagDocumentResponse reindex(Long documentId, AiRagDocumentIngestRequest request) {
+        if (documentId == null || documentId <= 0 || request == null || request.getDomain() == null
+                || request.getVisibility() == null || !request.hasValidScopeShape()) {
+            throw new IllegalArgumentException("RAG reindex request is invalid");
+        }
+        User actor = currentActor();
+        AiRagDocumentEntity existing = activeDocument(documentId);
+        authorizeDocument(actor, existing);
+        String resourceId = request.getResourceId().trim();
+        if (existing.getDomain() != request.getDomain()
+                || !existing.getResourceId().equals(resourceId)
+                || request.getVersion() <= existing.getDocumentVersion()
+                || !samePermissionMetadata(existing, request)) {
+            throw new IllegalArgumentException("RAG reindex must preserve permission metadata and increase version");
+        }
+        revokeEntities(existing);
+        AiRagDocumentResponse response = persist(request, existing.getOwnerId(), existing.getNamespace(), resourceId);
+        auditLogService.log(actor, AuditAction.AI_RAG_REINDEX, AuditModule.AI,
+                "AI_RAG_DOCUMENT", response.documentId(), "Reindexed an authorized RAG document");
+        return response;
+    }
+
+    @Override
+    @Transactional
+    public void revoke(Long documentId) {
+        if (documentId == null || documentId <= 0) {
+            throw new IllegalArgumentException("RAG document ID is invalid");
+        }
+        User actor = currentActor();
+        AiRagDocumentEntity document = activeDocument(documentId);
+        authorizeDocument(actor, document);
+        revokeEntities(document);
+        auditLogService.log(actor, AuditAction.AI_RAG_REVOKE, AuditModule.AI,
+                "AI_RAG_DOCUMENT", documentId, "Revoked an authorized RAG document");
+    }
+
+    private AiRagDocumentResponse persist(AiRagDocumentIngestRequest request,
+                                          Long ownerId,
+                                          String namespace,
+                                          String resourceId) {
 
         List<AiRagTextChunker.Chunk> parsed = chunker.chunk(request.getContent());
         AiRagDocumentEntity document = new AiRagDocumentEntity();
@@ -82,7 +138,7 @@ public class AiRagIngestionServiceImpl implements AiRagIngestionService {
         document.setSourceType(request.getSourceType().trim());
         document.setTitle(request.getTitle().trim());
         document.setVisibility(request.getVisibility());
-        document.setOwnerId(actor.getId());
+        document.setOwnerId(ownerId);
         document.setLabId(request.getLabId());
         document.setProjectId(request.getProjectId());
         document.setGroupId(request.getGroupId());
@@ -99,6 +155,43 @@ public class AiRagIngestionServiceImpl implements AiRagIngestionService {
         chunkRepository.saveAll(chunks);
         return new AiRagDocumentResponse(documentId, namespace, request.getDomain(), resourceId,
                 request.getVersion(), request.getSourceType().trim(), request.getVisibility(), chunks.size());
+    }
+
+    private AiRagDocumentEntity activeDocument(Long documentId) {
+        return documentRepository.findByIdAndActiveTrueAndDeletedFalse(documentId)
+                .orElseThrow(() -> new EntityNotFoundException("RAG document not found"));
+    }
+
+    private void authorizeDocument(User actor, AiRagDocumentEntity document) {
+        if (actor.hasRole("ADMIN")) {
+            return;
+        }
+        if (!actor.hasRole("LAB_MANAGER") || document.getLabId() == null
+                || !laboratoryRepository.existsByIdAndManagerIdAndActiveTrueAndDeletedFalse(
+                        document.getLabId(), actor.getId())) {
+            throw new AccessDeniedException("RAG document ownership is required");
+        }
+    }
+
+    private void revokeEntities(AiRagDocumentEntity document) {
+        document.setActive(false);
+        document.setDeleted(true);
+        documentRepository.save(document);
+        List<AiRagChunkEntity> chunks = chunkRepository
+                .findByDocumentIdAndDeletedFalseOrderByChunkIndex(document.getId());
+        chunks.forEach(chunk -> {
+            chunk.setActive(false);
+            chunk.setDeleted(true);
+        });
+        chunkRepository.saveAll(chunks);
+    }
+
+    private static boolean samePermissionMetadata(AiRagDocumentEntity document,
+                                                  AiRagDocumentIngestRequest request) {
+        return document.getVisibility() == request.getVisibility()
+                && Objects.equals(document.getLabId(), request.getLabId())
+                && Objects.equals(document.getProjectId(), request.getProjectId())
+                && Objects.equals(document.getGroupId(), request.getGroupId());
     }
 
     private void validateOwnedScope(User actor, AiRagDocumentIngestRequest request) {

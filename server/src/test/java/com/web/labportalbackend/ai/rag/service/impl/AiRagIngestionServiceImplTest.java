@@ -9,6 +9,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.web.labportalbackend.ai.enums.AiAssistantDomain;
+import com.web.labportalbackend.admin.audit.service.AuditLogService;
+import com.web.labportalbackend.admin.audit.enums.AuditAction;
+import com.web.labportalbackend.admin.audit.enums.AuditModule;
 import com.web.labportalbackend.ai.rag.dto.request.AiRagDocumentIngestRequest;
 import com.web.labportalbackend.ai.rag.entity.AiRagChunkEntity;
 import com.web.labportalbackend.ai.rag.entity.AiRagDocumentEntity;
@@ -46,13 +49,14 @@ class AiRagIngestionServiceImplTest {
     @Mock private LaboratoryRepository laboratoryRepository;
     @Mock private ProjectRepository projectRepository;
     @Mock private GroupRepository groupRepository;
+    @Mock private AuditLogService auditLogService;
 
     private AiRagIngestionServiceImpl service;
 
     @BeforeEach
     void setUp() {
         service = new AiRagIngestionServiceImpl(documentRepository, chunkRepository, new AiRagTextChunker(),
-                userRepository, laboratoryRepository, projectRepository, groupRepository);
+                userRepository, laboratoryRepository, projectRepository, groupRepository, auditLogService);
         SecurityContextHolder.getContext().setAuthentication(
                 UsernamePasswordAuthenticationToken.authenticated("manager", "n/a", List.of()));
     }
@@ -93,6 +97,59 @@ class AiRagIngestionServiceImplTest {
                         && chunk.getProjectId() == null
                         && chunk.getGroupId() == null
                         && chunk.getContentHash().length() == 64));
+        verify(auditLogService).log(manager, AuditAction.AI_RAG_INGEST, AuditModule.AI,
+                "AI_RAG_DOCUMENT", 100L, "Ingested an authorized RAG document");
+    }
+
+    @Test
+    void reindexRevokesOldChunksAndCreatesHigherVersion() {
+        User manager = actor("LAB_MANAGER");
+        AiRagDocumentEntity existing = document(100L, 1);
+        AiRagChunkEntity oldChunk = chunk(100L);
+        AiRagDocumentIngestRequest request = labRequest();
+        request.setVersion(2);
+        when(userRepository.findByUsername("manager")).thenReturn(Optional.of(manager));
+        when(documentRepository.findByIdAndActiveTrueAndDeletedFalse(100L)).thenReturn(Optional.of(existing));
+        when(laboratoryRepository.existsByIdAndManagerIdAndActiveTrueAndDeletedFalse(10L, 7L)).thenReturn(true);
+        when(chunkRepository.findByDocumentIdAndDeletedFalseOrderByChunkIndex(100L)).thenReturn(List.of(oldChunk));
+        when(documentRepository.save(any())).thenAnswer(invocation -> {
+            AiRagDocumentEntity value = invocation.getArgument(0);
+            if (value.getId() == null) {
+                value.setId(101L);
+            }
+            return value;
+        });
+
+        var response = service.reindex(100L, request);
+
+        assertEquals(101L, response.documentId());
+        assertEquals(2, response.version());
+        assertTrue(Boolean.TRUE.equals(existing.getDeleted()));
+        assertTrue(Boolean.FALSE.equals(existing.getActive()));
+        assertTrue(Boolean.TRUE.equals(oldChunk.getDeleted()));
+        assertTrue(Boolean.FALSE.equals(oldChunk.getActive()));
+        verify(auditLogService).log(manager, AuditAction.AI_RAG_REINDEX, AuditModule.AI,
+                "AI_RAG_DOCUMENT", 101L, "Reindexed an authorized RAG document");
+    }
+
+    @Test
+    void revokeSoftDeletesDocumentAndChunksAndAuditsActor() {
+        User manager = actor("LAB_MANAGER");
+        AiRagDocumentEntity existing = document(100L, 1);
+        AiRagChunkEntity oldChunk = chunk(100L);
+        when(userRepository.findByUsername("manager")).thenReturn(Optional.of(manager));
+        when(documentRepository.findByIdAndActiveTrueAndDeletedFalse(100L)).thenReturn(Optional.of(existing));
+        when(laboratoryRepository.existsByIdAndManagerIdAndActiveTrueAndDeletedFalse(10L, 7L)).thenReturn(true);
+        when(chunkRepository.findByDocumentIdAndDeletedFalseOrderByChunkIndex(100L)).thenReturn(List.of(oldChunk));
+
+        service.revoke(100L);
+
+        assertTrue(Boolean.TRUE.equals(existing.getDeleted()));
+        assertTrue(Boolean.FALSE.equals(existing.getActive()));
+        assertTrue(Boolean.TRUE.equals(oldChunk.getDeleted()));
+        assertTrue(Boolean.FALSE.equals(oldChunk.getActive()));
+        verify(auditLogService).log(manager, AuditAction.AI_RAG_REVOKE, AuditModule.AI,
+                "AI_RAG_DOCUMENT", 100L, "Revoked an authorized RAG document");
     }
 
     @Test
@@ -115,6 +172,30 @@ class AiRagIngestionServiceImplTest {
         actor.setDeleted(false);
         actor.setRoles(Set.of(new Role(roleName, roleName)));
         return actor;
+    }
+
+    private static AiRagDocumentEntity document(Long id, int version) {
+        AiRagDocumentEntity document = new AiRagDocumentEntity();
+        document.setId(id);
+        document.setNamespace("lab-knowledge");
+        document.setDomain(AiAssistantDomain.LAB);
+        document.setResourceId("policy-1");
+        document.setDocumentVersion(version);
+        document.setSourceType("LAB_POLICY");
+        document.setTitle("Safety policy");
+        document.setVisibility(AiRagVisibility.LAB_MEMBERS);
+        document.setOwnerId(7L);
+        document.setLabId(10L);
+        document.setContentHash("a".repeat(64));
+        return document;
+    }
+
+    private static AiRagChunkEntity chunk(Long documentId) {
+        AiRagChunkEntity chunk = new AiRagChunkEntity();
+        chunk.setDocumentId(documentId);
+        chunk.setActive(true);
+        chunk.setDeleted(false);
+        return chunk;
     }
 
     private static AiRagDocumentIngestRequest labRequest() {
