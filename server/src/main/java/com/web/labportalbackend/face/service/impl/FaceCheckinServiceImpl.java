@@ -14,6 +14,7 @@ import com.web.labportalbackend.common.enums.TimeSlotStatus;
 import com.web.labportalbackend.face.client.FaceMatchRequest;
 import com.web.labportalbackend.face.client.FaceMatchResponse;
 import com.web.labportalbackend.face.client.FaceProcessingClient;
+import com.web.labportalbackend.face.client.FaceServiceException;
 import com.web.labportalbackend.face.dto.request.FaceCheckinRequest;
 import com.web.labportalbackend.face.dto.response.FaceCheckinResponse;
 import com.web.labportalbackend.face.entity.FaceConsentLogEntity;
@@ -71,13 +72,21 @@ public class FaceCheckinServiceImpl implements FaceCheckinService {
         }
         validateImage(request.imageBase64());
 
-        FaceMatchResponse match = processingClient.match(new FaceMatchRequest(
-                request.imageBase64(),
-                request.contentType(),
-                decryptEmbedding(profile.getEncryptedEmbedding()),
-                config.getConfidenceThreshold().doubleValue(),
-                config.getLivenessThreshold().doubleValue(),
-                Boolean.TRUE.equals(config.getLivenessRequired())));
+        FaceMatchResponse match;
+        try {
+            match = processingClient.match(new FaceMatchRequest(
+                    request.imageBase64(),
+                    request.contentType(),
+                    decryptEmbedding(profile.getEncryptedEmbedding()),
+                    config.getConfidenceThreshold().doubleValue(),
+                    config.getLivenessThreshold().doubleValue(),
+                    Boolean.TRUE.equals(config.getLivenessRequired())));
+        } catch (FaceServiceException exception) {
+            if (exception.retryable()) {
+                writer.recordFailure(actor.getId(), request.bookingId(), null, null, "SERVICE_ERROR");
+            }
+            throw exception;
+        }
         return decideAndPersist(actor.getId(), request.bookingId(), match, config);
     }
 

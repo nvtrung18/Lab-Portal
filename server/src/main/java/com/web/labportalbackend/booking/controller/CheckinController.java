@@ -2,6 +2,7 @@ package com.web.labportalbackend.booking.controller;
 
 import com.web.labportalbackend.booking.dto.request.CheckinRequest;
 import com.web.labportalbackend.booking.dto.request.CreateCheckinQrRequest;
+import com.web.labportalbackend.booking.dto.request.ManualCheckinRequest;
 import com.web.labportalbackend.booking.dto.response.BookingResponse;
 import com.web.labportalbackend.booking.dto.response.CheckinQrResponse;
 import com.web.labportalbackend.booking.dto.response.CheckinResponse;
@@ -26,7 +27,8 @@ public class CheckinController {
     @PreAuthorize("hasRole('STUDENT')")
     @Operation(summary = "Create check-in QR token", description = "Create a short-lived QR token for an approved booking")
     public ResponseEntity<Response<CheckinQrResponse>> createQr(@Valid @RequestBody CreateCheckinQrRequest request) {
-        CheckinQrResponse result = checkinService.createQrForCurrentStudent(request.getBookingId());
+        CheckinQrResponse result = checkinService.createQrForCurrentStudent(
+                request.getBookingId(), request.getFallbackReason());
         return ResponseEntity.ok(Response.ok(result.getMessage(), result));
     }
 
@@ -37,6 +39,17 @@ public class CheckinController {
         BookingResponse booking = checkinService.confirmByCurrentManager(request.getToken());
         return ResponseEntity.ok(Response.ok(
                 "Xác nhận có mặt thành công.",
+                CheckinResponse.builder().booking(booking).build()
+        ));
+    }
+
+    @PostMapping("/checkin/manual")
+    @PreAuthorize("hasRole('LAB_MANAGER')")
+    @Operation(summary = "Check in manually", description = "Lab manager performs an audited manual fallback check-in")
+    public ResponseEntity<Response<CheckinResponse>> manual(@Valid @RequestBody ManualCheckinRequest request) {
+        BookingResponse booking = checkinService.manualCheckinByCurrentManager(request.bookingId(), request.reason());
+        return ResponseEntity.ok(Response.ok(
+                "Xác nhận có mặt thủ công thành công.",
                 CheckinResponse.builder().booking(booking).build()
         ));
     }

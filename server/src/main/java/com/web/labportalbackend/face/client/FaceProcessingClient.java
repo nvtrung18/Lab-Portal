@@ -26,7 +26,7 @@ public class FaceProcessingClient {
         try {
             return feignClient.embed(internalServiceToken, UUID.randomUUID().toString(), request);
         } catch (FeignException exception) {
-            throw new FaceServiceException("Face service request failed", exception);
+            throw failure(exception);
         }
     }
 
@@ -34,7 +34,13 @@ public class FaceProcessingClient {
         try {
             return feignClient.match(internalServiceToken, UUID.randomUUID().toString(), request);
         } catch (FeignException exception) {
-            throw new FaceServiceException("Face service request failed", exception);
+            throw failure(exception);
         }
+    }
+
+    private FaceServiceException failure(FeignException exception) {
+        int status = exception.status();
+        return new FaceServiceException("Face service request failed", exception,
+                status < 0 || status >= 500);
     }
 }
