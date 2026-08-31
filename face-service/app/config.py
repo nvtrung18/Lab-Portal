@@ -1,0 +1,43 @@
+from __future__ import annotations
+
+import os
+from typing import Annotated
+
+from pydantic import BaseModel, ConfigDict, Field, SecretStr, StringConstraints, field_validator
+
+
+NonBlankText = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
+
+
+class Settings(BaseModel):
+    """Environment-backed settings with no business-database configuration."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True, hide_input_in_errors=True)
+
+    service_name: NonBlankText = "face-service"
+    environment: NonBlankText = "local"
+    internal_service_token: SecretStr = Field(exclude=True, repr=False)
+    request_timeout_seconds: float = Field(default=3.0, gt=0, le=30)
+
+    @field_validator("internal_service_token")
+    @classmethod
+    def validate_internal_service_token(cls, value: SecretStr) -> SecretStr:
+        token = value.get_secret_value()
+        if not token or len(token) > 1024 or any(not 0x21 <= ord(character) <= 0x7E for character in token):
+            raise ValueError("Internal service token configuration is invalid.")
+        return value
+
+    @classmethod
+    def from_env(cls) -> "Settings":
+        values: dict[str, str] = {}
+        environment_names = {
+            "service_name": "FACE_SERVICE_NAME",
+            "environment": "FACE_ENVIRONMENT",
+            "internal_service_token": "FACE_INTERNAL_SERVICE_TOKEN",
+            "request_timeout_seconds": "FACE_REQUEST_TIMEOUT_SECONDS",
+        }
+        for field_name, environment_name in environment_names.items():
+            value = os.getenv(environment_name)
+            if value is not None:
+                values[field_name] = value
+        return cls.model_validate(values)
