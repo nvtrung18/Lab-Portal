@@ -2,10 +2,13 @@ package com.web.labportalbackend.face.controller;
 
 import com.web.labportalbackend.common.dto.Response;
 import com.web.labportalbackend.face.dto.request.FaceConsentRequest;
+import com.web.labportalbackend.face.dto.request.FaceCheckinRequest;
 import com.web.labportalbackend.face.dto.request.FaceRegistrationRequest;
 import com.web.labportalbackend.face.dto.response.FaceConsentResponse;
+import com.web.labportalbackend.face.dto.response.FaceCheckinResponse;
 import com.web.labportalbackend.face.dto.response.FaceProfileResponse;
 import com.web.labportalbackend.face.service.FaceProfileService;
+import com.web.labportalbackend.face.service.FaceCheckinService;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +29,15 @@ import org.springframework.web.bind.annotation.RestController;
 public class FaceProfileController {
 
     private final FaceProfileService faceProfileService;
+    private final FaceCheckinService faceCheckinService;
+
+    @PostMapping("/check-in")
+    @PreAuthorize("hasRole('STUDENT')")
+    @Operation(summary = "Check in to an owned approved booking using face matching")
+    public ResponseEntity<Response<FaceCheckinResponse>> checkIn(
+            @Valid @RequestBody FaceCheckinRequest request) {
+        return ResponseEntity.ok(Response.ok("Face check-in evaluated", faceCheckinService.checkIn(request)));
+    }
 
     @PostMapping("/consent")
     @PreAuthorize("isAuthenticated()")

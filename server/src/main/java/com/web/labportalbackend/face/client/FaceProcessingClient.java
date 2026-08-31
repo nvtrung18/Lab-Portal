@@ -29,4 +29,12 @@ public class FaceProcessingClient {
             throw new FaceServiceException("Face service request failed", exception);
         }
     }
+
+    public FaceMatchResponse match(FaceMatchRequest request) {
+        try {
+            return feignClient.match(internalServiceToken, UUID.randomUUID().toString(), request);
+        } catch (FeignException exception) {
+            throw new FaceServiceException("Face service request failed", exception);
+        }
+    }
 }

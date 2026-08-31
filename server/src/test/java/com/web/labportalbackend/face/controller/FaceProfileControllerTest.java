@@ -13,8 +13,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.web.labportalbackend.auth.security.JwtAuthenticationFilter;
 import com.web.labportalbackend.face.dto.response.FaceConsentResponse;
+import com.web.labportalbackend.face.dto.response.FaceCheckinResponse;
 import com.web.labportalbackend.face.enums.FaceConsentStatus;
 import com.web.labportalbackend.face.service.FaceProfileService;
+import com.web.labportalbackend.face.service.FaceCheckinService;
 import java.time.Instant;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,6 +42,7 @@ class FaceProfileControllerTest {
 
     @Autowired MockMvc mockMvc;
     @MockitoBean FaceProfileService faceProfileService;
+    @MockitoBean FaceCheckinService faceCheckinService;
 
     @Test
     void authenticatedOwnerCanChangeOwnConsent() throws Exception {
@@ -57,6 +60,22 @@ class FaceProfileControllerTest {
 
         verify(faceProfileService).changeConsent(eq(null),
                 argThat(request -> request.status() == FaceConsentStatus.GRANTED));
+    }
+
+    @Test
+    void studentCanSubmitFaceCheckinContract() throws Exception {
+        when(faceCheckinService.checkIn(org.mockito.ArgumentMatchers.any()))
+                .thenReturn(new FaceCheckinResponse(11L, true, "MATCH", 0.91, 0.88,
+                        null, Instant.parse("2026-08-31T00:00:00Z")));
+
+        mockMvc.perform(post("/api/face/check-in").contextPath("/api")
+                        .with(csrf()).with(user("student").roles("STUDENT"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"bookingId\":11,\"imageBase64\":\"aW1hZ2U=\",\"contentType\":\"image/jpeg\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.bookingId").value(11))
+                .andExpect(jsonPath("$.data.checkedIn").value(true))
+                .andExpect(jsonPath("$.data.result").value("MATCH"));
     }
 
     @Test

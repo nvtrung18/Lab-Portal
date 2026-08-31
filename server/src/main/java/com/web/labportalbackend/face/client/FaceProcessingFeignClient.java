@@ -18,4 +18,11 @@ public interface FaceProcessingFeignClient {
             @RequestHeader("X-Request-Id") String requestId,
             @RequestBody FaceEmbedRequest request
     );
+
+    @PostMapping("/v1/face/match")
+    FaceMatchResponse match(
+            @RequestHeader("X-Internal-Service-Token") String internalServiceToken,
+            @RequestHeader("X-Request-Id") String requestId,
+            @RequestBody FaceMatchRequest request
+    );
 }
