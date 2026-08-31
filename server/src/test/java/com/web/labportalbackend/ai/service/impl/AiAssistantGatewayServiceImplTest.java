@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -123,8 +124,14 @@ class AiAssistantGatewayServiceImplTest {
         when(availabilityService.requireAvailableForActor(AiAssistantKey.LAB_ASSISTANT)).thenReturn(availability);
         when(contextFacade.build(new AiContextBuildRequest(capabilityRequest, "request-123")))
                 .thenReturn(authorizedContext);
+        doReturn(new AiAuthorizedRetrieval("lab-knowledge", List.of(
+                new AiAuthorizedRetrieval.Chunk(91L, "lab-policy", 3, 2, 4, "POLICY",
+                        "Authorized safety policy", false))))
+                .when(ragRetrievalService).retrieve(profile, 7L, AiAssistantSystemRole.STUDENT,
+                        authorizedContext, "Summarize what I may access.");
         when(gatewayClient.chat(any())).thenReturn(new AiChatResponse(
-                AiAssistantKey.LAB_ASSISTANT.name(), "Safe answer", 12, 7, Map.of()));
+                AiAssistantKey.LAB_ASSISTANT.name(), "Safe answer", 12, 7,
+                Map.of("citations", objectMapper.valueToTree(List.of(Map.of("documentId", 999L))))));
 
         AiAssistantChatResponse response = service.chat(
                 AiAssistantKey.LAB_ASSISTANT, publicRequest, " request-123 ");
@@ -155,13 +162,20 @@ class AiAssistantGatewayServiceImplTest {
         assertEquals(17L, pythonContext.path("resources").get(0).path("resourceId").asLong());
         assertEquals(1, pythonContext.path("resources").size());
         assertEquals("lab-knowledge", pythonContext.path("authorizedRetrieval").path("namespace").asText());
-        assertEquals(0, pythonContext.path("authorizedRetrieval").path("chunks").size());
+        assertEquals(1, pythonContext.path("authorizedRetrieval").path("chunks").size());
         assertFalse(serialized.toString().contains("STUDENT"));
         assertFalse(serialized.toString().contains("userJwt"));
         assertFalse(serialized.toString().contains("Authorization"));
         assertFalse(serialized.toString().contains("effectiveScope"));
         assertEquals("request-123", gatewayRequest.getValue().requestId());
         assertEquals("LAB_ASSISTANT", response.assistantKey());
+        assertEquals(1, response.citations().size());
+        assertEquals(91L, response.citations().getFirst().documentId());
+        assertEquals("lab-policy", response.citations().getFirst().resourceId());
+        assertEquals(3, response.citations().getFirst().version());
+        assertEquals(2, response.citations().getFirst().chunkIndex());
+        assertEquals(4, response.citations().getFirst().pageNumber());
+        assertEquals("POLICY", response.citations().getFirst().sourceType());
         assertEquals(7L, auditEvent.getValue().actorId());
         assertEquals(AiAssistantKey.LAB_ASSISTANT, auditEvent.getValue().assistant());
         assertEquals(AiCapability.LAB_SLOT_READ, auditEvent.getValue().action());

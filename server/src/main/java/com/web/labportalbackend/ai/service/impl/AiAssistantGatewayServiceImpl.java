@@ -18,6 +18,7 @@ import com.web.labportalbackend.ai.enums.AiCapability;
 import com.web.labportalbackend.ai.enums.AiResourceType;
 import com.web.labportalbackend.ai.rag.service.AiAuthorizedRetrieval;
 import com.web.labportalbackend.ai.rag.service.AiRagRetrievalService;
+import com.web.labportalbackend.ai.rag.dto.response.AiRagCitationResponse;
 import com.web.labportalbackend.ai.service.AiAssistantAuditEvent;
 import com.web.labportalbackend.ai.service.AiAssistantAvailability;
 import com.web.labportalbackend.ai.service.AiAssistantAvailabilityException;
@@ -32,6 +33,7 @@ import com.web.labportalbackend.ai.service.AiCapabilityDecision;
 import com.web.labportalbackend.ai.service.AiCapabilityDeniedException;
 import com.web.labportalbackend.ai.service.AiCapabilityRequest;
 import java.util.Objects;
+import java.util.List;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -66,6 +68,7 @@ public class AiAssistantGatewayServiceImpl implements AiAssistantGatewayService 
         AiAssistantAvailability availability = null;
         AiAssistantProfile profile = null;
         AiAuthorizedContext authorized = null;
+        AiAuthorizedRetrieval retrieval = null;
         AiChatResponse response;
         boolean requestShapeValidated = false;
         try {
@@ -85,7 +88,7 @@ public class AiAssistantGatewayServiceImpl implements AiAssistantGatewayService 
                     request.getCapability().action());
             authorized = contextFacade.build(new AiContextBuildRequest(capabilityRequest, normalizedRequestId));
             validateAuthority(profile, capabilityRequest, authorized);
-            AiAuthorizedRetrieval retrieval = ragRetrievalService.retrieve(profile, availability.actorId(),
+            retrieval = ragRetrievalService.retrieve(profile, availability.actorId(),
                     availability.selectedSystemRole(), authorized, request.getInput());
 
             ObjectNode payload = objectMapper.createObjectNode();
@@ -102,7 +105,17 @@ public class AiAssistantGatewayServiceImpl implements AiAssistantGatewayService 
         auditUsageService.recordAssistantRequest(succeededEvent(
                 normalizedRequestId, profile, availability, authorized, response));
         return new AiAssistantChatResponse(profile.key().name(), response.answer(),
-                response.promptTokens(), response.completionTokens());
+                response.promptTokens(), response.completionTokens(), citations(retrieval));
+    }
+
+    private static List<AiRagCitationResponse> citations(AiAuthorizedRetrieval retrieval) {
+        if (retrieval == null) {
+            throw new AiContextReadDeniedException();
+        }
+        return retrieval.chunks().stream()
+                .map(chunk -> new AiRagCitationResponse(chunk.documentId(), chunk.resourceId(), chunk.version(),
+                        chunk.chunkIndex(), chunk.pageNumber(), chunk.sourceType()))
+                .toList();
     }
 
     private static AiAssistantAuditEvent succeededEvent(String requestId,
