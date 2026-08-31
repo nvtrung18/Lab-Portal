@@ -4,10 +4,12 @@ import com.web.labportalbackend.ai.entity.AiUsageLogEntity;
 import com.web.labportalbackend.ai.enums.AiAssistantKey;
 import java.time.Instant;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface AiUsageLogRepository extends JpaRepository<AiUsageLogEntity, Long> {
+public interface AiUsageLogRepository extends JpaRepository<AiUsageLogEntity, Long>,
+        JpaSpecificationExecutor<AiUsageLogEntity> {
 
     long countByUserIdAndAssistantKeyAndCreatedAtGreaterThanEqualAndCreatedAtLessThanAndActiveTrueAndDeletedFalse(
             Long userId, AiAssistantKey assistantKey, Instant startInclusive, Instant endExclusive);

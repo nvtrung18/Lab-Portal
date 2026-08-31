@@ -10,6 +10,9 @@ import com.web.labportalbackend.face.entity.FaceCheckinLogEntity;
 import com.web.labportalbackend.face.enums.FaceCheckinMethod;
 import com.web.labportalbackend.face.enums.FaceCheckinResult;
 import com.web.labportalbackend.face.repository.FaceCheckinLogRepository;
+import com.web.labportalbackend.notification.enums.NotificationEventType;
+import com.web.labportalbackend.notification.enums.NotificationTargetModule;
+import com.web.labportalbackend.notification.service.NotificationEmitter;
 import jakarta.persistence.EntityNotFoundException;
 import java.math.BigDecimal;
 import java.time.Duration;
@@ -26,6 +29,7 @@ public class FaceCheckinWriter {
     private final BookingRepository bookingRepository;
     private final FaceCheckinLogRepository checkinLogRepository;
     private final SystemConfigService systemConfigService;
+    private final NotificationEmitter notificationEmitter;
 
     @Transactional
     public Instant complete(Long actorId, Long bookingId, Double confidenceScore, Double livenessScore) {
@@ -35,6 +39,9 @@ public class FaceCheckinWriter {
         booking.setStatus(BookingStatus.CHECKED_IN);
         checkinLogRepository.save(log(booking, FaceCheckinResult.SUCCESS, confidenceScore,
                 livenessScore, null));
+        notificationEmitter.emit(actorId, NotificationEventType.FACE_CHECKIN_SUCCEEDED,
+                "Face check-in succeeded", "Your face check-in was accepted",
+                NotificationTargetModule.FACE, bookingId, null);
         return checkedInAt;
     }
 
@@ -50,6 +57,9 @@ public class FaceCheckinWriter {
         validateBookingAndWindow(booking, Instant.now());
         checkinLogRepository.save(log(booking, FaceCheckinResult.FAILED, confidenceScore,
                 livenessScore, failureReason));
+        notificationEmitter.emit(actorId, NotificationEventType.FACE_CHECKIN_FAILED,
+                "Face check-in failed", "Your face check-in was not accepted",
+                NotificationTargetModule.FACE, bookingId, null);
     }
 
     private Booking ownedBooking(Long actorId, Long bookingId) {

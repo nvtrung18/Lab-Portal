@@ -10,6 +10,7 @@ import com.web.labportalbackend.auth.entity.User;
 import com.web.labportalbackend.auth.repository.UserRepository;
 import com.web.labportalbackend.common.exception.InvalidAssigneeException;
 import com.web.labportalbackend.common.exception.ResourceNotFoundException;
+import com.web.labportalbackend.notification.service.NotificationEmitter;
 import com.web.labportalbackend.lab.entity.Laboratory;
 import com.web.labportalbackend.lab.repository.LaboratoryRepository;
 import com.web.labportalbackend.research.dto.request.AssignTaskRequest;
@@ -60,6 +61,9 @@ import static org.mockito.Mockito.lenient;
 
 @ExtendWith(MockitoExtension.class)
 class TaskServiceImplTest {
+
+    @Mock
+    NotificationEmitter notificationEmitter;
 
     @Mock
     private TaskRepository taskRepository;

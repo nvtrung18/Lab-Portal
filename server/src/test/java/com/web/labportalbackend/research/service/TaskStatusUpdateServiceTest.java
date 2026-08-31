@@ -14,6 +14,7 @@ import com.web.labportalbackend.research.repository.TaskRepository;
 import com.web.labportalbackend.research.security.TaskPermissionHelper;
 import com.web.labportalbackend.research.service.impl.TaskStatusUpdateService;
 import com.web.labportalbackend.research.service.impl.TaskActivityRecorder;
+import com.web.labportalbackend.notification.service.NotificationEmitter;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -45,6 +46,7 @@ class TaskStatusUpdateServiceTest {
     @Mock AuditLogService auditLogService;
     @Mock EntityManager entityManager;
     @Mock TaskActivityRecorder taskActivityRecorder;
+    @Mock NotificationEmitter notificationEmitter;
 
     private TaskStatusUpdateService service;
     private User manager;
@@ -55,7 +57,7 @@ class TaskStatusUpdateServiceTest {
     void setUp() {
         service = new TaskStatusUpdateService(taskRepository, userRepository, taskPermissionHelper,
                 reportRepository, systemConfigService, taskWorkflowService, auditLogService, entityManager,
-                taskActivityRecorder);
+                taskActivityRecorder, notificationEmitter);
         manager = user(2L, "manager", "LAB_MANAGER");
         initial = task(TaskStatus.TODO, 0);
         locked = task(TaskStatus.TODO, 0);

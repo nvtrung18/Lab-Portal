@@ -1,0 +1,14 @@
+package com.web.labportalbackend.notification.enums;
+
+public enum NotificationEventType {
+    TASK_ASSIGNED,
+    TASK_STATUS_CHANGED,
+    REPORT_SUBMITTED,
+    REPORT_REVIEWED,
+    PROPOSAL_SUBMITTED,
+    PROPOSAL_APPROVED,
+    PROPOSAL_REJECTED,
+    AI_ACTION_STATUS_CHANGED,
+    FACE_CHECKIN_SUCCEEDED,
+    FACE_CHECKIN_FAILED
+}

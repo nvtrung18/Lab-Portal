@@ -28,6 +28,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import com.web.labportalbackend.notification.service.NotificationEmitter;
 
 @DataJpaTest
 @Import(FaceCheckinWriter.class)
@@ -41,6 +42,7 @@ class FaceCheckinWriterIntegrationTest {
     @Autowired FaceCheckinLogRepository checkinLogRepository;
     @Autowired EntityManager entityManager;
     @MockitoBean SystemConfigService systemConfigService;
+    @MockitoBean NotificationEmitter notificationEmitter;
 
     @Test
     void successfulFaceMatchAtomicallyUpdatesBookingAndWritesLog() {

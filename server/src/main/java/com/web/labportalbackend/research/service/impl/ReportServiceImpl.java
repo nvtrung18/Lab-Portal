@@ -9,6 +9,9 @@ import com.web.labportalbackend.admin.audit.enums.AuditModule;
 import com.web.labportalbackend.admin.audit.service.AuditLogService;
 import com.web.labportalbackend.common.exception.ReportVersionConflictException;
 import com.web.labportalbackend.common.exception.ResourceNotFoundException;
+import com.web.labportalbackend.notification.enums.NotificationEventType;
+import com.web.labportalbackend.notification.enums.NotificationTargetModule;
+import com.web.labportalbackend.notification.service.NotificationEmitter;
 import com.web.labportalbackend.lab.entity.Laboratory;
 import com.web.labportalbackend.lab.repository.LaboratoryRepository;
 import com.web.labportalbackend.research.dto.request.SubmitReportRequest;
@@ -87,6 +90,7 @@ public class ReportServiceImpl implements ReportService {
     private final ResearchLogService researchLogService;
     private final SystemConfigService systemConfigService;
     private final AuditLogService auditLogService;
+    private final NotificationEmitter notificationEmitter;
 
     @Value("${app.research.report-storage-path:storage/reports}")
     private String reportStoragePath;
@@ -167,6 +171,9 @@ public class ReportServiceImpl implements ReportService {
                     saved.getId(),
                     displayName(currentUser) + " đã nộp báo cáo cho nhiệm vụ " + task.getTitle() + "."
             );
+            notificationEmitter.emit(saved.getSubmittedById(), NotificationEventType.REPORT_SUBMITTED,
+                    "Report submitted", "Your report was submitted for review",
+                    NotificationTargetModule.REPORT, saved.getId(), null);
             return enrich(ReportMapper.toResponse(saved, currentUser));
         } catch (DataIntegrityViolationException ex) {
             deleteStoredFile(storedFile.path());
@@ -437,6 +444,7 @@ public class ReportServiceImpl implements ReportService {
                 saved.getId(),
                 displayName(currentUser) + " đã kiểm tra báo cáo v" + saved.getVersion() + "."
         );
+        emitReportReviewed(saved);
         return enrich(ReportMapper.toResponse(saved));
     }
 
@@ -527,7 +535,14 @@ public class ReportServiceImpl implements ReportService {
                 displayName(currentUser) + " đã " + managerDecisionLabel(decision)
                         + " báo cáo của " + displayName(submitter) + "."
         );
+        emitReportReviewed(report);
         return enrich(ReportMapper.toResponse(report));
+    }
+
+    private void emitReportReviewed(ReportEntity report) {
+        notificationEmitter.emit(report.getSubmittedById(), NotificationEventType.REPORT_REVIEWED,
+                "Report reviewed", "Your report status changed to " + report.getStatus().name(),
+                NotificationTargetModule.REPORT, report.getId(), null);
     }
 
     private ReportEntity findReport(Long reportId) {

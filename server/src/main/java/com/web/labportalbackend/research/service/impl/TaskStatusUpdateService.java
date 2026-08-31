@@ -8,6 +8,9 @@ import com.web.labportalbackend.admin.systemconfig.service.SystemConfigService;
 import com.web.labportalbackend.auth.entity.User;
 import com.web.labportalbackend.auth.repository.UserRepository;
 import com.web.labportalbackend.common.exception.ResourceNotFoundException;
+import com.web.labportalbackend.notification.enums.NotificationEventType;
+import com.web.labportalbackend.notification.enums.NotificationTargetModule;
+import com.web.labportalbackend.notification.service.NotificationEmitter;
 import com.web.labportalbackend.research.dto.request.PatchTaskStatusRequest;
 import com.web.labportalbackend.research.dto.response.TaskResponse;
 import com.web.labportalbackend.research.entity.TaskEntity;
@@ -46,6 +49,7 @@ public class TaskStatusUpdateService {
     private final AuditLogService auditLogService;
     private final EntityManager entityManager;
     private final TaskActivityRecorder taskActivityRecorder;
+    private final NotificationEmitter notificationEmitter;
 
     public TaskResponse patch(Long taskId, PatchTaskStatusRequest request) {
         validateRequestShape(request);
@@ -136,6 +140,17 @@ public class TaskStatusUpdateService {
                 "Updated research task status",
                 metadata
         );
+        if (saved.getAssigneeId() != null) {
+            notificationEmitter.emit(
+                    saved.getAssigneeId(),
+                    NotificationEventType.TASK_STATUS_CHANGED,
+                    "Task status changed",
+                    "Your task status changed to " + saved.getStatus().name(),
+                    NotificationTargetModule.TASK,
+                    saved.getId(),
+                    null
+            );
+        }
         return TaskMapper.toResponse(saved);
     }
 

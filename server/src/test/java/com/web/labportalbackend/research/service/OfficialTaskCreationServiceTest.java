@@ -35,6 +35,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import com.web.labportalbackend.notification.service.NotificationEmitter;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -63,6 +64,7 @@ class OfficialTaskCreationServiceTest {
     @Mock TaskPermissionHelper taskPermissionHelper;
     @Mock AuditLogService auditLogService;
     @Mock TaskActivityRecorder taskActivityRecorder;
+    @Mock NotificationEmitter notificationEmitter;
     @InjectMocks TaskServiceImpl service;
 
     private User manager;
