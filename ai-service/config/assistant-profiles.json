@@ -29,7 +29,7 @@
       "safety": {
         "modelOutputTrusted": false,
         "toolExecutionEnabled": false,
-        "retrievalEnabled": false
+        "retrievalEnabled": true
       }
     },
     "LAB_ASSISTANT": {
@@ -60,7 +60,7 @@
       "safety": {
         "modelOutputTrusted": false,
         "toolExecutionEnabled": false,
-        "retrievalEnabled": false
+        "retrievalEnabled": true
       }
     },
     "RESEARCH_ASSISTANT": {
@@ -95,7 +95,7 @@
       "safety": {
         "modelOutputTrusted": false,
         "toolExecutionEnabled": false,
-        "retrievalEnabled": false
+        "retrievalEnabled": true
       }
     }
   }

@@ -4,6 +4,8 @@ import com.web.labportalbackend.ai.enums.AiActionRiskBoundary;
 import com.web.labportalbackend.ai.enums.AiAssistantDomain;
 import com.web.labportalbackend.ai.enums.AiResourceType;
 import com.web.labportalbackend.ai.enums.AiToolArgument;
+import com.web.labportalbackend.ai.rag.enums.AiKnowledgeNamespace;
+import com.web.labportalbackend.ai.rag.service.AiAuthorizedRetrieval;
 import com.web.labportalbackend.ai.service.AiCapabilityDecision;
 import com.web.labportalbackend.ai.service.AiToolDefinition;
 import java.util.ArrayList;
@@ -17,20 +19,23 @@ public record AiPythonAuthorizedContext(
         String contextVersion,
         AiDomainContext context,
         List<AllowedTool> allowedTools,
-        List<ResourceReference> resources) {
+        List<ResourceReference> resources,
+        AiAuthorizedRetrieval authorizedRetrieval) {
 
     public AiPythonAuthorizedContext {
         if (domain == null || contextVersion == null || contextVersion.isBlank() || context == null
                 || !matchesDomainContext(domain, context)
                 || allowedTools == null || allowedTools.size() != 1
-                || resources == null || resources.isEmpty()) {
+                || resources == null || resources.isEmpty() || authorizedRetrieval == null
+                || !AiKnowledgeNamespace.forDomain(domain).value().equals(authorizedRetrieval.namespace())) {
             throw new AiContextReadDeniedException();
         }
         allowedTools = List.copyOf(allowedTools);
         resources = List.copyOf(resources);
     }
 
-    public static AiPythonAuthorizedContext from(AiAuthorizedContext authorized) {
+    public static AiPythonAuthorizedContext from(AiAuthorizedContext authorized,
+                                                  AiAuthorizedRetrieval authorizedRetrieval) {
         if (authorized == null || authorized.resource() == null
                 || !authorized.resource().hasValidIdentityShape()
                 || authorized.toolPolicy() == null || authorized.toolPolicy().descriptor() == null) {
@@ -58,7 +63,8 @@ public record AiPythonAuthorizedContext(
                 authorized.contextVersion(),
                 authorized.context(),
                 List.of(AllowedTool.from(tool)),
-                references);
+                references,
+                authorizedRetrieval);
     }
 
     private static Long parentId(AiCapabilityDecision.ResolvedResource resource,

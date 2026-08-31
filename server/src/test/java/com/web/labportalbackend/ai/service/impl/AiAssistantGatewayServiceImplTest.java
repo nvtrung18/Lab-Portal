@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -39,6 +40,8 @@ import com.web.labportalbackend.ai.enums.AiCapabilityDenialReason;
 import com.web.labportalbackend.ai.enums.AiQuotaPolicyReference;
 import com.web.labportalbackend.ai.enums.AiResourceScope;
 import com.web.labportalbackend.ai.enums.AiResourceType;
+import com.web.labportalbackend.ai.rag.service.AiAuthorizedRetrieval;
+import com.web.labportalbackend.ai.rag.service.AiRagRetrievalService;
 import com.web.labportalbackend.ai.service.AiAssistantAvailability;
 import com.web.labportalbackend.ai.service.AiAssistantAvailabilityException;
 import com.web.labportalbackend.ai.service.AiAssistantAvailabilityFailure;
@@ -73,10 +76,13 @@ class AiAssistantGatewayServiceImplTest {
     private final AiAssistantAvailabilityService availabilityService = mock(AiAssistantAvailabilityService.class);
     private final AiContextFacade contextFacade = mock(AiContextFacade.class);
     private final AiGatewayClient gatewayClient = mock(AiGatewayClient.class);
+    private final AiRagRetrievalService ragRetrievalService = mock(AiRagRetrievalService.class,
+            invocation -> AiAuthorizedRetrieval.empty(
+                    ((AiAssistantProfile) invocation.getArgument(0)).retrievalNamespace()));
     private final AiAuditUsageService auditUsageService = mock(AiAuditUsageService.class);
     private final ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
     private final AiAssistantGatewayServiceImpl service = new AiAssistantGatewayServiceImpl(
-            availabilityService, contextFacade, gatewayClient, objectMapper, auditUsageService);
+            availabilityService, contextFacade, gatewayClient, objectMapper, auditUsageService, ragRetrievalService);
 
     @Test
     void adminSystemSummaryProjectsOnlyBoundedAuthorizedContextToPython() {
@@ -118,8 +124,14 @@ class AiAssistantGatewayServiceImplTest {
         when(availabilityService.requireAvailableForActor(AiAssistantKey.LAB_ASSISTANT)).thenReturn(availability);
         when(contextFacade.build(new AiContextBuildRequest(capabilityRequest, "request-123")))
                 .thenReturn(authorizedContext);
+        doReturn(new AiAuthorizedRetrieval("lab-knowledge", List.of(
+                new AiAuthorizedRetrieval.Chunk(91L, "lab-policy", 3, 2, 4, "POLICY",
+                        "Authorized safety policy", false))))
+                .when(ragRetrievalService).retrieve(profile, 7L, AiAssistantSystemRole.STUDENT,
+                        authorizedContext, "Summarize what I may access.");
         when(gatewayClient.chat(any())).thenReturn(new AiChatResponse(
-                AiAssistantKey.LAB_ASSISTANT.name(), "Safe answer", 12, 7, Map.of()));
+                AiAssistantKey.LAB_ASSISTANT.name(), "Safe answer", 12, 7,
+                Map.of("citations", objectMapper.valueToTree(List.of(Map.of("documentId", 999L))))));
 
         AiAssistantChatResponse response = service.chat(
                 AiAssistantKey.LAB_ASSISTANT, publicRequest, " request-123 ");
@@ -138,7 +150,8 @@ class AiAssistantGatewayServiceImplTest {
         assertEquals("LAB_ASSISTANT", serialized.path("assistantKey").asText());
         assertEquals("Summarize what I may access.", serialized.path("input").asText());
         JsonNode pythonContext = serialized.path("authorizedContext");
-        assertEquals(Set.of("domain", "contextVersion", "context", "allowedTools", "resources"),
+        assertEquals(Set.of("domain", "contextVersion", "context", "allowedTools", "resources",
+                        "authorizedRetrieval"),
                 fieldSet(pythonContext));
         assertEquals("LAB", pythonContext.path("domain").asText());
         assertEquals("P5A-T5-v1", pythonContext.path("contextVersion").asText());
@@ -148,12 +161,21 @@ class AiAssistantGatewayServiceImplTest {
         assertEquals("TIME_SLOT", pythonContext.path("resources").get(0).path("resourceType").asText());
         assertEquals(17L, pythonContext.path("resources").get(0).path("resourceId").asLong());
         assertEquals(1, pythonContext.path("resources").size());
+        assertEquals("lab-knowledge", pythonContext.path("authorizedRetrieval").path("namespace").asText());
+        assertEquals(1, pythonContext.path("authorizedRetrieval").path("chunks").size());
         assertFalse(serialized.toString().contains("STUDENT"));
         assertFalse(serialized.toString().contains("userJwt"));
         assertFalse(serialized.toString().contains("Authorization"));
         assertFalse(serialized.toString().contains("effectiveScope"));
         assertEquals("request-123", gatewayRequest.getValue().requestId());
         assertEquals("LAB_ASSISTANT", response.assistantKey());
+        assertEquals(1, response.citations().size());
+        assertEquals(91L, response.citations().getFirst().documentId());
+        assertEquals("lab-policy", response.citations().getFirst().resourceId());
+        assertEquals(3, response.citations().getFirst().version());
+        assertEquals(2, response.citations().getFirst().chunkIndex());
+        assertEquals(4, response.citations().getFirst().pageNumber());
+        assertEquals("POLICY", response.citations().getFirst().sourceType());
         assertEquals(7L, auditEvent.getValue().actorId());
         assertEquals(AiAssistantKey.LAB_ASSISTANT, auditEvent.getValue().assistant());
         assertEquals(AiCapability.LAB_SLOT_READ, auditEvent.getValue().action());
@@ -218,7 +240,7 @@ class AiAssistantGatewayServiceImplTest {
                         request(AiCapability.RESEARCH_GROUP_SUMMARY, 30L, null), "request-denied"));
 
         assertEquals(failure, exception.failure());
-        verifyNoInteractions(contextFacade, gatewayClient);
+        verifyNoInteractions(contextFacade, ragRetrievalService, gatewayClient);
         ArgumentCaptor<AiAssistantAuditEvent> auditEvent = ArgumentCaptor.forClass(AiAssistantAuditEvent.class);
         verify(auditUsageService).recordAssistantRequest(auditEvent.capture());
         assertNull(auditEvent.getValue().assistant());
@@ -404,10 +426,15 @@ class AiAssistantGatewayServiceImplTest {
 
     private static AiAssistantProfile profile(AiAssistantKey key) {
         AiAssistantDomain domain = key.domain();
+        String namespace = switch (domain) {
+            case ADMIN -> "admin-knowledge";
+            case LAB -> "lab-knowledge";
+            case RESEARCH -> "research-knowledge";
+        };
         return new AiAssistantProfile(key, domain, true,
                 Set.of(AiAssistantSystemRole.ADMIN, AiAssistantSystemRole.LAB_MANAGER,
                         AiAssistantSystemRole.STUDENT),
-                "model", "prompt-v1", null, "namespace", AiQuotaPolicyReference.AI_CONFIG_QUOTA,
+                "model", "prompt-v1", null, namespace, AiQuotaPolicyReference.AI_CONFIG_QUOTA,
                 Set.of(switch (domain) {
                     case ADMIN -> AiAssistantToolGroup.ADMIN_READ;
                     case LAB -> AiAssistantToolGroup.LAB_READ;

@@ -26,6 +26,7 @@ import com.web.labportalbackend.ai.service.AiAssistantAvailabilityFailure;
 import com.web.labportalbackend.ai.service.AiAssistantGatewayService;
 import com.web.labportalbackend.ai.service.AiCapabilityDeniedException;
 import com.web.labportalbackend.auth.security.JwtAuthenticationFilter;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -64,7 +65,7 @@ class AiAssistantControllerTest {
     void authenticatedCanonicalKeyReachesGatewayWithoutForwardingAuthorization(AiAssistantKey assistantKey)
             throws Exception {
         when(gatewayService.chat(eq(assistantKey), org.mockito.ArgumentMatchers.any(), eq("request-123")))
-                .thenReturn(new AiAssistantChatResponse(assistantKey.name(), "Safe answer", 12, 7));
+                .thenReturn(new AiAssistantChatResponse(assistantKey.name(), "Safe answer", 12, 7, List.of()));
 
         mockMvc.perform(post("/api/ai/assistants/{assistantKey}/chat", assistantKey.name())
                         .contextPath("/api")

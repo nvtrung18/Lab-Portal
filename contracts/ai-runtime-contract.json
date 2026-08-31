@@ -85,7 +85,11 @@
           "riskBoundary": "READ_ONLY"
         }
       ],
-      "resources": [{"resourceType": "GROUP", "resourceId": 30}]
+      "resources": [{"resourceType": "GROUP", "resourceId": 30}],
+      "authorizedRetrieval": {
+        "namespace": "research-knowledge",
+        "chunks": []
+      }
     }
   },
   "chatResponse": {
