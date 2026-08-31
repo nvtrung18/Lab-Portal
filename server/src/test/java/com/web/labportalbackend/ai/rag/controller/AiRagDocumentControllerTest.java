@@ -110,6 +110,25 @@ class AiRagDocumentControllerTest {
         verify(ingestionService).revoke(101L);
     }
 
+    @Test
+    void studentCannotReindexOrRevokeDocuments() throws Exception {
+        mockMvc.perform(put("/api/ai/rag/documents/100")
+                        .contextPath("/api")
+                        .with(csrf())
+                        .with(user("student").roles("STUDENT"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(validBody().replace("\"version\":1", "\"version\":2")))
+                .andExpect(status().isForbidden());
+
+        mockMvc.perform(delete("/api/ai/rag/documents/100")
+                        .contextPath("/api")
+                        .with(csrf())
+                        .with(user("student").roles("STUDENT")))
+                .andExpect(status().isForbidden());
+
+        verifyNoInteractions(ingestionService);
+    }
+
     private static String validBody() {
         return """
                 {"domain":"LAB","resourceId":"policy-1","version":1,"sourceType":"LAB_POLICY",
