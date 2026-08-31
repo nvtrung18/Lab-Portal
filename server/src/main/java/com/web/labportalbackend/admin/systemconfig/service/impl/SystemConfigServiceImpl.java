@@ -57,6 +57,7 @@ public class SystemConfigServiceImpl implements SystemConfigService {
     @Override
     @Transactional
     public SystemConfigResponse updateConfig(SystemConfigRequest request) {
+        validateRequestShape(request);
         SystemConfigResponse config = toResponse(request);
         validate(config);
 
@@ -88,34 +89,47 @@ public class SystemConfigServiceImpl implements SystemConfigService {
     private SystemConfigResponse toResponse(SystemConfigRequest request) {
         return new SystemConfigResponse(
                 new SystemConfigResponse.AccountConfig(
-                        request.account().requireEmailVerification(),
-                        normalizeRole(request.account().defaultRegisterRole()),
-                        request.account().maxLoginAttempts()
+                        request.getAccount().isRequireEmailVerification(),
+                        normalizeRole(request.getAccount().getDefaultRegisterRole()),
+                        request.getAccount().getMaxLoginAttempts()
                 ),
                 new SystemConfigResponse.LabConfig(
-                        request.lab().oneManagerOneLab(),
-                        request.lab().hideInactiveLabsFromStudent(),
-                        request.lab().disableApplyForInactiveLab(),
-                        request.lab().disableBookingForInactiveLab()
+                        request.getLab().isOneManagerOneLab(),
+                        request.getLab().isHideInactiveLabsFromStudent(),
+                        request.getLab().isDisableApplyForInactiveLab(),
+                        request.getLab().isDisableBookingForInactiveLab()
                 ),
                 new SystemConfigResponse.BookingConfig(
-                        request.booking().checkinWindowMinutes(),
-                        request.booking().cancelBeforeMinutes(),
-                        request.booking().hidePastSlots(),
-                        request.booking().hideCancelledSlots()
+                        request.getBooking().getCheckinWindowMinutes(),
+                        request.getBooking().getCancelBeforeMinutes(),
+                        request.getBooking().isHidePastSlots(),
+                        request.getBooking().isHideCancelledSlots()
                 ),
                 new SystemConfigResponse.UploadConfig(
-                        request.upload().reportMaxSizeMb(),
-                        request.upload().productMaxSizeMb(),
-                        normalizeAllowedTypes(request.upload().reportAllowedTypes()),
-                        normalizeAllowedTypes(request.upload().productAllowedTypes())
+                        request.getUpload().getReportMaxSizeMb(),
+                        request.getUpload().getProductMaxSizeMb(),
+                        normalizeAllowedTypes(request.getUpload().getReportAllowedTypes()),
+                        normalizeAllowedTypes(request.getUpload().getProductAllowedTypes())
                 ),
                 new SystemConfigResponse.ResearchConfig(
-                        request.research().evaluationMaxScore(),
-                        request.research().requireApprovedReportBeforeTaskDone(),
-                        request.research().requireLeaderReviewBeforeManagerReview(),
-                        request.research().allowMemberPersonalProductUpload()
-                )
+                        request.getResearch().getEvaluationMaxScore(),
+                        request.getResearch().isRequireApprovedReportBeforeTaskDone(),
+                        request.getResearch().isRequireLeaderReviewBeforeManagerReview(),
+                        request.getResearch().isAllowMemberPersonalProductUpload()
+                ),
+                new SystemConfigResponse.AiConfig(request.getAi().isEnabled(),
+                        request.getAi().getMaxRequestsPerDay(), request.getAi().getMaxContextTokens()),
+                new SystemConfigResponse.FaceConfig(request.getFace().isEnabled(),
+                        request.getFace().getConfidenceThreshold(), request.getFace().getLivenessThreshold()),
+                new SystemConfigResponse.QrFallbackConfig(request.getQrFallback().isEnabled(),
+                        request.getQrFallback().getTokenTtlSeconds()),
+                new SystemConfigResponse.NotificationConfig(request.getNotification().isEnabled(),
+                        request.getNotification().getMaxPageSize()),
+                new SystemConfigResponse.RetentionConfig(request.getRetention().getNotificationDays(),
+                        request.getRetention().getAiUsageLogDays(), request.getRetention().getFaceCheckinLogDays(),
+                        request.getRetention().getAuditLogDays()),
+                new SystemConfigResponse.OperationalConfig(request.getOperational().getMaxPageSize(),
+                        request.getOperational().isIncludeFailureReasonCodes())
         );
     }
 
@@ -150,6 +164,29 @@ public class SystemConfigServiceImpl implements SystemConfigService {
             errors.add("evaluationMaxScore phải lớn hơn 0.");
         }
 
+        if (config.ai().maxRequestsPerDay() < 1 || config.ai().maxContextTokens() < 1) {
+            errors.add("AI quota and context limits must be greater than zero.");
+        }
+        if (!validThreshold(config.face().confidenceThreshold())
+                || !validThreshold(config.face().livenessThreshold())) {
+            errors.add("Face confidence and liveness thresholds must be between 0 and 1.");
+        }
+        if (config.qrFallback().tokenTtlSeconds() < 1 || config.qrFallback().tokenTtlSeconds() > 86400) {
+            errors.add("QR fallback token TTL must be between 1 and 86400 seconds.");
+        }
+        if (config.notification().maxPageSize() < 1 || config.notification().maxPageSize() > 100) {
+            errors.add("Notification page size must be between 1 and 100.");
+        }
+        if (config.operational().maxPageSize() < 1 || config.operational().maxPageSize() > 100) {
+            errors.add("Operational log page size must be between 1 and 100.");
+        }
+        if (!validRetention(config.retention().notificationDays())
+                || !validRetention(config.retention().aiUsageLogDays())
+                || !validRetention(config.retention().faceCheckinLogDays())
+                || !validRetention(config.retention().auditLogDays())) {
+            errors.add("Retention periods must be between 1 and 3650 days.");
+        }
+
         if (!errors.isEmpty()) {
             throw new IllegalArgumentException(String.join(" ", errors));
         }
@@ -161,6 +198,7 @@ public class SystemConfigServiceImpl implements SystemConfigService {
             if (!hasCompleteSections(config)) {
                 return defaultConfig();
             }
+            config = completeOperationalSections(config);
             validate(config);
             return config;
         } catch (JsonProcessingException | IllegalArgumentException | NullPointerException ex) {
@@ -175,6 +213,17 @@ public class SystemConfigServiceImpl implements SystemConfigService {
                 && config.booking() != null
                 && config.upload() != null
                 && config.research() != null;
+    }
+
+    private SystemConfigResponse completeOperationalSections(SystemConfigResponse config) {
+        SystemConfigResponse defaults = defaultConfig();
+        return new SystemConfigResponse(config.account(), config.lab(), config.booking(), config.upload(),
+                config.research(), config.ai() == null ? defaults.ai() : config.ai(),
+                config.face() == null ? defaults.face() : config.face(),
+                config.qrFallback() == null ? defaults.qrFallback() : config.qrFallback(),
+                config.notification() == null ? defaults.notification() : config.notification(),
+                config.retention() == null ? defaults.retention() : config.retention(),
+                config.operational() == null ? defaults.operational() : config.operational());
     }
 
     private String writeConfig(SystemConfigResponse config) {
@@ -215,6 +264,27 @@ public class SystemConfigServiceImpl implements SystemConfigService {
         return List.copyOf(normalized);
     }
 
+    private boolean validThreshold(double value) {
+        return !Double.isNaN(value) && value >= 0.0 && value <= 1.0;
+    }
+
+    private boolean validRetention(int days) {
+        return days >= 1 && days <= 3650;
+    }
+
+    private void validateRequestShape(SystemConfigRequest request) {
+        if (request == null || !request.getUnknownFields().isEmpty()) {
+            throw new IllegalArgumentException("Unknown or missing system config fields are not allowed");
+        }
+        List<SystemConfigRequest.StrictSection> sections = java.util.Arrays.asList(
+                request.getAccount(), request.getLab(), request.getBooking(), request.getUpload(),
+                request.getResearch(), request.getAi(), request.getFace(), request.getQrFallback(),
+                request.getNotification(), request.getRetention(), request.getOperational());
+        if (sections.stream().anyMatch(section -> section == null || !section.getUnknownFields().isEmpty())) {
+            throw new IllegalArgumentException("Unknown system config fields, including secret values, are not allowed");
+        }
+    }
+
     private SystemConfigResponse defaultConfig() {
         return new SystemConfigResponse(
                 new SystemConfigResponse.AccountConfig(true, "STUDENT", 5),
@@ -226,7 +296,13 @@ public class SystemConfigServiceImpl implements SystemConfigService {
                         List.of("pdf", "doc", "docx"),
                         List.of("pdf", "doc", "docx", "ppt", "pptx", "zip", "mp4")
                 ),
-                new SystemConfigResponse.ResearchConfig(10, true, true, true)
+                new SystemConfigResponse.ResearchConfig(10, true, true, true),
+                new SystemConfigResponse.AiConfig(true, 100, 8192),
+                new SystemConfigResponse.FaceConfig(true, 0.80, 0.80),
+                new SystemConfigResponse.QrFallbackConfig(true, 300),
+                new SystemConfigResponse.NotificationConfig(true, 100),
+                new SystemConfigResponse.RetentionConfig(90, 180, 180, 365),
+                new SystemConfigResponse.OperationalConfig(100, true)
         );
     }
 }
