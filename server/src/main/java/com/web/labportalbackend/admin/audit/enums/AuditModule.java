@@ -11,5 +11,6 @@ public enum AuditModule {
     REPORT,
     PRODUCT,
     EVALUATION,
-    AI
+    AI,
+    FACE
 }
