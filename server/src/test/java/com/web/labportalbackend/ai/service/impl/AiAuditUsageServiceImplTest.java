@@ -30,6 +30,7 @@ import com.web.labportalbackend.auth.entity.Role;
 import com.web.labportalbackend.auth.entity.User;
 import com.web.labportalbackend.auth.repository.UserRepository;
 import com.web.labportalbackend.common.enums.UserStatus;
+import com.web.labportalbackend.notification.service.NotificationEmitter;
 import jakarta.persistence.EntityManager;
 import java.util.List;
 import org.junit.jupiter.api.AfterEach;
@@ -47,7 +48,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 
 @DataJpaTest
 @Import({AiAuditUsageServiceImpl.class, AuditLogServiceImpl.class,
-        AiAuditUsageServiceImplTest.JacksonTestConfiguration.class})
+        NotificationEmitter.class, AiAuditUsageServiceImplTest.JacksonTestConfiguration.class})
 class AiAuditUsageServiceImplTest {
 
     private static final String USERNAME = "p9-t6-student";

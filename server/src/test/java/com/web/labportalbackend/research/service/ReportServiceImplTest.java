@@ -4,6 +4,7 @@ import com.web.labportalbackend.admin.audit.service.AuditLogService;
 import com.web.labportalbackend.admin.systemconfig.dto.SystemConfigResponse;
 import com.web.labportalbackend.admin.systemconfig.service.SystemConfigService;
 import com.web.labportalbackend.common.exception.ReportVersionConflictException;
+import com.web.labportalbackend.notification.service.NotificationEmitter;
 import com.web.labportalbackend.auth.entity.Role;
 import com.web.labportalbackend.auth.entity.User;
 import com.web.labportalbackend.auth.repository.UserRepository;
@@ -64,6 +65,9 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class ReportServiceImplTest {
+
+    @Mock
+    NotificationEmitter notificationEmitter;
 
     @Mock
     private ReportRepository reportRepository;

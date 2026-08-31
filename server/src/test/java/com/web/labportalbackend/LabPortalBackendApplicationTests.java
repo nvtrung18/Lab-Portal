@@ -1,6 +1,6 @@
 package com.web.labportalbackend;
 
-import com.web.labportalbackend.research.adapter.NoOpProposalNotificationAdapter;
+import com.web.labportalbackend.research.adapter.DurableProposalNotificationAdapter;
 import com.web.labportalbackend.research.port.ProposalNotificationPort;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,7 +20,7 @@ class LabPortalBackendApplicationTests {
     @Test
     void contextLoads() {
         assertEquals(1, proposalNotificationPorts.size());
-        assertInstanceOf(NoOpProposalNotificationAdapter.class, proposalNotificationPorts.getFirst());
+        assertInstanceOf(DurableProposalNotificationAdapter.class, proposalNotificationPorts.getFirst());
     }
 
 }

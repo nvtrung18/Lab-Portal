@@ -7,6 +7,9 @@ import com.web.labportalbackend.auth.entity.User;
 import com.web.labportalbackend.auth.repository.UserRepository;
 import com.web.labportalbackend.common.exception.InvalidAssigneeException;
 import com.web.labportalbackend.common.exception.ResourceNotFoundException;
+import com.web.labportalbackend.notification.enums.NotificationEventType;
+import com.web.labportalbackend.notification.enums.NotificationTargetModule;
+import com.web.labportalbackend.notification.service.NotificationEmitter;
 import com.web.labportalbackend.lab.entity.Laboratory;
 import com.web.labportalbackend.lab.repository.LaboratoryRepository;
 import com.web.labportalbackend.research.dto.request.AssignTaskRequest;
@@ -83,6 +86,7 @@ public class TaskServiceImpl implements TaskService {
     private final TaskMetadataPatchService taskMetadataPatchService;
     private final TaskStatusUpdateService taskStatusUpdateService;
     private final TaskActivityRecorder taskActivityRecorder;
+    private final NotificationEmitter notificationEmitter;
 
     @Override
     @Transactional
@@ -133,6 +137,8 @@ public class TaskServiceImpl implements TaskService {
 
         TaskEntity saved = taskRepository.save(task);
         taskActivityRecorder.recordCreation(saved, currentUser);
+        emitTaskNotification(saved.getAssigneeId(), NotificationEventType.TASK_ASSIGNED,
+                "Task assigned", "A research task was assigned to you", saved.getId());
         return TaskMapper.toResponse(saved, project.getId());
     }
 
@@ -185,6 +191,8 @@ public class TaskServiceImpl implements TaskService {
                 saved.getId(),
                 "Created official research task: " + saved.getTitle()
         );
+        emitTaskNotification(saved.getAssigneeId(), NotificationEventType.TASK_ASSIGNED,
+                "Task assigned", "A research task was assigned to you", saved.getId());
         return TaskMapper.toResponse(saved);
     }
 
@@ -278,7 +286,10 @@ public class TaskServiceImpl implements TaskService {
         }
 
         task.setAssigneeId(request.getAssigneeId());
-        return TaskMapper.toResponse(taskRepository.save(task));
+        TaskEntity saved = taskRepository.save(task);
+        emitTaskNotification(saved.getAssigneeId(), NotificationEventType.TASK_ASSIGNED,
+                "Task assigned", "A research task was assigned to you", saved.getId());
+        return TaskMapper.toResponse(saved);
     }
 
     @Override
@@ -410,7 +421,22 @@ public class TaskServiceImpl implements TaskService {
         applyStatusProgress(task, requestedStatus);
         TaskEntity saved = taskRepository.save(task);
         taskActivityRecorder.recordMutation(before, saved, currentUser);
+        emitTaskNotification(saved.getAssigneeId(), NotificationEventType.TASK_STATUS_CHANGED,
+                "Task status changed", "Your task status changed to " + saved.getStatus().name(), saved.getId());
         return TaskMapper.toResponse(saved, milestone.getProject().getId());
+    }
+
+    private void emitTaskNotification(
+            Long recipientId,
+            NotificationEventType eventType,
+            String title,
+            String message,
+            Long taskId
+    ) {
+        if (recipientId != null) {
+            notificationEmitter.emit(recipientId, eventType, title, message,
+                    NotificationTargetModule.TASK, taskId, null);
+        }
     }
 
     private void assertCanUpdateTaskStatus(User currentUser, TaskEntity task) {

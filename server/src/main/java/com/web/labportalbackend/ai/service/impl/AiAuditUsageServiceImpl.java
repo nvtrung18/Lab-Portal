@@ -14,6 +14,9 @@ import com.web.labportalbackend.ai.service.AiToolAuditEvent;
 import com.web.labportalbackend.auth.entity.User;
 import com.web.labportalbackend.auth.repository.UserRepository;
 import com.web.labportalbackend.common.enums.UserStatus;
+import com.web.labportalbackend.notification.enums.NotificationEventType;
+import com.web.labportalbackend.notification.enums.NotificationTargetModule;
+import com.web.labportalbackend.notification.service.NotificationEmitter;
 import java.util.Locale;
 import java.util.Objects;
 import org.springframework.security.access.AccessDeniedException;
@@ -33,15 +36,18 @@ public class AiAuditUsageServiceImpl implements AiAuditUsageService {
     private final AiUsageLogRepository usageLogRepository;
     private final UserRepository userRepository;
     private final ObjectMapper objectMapper;
+    private final NotificationEmitter notificationEmitter;
 
     public AiAuditUsageServiceImpl(AuditLogService auditLogService,
                                    AiUsageLogRepository usageLogRepository,
                                    UserRepository userRepository,
-                                   ObjectMapper objectMapper) {
+                                   ObjectMapper objectMapper,
+                                   NotificationEmitter notificationEmitter) {
         this.auditLogService = auditLogService;
         this.usageLogRepository = usageLogRepository;
         this.userRepository = userRepository;
         this.objectMapper = objectMapper;
+        this.notificationEmitter = notificationEmitter;
     }
 
     @Override
@@ -77,6 +83,9 @@ public class AiAuditUsageServiceImpl implements AiAuditUsageService {
         auditLogService.log(actor, AuditAction.AI_TOOL_OUTCOME, AuditModule.AI,
                 targetType(event.resourceType(), "AI_TOOL"), event.resourceId(),
                 TOOL_DESCRIPTION, metadata(event));
+        notificationEmitter.emit(actor.getId(), NotificationEventType.AI_ACTION_STATUS_CHANGED,
+                "AI action completed", "AI tool outcome: " + event.executionResult().name(),
+                NotificationTargetModule.AI, event.resourceId(), event.assistant());
     }
 
     private String metadata(AiAssistantAuditEvent event) {
