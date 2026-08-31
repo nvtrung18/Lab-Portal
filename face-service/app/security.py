@@ -22,13 +22,20 @@ def _header_values(scope: Scope, name: bytes) -> list[str]:
     return [value.decode("latin-1") for key, value in scope.get("headers", ()) if key.lower() == name]
 
 
-def error_response(request_id: str, error_code: str, message: str, status_code: int) -> JSONResponse:
+def error_response(
+    request_id: str,
+    error_code: str,
+    message: str,
+    status_code: int,
+    *,
+    retryable: bool = False,
+) -> JSONResponse:
     return JSONResponse(
         status_code=status_code,
         content={
             "errorCode": error_code,
             "message": message,
-            "retryable": False,
+            "retryable": retryable,
             "requestId": request_id,
         },
         headers={"X-Request-Id": request_id},
