@@ -39,6 +39,8 @@ import com.web.labportalbackend.ai.enums.AiCapabilityDenialReason;
 import com.web.labportalbackend.ai.enums.AiQuotaPolicyReference;
 import com.web.labportalbackend.ai.enums.AiResourceScope;
 import com.web.labportalbackend.ai.enums.AiResourceType;
+import com.web.labportalbackend.ai.rag.service.AiAuthorizedRetrieval;
+import com.web.labportalbackend.ai.rag.service.AiRagRetrievalService;
 import com.web.labportalbackend.ai.service.AiAssistantAvailability;
 import com.web.labportalbackend.ai.service.AiAssistantAvailabilityException;
 import com.web.labportalbackend.ai.service.AiAssistantAvailabilityFailure;
@@ -73,10 +75,13 @@ class AiAssistantGatewayServiceImplTest {
     private final AiAssistantAvailabilityService availabilityService = mock(AiAssistantAvailabilityService.class);
     private final AiContextFacade contextFacade = mock(AiContextFacade.class);
     private final AiGatewayClient gatewayClient = mock(AiGatewayClient.class);
+    private final AiRagRetrievalService ragRetrievalService = mock(AiRagRetrievalService.class,
+            invocation -> AiAuthorizedRetrieval.empty(
+                    ((AiAssistantProfile) invocation.getArgument(0)).retrievalNamespace()));
     private final AiAuditUsageService auditUsageService = mock(AiAuditUsageService.class);
     private final ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
     private final AiAssistantGatewayServiceImpl service = new AiAssistantGatewayServiceImpl(
-            availabilityService, contextFacade, gatewayClient, objectMapper, auditUsageService);
+            availabilityService, contextFacade, gatewayClient, objectMapper, auditUsageService, ragRetrievalService);
 
     @Test
     void adminSystemSummaryProjectsOnlyBoundedAuthorizedContextToPython() {
@@ -138,7 +143,8 @@ class AiAssistantGatewayServiceImplTest {
         assertEquals("LAB_ASSISTANT", serialized.path("assistantKey").asText());
         assertEquals("Summarize what I may access.", serialized.path("input").asText());
         JsonNode pythonContext = serialized.path("authorizedContext");
-        assertEquals(Set.of("domain", "contextVersion", "context", "allowedTools", "resources"),
+        assertEquals(Set.of("domain", "contextVersion", "context", "allowedTools", "resources",
+                        "authorizedRetrieval"),
                 fieldSet(pythonContext));
         assertEquals("LAB", pythonContext.path("domain").asText());
         assertEquals("P5A-T5-v1", pythonContext.path("contextVersion").asText());
@@ -148,6 +154,8 @@ class AiAssistantGatewayServiceImplTest {
         assertEquals("TIME_SLOT", pythonContext.path("resources").get(0).path("resourceType").asText());
         assertEquals(17L, pythonContext.path("resources").get(0).path("resourceId").asLong());
         assertEquals(1, pythonContext.path("resources").size());
+        assertEquals("lab-knowledge", pythonContext.path("authorizedRetrieval").path("namespace").asText());
+        assertEquals(0, pythonContext.path("authorizedRetrieval").path("chunks").size());
         assertFalse(serialized.toString().contains("STUDENT"));
         assertFalse(serialized.toString().contains("userJwt"));
         assertFalse(serialized.toString().contains("Authorization"));
@@ -218,7 +226,7 @@ class AiAssistantGatewayServiceImplTest {
                         request(AiCapability.RESEARCH_GROUP_SUMMARY, 30L, null), "request-denied"));
 
         assertEquals(failure, exception.failure());
-        verifyNoInteractions(contextFacade, gatewayClient);
+        verifyNoInteractions(contextFacade, ragRetrievalService, gatewayClient);
         ArgumentCaptor<AiAssistantAuditEvent> auditEvent = ArgumentCaptor.forClass(AiAssistantAuditEvent.class);
         verify(auditUsageService).recordAssistantRequest(auditEvent.capture());
         assertNull(auditEvent.getValue().assistant());
@@ -404,10 +412,15 @@ class AiAssistantGatewayServiceImplTest {
 
     private static AiAssistantProfile profile(AiAssistantKey key) {
         AiAssistantDomain domain = key.domain();
+        String namespace = switch (domain) {
+            case ADMIN -> "admin-knowledge";
+            case LAB -> "lab-knowledge";
+            case RESEARCH -> "research-knowledge";
+        };
         return new AiAssistantProfile(key, domain, true,
                 Set.of(AiAssistantSystemRole.ADMIN, AiAssistantSystemRole.LAB_MANAGER,
                         AiAssistantSystemRole.STUDENT),
-                "model", "prompt-v1", null, "namespace", AiQuotaPolicyReference.AI_CONFIG_QUOTA,
+                "model", "prompt-v1", null, namespace, AiQuotaPolicyReference.AI_CONFIG_QUOTA,
                 Set.of(switch (domain) {
                     case ADMIN -> AiAssistantToolGroup.ADMIN_READ;
                     case LAB -> AiAssistantToolGroup.LAB_READ;

@@ -123,6 +123,7 @@ def _request(tool_id: str, resource_type: str, resource_id: int):
                 }
             ],
             "resources": [{"resourceType": resource_type, "resourceId": resource_id}],
+            "authorizedRetrieval": {"namespace": "lab-knowledge", "chunks": []},
         },
     }
 

@@ -105,7 +105,7 @@ class AdapterReference(ProfileModel):
 class SafetySettings(ProfileModel):
     model_output_trusted: Literal[False]
     tool_execution_enabled: Literal[False]
-    retrieval_enabled: Literal[False]
+    retrieval_enabled: Literal[True]
 
 
 class ProfileDefinition(ProfileModel):

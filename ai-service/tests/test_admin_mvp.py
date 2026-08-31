@@ -98,6 +98,7 @@ def _request(tool_id: str, resource_type: str, resource_id: int | None):
                 }
             ],
             "resources": [{"resourceType": resource_type, "resourceId": resource_id}],
+            "authorizedRetrieval": {"namespace": "admin-knowledge", "chunks": []},
         },
     }
 

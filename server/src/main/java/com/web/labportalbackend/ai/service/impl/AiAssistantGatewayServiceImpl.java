@@ -16,6 +16,8 @@ import com.web.labportalbackend.ai.dto.response.AiAssistantChatResponse;
 import com.web.labportalbackend.ai.enums.AiAssistantKey;
 import com.web.labportalbackend.ai.enums.AiCapability;
 import com.web.labportalbackend.ai.enums.AiResourceType;
+import com.web.labportalbackend.ai.rag.service.AiAuthorizedRetrieval;
+import com.web.labportalbackend.ai.rag.service.AiRagRetrievalService;
 import com.web.labportalbackend.ai.service.AiAssistantAuditEvent;
 import com.web.labportalbackend.ai.service.AiAssistantAvailability;
 import com.web.labportalbackend.ai.service.AiAssistantAvailabilityException;
@@ -40,17 +42,20 @@ public class AiAssistantGatewayServiceImpl implements AiAssistantGatewayService 
     private final AiGatewayClient gatewayClient;
     private final ObjectMapper objectMapper;
     private final AiAuditUsageService auditUsageService;
+    private final AiRagRetrievalService ragRetrievalService;
 
     public AiAssistantGatewayServiceImpl(AiAssistantAvailabilityService availabilityService,
                                          AiContextFacade contextFacade,
                                          AiGatewayClient gatewayClient,
                                          ObjectMapper objectMapper,
-                                         AiAuditUsageService auditUsageService) {
+                                         AiAuditUsageService auditUsageService,
+                                         AiRagRetrievalService ragRetrievalService) {
         this.availabilityService = availabilityService;
         this.contextFacade = contextFacade;
         this.gatewayClient = gatewayClient;
         this.objectMapper = objectMapper;
         this.auditUsageService = auditUsageService;
+        this.ragRetrievalService = ragRetrievalService;
     }
 
     @Override
@@ -80,11 +85,14 @@ public class AiAssistantGatewayServiceImpl implements AiAssistantGatewayService 
                     request.getCapability().action());
             authorized = contextFacade.build(new AiContextBuildRequest(capabilityRequest, normalizedRequestId));
             validateAuthority(profile, capabilityRequest, authorized);
+            AiAuthorizedRetrieval retrieval = ragRetrievalService.retrieve(profile, availability.actorId(),
+                    availability.selectedSystemRole(), authorized, request.getInput());
 
             ObjectNode payload = objectMapper.createObjectNode();
             payload.put("assistantKey", profile.key().name());
             payload.put("input", request.getInput());
-            payload.set("authorizedContext", objectMapper.valueToTree(AiPythonAuthorizedContext.from(authorized)));
+            payload.set("authorizedContext",
+                    objectMapper.valueToTree(AiPythonAuthorizedContext.from(authorized, retrieval)));
             response = gatewayClient.chat(new AiGatewayRequest(payload, normalizedRequestId));
         } catch (RuntimeException exception) {
             auditUsageService.recordAssistantRequest(failedEvent(

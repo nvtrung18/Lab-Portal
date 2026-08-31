@@ -255,7 +255,7 @@ def test_profiles_contain_no_jwt_or_role_authorization_runtime_rules() -> None:
         serialized = profile.model_dump_json(by_alias=True).lower()
         assert all(phrase not in serialized for phrase in prohibited_phrases)
         assert profile.safety.tool_execution_enabled is False
-        assert profile.safety.retrieval_enabled is False
+        assert profile.safety.retrieval_enabled is True
 
 
 def test_profile_identity_is_deterministic() -> None:
