@@ -111,7 +111,7 @@ services:
       - lab_portal_backend_uploads:/app/uploads
     ports:
       - "8080:8080"
-    command: ["sh", "mvnw", "spring-boot:run"]
+    command: ["sh", "-c", "sh mvnw clean spring-boot:run"]
     depends_on:
       mysql:
         condition: service_healthy
