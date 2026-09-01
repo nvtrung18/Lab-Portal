@@ -27,6 +27,7 @@ import { NotificationsPage } from '../../modules/notification/pages';
 import { AssistantPage } from '../../modules/assistant/pages';
 import { FaceCheckinPage, FaceProfilePage } from '../../modules/face/pages';
 import { KnowledgePage } from '../../modules/knowledge/pages';
+import { OperationalLogsPage } from '../../modules/operations/pages';
 import { ResearchPage, ResearchProjectDetailPage, ResearchGroupDetailPage } from '../../modules/research/pages';
 import { OtherPage, ProfilePage } from '../../modules/user/pages';
 import { AdminLayout, AuthLayout, MainLayout } from '../../layouts';
@@ -63,6 +64,7 @@ export function AppRouter() {
           <Route path="assistant" element={<AssistantPage />} />
           <Route path="face-profile" element={<FaceProfilePage />} />
           <Route path="knowledge" element={<KnowledgePage />} />
+          <Route path="operational-logs" element={<OperationalLogsPage />} />
         </Route>
       </Route>
 
@@ -112,6 +114,7 @@ export function AppRouter() {
           <Route path="lab-members" element={<LabMembersPage />} />
           <Route path="cleaning" element={<CleaningPage />} />
           <Route path="complaints" element={<ManagerComplaintsPage />} />
+          <Route path="operational-logs" element={<OperationalLogsPage />} />
           <Route path="knowledge" element={<KnowledgePage />} />
         </Route>
       </Route>

@@ -97,5 +97,6 @@ export const queryKeys = {
     availableManagers: ['availableManagers'] as const,
     dashboardStats: ['adminDashboardStats'] as const,
     systemConfig: ['systemConfig'] as const,
+    operationalLogs: (kind: string, page: number, filters: object) => ['operationalLogs', kind, page, filters] as const,
   },
 } as const;

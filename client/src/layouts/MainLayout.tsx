@@ -30,6 +30,7 @@ const studentActiveMembershipNavItems: NavItem[] = [
 ];
 
 const managerNavItems: NavItem[] = [
+  { label: 'Nhật ký vận hành', path: '/app/operational-logs' },
   { label: 'Kho tri thức AI', path: '/app/knowledge' },
   { label: 'Hồ sơ khuôn mặt', path: '/app/face-profile' },
   { label: 'Trợ lý AI', path: '/app/assistant' },
