@@ -33,7 +33,7 @@ export function OperationalLogsPage() {
   const availableTabs = isAdmin ? tabs : tabs.filter((tab) => tab.kind === 'face-checkins');
   const [kind, setKind] = useState<OperationalLogKind>(availableTabs[0].kind);
   const [page, setPage] = useState(0);
-  const [inputs, setInputs] = useState({ userId: '', labId: '', resourceId: '', module: '', from: '', to: '' });
+  const [inputs, setInputs] = useState({ userId: '', labId: '', resourceId: '', module: '', assistantKey: '', resourceType: '', result: '', from: '', to: '' });
   const [filters, setFilters] = useState<OperationalFilters>({});
   const deferredFilters = useDeferredValue(filters);
   const query = useOperationalLogs(kind, deferredFilters, page);
@@ -41,16 +41,20 @@ export function OperationalLogsPage() {
 
   const submit = (event: FormEvent) => {
     event.preventDefault(); setPage(0);
-    setFilters({
+    const commonFilters: OperationalFilters = {
       ...(Number(inputs.userId) > 0 ? { userId: Number(inputs.userId) } : {}),
-      ...(Number(inputs.labId) > 0 ? { labId: Number(inputs.labId) } : {}),
-      ...(Number(inputs.resourceId) > 0 ? (kind === 'face-checkins' ? { bookingId: Number(inputs.resourceId) } : { resourceId: Number(inputs.resourceId) }) : {}),
-      ...(inputs.module.trim() && kind === 'ai-usage' ? { module: inputs.module.trim() } : {}),
       ...(inputs.from ? { from: new Date(`${inputs.from}T00:00:00`).toISOString() } : {}),
       ...(inputs.to ? { to: new Date(`${inputs.to}T23:59:59`).toISOString() } : {}),
-    });
+    };
+    if (kind === 'ai-usage') {
+      setFilters({ ...commonFilters, ...(Number(inputs.labId) > 0 ? { labId: Number(inputs.labId) } : {}), ...(inputs.module.trim() ? { module: inputs.module.trim() } : {}) });
+    } else if (kind === 'ai-actions') {
+      setFilters({ ...commonFilters, ...(Number(inputs.resourceId) > 0 ? { resourceId: Number(inputs.resourceId) } : {}), ...(inputs.assistantKey ? { assistantKey: inputs.assistantKey } : {}), ...(inputs.resourceType ? { resourceType: inputs.resourceType } : {}) });
+    } else {
+      setFilters({ ...commonFilters, ...(Number(inputs.labId) > 0 ? { labId: Number(inputs.labId) } : {}), ...(Number(inputs.resourceId) > 0 ? { bookingId: Number(inputs.resourceId) } : {}), ...(inputs.result ? { result: inputs.result } : {}) });
+    }
   };
-  const reset = () => { setInputs({ userId: '', labId: '', resourceId: '', module: '', from: '', to: '' }); setFilters({}); setPage(0); };
+  const reset = () => { setInputs({ userId: '', labId: '', resourceId: '', module: '', assistantKey: '', resourceType: '', result: '', from: '', to: '' }); setFilters({}); setPage(0); };
 
   return (
     <section className="mx-auto max-w-7xl">
@@ -58,9 +62,12 @@ export function OperationalLogsPage() {
       <div className="mb-5 flex flex-wrap gap-2" role="tablist" aria-label="Loại nhật ký">{availableTabs.map((tab) => <button aria-selected={kind === tab.kind} className={['min-h-11 rounded-md px-4 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500', kind === tab.kind ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-950' : 'border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200'].join(' ')} key={tab.kind} role="tab" type="button" onClick={() => { setKind(tab.kind); setPage(0); setFilters({}); }}>{tab.kind === 'face-checkins' ? <ScanFace aria-hidden="true" className="mr-2 inline h-4 w-4" /> : <Bot aria-hidden="true" className="mr-2 inline h-4 w-4" />}{tab.label}</button>)}</div>
       <form className="mb-5 grid gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:grid-cols-2 lg:grid-cols-6 dark:border-slate-800 dark:bg-slate-900" onSubmit={submit}>
         <FilterInput label="User ID" type="number" value={inputs.userId} onChange={(value) => setInputs((current) => ({ ...current, userId: value }))} />
-        <FilterInput label="Lab ID" type="number" value={inputs.labId} onChange={(value) => setInputs((current) => ({ ...current, labId: value }))} />
-        <FilterInput label={kind === 'face-checkins' ? 'Booking ID' : 'Resource ID'} type="number" value={inputs.resourceId} onChange={(value) => setInputs((current) => ({ ...current, resourceId: value }))} />
-        {kind === 'ai-usage' ? <FilterInput label="Module" value={inputs.module} onChange={(value) => setInputs((current) => ({ ...current, module: value }))} /> : <div className="hidden lg:block" />}
+        {kind !== 'ai-actions' ? <FilterInput label="Lab ID" type="number" value={inputs.labId} onChange={(value) => setInputs((current) => ({ ...current, labId: value }))} /> : null}
+        {kind !== 'ai-usage' ? <FilterInput label={kind === 'face-checkins' ? 'Booking ID' : 'Resource ID'} type="number" value={inputs.resourceId} onChange={(value) => setInputs((current) => ({ ...current, resourceId: value }))} /> : null}
+        {kind === 'ai-usage' ? <FilterInput label="Module" value={inputs.module} onChange={(value) => setInputs((current) => ({ ...current, module: value }))} /> : null}
+        {kind === 'ai-actions' ? <FilterSelect label="Assistant" value={inputs.assistantKey} options={['ADMIN_ASSISTANT', 'LAB_ASSISTANT', 'RESEARCH_ASSISTANT']} onChange={(value) => setInputs((current) => ({ ...current, assistantKey: value }))} /> : null}
+        {kind === 'ai-actions' ? <FilterSelect label="Resource type" value={inputs.resourceType} options={['SYSTEM', 'AUDIT_LOG', 'USER_ACCOUNT', 'SYSTEM_CONFIG', 'LABORATORY', 'TIME_SLOT', 'BOOKING', 'PROJECT', 'GROUP', 'TASK', 'REPORT']} onChange={(value) => setInputs((current) => ({ ...current, resourceType: value }))} /> : null}
+        {kind === 'face-checkins' ? <FilterSelect label="Kết quả" value={inputs.result} options={['SUCCESS', 'FAILED', 'DENIED']} onChange={(value) => setInputs((current) => ({ ...current, result: value }))} /> : null}
         <FilterInput label="Từ ngày" type="date" value={inputs.from} onChange={(value) => setInputs((current) => ({ ...current, from: value }))} />
         <FilterInput label="Đến ngày" type="date" value={inputs.to} onChange={(value) => setInputs((current) => ({ ...current, to: value }))} />
         <div className="flex items-end gap-2 sm:col-span-2 lg:col-span-6 lg:justify-end"><Button variant="outline" onClick={reset}>Đặt lại</Button><Button type="submit">Lọc nhật ký</Button></div>
@@ -73,3 +80,4 @@ export function OperationalLogsPage() {
 }
 
 function FilterInput({ label, onChange, type = 'text', value }: { label: string; onChange: (value: string) => void; type?: string; value: string }) { const id = `operation-${label.toLowerCase().replace(/\s+/g, '-')}`; return <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300" htmlFor={id}>{label}<input id={id} className="mt-1 min-h-11 w-full rounded-md border border-slate-300 bg-white px-3 text-base text-slate-950 dark:border-slate-700 dark:bg-slate-950 dark:text-white" min={type === 'number' ? 1 : undefined} type={type} value={value} onChange={(event) => onChange(event.target.value)} /></label>; }
+function FilterSelect({ label, onChange, options, value }: { label: string; onChange: (value: string) => void; options: string[]; value: string }) { const id = `operation-${label.toLowerCase().replace(/\s+/g, '-')}`; return <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300" htmlFor={id}>{label}<select id={id} className="mt-1 min-h-11 w-full rounded-md border border-slate-300 bg-white px-3 text-base text-slate-950 dark:border-slate-700 dark:bg-slate-950 dark:text-white" value={value} onChange={(event) => onChange(event.target.value)}><option value="">Tất cả</option>{options.map((option) => <option key={option} value={option}>{option}</option>)}</select></label>; }
