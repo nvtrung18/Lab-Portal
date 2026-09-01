@@ -14,6 +14,7 @@ interface NavItem {
 }
 
 const studentBaseNavItems: NavItem[] = [
+  { label: 'Thông báo', path: '/app/notifications' },
   { label: 'Hồ sơ cá nhân', path: '/app/profile' },
   { label: 'Danh sách phòng thí nghiệm', path: '/app/labs' },
 ];
@@ -26,6 +27,7 @@ const studentActiveMembershipNavItems: NavItem[] = [
 ];
 
 const managerNavItems: NavItem[] = [
+  { label: 'Thông báo', path: '/app/notifications' },
   { label: 'Hồ sơ cá nhân', path: '/app/profile' },
   { label: 'Tổng quan PTN', path: '/app/lab-overview' },
   { label: 'Hồ sơ ứng tuyển', path: '/app/applications' },

@@ -23,6 +23,7 @@ import {
   LabOverviewPage,
 } from '../../modules/lab/pages';
 import { ManagerComplaintsPage, PenaltyPage } from '../../modules/penalty/pages';
+import { NotificationsPage } from '../../modules/notification/pages';
 import { ResearchPage, ResearchProjectDetailPage, ResearchGroupDetailPage } from '../../modules/research/pages';
 import { OtherPage, ProfilePage } from '../../modules/user/pages';
 import { AdminLayout, AuthLayout, MainLayout } from '../../layouts';
@@ -55,6 +56,7 @@ export function AppRouter() {
           <Route path="system-config" element={<AdminSettingsPage />} />
           <Route path="settings" element={<Navigate to="/admin/system-config" replace />} />
           <Route path="audit-logs" element={<AdminAuditLogPage />} />
+          <Route path="notifications" element={<NotificationsPage />} />
         </Route>
       </Route>
 
@@ -63,6 +65,7 @@ export function AppRouter() {
           <Route index element={<Navigate to="/app/profile" replace />} />
           <Route path="dashboard" element={<DashboardPlaceholder />} />
           <Route path="profile" element={<ProfilePage />} />
+          <Route path="notifications" element={<NotificationsPage />} />
         </Route>
       </Route>
 

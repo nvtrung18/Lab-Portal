@@ -11,6 +11,7 @@ interface NavItem {
 }
 
 const adminNavItems: NavItem[] = [
+  { label: 'Notifications', path: '/admin/notifications' },
   { label: 'Dashboard', path: '/admin/dashboard' },
   { label: 'Users', path: '/admin/users' },
   { label: 'Labs', path: '/admin/labs' },

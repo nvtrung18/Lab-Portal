@@ -23,6 +23,10 @@ export const queryKeys = {
     mine: ['myBookings'] as const,
     byLab: (labId: number) => ['bookings', labId] as const,
   },
+  notifications: {
+    all: ['notifications'] as const,
+    page: (page: number, size: number) => ['notifications', { page, size }] as const,
+  },
   cleaning: {
     overview: (labId: number) => ['cleaningOverview', labId] as const,
     eligible: (slotId: number) => ['eligibleCleaners', slotId] as const,
