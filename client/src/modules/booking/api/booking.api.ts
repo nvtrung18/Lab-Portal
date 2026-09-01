@@ -34,6 +34,8 @@ export interface CheckinQrResponse {
   message: string;
 }
 
+export type FaceFallbackReason = 'FACE_DISABLED' | 'FACE_SERVICE_UNAVAILABLE' | 'FACE_PROFILE_UNAVAILABLE';
+
 export async function createBooking(slotId: number): Promise<BookingResponse> {
   const response = await apiClient.post<Response<BookingResponse>>('/api/bookings', { slotId });
   return response.data.data;
@@ -70,8 +72,13 @@ export async function reviewBooking(payload: ReviewBookingPayload): Promise<Book
   return response.data.data;
 }
 
-export async function createCheckinQr(bookingId: number): Promise<CheckinQrResponse> {
-  const response = await apiClient.post<Response<CheckinQrResponse>>('/api/checkin/qr', { bookingId });
+export async function createCheckinQr(bookingId: number, fallbackReason: FaceFallbackReason): Promise<CheckinQrResponse> {
+  const response = await apiClient.post<Response<CheckinQrResponse>>('/api/checkin/qr', { bookingId, fallbackReason });
+  return response.data.data;
+}
+
+export async function manualCheckin(bookingId: number, reason: string): Promise<CheckInResponse> {
+  const response = await apiClient.post<Response<CheckInResponse>>('/api/checkin/manual', { bookingId, reason });
   return response.data.data;
 }
 

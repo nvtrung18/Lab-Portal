@@ -10,6 +10,7 @@ import {
   createBooking,
   getMyBookings,
   getSlotRegistrations,
+  manualCheckin,
   reviewBooking,
   type ReviewBookingPayload,
 } from '../api';
@@ -107,10 +108,22 @@ export function useReviewBooking(labId?: number | null, slotId?: number | null) 
 
 export function useCreateCheckinQr() {
   return useMutation({
-    mutationFn: (bookingId: number) => createCheckinQr(bookingId),
+    mutationFn: ({ bookingId, fallbackReason }: { bookingId: number; fallbackReason: import('../api').FaceFallbackReason }) => createCheckinQr(bookingId, fallbackReason),
     onError: (error) => {
       toast.error(getErrorMessage(error, 'Không thể tạo mã QR check-in.'));
     },
+  });
+}
+
+export function useManualCheckIn() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ bookingId, reason }: { bookingId: number; reason: string }) => manualCheckin(bookingId, reason),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: MY_BOOKINGS_QUERY_KEY });
+      toast.success('Xác nhận có mặt thủ công thành công.');
+    },
+    onError: (error) => toast.error(getErrorMessage(error, 'Không thể xác nhận có mặt thủ công.')),
   });
 }
 

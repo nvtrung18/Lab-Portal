@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import type { BookingResponse } from '../api';
+import type { BookingResponse, FaceFallbackReason } from '../api';
 import { useCreateCheckinQr } from '../hooks';
 import { CheckinQrModal } from './CheckinQrModal';
 
@@ -28,6 +28,7 @@ function getWindowState(startTime: string) {
 
 export function CheckinButton({ booking }: CheckinButtonProps) {
   const [isQrOpen, setIsQrOpen] = useState(false);
+  const [fallbackReason, setFallbackReason] = useState<FaceFallbackReason | ''>('');
   const createQr = useCreateCheckinQr();
 
   if (booking.status === 'CHECKED_IN') {
@@ -47,7 +48,7 @@ export function CheckinButton({ booking }: CheckinButtonProps) {
   }
 
   const state = getWindowState(booking.startTime);
-  const disabled = state !== 'open' || createQr.isPending;
+  const disabled = state !== 'open' || createQr.isPending || !fallbackReason;
   const text =
     state === 'early'
       ? 'Chưa đến giờ check-in'
@@ -56,12 +57,27 @@ export function CheckinButton({ booking }: CheckinButtonProps) {
         : 'Tạo mã QR check-in';
 
   const handleCreateQr = async () => {
-    await createQr.mutateAsync(booking.id);
+    if (!fallbackReason) return;
+    await createQr.mutateAsync({ bookingId: booking.id, fallbackReason });
     setIsQrOpen(true);
   };
 
   return (
     <>
+      <label className="mb-2 block text-xs font-semibold text-slate-600" htmlFor={`fallback-reason-${booking.id}`}>
+        Lý do dùng QR fallback
+        <select
+          id={`fallback-reason-${booking.id}`}
+          className="mt-1 min-h-11 w-full rounded-md border border-slate-300 bg-white px-2 text-sm text-slate-900"
+          value={fallbackReason}
+          onChange={(event) => setFallbackReason(event.target.value as FaceFallbackReason | '')}
+        >
+          <option value="">Chọn lý do</option>
+          <option value="FACE_DISABLED">Face Check-in đang tắt</option>
+          <option value="FACE_SERVICE_UNAVAILABLE">Dịch vụ Face không khả dụng</option>
+          <option value="FACE_PROFILE_UNAVAILABLE">Chưa có Face Profile</option>
+        </select>
+      </label>
       <button
         className="w-full rounded-md bg-slate-900 px-3 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:bg-slate-400"
         disabled={disabled}

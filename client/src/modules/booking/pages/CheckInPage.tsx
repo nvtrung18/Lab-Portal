@@ -2,8 +2,9 @@ import axios from 'axios';
 import { FormEvent, useEffect, useRef, useState } from 'react';
 
 import type { Response } from '../../../shared/types';
+import { Button } from '../../../shared/components';
 import type { BookingResponse } from '../api';
-import { useConfirmCheckIn } from '../hooks';
+import { useConfirmCheckIn, useManualCheckIn } from '../hooks';
 
 interface BarcodeResult {
   rawValue: string;
@@ -30,6 +31,10 @@ export function CheckInPage() {
   const [isCameraActive, setIsCameraActive] = useState(false);
   const [confirmedBooking, setConfirmedBooking] = useState<BookingResponse | null>(null);
   const confirmCheckIn = useConfirmCheckIn();
+  const manualCheckIn = useManualCheckIn();
+  const [manualBookingId, setManualBookingId] = useState('');
+  const [manualReason, setManualReason] = useState('');
+  const [manualError, setManualError] = useState('');
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const frameRef = useRef<number | null>(null);
@@ -130,6 +135,19 @@ export function CheckInPage() {
     }
   };
 
+  const handleManualCheckin = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (Number(manualBookingId) <= 0 || !manualReason.trim()) {
+      setManualError('Vui lòng nhập booking ID và lý do xác nhận thủ công.');
+      return;
+    }
+    setManualError('');
+    manualCheckIn.mutate(
+      { bookingId: Number(manualBookingId), reason: manualReason.trim() },
+      { onSuccess: () => { setManualBookingId(''); setManualReason(''); } },
+    );
+  };
+
   return (
     <div className="mx-auto max-w-3xl">
       <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
@@ -207,6 +225,18 @@ export function CheckInPage() {
           >
             {confirmCheckIn.isPending ? 'Đang xác nhận...' : 'Xác nhận'}
           </button>
+        </form>
+      </section>
+
+      <section className="mt-5 rounded-lg border border-amber-200 bg-amber-50 p-6 shadow-sm">
+        <p className="text-sm font-semibold uppercase tracking-wide text-amber-700">Fallback có kiểm soát</p>
+        <h2 className="mt-1 text-xl font-semibold text-slate-950">Xác nhận thủ công</h2>
+        <p className="mt-2 text-sm leading-6 text-slate-600">Chỉ sử dụng khi Face Check-in và QR không khả dụng. Lý do sẽ được lưu trong audit log.</p>
+        <form className="mt-5 grid gap-4 sm:grid-cols-2" onSubmit={handleManualCheckin}>
+          <label className="text-sm font-semibold text-slate-700" htmlFor="manual-booking-id">Booking ID<input id="manual-booking-id" className="mt-2 min-h-11 w-full rounded-md border border-slate-300 bg-white px-3 text-base" min={1} type="number" value={manualBookingId} onChange={(event) => setManualBookingId(event.target.value)} /></label>
+          <label className="text-sm font-semibold text-slate-700 sm:col-span-2" htmlFor="manual-checkin-reason">Lý do xác nhận thủ công<textarea id="manual-checkin-reason" className="mt-2 min-h-24 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-base" maxLength={1000} value={manualReason} onChange={(event) => setManualReason(event.target.value)} /></label>
+          {manualError ? <p className="text-sm font-medium text-red-700 sm:col-span-2" role="alert">{manualError}</p> : null}
+          <Button className="sm:col-span-2 sm:justify-self-start" loading={manualCheckIn.isPending} loadingText="Đang xác nhận..." type="submit" variant="danger">Xác nhận fallback thủ công</Button>
         </form>
       </section>
     </div>
