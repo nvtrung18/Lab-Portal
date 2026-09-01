@@ -34,6 +34,12 @@ const defaultConfig: SystemConfig = {
     requireLeaderReviewBeforeManagerReview: true,
     allowMemberPersonalProductUpload: true,
   },
+  ai: { enabled: true, maxRequestsPerDay: 100, maxContextTokens: 8192 },
+  face: { enabled: true, confidenceThreshold: 0.8, livenessThreshold: 0.8 },
+  qrFallback: { enabled: true, tokenTtlSeconds: 300 },
+  notification: { enabled: true, maxPageSize: 100 },
+  retention: { notificationDays: 90, aiUsageLogDays: 180, faceCheckinLogDays: 180, auditLogDays: 365 },
+  operational: { maxPageSize: 100, includeFailureReasonCodes: true },
 };
 
 function parseTypes(value: string) {
@@ -78,6 +84,21 @@ function validateConfig(config: SystemConfig) {
   if (config.research.evaluationMaxScore <= 0) {
     errors.push('Thang điểm đánh giá tối đa phải lớn hơn 0.');
   }
+  if (config.ai.maxRequestsPerDay < 1 || config.ai.maxContextTokens < 1) {
+    errors.push('Giới hạn yêu cầu và context AI phải lớn hơn 0.');
+  }
+  if (config.face.confidenceThreshold < 0 || config.face.confidenceThreshold > 1 || config.face.livenessThreshold < 0 || config.face.livenessThreshold > 1) {
+    errors.push('Ngưỡng nhận diện và liveness phải nằm trong khoảng 0 đến 1.');
+  }
+  if (config.qrFallback.tokenTtlSeconds < 1 || config.qrFallback.tokenTtlSeconds > 86400) {
+    errors.push('Thời hạn QR fallback phải nằm trong khoảng 1 đến 86400 giây.');
+  }
+  if (config.notification.maxPageSize < 1 || config.notification.maxPageSize > 100 || config.operational.maxPageSize < 1 || config.operational.maxPageSize > 100) {
+    errors.push('Kích thước trang thông báo và nhật ký phải nằm trong khoảng 1 đến 100.');
+  }
+  if (Object.values(config.retention).some((days) => days < 1 || days > 3650)) {
+    errors.push('Thời gian lưu dữ liệu phải nằm trong khoảng 1 đến 3650 ngày.');
+  }
 
   return errors;
 }
@@ -114,7 +135,7 @@ export function SystemConfigPage() {
   );
 
   const updateNumber = (
-    section: 'account' | 'booking' | 'upload' | 'research',
+    section: 'account' | 'booking' | 'upload' | 'research' | 'ai' | 'face' | 'qrFallback' | 'notification' | 'retention' | 'operational',
     field: string,
     value: string,
   ) => {
@@ -128,7 +149,7 @@ export function SystemConfigPage() {
   };
 
   const updateBoolean = (
-    section: 'account' | 'lab' | 'booking' | 'research',
+    section: 'account' | 'lab' | 'booking' | 'research' | 'ai' | 'face' | 'qrFallback' | 'notification' | 'operational',
     field: string,
     value: boolean,
   ) => {
@@ -331,6 +352,37 @@ export function SystemConfigPage() {
             onChange={(value) => updateBoolean('research', 'allowMemberPersonalProductUpload', value)}
           />
         </ConfigSection>
+
+        <ConfigSection title="Trợ lý AI">
+          <ToggleField checked={form.ai.enabled} label="Bật các tính năng trợ lý AI" onChange={(value) => updateBoolean('ai', 'enabled', value)} />
+          <NumberField label="Số yêu cầu tối đa mỗi người dùng/ngày" min={1} value={form.ai.maxRequestsPerDay} onChange={(value) => updateNumber('ai', 'maxRequestsPerDay', value)} />
+          <NumberField label="Ngân sách context tối đa, token" min={1} value={form.ai.maxContextTokens} onChange={(value) => updateNumber('ai', 'maxContextTokens', value)} />
+        </ConfigSection>
+
+        <ConfigSection title="Nhận diện khuôn mặt">
+          <ToggleField checked={form.face.enabled} label="Bật check-in bằng khuôn mặt" onChange={(value) => updateBoolean('face', 'enabled', value)} />
+          <NumberField label="Ngưỡng khớp khuôn mặt" min={0} max={1} step={0.01} value={form.face.confidenceThreshold} onChange={(value) => updateNumber('face', 'confidenceThreshold', value)} />
+          <NumberField label="Ngưỡng liveness" min={0} max={1} step={0.01} value={form.face.livenessThreshold} onChange={(value) => updateNumber('face', 'livenessThreshold', value)} />
+        </ConfigSection>
+
+        <ConfigSection title="QR fallback và thông báo">
+          <ToggleField checked={form.qrFallback.enabled} label="Cho phép QR fallback" onChange={(value) => updateBoolean('qrFallback', 'enabled', value)} />
+          <NumberField label="Thời hạn QR token, giây" min={1} max={86400} value={form.qrFallback.tokenTtlSeconds} onChange={(value) => updateNumber('qrFallback', 'tokenTtlSeconds', value)} />
+          <ToggleField checked={form.notification.enabled} label="Bật thông báo trong ứng dụng" onChange={(value) => updateBoolean('notification', 'enabled', value)} />
+          <NumberField label="Số thông báo tối đa mỗi trang" min={1} max={100} value={form.notification.maxPageSize} onChange={(value) => updateNumber('notification', 'maxPageSize', value)} />
+        </ConfigSection>
+
+        <ConfigSection title="Thời gian lưu dữ liệu">
+          <NumberField label="Thông báo, ngày" min={1} max={3650} value={form.retention.notificationDays} onChange={(value) => updateNumber('retention', 'notificationDays', value)} />
+          <NumberField label="AI usage logs, ngày" min={1} max={3650} value={form.retention.aiUsageLogDays} onChange={(value) => updateNumber('retention', 'aiUsageLogDays', value)} />
+          <NumberField label="Face check-in logs, ngày" min={1} max={3650} value={form.retention.faceCheckinLogDays} onChange={(value) => updateNumber('retention', 'faceCheckinLogDays', value)} />
+          <NumberField label="Security audit logs, ngày" min={1} max={3650} value={form.retention.auditLogDays} onChange={(value) => updateNumber('retention', 'auditLogDays', value)} />
+        </ConfigSection>
+
+        <ConfigSection title="Nhật ký vận hành">
+          <NumberField label="Số bản ghi tối đa mỗi trang" min={1} max={100} value={form.operational.maxPageSize} onChange={(value) => updateNumber('operational', 'maxPageSize', value)} />
+          <ToggleField checked={form.operational.includeFailureReasonCodes} label="Hiển thị mã lý do lỗi đã giới hạn" onChange={(value) => updateBoolean('operational', 'includeFailureReasonCodes', value)} />
+        </ConfigSection>
       </div>
     </section>
   );
@@ -378,13 +430,17 @@ function ToggleField({
 
 function NumberField({
   label,
+  max,
   min,
   onChange,
+  step,
   value,
 }: {
   label: string;
+  max?: number;
   min: number;
   onChange: (value: string) => void;
+  step?: number;
   value: number;
 }) {
   return (
@@ -393,6 +449,8 @@ function NumberField({
       <input
         className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none focus:border-white"
         min={min}
+        max={max}
+        step={step}
         type="number"
         value={Number.isFinite(value) ? value : 0}
         onChange={(event) => onChange(event.target.value)}

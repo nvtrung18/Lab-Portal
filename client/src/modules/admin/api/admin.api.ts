@@ -78,6 +78,34 @@ export interface SystemConfig {
     requireLeaderReviewBeforeManagerReview: boolean;
     allowMemberPersonalProductUpload: boolean;
   };
+  ai: {
+    enabled: boolean;
+    maxRequestsPerDay: number;
+    maxContextTokens: number;
+  };
+  face: {
+    enabled: boolean;
+    confidenceThreshold: number;
+    livenessThreshold: number;
+  };
+  qrFallback: {
+    enabled: boolean;
+    tokenTtlSeconds: number;
+  };
+  notification: {
+    enabled: boolean;
+    maxPageSize: number;
+  };
+  retention: {
+    notificationDays: number;
+    aiUsageLogDays: number;
+    faceCheckinLogDays: number;
+    auditLogDays: number;
+  };
+  operational: {
+    maxPageSize: number;
+    includeFailureReasonCodes: boolean;
+  };
 }
 
 export async function getAdminDashboardStats(): Promise<AdminDashboardStats> {
@@ -246,4 +274,3 @@ export async function getAdminAuditLogs(
   });
   return response.data.data;
 }
-
