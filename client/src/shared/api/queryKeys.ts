@@ -27,6 +27,10 @@ export const queryKeys = {
     all: ['notifications'] as const,
     page: (page: number, size: number) => ['notifications', { page, size }] as const,
   },
+  face: {
+    consent: (userId: number | null) => ['faceConsent', userId ?? 'me'] as const,
+    profile: (userId: number | null) => ['faceProfile', userId ?? 'me'] as const,
+  },
   cleaning: {
     overview: (labId: number) => ['cleaningOverview', labId] as const,
     eligible: (slotId: number) => ['eligibleCleaners', slotId] as const,

@@ -14,6 +14,7 @@ interface NavItem {
 }
 
 const studentBaseNavItems: NavItem[] = [
+  { label: 'Hồ sơ khuôn mặt', path: '/app/face-profile' },
   { label: 'Trợ lý AI', path: '/app/assistant' },
   { label: 'Thông báo', path: '/app/notifications' },
   { label: 'Hồ sơ cá nhân', path: '/app/profile' },
@@ -21,6 +22,7 @@ const studentBaseNavItems: NavItem[] = [
 ];
 
 const studentActiveMembershipNavItems: NavItem[] = [
+  { label: 'Check-in khuôn mặt', path: '/app/face-checkin' },
   { label: 'Lịch sử sử dụng PTN', path: '/app/my-bookings' },
   { label: 'PTN của tôi', path: '/app/other' },
   { label: 'Nghiên cứu khoa học', path: '/app/research' },
@@ -28,6 +30,7 @@ const studentActiveMembershipNavItems: NavItem[] = [
 ];
 
 const managerNavItems: NavItem[] = [
+  { label: 'Hồ sơ khuôn mặt', path: '/app/face-profile' },
   { label: 'Trợ lý AI', path: '/app/assistant' },
   { label: 'Thông báo', path: '/app/notifications' },
   { label: 'Hồ sơ cá nhân', path: '/app/profile' },

@@ -25,6 +25,7 @@ import {
 import { ManagerComplaintsPage, PenaltyPage } from '../../modules/penalty/pages';
 import { NotificationsPage } from '../../modules/notification/pages';
 import { AssistantPage } from '../../modules/assistant/pages';
+import { FaceCheckinPage, FaceProfilePage } from '../../modules/face/pages';
 import { ResearchPage, ResearchProjectDetailPage, ResearchGroupDetailPage } from '../../modules/research/pages';
 import { OtherPage, ProfilePage } from '../../modules/user/pages';
 import { AdminLayout, AuthLayout, MainLayout } from '../../layouts';
@@ -59,6 +60,7 @@ export function AppRouter() {
           <Route path="audit-logs" element={<AdminAuditLogPage />} />
           <Route path="notifications" element={<NotificationsPage />} />
           <Route path="assistant" element={<AssistantPage />} />
+          <Route path="face-profile" element={<FaceProfilePage />} />
         </Route>
       </Route>
 
@@ -69,6 +71,7 @@ export function AppRouter() {
           <Route path="profile" element={<ProfilePage />} />
           <Route path="notifications" element={<NotificationsPage />} />
           <Route path="assistant" element={<AssistantPage />} />
+          <Route path="face-profile" element={<FaceProfilePage />} />
         </Route>
       </Route>
 
@@ -77,6 +80,7 @@ export function AppRouter() {
           <Route path="labs" element={<LabListPage />} />
           <Route element={<ActiveMembershipRoute />}>
             <Route path="my-bookings" element={<MyBookingsPage />} />
+            <Route path="face-checkin" element={<FaceCheckinPage />} />
             <Route path="penalties" element={<PenaltyPage />} />
             <Route path="other" element={<OtherPage />} />
           </Route>

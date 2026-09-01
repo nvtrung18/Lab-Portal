@@ -11,6 +11,7 @@ interface NavItem {
 }
 
 const adminNavItems: NavItem[] = [
+  { label: 'Face Profiles', path: '/admin/face-profile' },
   { label: 'AI Assistant', path: '/admin/assistant' },
   { label: 'Notifications', path: '/admin/notifications' },
   { label: 'Dashboard', path: '/admin/dashboard' },
