@@ -39,6 +39,26 @@ function getErrorMessage(error: unknown) {
   return 'Không thể đăng nhập. Vui lòng thử lại sau.';
 }
 
+export function getSafeReturnPath(returnUrl: string | null, fallback: string) {
+  if (
+    !returnUrl
+    || !returnUrl.startsWith('/')
+    || returnUrl.startsWith('//')
+    || returnUrl.includes('\\')
+  ) {
+    return fallback;
+  }
+
+  try {
+    const parsed = new URL(returnUrl, 'https://lab-portal.invalid');
+    return parsed.origin === 'https://lab-portal.invalid'
+      ? `${parsed.pathname}${parsed.search}${parsed.hash}`
+      : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
 export function LoginPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -73,7 +93,7 @@ export function LoginPage() {
         roles: user.roles,
       });
       const returnUrl = searchParams.get('returnUrl');
-      navigate(returnUrl || getPrimaryRedirectPath(user.roles), { replace: true });
+      navigate(getSafeReturnPath(returnUrl, getPrimaryRedirectPath(user.roles)), { replace: true });
     } catch (error) {
       setServerError(getErrorMessage(error));
     }
