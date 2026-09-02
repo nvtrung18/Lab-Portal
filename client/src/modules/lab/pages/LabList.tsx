@@ -1,3 +1,4 @@
+import { Search } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import { getActiveMemberships, getMembershipLabId } from '../../../shared/utils/membership';
@@ -56,6 +57,7 @@ export function LabList() {
   const { data: userApplications = [], isLoading: isLoadingApplications } =
     useUserApplications(currentUser?.id);
   const [selectedLabId, setSelectedLabId] = useState<number | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
   const activeMembershipLabIds = useMemo(() => {
     return new Set(
@@ -82,15 +84,22 @@ export function LabList() {
     return latestApplications;
   }, [userApplications]);
 
-  const labsForApply = useMemo(() => {
+  const availableLabs = useMemo(() => {
     return labs.filter((lab) => {
       return isLabActive(lab) && !activeMembershipLabIds.has(lab.id);
     });
   }, [activeMembershipLabIds, labs]);
 
+  const labsForApply = useMemo(() => {
+    const normalizedSearch = searchTerm.trim().toLocaleLowerCase('vi-VN');
+    if (!normalizedSearch) return availableLabs;
+    return availableLabs.filter((lab) => [lab.labName, lab.department, lab.location]
+      .some((value) => value?.toLocaleLowerCase('vi-VN').includes(normalizedSearch)));
+  }, [availableLabs, searchTerm]);
+
   const selectedLab = useMemo(
-    () => labsForApply.find((lab) => lab.id === selectedLabId),
-    [labsForApply, selectedLabId],
+    () => availableLabs.find((lab) => lab.id === selectedLabId),
+    [availableLabs, selectedLabId],
   );
 
   if (isLoading || isLoadingUser || isLoadingApplications) {
@@ -118,22 +127,36 @@ export function LabList() {
   }
 
   return (
-    <section>
-      <div className="mb-5 flex items-center justify-between gap-4">
+    <section className="mx-auto max-w-7xl">
+      <div className="mb-5 rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800 sm:p-6">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <h2 className="text-xl font-semibold text-slate-950">Phòng thí nghiệm</h2>
-          <p className="mt-1 text-sm text-slate-600">
+          <h2 className="text-xl font-semibold tracking-tight text-slate-950 dark:text-white">Khám phá phòng thí nghiệm</h2>
+          <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-600 dark:text-slate-300">
             Danh sách PTN bạn có thể ứng tuyển. PTN đã tham gia được quản lý trong mục PTN của tôi.
           </p>
         </div>
-        <span className="shrink-0 text-sm text-slate-500">
-          {labsForApply.length} PTN
-        </span>
+          <label className="relative block w-full lg:max-w-sm" htmlFor="lab-search">
+            <span className="sr-only">Tìm phòng thí nghiệm</span>
+            <Search aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <input
+              className="min-h-11 w-full rounded-md border border-slate-300 bg-white pl-10 pr-3 text-base text-slate-950 outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 dark:border-slate-700 dark:bg-slate-950 dark:text-white"
+              id="lab-search"
+              placeholder="Tìm theo tên, khoa hoặc địa điểm"
+              type="search"
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
+            />
+          </label>
+        </div>
+        <p className="mt-4 text-sm tabular-nums text-slate-500 dark:text-slate-400" aria-live="polite">
+          Hiển thị {labsForApply.length} trong {availableLabs.length} PTN có thể ứng tuyển
+        </p>
       </div>
 
       {labsForApply.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-slate-300 bg-white p-8 text-center text-sm text-slate-600">
-          Hiện không còn PTN nào để ứng tuyển.
+        <div className="rounded-xl border border-dashed border-slate-300 bg-white p-8 text-center text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">
+          {searchTerm.trim() ? 'Không tìm thấy PTN phù hợp với từ khóa.' : 'Hiện không còn PTN nào để ứng tuyển.'}
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -143,7 +166,7 @@ export function LabList() {
             return (
               <article
                 key={lab.id}
-                className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"
+                className="flex h-full flex-col rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200 transition-shadow hover:shadow-md dark:bg-slate-900 dark:ring-slate-800"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div>
@@ -164,11 +187,11 @@ export function LabList() {
                   </span>
                 </div>
 
-                <p className="mt-4 line-clamp-3 min-h-12 text-sm text-slate-600">
+                <p className="mt-4 line-clamp-3 min-h-12 text-sm leading-6 text-slate-600 dark:text-slate-300">
                   {lab.description || 'PTN chưa có mô tả.'}
                 </p>
 
-                <dl className="mt-4 grid grid-cols-2 gap-3 text-sm">
+                <dl className="mt-4 grid flex-1 grid-cols-2 gap-3 text-sm">
                   <div>
                     <dt className="text-slate-500">Quản lý</dt>
                     <dd className="font-medium text-slate-950">
@@ -191,7 +214,7 @@ export function LabList() {
 
                 <button
                   type="button"
-                  className="mt-5 w-full rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-300"
+                  className="mt-5 min-h-11 w-full rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:bg-slate-300 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-200"
                   disabled={applyState.disabled}
                   onClick={() => setSelectedLabId(lab.id)}
                 >

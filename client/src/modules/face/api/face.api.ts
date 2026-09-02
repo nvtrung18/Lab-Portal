@@ -2,7 +2,7 @@ import axios from 'axios';
 
 import { apiClient } from '../../../shared/api';
 import type { Response } from '../../../shared/types';
-import type { FaceCheckinResult, FaceConsent, FaceConsentStatus, FaceImageRequest, FaceProfile } from '../types';
+import type { FaceChallenge, FaceCheckinCandidate, FaceCheckinResult, FaceConsent, FaceConsentStatus, FaceGuidanceResult, FaceImageRequest, FaceProfile } from '../types';
 
 function targetPath(userId: number | null, suffix: string) {
   return userId ? `/api/face/users/${userId}/${suffix}` : `/api/face/${suffix}`;
@@ -36,6 +36,11 @@ export async function getFaceProfile(userId: number | null): Promise<FaceProfile
   }
 }
 
+export async function getFaceProfiles(): Promise<FaceProfile[]> {
+  const response = await apiClient.get<Response<FaceProfile[]>>('/api/face/profiles');
+  return response.data.data;
+}
+
 export async function saveFaceProfile(userId: number | null, request: FaceImageRequest, update: boolean) {
   const path = userId
     ? `/api/face/users/${userId}/${update ? 'profile' : 'register'}`
@@ -50,12 +55,41 @@ export async function deleteFaceProfile(userId: number | null) {
   await apiClient.delete(targetPath(userId, 'profile'));
 }
 
+export async function getFaceGuidance(
+  userId: number | null,
+  request: Pick<FaceImageRequest, 'imageBase64' | 'contentType'>,
+) {
+  const response = await apiClient.post<Response<FaceGuidanceResult>>(targetPath(userId, 'guidance'), request);
+  return response.data.data;
+}
+
+export async function startFaceChallenge(userId: number | null): Promise<FaceChallenge> {
+  const response = await apiClient.post<Response<FaceChallenge>>(targetPath(userId, 'challenge'));
+  return response.data.data;
+}
+
 export async function faceCheckin(bookingId: number, request: Omit<FaceImageRequest, 'livenessRequired'>) {
   const response = await apiClient.post<Response<FaceCheckinResult>>('/api/face/check-in', {
     bookingId,
-    imageBase64: request.imageBase64,
-    contentType: request.contentType,
+    ...request,
   });
+  return response.data.data;
+}
+
+export async function getFaceCheckinCandidates(): Promise<FaceCheckinCandidate[]> {
+  const response = await apiClient.get<Response<FaceCheckinCandidate[]>>('/api/face/check-in/candidates');
+  return response.data.data;
+}
+
+export async function getFaceCheckinGuidance(
+  request: Pick<FaceImageRequest, 'imageBase64' | 'contentType'>,
+) {
+  const response = await apiClient.post<Response<FaceGuidanceResult>>('/api/face/check-in/guidance', request);
+  return response.data.data;
+}
+
+export async function startFaceCheckinPassiveSession(): Promise<FaceChallenge> {
+  const response = await apiClient.post<Response<FaceChallenge>>('/api/face/check-in/passive-session');
   return response.data.data;
 }
 

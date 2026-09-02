@@ -30,6 +30,30 @@ public class FaceProcessingClient {
         }
     }
 
+    public FaceChallengeStartResponse startChallenge() {
+        try {
+            return feignClient.startChallenge(internalServiceToken, UUID.randomUUID().toString());
+        } catch (FeignException exception) {
+            throw failure(exception);
+        }
+    }
+
+    public FaceChallengeStartResponse startPassiveSession() {
+        try {
+            return feignClient.startPassiveSession(internalServiceToken, UUID.randomUUID().toString());
+        } catch (FeignException exception) {
+            throw failure(exception);
+        }
+    }
+
+    public FaceGuidanceResult guidance(FaceGuidanceImageRequest request) {
+        try {
+            return feignClient.guidance(internalServiceToken, UUID.randomUUID().toString(), request);
+        } catch (FeignException exception) {
+            throw failure(exception);
+        }
+    }
+
     public FaceMatchResponse match(FaceMatchRequest request) {
         try {
             return feignClient.match(internalServiceToken, UUID.randomUUID().toString(), request);

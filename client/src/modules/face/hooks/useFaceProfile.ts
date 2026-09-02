@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { queryKeys } from '../../../shared/api';
 import { toast } from '../../../shared/components';
-import { changeFaceConsent, deleteFaceProfile, getFaceConsent, getFaceProfile, saveFaceProfile } from '../api';
+import { changeFaceConsent, deleteFaceProfile, getFaceConsent, getFaceProfile, getFaceProfiles, saveFaceProfile } from '../api';
 import type { FaceConsentStatus, FaceImageRequest } from '../types';
 
 export function useFaceProfile(userId: number | null, enabled = true) {
@@ -19,9 +19,18 @@ export function useFaceProfile(userId: number | null, enabled = true) {
   return { consent, profile };
 }
 
+export function useFaceProfiles(enabled: boolean) {
+  return useQuery({
+    queryKey: queryKeys.face.profiles,
+    queryFn: getFaceProfiles,
+    enabled,
+  });
+}
+
 export function useFaceProfileActions(userId: number | null) {
   const queryClient = useQueryClient();
   const refresh = () => {
+    void queryClient.invalidateQueries({ queryKey: queryKeys.face.profiles });
     void queryClient.invalidateQueries({ queryKey: queryKeys.face.consent(userId) });
     void queryClient.invalidateQueries({ queryKey: queryKeys.face.profile(userId) });
   };

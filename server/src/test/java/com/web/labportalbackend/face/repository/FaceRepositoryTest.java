@@ -56,6 +56,21 @@ class FaceRepositoryTest {
                 owner.getId(), FaceProfileStatus.ACTIVE).isPresent());
     }
 
+    @Test
+    void adminMetadataProjectionReturnsUserIdWithoutEncryptedEmbedding() {
+        User owner = saveUser("metadata-owner");
+        FaceProfileEntity profile = FaceProfileEntity.builder().user(owner).build();
+        profile.replaceEmbedding("encrypted-secret", "opencv-sface-2021dec", FaceConsentStatus.GRANTED);
+        profileRepository.saveAndFlush(profile);
+
+        var metadata = profileRepository.findAllProfileMetadata();
+
+        assertEquals(1, metadata.size());
+        assertEquals(owner.getId(), metadata.getFirst().userId());
+        assertEquals(FaceProfileStatus.ACTIVE, metadata.getFirst().status());
+        assertEquals("opencv-sface-2021dec", metadata.getFirst().embeddingModel());
+    }
+
     private User saveUser(String name) {
         return userRepository.saveAndFlush(new User(name + "@example.test", name, "password", name,
                 null, UserStatus.ACTIVE, new HashSet<>()));

@@ -28,6 +28,8 @@ export const queryKeys = {
     page: (page: number, size: number) => ['notifications', { page, size }] as const,
   },
   face: {
+    profiles: ['faceProfiles'] as const,
+    checkinCandidates: ['faceCheckinCandidates'] as const,
     consent: (userId: number | null) => ['faceConsent', userId ?? 'me'] as const,
     profile: (userId: number | null) => ['faceProfile', userId ?? 'me'] as const,
   },

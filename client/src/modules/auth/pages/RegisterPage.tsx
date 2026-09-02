@@ -3,7 +3,8 @@ import { type FormEvent, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 
-import { registerAPI, sendRegisterCodeAPI, verifyRegisterCodeAPI } from '../api';
+import { loginAPI, registerAPI, sendRegisterCodeAPI, verifyRegisterCodeAPI } from '../api';
+import { useAuth } from '../hooks';
 import type { Response } from '../../../shared/types';
 import { Button } from '../../../shared/components';
 import { VALIDATION_MESSAGES } from '../../../shared/utils';
@@ -31,6 +32,7 @@ function isValidEmail(value: string) {
 
 export function RegisterPage() {
   const navigate = useNavigate();
+  const { saveSession } = useAuth();
   const [step, setStep] = useState<RegisterStep>('email');
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
@@ -131,7 +133,9 @@ export function RegisterPage() {
         fullName: fullName.trim(),
         password,
       });
-      navigate('/login', { replace: true });
+      const loginResult = await loginAPI({ email: normalizedEmail, password });
+      await saveSession(loginResult.token);
+      navigate('/app/profile', { replace: true });
     } catch (submitError) {
       setError(getErrorMessage(submitError));
     } finally {

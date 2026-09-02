@@ -25,15 +25,15 @@ import {
 import { ManagerComplaintsPage, PenaltyPage } from '../../modules/penalty/pages';
 import { NotificationsPage } from '../../modules/notification/pages';
 import { AssistantPage } from '../../modules/assistant/pages';
-import { FaceCheckinPage, FaceProfilePage } from '../../modules/face/pages';
+import { FaceProfilePage } from '../../modules/face/pages';
 import { KnowledgePage } from '../../modules/knowledge/pages';
 import { OperationalLogsPage } from '../../modules/operations/pages';
 import { ResearchPage, ResearchProjectDetailPage, ResearchGroupDetailPage } from '../../modules/research/pages';
-import { OtherPage, ProfilePage } from '../../modules/user/pages';
+import { OtherPage, ProfilePage, StudentDashboardPage } from '../../modules/user/pages';
 import { AdminLayout, AuthLayout, MainLayout } from '../../layouts';
+import { getStoredRole } from '../../shared/api';
 import { ForbiddenPage, NotFoundPage } from '../../shared/components';
 import { ADMIN, LAB_MANAGER, STUDENT } from '../../shared/constants/roles';
-import { DashboardPlaceholder } from '../DashboardPlaceholder';
 import { ActiveMembershipRoute } from './ActiveMembershipRoute';
 import { ProtectedRoute } from './ProtectedRoute';
 
@@ -70,8 +70,7 @@ export function AppRouter() {
 
       <Route element={<ProtectedRoute allowedRoles={[STUDENT, LAB_MANAGER]} />}>
         <Route path="/app" element={<MainLayout />}>
-          <Route index element={<Navigate to="/app/profile" replace />} />
-          <Route path="dashboard" element={<DashboardPlaceholder />} />
+          <Route index element={<AppIndexRedirect />} />
           <Route path="profile" element={<ProfilePage />} />
           <Route path="notifications" element={<NotificationsPage />} />
           <Route path="assistant" element={<AssistantPage />} />
@@ -81,10 +80,10 @@ export function AppRouter() {
 
       <Route element={<ProtectedRoute allowedRoles={[STUDENT]} />}>
         <Route path="/app" element={<MainLayout />}>
+          <Route path="dashboard" element={<StudentDashboardPage />} />
           <Route path="labs" element={<LabListPage />} />
           <Route element={<ActiveMembershipRoute />}>
             <Route path="my-bookings" element={<MyBookingsPage />} />
-            <Route path="face-checkin" element={<FaceCheckinPage />} />
             <Route path="penalties" element={<PenaltyPage />} />
             <Route path="other" element={<OtherPage />} />
           </Route>
@@ -119,8 +118,13 @@ export function AppRouter() {
         </Route>
       </Route>
 
-      <Route path="/" element={<Navigate to="/app/profile" replace />} />
+      <Route path="/" element={<AppIndexRedirect />} />
       <Route path="*" element={<Navigate to="/404" replace />} />
     </Routes>
   );
+}
+
+function AppIndexRedirect() {
+  const role = getStoredRole()?.replace(/^ROLE_/, '');
+  return <Navigate to={role === LAB_MANAGER ? '/app/lab-overview' : '/app/dashboard'} replace />;
 }

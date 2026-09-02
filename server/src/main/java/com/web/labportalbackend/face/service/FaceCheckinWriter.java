@@ -1,9 +1,10 @@
 package com.web.labportalbackend.face.service;
 
-import com.web.labportalbackend.admin.systemconfig.dto.SystemConfigResponse;
-import com.web.labportalbackend.admin.systemconfig.service.SystemConfigService;
 import com.web.labportalbackend.booking.entity.Booking;
 import com.web.labportalbackend.booking.repository.BookingRepository;
+import com.web.labportalbackend.booking.service.CheckinWindowPolicy;
+import com.web.labportalbackend.auth.entity.User;
+import com.web.labportalbackend.auth.repository.UserRepository;
 import com.web.labportalbackend.common.enums.BookingStatus;
 import com.web.labportalbackend.common.enums.TimeSlotStatus;
 import com.web.labportalbackend.face.entity.FaceCheckinLogEntity;
@@ -15,7 +16,6 @@ import com.web.labportalbackend.notification.enums.NotificationTargetModule;
 import com.web.labportalbackend.notification.service.NotificationEmitter;
 import jakarta.persistence.EntityNotFoundException;
 import java.math.BigDecimal;
-import java.time.Duration;
 import java.time.Instant;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
@@ -27,19 +27,24 @@ import org.springframework.transaction.annotation.Transactional;
 public class FaceCheckinWriter {
 
     private final BookingRepository bookingRepository;
+    private final UserRepository userRepository;
     private final FaceCheckinLogRepository checkinLogRepository;
-    private final SystemConfigService systemConfigService;
+    private final CheckinWindowPolicy checkinWindowPolicy;
     private final NotificationEmitter notificationEmitter;
 
     @Transactional
-    public Instant complete(Long actorId, Long bookingId, Double confidenceScore, Double livenessScore) {
-        Booking booking = ownedBooking(actorId, bookingId);
+    public Instant complete(Long studentId, Long managerId, Long bookingId,
+                            Double confidenceScore, Double livenessScore) {
+        Booking booking = ownedBooking(studentId, bookingId);
+        User manager = userRepository.findById(managerId)
+                .orElseThrow(() -> new AccessDeniedException("Laboratory manager not found"));
+        requireManagedLab(booking, managerId);
         Instant checkedInAt = Instant.now();
         validateBookingAndWindow(booking, checkedInAt);
         booking.setStatus(BookingStatus.CHECKED_IN);
         checkinLogRepository.save(log(booking, FaceCheckinResult.SUCCESS, confidenceScore,
-                livenessScore, null));
-        notificationEmitter.emit(actorId, NotificationEventType.FACE_CHECKIN_SUCCEEDED,
+                livenessScore, null, manager));
+        notificationEmitter.emit(studentId, NotificationEventType.FACE_CHECKIN_SUCCEEDED,
                 "Face check-in succeeded", "Your face check-in was accepted",
                 NotificationTargetModule.FACE, bookingId, null);
         return checkedInAt;
@@ -47,17 +52,21 @@ public class FaceCheckinWriter {
 
     @Transactional
     public void recordFailure(
-            Long actorId,
+            Long studentId,
+            Long managerId,
             Long bookingId,
             Double confidenceScore,
             Double livenessScore,
             String failureReason
     ) {
-        Booking booking = ownedBooking(actorId, bookingId);
+        Booking booking = ownedBooking(studentId, bookingId);
+        User manager = userRepository.findById(managerId)
+                .orElseThrow(() -> new AccessDeniedException("Laboratory manager not found"));
+        requireManagedLab(booking, managerId);
         validateBookingAndWindow(booking, Instant.now());
         checkinLogRepository.save(log(booking, FaceCheckinResult.FAILED, confidenceScore,
-                livenessScore, failureReason));
-        notificationEmitter.emit(actorId, NotificationEventType.FACE_CHECKIN_FAILED,
+                livenessScore, failureReason, manager));
+        notificationEmitter.emit(studentId, NotificationEventType.FACE_CHECKIN_FAILED,
                 "Face check-in failed", "Your face check-in was not accepted",
                 NotificationTargetModule.FACE, bookingId, null);
     }
@@ -78,14 +87,13 @@ public class FaceCheckinWriter {
         if (booking.getTimeSlot() == null || booking.getTimeSlot().getStatus() == TimeSlotStatus.CANCELLED) {
             throw new IllegalStateException("Booking time slot is not available");
         }
-        SystemConfigResponse config = systemConfigService.getConfig();
-        if (config == null || config.booking() == null || config.booking().checkinWindowMinutes() <= 0) {
-            throw new IllegalStateException("Check-in window is not configured");
-        }
-        Instant end = booking.getStartTime().plus(
-                Duration.ofMinutes(config.booking().checkinWindowMinutes()));
-        if (now.isBefore(booking.getStartTime()) || now.isAfter(end)) {
-            throw new IllegalStateException("Booking is outside the check-in window");
+        checkinWindowPolicy.validate(booking, now);
+    }
+
+    private void requireManagedLab(Booking booking, Long managerId) {
+        if (booking.getLab() == null || booking.getLab().getManager() == null
+                || !managerId.equals(booking.getLab().getManager().getId())) {
+            throw new AccessDeniedException("Booking does not belong to a laboratory managed by this user");
         }
     }
 
@@ -94,13 +102,14 @@ public class FaceCheckinWriter {
             FaceCheckinResult result,
             Double confidenceScore,
             Double livenessScore,
-            String failureReason
+            String failureReason,
+            User checkedInBy
     ) {
         return FaceCheckinLogEntity.builder()
                 .booking(booking)
                 .user(booking.getUser())
                 .lab(booking.getLab())
-                .checkedInBy(booking.getUser())
+                .checkedInBy(checkedInBy)
                 .checkinMethod(FaceCheckinMethod.FACE)
                 .result(result)
                 .confidenceScore(decimal(confidenceScore))

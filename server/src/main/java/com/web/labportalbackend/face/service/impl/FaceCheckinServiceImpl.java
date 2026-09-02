@@ -3,20 +3,25 @@ package com.web.labportalbackend.face.service.impl;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.web.labportalbackend.admin.systemconfig.dto.SystemConfigResponse;
-import com.web.labportalbackend.admin.systemconfig.service.SystemConfigService;
 import com.web.labportalbackend.auth.entity.User;
 import com.web.labportalbackend.auth.repository.UserRepository;
 import com.web.labportalbackend.booking.entity.Booking;
 import com.web.labportalbackend.booking.repository.BookingRepository;
+import com.web.labportalbackend.booking.service.CheckinWindowPolicy;
 import com.web.labportalbackend.common.enums.BookingStatus;
 import com.web.labportalbackend.common.enums.TimeSlotStatus;
 import com.web.labportalbackend.face.client.FaceMatchRequest;
 import com.web.labportalbackend.face.client.FaceMatchResponse;
+import com.web.labportalbackend.face.client.FaceGuidanceImageRequest;
+import com.web.labportalbackend.face.client.FaceGuidanceResult;
 import com.web.labportalbackend.face.client.FaceProcessingClient;
 import com.web.labportalbackend.face.client.FaceServiceException;
 import com.web.labportalbackend.face.dto.request.FaceCheckinRequest;
+import com.web.labportalbackend.face.dto.request.FaceGuidanceRequest;
+import com.web.labportalbackend.face.dto.response.FaceChallengeResponse;
 import com.web.labportalbackend.face.dto.response.FaceCheckinResponse;
+import com.web.labportalbackend.face.dto.response.FaceCheckinCandidateResponse;
+import com.web.labportalbackend.face.dto.response.FaceGuidanceResponse;
 import com.web.labportalbackend.face.entity.FaceConsentLogEntity;
 import com.web.labportalbackend.face.entity.FaceProfileEntity;
 import com.web.labportalbackend.face.entity.FaceSecurityConfigEntity;
@@ -27,8 +32,6 @@ import com.web.labportalbackend.face.repository.FaceSecurityConfigRepository;
 import com.web.labportalbackend.face.security.FaceEmbeddingCipher;
 import com.web.labportalbackend.face.service.FaceCheckinService;
 import com.web.labportalbackend.face.service.FaceCheckinWriter;
-import jakarta.persistence.EntityNotFoundException;
-import java.time.Duration;
 import java.time.Instant;
 import java.util.Base64;
 import java.util.List;
@@ -44,27 +47,69 @@ import org.springframework.stereotype.Service;
 public class FaceCheckinServiceImpl implements FaceCheckinService {
 
     private static final Set<String> FAILURE_RESULTS = Set.of(
-            "NO_FACE", "MULTIPLE_FACES", "LOW_QUALITY", "NO_MATCH", "SPOOF_DETECTED", "SERVICE_ERROR");
+            "NO_FACE", "MULTIPLE_FACES", "LOW_QUALITY", "NO_MATCH", "SPOOF_DETECTED",
+            "CHALLENGE_MISSING", "CHALLENGE_INVALID", "CHALLENGE_FACE_INVALID",
+            "CHALLENGE_START_NOT_FRONTAL", "CHALLENGE_TURN_NOT_DETECTED",
+            "OBSERVATION_TOO_SHORT", "OBSERVATION_FACE_INVALID", "OBSERVATION_NOT_FRONTAL",
+            "OBSERVATION_NOT_LIVE", "SERVICE_ERROR");
 
     private final UserRepository userRepository;
     private final BookingRepository bookingRepository;
     private final FaceConsentLogRepository consentRepository;
     private final FaceProfileRepository profileRepository;
     private final FaceSecurityConfigRepository securityConfigRepository;
-    private final SystemConfigService systemConfigService;
+    private final CheckinWindowPolicy checkinWindowPolicy;
     private final FaceProcessingClient processingClient;
     private final FaceEmbeddingCipher embeddingCipher;
     private final FaceCheckinWriter writer;
     private final ObjectMapper objectMapper;
 
     @Override
+    public List<FaceCheckinCandidateResponse> candidates() {
+        User manager = currentManager();
+        Instant now = Instant.now();
+        CheckinWindowPolicy.CandidateWindow window = checkinWindowPolicy.candidateWindow(now);
+        return bookingRepository.findFaceCheckinCandidatesForManager(
+                manager.getId(), window.earliestStart(), window.latestStart());
+    }
+
+    @Override
+    public FaceGuidanceResponse guidance(FaceGuidanceRequest request) {
+        currentManager();
+        validateImage(request.imageBase64());
+        FaceGuidanceResult result = processingClient.guidance(new FaceGuidanceImageRequest(
+                request.imageBase64(), request.contentType(), false));
+        if (result == null || result.detectedFaces() < 0) {
+            throw new IllegalStateException("Face service returned an invalid guidance result");
+        }
+        return new FaceGuidanceResponse(
+                result.detectedFaces(), result.singleFace(), result.faceInGuide(),
+                result.facingForward(), result.landmarksVisible(), result.lightingGood(),
+                result.sharpnessGood(), result.centerX(), result.centerY(),
+                result.faceWidthRatio(), result.faceHeightRatio(), result.failureReason());
+    }
+
+    @Override
+    public FaceChallengeResponse startPassiveSession() {
+        currentManager();
+        var challenge = processingClient.startPassiveSession();
+        if (challenge == null || challenge.challengeToken() == null || challenge.challengeToken().isBlank()
+                || !"OBSERVE".equals(challenge.action())) {
+            throw new IllegalStateException("Face service returned an invalid passive observation session");
+        }
+        return new FaceChallengeResponse(
+                challenge.challengeToken(), challenge.action(), challenge.expiresAt());
+    }
+
+    @Override
     public FaceCheckinResponse checkIn(FaceCheckinRequest request) {
-        User actor = currentStudent();
-        Booking booking = ownedBooking(actor, request.bookingId());
+        User manager = currentManager();
+        Booking booking = managedBooking(manager, request.bookingId());
+        User student = booking.getUser();
         validateBookingAndWindow(booking, Instant.now());
-        requireGrantedConsent(actor.getId());
+        requireGrantedConsent(student.getId());
         FaceProfileEntity profile = profileRepository
-                .findByUserIdAndProfileStatusAndActiveTrueAndDeletedFalse(actor.getId(), FaceProfileStatus.ACTIVE)
+                .findByUserIdAndProfileStatusAndActiveTrueAndDeletedFalse(student.getId(), FaceProfileStatus.ACTIVE)
                 .orElseThrow(() -> new IllegalStateException("An active face profile is required"));
         FaceSecurityConfigEntity config = securityConfig();
         if (!Boolean.TRUE.equals(config.getFaceEnabled())) {
@@ -80,18 +125,25 @@ public class FaceCheckinServiceImpl implements FaceCheckinService {
                     decryptEmbedding(profile.getEncryptedEmbedding()),
                     config.getConfidenceThreshold().doubleValue(),
                     config.getLivenessThreshold().doubleValue(),
-                    Boolean.TRUE.equals(config.getLivenessRequired())));
+                    Boolean.TRUE.equals(config.getLivenessRequired()),
+                    request.challengeFrames().stream()
+                            .map(frame -> new com.web.labportalbackend.face.client.FaceChallengeFrame(
+                                    frame.imageBase64(), frame.contentType()))
+                            .toList(),
+                    request.challengeToken()));
         } catch (FaceServiceException exception) {
             if (exception.retryable()) {
-                writer.recordFailure(actor.getId(), request.bookingId(), null, null, "SERVICE_ERROR");
+                writer.recordFailure(student.getId(), manager.getId(), request.bookingId(),
+                        null, null, "SERVICE_ERROR");
             }
             throw exception;
         }
-        return decideAndPersist(actor.getId(), request.bookingId(), match, config);
+        return decideAndPersist(student.getId(), manager.getId(), request.bookingId(), match, config);
     }
 
     private FaceCheckinResponse decideAndPersist(
-            Long actorId,
+            Long studentId,
+            Long managerId,
             Long bookingId,
             FaceMatchResponse match,
             FaceSecurityConfigEntity config
@@ -103,17 +155,17 @@ public class FaceCheckinServiceImpl implements FaceCheckinService {
         boolean confidencePassed = match.confidenceScore() != null
                 && match.confidenceScore() >= config.getConfidenceThreshold().doubleValue();
         boolean livenessPassed = !Boolean.TRUE.equals(config.getLivenessRequired())
-                || (match.livenessScore() != null
-                && match.livenessScore() >= config.getLivenessThreshold().doubleValue());
+                || match.passiveLivenessPassed();
         if ("MATCH".equals(match.result()) && confidencePassed && livenessPassed) {
-            Instant checkedInAt = writer.complete(actorId, bookingId,
+            Instant checkedInAt = writer.complete(studentId, managerId, bookingId,
                     match.confidenceScore(), match.livenessScore());
             return new FaceCheckinResponse(bookingId, true, "MATCH", match.confidenceScore(),
                     match.livenessScore(), null, checkedInAt);
         }
 
         String failureReason = failureReason(match, confidencePassed, livenessPassed);
-        writer.recordFailure(actorId, bookingId, match.confidenceScore(), match.livenessScore(), failureReason);
+        writer.recordFailure(studentId, managerId, bookingId,
+                match.confidenceScore(), match.livenessScore(), failureReason);
         return new FaceCheckinResponse(bookingId, false, failureReason, match.confidenceScore(),
                 match.livenessScore(), failureReason, null);
     }
@@ -131,26 +183,23 @@ public class FaceCheckinServiceImpl implements FaceCheckinService {
         return !confidencePassed ? "NO_MATCH" : "SERVICE_ERROR";
     }
 
-    private User currentStudent() {
+    private User currentManager() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated()) {
             throw new AccessDeniedException("Authentication is required");
         }
         User actor = userRepository.findByEmailOrUsername(authentication.getName(), authentication.getName())
                 .orElseThrow(() -> new AccessDeniedException("Authenticated user not found"));
-        if (!actor.hasRole("STUDENT")) {
-            throw new AccessDeniedException("Face check-in is limited to students");
+        if (!actor.hasRole("LAB_MANAGER")) {
+            throw new AccessDeniedException("Face check-in operation is limited to laboratory managers");
         }
         return actor;
     }
 
-    private Booking ownedBooking(User actor, Long bookingId) {
-        Booking booking = bookingRepository.findById(bookingId)
-                .orElseThrow(() -> new EntityNotFoundException("Booking not found"));
-        if (!booking.getUser().getId().equals(actor.getId())) {
-            throw new AccessDeniedException("Face check-in is limited to the booking owner");
-        }
-        return booking;
+    private Booking managedBooking(User manager, Long bookingId) {
+        return bookingRepository.findManagerFaceCheckinBooking(manager.getId(), bookingId)
+                .orElseThrow(() -> new AccessDeniedException(
+                        "Booking does not belong to the laboratory managed by the current user"));
     }
 
     private void validateBookingAndWindow(Booking booking, Instant now) {
@@ -160,14 +209,7 @@ public class FaceCheckinServiceImpl implements FaceCheckinService {
         if (booking.getTimeSlot() == null || booking.getTimeSlot().getStatus() == TimeSlotStatus.CANCELLED) {
             throw new IllegalStateException("Booking time slot is not available");
         }
-        SystemConfigResponse config = systemConfigService.getConfig();
-        if (config == null || config.booking() == null || config.booking().checkinWindowMinutes() <= 0) {
-            throw new IllegalStateException("Check-in window is not configured");
-        }
-        Instant end = booking.getStartTime().plus(Duration.ofMinutes(config.booking().checkinWindowMinutes()));
-        if (now.isBefore(booking.getStartTime()) || now.isAfter(end)) {
-            throw new IllegalStateException("Booking is outside the check-in window");
-        }
+        checkinWindowPolicy.validate(booking, now);
     }
 
     private void requireGrantedConsent(Long userId) {
@@ -188,15 +230,29 @@ public class FaceCheckinServiceImpl implements FaceCheckinService {
         return configs.getFirst();
     }
 
-    private List<Double> decryptEmbedding(String encryptedEmbedding) {
+    private List<List<Double>> decryptEmbedding(String encryptedEmbedding) {
         try {
-            List<Double> embedding = objectMapper.readValue(
-                    embeddingCipher.decrypt(encryptedEmbedding), new TypeReference<>() { });
-            if (embedding.isEmpty() || embedding.size() > 4096
-                    || embedding.stream().anyMatch(value -> value == null || !Double.isFinite(value))) {
+            var root = objectMapper.readTree(embeddingCipher.decrypt(encryptedEmbedding));
+            if (!root.isArray() || root.isEmpty()) {
                 throw new IllegalStateException("Stored face embedding is invalid");
             }
-            return embedding;
+            List<List<Double>> embeddings;
+            if (root.get(0).isNumber()) {
+                embeddings = List.of(objectMapper.convertValue(root, new TypeReference<List<Double>>() { }));
+            } else {
+                embeddings = objectMapper.convertValue(root, new TypeReference<List<List<Double>>>() { });
+            }
+            if (embeddings.isEmpty() || embeddings.size() > 3
+                    || embeddings.stream().anyMatch(embedding -> embedding == null || embedding.isEmpty()
+                    || embedding.size() > 4096
+                    || embedding.stream().anyMatch(value -> value == null || !Double.isFinite(value)))) {
+                throw new IllegalStateException("Stored face embedding is invalid");
+            }
+            int dimension = embeddings.getFirst().size();
+            if (embeddings.stream().anyMatch(embedding -> embedding.size() != dimension)) {
+                throw new IllegalStateException("Stored face embeddings have inconsistent dimensions");
+            }
+            return embeddings;
         } catch (JsonProcessingException exception) {
             throw new IllegalStateException("Stored face embedding is invalid", exception);
         }
