@@ -89,7 +89,7 @@ export function LabMembersPage() {
     <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-xl font-semibold text-slate-950">Thành viên PTN</h2>
+          <h1 className="text-xl font-semibold text-slate-950">Thành viên PTN</h1>
           <p className="mt-1 text-sm text-slate-600">
             Danh sách thành viên thuộc PTN bạn quản lý
             {managedLabName ? `: ${managedLabName}` : ''}.

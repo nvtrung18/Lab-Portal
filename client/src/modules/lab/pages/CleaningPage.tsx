@@ -76,7 +76,7 @@ export function CleaningPage() {
   return (
     <section className="space-y-6">
       <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="text-xl font-semibold text-slate-950">Vệ sinh PTN</h2>
+        <h1 className="text-xl font-semibold text-slate-950">Phân công vệ sinh PTN</h1>
         <p className="mt-2 text-sm text-slate-600">
           Quản lý và phân công nhiệm vụ vệ sinh cho các ca sử dụng PTN.
         </p>

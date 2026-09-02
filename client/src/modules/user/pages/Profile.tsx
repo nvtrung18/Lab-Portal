@@ -144,7 +144,7 @@ export function ProfilePage() {
             </div>
           )}
           <div>
-            <h2 className="text-xl font-semibold text-slate-950">{displayName}</h2>
+          <h1 className="text-xl font-semibold text-slate-950">{displayName}</h1>
             <p className="mt-1 text-sm text-slate-600">{profile.email}</p>
             <p className="mt-1 text-xs font-medium uppercase text-slate-500">{profile.roles.map(formatRole).join(', ')}</p>
           </div>

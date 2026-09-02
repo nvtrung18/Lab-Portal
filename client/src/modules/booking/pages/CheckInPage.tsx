@@ -7,7 +7,7 @@ import { Link } from 'react-router-dom';
 
 import type { Response } from '../../../shared/types';
 import { queryKeys } from '../../../shared/api';
-import { Button, EmptyState, ErrorState, ResponsiveTable } from '../../../shared/components';
+import { Button, EmptyState, ErrorState, Modal, ResponsiveTable } from '../../../shared/components';
 import { useOperationalLogs } from '../../operations/hooks';
 import type { FaceCheckinLog } from '../../operations/types';
 import { ManagerFaceCheckinPanel } from '../../face/components/ManagerFaceCheckinPanel';
@@ -31,6 +31,7 @@ export function CheckInPage() {
   const [error, setError] = useState('');
   const [cameraError, setCameraError] = useState('');
   const [isCameraActive, setIsCameraActive] = useState(false);
+  const [qrCameraDialogOpen, setQrCameraDialogOpen] = useState(false);
   const [lastSuccess, setLastSuccess] = useState<{
     method: 'Face ID' | 'QR' | 'Thủ công';
     bookingId: number;
@@ -106,14 +107,17 @@ export function CheckInPage() {
     }
 
     try {
+      setQrCameraDialogOpen(true);
+      setIsCameraActive(true);
+      await new Promise<void>((resolve) => window.requestAnimationFrame(() => resolve()));
       const session = scannerSessionRef.current + 1;
       scannerSessionRef.current = session;
       const video = videoRef.current;
       if (!video) {
         setCameraError('Không tìm thấy vùng hiển thị camera. Hãy tải lại trang và thử lại.');
+        setIsCameraActive(false);
         return;
       }
-      setIsCameraActive(true);
       const { BrowserQRCodeReader } = await import('@zxing/browser');
       const reader = new BrowserQRCodeReader(undefined, { delayBetweenScanAttempts: 200 });
       const controls = await reader.decodeFromConstraints(
@@ -144,6 +148,13 @@ export function CheckInPage() {
       setCameraError('Không thể mở camera. Vui lòng kiểm tra quyền truy cập camera hoặc nhập token thủ công.');
       stopCamera();
     }
+  };
+
+  const closeQrCameraDialog = () => {
+    if (confirmCheckIn.isPending) return;
+    stopCamera();
+    setQrCameraDialogOpen(false);
+    setCameraError('');
   };
 
   const handleManualCheckin = (event: FormEvent<HTMLFormElement>) => {
@@ -214,15 +225,7 @@ export function CheckInPage() {
             ))}</div>
           )}
         </section><div className="mt-6 rounded-lg border border-slate-200 bg-slate-50 p-4">
-          <p className="mb-3 text-sm text-slate-600">Đưa mã QR của sinh viên vào giữa khung. Hệ thống sẽ tự đọc và xác nhận token một lần.</p>
-          <div className="aspect-video overflow-hidden rounded-md bg-slate-900">
-            <video
-              ref={videoRef}
-              className="h-full w-full object-cover"
-              muted
-              playsInline
-            />
-          </div>
+          <p className="text-sm text-slate-600">Camera sẽ mở trong cửa sổ giữa màn hình. Đưa mã QR của sinh viên vào giữa khung để hệ thống tự đọc và xác nhận một lần.</p>
           <div className="mt-4 flex flex-col gap-2 sm:flex-row">
             <button
               className="rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white disabled:bg-slate-400"
@@ -232,16 +235,8 @@ export function CheckInPage() {
             >
               {isCameraActive ? 'Đang quét QR...' : 'Bật camera quét QR'}
             </button>
-            <button
-              className="rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 disabled:opacity-60"
-              disabled={!isCameraActive}
-              type="button"
-              onClick={stopCamera}
-            >
-              Tắt camera
-            </button>
           </div>
-          {cameraError ? <p className="mt-3 text-sm font-medium text-amber-700">{cameraError}</p> : null}
+          {cameraError && !qrCameraDialogOpen ? <p className="mt-3 text-sm font-medium text-amber-700">{cameraError}</p> : null}
         </div>
 
         <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
@@ -292,6 +287,36 @@ export function CheckInPage() {
           </form>
         </section> : null}
       </section>
+
+      <Modal
+        backdropBlur
+        centered
+        closeDisabled={confirmCheckIn.isPending}
+        closeOnEscape
+        isOpen={qrCameraDialogOpen}
+        onClose={closeQrCameraDialog}
+        size={lastSuccess?.method === 'QR' ? 'lg' : 'full'}
+        subtitle={lastSuccess?.method === 'QR' ? 'Kết quả đã được ghi nhận vào ca sử dụng.' : 'Đặt mã QR vào chính giữa khung hình.'}
+        title={lastSuccess?.method === 'QR' ? 'Kết quả quét QR' : 'Camera quét QR check-in'}
+      >
+        {lastSuccess?.method === 'QR' ? (
+          <div className="flex flex-col items-center py-8 text-center" role="status">
+            <span className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-emerald-700"><CheckCircle2 aria-hidden="true" className="h-9 w-9" /></span>
+            <h3 className="mt-4 text-xl font-semibold text-slate-950">Check-in thành công</h3>
+            <p className="mt-2 text-sm text-slate-600">Booking #{lastSuccess.bookingId}{lastSuccess.booking ? ` · ${lastSuccess.booking.studentName ?? lastSuccess.booking.studentEmail ?? `User #${lastSuccess.booking.userId}`}` : ''} đã được xác nhận có mặt.</p>
+            <Button className="mt-6" type="button" onClick={closeQrCameraDialog}>Hoàn tất</Button>
+          </div>
+        ) : (
+          <div className="mx-auto w-full max-w-[calc(72dvh*16/9)]">
+            <div className="relative mx-auto aspect-video w-full overflow-hidden rounded-md bg-slate-950">
+              <video ref={videoRef} autoPlay className="h-full w-full object-cover" muted playsInline aria-label="Camera quét mã QR check-in" />
+              <div aria-hidden="true" className="pointer-events-none absolute left-1/2 top-1/2 aspect-square w-[58%] -translate-x-1/2 -translate-y-1/2 rounded-lg border-2 border-white shadow-[0_0_0_999px_rgba(15,23,42,0.35)]" />
+              <p className="absolute inset-x-3 bottom-3 rounded bg-slate-950/80 px-3 py-2 text-center text-sm font-semibold text-white" aria-live="polite">{confirmCheckIn.isPending ? 'Đã đọc mã — đang xác nhận check-in...' : isCameraActive ? 'Đang tìm mã QR...' : 'Camera đã dừng'}</p>
+              {cameraError || error ? <p className="absolute inset-x-3 top-3 rounded bg-red-700/90 px-3 py-2 text-center text-sm font-medium text-white" role="alert">{cameraError || error}</p> : null}
+            </div>
+          </div>
+        )}
+      </Modal>
 
     </div>
   );

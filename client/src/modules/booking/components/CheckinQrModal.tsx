@@ -3,14 +3,13 @@ import QRCode from 'qrcode';
 
 import { Button, Modal } from '../../../shared/components';
 import type { BookingResponse, CheckinQrResponse } from '../api';
-import { useMyBookings } from '../hooks';
 
 interface CheckinQrModalProps {
   booking: BookingResponse;
-  qr?: CheckinQrResponse;
+  qr?: Pick<CheckinQrResponse, 'requestId' | 'status' | 'token' | 'expiresAt'>;
   isOpen: boolean;
   isCreating: boolean;
-  onRegenerate: () => void;
+  onRegenerate?: () => void;
   onClose: () => void;
 }
 
@@ -31,7 +30,6 @@ export function CheckinQrModal({
 }: CheckinQrModalProps) {
   const [remainingSeconds, setRemainingSeconds] = useState(0);
   const [qrImageUrl, setQrImageUrl] = useState('');
-  const { refetch } = useMyBookings(isOpen);
 
   useEffect(() => {
     if (!isOpen) {
@@ -40,12 +38,10 @@ export function CheckinQrModal({
     const update = () => setRemainingSeconds(secondsUntil(qr?.expiresAt));
     update();
     const timer = window.setInterval(update, 1000);
-    const poller = window.setInterval(() => void refetch(), 7000);
     return () => {
       window.clearInterval(timer);
-      window.clearInterval(poller);
     };
-  }, [isOpen, qr?.expiresAt, refetch]);
+  }, [isOpen, qr?.expiresAt]);
 
   useEffect(() => {
     let cancelled = false;
@@ -90,9 +86,11 @@ export function CheckinQrModal({
           <Button disabled={isCreating} onClick={onClose} variant="outline">
             Đóng
           </Button>
-          <Button disabled={!expired && !rejected} loading={isCreating} loadingText="Đang gửi..." onClick={onRegenerate}>
-            Gửi lại yêu cầu
-          </Button>
+          {onRegenerate ? (
+            <Button disabled={!expired && !rejected} loading={isCreating} loadingText="Đang gửi..." onClick={onRegenerate}>
+              Gửi lại yêu cầu
+            </Button>
+          ) : null}
         </>
       )}
       onClose={onClose}

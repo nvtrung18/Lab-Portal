@@ -1,9 +1,9 @@
 import axios from 'axios';
-import { Camera, CircleAlert, CircleCheck, Shield, Trash2 } from 'lucide-react';
-import { FormEvent, useEffect, useRef, useState } from 'react';
+import { Camera, CircleCheck, Shield, Trash2 } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 
 import { getStoredRole } from '../../../shared/api';
-import { Button, EmptyState, ErrorState } from '../../../shared/components';
+import { Button, EmptyState, ErrorState, Modal } from '../../../shared/components';
 import type { Response } from '../../../shared/types';
 import { useProfile } from '../../user/hooks';
 import { getFaceGuidance, readFaceImage, startFaceChallenge } from '../api';
@@ -95,10 +95,11 @@ export function FaceProfilePage() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const [cameraActive, setCameraActive] = useState(false);
+  const [cameraDialogOpen, setCameraDialogOpen] = useState(false);
+  const [faceSaveComplete, setFaceSaveComplete] = useState(false);
   const [cameraReady, setCameraReady] = useState(false);
   const [guidance, setGuidance] = useState<FaceGuidanceResult | null>(null);
   const [stable, setStable] = useState(false);
-  const [guidanceChecking, setGuidanceChecking] = useState(false);
   const [challenge, setChallenge] = useState<FaceChallenge | null>(null);
   const [countdown, setCountdown] = useState<number | null>(null);
   const [capturePhase, setCapturePhase] = useState<CapturePhase>('IDLE');
@@ -128,7 +129,6 @@ export function FaceProfilePage() {
         timer = window.setTimeout(evaluate, 800);
         return;
       }
-      setGuidanceChecking(true);
       try {
         const result = await getFaceGuidance(targetUserId, await readCameraFrame(video, 640, 0.76));
         if (cancelled) return;
@@ -154,7 +154,6 @@ export function FaceProfilePage() {
         setLocalError(errorMessage(error));
       } finally {
         if (!cancelled) {
-          setGuidanceChecking(false);
           timer = window.setTimeout(evaluate, 800);
         }
       }
@@ -186,6 +185,10 @@ export function FaceProfilePage() {
   }, [previewUrl]);
 
   const startCamera = async () => {
+    setCameraDialogOpen(true);
+    setFaceSaveComplete(false);
+    setImage(null);
+    setPreviewUrl('');
     try {
       if (!navigator.mediaDevices?.getUserMedia) {
         throw new Error('Camera API is unavailable');
@@ -235,6 +238,7 @@ export function FaceProfilePage() {
     streamRef.current?.getTracks().forEach((track) => track.stop());
     streamRef.current = null;
     setCameraActive(false);
+    setCameraDialogOpen(false);
     setCameraReady(false);
     setImage(null);
     setPreviewUrl('');
@@ -299,20 +303,47 @@ export function FaceProfilePage() {
 
   captureCameraRef.current = captureCamera;
 
-  const handleSave = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const saveCapturedFace = () => {
     if (!image) {
       setLocalError('Vui lòng mở camera và chụp ảnh khuôn mặt rõ nét.');
       return;
     }
     setLocalError('');
-    actions.save.mutate({ request: { ...image, livenessRequired: true }, update: Boolean(profile.data) });
+    actions.save.mutate(
+      { request: { ...image, livenessRequired: true }, update: Boolean(profile.data) },
+      { onSuccess: () => setFaceSaveComplete(true) },
+    );
+  };
+
+  const closeCameraDialog = () => {
+    if (actions.save.isPending || capturingRef.current) return;
+    streamRef.current?.getTracks().forEach((track) => track.stop());
+    streamRef.current = null;
+    setCameraActive(false);
+    setCameraReady(false);
+    setCameraDialogOpen(false);
+    setGuidance(null);
+    setCountdown(null);
+    setLocalError('');
   };
 
   const mutationError = actions.consent.error ?? actions.save.error ?? actions.remove.error;
   const allConditionsPassed = Boolean(guidance?.singleFace && guidance.faceInGuide
     && guidance.facingForward && guidance.landmarksVisible && guidance.lightingGood
     && guidance.sharpnessGood && stable);
+  const adjustmentInstruction = !cameraReady
+    ? 'Đang khởi tạo camera...'
+    : !guidance?.singleFace
+      ? guidance?.detectedFaces === 0 ? 'Đưa một khuôn mặt vào giữa khung' : 'Chỉ để một người trong khung hình'
+      : !guidance.faceInGuide
+        ? 'Di chuyển khuôn mặt vào giữa oval và điều chỉnh khoảng cách'
+        : !guidance.facingForward || !guidance.landmarksVisible
+          ? 'Nhìn thẳng và không che mắt, mũi hoặc miệng'
+          : !guidance.lightingGood
+            ? 'Điều chỉnh để ánh sáng chiếu từ phía trước'
+            : !guidance.sharpnessGood || !stable
+              ? 'Giữ yên khuôn mặt để ảnh rõ nét'
+              : 'Giữ nguyên vị trí — hệ thống sẽ tự chụp';
   const captureInstruction = capturePhase === 'FRONT'
     ? 'ĐANG CHỤP ẢNH CHÍNH DIỆN — tiếp tục nhìn thẳng'
     : capturePhase === 'LEFT_PREPARE'
@@ -325,34 +356,7 @@ export function FaceProfilePage() {
             ? `ĐANG GHI GÓC PHẢI — giữ khuôn mặt trong khung (${capturedChallengeFrames}/12)`
         : capturePhase === 'COMPLETE'
           ? 'ĐÃ GHI NHẬN CHÍNH DIỆN, TRÁI VÀ PHẢI — đang hoàn tất'
-          : allConditionsPassed
-            ? 'Giữ nguyên vị trí — hệ thống sẽ tự chụp'
-            : 'Làm theo các cảnh báo để hoàn tất kiểm tra';
-  const criteria = [
-    {
-      label: 'Chỉ một người trong khung hình',
-      passed: guidance?.singleFace,
-      warning: guidance?.detectedFaces === 0 ? 'Chưa phát hiện khuôn mặt' : 'Có nhiều hơn một khuôn mặt',
-    },
-    {
-      label: 'Toàn bộ khuôn mặt nằm trong khung oval',
-      passed: guidance?.faceInGuide,
-      warning: 'Di chuyển khuôn mặt vào giữa khung và điều chỉnh khoảng cách',
-    },
-    {
-      label: 'Nhìn thẳng, không che mắt, mũi hoặc miệng',
-      passed: Boolean(guidance?.facingForward && guidance.landmarksVisible),
-      warning: guidance?.landmarksVisible ? 'Hãy nhìn thẳng vào camera' : 'Hãy để lộ rõ mắt, mũi và miệng',
-    },
-    {
-      label: 'Giữ yên và đảm bảo ánh sáng từ phía trước',
-      passed: Boolean(guidance?.lightingGood && guidance.sharpnessGood && stable),
-      warning: !guidance?.lightingGood
-        ? 'Điều chỉnh ánh sáng phía trước khuôn mặt'
-        : !guidance?.sharpnessGood ? 'Ảnh đang mờ — giữ yên và lau sạch camera' : 'Giữ yên khuôn mặt',
-    },
-  ];
-
+          : adjustmentInstruction;
   return (
     <section className="mx-auto max-w-5xl">
       <header className="mb-6">
@@ -385,7 +389,7 @@ export function FaceProfilePage() {
           <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
             <h2 className="flex items-center gap-2 text-base font-semibold text-slate-950 dark:text-white"><Camera aria-hidden="true" className="h-5 w-5" /> Mẫu khuôn mặt</h2>
             {profile.isLoading ? <div className="mt-4 h-20 animate-pulse rounded bg-slate-100 dark:bg-slate-800" /> : profile.isError ? <ErrorState className="mt-4" onRetry={() => void profile.refetch()}>Không thể tải hồ sơ khuôn mặt.</ErrorState> : (
-              <form className="mt-4" onSubmit={handleSave}>
+              <div className="mt-4">
                 {profile.data ? <div className="mb-4 rounded-md bg-slate-50 p-3 text-sm text-slate-600 dark:bg-slate-950 dark:text-slate-300"><p>Trạng thái: <strong>{profile.data.status}</strong></p><p className="mt-1">Model: {profile.data.embeddingModel}</p></div> : <p className="mb-4 text-sm text-slate-600 dark:text-slate-300">Chưa đăng ký hồ sơ khuôn mặt.</p>}
                 {consent.isLoading ? <div className="mb-4 h-28 animate-pulse rounded bg-slate-100 dark:bg-slate-800" aria-label="Đang tải thông tin quyền riêng tư" /> : consent.isError ? <ErrorState className="mb-4" onRetry={() => void consent.refetch()}>Không thể tải trạng thái đồng ý sử dụng dữ liệu.</ErrorState> : (
                   <div className={`mb-4 rounded-md border p-4 ${consent.data?.status === 'GRANTED' ? 'border-emerald-200 bg-emerald-50 dark:border-emerald-900 dark:bg-emerald-950/40' : 'border-blue-200 bg-blue-50 dark:border-blue-900 dark:bg-blue-950/40'}`}>
@@ -413,52 +417,61 @@ export function FaceProfilePage() {
                     </div>
                   </div>
                 )}
-                <div className="mb-4 rounded-md border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-950">
-                  <div className="flex items-center justify-between gap-3">
-                    <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Kiểm tra theo thời gian thực</h3>
-                    {cameraActive && guidanceChecking ? <span className="text-xs text-slate-500" role="status">Đang kiểm tra…</span> : null}
-                  </div>
-                  <ul className="mt-3 grid gap-2 text-sm text-slate-600 dark:text-slate-300 sm:grid-cols-2">
-                    {criteria.map((criterion) => (
-                      <li className={`flex items-start gap-2 rounded px-2 py-1.5 ${cameraActive && criterion.passed ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200' : cameraActive && guidance ? 'bg-amber-50 text-amber-800 dark:bg-amber-950/50 dark:text-amber-200' : ''}`} key={criterion.label}>
-                        {cameraActive && criterion.passed
-                          ? <CircleCheck aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0" />
-                          : <CircleAlert aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0" />}
-                        <span><span className="font-medium">{criterion.label}</span>{cameraActive && guidance && !criterion.passed ? <span className="mt-0.5 block text-xs">{criterion.warning}</span> : null}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-                {previewUrl && !cameraActive ? <div className="mb-4"><img alt="Ảnh khuôn mặt chính diện dùng làm mẫu nhận diện" className="aspect-video w-full rounded-md border border-slate-200 object-cover dark:border-slate-700" src={previewUrl} /><p className="mt-2 text-xs text-slate-500 dark:text-slate-400">Đã thu đủ mẫu chính diện, trái và phải. Backend chỉ lưu ba embedding đã mã hóa, không lưu các ảnh camera này.</p></div> : null}
-                {cameraActive ? (
-                  <div className="mb-4 space-y-3">
-                    <div className="relative overflow-hidden rounded-md border border-slate-300 bg-slate-950 dark:border-slate-700">
-                      <video ref={videoRef} autoPlay muted playsInline aria-label="Hình ảnh trực tiếp từ camera" className="aspect-video w-full object-cover" onLoadedMetadata={() => setCameraReady(true)} />
-                      <div aria-hidden="true" className="pointer-events-none absolute inset-x-1/4 inset-y-4 rounded-full border-2 border-dashed border-white/90 shadow-[0_0_0_999px_rgba(15,23,42,0.28)]" />
-                      {countdown !== null ? <div aria-live="assertive" className="absolute inset-0 flex items-center justify-center"><span className="flex h-20 w-20 items-center justify-center rounded-full bg-slate-950/80 text-4xl font-bold text-white">{countdown || '✓'}</span></div> : null}
-                      <p aria-live="assertive" className="absolute inset-x-3 bottom-3 rounded bg-slate-950/75 px-3 py-2 text-center text-xs font-medium text-white">{captureInstruction}</p>
-                    </div>
-                    {challenge ? <p className="rounded-md bg-blue-50 px-3 py-2 text-sm text-blue-800 dark:bg-blue-950/40 dark:text-blue-200">Hệ thống sẽ tự thu lần lượt ảnh chính diện, góc trái và góc phải. Chỉ quay nhẹ theo hướng trên màn hình và luôn giữ toàn bộ khuôn mặt trong khung.</p> : null}
-                    <p aria-live="polite" className={`flex items-start gap-2 rounded-md px-3 py-2 text-sm ${allConditionsPassed ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200' : 'bg-amber-50 text-amber-800 dark:bg-amber-950/50 dark:text-amber-200'}`}>
-                      {allConditionsPassed ? <CircleCheck aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0" /> : <CircleAlert aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0" />}
-                      {!cameraReady ? 'Đang khởi tạo camera...' : allConditionsPassed ? `Đã đạt tất cả tiêu chí${countdown !== null ? ` — tự chụp sau ${countdown} giây` : ''}` : 'Chưa đạt đủ tiêu chí. Hãy xem từng cảnh báo phía trên.'}
-                    </p>
-                    <Button disabled={!cameraReady || !allConditionsPassed || capturePhase !== 'IDLE'} type="button" onClick={captureCamera}>Chụp ngay</Button>
-                  </div>
-                ) : <Button type="button" variant={consent.data?.status === 'GRANTED' ? 'outline' : 'success'} disabled={consent.isLoading || consent.isError || (consent.data?.status !== 'GRANTED' && !privacyAccepted)} loading={actions.consent.isPending} loadingText="Đang ghi nhận đồng ý..." onClick={requestConsentAndOpenCamera}><Camera aria-hidden="true" className="h-4 w-4" /> {consent.data?.status === 'GRANTED' ? 'Mở camera' : 'Tôi đồng ý và mở camera'}</Button>}
+                <Button type="button" variant={consent.data?.status === 'GRANTED' ? 'outline' : 'success'} disabled={consent.isLoading || consent.isError || (consent.data?.status !== 'GRANTED' && !privacyAccepted)} loading={actions.consent.isPending} loadingText="Đang ghi nhận đồng ý..." onClick={requestConsentAndOpenCamera}><Camera aria-hidden="true" className="h-4 w-4" /> {consent.data?.status === 'GRANTED' ? 'Mở camera' : 'Tôi đồng ý và mở camera'}</Button>
                 <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">Ảnh được chụp trực tiếp để kiểm tra chất lượng và liveness; hệ thống chỉ lưu embedding đã mã hóa.</p>
                 <div className="mt-4 flex flex-wrap gap-2">
-                  <Button loading={actions.save.isPending} loadingText="Đang xử lý..." type="submit">{profile.data ? 'Cập nhật mẫu' : 'Đăng ký mẫu'}</Button>
                   {profile.data ? <Button aria-label="Xóa hồ sơ khuôn mặt" loading={actions.remove.isPending} variant="danger" onClick={() => { if (window.confirm('Xóa hồ sơ khuôn mặt hiện tại?')) actions.remove.mutate(); }}><Trash2 aria-hidden="true" className="h-4 w-4" /> Xóa hồ sơ</Button> : null}
                   {consent.data?.status === 'GRANTED' ? <Button type="button" loading={actions.consent.isPending} variant="outline" onClick={withdrawConsent}>Rút lại đồng ý</Button> : null}
                 </div>
-              </form>
+              </div>
             )}
           </section>
         </div>
       )}
 
-      {localError || mutationError ? <p className="mt-5 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-200" role="alert">{localError || errorMessage(mutationError)}</p> : null}
+      <Modal
+        backdropBlur
+        centered
+        closeDisabled={actions.save.isPending || capturePhase !== 'IDLE'}
+        closeOnEscape
+        isOpen={cameraDialogOpen}
+        onClose={closeCameraDialog}
+        size={faceSaveComplete ? 'lg' : image && !cameraActive ? '2xl' : 'full'}
+        subtitle={faceSaveComplete ? 'Kết quả đã được lưu an toàn vào hồ sơ.' : image && !cameraActive ? 'Kiểm tra kết quả trước khi lưu hồ sơ khuôn mặt.' : 'Giữ khuôn mặt giữa khung và làm theo hướng dẫn trên màn hình.'}
+        title={faceSaveComplete ? 'Kết quả đăng ký khuôn mặt' : image && !cameraActive ? 'Kết quả chụp khuôn mặt' : 'Camera đăng ký khuôn mặt'}
+      >
+        {faceSaveComplete ? (
+          <div className="flex flex-col items-center py-8 text-center" role="status">
+            <span className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-emerald-700"><CircleCheck aria-hidden="true" className="h-9 w-9" /></span>
+            <h3 className="mt-4 text-xl font-semibold text-slate-950">Đã lưu hồ sơ khuôn mặt</h3>
+            <p className="mt-2 max-w-lg text-sm text-slate-600">Mẫu chính diện và các góc kiểm tra đã được xử lý. Hệ thống chỉ lưu embedding đã mã hóa.</p>
+            <Button className="mt-6" type="button" onClick={closeCameraDialog}>Hoàn tất</Button>
+          </div>
+        ) : image && !cameraActive ? (
+          <div className="mx-auto max-w-2xl">
+            <img alt="Ảnh khuôn mặt chính diện vừa chụp" className="aspect-video w-full rounded-md border border-slate-200 object-cover" src={previewUrl} />
+            <div className="mt-4 flex items-start gap-2 rounded-md bg-emerald-50 p-3 text-sm text-emerald-800" role="status"><CircleCheck aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0" /><span>Đã thu đủ mẫu chính diện, trái và phải. Bạn có thể lưu kết quả hoặc chụp lại.</span></div>
+            {actions.save.error ? <p className="mt-3 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700" role="alert">{errorMessage(actions.save.error)}</p> : null}
+            <div className="mt-5 flex flex-col-reverse justify-end gap-2 sm:flex-row">
+              <Button disabled={actions.save.isPending} type="button" variant="outline" onClick={() => void startCamera()}>Chụp lại</Button>
+              <Button loading={actions.save.isPending} loadingText="Đang xử lý..." type="button" onClick={saveCapturedFace}>{profile.data ? 'Cập nhật mẫu này' : 'Đăng ký mẫu này'}</Button>
+            </div>
+          </div>
+        ) : (
+          <div className="mx-auto w-full max-w-[calc(72dvh*16/9)]">
+              <div className="relative aspect-video overflow-hidden rounded-md border border-slate-300 bg-slate-950 shadow-lg">
+                {cameraActive ? <video ref={videoRef} autoPlay muted playsInline aria-label="Hình ảnh trực tiếp từ camera" className="aspect-video w-full object-cover" onLoadedMetadata={() => setCameraReady(true)} /> : <div className="flex aspect-video items-center justify-center text-slate-400"><Camera aria-hidden="true" className="h-16 w-16" /></div>}
+                {cameraActive ? <div aria-hidden="true" className="pointer-events-none absolute inset-x-1/4 inset-y-4 rounded-full border-2 border-dashed border-white/90 shadow-[0_0_0_999px_rgba(15,23,42,0.28)]" /> : null}
+                {countdown !== null ? <div aria-live="assertive" className="absolute inset-0 flex items-center justify-center"><span className="flex h-20 w-20 items-center justify-center rounded-full bg-slate-950/80 text-4xl font-bold text-white">{countdown || '✓'}</span></div> : null}
+                <p aria-live="assertive" className="absolute inset-x-3 bottom-3 rounded bg-slate-950/75 px-3 py-2 text-center text-xs font-medium text-white">{cameraActive ? captureInstruction : 'Camera chưa sẵn sàng'}</p>
+                {localError ? <p className="absolute inset-x-3 top-3 rounded bg-red-700/90 px-3 py-2 text-center text-sm font-medium text-white" role="alert">{localError}</p> : null}
+                {cameraActive && cameraReady && allConditionsPassed && capturePhase === 'IDLE' ? <Button className="absolute right-3 top-3" type="button" onClick={captureCamera}>Chụp ngay</Button> : null}
+              </div>
+          </div>
+        )}
+      </Modal>
+
+      {!cameraDialogOpen && (localError || mutationError) ? <p className="mt-5 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-200" role="alert">{localError || errorMessage(mutationError)}</p> : null}
     </section>
   );
 }

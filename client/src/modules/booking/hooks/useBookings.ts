@@ -8,6 +8,7 @@ import {
   confirmCheckinByToken,
   createCheckinQr,
   getMyCheckinQrRequest,
+  getMyCheckinQrHistory,
   getPendingCheckinQrRequests,
   reviewCheckinQrRequest,
   createBooking,
@@ -123,11 +124,27 @@ export function useReviewBooking(labId?: number | null, slotId?: number | null) 
 }
 
 export function useCreateCheckinQr() {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ bookingId, fallbackReason, customReason }: { bookingId: number; fallbackReason: import('../api').FaceFallbackReason; customReason?: string }) => createCheckinQr(bookingId, fallbackReason, customReason),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['checkinQrHistory'] });
+      toast.success('Đã gửi yêu cầu QR. Bạn có thể đóng trang và chờ thông báo từ quản lý PTN.');
+    },
     onError: (error) => {
       toast.error(getErrorMessage(error, 'Không thể tạo mã QR check-in.'));
     },
+  });
+}
+
+export function useMyCheckinQrHistory(enabled = true) {
+  return useQuery({
+    queryKey: ['checkinQrHistory'],
+    queryFn: getMyCheckinQrHistory,
+    enabled,
+    staleTime: 30000,
+    refetchOnReconnect: true,
+    refetchOnWindowFocus: true,
   });
 }
 
@@ -137,7 +154,7 @@ export function useMyCheckinQrRequest(bookingId: number, enabled: boolean) {
     queryFn: () => getMyCheckinQrRequest(bookingId),
     enabled,
     retry: false,
-    refetchInterval: enabled ? 3000 : false,
+    refetchInterval: enabled ? 30000 : false,
   });
 }
 
@@ -146,7 +163,7 @@ export function usePendingCheckinQrRequests(enabled = true) {
     queryKey: ['pendingCheckinQrRequests'],
     queryFn: getPendingCheckinQrRequests,
     enabled,
-    refetchInterval: enabled ? 5000 : false,
+    refetchInterval: enabled ? 30000 : false,
   });
 }
 

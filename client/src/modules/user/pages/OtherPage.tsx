@@ -75,7 +75,7 @@ export function OtherPage() {
   return (
     <section className="space-y-6">
       <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="text-xl font-semibold text-slate-950">PTN của tôi</h2>
+        <h1 className="text-xl font-semibold text-slate-950">PTN của tôi</h1>
         <p className="mt-2 text-sm text-slate-600">
           Khu vực dành cho các phòng thí nghiệm bạn đang là thành viên hoạt động.
         </p>

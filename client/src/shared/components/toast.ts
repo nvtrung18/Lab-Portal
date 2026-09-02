@@ -3,6 +3,7 @@ export type ToastVariant = 'success' | 'error' | 'warning' | 'info';
 export interface ToastPayload {
   message: string;
   variant: ToastVariant;
+  title?: string;
 }
 
 export const TOAST_EVENT = 'lab-portal-toast';
@@ -19,7 +20,7 @@ export const TOAST_MESSAGES = {
 const TOAST_DEDUPE_MS = 2500;
 const toastHistory = new Map<string, number>();
 
-function notify(message: string, variant: ToastVariant) {
+function notify(message: string, variant: ToastVariant, title?: string) {
   const key = `${variant}:${message}`;
   const now = Date.now();
   const lastShownAt = toastHistory.get(key) ?? 0;
@@ -31,7 +32,7 @@ function notify(message: string, variant: ToastVariant) {
   toastHistory.set(key, now);
   window.dispatchEvent(
     new CustomEvent<ToastPayload>(TOAST_EVENT, {
-      detail: { message, variant },
+      detail: { message, variant, title },
     }),
   );
 }
@@ -46,7 +47,7 @@ export const toast = {
   warning(message: string = TOAST_MESSAGES.error) {
     notify(message, 'warning');
   },
-  info(message: string = TOAST_MESSAGES.success) {
-    notify(message, 'info');
+  info(message: string = TOAST_MESSAGES.success, title?: string) {
+    notify(message, 'info', title);
   },
 };

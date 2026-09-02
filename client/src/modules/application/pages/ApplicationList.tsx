@@ -96,7 +96,7 @@ export function ApplicationList() {
     <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
       <div className="flex items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-semibold text-slate-950">Đơn ứng tuyển</h2>
+          <h1 className="text-xl font-semibold text-slate-950">Đơn ứng tuyển</h1>
           <p className="mt-1 text-sm text-slate-600">
             Chỉ hiển thị đơn ứng tuyển của {managedLabName ?? `PTN #${managedLabId}`}.
           </p>

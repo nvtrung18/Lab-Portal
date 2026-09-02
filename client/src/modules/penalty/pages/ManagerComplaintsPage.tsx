@@ -66,7 +66,7 @@ export function ManagerComplaintsPage() {
   return (
     <section className="space-y-6">
       <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="text-xl font-semibold text-slate-950">Khiếu nại vi phạm</h2>
+          <h1 className="text-xl font-semibold text-slate-950">Khiếu nại vi phạm</h1>
         <p className="mt-2 text-sm text-slate-600">
           Xem xét và xử lý các khiếu nại vi phạm thuộc PTN bạn quản lý.
         </p>

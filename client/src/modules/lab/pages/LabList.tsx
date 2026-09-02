@@ -131,7 +131,7 @@ export function LabList() {
       <div className="mb-5 rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800 sm:p-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <h2 className="text-xl font-semibold tracking-tight text-slate-950 dark:text-white">Khám phá phòng thí nghiệm</h2>
+          <h1 className="text-xl font-semibold tracking-tight text-slate-950 dark:text-white">Danh sách phòng thí nghiệm</h1>
           <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-600 dark:text-slate-300">
             Danh sách PTN bạn có thể ứng tuyển. PTN đã tham gia được quản lý trong mục PTN của tôi.
           </p>

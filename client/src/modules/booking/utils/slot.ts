@@ -7,6 +7,7 @@ const STATUS_LABELS: Record<string, string> = {
   CLOSED: 'Đã đóng',
   INACTIVE: 'Tạm ngừng',
   MAINTENANCE: 'Bảo trì',
+  IN_PROGRESS: 'Đang sử dụng',
   EXPIRED: 'Đã qua',
   CANCELLED: 'Đã hủy',
   ARCHIVED: 'Đã lưu trữ',
@@ -22,15 +23,27 @@ function normalizeStatus(
   rawStatus: string | undefined,
   capacity: number,
   approvedCount: number,
+  startTime: string,
   endTime: string,
 ): string {
   const status = rawStatus?.toUpperCase() || 'AVAILABLE';
+  const startDate = startTime ? new Date(startTime) : null;
   const endDate = endTime ? new Date(endTime) : null;
+  const now = Date.now();
+
+  if (
+    startDate && endDate &&
+    !Number.isNaN(startDate.getTime()) && !Number.isNaN(endDate.getTime()) &&
+    startDate.getTime() <= now && now <= endDate.getTime() &&
+    ['AVAILABLE', 'FULL', 'EXPIRED'].includes(status)
+  ) {
+    return 'IN_PROGRESS';
+  }
 
   if (
     endDate &&
     !Number.isNaN(endDate.getTime()) &&
-    endDate.getTime() < Date.now() &&
+    endDate.getTime() < now &&
     !['CLOSED', 'CANCELLED', 'INACTIVE', 'MAINTENANCE', 'ARCHIVED'].includes(status)
   ) {
     return 'EXPIRED';
@@ -67,7 +80,7 @@ export function normalizeSlot(slot: RawSlotResponse): LabSlot {
         : null;
   const startTime = slot.startTime ?? slot.start_time ?? '';
   const endTime = slot.endTime ?? slot.end_time ?? '';
-  const status = normalizeStatus(slot.status, capacity, approvedCount, endTime);
+  const status = normalizeStatus(slot.status, capacity, approvedCount, startTime, endTime);
 
   return {
     id: toNumber(slot.id),

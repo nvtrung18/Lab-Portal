@@ -31,7 +31,7 @@ export function PenaltyPage() {
   return (
     <section className="space-y-4">
       <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="text-xl font-semibold text-slate-950">Vi phạm & khiếu nại</h2>
+        <h1 className="text-xl font-semibold text-slate-950">Vi phạm & khiếu nại</h1>
         <p className="mt-2 text-sm text-slate-600">
           Danh sách các vi phạm được ghi nhận trong quá trình sử dụng PTN.
         </p>

@@ -61,7 +61,7 @@ export function LabOverviewPage() {
                 <CheckCircle2 aria-hidden="true" className="h-3.5 w-3.5" />{displayedStatus}
               </span>
             </div>
-            <h2 className="mt-2 text-2xl font-semibold tracking-tight text-balance sm:text-3xl">{managedLab.labName}</h2>
+          <h1 className="mt-2 text-2xl font-semibold tracking-tight text-balance sm:text-3xl">{managedLab.labName}</h1>
             <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-300 sm:text-base">
               {managedLab.description || 'Theo dõi ca sử dụng, điểm danh thành viên và các công việc vận hành trong ngày.'}
             </p>

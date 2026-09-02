@@ -103,7 +103,7 @@ export function SlotDetailPage() {
         </Link>
         <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h2 className="text-xl font-semibold text-slate-950">Chi tiết khung giờ</h2>
+          <h1 className="text-xl font-semibold text-slate-950">Chi tiết ca sử dụng</h1>
             <p className="mt-2 text-sm text-slate-600">
               Danh sách sinh viên đăng ký sử dụng khung giờ và vi phạm đã ghi nhận.
             </p>
