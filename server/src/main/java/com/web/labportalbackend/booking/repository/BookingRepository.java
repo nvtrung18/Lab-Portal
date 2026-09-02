@@ -128,6 +128,26 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
             @Param("statuses") List<BookingStatus> statuses
     );
 
+    @Query("""
+            SELECT new com.web.labportalbackend.booking.repository.TimeSlotBookingCounts(
+                b.timeSlot.id,
+                SUM(CASE WHEN b.status IN (
+                    com.web.labportalbackend.common.enums.BookingStatus.APPROVED,
+                    com.web.labportalbackend.common.enums.BookingStatus.CHECKED_IN
+                ) THEN 1 ELSE 0 END),
+                SUM(CASE WHEN b.status = com.web.labportalbackend.common.enums.BookingStatus.CHECKED_IN
+                    THEN 1 ELSE 0 END),
+                SUM(CASE WHEN b.status = com.web.labportalbackend.common.enums.BookingStatus.PENDING_APPROVAL
+                    THEN 1 ELSE 0 END)
+            )
+            FROM Booking b
+            WHERE b.timeSlot.id IN :slotIds
+              AND b.deleted = false
+              AND b.active = true
+            GROUP BY b.timeSlot.id
+            """)
+    List<TimeSlotBookingCounts> findActiveCountsByTimeSlotIds(@Param("slotIds") List<Long> slotIds);
+
     /**
      * Check if a user has an existing (non-cancelled) booking for a slot.
      * Used for duplicate booking prevention.
