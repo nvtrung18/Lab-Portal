@@ -2,15 +2,20 @@ package com.web.labportalbackend.face.controller;
 
 import com.web.labportalbackend.common.dto.Response;
 import com.web.labportalbackend.face.dto.request.FaceConsentRequest;
+import com.web.labportalbackend.face.dto.request.FaceGuidanceRequest;
 import com.web.labportalbackend.face.dto.request.FaceCheckinRequest;
 import com.web.labportalbackend.face.dto.request.FaceRegistrationRequest;
 import com.web.labportalbackend.face.dto.response.FaceConsentResponse;
+import com.web.labportalbackend.face.dto.response.FaceChallengeResponse;
+import com.web.labportalbackend.face.dto.response.FaceGuidanceResponse;
 import com.web.labportalbackend.face.dto.response.FaceCheckinResponse;
 import com.web.labportalbackend.face.dto.response.FaceProfileResponse;
+import com.web.labportalbackend.face.dto.response.FaceCheckinCandidateResponse;
 import com.web.labportalbackend.face.service.FaceProfileService;
 import com.web.labportalbackend.face.service.FaceCheckinService;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -31,12 +36,41 @@ public class FaceProfileController {
     private final FaceProfileService faceProfileService;
     private final FaceCheckinService faceCheckinService;
 
+    @GetMapping("/profiles")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "List face profile metadata for administration")
+    public ResponseEntity<Response<List<FaceProfileResponse>>> listProfiles() {
+        return ResponseEntity.ok(Response.ok(faceProfileService.listProfiles()));
+    }
+
     @PostMapping("/check-in")
-    @PreAuthorize("hasRole('STUDENT')")
-    @Operation(summary = "Check in to an owned approved booking using face matching")
+    @PreAuthorize("hasRole('LAB_MANAGER')")
+    @Operation(summary = "Check in an approved managed-lab booking using face matching")
     public ResponseEntity<Response<FaceCheckinResponse>> checkIn(
             @Valid @RequestBody FaceCheckinRequest request) {
         return ResponseEntity.ok(Response.ok("Face check-in evaluated", faceCheckinService.checkIn(request)));
+    }
+
+    @GetMapping("/check-in/candidates")
+    @PreAuthorize("hasRole('LAB_MANAGER')")
+    @Operation(summary = "List approved bookings available for manager-operated face check-in")
+    public ResponseEntity<Response<List<FaceCheckinCandidateResponse>>> checkInCandidates() {
+        return ResponseEntity.ok(Response.ok(faceCheckinService.candidates()));
+    }
+
+    @PostMapping("/check-in/guidance")
+    @PreAuthorize("hasRole('LAB_MANAGER')")
+    @Operation(summary = "Evaluate a camera frame at the manager face check-in workstation")
+    public ResponseEntity<Response<FaceGuidanceResponse>> checkInGuidance(
+            @Valid @RequestBody FaceGuidanceRequest request) {
+        return ResponseEntity.ok(Response.ok(faceCheckinService.guidance(request)));
+    }
+
+    @PostMapping("/check-in/passive-session")
+    @PreAuthorize("hasRole('LAB_MANAGER')")
+    @Operation(summary = "Start a passive camera observation for manager-operated face check-in")
+    public ResponseEntity<Response<FaceChallengeResponse>> startCheckInPassiveSession() {
+        return ResponseEntity.ok(Response.ok(faceCheckinService.startPassiveSession()));
     }
 
     @PostMapping("/consent")
@@ -52,6 +86,21 @@ public class FaceProfileController {
     @Operation(summary = "Get the current user's face consent")
     public ResponseEntity<Response<FaceConsentResponse>> getOwnConsent() {
         return ResponseEntity.ok(Response.ok(faceProfileService.getConsent(null)));
+    }
+
+    @PostMapping("/guidance")
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "Evaluate a camera frame for real-time face capture guidance")
+    public ResponseEntity<Response<FaceGuidanceResponse>> guidanceForOwnProfile(
+            @Valid @RequestBody FaceGuidanceRequest request) {
+        return ResponseEntity.ok(Response.ok(faceProfileService.guidance(null, request)));
+    }
+
+    @PostMapping("/challenge")
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "Start a signed active face-liveness challenge")
+    public ResponseEntity<Response<FaceChallengeResponse>> startChallenge() {
+        return ResponseEntity.ok(Response.ok(faceProfileService.startChallenge(null)));
     }
 
     @PostMapping("/register")
@@ -100,6 +149,22 @@ public class FaceProfileController {
     @Operation(summary = "Get a user's face consent as Admin")
     public ResponseEntity<Response<FaceConsentResponse>> getUserConsent(@PathVariable Long userId) {
         return ResponseEntity.ok(Response.ok(faceProfileService.getConsent(userId)));
+    }
+
+    @PostMapping("/users/{userId}/guidance")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Evaluate a camera frame for an Admin-managed user's face guidance")
+    public ResponseEntity<Response<FaceGuidanceResponse>> guidanceForUser(
+            @PathVariable Long userId,
+            @Valid @RequestBody FaceGuidanceRequest request) {
+        return ResponseEntity.ok(Response.ok(faceProfileService.guidance(userId, request)));
+    }
+
+    @PostMapping("/users/{userId}/challenge")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Start an active face-liveness challenge for an Admin-managed user")
+    public ResponseEntity<Response<FaceChallengeResponse>> startChallengeForUser(@PathVariable Long userId) {
+        return ResponseEntity.ok(Response.ok(faceProfileService.startChallenge(userId)));
     }
 
     @PostMapping("/users/{userId}/register")

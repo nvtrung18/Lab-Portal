@@ -19,26 +19,26 @@ export const AttendanceChart = memo(function AttendanceChart({ byStudent }: Atte
   const hiddenCount = Math.max(0, byStudent.length - MAX_VISIBLE_STUDENTS);
 
   if (!byStudent.length) {
-    return <p className="mt-4 text-sm text-slate-600">Chưa có dữ liệu điểm danh.</p>;
+    return <p className="mt-4 text-sm text-slate-600 dark:text-slate-300">Chưa có dữ liệu điểm danh.</p>;
   }
 
   return (
     <div className="mt-4 overflow-x-auto">
-      <table className="min-w-full divide-y divide-slate-200 text-sm">
-        <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+      <table className="min-w-full divide-y divide-slate-200 text-sm dark:divide-slate-800">
+        <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:bg-slate-950 dark:text-slate-400">
           <tr>
             <th className="px-3 py-3">Sinh viên</th>
             <th className="px-3 py-3">Tỷ lệ điểm danh</th>
             <th className="px-3 py-3">Số buổi có mặt</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-slate-100">
+        <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
           {visibleStudents.map((student) => (
             <tr key={student.studentId || student.studentName}>
-              <td className="px-3 py-3 font-medium text-slate-800">{student.studentName || 'Chưa cập nhật'}</td>
-              <td className="px-3 py-3 text-slate-600">
+              <td className="px-3 py-3 font-medium text-slate-800 dark:text-slate-100">{student.studentName || 'Chưa cập nhật'}</td>
+              <td className="px-3 py-3 text-slate-600 dark:text-slate-300">
                 <div className="flex min-w-40 items-center gap-3">
-                  <div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-100">
+                  <div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
                     <div
                       className="h-full rounded-full bg-emerald-500"
                       style={{ width: `${clampPercent(student.attendanceRate)}%` }}
@@ -47,7 +47,7 @@ export const AttendanceChart = memo(function AttendanceChart({ byStudent }: Atte
                   <span className="w-12 text-right">{formatPercent(student.attendanceRate)}</span>
                 </div>
               </td>
-              <td className="px-3 py-3 text-slate-600">
+              <td className="px-3 py-3 text-slate-600 dark:text-slate-300">
                 {safeNumber(student.attendanceCount)}/{safeNumber(student.expectedAttendanceCount)}
               </td>
             </tr>
@@ -55,7 +55,7 @@ export const AttendanceChart = memo(function AttendanceChart({ byStudent }: Atte
         </tbody>
       </table>
       {hiddenCount ? (
-        <p className="mt-3 text-xs text-slate-500">Còn {hiddenCount} sinh viên khác.</p>
+        <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">Còn {hiddenCount} sinh viên khác.</p>
       ) : null}
     </div>
   );

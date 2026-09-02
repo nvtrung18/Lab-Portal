@@ -2,17 +2,25 @@ services:
   redis:
     image: redis:7-alpine
     container_name: lab-portal-redis
+    restart: unless-stopped
     ports:
       - "${REDIS_PORT:-6379}:6379"
     command: ["redis-server", "--appendonly", "no"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
 
   mysql:
     image: mysql:8.0
     container_name: lab_portal_mysql
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
-      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-local_root_password}
+      MYSQL_DATABASE: ${DB_NAME:-lab_portal}
+      MYSQL_USER: ${DB_USERNAME:-lab_portal_app}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-local_app_password}
     ports:
       - "3306:3306"
     volumes:
@@ -24,10 +32,109 @@ services:
         "--collation-server=utf8mb4_unicode_ci"
       ]
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_PASSWORD}"]
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p$${MYSQL_ROOT_PASSWORD}"]
       interval: 10s
       timeout: 5s
       retries: 10
+
+  ai-service:
+    image: python:3.12-slim
+    container_name: lab_portal_ai_service
+    restart: unless-stopped
+    working_dir: /app
+    environment:
+      AI_INTERNAL_SERVICE_TOKEN: ${AI_INTERNAL_SERVICE_TOKEN:-local-ai-internal-token}
+      AI_MODEL_ARTIFACTS_PATH: config/model-artifacts.local.json
+      AI_MODEL_ARTIFACT_ROOT: /app/artifacts
+      AI_RUNTIME_LOAD_ENABLED: "false"
+    volumes:
+      - ./ai-service:/app
+    ports:
+      - "8090:8090"
+    command: >-
+      sh -c "pip install --no-cache-dir -r requirements.txt
+      && uvicorn app.main:app --host 0.0.0.0 --port 8090"
+    healthcheck:
+      test:
+        ["CMD-SHELL", "python -c \"import os,urllib.request; urllib.request.urlopen(urllib.request.Request('http://localhost:8090/health', headers={'X-Internal-Service-Token': os.environ['AI_INTERNAL_SERVICE_TOKEN']}))\""]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
+  face-service:
+    build:
+      context: .
+      dockerfile: docker/face-service/Dockerfile
+    image: lab-portal-face-service
+    container_name: lab_portal_face_service
+    restart: unless-stopped
+    working_dir: /app
+    environment:
+      FACE_INTERNAL_SERVICE_TOKEN: ${FACE_INTERNAL_SERVICE_TOKEN:-local-face-internal-token}
+      FACE_CHALLENGE_SECRET: ${FACE_CHALLENGE_SECRET:-local-face-challenge-secret}
+      FACE_PROCESSOR_MODE: opencv
+      FACE_DETECTOR_MODEL_PATH: /models/face_detection_yunet_2023mar.onnx
+      FACE_RECOGNIZER_MODEL_PATH: /models/face_recognition_sface_2021dec.onnx
+      FACE_LIVENESS_MODEL_PATH: /models/minifasnet_v2.onnx
+    volumes:
+      - ./face-service:/app
+    ports:
+      - "8091:8091"
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8091"]
+    healthcheck:
+      test:
+        ["CMD-SHELL", "python -c \"import os,urllib.request; urllib.request.urlopen(urllib.request.Request('http://localhost:8091/health', headers={'X-Internal-Service-Token': os.environ['FACE_INTERNAL_SERVICE_TOKEN']}))\""]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
+  backend:
+    image: eclipse-temurin:21-jdk
+    container_name: lab_portal_backend
+    restart: unless-stopped
+    working_dir: /app
+    environment:
+      SPRING_PROFILES_ACTIVE: local
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: ${DB_NAME:-lab_portal}
+      DB_USERNAME: ${DB_USERNAME:-lab_portal_app}
+      DB_PASSWORD: ${DB_PASSWORD:-local_app_password}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      JWT_SECRET: ${JWT_SECRET:-bG9jYWwtbGFiLXBvcnRhbC1qd3Qtc2VjcmV0LWtleS0zMi1ieXRlcw==}
+      AI_GATEWAY_BASE_URL: http://ai-service:8090
+      AI_INTERNAL_SERVICE_TOKEN: ${AI_INTERNAL_SERVICE_TOKEN:-local-ai-internal-token}
+      FACE_SERVICE_BASE_URL: http://face-service:8091
+      FACE_INTERNAL_SERVICE_TOKEN: ${FACE_INTERNAL_SERVICE_TOKEN:-local-face-internal-token}
+      FACE_EMBEDDING_ENCRYPTION_KEY: ${FACE_EMBEDDING_ENCRYPTION_KEY:-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=}
+      APP_CORS_ALLOWED_ORIGINS: http://localhost:5173,http://localhost:5174,http://localhost:5175
+      # Local Docker starts with the complete development dataset. Override
+      # with DEV_SEED_ENABLED=false when preserving an existing database is
+      # required.
+      DEV_SEED_ENABLED: ${DEV_SEED_ENABLED:-true}
+    volumes:
+      - ./server:/app
+      - lab_portal_backend_m2:/root/.m2
+      - lab_portal_backend_storage:/app/storage
+      - lab_portal_backend_uploads:/app/uploads
+    ports:
+      - "8080:8080"
+    command: ["sh", "-c", "sh mvnw clean spring-boot:run"]
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      ai-service:
+        condition: service_healthy
+      face-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c '</dev/tcp/127.0.0.1/8080'"]
+      interval: 15s
+      timeout: 5s
+      retries: 30
 
   frontend-admin:
     build:
@@ -44,6 +151,9 @@ services:
       - ./client:/app
       - lab_portal_frontend_admin_node_modules:/app/node_modules
     command: sh -c "npm ci && npm run dev:admin"
+    depends_on:
+      backend:
+        condition: service_started
 
   frontend-manager:
     build:
@@ -60,6 +170,9 @@ services:
       - ./client:/app
       - lab_portal_frontend_manager_node_modules:/app/node_modules
     command: sh -c "npm ci && npm run dev:manager"
+    depends_on:
+      backend:
+        condition: service_started
 
   frontend-user:
     build:
@@ -76,9 +189,15 @@ services:
       - ./client:/app
       - lab_portal_frontend_user_node_modules:/app/node_modules
     command: sh -c "npm ci && npm run dev:user"
+    depends_on:
+      backend:
+        condition: service_started
 
 volumes:
   lab_portal_mysql_data:
   lab_portal_frontend_admin_node_modules:
   lab_portal_frontend_manager_node_modules:
   lab_portal_frontend_user_node_modules:
+  lab_portal_backend_m2:
+  lab_portal_backend_storage:
+  lab_portal_backend_uploads:

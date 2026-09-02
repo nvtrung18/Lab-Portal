@@ -34,6 +34,54 @@ function toApiDateTime(date: string, time: string) {
   return new Date(toLocalDateTime(date, time)).toISOString();
 }
 
+const HOURS_24 = Array.from({ length: 24 }, (_, hour) => String(hour).padStart(2, '0'));
+const MINUTES = Array.from({ length: 60 }, (_, minute) => String(minute).padStart(2, '0'));
+
+function Time24HourSelect({
+  id,
+  label,
+  value,
+  onChange,
+}: {
+  id: string;
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  const [hour = '', minute = ''] = value.split(':', 2);
+  const selectClassName = 'min-h-11 w-full rounded-md border border-slate-300 bg-white px-3 text-sm outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10';
+
+  return (
+    <fieldset>
+      <legend className="text-sm font-medium text-slate-700">{label}</legend>
+      <div className="mt-1 grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+        <select
+          aria-label={`${label} - giờ, định dạng 24 giờ`}
+          className={selectClassName}
+          id={`${id}-hour`}
+          value={hour}
+          onChange={(event) => onChange(event.target.value ? `${event.target.value}:${minute || '00'}` : '')}
+        >
+          <option value="">Giờ</option>
+          {HOURS_24.map((item) => <option key={item} value={item}>{item}</option>)}
+        </select>
+        <span aria-hidden="true" className="font-semibold text-slate-500">:</span>
+        <select
+          aria-label={`${label} - phút`}
+          className={selectClassName}
+          id={`${id}-minute`}
+          value={minute}
+          onChange={(event) => onChange(event.target.value ? `${hour || '00'}:${event.target.value}` : '')}
+        >
+          <option value="">Phút</option>
+          {MINUTES.map((item) => <option key={item} value={item}>{item}</option>)}
+        </select>
+      </div>
+      <p className="mt-1 text-xs text-slate-500">Định dạng 24 giờ (00:00–23:59)</p>
+    </fieldset>
+  );
+}
+
 export function CreateSlotModal({ labId, isOpen, onClose }: CreateSlotModalProps) {
   const [form, setForm] = useState<FormState>(initialForm);
   const [error, setError] = useState('');
@@ -138,30 +186,8 @@ export function CreateSlotModal({ labId, isOpen, onClose }: CreateSlotModalProps
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <label className="text-sm font-medium text-slate-700" htmlFor="slot-start">
-                Giờ bắt đầu
-              </label>
-              <input
-                id="slot-start"
-                type="time"
-                className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
-                value={form.startTime}
-                onChange={(event) => updateField('startTime', event.target.value)}
-              />
-            </div>
-            <div>
-              <label className="text-sm font-medium text-slate-700" htmlFor="slot-end">
-                Giờ kết thúc
-              </label>
-              <input
-                id="slot-end"
-                type="time"
-                className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
-                value={form.endTime}
-                onChange={(event) => updateField('endTime', event.target.value)}
-              />
-            </div>
+            <Time24HourSelect id="slot-start" label="Giờ bắt đầu" value={form.startTime} onChange={(value) => updateField('startTime', value)} />
+            <Time24HourSelect id="slot-end" label="Giờ kết thúc" value={form.endTime} onChange={(value) => updateField('endTime', value)} />
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">

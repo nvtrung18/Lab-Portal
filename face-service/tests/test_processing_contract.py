@@ -10,6 +10,7 @@ from app.main import create_app
 from app.models import (
     DetectionResponse,
     EmbeddingResponse,
+    GuidanceResponse,
     LivenessResponse,
     MatchResponse,
     QualityResponse,
@@ -30,6 +31,22 @@ IMAGE = {
 
 
 class ContractProcessor:
+    def guidance(self, image: FaceImage) -> GuidanceResponse:
+        assert image.content == b"test-image-bytes"
+        return GuidanceResponse(
+            detectedFaces=1,
+            singleFace=True,
+            faceInGuide=True,
+            facingForward=True,
+            landmarksVisible=True,
+            lightingGood=True,
+            sharpnessGood=True,
+            centerX=0.5,
+            centerY=0.5,
+            faceWidthRatio=0.35,
+            faceHeightRatio=0.55,
+        )
+
     def detect(self, image: FaceImage) -> DetectionResponse:
         assert image.content == b"test-image-bytes"
         return DetectionResponse(result="OK", detectedFaces=1, confidenceScore=0.98)
@@ -49,11 +66,11 @@ class ContractProcessor:
     def match(
         self,
         _image: FaceImage,
-        reference_embedding: list[float],
+        reference_embeddings: list[list[float]],
         confidence_threshold: float,
         liveness_threshold: float,
     ) -> MatchResponse:
-        assert reference_embedding == [0.1, 0.2]
+        assert reference_embeddings == [[0.1, 0.2]]
         assert confidence_threshold == 0.85
         assert liveness_threshold == 0.7
         return MatchResponse(result="MATCH", confidenceScore=0.92, livenessScore=0.9)
@@ -70,6 +87,8 @@ def client(processor: object | None = None) -> TestClient:
 def test_processing_routes_publish_and_honor_the_frozen_contract() -> None:
     test_client = client(ContractProcessor())
 
+    passive_session = test_client.post("/v1/face/passive-session", headers=HEADERS)
+    guidance = test_client.post("/v1/face/guidance", json=IMAGE, headers=HEADERS)
     detect = test_client.post("/v1/face/detect", json=IMAGE, headers=HEADERS)
     quality = test_client.post("/v1/face/quality", json=IMAGE, headers=HEADERS)
     embed = test_client.post("/v1/face/embed", json=IMAGE, headers=HEADERS)
@@ -85,6 +104,23 @@ def test_processing_routes_publish_and_honor_the_frozen_contract() -> None:
     )
     liveness = test_client.post("/v1/face/liveness", json=IMAGE, headers=HEADERS)
 
+    assert guidance.json() == {
+        "detectedFaces": 1,
+        "singleFace": True,
+        "faceInGuide": True,
+        "facingForward": True,
+        "landmarksVisible": True,
+        "lightingGood": True,
+        "sharpnessGood": True,
+        "centerX": 0.5,
+        "centerY": 0.5,
+        "faceWidthRatio": 0.35,
+        "faceHeightRatio": 0.55,
+        "failureReason": None,
+    }
+    assert passive_session.status_code == 200
+    assert passive_session.json()["action"] == "OBSERVE"
+    assert passive_session.json()["challengeToken"]
     assert detect.json() == {
         "result": "OK",
         "detectedFaces": 1,
@@ -97,6 +133,7 @@ def test_processing_routes_publish_and_honor_the_frozen_contract() -> None:
     assert embed.json()["embeddingModel"] == "face-model-v1"
     assert match.json()["result"] == "MATCH"
     assert match.json()["confidenceScore"] == 0.92
+    assert match.json()["passiveLivenessPassed"] is False
     assert liveness.json()["livenessScore"] == 0.9
 
 
@@ -132,3 +169,27 @@ def test_invalid_image_or_embedding_is_rejected_at_the_boundary() -> None:
     assert invalid_image.status_code == 422
     assert invalid_embedding.status_code == 422
     assert invalid_image.json()["errorCode"] == "FACE_INVALID_REQUEST"
+
+
+def test_liveness_contract_uses_live_class_probability() -> None:
+    # The MiniFASNetV2 ONNX output is [live, print-attack, replay-attack].
+    # ContractProcessor is intentionally not used here; this guards the
+    # model-output mapping in the real processor implementation.
+    import numpy as np
+
+    class FakeNet:
+        def setInput(self, _tensor) -> None:
+            pass
+
+        def forward(self):
+            return np.array([[4.0, -3.0, -4.0]], dtype=np.float32)
+
+    from app.opencv_processor import OpenCvFaceProcessor
+
+    processor = object.__new__(OpenCvFaceProcessor)
+    processor._liveness = FakeNet()
+    frame = np.full((100, 100, 3), 128, dtype=np.uint8)
+    face = np.array([20, 20, 60, 60] + [0] * 10, dtype=np.float32)
+    score = processor._liveness_score(frame, face)
+
+    assert score > 0.99

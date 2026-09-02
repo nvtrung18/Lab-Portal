@@ -1,4 +1,24 @@
 import { useQueryClient } from '@tanstack/react-query';
+import {
+  Activity,
+  Bell,
+  BookOpenCheck,
+  Bot,
+  CalendarDays,
+  ClipboardList,
+  CircleUserRound,
+  FlaskConical,
+  LayoutDashboard,
+  Menu,
+  MessageSquareWarning,
+  Microscope,
+  ScanFace,
+  Scale,
+  Sparkles,
+  UserRoundCheck,
+  UsersRound,
+  type LucideIcon,
+} from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { NavLink, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
 
@@ -11,30 +31,44 @@ import { getManagedLabId, hasActiveMembership } from '../shared/utils/membership
 interface NavItem {
   label: string;
   path: string;
+  group?: string;
+  icon?: LucideIcon;
 }
 
-const studentBaseNavItems: NavItem[] = [
-  { label: 'Hồ sơ cá nhân', path: '/app/profile' },
-  { label: 'Danh sách phòng thí nghiệm', path: '/app/labs' },
+const studentCoreNavItems: NavItem[] = [
+  { label: 'Tổng quan', path: '/app/dashboard', group: 'Bắt đầu', icon: LayoutDashboard },
+  { label: 'Khám phá PTN', path: '/app/labs', group: 'Bắt đầu', icon: FlaskConical },
 ];
 
 const studentActiveMembershipNavItems: NavItem[] = [
-  { label: 'Lịch sử sử dụng PTN', path: '/app/my-bookings' },
-  { label: 'PTN của tôi', path: '/app/other' },
-  { label: 'Nghiên cứu khoa học', path: '/app/research' },
-  { label: 'Vi phạm & khiếu nại', path: '/app/penalties' },
+  { label: 'PTN của tôi', path: '/app/other', group: 'Hoạt động PTN', icon: UsersRound },
+  { label: 'Ca sử dụng', path: '/app/my-bookings', group: 'Hoạt động PTN', icon: CalendarDays },
+  { label: 'Nghiên cứu khoa học', path: '/app/research', group: 'Hoạt động PTN', icon: Microscope },
+  { label: 'Vi phạm & khiếu nại', path: '/app/penalties', group: 'Hoạt động PTN', icon: Scale },
+];
+
+const studentSupportNavItems: NavItem[] = [
+  { label: 'Trợ lý AI', path: '/app/assistant', group: 'Hỗ trợ và tài khoản', icon: Bot },
+  { label: 'Thông báo', path: '/app/notifications', group: 'Hỗ trợ và tài khoản', icon: Bell },
+  { label: 'Hồ sơ khuôn mặt', path: '/app/face-profile', group: 'Hỗ trợ và tài khoản', icon: ScanFace },
+  { label: 'Hồ sơ cá nhân', path: '/app/profile', group: 'Hỗ trợ và tài khoản', icon: CircleUserRound },
 ];
 
 const managerNavItems: NavItem[] = [
-  { label: 'Hồ sơ cá nhân', path: '/app/profile' },
-  { label: 'Tổng quan PTN', path: '/app/lab-overview' },
-  { label: 'Hồ sơ ứng tuyển', path: '/app/applications' },
-  { label: 'Thành viên PTN', path: '/app/lab-members' },
-  { label: 'Khung giờ sử dụng', path: '/app/lab-slots' },
-  { label: 'Xác nhận có mặt', path: '/app/checkin-scan' },
-  { label: 'Vệ sinh PTN', path: '/app/cleaning' },
-  { label: 'Khiếu nại vi phạm', path: '/app/complaints' },
-  { label: 'Nghiên cứu khoa học', path: '/app/research' },
+  { label: 'Tổng quan PTN', path: '/app/lab-overview', group: 'Điều hành hôm nay', icon: LayoutDashboard },
+  { label: 'Trạm check-in', path: '/app/checkin-scan', group: 'Điều hành hôm nay', icon: ScanFace },
+  { label: 'Khung giờ sử dụng', path: '/app/lab-slots', group: 'Điều hành hôm nay', icon: CalendarDays },
+  { label: 'Hồ sơ ứng tuyển', path: '/app/applications', group: 'Thành viên', icon: ClipboardList },
+  { label: 'Thành viên PTN', path: '/app/lab-members', group: 'Thành viên', icon: UserRoundCheck },
+  { label: 'Vệ sinh PTN', path: '/app/cleaning', group: 'Vận hành PTN', icon: Sparkles },
+  { label: 'Khiếu nại vi phạm', path: '/app/complaints', group: 'Vận hành PTN', icon: MessageSquareWarning },
+  { label: 'Nghiên cứu khoa học', path: '/app/research', group: 'Vận hành PTN', icon: Microscope },
+  { label: 'Nhật ký vận hành', path: '/app/operational-logs', group: 'Hỗ trợ và tài khoản', icon: Activity },
+  { label: 'Kho tri thức AI', path: '/app/knowledge', group: 'Hỗ trợ và tài khoản', icon: BookOpenCheck },
+  { label: 'Trợ lý AI', path: '/app/assistant', group: 'Hỗ trợ và tài khoản', icon: Bot },
+  { label: 'Thông báo', path: '/app/notifications', group: 'Hỗ trợ và tài khoản', icon: Bell },
+  { label: 'Hồ sơ khuôn mặt', path: '/app/face-profile', group: 'Hỗ trợ và tài khoản', icon: ScanFace },
+  { label: 'Hồ sơ cá nhân', path: '/app/profile', group: 'Hỗ trợ và tài khoản', icon: CircleUserRound },
 ];
 
 const managerLabScopedPaths = [
@@ -88,8 +122,9 @@ function getNavItems(user: ReturnType<typeof buildUser>, isManager: boolean) {
   }
 
   return [
-    ...studentBaseNavItems,
+    ...studentCoreNavItems,
     ...(hasActiveMembership(user) ? studentActiveMembershipNavItems : []),
+    ...studentSupportNavItems,
   ];
 }
 
@@ -119,6 +154,9 @@ export function MainLayout() {
   const isStudent = roles.includes(STUDENT);
   const managedLabId = getManagedLabId(user);
   const navItems = getNavItems(user, isManager);
+  const currentPageLabel = navItems.find(
+    (item) => location.pathname === item.path || location.pathname.startsWith(`${item.path}/`),
+  )?.label;
   const portalTitle = isManager ? 'Cổng quản lý PTN' : 'Cổng sinh viên';
   const roleLabel = isManager ? 'Quản lý PTN' : isStudent ? 'Sinh viên' : 'Chưa có vai trò';
   const shouldShowManagedLabEmptyState =
@@ -185,12 +223,13 @@ export function MainLayout() {
                 variant="outline"
                 onClick={() => setIsMobileNavOpen(true)}
               >
-                Menu
+                <Menu aria-hidden="true" className="h-4 w-4" />
+                <span className="sr-only">Mở menu</span>
               </Button>
               <div className="min-w-0">
-                <p className="text-xs font-medium uppercase text-slate-500">Không gian làm việc</p>
+                <p className="text-xs font-medium text-slate-500">{portalTitle}</p>
                 <h1 className="truncate text-lg font-semibold text-slate-950 sm:text-xl">
-                  {portalTitle}
+                  {currentPageLabel ?? 'Không gian làm việc'}
                 </h1>
               </div>
             </div>
@@ -235,7 +274,15 @@ function SidebarContent({ navItems, portalTitle, roleLabel, compact = false, onN
     <>
       {!compact ? (
         <>
-          <div className="px-3 text-lg font-semibold tracking-tight text-slate-950">{portalTitle}</div>
+          <div className="flex items-center gap-3 px-3">
+            <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-950 text-white">
+              <FlaskConical aria-hidden="true" className="h-5 w-5" />
+            </span>
+            <div>
+              <div className="text-base font-semibold tracking-tight text-slate-950">Lab Portal</div>
+              <div className="text-xs text-slate-500">{portalTitle}</div>
+            </div>
+          </div>
           <div className="mt-3 rounded-md bg-slate-100 px-3 py-2 text-xs font-medium text-slate-600">
             {roleLabel}
           </div>
@@ -243,23 +290,31 @@ function SidebarContent({ navItems, portalTitle, roleLabel, compact = false, onN
       ) : null}
 
       <nav className={compact ? 'space-y-1' : 'mt-8 space-y-1'}>
-        {navItems.map((item) => (
-          <NavLink
-            key={item.path}
-            to={item.path}
-            className={({ isActive }) =>
-              [
-                'block rounded-md px-3 py-2 text-sm font-medium transition',
-                isActive
-                  ? 'bg-slate-900 text-white'
-                  : 'text-slate-600 hover:bg-slate-100 hover:text-slate-950',
-              ].join(' ')
-            }
-            onClick={onNavigate}
-          >
-            {item.label}
-          </NavLink>
-        ))}
+        {navItems.map((item, index) => {
+          const Icon = item.icon;
+          const showGroup = Boolean(item.group && item.group !== navItems[index - 1]?.group);
+          return (
+            <div className={showGroup && index > 0 ? 'pt-5' : ''} key={item.path}>
+              {showGroup ? <p className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-slate-400">{item.group}</p> : null}
+              <NavLink
+                to={item.path}
+                className={({ isActive }) =>
+                  [
+                    'flex min-h-11 items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
+                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500',
+                    isActive
+                      ? 'bg-slate-900 text-white shadow-sm'
+                      : 'text-slate-600 hover:bg-slate-100 hover:text-slate-950',
+                  ].join(' ')
+                }
+                onClick={onNavigate}
+              >
+                {Icon ? <Icon aria-hidden="true" className="h-4 w-4 shrink-0" /> : null}
+                <span>{item.label}</span>
+              </NavLink>
+            </div>
+          );
+        })}
       </nav>
     </>
   );

@@ -3,6 +3,7 @@ package com.web.labportalbackend.booking.repository;
 import com.web.labportalbackend.booking.entity.Booking;
 import com.web.labportalbackend.ai.context.AiLabContext;
 import com.web.labportalbackend.common.enums.BookingStatus;
+import com.web.labportalbackend.face.dto.response.FaceCheckinCandidateResponse;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -13,6 +14,39 @@ import java.util.List;
 
 @Repository
 public interface BookingRepository extends JpaRepository<Booking, Long> {
+
+    @Query("""
+            SELECT new com.web.labportalbackend.face.dto.response.FaceCheckinCandidateResponse(
+                b.id, u.id, u.fullName, u.email, l.id, l.labName, ts.id,
+                b.startTime, b.endTime, b.status)
+            FROM Booking b JOIN b.user u JOIN b.lab l JOIN b.timeSlot ts
+            WHERE l.manager.id = :managerId
+              AND b.status = com.web.labportalbackend.common.enums.BookingStatus.APPROVED
+              AND b.active = true AND b.deleted = false
+              AND u.active = true AND u.deleted = false
+              AND l.active = true AND l.deleted = false
+              AND ts.active = true AND ts.deleted = false
+              AND b.startTime >= :earliestStart
+              AND b.startTime <= :latestStart
+            ORDER BY b.startTime ASC, b.id ASC
+            """)
+    List<FaceCheckinCandidateResponse> findFaceCheckinCandidatesForManager(
+            @Param("managerId") Long managerId,
+            @Param("earliestStart") Instant earliestStart,
+            @Param("latestStart") Instant latestStart);
+
+    @Query("""
+            SELECT b FROM Booking b
+            JOIN FETCH b.user u
+            JOIN FETCH b.lab l
+            JOIN FETCH b.timeSlot ts
+            WHERE b.id = :bookingId AND l.manager.id = :managerId
+              AND b.active = true AND b.deleted = false
+              AND l.active = true AND l.deleted = false
+              AND ts.active = true AND ts.deleted = false
+            """)
+    java.util.Optional<Booking> findManagerFaceCheckinBooking(
+            @Param("managerId") Long managerId, @Param("bookingId") Long bookingId);
 
     List<Booking> findByUserId(Long userId);
 
@@ -99,10 +133,17 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     boolean existsActiveBookingByUserAndSlot(@Param("userId") Long userId, @Param("slotId") Long slotId);
 
     @Query("SELECT b FROM Booking b WHERE b.status = :status " +
-           "AND b.endTime <= :cutoff " +
+           "AND b.startTime < :cutoff " +
            "AND b.deleted = false AND b.active = true")
     List<Booking> findNoShowCandidates(
             @Param("status") BookingStatus status,
+            @Param("cutoff") Instant cutoff
+    );
+
+    @Query("SELECT b FROM Booking b WHERE b.status IN :statuses " +
+           "AND b.endTime <= :cutoff AND b.deleted = false AND b.active = true")
+    List<Booking> findEndedSessionCandidates(
+            @Param("statuses") List<BookingStatus> statuses,
             @Param("cutoff") Instant cutoff
     );
 

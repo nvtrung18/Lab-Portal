@@ -1,26 +1,41 @@
 from __future__ import annotations
 
+import logging
+
 from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
 from app.config import Settings
 from app.models import (
+    ChallengeStartResponse,
     DetectionResponse,
     EmbeddingResponse,
+    GuidanceResponse,
     ImageRequest,
     LivenessResponse,
     MatchRequest,
     MatchResponse,
     QualityResponse,
 )
+from app.liveness_challenge import create_challenge, create_observation_session
 from app.processor import FaceImage, FaceProcessor, FaceProcessorUnavailable, UnavailableFaceProcessor
 from app.security import InternalSecurityMiddleware, error_response
 
 
+logger = logging.getLogger("face-service")
+logger.setLevel(logging.INFO)
+
+
 def create_app(settings: Settings | None = None, processor: FaceProcessor | None = None) -> FastAPI:
     resolved_settings = settings or Settings.from_env()
-    resolved_processor = processor or UnavailableFaceProcessor()
+    if processor is not None:
+        resolved_processor = processor
+    elif resolved_settings.processor_mode == "opencv":
+        from app.opencv_processor import OpenCvFaceProcessor
+        resolved_processor = OpenCvFaceProcessor(resolved_settings)
+    else:
+        resolved_processor = UnavailableFaceProcessor()
     application = FastAPI(title=resolved_settings.service_name, version="0.1.0")
     application.state.settings = resolved_settings
 
@@ -29,7 +44,31 @@ def create_app(settings: Settings | None = None, processor: FaceProcessor | None
         return {"status": "UP", "service": resolved_settings.service_name}
 
     def face_image(request: ImageRequest) -> FaceImage:
-        return FaceImage(request.image_bytes(), request.content_type, request.liveness_required)
+        return FaceImage(
+            request.image_bytes(), request.content_type, request.liveness_required,
+            request.challenge_token,
+            tuple(frame.image_bytes() for frame in request.challenge_frames),
+        )
+
+    @application.post("/v1/face/challenge", response_model=ChallengeStartResponse, response_model_by_alias=True)
+    def start_challenge() -> ChallengeStartResponse:
+        secret = (resolved_settings.challenge_secret or resolved_settings.internal_service_token).get_secret_value()
+        challenge = create_challenge(secret)
+        return ChallengeStartResponse(
+            challengeToken=challenge.token, action=challenge.action, expiresAt=challenge.expires_at
+        )
+
+    @application.post("/v1/face/passive-session", response_model=ChallengeStartResponse, response_model_by_alias=True)
+    def start_passive_session() -> ChallengeStartResponse:
+        secret = (resolved_settings.challenge_secret or resolved_settings.internal_service_token).get_secret_value()
+        session = create_observation_session(secret)
+        return ChallengeStartResponse(
+            challengeToken=session.token, action=session.action, expiresAt=session.expires_at
+        )
+
+    @application.post("/v1/face/guidance", response_model=GuidanceResponse, response_model_by_alias=True)
+    def guidance(request: ImageRequest) -> GuidanceResponse:
+        return resolved_processor.guidance(face_image(request))
 
     @application.post("/v1/face/detect", response_model=DetectionResponse, response_model_by_alias=True)
     def detect(request: ImageRequest) -> DetectionResponse:
@@ -41,13 +80,22 @@ def create_app(settings: Settings | None = None, processor: FaceProcessor | None
 
     @application.post("/v1/face/embed", response_model=EmbeddingResponse, response_model_by_alias=True)
     def embed(request: ImageRequest) -> EmbeddingResponse:
-        return resolved_processor.embed(face_image(request))
+        response = resolved_processor.embed(face_image(request))
+        logger.info(
+            "face_embed_result result=%s failureReason=%s confidenceScore=%s livenessScore=%s activeLivenessPassed=%s",
+            response.result,
+            response.failure_reason,
+            response.confidence_score,
+            response.liveness_score,
+            response.active_liveness_passed,
+        )
+        return response
 
     @application.post("/v1/face/match", response_model=MatchResponse, response_model_by_alias=True)
     def match(request: MatchRequest) -> MatchResponse:
         return resolved_processor.match(
             face_image(request),
-            request.reference_embedding,
+            request.all_reference_embeddings(),
             request.confidence_threshold,
             request.liveness_threshold,
         )

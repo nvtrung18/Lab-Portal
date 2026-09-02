@@ -23,12 +23,17 @@ import {
   LabOverviewPage,
 } from '../../modules/lab/pages';
 import { ManagerComplaintsPage, PenaltyPage } from '../../modules/penalty/pages';
+import { NotificationsPage } from '../../modules/notification/pages';
+import { AssistantPage } from '../../modules/assistant/pages';
+import { FaceProfilePage } from '../../modules/face/pages';
+import { KnowledgePage } from '../../modules/knowledge/pages';
+import { OperationalLogsPage } from '../../modules/operations/pages';
 import { ResearchPage, ResearchProjectDetailPage, ResearchGroupDetailPage } from '../../modules/research/pages';
-import { OtherPage, ProfilePage } from '../../modules/user/pages';
+import { OtherPage, ProfilePage, StudentDashboardPage } from '../../modules/user/pages';
 import { AdminLayout, AuthLayout, MainLayout } from '../../layouts';
+import { getStoredRole } from '../../shared/api';
 import { ForbiddenPage, NotFoundPage } from '../../shared/components';
 import { ADMIN, LAB_MANAGER, STUDENT } from '../../shared/constants/roles';
-import { DashboardPlaceholder } from '../DashboardPlaceholder';
 import { ActiveMembershipRoute } from './ActiveMembershipRoute';
 import { ProtectedRoute } from './ProtectedRoute';
 
@@ -55,19 +60,27 @@ export function AppRouter() {
           <Route path="system-config" element={<AdminSettingsPage />} />
           <Route path="settings" element={<Navigate to="/admin/system-config" replace />} />
           <Route path="audit-logs" element={<AdminAuditLogPage />} />
+          <Route path="notifications" element={<NotificationsPage />} />
+          <Route path="assistant" element={<AssistantPage />} />
+          <Route path="face-profile" element={<FaceProfilePage />} />
+          <Route path="knowledge" element={<KnowledgePage />} />
+          <Route path="operational-logs" element={<OperationalLogsPage />} />
         </Route>
       </Route>
 
       <Route element={<ProtectedRoute allowedRoles={[STUDENT, LAB_MANAGER]} />}>
         <Route path="/app" element={<MainLayout />}>
-          <Route index element={<Navigate to="/app/profile" replace />} />
-          <Route path="dashboard" element={<DashboardPlaceholder />} />
+          <Route index element={<AppIndexRedirect />} />
           <Route path="profile" element={<ProfilePage />} />
+          <Route path="notifications" element={<NotificationsPage />} />
+          <Route path="assistant" element={<AssistantPage />} />
+          <Route path="face-profile" element={<FaceProfilePage />} />
         </Route>
       </Route>
 
       <Route element={<ProtectedRoute allowedRoles={[STUDENT]} />}>
         <Route path="/app" element={<MainLayout />}>
+          <Route path="dashboard" element={<StudentDashboardPage />} />
           <Route path="labs" element={<LabListPage />} />
           <Route element={<ActiveMembershipRoute />}>
             <Route path="my-bookings" element={<MyBookingsPage />} />
@@ -100,11 +113,18 @@ export function AppRouter() {
           <Route path="lab-members" element={<LabMembersPage />} />
           <Route path="cleaning" element={<CleaningPage />} />
           <Route path="complaints" element={<ManagerComplaintsPage />} />
+          <Route path="operational-logs" element={<OperationalLogsPage />} />
+          <Route path="knowledge" element={<KnowledgePage />} />
         </Route>
       </Route>
 
-      <Route path="/" element={<Navigate to="/app/profile" replace />} />
+      <Route path="/" element={<AppIndexRedirect />} />
       <Route path="*" element={<Navigate to="/404" replace />} />
     </Routes>
   );
+}
+
+function AppIndexRedirect() {
+  const role = getStoredRole()?.replace(/^ROLE_/, '');
+  return <Navigate to={role === LAB_MANAGER ? '/app/lab-overview' : '/app/dashboard'} replace />;
 }

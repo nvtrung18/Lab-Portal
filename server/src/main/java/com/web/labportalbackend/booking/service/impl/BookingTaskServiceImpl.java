@@ -1,5 +1,7 @@
 package com.web.labportalbackend.booking.service.impl;
 
+import com.web.labportalbackend.admin.systemconfig.dto.SystemConfigResponse;
+import com.web.labportalbackend.admin.systemconfig.service.SystemConfigService;
 import com.web.labportalbackend.booking.entity.Booking;
 import com.web.labportalbackend.booking.entity.PenaltyEntity;
 import com.web.labportalbackend.booking.entity.TimeSlot;
@@ -13,9 +15,9 @@ import com.web.labportalbackend.booking.service.PenaltyService;
 import com.web.labportalbackend.common.enums.BookingStatus;
 import com.web.labportalbackend.common.enums.PenaltyStatus;
 import com.web.labportalbackend.common.enums.PenaltyType;
+import com.web.labportalbackend.common.enums.TimeSlotStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,22 +39,13 @@ public class BookingTaskServiceImpl implements BookingTaskService {
     private final TimeSlotRepository timeSlotRepository;
     private final CleaningRepository cleaningRepository;
     private final CleaningService cleaningService;
-
-    @Value("${booking.task.no-show-grace-minutes:15}")
-    private long noShowGraceMinutes;
-
-    @Value("${booking.task.auto-no-show-enabled:false}")
-    private boolean autoNoShowEnabled;
+    private final SystemConfigService systemConfigService;
 
     @Override
     @Scheduled(cron = "${booking.task.cron:0 * * * * *}")
     @Transactional
     public int processNoShows() {
-        if (!autoNoShowEnabled) {
-            return 0;
-        }
-
-        Instant cutoff = Instant.now().minus(noShowGraceMinutes, ChronoUnit.MINUTES);
+        Instant cutoff = checkinCutoff();
         List<Booking> candidates = bookingRepository.findNoShowCandidates(BookingStatus.APPROVED, cutoff);
 
         for (Booking booking : candidates) {
@@ -87,6 +80,21 @@ public class BookingTaskServiceImpl implements BookingTaskService {
 
     @Override
     @Scheduled(cron = "${booking.task.cron:0 * * * * *}")
+    @Transactional
+    public int expirePastCheckinSlots() {
+        List<TimeSlot> expiredSlots = timeSlotRepository.findCheckinExpiredSlots(
+                List.of(TimeSlotStatus.AVAILABLE, TimeSlotStatus.FULL),
+                checkinCutoff());
+        expiredSlots.forEach(slot -> slot.setStatus(TimeSlotStatus.EXPIRED));
+        if (!expiredSlots.isEmpty()) {
+            timeSlotRepository.saveAll(expiredSlots);
+            log.info("Expired {} time slot(s) after the check-in window", expiredSlots.size());
+        }
+        return expiredSlots.size();
+    }
+
+    @Override
+    @Scheduled(cron = "${booking.task.cron:0 * * * * *}")
     public int createCleaningTasksForEndedSlots() {
         Instant cutoff = Instant.now();
         List<TimeSlot> endedSlots = timeSlotRepository.findEndedSlots(cutoff);
@@ -103,5 +111,35 @@ public class BookingTaskServiceImpl implements BookingTaskService {
             log.info("Created {} cleaning task(s) for ended slots", created);
         }
         return created;
+    }
+
+    @Override
+    @Scheduled(cron = "${booking.task.cron:0 * * * * *}")
+    @Transactional
+    public int completeEndedSessions() {
+        Instant now = Instant.now();
+        List<Booking> endedSessions = bookingRepository.findEndedSessionCandidates(
+                List.of(BookingStatus.CHECKED_IN, BookingStatus.IN_PROGRESS), now);
+        endedSessions.forEach(booking -> booking.setStatus(BookingStatus.COMPLETED));
+        if (!endedSessions.isEmpty()) {
+            bookingRepository.saveAll(endedSessions);
+            log.info("Automatically completed {} ended lab session(s)", endedSessions.size());
+        }
+        List<TimeSlot> endedSlots = timeSlotRepository.findEndedSessionSlots(
+                List.of(TimeSlotStatus.AVAILABLE, TimeSlotStatus.FULL, TimeSlotStatus.EXPIRED), now);
+        endedSlots.forEach(slot -> slot.setStatus(TimeSlotStatus.CLOSED));
+        if (!endedSlots.isEmpty()) {
+            timeSlotRepository.saveAll(endedSlots);
+            log.info("Automatically closed {} ended lab slot(s)", endedSlots.size());
+        }
+        return endedSessions.size();
+    }
+
+    private Instant checkinCutoff() {
+        SystemConfigResponse config = systemConfigService.getConfig();
+        if (config == null || config.booking() == null || config.booking().checkinWindowMinutes() <= 0) {
+            throw new IllegalStateException("Valid booking check-in configuration is required");
+        }
+        return Instant.now().minus(config.booking().checkinWindowMinutes(), ChronoUnit.MINUTES);
     }
 }

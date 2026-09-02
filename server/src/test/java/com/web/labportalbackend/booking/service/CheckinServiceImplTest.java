@@ -30,16 +30,20 @@ import com.web.labportalbackend.face.repository.FaceCheckinLogRepository;
 import com.web.labportalbackend.face.service.FaceFallbackPolicy;
 import com.web.labportalbackend.lab.entity.Laboratory;
 import com.web.labportalbackend.lab.repository.LaboratoryRepository;
+import com.web.labportalbackend.notification.service.NotificationEmitter;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.Base64;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
+import org.springframework.data.redis.core.SetOperations;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -52,10 +56,13 @@ class CheckinServiceImplTest {
     private final StringRedisTemplate redisTemplate = mock(StringRedisTemplate.class);
     @SuppressWarnings("unchecked")
     private final ValueOperations<String, String> valueOperations = mock(ValueOperations.class);
+    @SuppressWarnings("unchecked")
+    private final SetOperations<String, String> setOperations = mock(SetOperations.class);
     private final SystemConfigService systemConfigService = mock(SystemConfigService.class);
     private final FaceFallbackPolicy fallbackPolicy = mock(FaceFallbackPolicy.class);
     private final FaceCheckinLogRepository logRepository = mock(FaceCheckinLogRepository.class);
     private final AuditLogService auditLogService = mock(AuditLogService.class);
+    private final NotificationEmitter notificationEmitter = mock(NotificationEmitter.class);
     private final User actor = mock(User.class);
     private final User student = mock(User.class);
     private final Laboratory lab = mock(Laboratory.class);
@@ -66,8 +73,10 @@ class CheckinServiceImplTest {
     @BeforeEach
     void setUp() {
         service = new CheckinServiceImpl(bookingRepository, userRepository, laboratoryRepository,
-                redisTemplate, systemConfigService, fallbackPolicy, logRepository, auditLogService);
+                redisTemplate, new CheckinWindowPolicy(systemConfigService), fallbackPolicy,
+                logRepository, auditLogService, notificationEmitter);
         when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        when(redisTemplate.opsForSet()).thenReturn(setOperations);
         when(userRepository.findByUsername("actor")).thenReturn(Optional.of(actor));
         when(actor.getId()).thenReturn(3L);
         when(student.getId()).thenReturn(7L);
@@ -93,26 +102,34 @@ class CheckinServiceImplTest {
     }
 
     @Test
-    void qrTokenBindsBookingToAuthorizedFallbackReason() {
+    void qrRequestDoesNotIssueTokenBeforeManagerApproval() {
         when(actor.hasRole("STUDENT")).thenReturn(true);
         when(booking.getUser()).thenReturn(actor);
+        when(lab.getManager()).thenReturn(student);
 
-        service.createQrForCurrentStudent(11L, FaceFallbackReason.FACE_PROFILE_UNAVAILABLE);
+        var response = service.requestQrForCurrentStudent(11L, FaceFallbackReason.FACE_PROFILE_UNAVAILABLE, null);
 
         verify(fallbackPolicy).assertQrAllowed(booking, FaceFallbackReason.FACE_PROFILE_UNAVAILABLE);
-        verify(valueOperations).set(anyString(), eq("11|FACE_PROFILE_UNAVAILABLE"), any(Duration.class));
+        assertEquals("PENDING", response.getStatus());
+        assertEquals(null, response.getToken());
+        verify(valueOperations, never()).set(org.mockito.ArgumentMatchers.startsWith("checkin:token:"), anyString(), any(Duration.class));
     }
 
     @Test
     void qrConfirmationRechecksPolicyAndWritesAuditTrail() {
         when(actor.hasRole("LAB_MANAGER")).thenReturn(true);
         when(laboratoryRepository.findFirstByManagerIdAndDeletedFalse(3L)).thenReturn(Optional.of(lab));
-        when(valueOperations.get("checkin:token:qr-token")).thenReturn("11|FACE_SERVICE_UNAVAILABLE");
+        String encodedReason = Base64.getUrlEncoder().withoutPadding()
+                .encodeToString("FACE_SERVICE_UNAVAILABLE".getBytes(StandardCharsets.UTF_8));
+        when(valueOperations.get("checkin:token:qr-token"))
+                .thenReturn("11|FACE_SERVICE_UNAVAILABLE|" + encodedReason);
         when(redisTemplate.delete("checkin:token:qr-token")).thenReturn(true);
 
         service.confirmByCurrentManager("qr-token");
 
         verify(fallbackPolicy).assertQrAllowed(booking, FaceFallbackReason.FACE_SERVICE_UNAVAILABLE);
+        verify(booking).setStatus(BookingStatus.CHECKED_IN);
+        verify(bookingRepository).save(booking);
         ArgumentCaptor<FaceCheckinLogEntity> logCaptor = ArgumentCaptor.forClass(FaceCheckinLogEntity.class);
         verify(logRepository).save(logCaptor.capture());
         assertEquals(FaceCheckinMethod.QR_FALLBACK, logCaptor.getValue().getCheckinMethod());
@@ -144,6 +161,8 @@ class CheckinServiceImplTest {
         service.manualCheckinByCurrentManager(11L, "  Camera maintenance  ");
 
         verify(fallbackPolicy).assertManualAllowed();
+        verify(booking).setStatus(BookingStatus.CHECKED_IN);
+        verify(bookingRepository).save(booking);
         ArgumentCaptor<FaceCheckinLogEntity> logCaptor = ArgumentCaptor.forClass(FaceCheckinLogEntity.class);
         verify(logRepository).save(logCaptor.capture());
         assertEquals(FaceCheckinMethod.MANUAL, logCaptor.getValue().getCheckinMethod());

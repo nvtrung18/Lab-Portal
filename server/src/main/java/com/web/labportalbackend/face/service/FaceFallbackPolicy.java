@@ -35,6 +35,7 @@ public class FaceFallbackPolicy {
             case FACE_PROFILE_UNAVAILABLE -> Boolean.TRUE.equals(config.getQrWhenProfileUnavailable())
                     && profileRepository.findByUserIdAndProfileStatusAndActiveTrueAndDeletedFalse(
                             booking.getUser().getId(), FaceProfileStatus.ACTIVE).isEmpty();
+            case OTHER -> true;
         };
         if (!allowed) {
             throw new IllegalStateException("QR fallback is not allowed for the supplied reason");

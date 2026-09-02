@@ -11,6 +11,11 @@ interface NavItem {
 }
 
 const adminNavItems: NavItem[] = [
+  { label: 'Operational Logs', path: '/admin/operational-logs' },
+  { label: 'AI Knowledge', path: '/admin/knowledge' },
+  { label: 'Face Profiles', path: '/admin/face-profile' },
+  { label: 'AI Assistant', path: '/admin/assistant' },
+  { label: 'Notifications', path: '/admin/notifications' },
   { label: 'Dashboard', path: '/admin/dashboard' },
   { label: 'Users', path: '/admin/users' },
   { label: 'Labs', path: '/admin/labs' },

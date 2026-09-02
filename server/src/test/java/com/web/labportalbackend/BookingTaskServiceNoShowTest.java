@@ -1,5 +1,7 @@
 package com.web.labportalbackend;
 
+import com.web.labportalbackend.admin.systemconfig.dto.SystemConfigResponse;
+import com.web.labportalbackend.admin.systemconfig.service.SystemConfigService;
 import com.web.labportalbackend.auth.entity.User;
 import com.web.labportalbackend.booking.entity.Booking;
 import com.web.labportalbackend.booking.entity.PenaltyEntity;
@@ -14,6 +16,7 @@ import com.web.labportalbackend.booking.service.impl.BookingTaskServiceImpl;
 import com.web.labportalbackend.common.enums.BookingStatus;
 import com.web.labportalbackend.common.enums.PenaltyStatus;
 import com.web.labportalbackend.common.enums.PenaltyType;
+import com.web.labportalbackend.common.enums.TimeSlotStatus;
 import com.web.labportalbackend.lab.entity.Laboratory;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -21,7 +24,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -52,13 +54,15 @@ class BookingTaskServiceNoShowTest {
     @Mock
     private CleaningService cleaningService;
 
+    @Mock
+    private SystemConfigService systemConfigService;
+
     @InjectMocks
     private BookingTaskServiceImpl bookingTaskService;
 
     @Test
     void processNoShows_marksOverdueBookingNoShowAndCreatesPenalty() {
-        ReflectionTestUtils.setField(bookingTaskService, "autoNoShowEnabled", true);
-        ReflectionTestUtils.setField(bookingTaskService, "noShowGraceMinutes", 15L);
+        when(systemConfigService.getConfig()).thenReturn(systemConfig(15));
 
         User user = new User();
         user.setId(10L);
@@ -74,7 +78,7 @@ class BookingTaskServiceNoShowTest {
         booking.setLab(lab);
         booking.setTimeSlot(slot);
         booking.setStatus(BookingStatus.APPROVED);
-        booking.setEndTime(Instant.now().minusSeconds(1800));
+        booking.setStartTime(Instant.now().minusSeconds(1800));
 
         when(bookingRepository.findNoShowCandidates(eq(BookingStatus.APPROVED), any(Instant.class)))
                 .thenReturn(List.of(booking));
@@ -101,5 +105,55 @@ class BookingTaskServiceNoShowTest {
         assertEquals("Vắng mặt không thông báo", penalty.getReason());
         assertEquals(BigDecimal.valueOf(50_000), penalty.getAmount());
         assertEquals(PenaltyStatus.ACTIVE, penalty.getStatus());
+    }
+
+    @Test
+    void expirePastCheckinSlots_marksAvailableAndFullSlotsExpired() {
+        when(systemConfigService.getConfig()).thenReturn(systemConfig(15));
+        TimeSlot available = new TimeSlot();
+        available.setStatus(TimeSlotStatus.AVAILABLE);
+        TimeSlot full = new TimeSlot();
+        full.setStatus(TimeSlotStatus.FULL);
+        when(timeSlotRepository.findCheckinExpiredSlots(
+                eq(List.of(TimeSlotStatus.AVAILABLE, TimeSlotStatus.FULL)), any(Instant.class)))
+                .thenReturn(List.of(available, full));
+
+        int expired = bookingTaskService.expirePastCheckinSlots();
+
+        assertEquals(2, expired);
+        assertEquals(TimeSlotStatus.EXPIRED, available.getStatus());
+        assertEquals(TimeSlotStatus.EXPIRED, full.getStatus());
+        verify(timeSlotRepository).saveAll(List.of(available, full));
+    }
+
+    @Test
+    void completeEndedSessions_marksCheckedInAndInProgressBookingsCompleted() {
+        Booking checkedIn = new Booking();
+        checkedIn.setStatus(BookingStatus.CHECKED_IN);
+        Booking inProgress = new Booking();
+        inProgress.setStatus(BookingStatus.IN_PROGRESS);
+        TimeSlot endedSlot = new TimeSlot();
+        endedSlot.setStatus(TimeSlotStatus.EXPIRED);
+        when(bookingRepository.findEndedSessionCandidates(
+                eq(List.of(BookingStatus.CHECKED_IN, BookingStatus.IN_PROGRESS)), any(Instant.class)))
+                .thenReturn(List.of(checkedIn, inProgress));
+        when(timeSlotRepository.findEndedSessionSlots(
+                eq(List.of(TimeSlotStatus.AVAILABLE, TimeSlotStatus.FULL, TimeSlotStatus.EXPIRED)), any(Instant.class)))
+                .thenReturn(List.of(endedSlot));
+
+        int completed = bookingTaskService.completeEndedSessions();
+
+        assertEquals(2, completed);
+        assertEquals(BookingStatus.COMPLETED, checkedIn.getStatus());
+        assertEquals(BookingStatus.COMPLETED, inProgress.getStatus());
+        assertEquals(TimeSlotStatus.CLOSED, endedSlot.getStatus());
+        verify(bookingRepository).saveAll(List.of(checkedIn, inProgress));
+        verify(timeSlotRepository).saveAll(List.of(endedSlot));
+    }
+
+    private SystemConfigResponse systemConfig(int checkinWindowMinutes) {
+        return new SystemConfigResponse(null, null,
+                new SystemConfigResponse.BookingConfig(checkinWindowMinutes, 0, true, true),
+                null, null);
     }
 }

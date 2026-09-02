@@ -114,6 +114,20 @@ public interface TimeSlotRepository extends JpaRepository<TimeSlot, Long> {
     @Query("SELECT ts FROM TimeSlot ts WHERE ts.endTime <= :cutoff AND ts.deleted = false AND ts.active = true")
     List<TimeSlot> findEndedSlots(@Param("cutoff") Instant cutoff);
 
+    @Query("SELECT ts FROM TimeSlot ts WHERE ts.status IN :statuses " +
+           "AND ts.endTime <= :cutoff AND ts.deleted = false AND ts.active = true")
+    List<TimeSlot> findEndedSessionSlots(
+            @Param("statuses") List<TimeSlotStatus> statuses,
+            @Param("cutoff") Instant cutoff);
+
+    @Query("SELECT ts FROM TimeSlot ts WHERE ts.status IN :statuses " +
+           "AND ts.startTime < :cutoff " +
+           "AND ts.deleted = false AND ts.active = true")
+    List<TimeSlot> findCheckinExpiredSlots(
+            @Param("statuses") List<TimeSlotStatus> statuses,
+            @Param("cutoff") Instant cutoff
+    );
+
     @Query("""
             SELECT COUNT(ts)
             FROM TimeSlot ts

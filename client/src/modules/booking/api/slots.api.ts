@@ -81,3 +81,8 @@ export async function cancelSlot(payload: CancelSlotPayload): Promise<RawSlotRes
   );
   return response.data.data;
 }
+
+export async function completeSlot(slotId: number): Promise<RawSlotResponse> {
+  const response = await apiClient.patch<Response<RawSlotResponse>>(`/api/slots/${slotId}/complete`);
+  return response.data.data;
+}

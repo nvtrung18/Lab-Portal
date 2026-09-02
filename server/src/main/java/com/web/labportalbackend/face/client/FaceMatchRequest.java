@@ -7,9 +7,12 @@ public record FaceMatchRequest(
         @Schema(description = "Base64-encoded JPEG or PNG check-in image") String imageBase64,
         @Schema(description = "Validated image media type") String contentType,
         @Schema(description = "Decrypted reference embedding held only in Spring process memory")
-        List<Double> referenceEmbedding,
+        List<List<Double>> referenceEmbeddings,
         @Schema(description = "Configured minimum face-match confidence") double confidenceThreshold,
         @Schema(description = "Configured minimum liveness score") double livenessThreshold,
-        @Schema(description = "Whether liveness must pass") boolean livenessRequired
+        @Schema(description = "Whether liveness must pass") boolean livenessRequired,
+        @Schema(description = "Additional live camera frames captured during passive observation")
+        List<FaceChallengeFrame> challengeFrames,
+        @Schema(description = "Signed passive-observation session token") String challengeToken
 ) {
 }

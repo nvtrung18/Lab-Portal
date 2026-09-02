@@ -8,7 +8,7 @@ import { formatPenaltyType } from '../../penalty/utils';
 import { useCurrentUser } from '../../user/hooks';
 import { CancelSlotModal, PenaltyCreateModal } from '../components';
 import type { BookingResponse } from '../api';
-import { useReviewBooking, useSlot, useSlotRegistrations } from '../hooks';
+import { useCompleteSlot, useReviewBooking, useSlot, useSlotRegistrations } from '../hooks';
 import { getBookingStatusLabel, isUsableSlot } from '../utils';
 
 function formatDateTime(value?: string) {
@@ -44,7 +44,14 @@ export function SlotDetailPage() {
   const { data: slotPenalties = [] } = useSlotPenalties(numericSlotId);
   const reviewBooking = useReviewBooking(managedLabId, numericSlotId);
   const createPenalty = useCreatePenalty(numericSlotId);
+  const completeSlot = useCompleteSlot(managedLabId, numericSlotId);
   const canMutateSlot = Boolean(slot && isUsableSlot(slot));
+  const now = Date.now();
+  const startTime = slot ? new Date(slot.startTime).getTime() : Number.NaN;
+  const endTime = slot ? new Date(slot.endTime).getTime() : Number.NaN;
+  const terminalSlot = Boolean(slot && ['CANCELLED', 'CLOSED', 'INACTIVE', 'ARCHIVED'].includes(slot.status));
+  const canCancelSlot = Boolean(slot && canMutateSlot && !terminalSlot && now < startTime);
+  const canCompleteSlot = Boolean(slot && !terminalSlot && startTime <= now && now < endTime);
 
   const counts = useMemo(
     () => ({
@@ -101,13 +108,26 @@ export function SlotDetailPage() {
               Danh sách sinh viên đăng ký sử dụng khung giờ và vi phạm đã ghi nhận.
             </p>
           </div>
-          {slot && canMutateSlot ? (
+          {canCancelSlot && slot ? (
             <button
               type="button"
               className="w-fit rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-700"
               onClick={() => setCancelSlotId(slot.id)}
             >
               Hủy khung giờ
+            </button>
+          ) : canCompleteSlot && slot ? (
+            <button
+              type="button"
+              className="w-fit rounded-md bg-red-700 px-3 py-2 text-sm font-semibold text-white disabled:opacity-60"
+              disabled={completeSlot.isPending}
+              onClick={() => {
+                if (window.confirm('Bạn có chắc muốn kết thúc ca sử dụng lab ngay bây giờ không?')) {
+                  completeSlot.mutate(slot.id);
+                }
+              }}
+            >
+              {completeSlot.isPending ? 'Đang kết thúc...' : 'Kết thúc ca lab'}
             </button>
           ) : null}
         </div>

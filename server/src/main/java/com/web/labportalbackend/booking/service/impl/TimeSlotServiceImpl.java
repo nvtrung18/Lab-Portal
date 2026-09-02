@@ -41,7 +41,8 @@ import java.time.Instant;
 public class TimeSlotServiceImpl implements TimeSlotService {
 
     private static final List<TimeSlotStatus> HIDDEN_SLOT_STATUSES =
-            List.of(TimeSlotStatus.CANCELLED, TimeSlotStatus.INACTIVE, TimeSlotStatus.ARCHIVED);
+            List.of(TimeSlotStatus.CANCELLED, TimeSlotStatus.CLOSED, TimeSlotStatus.EXPIRED,
+                    TimeSlotStatus.INACTIVE, TimeSlotStatus.ARCHIVED);
 
     private final TimeSlotRepository timeSlotRepository;
     private final LaboratoryRepository laboratoryRepository;
@@ -98,7 +99,8 @@ public class TimeSlotServiceImpl implements TimeSlotService {
         Instant cutoff = bookingConfig.hidePastSlots() ? Instant.now() : Instant.EPOCH;
         List<TimeSlotStatus> hiddenStatuses = bookingConfig.hideCancelledSlots()
                 ? HIDDEN_SLOT_STATUSES
-                : List.of(TimeSlotStatus.INACTIVE, TimeSlotStatus.ARCHIVED);
+                : List.of(TimeSlotStatus.CLOSED, TimeSlotStatus.EXPIRED,
+                        TimeSlotStatus.INACTIVE, TimeSlotStatus.ARCHIVED);
         return timeSlotRepository.findUsableByLabId(labId, cutoff, hiddenStatuses).stream()
                 .map(this::toResponse)
                 .toList();
@@ -159,6 +161,34 @@ public class TimeSlotServiceImpl implements TimeSlotService {
         );
 
         return toResponse(savedSlot);
+    }
+
+    @Override
+    @Transactional
+    public TimeSlotResponse completeSlot(Long slotId) {
+        TimeSlot slot = timeSlotRepository.findActiveById(slotId)
+                .orElseThrow(() -> new EntityNotFoundException("Slot not found: " + slotId));
+        User currentUser = getCurrentUser();
+        assertCanManageSlot(currentUser, slot.getLab());
+        Instant now = Instant.now();
+        if (now.isBefore(slot.getStartTime()) || now.isAfter(slot.getEndTime())) {
+            throw new IllegalStateException("Chỉ có thể kết thúc ca trong thời gian sử dụng.");
+        }
+        if (slot.getStatus() == TimeSlotStatus.CANCELLED || slot.getStatus() == TimeSlotStatus.CLOSED
+                || slot.getStatus() == TimeSlotStatus.INACTIVE || slot.getStatus() == TimeSlotStatus.ARCHIVED) {
+            throw new IllegalStateException("Ca sử dụng đã kết thúc hoặc không còn hoạt động.");
+        }
+
+        List<com.web.labportalbackend.booking.entity.Booking> activeBookings =
+                bookingRepository.findBySlotIdAndStatusIn(slotId,
+                        List.of(BookingStatus.CHECKED_IN, BookingStatus.IN_PROGRESS));
+        activeBookings.forEach(booking -> booking.setStatus(BookingStatus.COMPLETED));
+        bookingRepository.saveAll(activeBookings);
+        slot.setStatus(TimeSlotStatus.CLOSED);
+        TimeSlot saved = timeSlotRepository.save(slot);
+        auditLogService.log(currentUser, AuditAction.COMPLETE_LAB_SESSION, AuditModule.BOOKING,
+                "TIME_SLOT", saved.getId(), "Manager đã kết thúc ca sử dụng lab.");
+        return toResponse(saved);
     }
 
     @Override

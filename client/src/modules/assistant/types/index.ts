@@ -1,0 +1,44 @@
+export type AssistantKey = 'ADMIN_ASSISTANT' | 'LAB_ASSISTANT' | 'RESEARCH_ASSISTANT';
+
+export type AssistantCapability =
+  | 'ADMIN_SYSTEM_SUMMARY'
+  | 'ADMIN_AUDIT_SUMMARY'
+  | 'ADMIN_USER_STATUS_LOOKUP'
+  | 'ADMIN_CONFIG_DRAFT'
+  | 'ADMIN_ACCOUNT_ACTION_DRAFT'
+  | 'LAB_POLICY_READ'
+  | 'LAB_SLOT_READ'
+  | 'LAB_OWN_BOOKING_READ'
+  | 'LAB_MANAGED_SUMMARY'
+  | 'LAB_BOOKING_DRAFT'
+  | 'LAB_CHECKIN_GUIDANCE'
+  | 'RESEARCH_PROJECT_SUMMARY'
+  | 'RESEARCH_GROUP_SUMMARY'
+  | 'RESEARCH_ASSIGNED_TASK_READ'
+  | 'RESEARCH_TASK_PROPOSAL_DRAFT'
+  | 'RESEARCH_TASK_SUGGESTION_DRAFT'
+  | 'RESEARCH_REPORT_REVIEW_DRAFT';
+
+export interface AssistantChatRequest {
+  input: string;
+  capability: AssistantCapability;
+  resourceId?: number;
+  parentResourceId?: number;
+}
+
+export interface AssistantCitation {
+  documentId: number;
+  resourceId: string;
+  version: number;
+  chunkIndex: number;
+  pageNumber: number | null;
+  sourceType: string;
+}
+
+export interface AssistantChatResponse {
+  assistantKey: AssistantKey;
+  answer: string;
+  promptTokens: number;
+  completionTokens: number;
+  citations: AssistantCitation[];
+}

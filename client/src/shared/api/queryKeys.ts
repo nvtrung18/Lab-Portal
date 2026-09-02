@@ -23,6 +23,16 @@ export const queryKeys = {
     mine: ['myBookings'] as const,
     byLab: (labId: number) => ['bookings', labId] as const,
   },
+  notifications: {
+    all: ['notifications'] as const,
+    page: (page: number, size: number) => ['notifications', { page, size }] as const,
+  },
+  face: {
+    profiles: ['faceProfiles'] as const,
+    checkinCandidates: ['faceCheckinCandidates'] as const,
+    consent: (userId: number | null) => ['faceConsent', userId ?? 'me'] as const,
+    profile: (userId: number | null) => ['faceProfile', userId ?? 'me'] as const,
+  },
   cleaning: {
     overview: (labId: number) => ['cleaningOverview', labId] as const,
     eligible: (slotId: number) => ['eligibleCleaners', slotId] as const,
@@ -89,5 +99,6 @@ export const queryKeys = {
     availableManagers: ['availableManagers'] as const,
     dashboardStats: ['adminDashboardStats'] as const,
     systemConfig: ['systemConfig'] as const,
+    operationalLogs: (kind: string, page: number, filters: object) => ['operationalLogs', kind, page, filters] as const,
   },
 } as const;

@@ -18,12 +18,14 @@ import com.web.labportalbackend.auth.repository.UserRepository;
 import com.web.labportalbackend.booking.entity.Booking;
 import com.web.labportalbackend.booking.entity.TimeSlot;
 import com.web.labportalbackend.booking.repository.BookingRepository;
+import com.web.labportalbackend.booking.service.CheckinWindowPolicy;
 import com.web.labportalbackend.common.enums.BookingStatus;
 import com.web.labportalbackend.common.enums.TimeSlotStatus;
 import com.web.labportalbackend.face.client.FaceMatchRequest;
 import com.web.labportalbackend.face.client.FaceMatchResponse;
 import com.web.labportalbackend.face.client.FaceProcessingClient;
 import com.web.labportalbackend.face.dto.request.FaceCheckinRequest;
+import com.web.labportalbackend.face.dto.request.FaceChallengeFrameRequest;
 import com.web.labportalbackend.face.entity.FaceConsentLogEntity;
 import com.web.labportalbackend.face.entity.FaceProfileEntity;
 import com.web.labportalbackend.face.entity.FaceSecurityConfigEntity;
@@ -60,6 +62,7 @@ class FaceCheckinServiceImplTest {
     private final FaceProcessingClient processingClient = mock(FaceProcessingClient.class);
     private final FaceEmbeddingCipher cipher = new FaceEmbeddingCipher(KEY);
     private final FaceCheckinWriter writer = mock(FaceCheckinWriter.class);
+    private final User manager = mock(User.class);
     private final User student = mock(User.class);
     private final Booking booking = mock(Booking.class);
     private FaceCheckinServiceImpl service;
@@ -67,14 +70,15 @@ class FaceCheckinServiceImplTest {
     @BeforeEach
     void setUp() {
         service = new FaceCheckinServiceImpl(userRepository, bookingRepository, consentRepository,
-                profileRepository, configRepository, systemConfigService, processingClient, cipher,
+                profileRepository, configRepository, new CheckinWindowPolicy(systemConfigService), processingClient, cipher,
                 writer, new ObjectMapper());
         SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken("student", "n/a", List.of()));
-        when(userRepository.findByEmailOrUsername("student", "student")).thenReturn(Optional.of(student));
+                new UsernamePasswordAuthenticationToken("manager", "n/a", List.of()));
+        when(userRepository.findByEmailOrUsername("manager", "manager")).thenReturn(Optional.of(manager));
+        when(manager.getId()).thenReturn(3L);
+        when(manager.hasRole("LAB_MANAGER")).thenReturn(true);
         when(student.getId()).thenReturn(7L);
-        when(student.hasRole("STUDENT")).thenReturn(true);
-        when(bookingRepository.findById(11L)).thenReturn(Optional.of(booking));
+        when(bookingRepository.findManagerFaceCheckinBooking(3L, 11L)).thenReturn(Optional.of(booking));
         when(booking.getUser()).thenReturn(student);
         when(booking.getStatus()).thenReturn(BookingStatus.APPROVED);
         when(booking.getStartTime()).thenReturn(Instant.now().minusSeconds(60));
@@ -85,7 +89,8 @@ class FaceCheckinServiceImplTest {
         when(consentRepository.findFirstByUserIdOrderByCreatedAtDescIdDesc(7L)).thenReturn(Optional.of(
                 FaceConsentLogEntity.builder().consentStatus(FaceConsentStatus.GRANTED).build()));
         FaceProfileEntity profile = mock(FaceProfileEntity.class);
-        when(profile.getEncryptedEmbedding()).thenReturn(cipher.encrypt("[0.1,0.2]"));
+        when(profile.getEncryptedEmbedding()).thenReturn(
+                cipher.encrypt("[[0.1,0.2],[0.3,0.4],[0.5,0.6]]"));
         when(profileRepository.findByUserIdAndProfileStatusAndActiveTrueAndDeletedFalse(
                 7L, FaceProfileStatus.ACTIVE)).thenReturn(Optional.of(profile));
         when(configRepository.findAllByActiveTrueAndDeletedFalse()).thenReturn(List.of(config()));
@@ -97,44 +102,62 @@ class FaceCheckinServiceImplTest {
     }
 
     @Test
-    void matchingOwnedApprovedBookingInsideWindowCommitsCheckin() {
-        when(processingClient.match(any())).thenReturn(new FaceMatchResponse("MATCH", 0.91, 0.88, null));
-        when(writer.complete(7L, 11L, 0.91, 0.88)).thenReturn(Instant.parse("2026-08-31T00:00:00Z"));
+    void matchingManagedApprovedBookingInsideWindowCommitsCheckin() {
+        when(processingClient.match(any())).thenReturn(
+                new FaceMatchResponse("MATCH", 0.91, 0.0003, false, true, null));
+        when(writer.complete(7L, 3L, 11L, 0.91, 0.0003))
+                .thenReturn(Instant.parse("2026-08-31T00:00:00Z"));
 
         var response = service.checkIn(request());
 
         assertTrue(response.checkedIn());
         ArgumentCaptor<FaceMatchRequest> forwarded = ArgumentCaptor.forClass(FaceMatchRequest.class);
         verify(processingClient).match(forwarded.capture());
-        assertTrue(forwarded.getValue().referenceEmbedding().equals(List.of(0.1, 0.2)));
-        verify(writer).complete(7L, 11L, 0.91, 0.88);
+        assertTrue(forwarded.getValue().referenceEmbeddings().equals(List.of(
+                List.of(0.1, 0.2), List.of(0.3, 0.4), List.of(0.5, 0.6))));
+        assertTrue(forwarded.getValue().challengeFrames().size() == 4);
+        verify(writer).complete(7L, 3L, 11L, 0.91, 0.0003);
     }
 
     @Test
     void belowThresholdResultIsLoggedWithoutChangingBookingStatus() {
-        when(processingClient.match(any())).thenReturn(new FaceMatchResponse("MATCH", 0.7, 0.88, null));
+        when(processingClient.match(any())).thenReturn(
+                new FaceMatchResponse("MATCH", 0.7, 0.88, false, true, null));
 
         var response = service.checkIn(request());
 
         assertFalse(response.checkedIn());
-        verify(writer).recordFailure(7L, 11L, 0.7, 0.88, "NO_MATCH");
-        verify(writer, never()).complete(any(), any(), any(), any());
+        verify(writer).recordFailure(7L, 3L, 11L, 0.7, 0.88, "NO_MATCH");
+        verify(writer, never()).complete(any(), any(), any(), any(), any());
     }
 
     @Test
-    void anotherUsersBookingIsDeniedBeforeBiometricProcessing() {
-        User other = mock(User.class);
-        when(other.getId()).thenReturn(8L);
-        when(booking.getUser()).thenReturn(other);
+    void bookingOutsideManagedLabsIsDeniedBeforeBiometricProcessing() {
+        when(bookingRepository.findManagerFaceCheckinBooking(3L, 11L)).thenReturn(Optional.empty());
 
         assertThrows(AccessDeniedException.class, () -> service.checkIn(request()));
 
         verify(processingClient, never()).match(any());
     }
 
+    @Test
+    void candidatesOnlyQueriesBookingsInsideConfiguredCheckinWindow() {
+        service.candidates();
+
+        verify(bookingRepository).findFaceCheckinCandidatesForManager(
+                eq(3L), any(Instant.class), any(Instant.class));
+    }
+
     private FaceCheckinRequest request() {
+        String image = Base64.getEncoder().encodeToString("image".getBytes());
         return new FaceCheckinRequest(11L,
-                Base64.getEncoder().encodeToString("image".getBytes()), "image/jpeg");
+                image, "image/jpeg",
+                List.of(
+                        new FaceChallengeFrameRequest(image, "image/jpeg"),
+                        new FaceChallengeFrameRequest(image, "image/jpeg"),
+                        new FaceChallengeFrameRequest(image, "image/jpeg"),
+                        new FaceChallengeFrameRequest(image, "image/jpeg")),
+                "signed-challenge");
     }
 
     private FaceSecurityConfigEntity config() {

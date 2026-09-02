@@ -25,8 +25,12 @@ export function getPrimaryRedirectPath(roles: string[]) {
     return '/admin/dashboard';
   }
 
-  if (normalizedRoles.includes(LAB_MANAGER) || normalizedRoles.includes(STUDENT)) {
+  if (normalizedRoles.includes(LAB_MANAGER)) {
     return '/app/profile';
+  }
+
+  if (normalizedRoles.includes(STUDENT)) {
+    return '/app/dashboard';
   }
 
   return '/403';

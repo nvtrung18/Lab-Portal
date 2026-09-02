@@ -112,3 +112,5 @@ __pycache__/
 # Preserve locally without deleting, reading as authoritative, or staging it.
 p6-t5-kaggle/
 p6-t5-kaggle.zip
+face-service/models/
+.docker-cache/
