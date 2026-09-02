@@ -22,6 +22,9 @@ import com.web.labportalbackend.common.exception.DuplicateBookingException;
 import com.web.labportalbackend.lab.entity.Laboratory;
 import com.web.labportalbackend.lab.repository.LaboratoryRepository;
 import com.web.labportalbackend.lab.repository.MembershipRepository;
+import com.web.labportalbackend.notification.enums.NotificationEventType;
+import com.web.labportalbackend.notification.enums.NotificationTargetModule;
+import com.web.labportalbackend.notification.service.NotificationEmitter;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -48,6 +51,7 @@ public class BookingServiceImpl implements BookingService {
     private final LaboratoryRepository laboratoryRepository;
     private final EmailService emailService;
     private final SystemConfigService systemConfigService;
+    private final NotificationEmitter notificationEmitter;
 
     @Override
     @Transactional
@@ -80,6 +84,18 @@ public class BookingServiceImpl implements BookingService {
         booking.setParticipantsCount(request.getParticipantsCount() != null ? request.getParticipantsCount() : 1);
 
         Booking saved = bookingRepository.save(booking);
+        User manager = saved.getLab().getManager();
+        if (manager != null) {
+            notificationEmitter.emit(
+                    manager.getId(),
+                    NotificationEventType.BOOKING_REQUESTED,
+                    "Có đăng ký ca sử dụng mới",
+                    saved.getUser().getFullName() + " vừa gửi đăng ký sử dụng " + saved.getLab().getLabName() + ".",
+                    NotificationTargetModule.BOOKING,
+                    saved.getId(),
+                    null
+            );
+        }
         safeSendEmail(() -> emailService.sendBookingCreatedEmail(
                 saved.getUser().getEmail(),
                 buildEmailData(saved, "Chờ phê duyệt", "Vui lòng chờ quản lý PTN phê duyệt.")
@@ -147,6 +163,18 @@ public class BookingServiceImpl implements BookingService {
 
         booking.setStatus(BookingStatus.CANCELLED_BY_STUDENT);
         Booking saved = bookingRepository.save(booking);
+        User manager = saved.getLab().getManager();
+        if (manager != null) {
+            notificationEmitter.emit(
+                    manager.getId(),
+                    NotificationEventType.BOOKING_CANCELLED,
+                    "Sinh viên đã hủy đăng ký",
+                    saved.getUser().getFullName() + " đã hủy đăng ký ca sử dụng tại " + saved.getLab().getLabName() + ".",
+                    NotificationTargetModule.BOOKING,
+                    saved.getId(),
+                    null
+            );
+        }
         safeSendEmail(() -> emailService.sendBookingCancelledByStudentEmail(
                 saved.getUser().getEmail(),
                 buildEmailData(saved, "Sinh viên đã hủy", null)
@@ -184,11 +212,33 @@ public class BookingServiceImpl implements BookingService {
         Booking saved = bookingRepository.save(booking);
         refreshSlotFullStatus(saved.getTimeSlot());
         if (saved.getStatus() == BookingStatus.APPROVED) {
+            notificationEmitter.emit(
+                    saved.getUser().getId(),
+                    NotificationEventType.BOOKING_APPROVED,
+                    "Đăng ký ca sử dụng đã được phê duyệt",
+                    "Bạn đã được phê duyệt sử dụng " + saved.getLab().getLabName() + ".",
+                    NotificationTargetModule.BOOKING,
+                    saved.getId(),
+                    null
+            );
             safeSendEmail(() -> emailService.sendBookingApprovedEmail(
                     saved.getUser().getEmail(),
                     buildEmailData(saved, "Đã phê duyệt", "Khi đến giờ sử dụng, sinh viên vui lòng mở hệ thống để tạo mã QR check-in và đưa cho quản lý PTN quét xác nhận.")
             ));
         } else if (saved.getStatus() == BookingStatus.REJECTED) {
+            String rejectionMessage = request.getNote() == null || request.getNote().isBlank()
+                    ? "Đăng ký sử dụng " + saved.getLab().getLabName() + " không được phê duyệt."
+                    : "Đăng ký sử dụng " + saved.getLab().getLabName()
+                    + " không được phê duyệt. Lý do: " + request.getNote().trim();
+            notificationEmitter.emit(
+                    saved.getUser().getId(),
+                    NotificationEventType.BOOKING_REJECTED,
+                    "Đăng ký ca sử dụng không được phê duyệt",
+                    rejectionMessage,
+                    NotificationTargetModule.BOOKING,
+                    saved.getId(),
+                    null
+            );
             safeSendEmail(() -> emailService.sendBookingRejectedEmail(
                     saved.getUser().getEmail(),
                     buildEmailData(saved, "Không được phê duyệt", request.getNote())

@@ -4,6 +4,7 @@ import com.web.labportalbackend.ai.enums.AiAssistantKey;
 import com.web.labportalbackend.auth.entity.User;
 import com.web.labportalbackend.auth.repository.UserRepository;
 import com.web.labportalbackend.notification.entity.NotificationEntity;
+import com.web.labportalbackend.notification.event.NotificationCreatedEvent;
 import com.web.labportalbackend.notification.enums.NotificationEventType;
 import com.web.labportalbackend.notification.enums.NotificationTargetModule;
 import com.web.labportalbackend.notification.repository.NotificationRepository;
@@ -11,6 +12,7 @@ import jakarta.persistence.EntityNotFoundException;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -19,6 +21,7 @@ public class NotificationEmitter {
 
     private final NotificationRepository notificationRepository;
     private final UserRepository userRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     public void emit(
             Long recipientId,
@@ -33,7 +36,7 @@ public class NotificationEmitter {
                 .filter(user -> Boolean.TRUE.equals(user.getActive()))
                 .filter(user -> !Boolean.TRUE.equals(user.getDeleted()))
                 .orElseThrow(() -> new EntityNotFoundException("Notification recipient not found"));
-        notificationRepository.save(NotificationEntity.builder()
+        NotificationEntity notification = notificationRepository.save(NotificationEntity.builder()
                 .recipient(recipient)
                 .eventType(eventType)
                 .title(title)
@@ -42,6 +45,9 @@ public class NotificationEmitter {
                 .targetId(targetId)
                 .assistantKey(assistantKey)
                 .build());
+        eventPublisher.publishEvent(new NotificationCreatedEvent(
+                notification.getId(), recipient.getId(), eventType, title, message,
+                targetModule, targetId, notification.getCreatedAt()));
     }
 
     public void emitToRecipients(

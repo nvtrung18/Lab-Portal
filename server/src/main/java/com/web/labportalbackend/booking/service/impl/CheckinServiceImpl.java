@@ -7,6 +7,7 @@ import com.web.labportalbackend.auth.entity.User;
 import com.web.labportalbackend.auth.repository.UserRepository;
 import com.web.labportalbackend.booking.dto.response.BookingResponse;
 import com.web.labportalbackend.booking.dto.response.CheckinQrResponse;
+import com.web.labportalbackend.booking.dto.response.CheckinQrHistoryResponse;
 import com.web.labportalbackend.booking.dto.response.CheckinQrRequestResponse;
 import com.web.labportalbackend.booking.entity.Booking;
 import com.web.labportalbackend.booking.mapper.BookingMapper;
@@ -49,7 +50,6 @@ import java.nio.charset.StandardCharsets;
 @RequiredArgsConstructor
 public class CheckinServiceImpl implements CheckinService {
 
-    private static final Duration QR_TOKEN_TTL = Duration.ofMinutes(2);
     private static final String TOKEN_PREFIX = "checkin:token:";
     private static final String QR_REQUEST_PREFIX = "checkin:qr-request:";
     private static final String QR_REQUEST_BOOKING_PREFIX = "checkin:qr-request:booking:";
@@ -82,7 +82,7 @@ public class CheckinServiceImpl implements CheckinService {
                 ? normalizeCustomReason(customReason) : fallbackReason.name();
 
         Instant now = Instant.now();
-        Instant requestExpiresAt = checkinWindowPolicy.closesAt(booking);
+        Instant requestExpiresAt = booking.getEndTime();
         Duration ttl = Duration.between(now, requestExpiresAt);
         if (ttl.isNegative() || ttl.isZero()) {
             throw new IllegalStateException("Đã quá thời gian check-in.");
@@ -130,7 +130,30 @@ public class CheckinServiceImpl implements CheckinService {
             case "REJECTED" -> "Quản lý đã từ chối yêu cầu QR.";
             default -> "Yêu cầu QR đang chờ quản lý duyệt.";
         };
+        if ("USED".equals(request.status())) {
+            message = "Mã QR đã được sử dụng để check-in.";
+        }
         return toStudentResponse(request, message);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<CheckinQrHistoryResponse> getCurrentStudentQrHistory() {
+        User student = getCurrentUser();
+        Instant now = Instant.now();
+        return bookingRepository.findCurrentQrHistoryBookingsForUser(student.getId(), now).stream()
+                .map(booking -> {
+                    String requestId = redisTemplate.opsForValue().get(qrRequestBookingKey(booking.getId()));
+                    QrRequest request = requestId == null ? null : readQrRequest(requestId);
+                    if (request == null || !request.studentId().equals(student.getId())) {
+                        return null;
+                    }
+                    return new CheckinQrHistoryResponse(
+                            request.requestId(), request.bookingId(), request.fallbackReason(), request.reason(),
+                            request.status(), request.token(), request.expiresAt());
+                })
+                .filter(Objects::nonNull)
+                .toList();
     }
 
     @Override
@@ -158,16 +181,18 @@ public class CheckinServiceImpl implements CheckinService {
         String token = null;
         Instant reviewedExpiresAt = request.expiresAt();
         if (approved) {
-            Duration tokenTtl = remaining.compareTo(QR_TOKEN_TTL) < 0 ? remaining : QR_TOKEN_TTL;
             token = createToken();
             redisTemplate.opsForValue().set(tokenKey(token), request.bookingId() + "|"
-                    + request.fallbackReason().name() + "|" + encode(request.reason()), tokenTtl);
-            remaining = tokenTtl;
-            reviewedExpiresAt = Instant.now().plus(tokenTtl);
+                    + request.fallbackReason().name() + "|" + encode(request.reason()), remaining);
         }
         QrRequest reviewed = new QrRequest(request.requestId(), request.bookingId(), request.studentId(), request.labId(),
                 request.fallbackReason(), request.reason(), approved ? "APPROVED" : "REJECTED", token, reviewedExpiresAt);
         writeQrRequest(reviewed, remaining);
+        notificationEmitter.emit(request.studentId(), NotificationEventType.QR_CHECKIN_REVIEWED,
+                approved ? "Yêu cầu QR đã được duyệt" : "Yêu cầu QR đã bị từ chối",
+                approved ? "Quản lý PTN đã duyệt yêu cầu QR check-in của bạn."
+                        : "Quản lý PTN đã từ chối yêu cầu QR check-in của bạn.",
+                NotificationTargetModule.FACE, request.bookingId(), null);
         return toManagerResponse(reviewed);
     }
 
@@ -189,11 +214,12 @@ public class CheckinServiceImpl implements CheckinService {
 
         Booking booking = bookingRepository.findById(fallbackToken.bookingId())
                 .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy đăng ký sử dụng PTN."));
-        validateManagerCanConfirm(booking, currentUser);
+        validateManagerCanConfirmQr(booking, currentUser);
         faceFallbackPolicy.assertQrAllowed(booking, fallbackToken.reason());
         if (!Boolean.TRUE.equals(redisTemplate.delete(redisKey))) {
             throw invalidQrToken();
         }
+        markQrRequestUsed(fallbackToken.bookingId(), normalizedToken);
 
         booking.setStatus(BookingStatus.CHECKED_IN);
         Booking saved = bookingRepository.save(booking);
@@ -240,6 +266,22 @@ public class CheckinServiceImpl implements CheckinService {
         }
         validateBookingCanCheckIn(booking);
         checkinWindowPolicy.validate(booking, Instant.now());
+    }
+
+    private void validateManagerCanConfirmQr(Booking booking, User manager) {
+        Laboratory managedLab = laboratoryRepository.findFirstByManagerIdAndDeletedFalse(manager.getId())
+                .orElseThrow(() -> new AccessDeniedException("Quản lý PTN chưa được phân công phòng thí nghiệm."));
+        if (!booking.getLab().getId().equals(managedLab.getId())) {
+            throw new AccessDeniedException("Bạn không có quyền xác nhận cho PTN này.");
+        }
+        validateBookingCanCheckIn(booking);
+        Instant now = Instant.now();
+        if (now.isBefore(checkinWindowPolicy.opensAt(booking))) {
+            throw new IllegalStateException("Chưa đến giờ check-in. Có thể check-in trước giờ bắt đầu 5 phút.");
+        }
+        if (booking.getEndTime() == null || !now.isBefore(booking.getEndTime())) {
+            throw new IllegalStateException("Ca sử dụng PTN đã kết thúc.");
+        }
     }
 
     private void validateBookingCanCheckIn(Booking booking) {
@@ -303,6 +345,21 @@ public class CheckinServiceImpl implements CheckinService {
         } catch (IllegalArgumentException exception) {
             return null;
         }
+    }
+
+    private void markQrRequestUsed(Long bookingId, String token) {
+        String requestId = redisTemplate.opsForValue().get(qrRequestBookingKey(bookingId));
+        QrRequest request = requestId == null ? null : readQrRequest(requestId);
+        if (request == null || !"APPROVED".equals(request.status()) || !token.equals(request.token())) {
+            return;
+        }
+        Duration remaining = Duration.between(Instant.now(), request.expiresAt());
+        if (remaining.isNegative() || remaining.isZero()) {
+            return;
+        }
+        writeQrRequest(new QrRequest(
+                request.requestId(), request.bookingId(), request.studentId(), request.labId(),
+                request.fallbackReason(), request.reason(), "USED", null, request.expiresAt()), remaining);
     }
 
     private CheckinQrResponse toStudentResponse(QrRequest request, String message) {

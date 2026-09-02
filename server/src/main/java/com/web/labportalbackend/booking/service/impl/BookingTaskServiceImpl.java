@@ -16,6 +16,9 @@ import com.web.labportalbackend.common.enums.BookingStatus;
 import com.web.labportalbackend.common.enums.PenaltyStatus;
 import com.web.labportalbackend.common.enums.PenaltyType;
 import com.web.labportalbackend.common.enums.TimeSlotStatus;
+import com.web.labportalbackend.notification.enums.NotificationEventType;
+import com.web.labportalbackend.notification.enums.NotificationTargetModule;
+import com.web.labportalbackend.notification.service.NotificationEmitter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -40,6 +43,7 @@ public class BookingTaskServiceImpl implements BookingTaskService {
     private final CleaningRepository cleaningRepository;
     private final CleaningService cleaningService;
     private final SystemConfigService systemConfigService;
+    private final NotificationEmitter notificationEmitter;
 
     @Override
     @Scheduled(cron = "${booking.task.cron:0 * * * * *}")
@@ -123,6 +127,15 @@ public class BookingTaskServiceImpl implements BookingTaskService {
         endedSessions.forEach(booking -> booking.setStatus(BookingStatus.COMPLETED));
         if (!endedSessions.isEmpty()) {
             bookingRepository.saveAll(endedSessions);
+            endedSessions.forEach(booking -> notificationEmitter.emit(
+                    booking.getUser().getId(),
+                    NotificationEventType.BOOKING_SESSION_COMPLETED,
+                    "Ca sử dụng đã kết thúc",
+                    "Ca sử dụng tại " + booking.getLab().getLabName() + " đã tự động kết thúc theo lịch.",
+                    NotificationTargetModule.BOOKING,
+                    booking.getId(),
+                    null
+            ));
             log.info("Automatically completed {} ended lab session(s)", endedSessions.size());
         }
         List<TimeSlot> endedSlots = timeSlotRepository.findEndedSessionSlots(

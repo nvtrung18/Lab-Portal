@@ -98,6 +98,14 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     @Query("SELECT b FROM Booking b WHERE b.user.id = :userId AND b.deleted = false AND b.active = true ORDER BY b.startTime DESC")
     List<Booking> findActiveByUserId(@Param("userId") Long userId);
 
+    @Query("SELECT b FROM Booking b WHERE b.user.id = :userId " +
+           "AND b.endTime > :now AND b.deleted = false AND b.active = true " +
+           "ORDER BY b.startTime DESC, b.id DESC")
+    List<Booking> findCurrentQrHistoryBookingsForUser(
+            @Param("userId") Long userId,
+            @Param("now") Instant now
+    );
+
     @Query("SELECT b FROM Booking b WHERE b.timeSlot.id = :slotId AND b.status IN :statuses AND b.deleted = false AND b.active = true")
     List<Booking> findBySlotIdAndStatusIn(
             @Param("slotId") Long slotId,

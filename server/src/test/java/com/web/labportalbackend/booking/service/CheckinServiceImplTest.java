@@ -31,6 +31,8 @@ import com.web.labportalbackend.face.service.FaceFallbackPolicy;
 import com.web.labportalbackend.lab.entity.Laboratory;
 import com.web.labportalbackend.lab.repository.LaboratoryRepository;
 import com.web.labportalbackend.notification.service.NotificationEmitter;
+import com.web.labportalbackend.notification.enums.NotificationEventType;
+import com.web.labportalbackend.notification.enums.NotificationTargetModule;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
@@ -87,6 +89,7 @@ class CheckinServiceImplTest {
         when(booking.getTimeSlot()).thenReturn(slot);
         when(booking.getStatus()).thenReturn(BookingStatus.APPROVED);
         when(booking.getStartTime()).thenReturn(Instant.now().minusSeconds(60));
+        when(booking.getEndTime()).thenReturn(Instant.now().plus(Duration.ofHours(2)));
         when(slot.getStatus()).thenReturn(TimeSlotStatus.AVAILABLE);
         when(bookingRepository.findById(11L)).thenReturn(Optional.of(booking));
         when(bookingRepository.save(booking)).thenReturn(booking);
@@ -106,13 +109,36 @@ class CheckinServiceImplTest {
         when(actor.hasRole("STUDENT")).thenReturn(true);
         when(booking.getUser()).thenReturn(actor);
         when(lab.getManager()).thenReturn(student);
+        Instant sessionEndsAt = Instant.now().plus(Duration.ofHours(2));
+        when(booking.getEndTime()).thenReturn(sessionEndsAt);
 
         var response = service.requestQrForCurrentStudent(11L, FaceFallbackReason.FACE_PROFILE_UNAVAILABLE, null);
 
         verify(fallbackPolicy).assertQrAllowed(booking, FaceFallbackReason.FACE_PROFILE_UNAVAILABLE);
         assertEquals("PENDING", response.getStatus());
         assertEquals(null, response.getToken());
+        assertEquals(sessionEndsAt, response.getExpiresAt());
         verify(valueOperations, never()).set(org.mockito.ArgumentMatchers.startsWith("checkin:token:"), anyString(), any(Duration.class));
+    }
+
+    @Test
+    void approvedQrTokenRemainsAvailableUntilTheLabSessionEnds() {
+        when(actor.hasRole("LAB_MANAGER")).thenReturn(true);
+        when(laboratoryRepository.findFirstByManagerIdAndDeletedFalse(3L)).thenReturn(Optional.of(lab));
+        Instant sessionEndsAt = Instant.now().plus(Duration.ofHours(2));
+        String encodedReason = Base64.getUrlEncoder().withoutPadding()
+                .encodeToString("Camera unavailable".getBytes(StandardCharsets.UTF_8));
+        when(valueOperations.get("checkin:qr-request:req-until-end"))
+                .thenReturn("11|7|5|FACE_SERVICE_UNAVAILABLE|" + encodedReason
+                        + "|PENDING||" + sessionEndsAt);
+
+        var response = service.reviewQrRequestByCurrentManager("req-until-end", true);
+
+        assertEquals(sessionEndsAt, response.expiresAt());
+        ArgumentCaptor<Duration> ttlCaptor = ArgumentCaptor.forClass(Duration.class);
+        verify(valueOperations).set(org.mockito.ArgumentMatchers.startsWith("checkin:token:"),
+                org.mockito.ArgumentMatchers.contains("11|FACE_SERVICE_UNAVAILABLE|"), ttlCaptor.capture());
+        org.junit.jupiter.api.Assertions.assertTrue(ttlCaptor.getValue().compareTo(Duration.ofMinutes(100)) > 0);
     }
 
     @Test
@@ -123,6 +149,11 @@ class CheckinServiceImplTest {
                 .encodeToString("FACE_SERVICE_UNAVAILABLE".getBytes(StandardCharsets.UTF_8));
         when(valueOperations.get("checkin:token:qr-token"))
                 .thenReturn("11|FACE_SERVICE_UNAVAILABLE|" + encodedReason);
+        Instant sessionEndsAt = Instant.now().plus(Duration.ofHours(2));
+        when(valueOperations.get("checkin:qr-request:booking:11")).thenReturn("req-used");
+        when(valueOperations.get("checkin:qr-request:req-used"))
+                .thenReturn("11|7|5|FACE_SERVICE_UNAVAILABLE|" + encodedReason
+                        + "|APPROVED|qr-token|" + sessionEndsAt);
         when(redisTemplate.delete("checkin:token:qr-token")).thenReturn(true);
 
         service.confirmByCurrentManager("qr-token");
@@ -136,6 +167,63 @@ class CheckinServiceImplTest {
         assertEquals("FACE_SERVICE_UNAVAILABLE", logCaptor.getValue().getFallbackReason());
         verify(auditLogService).log(actor, AuditAction.QR_FALLBACK_CHECKIN, AuditModule.FACE,
                 "BOOKING", 11L, "QR fallback check-in: FACE_SERVICE_UNAVAILABLE");
+        verify(valueOperations).set(eq("checkin:qr-request:req-used"),
+                org.mockito.ArgumentMatchers.contains("|USED||"), any(Duration.class));
+    }
+
+    @Test
+    void approvedQrCanBeUsedAfterTheNormalCheckinWindowUntilSessionEnd() {
+        when(actor.hasRole("LAB_MANAGER")).thenReturn(true);
+        when(laboratoryRepository.findFirstByManagerIdAndDeletedFalse(3L)).thenReturn(Optional.of(lab));
+        when(booking.getStartTime()).thenReturn(Instant.now().minus(Duration.ofMinutes(30)));
+        when(booking.getEndTime()).thenReturn(Instant.now().plus(Duration.ofHours(1)));
+        String encodedReason = Base64.getUrlEncoder().withoutPadding()
+                .encodeToString("FACE_SERVICE_UNAVAILABLE".getBytes(StandardCharsets.UTF_8));
+        when(valueOperations.get("checkin:token:session-token"))
+                .thenReturn("11|FACE_SERVICE_UNAVAILABLE|" + encodedReason);
+        when(redisTemplate.delete("checkin:token:session-token")).thenReturn(true);
+
+        service.confirmByCurrentManager("session-token");
+
+        verify(booking).setStatus(BookingStatus.CHECKED_IN);
+        verify(bookingRepository).save(booking);
+    }
+
+    @Test
+    void qrReviewNotifiesTheRequestingStudent() {
+        when(actor.hasRole("LAB_MANAGER")).thenReturn(true);
+        when(laboratoryRepository.findFirstByManagerIdAndDeletedFalse(3L)).thenReturn(Optional.of(lab));
+        Instant expiresAt = Instant.now().plusSeconds(300);
+        String encodedReason = Base64.getUrlEncoder().withoutPadding()
+                .encodeToString("Camera unavailable".getBytes(StandardCharsets.UTF_8));
+        when(valueOperations.get("checkin:qr-request:req-1"))
+                .thenReturn("11|7|5|FACE_SERVICE_UNAVAILABLE|" + encodedReason
+                        + "|PENDING||" + expiresAt);
+
+        service.reviewQrRequestByCurrentManager("req-1", false);
+
+        verify(notificationEmitter).emit(eq(7L), eq(NotificationEventType.QR_CHECKIN_REVIEWED),
+                anyString(), anyString(), eq(NotificationTargetModule.FACE), eq(11L), eq(null));
+    }
+
+    @Test
+    void qrHistoryReturnsOnlyTheCurrentStudentsUnexpiredRequests() {
+        Instant sessionEndsAt = Instant.now().plus(Duration.ofHours(2));
+        when(bookingRepository.findCurrentQrHistoryBookingsForUser(eq(3L), any(Instant.class)))
+                .thenReturn(List.of(booking));
+        when(valueOperations.get("checkin:qr-request:booking:11")).thenReturn("req-history");
+        String encodedReason = Base64.getUrlEncoder().withoutPadding()
+                .encodeToString("Camera unavailable".getBytes(StandardCharsets.UTF_8));
+        when(valueOperations.get("checkin:qr-request:req-history"))
+                .thenReturn("11|3|5|FACE_SERVICE_UNAVAILABLE|" + encodedReason
+                        + "|APPROVED|qr-token|" + sessionEndsAt);
+
+        var history = service.getCurrentStudentQrHistory();
+
+        assertEquals(1, history.size());
+        assertEquals(11L, history.getFirst().bookingId());
+        assertEquals("qr-token", history.getFirst().token());
+        assertEquals(sessionEndsAt, history.getFirst().expiresAt());
     }
 
     @Test
