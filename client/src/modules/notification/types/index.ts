@@ -1,15 +1,36 @@
 export type NotificationEventType =
   | 'TASK_ASSIGNED'
-  | 'TASK_PROPOSAL_SUBMITTED'
-  | 'TASK_PROPOSAL_REVIEWED'
+  | 'TASK_STATUS_CHANGED'
   | 'REPORT_SUBMITTED'
   | 'REPORT_REVIEWED'
-  | 'AI_ACTION_SUGGESTED'
-  | 'AI_ACTION_REVIEWED'
+  | 'PROPOSAL_SUBMITTED'
+  | 'PROPOSAL_APPROVED'
+  | 'PROPOSAL_REJECTED'
+  | 'AI_ACTION_STATUS_CHANGED'
   | 'FACE_CHECKIN_SUCCEEDED'
-  | 'FACE_CHECKIN_FAILED';
+  | 'FACE_CHECKIN_FAILED'
+  | 'BOOKING_REQUESTED'
+  | 'BOOKING_APPROVED'
+  | 'BOOKING_REJECTED'
+  | 'BOOKING_CANCELLED'
+  | 'BOOKING_SESSION_COMPLETED'
+  | 'QR_CHECKIN_REQUESTED'
+  | 'QR_CHECKIN_REVIEWED';
 
-export type NotificationTargetModule = 'RESEARCH' | 'AI' | 'FACE' | 'BOOKING' | 'SYSTEM';
+export type NotificationTargetModule = 'TASK' | 'REPORT' | 'PROPOSAL' | 'AI' | 'FACE' | 'BOOKING';
+
+export type RealtimeEventType = 'CONNECTED' | 'NOTIFICATION_CREATED';
+
+export interface RealtimeEvent {
+  eventId: string;
+  type: RealtimeEventType;
+  notificationEventType: NotificationEventType | null;
+  title: string | null;
+  message: string | null;
+  targetModule: NotificationTargetModule | null;
+  targetId: number | null;
+  occurredAt: string;
+}
 
 export interface NotificationItem {
   id: number;

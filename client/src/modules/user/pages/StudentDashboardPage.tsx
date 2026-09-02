@@ -101,9 +101,9 @@ export function StudentDashboardPage() {
         <div aria-hidden="true" className="absolute -right-16 -top-20 h-56 w-56 rounded-full bg-blue-500/20 blur-3xl" />
         <div className="relative max-w-3xl">
           <p className="text-sm font-medium text-blue-200">Không gian học tập và nghiên cứu của bạn</p>
-          <h2 className="mt-2 text-2xl font-semibold tracking-tight text-balance sm:text-3xl">
+          <h1 className="mt-2 text-2xl font-semibold tracking-tight text-balance sm:text-3xl">
             Xin chào, {displayName}
-          </h2>
+          </h1>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-300 sm:text-base">
             {hasMembership
               ? 'Theo dõi ca sử dụng sắp tới, vào khu vực PTN và xử lý các công việc cần thiết từ một nơi.'

@@ -1,10 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
-import { Camera, CircleAlert, CircleCheck, ScanFace } from 'lucide-react';
+import { Camera, CircleCheck, ScanFace } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 import { queryKeys } from '../../../shared/api';
-import { Button, EmptyState, ErrorState, toast } from '../../../shared/components';
+import { Button, EmptyState, ErrorState, Modal, toast } from '../../../shared/components';
 import type { Response } from '../../../shared/types';
 import { invalidateAttendanceQueries } from '../../booking/hooks';
 import {
@@ -81,10 +81,10 @@ export function ManagerFaceCheckinPanel({ onCompleted }: { onCompleted: (booking
     queryFn: getFaceCheckinCandidates,
   });
   const [bookingId, setBookingId] = useState('');
+  const [cameraDialogOpen, setCameraDialogOpen] = useState(false);
+  const [completedBookingId, setCompletedBookingId] = useState<number | null>(null);
   const [cameraActive, setCameraActive] = useState(false);
   const [cameraReady, setCameraReady] = useState(false);
-  const [guidance, setGuidance] = useState<FaceGuidanceResult | null>(null);
-  const [isStable, setIsStable] = useState(false);
   const [challenge, setChallenge] = useState<FaceChallenge | null>(null);
   const [instruction, setInstruction] = useState('Đưa khuôn mặt vào giữa khung oval');
   const [localError, setLocalError] = useState('');
@@ -128,7 +128,7 @@ export function ManagerFaceCheckinPanel({ onCompleted }: { onCompleted: (booking
       const completedCandidate = candidates.data?.find((candidate) => candidate.bookingId === result.bookingId);
       if (completedCandidate) invalidateAttendanceQueries(queryClient, completedCandidate);
       stopCamera();
-      setBookingId('');
+      setCompletedBookingId(result.bookingId);
       onCompleted(result.bookingId);
     },
     onError: (error) => setLocalError(errorMessage(error)),
@@ -173,10 +173,20 @@ export function ManagerFaceCheckinPanel({ onCompleted }: { onCompleted: (booking
         const stable = stablePosition(previousPositionRef.current, result);
         const passed = result.singleFace && result.faceInGuide && result.facingForward
           && result.landmarksVisible && result.lightingGood && result.sharpnessGood && stable;
+        const nextInstruction = !result.singleFace
+          ? result.detectedFaces === 0 ? 'Đưa một khuôn mặt vào giữa khung' : 'Chỉ để một người trong khung hình'
+          : !result.faceInGuide
+            ? 'Di chuyển khuôn mặt vào giữa oval và điều chỉnh khoảng cách'
+            : !result.facingForward || !result.landmarksVisible
+              ? 'Nhìn thẳng và không che mắt, mũi hoặc miệng'
+              : !result.lightingGood
+                ? 'Điều chỉnh để ánh sáng chiếu từ phía trước'
+                : !result.sharpnessGood || !stable
+                  ? 'Giữ yên khuôn mặt để ảnh rõ nét'
+                  : 'Giữ nguyên vị trí — hệ thống đang chuẩn bị nhận diện';
         previousPositionRef.current = result.singleFace ? result : null;
         stablePassesRef.current = passed ? stablePassesRef.current + 1 : 0;
-        setGuidance(result);
-        setIsStable(stable);
+        setInstruction(nextInstruction);
         if (stablePassesRef.current >= 3 && !capturingRef.current) void runCapture();
       } catch (error) {
         if (!cancelled) setLocalError(errorMessage(error));
@@ -196,6 +206,8 @@ export function ManagerFaceCheckinPanel({ onCompleted }: { onCompleted: (booking
       setLocalError('Hãy chọn thành viên và ca sử dụng trước khi mở camera.');
       return;
     }
+    setCameraDialogOpen(true);
+    setCompletedBookingId(null);
     try {
       if (!navigator.mediaDevices?.getUserMedia) throw new Error('Trình duyệt không hỗ trợ camera.');
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -206,8 +218,6 @@ export function ManagerFaceCheckinPanel({ onCompleted }: { onCompleted: (booking
       const activeChallenge = await startFaceCheckinPassiveSession();
       if (activeChallenge.action !== 'OBSERVE') throw new Error('Phiên quan sát camera không hợp lệ.');
       setChallenge(activeChallenge);
-      setGuidance(null);
-      setIsStable(false);
       setLocalError('');
       setInstruction('Đưa khuôn mặt vào giữa khung oval');
       previousPositionRef.current = null;
@@ -219,20 +229,22 @@ export function ManagerFaceCheckinPanel({ onCompleted }: { onCompleted: (booking
     }
   };
 
-  const criteria = [
-    ['Chỉ một người trong khung hình', guidance?.singleFace],
-    ['Toàn bộ khuôn mặt nằm trong khung oval', guidance?.faceInGuide],
-    ['Nhìn thẳng, không che mắt, mũi hoặc miệng', Boolean(guidance?.facingForward && guidance?.landmarksVisible)],
-    ['Giữ yên và đảm bảo ánh sáng từ phía trước', Boolean(guidance?.lightingGood && guidance?.sharpnessGood && isStable)],
-  ] as const;
+  const closeCameraDialog = () => {
+    if (checkin.isPending || capturingRef.current) return;
+    stopCamera();
+    setCameraDialogOpen(false);
+    setCompletedBookingId(null);
+    setBookingId('');
+    setLocalError('');
+  };
 
   if (candidates.isLoading) return <div className="mt-4 h-48 animate-pulse rounded bg-slate-100 dark:bg-slate-800" />;
   if (candidates.isError) return <ErrorState className="mt-4" onRetry={() => void candidates.refetch()}>Không thể tải danh sách thành viên của các ca.</ErrorState>;
   if ((candidates.data?.length ?? 0) === 0) return <EmptyState className="mt-4">Không có booking đã duyệt đang chờ check-in trong PTN bạn quản lý.</EmptyState>;
 
   return (
-    <div className="mt-4 grid gap-5 lg:grid-cols-[minmax(0,1.25fr)_minmax(280px,0.75fr)]">
-      <div>
+    <div className="mt-4">
+      <div className="max-w-3xl">
         <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200" htmlFor="face-booking">
           Thành viên và ca sử dụng
           <select id="face-booking" className="mt-2 min-h-11 w-full rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:text-white" disabled={cameraActive} value={bookingId} onChange={(event) => setBookingId(event.target.value)}>
@@ -240,25 +252,41 @@ export function ManagerFaceCheckinPanel({ onCompleted }: { onCompleted: (booking
             {candidates.data?.map((candidate) => <option key={candidate.bookingId} value={candidate.bookingId}>{candidate.studentName ?? candidate.studentEmail} — {candidate.labName} — {new Date(candidate.startTime).toLocaleString('vi-VN')}</option>)}
           </select>
         </label>
-        <div className="relative mt-4 aspect-video overflow-hidden rounded-md bg-slate-950">
-          {cameraActive ? <video ref={videoRef} autoPlay muted playsInline className="h-full w-full object-cover" aria-label="Camera nhận diện khuôn mặt tại bàn check-in" onLoadedMetadata={() => setCameraReady(true)} /> : <div className="flex h-full items-center justify-center text-slate-400"><ScanFace aria-hidden="true" className="h-16 w-16" /></div>}
-          {cameraActive ? <div aria-hidden="true" className="pointer-events-none absolute inset-x-1/4 inset-y-4 rounded-full border-2 border-dashed border-white/90 shadow-[0_0_0_999px_rgba(15,23,42,0.28)]" /> : null}
-          {cameraActive ? <p aria-live="assertive" className="absolute inset-x-3 bottom-3 rounded bg-slate-950/80 px-3 py-2 text-center text-sm font-semibold text-white">{instruction}</p> : null}
-        </div>
         <div className="mt-3 flex flex-wrap gap-2">
           <Button disabled={!bookingId || cameraActive} type="button" onClick={() => void startCamera()}><Camera aria-hidden="true" className="h-4 w-4" /> Mở camera và tự động nhận diện</Button>
-          {cameraActive ? <Button type="button" variant="outline" onClick={stopCamera}>Tắt camera</Button> : null}
         </div>
-        {localError ? <p className="mt-3 rounded-md border border-red-200 bg-red-50 p-3 text-sm font-medium text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-200" role="alert">{localError}</p> : null}
+        {localError && !cameraDialogOpen ? <p className="mt-3 rounded-md border border-red-200 bg-red-50 p-3 text-sm font-medium text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-200" role="alert">{localError}</p> : null}
       </div>
-      <section className="rounded-md border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-950" aria-label="Điều kiện nhận diện thời gian thực">
-        <h3 className="font-semibold text-slate-950 dark:text-white">Điều kiện thời gian thực</h3>
-        <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">Camera tự chụp khi tất cả điều kiện ổn định. Không hỗ trợ chọn ảnh có sẵn.</p>
-        <ul className="mt-4 space-y-2 text-sm">
-          {criteria.map(([label, passed]) => <li className={`flex items-start gap-2 rounded px-2 py-2 ${cameraActive && passed ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200' : cameraActive ? 'bg-amber-50 text-amber-800 dark:bg-amber-950/50 dark:text-amber-200' : 'text-slate-600 dark:text-slate-300'}`} key={label}>{cameraActive && passed ? <CircleCheck aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0" /> : <CircleAlert aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0" />}<span>{label}</span></li>)}
-        </ul>
-        <p className="mt-4 text-xs leading-5 text-slate-500 dark:text-slate-400">Hệ thống chỉ so khớp 1:1 với hồ sơ của chủ booking đã chọn. Manager là người vận hành thiết bị và được ghi nhận trong nhật ký check-in.</p>
-      </section>
+
+      <Modal
+        backdropBlur
+        centered
+        closeDisabled={checkin.isPending || capturingRef.current}
+        closeOnEscape
+        isOpen={cameraDialogOpen}
+        onClose={closeCameraDialog}
+        size={completedBookingId ? 'lg' : 'full'}
+        subtitle={completedBookingId ? 'Kết quả nhận diện đã được ghi nhận.' : 'Căn khuôn mặt vào giữa khung oval và nhìn thẳng vào camera.'}
+        title={completedBookingId ? 'Kết quả Face ID' : 'Camera Face ID check-in'}
+      >
+        {completedBookingId ? (
+          <div className="flex flex-col items-center py-8 text-center" role="status">
+            <span className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-emerald-700"><CircleCheck aria-hidden="true" className="h-9 w-9" /></span>
+            <h3 className="mt-4 text-xl font-semibold text-slate-950">Check-in thành công</h3>
+            <p className="mt-2 text-sm text-slate-600">Booking #{completedBookingId} đã chuyển sang trạng thái “Đã xác nhận có mặt”.</p>
+            <Button className="mt-6" type="button" onClick={closeCameraDialog}>Hoàn tất</Button>
+          </div>
+        ) : (
+          <div className="mx-auto w-full max-w-[calc(72dvh*16/9)]">
+              <div className="relative aspect-video overflow-hidden rounded-md bg-slate-950 shadow-lg">
+                {cameraActive ? <video ref={videoRef} autoPlay muted playsInline className="h-full w-full object-cover" aria-label="Camera nhận diện khuôn mặt tại bàn check-in" onLoadedMetadata={() => setCameraReady(true)} /> : <div className="flex h-full items-center justify-center text-slate-400"><ScanFace aria-hidden="true" className="h-16 w-16" /></div>}
+                {cameraActive ? <div aria-hidden="true" className="pointer-events-none absolute inset-x-1/4 inset-y-4 rounded-full border-2 border-dashed border-white/90 shadow-[0_0_0_999px_rgba(15,23,42,0.28)]" /> : null}
+                {cameraActive ? <p aria-live="assertive" className="absolute inset-x-3 bottom-3 rounded bg-slate-950/80 px-3 py-2 text-center text-sm font-semibold text-white">{instruction}</p> : null}
+                {localError ? <p className="absolute inset-x-3 top-3 rounded bg-red-700/90 px-3 py-2 text-center text-sm font-medium text-white" role="alert">{localError}</p> : null}
+              </div>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }

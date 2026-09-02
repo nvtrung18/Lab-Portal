@@ -38,7 +38,7 @@ export function LabSlotsPage() {
       <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h2 className="text-xl font-semibold text-slate-950">Khung giờ sử dụng</h2>
+            <h1 className="text-xl font-semibold text-slate-950">Quản lý ca sử dụng</h1>
             <p className="mt-2 text-sm text-slate-600">
               Danh sách khung giờ sử dụng của PTN bạn quản lý.
             </p>

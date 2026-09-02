@@ -17,12 +17,14 @@ import {
   Sparkles,
   UserRoundCheck,
   UsersRound,
+  X,
   type LucideIcon,
 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { NavLink, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
 
 import { useCurrentUser } from '../modules/user/hooks';
+import { useNotifications, useRealtimeEvents } from '../modules/notification/hooks';
 import { clearAuthTokens, getStoredUser, type StoredUser } from '../shared/api';
 import { Button } from '../shared/components';
 import { ADMIN, LAB_MANAGER, STUDENT } from '../shared/constants/roles';
@@ -37,19 +39,18 @@ interface NavItem {
 
 const studentCoreNavItems: NavItem[] = [
   { label: 'Tổng quan', path: '/app/dashboard', group: 'Bắt đầu', icon: LayoutDashboard },
-  { label: 'Khám phá PTN', path: '/app/labs', group: 'Bắt đầu', icon: FlaskConical },
+  { label: 'Danh sách PTN', path: '/app/labs', group: 'Bắt đầu', icon: FlaskConical },
 ];
 
 const studentActiveMembershipNavItems: NavItem[] = [
   { label: 'PTN của tôi', path: '/app/other', group: 'Hoạt động PTN', icon: UsersRound },
-  { label: 'Ca sử dụng', path: '/app/my-bookings', group: 'Hoạt động PTN', icon: CalendarDays },
+  { label: 'Ca sử dụng của tôi', path: '/app/my-bookings', group: 'Hoạt động PTN', icon: CalendarDays },
   { label: 'Nghiên cứu khoa học', path: '/app/research', group: 'Hoạt động PTN', icon: Microscope },
   { label: 'Vi phạm & khiếu nại', path: '/app/penalties', group: 'Hoạt động PTN', icon: Scale },
 ];
 
 const studentSupportNavItems: NavItem[] = [
   { label: 'Trợ lý AI', path: '/app/assistant', group: 'Hỗ trợ và tài khoản', icon: Bot },
-  { label: 'Thông báo', path: '/app/notifications', group: 'Hỗ trợ và tài khoản', icon: Bell },
   { label: 'Hồ sơ khuôn mặt', path: '/app/face-profile', group: 'Hỗ trợ và tài khoản', icon: ScanFace },
   { label: 'Hồ sơ cá nhân', path: '/app/profile', group: 'Hỗ trợ và tài khoản', icon: CircleUserRound },
 ];
@@ -57,16 +58,15 @@ const studentSupportNavItems: NavItem[] = [
 const managerNavItems: NavItem[] = [
   { label: 'Tổng quan PTN', path: '/app/lab-overview', group: 'Điều hành hôm nay', icon: LayoutDashboard },
   { label: 'Trạm check-in', path: '/app/checkin-scan', group: 'Điều hành hôm nay', icon: ScanFace },
-  { label: 'Khung giờ sử dụng', path: '/app/lab-slots', group: 'Điều hành hôm nay', icon: CalendarDays },
-  { label: 'Hồ sơ ứng tuyển', path: '/app/applications', group: 'Thành viên', icon: ClipboardList },
+  { label: 'Quản lý ca sử dụng', path: '/app/lab-slots', group: 'Điều hành hôm nay', icon: CalendarDays },
+  { label: 'Đơn ứng tuyển', path: '/app/applications', group: 'Thành viên', icon: ClipboardList },
   { label: 'Thành viên PTN', path: '/app/lab-members', group: 'Thành viên', icon: UserRoundCheck },
-  { label: 'Vệ sinh PTN', path: '/app/cleaning', group: 'Vận hành PTN', icon: Sparkles },
+  { label: 'Phân công vệ sinh', path: '/app/cleaning', group: 'Vận hành PTN', icon: Sparkles },
   { label: 'Khiếu nại vi phạm', path: '/app/complaints', group: 'Vận hành PTN', icon: MessageSquareWarning },
   { label: 'Nghiên cứu khoa học', path: '/app/research', group: 'Vận hành PTN', icon: Microscope },
   { label: 'Nhật ký vận hành', path: '/app/operational-logs', group: 'Hỗ trợ và tài khoản', icon: Activity },
   { label: 'Kho tri thức AI', path: '/app/knowledge', group: 'Hỗ trợ và tài khoản', icon: BookOpenCheck },
   { label: 'Trợ lý AI', path: '/app/assistant', group: 'Hỗ trợ và tài khoản', icon: Bot },
-  { label: 'Thông báo', path: '/app/notifications', group: 'Hỗ trợ và tài khoản', icon: Bell },
   { label: 'Hồ sơ khuôn mặt', path: '/app/face-profile', group: 'Hỗ trợ và tài khoản', icon: ScanFace },
   { label: 'Hồ sơ cá nhân', path: '/app/profile', group: 'Hỗ trợ và tài khoản', icon: CircleUserRound },
 ];
@@ -144,23 +144,41 @@ export function MainLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const queryClient = useQueryClient();
-  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+  const [isNavOpen, setIsNavOpen] = useState(false);
   const storedUser = getStoredUser();
   const { data: currentUser } = useCurrentUser();
   const user = useMemo(() => buildUser(currentUser, storedUser), [currentUser, storedUser]);
+  useRealtimeEvents(Boolean(user));
+  const { data: notificationData } = useNotifications(0, 1);
   const roles = user?.roles.map(normalizeRole) ?? [];
   const isAdmin = roles.includes(ADMIN);
   const isManager = roles.includes(LAB_MANAGER);
   const isStudent = roles.includes(STUDENT);
   const managedLabId = getManagedLabId(user);
   const navItems = getNavItems(user, isManager);
-  const currentPageLabel = navItems.find(
-    (item) => location.pathname === item.path || location.pathname.startsWith(`${item.path}/`),
-  )?.label;
+  const currentPageLabel = location.pathname === '/app/notifications'
+    ? 'Thông báo'
+    : navItems.find(
+        (item) => location.pathname === item.path || location.pathname.startsWith(`${item.path}/`),
+      )?.label;
   const portalTitle = isManager ? 'Cổng quản lý PTN' : 'Cổng sinh viên';
   const roleLabel = isManager ? 'Quản lý PTN' : isStudent ? 'Sinh viên' : 'Chưa có vai trò';
   const shouldShowManagedLabEmptyState =
     isManager && !managedLabId && isLabScopedManagerPath(location.pathname);
+  const unreadCount = notificationData?.unreadCount ?? 0;
+
+  useEffect(() => {
+    setIsNavOpen(false);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    if (!isNavOpen) return undefined;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setIsNavOpen(false);
+    };
+    document.addEventListener('keydown', closeOnEscape);
+    return () => document.removeEventListener('keydown', closeOnEscape);
+  }, [isNavOpen]);
 
   const handleLogout = () => {
     clearAuthTokens();
@@ -174,67 +192,90 @@ export function MainLayout() {
 
   return (
     <div className="min-h-screen overflow-x-hidden bg-slate-100 text-slate-900">
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 overflow-y-auto border-r border-slate-200 bg-white px-4 py-6 shadow-sm lg:block">
-        <SidebarContent
-          navItems={navItems}
-          portalTitle={portalTitle}
-          roleLabel={roleLabel}
-          onNavigate={() => setIsMobileNavOpen(false)}
-        />
-      </aside>
-
-      {isMobileNavOpen ? (
-        <div className="fixed inset-0 z-40 lg:hidden">
+      <div
+        aria-hidden={!isNavOpen}
+        className={[
+          'fixed inset-0 z-40 transition-opacity duration-200',
+          isNavOpen ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0',
+        ].join(' ')}
+      >
           <button
             aria-label="Đóng menu"
-            className="absolute inset-0 bg-slate-950/40"
+            className="absolute inset-0 bg-slate-950/45 backdrop-blur-[1px]"
+            tabIndex={isNavOpen ? 0 : -1}
             type="button"
-            onClick={() => setIsMobileNavOpen(false)}
+            onClick={() => setIsNavOpen(false)}
           />
-          <aside className="relative h-full w-72 max-w-[85vw] overflow-y-auto bg-white px-4 py-5 shadow-xl">
+          <aside
+            id="main-navigation-drawer"
+            className={[
+              'relative h-full w-72 max-w-[85vw] overflow-y-auto bg-white px-4 py-5 shadow-xl transition-transform duration-200 ease-out',
+              isNavOpen ? 'translate-x-0' : '-translate-x-full',
+            ].join(' ')}
+          >
             <div className="mb-5 flex items-center justify-between gap-3">
               <div className="min-w-0">
                 <p className="truncate text-base font-semibold text-slate-950">{portalTitle}</p>
                 <p className="mt-1 text-xs font-medium text-slate-500">{roleLabel}</p>
               </div>
-              <Button size="sm" variant="outline" onClick={() => setIsMobileNavOpen(false)}>
-                Đóng
+              <Button
+                aria-label="Đóng menu"
+                size="sm"
+                tabIndex={isNavOpen ? 0 : -1}
+                variant="outline"
+                onClick={() => setIsNavOpen(false)}
+              >
+                <X aria-hidden="true" className="h-4 w-4" />
+                <span className="sr-only">Đóng</span>
               </Button>
             </div>
             <SidebarContent
               navItems={navItems}
               portalTitle={portalTitle}
               roleLabel={roleLabel}
-              onNavigate={() => setIsMobileNavOpen(false)}
+              onNavigate={() => setIsNavOpen(false)}
               compact
+              interactive={isNavOpen}
             />
           </aside>
-        </div>
-      ) : null}
+      </div>
 
-      <div className="min-w-0 lg:pl-64">
+      <div className="min-w-0">
         <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/95 px-4 py-3 shadow-sm backdrop-blur lg:px-8">
           <div className="flex min-w-0 items-center justify-between gap-3">
             <div className="flex min-w-0 items-center gap-3">
               <Button
                 aria-label="Mở menu"
-                className="shrink-0 lg:hidden"
+                aria-controls="main-navigation-drawer"
+                aria-expanded={isNavOpen}
+                className="shrink-0"
                 size="sm"
                 variant="outline"
-                onClick={() => setIsMobileNavOpen(true)}
+                onClick={() => setIsNavOpen(true)}
               >
                 <Menu aria-hidden="true" className="h-4 w-4" />
                 <span className="sr-only">Mở menu</span>
               </Button>
               <div className="min-w-0">
                 <p className="text-xs font-medium text-slate-500">{portalTitle}</p>
-                <h1 className="truncate text-lg font-semibold text-slate-950 sm:text-xl">
+                <p className="truncate text-lg font-semibold text-slate-950 sm:text-xl">
                   {currentPageLabel ?? 'Không gian làm việc'}
-                </h1>
+                </p>
               </div>
             </div>
 
             <div className="flex min-w-0 shrink-0 items-center justify-end gap-2 sm:gap-3">
+              <button
+                aria-label={unreadCount > 0 ? `Thông báo, ${unreadCount} chưa đọc` : 'Thông báo'}
+                className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-600 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 active:translate-y-0"
+                type="button"
+                onClick={() => navigate('/app/notifications')}
+              >
+                <Bell aria-hidden="true" className="h-5 w-5" />
+                {unreadCount > 0 ? (
+                  <span className="absolute right-1.5 top-1.5 h-2.5 w-2.5 rounded-full border-2 border-white bg-red-500" />
+                ) : null}
+              </button>
               <div className="hidden min-w-0 items-center gap-3 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 shadow-sm sm:flex">
                 <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-200 text-xs font-semibold text-slate-600">
                   {(user?.fullName || user?.email || 'U').charAt(0).toUpperCase()}
@@ -253,8 +294,10 @@ export function MainLayout() {
           </div>
         </header>
 
-        <main className="min-w-0 max-w-full px-4 py-6 lg:px-8">
-          {shouldShowManagedLabEmptyState ? <EmptyManagedLabState /> : <Outlet />}
+        <main className="mx-auto min-w-0 max-w-[1600px] px-4 py-6 sm:py-8 lg:px-8">
+          <div className={location.pathname.startsWith('/app/research') ? '' : 'page-enter'} key={location.pathname}>
+            {shouldShowManagedLabEmptyState ? <EmptyManagedLabState /> : <Outlet />}
+          </div>
         </main>
       </div>
     </div>
@@ -266,10 +309,18 @@ interface SidebarContentProps {
   portalTitle: string;
   roleLabel: string;
   compact?: boolean;
+  interactive?: boolean;
   onNavigate: () => void;
 }
 
-function SidebarContent({ navItems, portalTitle, roleLabel, compact = false, onNavigate }: SidebarContentProps) {
+function SidebarContent({
+  navItems,
+  portalTitle,
+  roleLabel,
+  compact = false,
+  interactive = true,
+  onNavigate,
+}: SidebarContentProps) {
   return (
     <>
       {!compact ? (
@@ -307,6 +358,7 @@ function SidebarContent({ navItems, portalTitle, roleLabel, compact = false, onN
                       : 'text-slate-600 hover:bg-slate-100 hover:text-slate-950',
                   ].join(' ')
                 }
+                tabIndex={interactive ? 0 : -1}
                 onClick={onNavigate}
               >
                 {Icon ? <Icon aria-hidden="true" className="h-4 w-4 shrink-0" /> : null}

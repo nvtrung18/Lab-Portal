@@ -18,6 +18,9 @@ import com.web.labportalbackend.common.enums.PenaltyStatus;
 import com.web.labportalbackend.common.enums.PenaltyType;
 import com.web.labportalbackend.common.enums.TimeSlotStatus;
 import com.web.labportalbackend.lab.entity.Laboratory;
+import com.web.labportalbackend.notification.enums.NotificationEventType;
+import com.web.labportalbackend.notification.enums.NotificationTargetModule;
+import com.web.labportalbackend.notification.service.NotificationEmitter;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -56,6 +59,9 @@ class BookingTaskServiceNoShowTest {
 
     @Mock
     private SystemConfigService systemConfigService;
+
+    @Mock
+    private NotificationEmitter notificationEmitter;
 
     @InjectMocks
     private BookingTaskServiceImpl bookingTaskService;
@@ -129,8 +135,20 @@ class BookingTaskServiceNoShowTest {
     @Test
     void completeEndedSessions_marksCheckedInAndInProgressBookingsCompleted() {
         Booking checkedIn = new Booking();
+        User firstUser = new User();
+        firstUser.setId(1L);
+        Laboratory lab = new Laboratory();
+        lab.setLabName("PTN Hóa học");
+        checkedIn.setId(11L);
+        checkedIn.setUser(firstUser);
+        checkedIn.setLab(lab);
         checkedIn.setStatus(BookingStatus.CHECKED_IN);
         Booking inProgress = new Booking();
+        User secondUser = new User();
+        secondUser.setId(2L);
+        inProgress.setId(12L);
+        inProgress.setUser(secondUser);
+        inProgress.setLab(lab);
         inProgress.setStatus(BookingStatus.IN_PROGRESS);
         TimeSlot endedSlot = new TimeSlot();
         endedSlot.setStatus(TimeSlotStatus.EXPIRED);
@@ -149,6 +167,12 @@ class BookingTaskServiceNoShowTest {
         assertEquals(TimeSlotStatus.CLOSED, endedSlot.getStatus());
         verify(bookingRepository).saveAll(List.of(checkedIn, inProgress));
         verify(timeSlotRepository).saveAll(List.of(endedSlot));
+        verify(notificationEmitter).emit(1L, NotificationEventType.BOOKING_SESSION_COMPLETED,
+                "Ca sử dụng đã kết thúc", "Ca sử dụng tại PTN Hóa học đã tự động kết thúc theo lịch.",
+                NotificationTargetModule.BOOKING, 11L, null);
+        verify(notificationEmitter).emit(2L, NotificationEventType.BOOKING_SESSION_COMPLETED,
+                "Ca sử dụng đã kết thúc", "Ca sử dụng tại PTN Hóa học đã tự động kết thúc theo lịch.",
+                NotificationTargetModule.BOOKING, 12L, null);
     }
 
     private SystemConfigResponse systemConfig(int checkinWindowMinutes) {

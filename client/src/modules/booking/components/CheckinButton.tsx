@@ -1,11 +1,12 @@
 import { useState } from 'react';
 
-import type { BookingResponse, FaceFallbackReason } from '../api';
-import { useCreateCheckinQr, useMyCheckinQrRequest } from '../hooks';
+import type { BookingResponse, CheckinQrHistoryResponse, FaceFallbackReason } from '../api';
+import { useCreateCheckinQr } from '../hooks';
 import { CheckinQrModal } from './CheckinQrModal';
 
 interface CheckinButtonProps {
   booking: BookingResponse;
+  qrHistory?: CheckinQrHistoryResponse;
 }
 
 const CHECKIN_BEFORE_START_MINUTES = 5;
@@ -27,13 +28,12 @@ function getWindowState(startTime: string) {
   return 'open';
 }
 
-export function CheckinButton({ booking }: CheckinButtonProps) {
+export function CheckinButton({ booking, qrHistory }: CheckinButtonProps) {
   const [isQrOpen, setIsQrOpen] = useState(false);
   const [fallbackReason, setFallbackReason] = useState<FaceFallbackReason | ''>('');
   const [customReason, setCustomReason] = useState('');
   const createQr = useCreateCheckinQr();
-  const qrRequest = useMyCheckinQrRequest(booking.id, Boolean(createQr.data?.requestId));
-  const qr = qrRequest.data ?? createQr.data;
+  const qr = qrHistory ?? createQr.data;
 
   if (booking.status === 'CHECKED_IN') {
     return (
@@ -64,43 +64,80 @@ export function CheckinButton({ booking }: CheckinButtonProps) {
   const handleCreateQr = async () => {
     if (!fallbackReason) return;
     await createQr.mutateAsync({ bookingId: booking.id, fallbackReason, customReason: fallbackReason === 'OTHER' ? customReason.trim() : undefined });
-    setIsQrOpen(true);
   };
+
+  if (qr?.status === 'APPROVED') {
+    return (
+      <>
+        <button
+          className="w-full rounded-md bg-blue-700 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-800"
+          type="button"
+          onClick={() => setIsQrOpen(true)}
+        >
+          Xem mã QR đã được cấp
+        </button>
+        <CheckinQrModal
+          booking={booking}
+          qr={qr}
+          isOpen={isQrOpen}
+          isCreating={false}
+          onClose={() => setIsQrOpen(false)}
+        />
+      </>
+    );
+  }
+
+  if (qr?.status === 'PENDING') {
+    return (
+      <button
+        className="w-full rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-700"
+        disabled
+        type="button"
+      >
+        Đã gửi yêu cầu – chờ thông báo
+      </button>
+    );
+  }
 
   return (
     <>
-      <label className="mb-2 block text-xs font-semibold text-slate-600" htmlFor={`fallback-reason-${booking.id}`}>
-        Lý do dùng QR fallback
-        <select
-          id={`fallback-reason-${booking.id}`}
-          className="mt-1 min-h-11 w-full rounded-md border border-slate-300 bg-white px-2 text-sm text-slate-900"
-          value={fallbackReason}
-          onChange={(event) => setFallbackReason(event.target.value as FaceFallbackReason | '')}
+      <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_minmax(14rem,auto)] md:items-end">
+        <div>
+          <label className="block text-xs font-semibold text-slate-600" htmlFor={`fallback-reason-${booking.id}`}>
+            Lý do cần dùng mã QR
+            <select
+              id={`fallback-reason-${booking.id}`}
+              className="mt-1.5 min-h-11 w-full rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+              value={fallbackReason}
+              onChange={(event) => setFallbackReason(event.target.value as FaceFallbackReason | '')}
+            >
+              <option value="">Chọn lý do</option>
+              <option value="FACE_DISABLED">Face Check-in đang tắt</option>
+              <option value="FACE_SERVICE_UNAVAILABLE">Dịch vụ Face không khả dụng</option>
+              <option value="FACE_PROFILE_UNAVAILABLE">Chưa có Face Profile</option>
+              <option value="OTHER">Lý do khác</option>
+            </select>
+          </label>
+          {fallbackReason === 'OTHER' ? (
+            <textarea
+              aria-label="Lý do khác"
+              className="mt-2 min-h-20 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+              maxLength={1000}
+              placeholder="Mô tả ngắn lý do cần dùng mã QR"
+              value={customReason}
+              onChange={(event) => setCustomReason(event.target.value)}
+            />
+          ) : null}
+        </div>
+        <button
+          className="min-h-11 w-full rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600"
+          disabled={disabled}
+          type="button"
+          onClick={handleCreateQr}
         >
-          <option value="">Chọn lý do</option>
-          <option value="FACE_DISABLED">Face Check-in đang tắt</option>
-          <option value="FACE_SERVICE_UNAVAILABLE">Dịch vụ Face không khả dụng</option>
-          <option value="FACE_PROFILE_UNAVAILABLE">Chưa có Face Profile</option>
-          <option value="OTHER">Lý do khác</option>
-        </select>
-      </label>
-      {fallbackReason === 'OTHER' ? (
-        <textarea
-          className="mb-2 min-h-20 w-full rounded-md border border-slate-300 px-2 py-2 text-sm"
-          maxLength={1000}
-          placeholder="Nhập lý do xin tạo QR"
-          value={customReason}
-          onChange={(event) => setCustomReason(event.target.value)}
-        />
-      ) : null}
-      <button
-        className="w-full rounded-md bg-slate-900 px-3 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:bg-slate-400"
-        disabled={disabled}
-        type="button"
-        onClick={handleCreateQr}
-      >
-        {createQr.isPending ? 'Đang tạo mã QR...' : text}
-      </button>
+          {createQr.isPending ? 'Đang gửi yêu cầu...' : text}
+        </button>
+      </div>
       <CheckinQrModal
         booking={booking}
         qr={qr}

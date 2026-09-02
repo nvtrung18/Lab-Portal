@@ -1,3 +1,4 @@
+import { X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 import { PENDING_TOAST_KEY, TOAST_EVENT, type ToastPayload } from './toast';
@@ -49,7 +50,7 @@ export function ToastContainer() {
       return undefined;
     }
 
-    const timeoutId = window.setTimeout(() => setToast(null), 3000);
+    const timeoutId = window.setTimeout(() => setToast(null), 5000);
     return () => window.clearTimeout(timeoutId);
   }, [toast]);
 
@@ -58,16 +59,24 @@ export function ToastContainer() {
   }
 
   return (
-    <div className="fixed inset-x-3 bottom-3 z-[60] sm:inset-x-auto sm:bottom-4 sm:right-4 sm:w-96 sm:max-w-[calc(100vw-2rem)]">
+    <div className="toast-enter fixed inset-x-3 bottom-3 z-[60] sm:inset-x-auto sm:bottom-4 sm:right-4 sm:w-96 sm:max-w-[calc(100vw-2rem)]">
       <div
         className={[
-          'break-words rounded-md border px-4 py-3 text-sm shadow-lg',
+          'relative break-words rounded-md border px-4 py-3 pr-11 text-sm shadow-lg',
           VARIANT_CLASSES[toast.variant],
         ].join(' ')}
         role={toast.variant === 'error' ? 'alert' : 'status'}
       >
-        <p className="font-semibold">{VARIANT_LABELS[toast.variant]}</p>
+        <p className="font-semibold">{toast.title ?? VARIANT_LABELS[toast.variant]}</p>
         <p className="mt-1">{toast.message}</p>
+        <button
+          aria-label="Đóng thông báo"
+          className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-md transition hover:bg-black/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-current"
+          type="button"
+          onClick={() => setToast(null)}
+        >
+          <X aria-hidden="true" className="h-4 w-4" />
+        </button>
       </div>
     </div>
   );

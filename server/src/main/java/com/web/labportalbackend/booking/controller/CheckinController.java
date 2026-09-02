@@ -8,6 +8,7 @@ import com.web.labportalbackend.booking.dto.response.BookingResponse;
 import com.web.labportalbackend.booking.dto.response.CheckinQrResponse;
 import com.web.labportalbackend.booking.dto.response.CheckinResponse;
 import com.web.labportalbackend.booking.dto.response.CheckinQrRequestResponse;
+import com.web.labportalbackend.booking.dto.response.CheckinQrHistoryResponse;
 import com.web.labportalbackend.booking.service.CheckinService;
 import com.web.labportalbackend.common.dto.Response;
 import io.swagger.v3.oas.annotations.Operation;
@@ -46,6 +47,13 @@ public class CheckinController {
     public ResponseEntity<Response<CheckinQrResponse>> getMyQrRequest(@RequestParam Long bookingId) {
         CheckinQrResponse result = checkinService.getCurrentStudentQrRequest(bookingId);
         return ResponseEntity.ok(Response.ok(result.getMessage(), result));
+    }
+
+    @GetMapping("/checkin/qr-requests/me/history")
+    @PreAuthorize("hasRole('STUDENT')")
+    @Operation(summary = "List the current student's QR history for active lab sessions")
+    public ResponseEntity<Response<List<CheckinQrHistoryResponse>>> getMyQrHistory() {
+        return ResponseEntity.ok(Response.ok(checkinService.getCurrentStudentQrHistory()));
     }
 
     @GetMapping("/checkin/qr-requests/pending")

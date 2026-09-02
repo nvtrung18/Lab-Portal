@@ -30,7 +30,7 @@ export interface CheckInResponse {
 
 export interface CheckinQrResponse {
   requestId: string;
-  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'USED';
   token?: string | null;
   expiresAt: string;
   message: string;
@@ -44,6 +44,16 @@ export interface CheckinQrRequestResponse {
   fallbackReason: FaceFallbackReason;
   reason: string;
   status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  expiresAt: string;
+}
+
+export interface CheckinQrHistoryResponse {
+  requestId: string;
+  bookingId: number;
+  fallbackReason: FaceFallbackReason;
+  reason: string;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'USED';
+  token?: string | null;
   expiresAt: string;
 }
 
@@ -92,6 +102,11 @@ export async function createCheckinQr(bookingId: number, fallbackReason: FaceFal
 
 export async function getMyCheckinQrRequest(bookingId: number): Promise<CheckinQrResponse> {
   const response = await apiClient.get<Response<CheckinQrResponse>>('/api/checkin/qr-requests/me', { params: { bookingId } });
+  return response.data.data;
+}
+
+export async function getMyCheckinQrHistory(): Promise<CheckinQrHistoryResponse[]> {
+  const response = await apiClient.get<Response<CheckinQrHistoryResponse[]>>('/api/checkin/qr-requests/me/history');
   return response.data.data;
 }
 

@@ -5,5 +5,6 @@ public enum NotificationTargetModule {
     REPORT,
     PROPOSAL,
     AI,
-    FACE
+    FACE,
+    BOOKING
 }

@@ -6,6 +6,8 @@ import { Button } from './Button';
 export type ModalSize = 'sm' | 'md' | 'lg' | 'xl' | '2xl' | 'full';
 
 interface ModalProps {
+  backdropBlur?: boolean;
+  centered?: boolean;
   children: ReactNode;
   closeDisabled?: boolean;
   closeLabel?: string;
@@ -28,6 +30,8 @@ const SIZE_CLASSES: Record<ModalSize, string> = {
 };
 
 export function Modal({
+  backdropBlur = false,
+  centered = false,
   children,
   closeDisabled = false,
   closeLabel = 'Đóng',
@@ -61,7 +65,7 @@ export function Modal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto overscroll-contain bg-slate-950/45 p-2 sm:px-4 sm:py-6">
+    <div className={`fixed inset-0 z-50 flex justify-center overflow-y-auto overscroll-contain bg-slate-950/45 p-2 sm:px-4 sm:py-6 ${centered ? 'items-center' : 'items-start'} ${backdropBlur ? 'backdrop-blur-sm' : ''}`}>
       <section
         aria-labelledby={titleId}
         aria-modal="true"

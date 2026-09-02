@@ -23,6 +23,9 @@ import com.web.labportalbackend.common.email.SlotCancelledEmailData;
 import com.web.labportalbackend.lab.entity.Laboratory;
 import com.web.labportalbackend.lab.repository.LaboratoryRepository;
 import com.web.labportalbackend.lab.repository.MembershipRepository;
+import com.web.labportalbackend.notification.enums.NotificationEventType;
+import com.web.labportalbackend.notification.enums.NotificationTargetModule;
+import com.web.labportalbackend.notification.service.NotificationEmitter;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -43,6 +46,9 @@ public class TimeSlotServiceImpl implements TimeSlotService {
     private static final List<TimeSlotStatus> HIDDEN_SLOT_STATUSES =
             List.of(TimeSlotStatus.CANCELLED, TimeSlotStatus.CLOSED, TimeSlotStatus.EXPIRED,
                     TimeSlotStatus.INACTIVE, TimeSlotStatus.ARCHIVED);
+    private static final List<TimeSlotStatus> MANAGER_HIDDEN_SLOT_STATUSES =
+            List.of(TimeSlotStatus.CANCELLED, TimeSlotStatus.CLOSED,
+                    TimeSlotStatus.INACTIVE, TimeSlotStatus.ARCHIVED);
 
     private final TimeSlotRepository timeSlotRepository;
     private final LaboratoryRepository laboratoryRepository;
@@ -52,6 +58,7 @@ public class TimeSlotServiceImpl implements TimeSlotService {
     private final EmailService emailService;
     private final SystemConfigService systemConfigService;
     private final AuditLogService auditLogService;
+    private final NotificationEmitter notificationEmitter;
 
     @Override
     @Transactional
@@ -93,14 +100,22 @@ public class TimeSlotServiceImpl implements TimeSlotService {
         Laboratory lab = laboratoryRepository.findById(labId)
                 .orElseThrow(() -> new EntityNotFoundException("Lab not found: " + labId));
 
-        assertCanViewSlots(getCurrentUser(), lab);
+        User currentUser = getCurrentUser();
+        assertCanViewSlots(currentUser, lab);
 
         SystemConfigResponse.BookingConfig bookingConfig = systemConfig().booking();
         Instant cutoff = bookingConfig.hidePastSlots() ? Instant.now() : Instant.EPOCH;
-        List<TimeSlotStatus> hiddenStatuses = bookingConfig.hideCancelledSlots()
-                ? HIDDEN_SLOT_STATUSES
-                : List.of(TimeSlotStatus.CLOSED, TimeSlotStatus.EXPIRED,
-                        TimeSlotStatus.INACTIVE, TimeSlotStatus.ARCHIVED);
+        List<TimeSlotStatus> hiddenStatuses;
+        if (currentUser.hasRole("LAB_MANAGER")) {
+            hiddenStatuses = bookingConfig.hideCancelledSlots()
+                    ? MANAGER_HIDDEN_SLOT_STATUSES
+                    : List.of(TimeSlotStatus.CLOSED, TimeSlotStatus.INACTIVE, TimeSlotStatus.ARCHIVED);
+        } else {
+            hiddenStatuses = bookingConfig.hideCancelledSlots()
+                    ? HIDDEN_SLOT_STATUSES
+                    : List.of(TimeSlotStatus.CLOSED, TimeSlotStatus.EXPIRED,
+                            TimeSlotStatus.INACTIVE, TimeSlotStatus.ARCHIVED);
+        }
         return timeSlotRepository.findUsableByLabId(labId, cutoff, hiddenStatuses).stream()
                 .map(this::toResponse)
                 .toList();
@@ -147,6 +162,17 @@ public class TimeSlotServiceImpl implements TimeSlotService {
         bookingRepository.saveAll(affectedBookings);
         TimeSlot savedSlot = timeSlotRepository.save(slot);
 
+        affectedBookings.forEach(booking -> notificationEmitter.emit(
+                booking.getUser().getId(),
+                NotificationEventType.BOOKING_CANCELLED,
+                "Ca sử dụng đã bị hủy",
+                "Quản lý đã hủy ca sử dụng tại " + savedSlot.getLab().getLabName()
+                        + ". Lý do: " + request.getReason().trim(),
+                NotificationTargetModule.BOOKING,
+                booking.getId(),
+                null
+        ));
+
         if (Boolean.TRUE.equals(request.getNotifyByEmail())) {
             notifySlotCancelled(currentUser, savedSlot, affectedBookings, request.getReason());
         }
@@ -186,6 +212,15 @@ public class TimeSlotServiceImpl implements TimeSlotService {
         bookingRepository.saveAll(activeBookings);
         slot.setStatus(TimeSlotStatus.CLOSED);
         TimeSlot saved = timeSlotRepository.save(slot);
+        activeBookings.forEach(booking -> notificationEmitter.emit(
+                booking.getUser().getId(),
+                NotificationEventType.BOOKING_SESSION_COMPLETED,
+                "Ca sử dụng đã kết thúc",
+                "Quản lý đã kết thúc ca sử dụng tại " + saved.getLab().getLabName() + ".",
+                NotificationTargetModule.BOOKING,
+                booking.getId(),
+                null
+        ));
         auditLogService.log(currentUser, AuditAction.COMPLETE_LAB_SESSION, AuditModule.BOOKING,
                 "TIME_SLOT", saved.getId(), "Manager đã kết thúc ca sử dụng lab.");
         return toResponse(saved);

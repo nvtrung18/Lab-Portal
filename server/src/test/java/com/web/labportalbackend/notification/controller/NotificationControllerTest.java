@@ -9,6 +9,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.web.labportalbackend.auth.security.JwtAuthenticationFilter;
@@ -17,6 +18,7 @@ import com.web.labportalbackend.notification.dto.NotificationResponse;
 import com.web.labportalbackend.notification.enums.NotificationEventType;
 import com.web.labportalbackend.notification.enums.NotificationTargetModule;
 import com.web.labportalbackend.notification.service.NotificationService;
+import com.web.labportalbackend.notification.service.RealtimeEventService;
 import java.time.Instant;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -29,6 +31,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 @WebMvcTest(
         controllers = NotificationController.class,
@@ -42,6 +45,19 @@ class NotificationControllerTest {
 
     @Autowired MockMvc mockMvc;
     @MockitoBean NotificationService notificationService;
+    @MockitoBean RealtimeEventService realtimeEventService;
+
+    @Test
+    void authenticatedUserCanOpenRealtimeStream() throws Exception {
+        when(realtimeEventService.subscribeCurrentUser()).thenReturn(new SseEmitter());
+
+        mockMvc.perform(get("/api/notifications/stream").contextPath("/api")
+                        .with(user("student").roles("STUDENT")))
+                .andExpect(status().isOk())
+                .andExpect(request().asyncStarted());
+
+        verify(realtimeEventService).subscribeCurrentUser();
+    }
 
     @Test
     void authenticatedUserCanListNotificationsWithBoundedPaging() throws Exception {
@@ -84,6 +100,7 @@ class NotificationControllerTest {
                 .andExpect(status().isUnauthorized());
 
         verifyNoInteractions(notificationService);
+        verifyNoInteractions(realtimeEventService);
     }
 
     @TestConfiguration
