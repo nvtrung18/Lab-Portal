@@ -342,12 +342,12 @@ VALUES
     (@ms1_id, @student06_id, 'Tổng hợp tài liệu nhận diện khuôn mặt', 'Tập hợp các tài liệu khảo sát và viết báo cáo tổng quan.', '2026-07-02', 'WAITING_REVIEW', 90, TRUE, FALSE, NOW(6), NOW(6)),
     
     -- Mốc 2: Xây dựng tập dữ liệu thử nghiệm
-    (@ms2_id, @student09_id, 'Thu thập ảnh mẫu', 'Chụp ảnh chân dung của các thành viên Lab ở nhiều góc độ và điều kiện ánh sáng.', '2026-07-02', 'DOING', 40, TRUE, FALSE, NOW(6), NOW(6)),
+    (@ms2_id, @student09_id, 'Thu thập ảnh mẫu', 'Chụp ảnh chân dung của các thành viên Lab ở nhiều góc độ và điều kiện ánh sáng.', '2026-07-02', 'IN_PROGRESS', 40, TRUE, FALSE, NOW(6), NOW(6)),
     (@ms2_id, @student10_id, 'Chuẩn hóa ảnh đầu vào', 'Viết code tiền xử lý, căn chỉnh (align) và crop khuôn mặt về kích thước 160x160.', '2026-07-02', 'TODO', 0, TRUE, FALSE, NOW(6), NOW(6)),
     (@ms2_id, @student09_id, 'Gắn nhãn dữ liệu thử nghiệm', 'Gắn nhãn ID tương ứng cho từng tập ảnh chân dung đã chụp.', '2026-07-02', 'NEEDS_REVISION', 80, TRUE, FALSE, NOW(6), NOW(6)),
     
     -- Mốc 3: Phát triển API nhận diện khuôn mặt
-    (@ms3_id, @student06_id, 'Thiết kế API nhận diện', 'Thiết kế các endpoint nhận diện và cấu trúc DB lưu trữ vector đặc trưng.', '2026-07-02', 'DOING', 30, TRUE, FALSE, NOW(6), NOW(6)),
+    (@ms3_id, @student06_id, 'Thiết kế API nhận diện', 'Thiết kế các endpoint nhận diện và cấu trúc DB lưu trữ vector đặc trưng.', '2026-07-02', 'IN_PROGRESS', 30, TRUE, FALSE, NOW(6), NOW(6)),
     (@ms3_id, @student07_id, 'Tích hợp model vào backend', 'Triển khai inference model FaceNet/ArcFace trên backend Spring Boot.', '2026-07-02', 'WAITING_REVIEW', 90, TRUE, FALSE, NOW(6), NOW(6)),
     
     -- Mốc 4: Tích hợp giao diện check-in
@@ -649,22 +649,22 @@ INSERT INTO tasks
 VALUES
     -- Robotics Lab Tasks
     (@robot_ms1_id, @student16_id, 'Tìm hiểu thuật toán A*', 'Nghiên cứu cấu trúc và nguyên lý thuật toán A* trên đồ thị.', '2026-07-02', 'DONE', 100, TRUE, FALSE, NOW(6), NOW(6)),
-    (@robot_ms2_id, @student17_id, 'Thu thập dữ liệu cảm biến Lidar', 'Kết nối cảm biến Lidar và đo đạc khoảng cách vật cản.', '2026-07-02', 'DOING', 50, TRUE, FALSE, NOW(6), NOW(6)),
+    (@robot_ms2_id, @student17_id, 'Thu thập dữ liệu cảm biến Lidar', 'Kết nối cảm biến Lidar và đo đạc khoảng cách vật cản.', '2026-07-02', 'IN_PROGRESS', 50, TRUE, FALSE, NOW(6), NOW(6)),
     (@robot_ms2_id, @student18_id, 'Lập trình thuật toán tránh vật cản', 'Viết hàm điều khiển hướng robot dựa trên khoảng cách Lidar.', '2026-07-02', 'TODO', 0, TRUE, FALSE, NOW(6), NOW(6)),
 
     -- Data Science Lab Tasks
     (@ds_ms1_id, @student03_id, 'Trích xuất log sử dụng máy tính', 'Viết script trích xuất lịch sử log sử dụng máy tính phòng lab.', '2026-07-02', 'DONE', 100, TRUE, FALSE, NOW(6), NOW(6)),
-    (@ds_ms1_id, @student04_id, 'Làm sạch dữ liệu thô', 'Lọc bỏ dữ liệu null, chuẩn hóa các trường thông tin đăng nhập.', '2026-07-02', 'DOING', 40, TRUE, FALSE, NOW(6), NOW(6)),
+    (@ds_ms1_id, @student04_id, 'Làm sạch dữ liệu thô', 'Lọc bỏ dữ liệu null, chuẩn hóa các trường thông tin đăng nhập.', '2026-07-02', 'IN_PROGRESS', 40, TRUE, FALSE, NOW(6), NOW(6)),
     (@ds_ms2_id, @student05_id, 'Huấn luyện mô hình phân cụm K-Means', 'Xây dựng mô hình phân cụm tìm ra nhóm người dùng tích cực.', '2026-07-02', 'TODO', 0, TRUE, FALSE, NOW(6), NOW(6)),
 
     -- Cybersecurity Lab Tasks
     (@cyber_ms1_id, @student04_id, 'Cấu hình Snort IDS trên Gateway', 'Cài đặt và cấu hình Snort IDS lắng nghe trên cổng mạng gateway.', '2026-07-02', 'DONE', 100, TRUE, FALSE, NOW(6), NOW(6)),
-    (@cyber_ms1_id, @student05_id, 'Giả lập tấn công Port Scan', 'Sử dụng Nmap để quét cổng và tạo lưu lượng traffic tấn công.', '2026-07-02', 'DOING', 60, TRUE, FALSE, NOW(6), NOW(6)),
+    (@cyber_ms1_id, @student05_id, 'Giả lập tấn công Port Scan', 'Sử dụng Nmap để quét cổng và tạo lưu lượng traffic tấn công.', '2026-07-02', 'IN_PROGRESS', 60, TRUE, FALSE, NOW(6), NOW(6)),
     (@cyber_ms2_id, @student06_id, 'Viết luật phát hiện Port Scan', 'Định nghĩa rule Snort cảnh báo khi có nhiều kết nối TCP SYN trong 1s.', '2026-07-02', 'TODO', 0, TRUE, FALSE, NOW(6), NOW(6)),
 
     -- IoT Innovation Lab Tasks
     (@iot_ms1_id, @student05_id, 'Sơ đồ nguyên lý ESP32 và DHT22', 'Vẽ sơ đồ nguyên lý kết nối vi điều khiển ESP32 và cảm biến DHT22.', '2026-07-02', 'DONE', 100, TRUE, FALSE, NOW(6), NOW(6)),
-    (@iot_ms1_id, @student06_id, 'Lập trình đọc dữ liệu cảm biến', 'Viết code đọc nhiệt độ và độ ẩm từ DHT22 gửi qua cổng Serial.', '2026-07-02', 'DOING', 50, TRUE, FALSE, NOW(6), NOW(6)),
+    (@iot_ms1_id, @student06_id, 'Lập trình đọc dữ liệu cảm biến', 'Viết code đọc nhiệt độ và độ ẩm từ DHT22 gửi qua cổng Serial.', '2026-07-02', 'IN_PROGRESS', 50, TRUE, FALSE, NOW(6), NOW(6)),
     (@iot_ms2_id, @student07_id, 'Cấu hình MQTT Broker và Publish', 'Lập trình gửi dữ liệu nhiệt độ độ ẩm lên MQTT broker công cộng.', '2026-07-02', 'TODO', 0, TRUE, FALSE, NOW(6), NOW(6));
 
 -- Retrieve Task IDs for other labs

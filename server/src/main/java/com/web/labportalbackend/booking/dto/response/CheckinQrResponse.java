@@ -13,6 +13,12 @@ import java.time.Instant;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CheckinQrResponse {
+    @JsonProperty("requestId")
+    private String requestId;
+
+    @JsonProperty("status")
+    private String status;
+
     @JsonProperty("token")
     private String token;
 

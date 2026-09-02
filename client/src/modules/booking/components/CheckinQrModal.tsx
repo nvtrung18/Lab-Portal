@@ -79,7 +79,9 @@ export function CheckinQrModal({
     return null;
   }
 
-  const expired = Boolean(qr) && remainingSeconds <= 0;
+  const expired = Boolean(qr?.token) && remainingSeconds <= 0;
+  const pending = qr?.status === 'PENDING';
+  const rejected = qr?.status === 'REJECTED';
 
   return (
     <Modal
@@ -88,8 +90,8 @@ export function CheckinQrModal({
           <Button disabled={isCreating} onClick={onClose} variant="outline">
             Đóng
           </Button>
-          <Button disabled={!expired} loading={isCreating} loadingText="Đang tạo..." onClick={onRegenerate}>
-            Tạo lại mã QR
+          <Button disabled={!expired && !rejected} loading={isCreating} loadingText="Đang gửi..." onClick={onRegenerate}>
+            Gửi lại yêu cầu
           </Button>
         </>
       )}
@@ -99,7 +101,7 @@ export function CheckinQrModal({
     >
       <section className="text-center">
         <p className="mt-2 text-sm text-slate-600">
-          Vui lòng đưa mã này cho quản lý PTN quét để xác nhận có mặt.
+          {pending ? 'Yêu cầu đã gửi tới quản lý PTN. Màn hình sẽ tự cập nhật khi được duyệt.' : rejected ? 'Quản lý PTN đã từ chối yêu cầu QR.' : 'Vui lòng đưa mã này cho quản lý PTN quét để xác nhận có mặt.'}
         </p>
 
         <div className="mt-5 rounded-lg border border-slate-200 bg-slate-50 p-4">
@@ -117,7 +119,7 @@ export function CheckinQrModal({
         ) : null}
 
         <p className="mt-4 text-sm font-medium text-slate-700">
-          {expired ? 'Mã QR đã hết hạn.' : `Mã QR hết hạn sau ${remainingSeconds} giây.`}
+          {pending ? 'Đang chờ duyệt.' : rejected ? 'Yêu cầu đã bị từ chối.' : expired ? 'Mã QR đã hết hạn.' : `Mã QR hết hạn sau ${remainingSeconds} giây.`}
         </p>
         <p className="mt-1 text-xs text-slate-500">
           Đăng ký #{booking.id} - {booking.labName ?? 'PTN'}

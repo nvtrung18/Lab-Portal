@@ -86,6 +86,13 @@ public class TimeSlotController {
         return ResponseEntity.ok(Response.ok("Time slot cancelled successfully", slot));
     }
 
+    @PatchMapping("/slots/{slotId}/complete")
+    @PreAuthorize("hasRole('LAB_MANAGER')")
+    @Operation(summary = "Complete an active lab session", description = "Close a currently running time slot managed by the current lab manager")
+    public ResponseEntity<Response<TimeSlotResponse>> completeSlot(@PathVariable Long slotId) {
+        return ResponseEntity.ok(Response.ok("Đã kết thúc ca sử dụng lab.", timeSlotService.completeSlot(slotId)));
+    }
+
     @DeleteMapping("/slots/{slotId}")
     @PreAuthorize("hasRole('LAB_MANAGER')")
     @Operation(summary = "Delete time slot", description = "Soft-delete a time slot")

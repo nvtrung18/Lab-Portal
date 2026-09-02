@@ -14,5 +14,6 @@ public interface TimeSlotService {
     TimeSlotResponse getSlotById(Long slotId);
     TimeSlotResponse updateSlotStatus(Long slotId, String status);
     TimeSlotResponse cancelSlot(Long slotId, CancelTimeSlotRequest request);
+    TimeSlotResponse completeSlot(Long slotId);
     void deleteSlot(Long slotId);
 }

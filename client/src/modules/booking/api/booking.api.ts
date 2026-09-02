@@ -29,12 +29,25 @@ export interface CheckInResponse {
 }
 
 export interface CheckinQrResponse {
-  token: string;
+  requestId: string;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  token?: string | null;
   expiresAt: string;
   message: string;
 }
 
-export type FaceFallbackReason = 'FACE_DISABLED' | 'FACE_SERVICE_UNAVAILABLE' | 'FACE_PROFILE_UNAVAILABLE';
+export interface CheckinQrRequestResponse {
+  requestId: string;
+  bookingId: number;
+  studentId: number;
+  studentName?: string | null;
+  fallbackReason: FaceFallbackReason;
+  reason: string;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  expiresAt: string;
+}
+
+export type FaceFallbackReason = 'FACE_DISABLED' | 'FACE_SERVICE_UNAVAILABLE' | 'FACE_PROFILE_UNAVAILABLE' | 'OTHER';
 
 export async function createBooking(slotId: number): Promise<BookingResponse> {
   const response = await apiClient.post<Response<BookingResponse>>('/api/bookings', { slotId });
@@ -72,8 +85,23 @@ export async function reviewBooking(payload: ReviewBookingPayload): Promise<Book
   return response.data.data;
 }
 
-export async function createCheckinQr(bookingId: number, fallbackReason: FaceFallbackReason): Promise<CheckinQrResponse> {
-  const response = await apiClient.post<Response<CheckinQrResponse>>('/api/checkin/qr', { bookingId, fallbackReason });
+export async function createCheckinQr(bookingId: number, fallbackReason: FaceFallbackReason, customReason?: string): Promise<CheckinQrResponse> {
+  const response = await apiClient.post<Response<CheckinQrResponse>>('/api/checkin/qr-requests', { bookingId, fallbackReason, customReason });
+  return response.data.data;
+}
+
+export async function getMyCheckinQrRequest(bookingId: number): Promise<CheckinQrResponse> {
+  const response = await apiClient.get<Response<CheckinQrResponse>>('/api/checkin/qr-requests/me', { params: { bookingId } });
+  return response.data.data;
+}
+
+export async function getPendingCheckinQrRequests(): Promise<CheckinQrRequestResponse[]> {
+  const response = await apiClient.get<Response<CheckinQrRequestResponse[]>>('/api/checkin/qr-requests/pending');
+  return response.data.data;
+}
+
+export async function reviewCheckinQrRequest(requestId: string, approved: boolean): Promise<CheckinQrRequestResponse> {
+  const response = await apiClient.patch<Response<CheckinQrRequestResponse>>(`/api/checkin/qr-requests/${requestId}/review`, { approved });
   return response.data.data;
 }
 

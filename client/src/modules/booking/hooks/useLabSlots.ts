@@ -5,6 +5,7 @@ import { queryKeys } from '../../../shared/api';
 import { toast } from '../../../shared/components';
 import {
   cancelSlot,
+  completeSlot,
   createSlot,
   getLabSlots,
   getSlot,
@@ -34,6 +35,25 @@ export function useSlot(slotId?: number | null) {
     queryFn: async () => normalizeSlot(await getSlot(slotId as number)),
     enabled: Boolean(slotId),
     staleTime: 30000,
+    refetchInterval: 30000,
+  });
+}
+
+export function useCompleteSlot(labId?: number | null, slotId?: number | null) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => completeSlot(id),
+    onSuccess: () => {
+      if (labId) {
+        void queryClient.invalidateQueries({ queryKey: queryKeys.slots.byLab(labId) });
+        void queryClient.invalidateQueries({ queryKey: queryKeys.cleaning.overview(labId) });
+      }
+      void queryClient.invalidateQueries({ queryKey: queryKeys.slots.detail(slotId as number) });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.slots.bookings(slotId as number) });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.bookings.mine });
+      toast.success('Đã kết thúc ca sử dụng lab.');
+    },
+    onError: (error) => toast.error(getErrorMessage(error, 'Không thể kết thúc ca sử dụng lab.')),
   });
 }
 
