@@ -13,8 +13,8 @@ import com.web.labportalbackend.booking.mapper.BookingMapper;
 import com.web.labportalbackend.booking.repository.BookingRepository;
 import com.web.labportalbackend.booking.repository.TimeSlotRepository;
 import com.web.labportalbackend.booking.service.BookingService;
-import com.web.labportalbackend.booking.event.BookingEmailRequestedEvent;
 import com.web.labportalbackend.booking.event.BookingEmailType;
+import com.web.labportalbackend.booking.outbox.BookingOutboxService;
 import com.web.labportalbackend.common.email.BookingEmailData;
 import com.web.labportalbackend.common.enums.BookingStatus;
 import com.web.labportalbackend.common.enums.LabStatus;
@@ -28,7 +28,6 @@ import com.web.labportalbackend.notification.enums.NotificationTargetModule;
 import com.web.labportalbackend.notification.service.NotificationEmitter;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
@@ -51,7 +50,7 @@ public class BookingServiceImpl implements BookingService {
     private final LaboratoryRepository laboratoryRepository;
     private final SystemConfigService systemConfigService;
     private final NotificationEmitter notificationEmitter;
-    private final ApplicationEventPublisher eventPublisher;
+    private final BookingOutboxService bookingOutboxService;
 
     @Override
     @Transactional
@@ -299,8 +298,8 @@ public class BookingServiceImpl implements BookingService {
     }
 
     private void requestEmail(Booking booking, BookingEmailType type, BookingEmailData data) {
-        eventPublisher.publishEvent(new BookingEmailRequestedEvent(
-                booking.getId(), type, booking.getUser().getEmail(), data));
+        bookingOutboxService.enqueueEmail(
+                booking.getId(), type, booking.getUser().getEmail(), data);
     }
 
     private void assertManagerOwnsLab(User currentUser, Laboratory lab) {

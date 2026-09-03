@@ -76,10 +76,14 @@ booking:
     cron: "0 * * * * *"
   penalty:
     default-amount: 0
-  side-effects:
-    email:
-      max-attempts: ${BOOKING_EMAIL_MAX_ATTEMPTS:3}
-      retry-delay-ms: ${BOOKING_EMAIL_RETRY_DELAY_MS:500}
+  outbox:
+    poll-delay-ms: ${BOOKING_OUTBOX_POLL_DELAY_MS:1000}
+    batch-size: ${BOOKING_OUTBOX_BATCH_SIZE:25}
+    max-attempts: ${BOOKING_OUTBOX_MAX_ATTEMPTS:8}
+    retry-delay-ms: ${BOOKING_OUTBOX_RETRY_DELAY_MS:5000}
+    lock-timeout-ms: ${BOOKING_OUTBOX_LOCK_TIMEOUT_MS:60000}
+    retention-days: ${BOOKING_OUTBOX_RETENTION_DAYS:7}
+    cleanup-cron: "${BOOKING_OUTBOX_CLEANUP_CRON:0 30 2 * * *}"
 
 app:
   async:

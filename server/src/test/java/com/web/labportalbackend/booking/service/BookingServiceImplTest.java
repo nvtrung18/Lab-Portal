@@ -4,8 +4,8 @@ import com.web.labportalbackend.admin.systemconfig.service.SystemConfigService;
 import com.web.labportalbackend.auth.entity.User;
 import com.web.labportalbackend.auth.repository.UserRepository;
 import com.web.labportalbackend.booking.dto.request.ReviewBookingRequest;
-import com.web.labportalbackend.booking.event.BookingEmailRequestedEvent;
 import com.web.labportalbackend.booking.event.BookingEmailType;
+import com.web.labportalbackend.booking.outbox.BookingOutboxService;
 import com.web.labportalbackend.booking.entity.Booking;
 import com.web.labportalbackend.booking.entity.TimeSlot;
 import com.web.labportalbackend.booking.repository.BookingRepository;
@@ -26,11 +26,9 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.context.ApplicationEventPublisher;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
-import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -48,7 +46,7 @@ class BookingServiceImplTest {
         UserRepository userRepository = mock(UserRepository.class);
         LaboratoryRepository laboratoryRepository = mock(LaboratoryRepository.class);
         NotificationEmitter notificationEmitter = mock(NotificationEmitter.class);
-        ApplicationEventPublisher eventPublisher = mock(ApplicationEventPublisher.class);
+        BookingOutboxService outboxService = mock(BookingOutboxService.class);
         BookingServiceImpl service = new BookingServiceImpl(
                 bookingRepository,
                 timeSlotRepository,
@@ -57,7 +55,7 @@ class BookingServiceImplTest {
                 laboratoryRepository,
                 mock(SystemConfigService.class),
                 notificationEmitter,
-                eventPublisher
+                outboxService
         );
 
         User manager = mock(User.class);
@@ -111,6 +109,10 @@ class BookingServiceImplTest {
                 11L,
                 null
         );
-        verify(eventPublisher).publishEvent(isA(BookingEmailRequestedEvent.class));
+        verify(outboxService).enqueueEmail(
+                org.mockito.ArgumentMatchers.eq(11L),
+                org.mockito.ArgumentMatchers.eq(BookingEmailType.APPROVED),
+                org.mockito.ArgumentMatchers.eq("student@example.com"),
+                org.mockito.ArgumentMatchers.any());
     }
 }
