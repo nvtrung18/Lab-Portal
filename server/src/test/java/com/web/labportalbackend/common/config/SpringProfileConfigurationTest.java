@@ -36,6 +36,19 @@ class SpringProfileConfigurationTest {
     }
 
     @Test
+    void performanceProfileOptsIntoBoundedHttpAndHibernateMetrics() {
+        Properties properties = load("application-performance.yml");
+
+        assertThat(properties.getProperty("spring.config.activate.on-profile")).isEqualTo("performance");
+        assertThat(properties.getProperty("spring.jpa.properties.hibernate.generate_statistics")).isEqualTo("true");
+        assertThat(properties.getProperty("management.endpoints.web.exposure.include")).isEqualTo("health,metrics");
+        assertThat(properties.getProperty(
+                "management.metrics.distribution.percentiles-histogram.http.server.requests")).isEqualTo("true");
+        assertThat(properties.getProperty(
+                "management.metrics.distribution.percentiles.http.server.requests")).isEqualTo("0.5,0.95,0.99");
+    }
+
+    @Test
     void productionProfileFailsClearlyWhenRequiredDatabaseHostIsMissing() {
         StandardEnvironment environment = new StandardEnvironment();
         environment.getPropertySources().remove(StandardEnvironment.SYSTEM_ENVIRONMENT_PROPERTY_SOURCE_NAME);

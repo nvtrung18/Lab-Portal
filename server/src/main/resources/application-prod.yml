@@ -24,6 +24,9 @@ spring:
         enabled: ${REDIS_SSL_ENABLED}
 
 app:
+  auth:
+    google:
+      client-id: ${GOOGLE_CLIENT_ID}
   mail:
     from: ${MAIL_FROM:}
   cors:

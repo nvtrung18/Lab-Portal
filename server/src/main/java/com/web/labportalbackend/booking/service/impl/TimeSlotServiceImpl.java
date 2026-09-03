@@ -13,6 +13,7 @@ import com.web.labportalbackend.booking.dto.response.TimeSlotResponse;
 import com.web.labportalbackend.booking.entity.TimeSlot;
 import com.web.labportalbackend.booking.mapper.TimeSlotMapper;
 import com.web.labportalbackend.booking.repository.BookingRepository;
+import com.web.labportalbackend.booking.repository.TimeSlotBookingCounts;
 import com.web.labportalbackend.booking.repository.TimeSlotRepository;
 import com.web.labportalbackend.booking.service.TimeSlotService;
 import com.web.labportalbackend.common.enums.BookingStatus;
@@ -36,7 +37,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.time.Instant;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -116,8 +120,17 @@ public class TimeSlotServiceImpl implements TimeSlotService {
                     : List.of(TimeSlotStatus.CLOSED, TimeSlotStatus.EXPIRED,
                             TimeSlotStatus.INACTIVE, TimeSlotStatus.ARCHIVED);
         }
-        return timeSlotRepository.findUsableByLabId(labId, cutoff, hiddenStatuses).stream()
-                .map(this::toResponse)
+        List<TimeSlot> slots = timeSlotRepository.findUsableByLabId(labId, cutoff, hiddenStatuses);
+        if (slots.isEmpty()) {
+            return List.of();
+        }
+        List<Long> slotIds = slots.stream().map(TimeSlot::getId).toList();
+        Map<Long, TimeSlotBookingCounts> countsBySlotId = bookingRepository
+                .findActiveCountsByTimeSlotIds(slotIds)
+                .stream()
+                .collect(Collectors.toMap(TimeSlotBookingCounts::timeSlotId, Function.identity()));
+        return slots.stream()
+                .map(slot -> toResponse(slot, countsBySlotId.get(slot.getId())))
                 .toList();
     }
 
@@ -326,6 +339,18 @@ public class TimeSlotServiceImpl implements TimeSlotService {
                 BookingStatus.PENDING_APPROVAL
         );
         return TimeSlotMapper.toResponse(slot, approvedCount, checkedInCount, pendingCount);
+    }
+
+    private TimeSlotResponse toResponse(TimeSlot slot, TimeSlotBookingCounts counts) {
+        if (counts == null) {
+            return TimeSlotMapper.toResponse(slot, 0L, 0L, 0L);
+        }
+        return TimeSlotMapper.toResponse(
+                slot,
+                counts.approvedCount(),
+                counts.checkedInCount(),
+                counts.pendingCount()
+        );
     }
 
     private SystemConfigResponse systemConfig() {

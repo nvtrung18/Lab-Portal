@@ -7,6 +7,8 @@ import com.web.labportalbackend.auth.mapper.AuthMapper;
 import com.web.labportalbackend.auth.repository.RoleRepository;
 import com.web.labportalbackend.auth.repository.UserRepository;
 import com.web.labportalbackend.auth.security.JwtProvider;
+import com.web.labportalbackend.auth.security.GoogleIdentity;
+import com.web.labportalbackend.auth.security.GoogleIdentityVerifier;
 import com.web.labportalbackend.auth.service.AuthService;
 import com.web.labportalbackend.auth.service.RedisOtpService;
 import com.web.labportalbackend.admin.audit.enums.AuditAction;
@@ -58,6 +60,7 @@ public class AuthServiceImpl implements AuthService {
     private final EmailService emailService;
     private final PasswordEncoder passwordEncoder;
     private final JwtProvider jwtProvider;
+    private final GoogleIdentityVerifier googleIdentityVerifier;
     private final RedisOtpService redisOtpService;
     private final AuditLogService auditLogService;
 
@@ -71,6 +74,16 @@ public class AuthServiceImpl implements AuthService {
         SecurityContextHolder.getContext().setAuthentication(auth);
         User user = userRepository.findByUsername(auth.getName())
                 .orElseThrow(() -> new BadCredentialsException("User not found"));
+        return buildAuthResponse(user);
+    }
+
+    @Override
+    @Transactional
+    public AuthResponse loginWithGoogle(GoogleAuthRequest request) {
+        GoogleIdentity identity = googleIdentityVerifier.verify(request.getCredential());
+        User user = userRepository.findByGoogleSubject(identity.subject())
+                .orElseGet(() -> linkOrCreateGoogleUser(identity));
+        ensureLoginAllowed(user);
         return buildAuthResponse(user);
     }
 
@@ -554,6 +567,45 @@ public class AuthServiceImpl implements AuthService {
                 .email(user.getEmail())
                 .roles(roleNames)
                 .build();
+    }
+
+    private User linkOrCreateGoogleUser(GoogleIdentity identity) {
+        return userRepository.findByEmail(identity.email())
+                .map(existing -> linkExistingGoogleUser(existing, identity))
+                .orElseGet(() -> createGoogleUser(identity));
+    }
+
+    private User linkExistingGoogleUser(User user, GoogleIdentity identity) {
+        if (!identity.authoritativeEmail()) {
+            throw new BadCredentialsException(
+                    "Email đã có tài khoản. Vui lòng đăng nhập bằng mật khẩu trước khi liên kết Google.");
+        }
+        ensureLoginAllowed(user);
+        user.setGoogleSubject(identity.subject());
+        return userRepository.save(user);
+    }
+
+    private User createGoogleUser(GoogleIdentity identity) {
+        Role studentRole = roleRepository.findByName("STUDENT")
+                .orElseThrow(() -> new IllegalStateException("Default role STUDENT not found"));
+        User user = new User();
+        user.setEmail(identity.email());
+        user.setUsername(resolveUsername(null, identity.email()));
+        user.setPassword(passwordEncoder.encode(UUID.randomUUID().toString() + UUID.randomUUID()));
+        user.setGoogleSubject(identity.subject());
+        user.setFullName(identity.fullName());
+        user.setStatus(UserStatus.ACTIVE);
+        user.setActive(true);
+        user.addRole(studentRole);
+        return userRepository.save(user);
+    }
+
+    private void ensureLoginAllowed(User user) {
+        if (!Boolean.TRUE.equals(user.getActive())
+                || Boolean.TRUE.equals(user.getDeleted())
+                || user.getStatus() != UserStatus.ACTIVE) {
+            throw new BadCredentialsException("Account is not active");
+        }
     }
 
     private void verifyOtp(String key, String code) {

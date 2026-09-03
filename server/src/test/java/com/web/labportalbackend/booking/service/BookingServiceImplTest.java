@@ -4,12 +4,13 @@ import com.web.labportalbackend.admin.systemconfig.service.SystemConfigService;
 import com.web.labportalbackend.auth.entity.User;
 import com.web.labportalbackend.auth.repository.UserRepository;
 import com.web.labportalbackend.booking.dto.request.ReviewBookingRequest;
+import com.web.labportalbackend.booking.event.BookingEmailType;
+import com.web.labportalbackend.booking.outbox.BookingOutboxService;
 import com.web.labportalbackend.booking.entity.Booking;
 import com.web.labportalbackend.booking.entity.TimeSlot;
 import com.web.labportalbackend.booking.repository.BookingRepository;
 import com.web.labportalbackend.booking.repository.TimeSlotRepository;
 import com.web.labportalbackend.booking.service.impl.BookingServiceImpl;
-import com.web.labportalbackend.common.email.EmailService;
 import com.web.labportalbackend.common.enums.BookingStatus;
 import com.web.labportalbackend.common.enums.TimeSlotStatus;
 import com.web.labportalbackend.lab.entity.Laboratory;
@@ -45,15 +46,16 @@ class BookingServiceImplTest {
         UserRepository userRepository = mock(UserRepository.class);
         LaboratoryRepository laboratoryRepository = mock(LaboratoryRepository.class);
         NotificationEmitter notificationEmitter = mock(NotificationEmitter.class);
+        BookingOutboxService outboxService = mock(BookingOutboxService.class);
         BookingServiceImpl service = new BookingServiceImpl(
                 bookingRepository,
                 timeSlotRepository,
                 userRepository,
                 mock(MembershipRepository.class),
                 laboratoryRepository,
-                mock(EmailService.class),
                 mock(SystemConfigService.class),
-                notificationEmitter
+                notificationEmitter,
+                outboxService
         );
 
         User manager = mock(User.class);
@@ -107,5 +109,10 @@ class BookingServiceImplTest {
                 11L,
                 null
         );
+        verify(outboxService).enqueueEmail(
+                org.mockito.ArgumentMatchers.eq(11L),
+                org.mockito.ArgumentMatchers.eq(BookingEmailType.APPROVED),
+                org.mockito.ArgumentMatchers.eq("student@example.com"),
+                org.mockito.ArgumentMatchers.any());
     }
 }

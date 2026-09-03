@@ -10,6 +10,7 @@ import com.web.labportalbackend.auth.repository.UserRepository;
 import com.web.labportalbackend.booking.entity.Booking;
 import com.web.labportalbackend.booking.entity.TimeSlot;
 import com.web.labportalbackend.booking.repository.BookingRepository;
+import com.web.labportalbackend.booking.repository.TimeSlotBookingCounts;
 import com.web.labportalbackend.booking.repository.TimeSlotRepository;
 import com.web.labportalbackend.booking.service.impl.TimeSlotServiceImpl;
 import com.web.labportalbackend.common.email.EmailService;
@@ -128,6 +129,8 @@ class TimeSlotServiceImplTest {
                 null, null, new SystemConfigResponse.BookingConfig(10, 30, true, true), null, null));
         when(slotRepository.findUsableByLabId(eq(5L), any(Instant.class), anyList()))
                 .thenReturn(List.of(runningSlot));
+        when(bookingRepository.findActiveCountsByTimeSlotIds(List.of(9L)))
+                .thenReturn(List.of(new TimeSlotBookingCounts(9L, 4L, 2L, 1L)));
         SecurityContextHolder.getContext().setAuthentication(
                 new UsernamePasswordAuthenticationToken("manager", "n/a", List.of()));
 
@@ -135,9 +138,15 @@ class TimeSlotServiceImplTest {
 
         assertEquals(1, result.size());
         assertEquals(TimeSlotStatus.EXPIRED, result.getFirst().getStatus());
+        assertEquals(4L, result.getFirst().getApprovedCount());
+        assertEquals(2L, result.getFirst().getCheckedInCount());
+        assertEquals(1L, result.getFirst().getPendingCount());
         @SuppressWarnings("unchecked")
         ArgumentCaptor<List<TimeSlotStatus>> hiddenStatuses = ArgumentCaptor.forClass(List.class);
         verify(slotRepository).findUsableByLabId(eq(5L), any(Instant.class), hiddenStatuses.capture());
         assertFalse(hiddenStatuses.getValue().contains(TimeSlotStatus.EXPIRED));
+        verify(bookingRepository).findActiveCountsByTimeSlotIds(List.of(9L));
+        verify(bookingRepository, never()).countActiveByTimeSlotIdAndStatus(anyLong(), any());
+        verify(bookingRepository, never()).countActiveByTimeSlotIdAndStatusIn(anyLong(), anyList());
     }
 }

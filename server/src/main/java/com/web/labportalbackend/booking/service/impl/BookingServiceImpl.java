@@ -13,8 +13,9 @@ import com.web.labportalbackend.booking.mapper.BookingMapper;
 import com.web.labportalbackend.booking.repository.BookingRepository;
 import com.web.labportalbackend.booking.repository.TimeSlotRepository;
 import com.web.labportalbackend.booking.service.BookingService;
+import com.web.labportalbackend.booking.event.BookingEmailType;
+import com.web.labportalbackend.booking.outbox.BookingOutboxService;
 import com.web.labportalbackend.common.email.BookingEmailData;
-import com.web.labportalbackend.common.email.EmailService;
 import com.web.labportalbackend.common.enums.BookingStatus;
 import com.web.labportalbackend.common.enums.LabStatus;
 import com.web.labportalbackend.common.enums.TimeSlotStatus;
@@ -27,7 +28,6 @@ import com.web.labportalbackend.notification.enums.NotificationTargetModule;
 import com.web.labportalbackend.notification.service.NotificationEmitter;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
@@ -39,7 +39,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.util.List;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 public class BookingServiceImpl implements BookingService {
@@ -49,9 +48,9 @@ public class BookingServiceImpl implements BookingService {
     private final UserRepository userRepository;
     private final MembershipRepository membershipRepository;
     private final LaboratoryRepository laboratoryRepository;
-    private final EmailService emailService;
     private final SystemConfigService systemConfigService;
     private final NotificationEmitter notificationEmitter;
+    private final BookingOutboxService bookingOutboxService;
 
     @Override
     @Transactional
@@ -96,10 +95,8 @@ public class BookingServiceImpl implements BookingService {
                     null
             );
         }
-        safeSendEmail(() -> emailService.sendBookingCreatedEmail(
-                saved.getUser().getEmail(),
-                buildEmailData(saved, "Chờ phê duyệt", "Vui lòng chờ quản lý PTN phê duyệt.")
-        ));
+        requestEmail(saved, BookingEmailType.CREATED,
+                buildEmailData(saved, "Chờ phê duyệt", "Vui lòng chờ quản lý PTN phê duyệt."));
         return BookingMapper.toResponse(saved);
     }
 
@@ -175,10 +172,8 @@ public class BookingServiceImpl implements BookingService {
                     null
             );
         }
-        safeSendEmail(() -> emailService.sendBookingCancelledByStudentEmail(
-                saved.getUser().getEmail(),
-                buildEmailData(saved, "Sinh viên đã hủy", null)
-        ));
+        requestEmail(saved, BookingEmailType.CANCELLED_BY_STUDENT,
+                buildEmailData(saved, "Sinh viên đã hủy", null));
         refreshSlotFullStatus(booking.getTimeSlot());
     }
 
@@ -221,10 +216,8 @@ public class BookingServiceImpl implements BookingService {
                     saved.getId(),
                     null
             );
-            safeSendEmail(() -> emailService.sendBookingApprovedEmail(
-                    saved.getUser().getEmail(),
-                    buildEmailData(saved, "Đã phê duyệt", "Khi đến giờ sử dụng, sinh viên vui lòng mở hệ thống để tạo mã QR check-in và đưa cho quản lý PTN quét xác nhận.")
-            ));
+            requestEmail(saved, BookingEmailType.APPROVED,
+                    buildEmailData(saved, "Đã phê duyệt", "Khi đến giờ sử dụng, sinh viên vui lòng mở hệ thống để tạo mã QR check-in và đưa cho quản lý PTN quét xác nhận."));
         } else if (saved.getStatus() == BookingStatus.REJECTED) {
             String rejectionMessage = request.getNote() == null || request.getNote().isBlank()
                     ? "Đăng ký sử dụng " + saved.getLab().getLabName() + " không được phê duyệt."
@@ -239,10 +232,8 @@ public class BookingServiceImpl implements BookingService {
                     saved.getId(),
                     null
             );
-            safeSendEmail(() -> emailService.sendBookingRejectedEmail(
-                    saved.getUser().getEmail(),
-                    buildEmailData(saved, "Không được phê duyệt", request.getNote())
-            ));
+            requestEmail(saved, BookingEmailType.REJECTED,
+                    buildEmailData(saved, "Không được phê duyệt", request.getNote()));
         }
         return BookingMapper.toResponse(saved);
     }
@@ -306,12 +297,9 @@ public class BookingServiceImpl implements BookingService {
                 .build();
     }
 
-    private void safeSendEmail(Runnable emailAction) {
-        try {
-            emailAction.run();
-        } catch (RuntimeException ex) {
-            log.warn("Could not send booking notification email: {}", ex.getMessage());
-        }
+    private void requestEmail(Booking booking, BookingEmailType type, BookingEmailData data) {
+        bookingOutboxService.enqueueEmail(
+                booking.getId(), type, booking.getUser().getEmail(), data);
     }
 
     private void assertManagerOwnsLab(User currentUser, Laboratory lab) {

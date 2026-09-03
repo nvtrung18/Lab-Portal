@@ -8,6 +8,10 @@ export interface LoginRequest {
   password: string;
 }
 
+export interface GoogleAuthRequest {
+  credential: string;
+}
+
 export interface RegisterRequest {
   fullName: string;
   email: string;
@@ -125,8 +129,18 @@ export async function loginAPI(data: LoginRequest): Promise<LoginResult> {
     '/api/auth/login',
     data,
   );
+  return toLoginResult(response.data.data);
+}
 
-  const auth = response.data.data;
+export async function googleLoginAPI(data: GoogleAuthRequest): Promise<LoginResult> {
+  const response = await apiClient.post<Response<LoginResponse>>(
+    '/api/auth/google',
+    data,
+  );
+  return toLoginResult(response.data.data);
+}
+
+function toLoginResult(auth: LoginResponse): LoginResult {
   const token = auth.accessToken ?? auth.token;
 
   if (!token) {
@@ -136,25 +150,21 @@ export async function loginAPI(data: LoginRequest): Promise<LoginResult> {
   const bodyRole = extractRoleFromBody(auth);
 
   if (bodyRole) {
-    const role = normalizeRole(bodyRole);
-    console.log('[Auth] Role extracted from API body:', bodyRole, '=>', role);
     return {
       token,
       refreshToken: auth.refreshToken,
-      role,
+      role: normalizeRole(bodyRole),
       raw: auth,
       roleSource: 'body',
     };
   }
 
   const tokenRole = extractRoleFromToken(token);
-  const role = normalizeRole(tokenRole);
-  console.log('[Auth] Role extracted from JWT:', tokenRole, '=>', role);
 
   return {
     token,
     refreshToken: auth.refreshToken,
-    role,
+    role: normalizeRole(tokenRole),
     raw: auth,
     roleSource: 'jwt',
   };
