@@ -33,6 +33,13 @@ public class AuthController {
         return ResponseEntity.ok(Response.ok("Login successful", authResponse));
     }
 
+    @PostMapping("/google")
+    @Operation(summary = "Google sign-in", description = "Verify a Google ID token, then sign in or create a STUDENT account")
+    public ResponseEntity<Response<AuthResponse>> loginWithGoogle(@Valid @RequestBody GoogleAuthRequest request) {
+        AuthResponse authResponse = authService.loginWithGoogle(request);
+        return ResponseEntity.ok(Response.ok("Google sign-in successful", authResponse));
+    }
+
     @PostMapping("/register/send-code")
     @Operation(summary = "Send registration code", description = "Send registration OTP to email without creating a user")
     public ResponseEntity<Response<AuthEmailResponse>> sendRegistrationCode(@Valid @RequestBody RegisterSendCodeRequest request) {

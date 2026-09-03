@@ -7,7 +7,8 @@ import { useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 import { Eye, EyeOff } from 'lucide-react';
 
-import { loginAPI } from '../api';
+import { googleLoginAPI, loginAPI, type LoginResult } from '../api';
+import { GoogleSignInButton } from '../components';
 import { getPrimaryRedirectPath, useAuth } from '../hooks';
 import { USER_ME_QUERY_KEY } from '../../user/hooks';
 import type { Response } from '../../../shared/types';
@@ -66,6 +67,7 @@ export function LoginPage() {
   const { saveSession } = useAuth();
   const [serverError, setServerError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+  const [isGoogleSubmitting, setIsGoogleSubmitting] = useState(false);
 
   const {
     register,
@@ -79,23 +81,33 @@ export function LoginPage() {
     },
   });
 
+  const completeLogin = async (result: LoginResult) => {
+    queryClient.clear();
+    const { user, profile } = await saveSession(result.token);
+    queryClient.setQueryData(USER_ME_QUERY_KEY, profile);
+    const returnUrl = searchParams.get('returnUrl');
+    navigate(getSafeReturnPath(returnUrl, getPrimaryRedirectPath(user.roles)), { replace: true });
+  };
+
   const onSubmit = async (values: LoginFormValues) => {
     setServerError(null);
 
     try {
-      queryClient.clear();
-      const result = await loginAPI(values);
-      const { user, profile } = await saveSession(result.token);
-      queryClient.setQueryData(USER_ME_QUERY_KEY, profile);
-      console.log('[Auth] User profile loaded after login:', {
-        id: user.id,
-        email: user.email,
-        roles: user.roles,
-      });
-      const returnUrl = searchParams.get('returnUrl');
-      navigate(getSafeReturnPath(returnUrl, getPrimaryRedirectPath(user.roles)), { replace: true });
+      await completeLogin(await loginAPI(values));
     } catch (error) {
       setServerError(getErrorMessage(error));
+    }
+  };
+
+  const onGoogleCredential = async (credential: string) => {
+    setServerError(null);
+    setIsGoogleSubmitting(true);
+    try {
+      await completeLogin(await googleLoginAPI({ credential }));
+    } catch (error) {
+      setServerError(getErrorMessage(error));
+    } finally {
+      setIsGoogleSubmitting(false);
     }
   };
 
@@ -189,6 +201,16 @@ export function LoginPage() {
           Đăng nhập
         </Button>
       </form>
+
+      <div className="my-6 flex items-center gap-3" aria-hidden="true">
+        <span className="h-px flex-1 bg-slate-200" />
+        <span className="text-xs font-medium uppercase tracking-wide text-slate-500">hoặc</span>
+        <span className="h-px flex-1 bg-slate-200" />
+      </div>
+      <GoogleSignInButton
+        disabled={isSubmitting || isGoogleSubmitting}
+        onCredential={onGoogleCredential}
+      />
 
       <div className="mt-6 text-center text-sm text-slate-600">
         Chưa có tài khoản?{' '}

@@ -51,6 +51,7 @@ public class SecurityConfig {
      */
     private static final String[] PUBLIC_URLS = {
             "/auth/login",
+            "/auth/google",
             "/auth/register",
             "/auth/register/send-code",
             "/auth/register/verify-code",

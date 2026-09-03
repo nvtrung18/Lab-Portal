@@ -76,3 +76,8 @@ booking:
     cron: "0 * * * * *"
   penalty:
     default-amount: 0
+
+app:
+  auth:
+    google:
+      client-id: ${GOOGLE_CLIENT_ID:}

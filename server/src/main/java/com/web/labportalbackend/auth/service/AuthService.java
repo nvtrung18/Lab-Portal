@@ -8,6 +8,7 @@ import java.util.List;
  */
 public interface AuthService {
     AuthResponse login(LoginRequest request);
+    AuthResponse loginWithGoogle(GoogleAuthRequest request);
     AuthEmailResponse sendRegistrationCode(RegisterSendCodeRequest request);
     RegisterVerifyCodeResponse verifyRegistrationCode(VerifyRegisterRequest request);
     AuthEmailResponse register(RegisterRequest request);

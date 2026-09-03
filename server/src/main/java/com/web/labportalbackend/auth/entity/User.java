@@ -21,6 +21,7 @@ import java.util.Set;
 @Table(name = "users", indexes = {
         @Index(name = "idx_user_email", columnList = "email", unique = true),
         @Index(name = "idx_user_username", columnList = "username", unique = true),
+        @Index(name = "idx_user_google_subject", columnList = "google_subject", unique = true),
         @Index(name = "idx_user_status", columnList = "status")
 })
 @Getter
@@ -37,6 +38,9 @@ public class User extends BaseEntity {
 
     @Column(nullable = false)
     private String password;
+
+    @Column(name = "google_subject", unique = true, length = 255)
+    private String googleSubject;
 
     @Column(name = "full_name", length = 100)
     private String fullName;
@@ -59,6 +63,17 @@ public class User extends BaseEntity {
             inverseJoinColumns = @JoinColumn(name = "role_id")
     )
     private Set<Role> roles = new HashSet<>();
+
+    public User(String email, String username, String password, String fullName, String phone,
+                UserStatus status, Set<Role> roles) {
+        this.email = email;
+        this.username = username;
+        this.password = password;
+        this.fullName = fullName;
+        this.phone = phone;
+        this.status = status;
+        this.roles = roles;
+    }
 
     // --- convenience methods ---
 

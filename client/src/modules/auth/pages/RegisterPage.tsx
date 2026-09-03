@@ -3,8 +3,9 @@ import { type FormEvent, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 
-import { loginAPI, registerAPI, sendRegisterCodeAPI, verifyRegisterCodeAPI } from '../api';
-import { useAuth } from '../hooks';
+import { googleLoginAPI, loginAPI, registerAPI, sendRegisterCodeAPI, verifyRegisterCodeAPI } from '../api';
+import { GoogleSignInButton } from '../components';
+import { getPrimaryRedirectPath, useAuth } from '../hooks';
 import type { Response } from '../../../shared/types';
 import { Button } from '../../../shared/components';
 import { VALIDATION_MESSAGES } from '../../../shared/utils';
@@ -45,6 +46,7 @@ export function RegisterPage() {
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isGoogleSubmitting, setIsGoogleSubmitting] = useState(false);
 
   const normalizedEmail = email.trim().toLowerCase();
   const currentStepIndex = steps.findIndex((item) => item.key === step);
@@ -143,14 +145,41 @@ export function RegisterPage() {
     }
   };
 
+  const handleGoogleCredential = async (credential: string) => {
+    setError('');
+    setMessage('');
+    setIsGoogleSubmitting(true);
+    try {
+      const result = await googleLoginAPI({ credential });
+      const { user } = await saveSession(result.token);
+      navigate(getPrimaryRedirectPath(user.roles), { replace: true });
+    } catch (submitError) {
+      setError(getErrorMessage(submitError));
+    } finally {
+      setIsGoogleSubmitting(false);
+    }
+  };
+
   return (
     <section className="min-w-0 w-full rounded-lg border border-slate-200 bg-white p-5 shadow-sm sm:p-8">
       <h1 className="text-2xl font-semibold text-slate-950">Đăng ký tài khoản</h1>
       <p className="mt-2 break-words text-sm text-slate-600">
-        Tài khoản mới mặc định là STUDENT và cần xác thực email trước khi tạo.
+        Tài khoản mới mặc định là STUDENT. Bạn có thể dùng Google hoặc xác thực email.
       </p>
 
-      <div className="my-6 grid w-full grid-cols-3 items-center gap-2 text-center">
+      <div className="mt-6">
+        <GoogleSignInButton
+          disabled={isSubmitting || isGoogleSubmitting}
+          onCredential={handleGoogleCredential}
+        />
+      </div>
+      <div className="my-6 flex items-center gap-3" aria-hidden="true">
+        <span className="h-px flex-1 bg-slate-200" />
+        <span className="text-xs font-medium uppercase tracking-wide text-slate-500">hoặc đăng ký bằng email</span>
+        <span className="h-px flex-1 bg-slate-200" />
+      </div>
+
+      <div className="mb-6 grid w-full grid-cols-3 items-center gap-2 text-center">
         {steps.map((item, index) => (
           <div
             key={item.key}
