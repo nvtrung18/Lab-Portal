@@ -76,8 +76,17 @@ booking:
     cron: "0 * * * * *"
   penalty:
     default-amount: 0
+  side-effects:
+    email:
+      max-attempts: ${BOOKING_EMAIL_MAX_ATTEMPTS:3}
+      retry-delay-ms: ${BOOKING_EMAIL_RETRY_DELAY_MS:500}
 
 app:
+  async:
+    side-effects:
+      core-pool-size: ${SIDE_EFFECT_CORE_POOL_SIZE:2}
+      max-pool-size: ${SIDE_EFFECT_MAX_POOL_SIZE:4}
+      queue-capacity: ${SIDE_EFFECT_QUEUE_CAPACITY:200}
   auth:
     google:
       client-id: ${GOOGLE_CLIENT_ID:}
