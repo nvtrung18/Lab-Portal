@@ -37,7 +37,10 @@ export function useRealtimeEvents(enabled: boolean) {
         event.notificationEventType === 'BOOKING_APPROVED' ||
         event.notificationEventType === 'BOOKING_REJECTED' ||
         event.notificationEventType === 'BOOKING_CANCELLED' ||
-        event.notificationEventType === 'BOOKING_SESSION_COMPLETED'
+        event.notificationEventType === 'BOOKING_SESSION_COMPLETED' ||
+        event.notificationEventType === 'BOOKING_NO_SHOW' ||
+        event.notificationEventType === 'BOOKING_CHECKED_IN' ||
+        event.notificationEventType === 'PENALTY_CREATED'
       ) {
         void queryClient.invalidateQueries({ queryKey: queryKeys.bookings.mine });
         void queryClient.invalidateQueries({ queryKey: ['labSlots'] });

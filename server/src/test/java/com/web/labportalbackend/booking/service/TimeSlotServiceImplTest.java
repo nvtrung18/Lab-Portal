@@ -9,11 +9,11 @@ import com.web.labportalbackend.auth.entity.User;
 import com.web.labportalbackend.auth.repository.UserRepository;
 import com.web.labportalbackend.booking.entity.Booking;
 import com.web.labportalbackend.booking.entity.TimeSlot;
+import com.web.labportalbackend.booking.outbox.BookingOutboxService;
 import com.web.labportalbackend.booking.repository.BookingRepository;
 import com.web.labportalbackend.booking.repository.TimeSlotBookingCounts;
 import com.web.labportalbackend.booking.repository.TimeSlotRepository;
 import com.web.labportalbackend.booking.service.impl.TimeSlotServiceImpl;
-import com.web.labportalbackend.common.email.EmailService;
 import com.web.labportalbackend.common.enums.BookingStatus;
 import com.web.labportalbackend.common.enums.TimeSlotStatus;
 import com.web.labportalbackend.lab.entity.Laboratory;
@@ -34,6 +34,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
 class TimeSlotServiceImplTest {
@@ -52,8 +53,9 @@ class TimeSlotServiceImplTest {
         BookingRepository bookingRepository = mock(BookingRepository.class);
         AuditLogService auditLogService = mock(AuditLogService.class);
         NotificationEmitter notificationEmitter = mock(NotificationEmitter.class);
+        BookingOutboxService bookingOutboxService = mock(BookingOutboxService.class);
         TimeSlotServiceImpl service = new TimeSlotServiceImpl(slotRepository, labRepository,
-                membershipRepository, userRepository, bookingRepository, mock(EmailService.class),
+                membershipRepository, userRepository, bookingRepository, bookingOutboxService,
                 mock(SystemConfigService.class), auditLogService, notificationEmitter);
 
         User manager = mock(User.class);
@@ -72,8 +74,13 @@ class TimeSlotServiceImplTest {
         Booking booking = new Booking();
         User student = new User();
         student.setId(7L);
+        student.setEmail("student@example.com");
+        student.setFullName("Student A");
         booking.setId(11L);
         booking.setUser(student);
+        booking.setLab(lab);
+        booking.setStartTime(slot.getStartTime());
+        booking.setEndTime(slot.getEndTime());
         booking.setStatus(BookingStatus.CHECKED_IN);
 
         when(userRepository.findByUsername("manager")).thenReturn(Optional.of(manager));
@@ -95,6 +102,42 @@ class TimeSlotServiceImplTest {
         verify(notificationEmitter).emit(7L, NotificationEventType.BOOKING_SESSION_COMPLETED,
                 "Ca sử dụng đã kết thúc", "Quản lý đã kết thúc ca sử dụng tại PTN Vật lý.",
                 NotificationTargetModule.BOOKING, 11L, null);
+        verify(bookingOutboxService).enqueueEmail(eq(11L), eq(com.web.labportalbackend.booking.event.BookingEmailType.SESSION_COMPLETED),
+                eq("student@example.com"), any());
+    }
+
+    @Test
+    void managerCannotUseGenericStatusEndpointToChangeASlotWithActiveBookings() {
+        TimeSlotRepository slotRepository = mock(TimeSlotRepository.class);
+        LaboratoryRepository labRepository = mock(LaboratoryRepository.class);
+        MembershipRepository membershipRepository = mock(MembershipRepository.class);
+        UserRepository userRepository = mock(UserRepository.class);
+        BookingRepository bookingRepository = mock(BookingRepository.class);
+        TimeSlotServiceImpl service = new TimeSlotServiceImpl(slotRepository, labRepository,
+                membershipRepository, userRepository, bookingRepository, mock(BookingOutboxService.class),
+                mock(SystemConfigService.class), mock(AuditLogService.class), mock(NotificationEmitter.class));
+
+        User manager = mock(User.class);
+        when(manager.getId()).thenReturn(3L);
+        when(manager.hasRole("LAB_MANAGER")).thenReturn(true);
+        Laboratory lab = new Laboratory();
+        lab.setId(5L);
+        TimeSlot slot = new TimeSlot();
+        slot.setId(9L);
+        slot.setLab(lab);
+        slot.setStatus(TimeSlotStatus.AVAILABLE);
+        when(userRepository.findByUsername("manager")).thenReturn(Optional.of(manager));
+        when(labRepository.findFirstByManagerIdAndDeletedFalse(3L)).thenReturn(Optional.of(lab));
+        when(slotRepository.findActiveById(9L)).thenReturn(Optional.of(slot));
+        when(bookingRepository.countActiveByTimeSlotIdAndStatusIn(9L,
+                List.of(BookingStatus.PENDING_APPROVAL, BookingStatus.APPROVED,
+                        BookingStatus.CHECKED_IN, BookingStatus.IN_PROGRESS))).thenReturn(1L);
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken("manager", "n/a", List.of()));
+
+        assertThrows(IllegalStateException.class, () -> service.updateSlotStatus(9L, "MAINTENANCE"));
+
+        verify(slotRepository, never()).save(any());
     }
 
     @Test
@@ -106,7 +149,7 @@ class TimeSlotServiceImplTest {
         BookingRepository bookingRepository = mock(BookingRepository.class);
         SystemConfigService systemConfigService = mock(SystemConfigService.class);
         TimeSlotServiceImpl service = new TimeSlotServiceImpl(slotRepository, labRepository,
-                membershipRepository, userRepository, bookingRepository, mock(EmailService.class),
+                membershipRepository, userRepository, bookingRepository, mock(BookingOutboxService.class),
                 systemConfigService, mock(AuditLogService.class), mock(NotificationEmitter.class));
 
         User manager = mock(User.class);

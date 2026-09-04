@@ -126,6 +126,63 @@ public class SmtpEmailService implements EmailService {
     }
 
     @Override
+    public void sendBookingNoShowEmail(String email, BookingEmailData data) {
+        sendEmail(email, "Thông báo vắng mặt ca sử dụng PTN", String.join("\n",
+                greeting(data),
+                "Bạn đã không check-in cho ca sử dụng PTN theo lịch.",
+                "PTN: " + data.getLabName(),
+                "Thời gian: " + formatRange(data),
+                "Hệ thống đã ghi nhận vi phạm: " + blankToDefault(data.getNote(), "Vắng mặt không thông báo"),
+                "Vui lòng liên hệ quản lý PTN nếu cần làm rõ thông tin."
+        ));
+    }
+
+    @Override
+    public void sendSlotCancelledEmail(String email, BookingEmailData data) {
+        sendEmail(email, "Thông báo hủy ca sử dụng PTN", String.join("\n",
+                greeting(data),
+                "Quản lý PTN đã hủy ca sử dụng của bạn.",
+                "PTN: " + data.getLabName(),
+                "Thời gian: " + formatRange(data),
+                "Lý do: " + blankToDefault(data.getNote(), "Không có ghi chú"),
+                "Bạn có thể đăng ký khung giờ khác trên hệ thống."
+        ));
+    }
+
+    @Override
+    public void sendBookingSessionCompletedEmail(String email, BookingEmailData data) {
+        sendEmail(email, "Ca sử dụng PTN đã kết thúc", String.join("\n",
+                greeting(data),
+                "Ca sử dụng PTN của bạn đã được kết thúc.",
+                "PTN: " + data.getLabName(),
+                "Thời gian: " + formatRange(data),
+                "Ghi chú: " + blankToDefault(data.getNote(), "Không có")
+        ));
+    }
+
+    @Override
+    public void sendBookingCheckedInEmail(String email, BookingEmailData data) {
+        sendEmail(email, "Xác nhận check-in ca sử dụng PTN", String.join("\n",
+                greeting(data),
+                "Bạn đã được xác nhận check-in cho ca sử dụng PTN.",
+                "PTN: " + data.getLabName(),
+                "Thời gian: " + formatRange(data),
+                "Hình thức: " + blankToDefault(data.getNote(), "Đã xác nhận")
+        ));
+    }
+
+    @Override
+    public void sendPenaltyCreatedEmail(String email, BookingEmailData data) {
+        sendEmail(email, "Thông báo ghi nhận vi phạm", String.join("\n",
+                greeting(data),
+                "Quản lý PTN đã ghi nhận một vi phạm liên quan đến ca sử dụng của bạn.",
+                "PTN: " + data.getLabName(),
+                "Thời gian: " + formatRange(data),
+                "Lý do: " + blankToDefault(data.getNote(), "Không có ghi chú")
+        ));
+    }
+
+    @Override
     public void sendSlotCancelledEmail(String email, SlotCancelledEmailData data) {
         String body = String.join("\n",
                 "Khung giờ sử dụng PTN của bạn đã bị hủy.",

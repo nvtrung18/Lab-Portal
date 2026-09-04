@@ -45,7 +45,6 @@ export interface CreateSlotPayload {
 export interface CancelSlotPayload {
   slotId: number;
   reason?: string;
-  notifyByEmail: boolean;
 }
 
 function unwrapSlots(payload: SlotApiPayload): RawSlotResponse[] {
@@ -76,7 +75,6 @@ export async function cancelSlot(payload: CancelSlotPayload): Promise<RawSlotRes
     `/api/slots/${payload.slotId}/cancel`,
     {
       reason: payload.reason,
-      notifyByEmail: payload.notifyByEmail,
     },
   );
   return response.data.data;

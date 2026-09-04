@@ -18,6 +18,7 @@ import com.web.labportalbackend.admin.systemconfig.service.SystemConfigService;
 import com.web.labportalbackend.auth.entity.User;
 import com.web.labportalbackend.auth.repository.UserRepository;
 import com.web.labportalbackend.booking.entity.Booking;
+import com.web.labportalbackend.booking.outbox.BookingOutboxService;
 import com.web.labportalbackend.booking.entity.TimeSlot;
 import com.web.labportalbackend.booking.repository.BookingRepository;
 import com.web.labportalbackend.booking.service.impl.CheckinServiceImpl;
@@ -65,6 +66,7 @@ class CheckinServiceImplTest {
     private final FaceCheckinLogRepository logRepository = mock(FaceCheckinLogRepository.class);
     private final AuditLogService auditLogService = mock(AuditLogService.class);
     private final NotificationEmitter notificationEmitter = mock(NotificationEmitter.class);
+    private final BookingOutboxService bookingOutboxService = mock(BookingOutboxService.class);
     private final User actor = mock(User.class);
     private final User student = mock(User.class);
     private final Laboratory lab = mock(Laboratory.class);
@@ -76,7 +78,7 @@ class CheckinServiceImplTest {
     void setUp() {
         service = new CheckinServiceImpl(bookingRepository, userRepository, laboratoryRepository,
                 redisTemplate, new CheckinWindowPolicy(systemConfigService), fallbackPolicy,
-                logRepository, auditLogService, notificationEmitter);
+                logRepository, auditLogService, notificationEmitter, bookingOutboxService);
         when(redisTemplate.opsForValue()).thenReturn(valueOperations);
         when(redisTemplate.opsForSet()).thenReturn(setOperations);
         when(userRepository.findByUsername("actor")).thenReturn(Optional.of(actor));
@@ -167,6 +169,8 @@ class CheckinServiceImplTest {
         assertEquals("FACE_SERVICE_UNAVAILABLE", logCaptor.getValue().getFallbackReason());
         verify(auditLogService).log(actor, AuditAction.QR_FALLBACK_CHECKIN, AuditModule.FACE,
                 "BOOKING", 11L, "QR fallback check-in: FACE_SERVICE_UNAVAILABLE");
+        verify(bookingOutboxService).enqueueEmail(eq(11L), eq(com.web.labportalbackend.booking.event.BookingEmailType.CHECKED_IN),
+                any(), any());
         verify(valueOperations).set(eq("checkin:qr-request:req-used"),
                 org.mockito.ArgumentMatchers.contains("|USED||"), any(Duration.class));
     }
@@ -257,6 +261,8 @@ class CheckinServiceImplTest {
         assertEquals("Camera maintenance", logCaptor.getValue().getFallbackReason());
         verify(auditLogService).log(actor, AuditAction.MANUAL_CHECKIN, AuditModule.FACE,
                 "BOOKING", 11L, "Manual check-in override: Camera maintenance");
+        verify(bookingOutboxService).enqueueEmail(eq(11L), eq(com.web.labportalbackend.booking.event.BookingEmailType.CHECKED_IN),
+                any(), any());
     }
 
     @Test

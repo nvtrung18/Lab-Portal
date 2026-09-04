@@ -66,7 +66,7 @@ public class TimeSlotController {
 
     @PatchMapping("/slots/{slotId}/status")
     @PreAuthorize("hasRole('LAB_MANAGER')")
-    @Operation(summary = "Update time slot status", description = "Update time slot status")
+    @Operation(summary = "Update time slot status without active bookings", description = "A slot with active bookings must use the dedicated cancel or complete operations so affected users are notified")
     public ResponseEntity<Response<TimeSlotResponse>> updateSlotStatus(
             @PathVariable Long slotId,
             @RequestParam String status
@@ -95,7 +95,7 @@ public class TimeSlotController {
 
     @DeleteMapping("/slots/{slotId}")
     @PreAuthorize("hasRole('LAB_MANAGER')")
-    @Operation(summary = "Delete time slot", description = "Soft-delete a time slot")
+    @Operation(summary = "Delete time slot", description = "Soft-delete a time slot only when it has no active bookings; use cancellation or completion for active bookings so users are notified")
     public ResponseEntity<Response<Void>> deleteSlot(@PathVariable Long slotId) {
         timeSlotService.deleteSlot(slotId);
         return ResponseEntity.ok(Response.ok("Time slot deleted successfully"));

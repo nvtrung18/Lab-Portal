@@ -12,7 +12,6 @@ interface CancelSlotModalProps {
 
 export function CancelSlotModal({ labId, slotId, isOpen, onClose }: CancelSlotModalProps) {
   const [reason, setReason] = useState('');
-  const [notifyByEmail, setNotifyByEmail] = useState(true);
   const cancelSlot = useCancelSlot(labId, slotId);
 
   if (!isOpen || !slotId) {
@@ -31,10 +30,8 @@ export function CancelSlotModal({ labId, slotId, isOpen, onClose }: CancelSlotMo
     await cancelSlot.mutateAsync({
       slotId,
       reason,
-      notifyByEmail,
     });
     setReason('');
-    setNotifyByEmail(true);
     onClose();
   };
 
@@ -72,14 +69,7 @@ export function CancelSlotModal({ labId, slotId, isOpen, onClose }: CancelSlotMo
               onChange={(event) => setReason(event.target.value)}
             />
           </div>
-          <label className="flex items-center gap-2 text-sm font-medium text-slate-700">
-            <input
-              type="checkbox"
-              checked={notifyByEmail}
-              onChange={(event) => setNotifyByEmail(event.target.checked)}
-            />
-            Gửi thông báo qua email cho sinh viên đã đăng ký
-          </label>
+          <p className="text-sm text-slate-600">Sinh viên đã đăng ký sẽ nhận được thông báo qua email.</p>
         </div>
     </Modal>
   );

@@ -5,6 +5,8 @@ import com.web.labportalbackend.admin.systemconfig.service.SystemConfigService;
 import com.web.labportalbackend.booking.entity.Booking;
 import com.web.labportalbackend.booking.entity.PenaltyEntity;
 import com.web.labportalbackend.booking.entity.TimeSlot;
+import com.web.labportalbackend.booking.event.BookingEmailType;
+import com.web.labportalbackend.booking.outbox.BookingOutboxService;
 import com.web.labportalbackend.booking.repository.BookingRepository;
 import com.web.labportalbackend.booking.repository.CleaningRepository;
 import com.web.labportalbackend.booking.repository.PenaltyRepository;
@@ -16,6 +18,7 @@ import com.web.labportalbackend.common.enums.BookingStatus;
 import com.web.labportalbackend.common.enums.PenaltyStatus;
 import com.web.labportalbackend.common.enums.PenaltyType;
 import com.web.labportalbackend.common.enums.TimeSlotStatus;
+import com.web.labportalbackend.common.email.BookingEmailData;
 import com.web.labportalbackend.notification.enums.NotificationEventType;
 import com.web.labportalbackend.notification.enums.NotificationTargetModule;
 import com.web.labportalbackend.notification.service.NotificationEmitter;
@@ -44,6 +47,7 @@ public class BookingTaskServiceImpl implements BookingTaskService {
     private final CleaningService cleaningService;
     private final SystemConfigService systemConfigService;
     private final NotificationEmitter notificationEmitter;
+    private final BookingOutboxService bookingOutboxService;
 
     @Override
     @Scheduled(cron = "${booking.task.cron:0 * * * * *}")
@@ -74,6 +78,11 @@ public class BookingTaskServiceImpl implements BookingTaskService {
                         .build();
                 penaltyRepository.save(penalty);
             }
+            notificationEmitter.emit(booking.getUser().getId(), NotificationEventType.BOOKING_NO_SHOW,
+                    "Vắng mặt không thông báo", "Bạn đã không check-in cho ca sử dụng tại "
+                            + booking.getLab().getLabName() + ". Hệ thống đã ghi nhận vi phạm vắng mặt không thông báo.",
+                    NotificationTargetModule.BOOKING, booking.getId(), null);
+            enqueueBookingEmail(booking, BookingEmailType.NO_SHOW, NO_SHOW_REASON);
         }
 
         if (!candidates.isEmpty()) {
@@ -136,6 +145,8 @@ public class BookingTaskServiceImpl implements BookingTaskService {
                     booking.getId(),
                     null
             ));
+            endedSessions.forEach(booking -> enqueueBookingEmail(booking, BookingEmailType.SESSION_COMPLETED,
+                    "Ca sử dụng đã tự động kết thúc theo lịch."));
             log.info("Automatically completed {} ended lab session(s)", endedSessions.size());
         }
         List<TimeSlot> endedSlots = timeSlotRepository.findEndedSessionSlots(
@@ -146,6 +157,18 @@ public class BookingTaskServiceImpl implements BookingTaskService {
             log.info("Automatically closed {} ended lab slot(s)", endedSlots.size());
         }
         return endedSessions.size();
+    }
+
+    private void enqueueBookingEmail(Booking booking, BookingEmailType emailType, String note) {
+        bookingOutboxService.enqueueEmail(booking.getId(), emailType, booking.getUser().getEmail(),
+                BookingEmailData.builder()
+                        .studentName(booking.getUser().getFullName())
+                        .labName(booking.getLab().getLabName())
+                        .startTime(booking.getStartTime())
+                        .endTime(booking.getEndTime())
+                        .status(booking.getStatus().name())
+                        .note(note)
+                        .build());
     }
 
     private Instant checkinCutoff() {
