@@ -20,7 +20,7 @@ import java.time.Instant;
 public class BookingOutboxEvent {
 
     @Id
-    @Column(name = "event_id", length = 36, nullable = false, updatable = false)
+    @Column(name = "event_id", columnDefinition = "CHAR(36)", nullable = false, updatable = false)
     private String eventId;
 
     @Column(name = "aggregate_id", nullable = false, updatable = false)
