@@ -48,7 +48,7 @@ export function GoogleSignInButton({ disabled = false, onCredential }: GoogleSig
         text: 'continue_with',
         shape: 'rectangular',
         locale: 'vi',
-        width: Math.min(360, Math.floor(containerRef.current.clientWidth || 360)),
+        width: Math.min(400, Math.floor(containerRef.current.clientWidth || 400)),
       });
     };
 
@@ -80,10 +80,15 @@ export function GoogleSignInButton({ disabled = false, onCredential }: GoogleSig
   }
 
   return (
-    <div
-      aria-busy={disabled}
-      className={disabled ? 'pointer-events-none flex w-full justify-center opacity-60' : 'flex w-full justify-center'}
-      ref={containerRef}
-    />
+    <div className="flex w-full justify-center">
+      <div
+        aria-busy={disabled}
+        className={[
+          'w-full max-w-[400px] text-center [&>div]:mx-auto',
+          disabled ? 'pointer-events-none opacity-60' : '',
+        ].join(' ')}
+        ref={containerRef}
+      />
+    </div>
   );
 }
