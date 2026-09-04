@@ -6,6 +6,9 @@ import com.web.labportalbackend.auth.entity.User;
 import com.web.labportalbackend.booking.entity.Booking;
 import com.web.labportalbackend.booking.entity.PenaltyEntity;
 import com.web.labportalbackend.booking.entity.TimeSlot;
+import com.web.labportalbackend.booking.event.BookingEmailType;
+import com.web.labportalbackend.booking.outbox.BookingOutboxService;
+import com.web.labportalbackend.common.email.BookingEmailData;
 import com.web.labportalbackend.booking.repository.BookingRepository;
 import com.web.labportalbackend.booking.repository.CleaningRepository;
 import com.web.labportalbackend.booking.repository.PenaltyRepository;
@@ -63,20 +66,28 @@ class BookingTaskServiceNoShowTest {
     @Mock
     private NotificationEmitter notificationEmitter;
 
+    @Mock
+    private BookingOutboxService bookingOutboxService;
+
     @InjectMocks
     private BookingTaskServiceImpl bookingTaskService;
 
     @Test
-    void processNoShows_marksOverdueBookingNoShowAndCreatesPenalty() {
+    void processNoShows_marksOverdueBookingNoShowAndQueuesOneUserEmail() {
         when(systemConfigService.getConfig()).thenReturn(systemConfig(15));
 
         User user = new User();
         user.setId(10L);
+        user.setEmail("student@example.com");
+        user.setFullName("Student A");
         Laboratory lab = new Laboratory();
         lab.setId(20L);
+        lab.setLabName("Lab A");
         TimeSlot slot = new TimeSlot();
         slot.setId(30L);
         slot.setLab(lab);
+        slot.setStartTime(Instant.parse("2026-09-04T01:00:00Z"));
+        slot.setEndTime(Instant.parse("2026-09-04T03:00:00Z"));
 
         Booking booking = new Booking();
         booking.setId(99L);
@@ -111,6 +122,15 @@ class BookingTaskServiceNoShowTest {
         assertEquals("Vắng mặt không thông báo", penalty.getReason());
         assertEquals(BigDecimal.valueOf(50_000), penalty.getAmount());
         assertEquals(PenaltyStatus.ACTIVE, penalty.getStatus());
+        verify(notificationEmitter).emit(10L, NotificationEventType.BOOKING_NO_SHOW,
+                "Vắng mặt không thông báo", "Bạn đã không check-in cho ca sử dụng tại Lab A. "
+                + "Hệ thống đã ghi nhận vi phạm vắng mặt không thông báo.",
+                NotificationTargetModule.BOOKING, 99L, null);
+        verify(bookingOutboxService).enqueueEmail(eq(99L), eq(BookingEmailType.NO_SHOW),
+                eq("student@example.com"), argThat((BookingEmailData data) ->
+                        "Student A".equals(data.getStudentName())
+                                && "Lab A".equals(data.getLabName())
+                                && "Vắng mặt không thông báo".equals(data.getNote())));
     }
 
     @Test

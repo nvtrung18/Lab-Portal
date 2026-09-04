@@ -1,10 +1,13 @@
 package com.web.labportalbackend.face.service;
 
 import com.web.labportalbackend.booking.entity.Booking;
+import com.web.labportalbackend.booking.event.BookingEmailType;
+import com.web.labportalbackend.booking.outbox.BookingOutboxService;
 import com.web.labportalbackend.booking.repository.BookingRepository;
 import com.web.labportalbackend.booking.service.CheckinWindowPolicy;
 import com.web.labportalbackend.auth.entity.User;
 import com.web.labportalbackend.auth.repository.UserRepository;
+import com.web.labportalbackend.common.email.BookingEmailData;
 import com.web.labportalbackend.common.enums.BookingStatus;
 import com.web.labportalbackend.common.enums.TimeSlotStatus;
 import com.web.labportalbackend.face.entity.FaceCheckinLogEntity;
@@ -31,6 +34,7 @@ public class FaceCheckinWriter {
     private final FaceCheckinLogRepository checkinLogRepository;
     private final CheckinWindowPolicy checkinWindowPolicy;
     private final NotificationEmitter notificationEmitter;
+    private final BookingOutboxService bookingOutboxService;
 
     @Transactional
     public Instant complete(Long studentId, Long managerId, Long bookingId,
@@ -47,6 +51,15 @@ public class FaceCheckinWriter {
         notificationEmitter.emit(studentId, NotificationEventType.FACE_CHECKIN_SUCCEEDED,
                 "Face check-in succeeded", "Your face check-in was accepted",
                 NotificationTargetModule.FACE, bookingId, null);
+        bookingOutboxService.enqueueEmail(bookingId, BookingEmailType.CHECKED_IN, booking.getUser().getEmail(),
+                BookingEmailData.builder()
+                        .studentName(booking.getUser().getFullName())
+                        .labName(booking.getLab().getLabName())
+                        .startTime(booking.getStartTime())
+                        .endTime(booking.getEndTime())
+                        .status(booking.getStatus().name())
+                        .note("Face ID")
+                        .build());
         return checkedInAt;
     }
 

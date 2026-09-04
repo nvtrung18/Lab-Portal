@@ -10,11 +10,14 @@ import com.web.labportalbackend.booking.dto.response.CheckinQrResponse;
 import com.web.labportalbackend.booking.dto.response.CheckinQrHistoryResponse;
 import com.web.labportalbackend.booking.dto.response.CheckinQrRequestResponse;
 import com.web.labportalbackend.booking.entity.Booking;
+import com.web.labportalbackend.booking.event.BookingEmailType;
+import com.web.labportalbackend.booking.outbox.BookingOutboxService;
 import com.web.labportalbackend.booking.mapper.BookingMapper;
 import com.web.labportalbackend.booking.repository.BookingRepository;
 import com.web.labportalbackend.booking.service.CheckinService;
 import com.web.labportalbackend.booking.service.CheckinWindowPolicy;
 import com.web.labportalbackend.common.enums.BookingStatus;
+import com.web.labportalbackend.common.email.BookingEmailData;
 import com.web.labportalbackend.common.enums.TimeSlotStatus;
 import com.web.labportalbackend.face.entity.FaceCheckinLogEntity;
 import com.web.labportalbackend.face.enums.FaceCheckinMethod;
@@ -65,6 +68,7 @@ public class CheckinServiceImpl implements CheckinService {
     private final FaceCheckinLogRepository faceCheckinLogRepository;
     private final AuditLogService auditLogService;
     private final NotificationEmitter notificationEmitter;
+    private final BookingOutboxService bookingOutboxService;
 
     @Override
     @Transactional
@@ -224,6 +228,7 @@ public class CheckinServiceImpl implements CheckinService {
         booking.setStatus(BookingStatus.CHECKED_IN);
         Booking saved = bookingRepository.save(booking);
         recordFallback(saved, currentUser, FaceCheckinMethod.QR_FALLBACK, fallbackToken.reasonText());
+        notifyCheckedIn(saved, "QR fallback");
         auditLogService.log(currentUser, AuditAction.QR_FALLBACK_CHECKIN, AuditModule.FACE,
                 "BOOKING", saved.getId(), "QR fallback check-in: " + fallbackToken.reasonText());
         return BookingMapper.toResponse(saved);
@@ -245,6 +250,7 @@ public class CheckinServiceImpl implements CheckinService {
         booking.setStatus(BookingStatus.CHECKED_IN);
         Booking saved = bookingRepository.save(booking);
         recordFallback(saved, currentUser, FaceCheckinMethod.MANUAL, normalizedReason);
+        notifyCheckedIn(saved, "Check-in thủ công");
         auditLogService.log(currentUser, AuditAction.MANUAL_CHECKIN, AuditModule.FACE,
                 "BOOKING", saved.getId(), "Manual check-in override: " + normalizedReason);
         return BookingMapper.toResponse(saved);
@@ -256,6 +262,21 @@ public class CheckinServiceImpl implements CheckinService {
         }
         validateBookingCanCheckIn(booking);
         checkinWindowPolicy.validate(booking, Instant.now());
+    }
+
+    private void notifyCheckedIn(Booking booking, String method) {
+        notificationEmitter.emit(booking.getUser().getId(), NotificationEventType.BOOKING_CHECKED_IN,
+                "Đã xác nhận check-in", "Bạn đã được xác nhận check-in tại " + booking.getLab().getLabName() + ".",
+                NotificationTargetModule.BOOKING, booking.getId(), null);
+        bookingOutboxService.enqueueEmail(booking.getId(), BookingEmailType.CHECKED_IN, booking.getUser().getEmail(),
+                BookingEmailData.builder()
+                        .studentName(booking.getUser().getFullName())
+                        .labName(booking.getLab().getLabName())
+                        .startTime(booking.getStartTime())
+                        .endTime(booking.getEndTime())
+                        .status(booking.getStatus().name())
+                        .note(method)
+                        .build());
     }
 
     private void validateManagerCanConfirm(Booking booking, User manager) {

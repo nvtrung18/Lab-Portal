@@ -11,7 +11,9 @@ import com.web.labportalbackend.booking.dto.request.CancelTimeSlotRequest;
 import com.web.labportalbackend.booking.dto.request.CreateTimeSlotRequest;
 import com.web.labportalbackend.booking.dto.response.TimeSlotResponse;
 import com.web.labportalbackend.booking.entity.TimeSlot;
+import com.web.labportalbackend.booking.event.BookingEmailType;
 import com.web.labportalbackend.booking.mapper.TimeSlotMapper;
+import com.web.labportalbackend.booking.outbox.BookingOutboxService;
 import com.web.labportalbackend.booking.repository.BookingRepository;
 import com.web.labportalbackend.booking.repository.TimeSlotBookingCounts;
 import com.web.labportalbackend.booking.repository.TimeSlotRepository;
@@ -19,8 +21,7 @@ import com.web.labportalbackend.booking.service.TimeSlotService;
 import com.web.labportalbackend.common.enums.BookingStatus;
 import com.web.labportalbackend.common.enums.LabStatus;
 import com.web.labportalbackend.common.enums.TimeSlotStatus;
-import com.web.labportalbackend.common.email.EmailService;
-import com.web.labportalbackend.common.email.SlotCancelledEmailData;
+import com.web.labportalbackend.common.email.BookingEmailData;
 import com.web.labportalbackend.lab.entity.Laboratory;
 import com.web.labportalbackend.lab.repository.LaboratoryRepository;
 import com.web.labportalbackend.lab.repository.MembershipRepository;
@@ -29,7 +30,6 @@ import com.web.labportalbackend.notification.enums.NotificationTargetModule;
 import com.web.labportalbackend.notification.service.NotificationEmitter;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -42,7 +42,6 @@ import java.time.Instant;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 public class TimeSlotServiceImpl implements TimeSlotService {
@@ -59,7 +58,7 @@ public class TimeSlotServiceImpl implements TimeSlotService {
     private final MembershipRepository membershipRepository;
     private final UserRepository userRepository;
     private final BookingRepository bookingRepository;
-    private final EmailService emailService;
+    private final BookingOutboxService bookingOutboxService;
     private final SystemConfigService systemConfigService;
     private final AuditLogService auditLogService;
     private final NotificationEmitter notificationEmitter;
@@ -149,7 +148,12 @@ public class TimeSlotServiceImpl implements TimeSlotService {
         TimeSlot slot = timeSlotRepository.findActiveById(slotId)
                 .orElseThrow(() -> new EntityNotFoundException("Slot not found: " + slotId));
         assertCanManageSlot(getCurrentUser(), slot.getLab());
-        slot.setStatus(TimeSlotStatus.valueOf(status.toUpperCase()));
+        TimeSlotStatus requestedStatus = TimeSlotStatus.valueOf(status.toUpperCase());
+        long affectedBookingCount = activeBookingCount(slotId);
+        if (requestedStatus != slot.getStatus() && affectedBookingCount > 0) {
+            throw new IllegalStateException("Cannot change a slot with active bookings through the generic status operation; use the dedicated cancel or complete operation");
+        }
+        slot.setStatus(requestedStatus);
         return toResponse(timeSlotRepository.save(slot));
     }
 
@@ -175,20 +179,20 @@ public class TimeSlotServiceImpl implements TimeSlotService {
         bookingRepository.saveAll(affectedBookings);
         TimeSlot savedSlot = timeSlotRepository.save(slot);
 
-        affectedBookings.forEach(booking -> notificationEmitter.emit(
-                booking.getUser().getId(),
-                NotificationEventType.BOOKING_CANCELLED,
-                "Ca sử dụng đã bị hủy",
-                "Quản lý đã hủy ca sử dụng tại " + savedSlot.getLab().getLabName()
-                        + ". Lý do: " + request.getReason().trim(),
-                NotificationTargetModule.BOOKING,
-                booking.getId(),
-                null
-        ));
-
-        if (Boolean.TRUE.equals(request.getNotifyByEmail())) {
-            notifySlotCancelled(currentUser, savedSlot, affectedBookings, request.getReason());
-        }
+        String cancellationReason = request.getReason() == null ? "" : request.getReason().trim();
+        affectedBookings.forEach(booking -> {
+            notificationEmitter.emit(
+                    booking.getUser().getId(),
+                    NotificationEventType.BOOKING_CANCELLED,
+                    "Ca sử dụng đã bị hủy",
+                    "Quản lý đã hủy ca sử dụng tại " + savedSlot.getLab().getLabName()
+                            + ". Lý do: " + cancellationReason,
+                    NotificationTargetModule.BOOKING,
+                    booking.getId(),
+                    null
+            );
+            enqueueBookingEmail(booking, BookingEmailType.SLOT_CANCELLED, cancellationReason);
+        });
 
         auditLogService.log(
                 currentUser,
@@ -225,15 +229,18 @@ public class TimeSlotServiceImpl implements TimeSlotService {
         bookingRepository.saveAll(activeBookings);
         slot.setStatus(TimeSlotStatus.CLOSED);
         TimeSlot saved = timeSlotRepository.save(slot);
-        activeBookings.forEach(booking -> notificationEmitter.emit(
-                booking.getUser().getId(),
-                NotificationEventType.BOOKING_SESSION_COMPLETED,
-                "Ca sử dụng đã kết thúc",
-                "Quản lý đã kết thúc ca sử dụng tại " + saved.getLab().getLabName() + ".",
-                NotificationTargetModule.BOOKING,
-                booking.getId(),
-                null
-        ));
+        activeBookings.forEach(booking -> {
+            notificationEmitter.emit(
+                    booking.getUser().getId(),
+                    NotificationEventType.BOOKING_SESSION_COMPLETED,
+                    "Ca sử dụng đã kết thúc",
+                    "Quản lý đã kết thúc ca sử dụng tại " + saved.getLab().getLabName() + ".",
+                    NotificationTargetModule.BOOKING,
+                    booking.getId(),
+                    null
+            );
+            enqueueBookingEmail(booking, BookingEmailType.SESSION_COMPLETED, "Quản lý PTN đã kết thúc ca sử dụng.");
+        });
         auditLogService.log(currentUser, AuditAction.COMPLETE_LAB_SESSION, AuditModule.BOOKING,
                 "TIME_SLOT", saved.getId(), "Manager đã kết thúc ca sử dụng lab.");
         return toResponse(saved);
@@ -245,8 +252,18 @@ public class TimeSlotServiceImpl implements TimeSlotService {
         TimeSlot slot = timeSlotRepository.findActiveById(slotId)
                 .orElseThrow(() -> new EntityNotFoundException("Slot not found: " + slotId));
         assertCanManageSlot(getCurrentUser(), slot.getLab());
+        long affectedBookingCount = activeBookingCount(slotId);
+        if (affectedBookingCount > 0) {
+            throw new IllegalStateException("Cannot delete a slot with active bookings; use the dedicated cancel or complete operation");
+        }
         slot.setDeleted(true);
         timeSlotRepository.save(slot);
+    }
+
+    private long activeBookingCount(Long slotId) {
+        return bookingRepository.countActiveByTimeSlotIdAndStatusIn(slotId,
+                List.of(BookingStatus.PENDING_APPROVAL, BookingStatus.APPROVED,
+                        BookingStatus.CHECKED_IN, BookingStatus.IN_PROGRESS));
     }
 
     private void validateCreateRequest(CreateTimeSlotRequest request, Laboratory lab) {
@@ -357,25 +374,19 @@ public class TimeSlotServiceImpl implements TimeSlotService {
         return systemConfigService.getConfig();
     }
 
-    private void notifySlotCancelled(
-            User manager,
-            TimeSlot slot,
-            List<com.web.labportalbackend.booking.entity.Booking> bookings,
-            String reason
+    private void enqueueBookingEmail(
+            com.web.labportalbackend.booking.entity.Booking booking,
+            BookingEmailType emailType,
+            String note
     ) {
-        SlotCancelledEmailData emailData = SlotCancelledEmailData.builder()
-                .labName(slot.getLab().getLabName())
-                .startTime(slot.getStartTime())
-                .endTime(slot.getEndTime())
-                .reason(reason)
-                .managerName(manager.getFullName() != null ? manager.getFullName() : manager.getEmail())
-                .build();
-        bookings.forEach(booking -> {
-            try {
-                emailService.sendSlotCancelledEmail(booking.getUser().getEmail(), emailData);
-            } catch (RuntimeException ex) {
-                log.warn("Could not send slot cancellation email for booking {}: {}", booking.getId(), ex.getMessage());
-            }
-        });
+        bookingOutboxService.enqueueEmail(booking.getId(), emailType, booking.getUser().getEmail(),
+                BookingEmailData.builder()
+                        .studentName(booking.getUser().getFullName())
+                        .labName(booking.getLab().getLabName())
+                        .startTime(booking.getStartTime())
+                        .endTime(booking.getEndTime())
+                        .status(booking.getStatus().name())
+                        .note(note)
+                        .build());
     }
 }

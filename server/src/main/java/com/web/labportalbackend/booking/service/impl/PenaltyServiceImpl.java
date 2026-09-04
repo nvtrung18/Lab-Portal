@@ -9,16 +9,22 @@ import com.web.labportalbackend.booking.dto.response.PenaltyResponse;
 import com.web.labportalbackend.booking.entity.Booking;
 import com.web.labportalbackend.booking.entity.PenaltyEntity;
 import com.web.labportalbackend.booking.entity.TimeSlot;
+import com.web.labportalbackend.booking.event.BookingEmailType;
 import com.web.labportalbackend.booking.mapper.PenaltyMapper;
+import com.web.labportalbackend.booking.outbox.BookingOutboxService;
 import com.web.labportalbackend.booking.repository.BookingRepository;
 import com.web.labportalbackend.booking.repository.PenaltyRepository;
 import com.web.labportalbackend.booking.repository.TimeSlotRepository;
 import com.web.labportalbackend.booking.service.PenaltyService;
 import com.web.labportalbackend.common.enums.PenaltyStatus;
 import com.web.labportalbackend.common.enums.TimeSlotStatus;
+import com.web.labportalbackend.common.email.BookingEmailData;
 import com.web.labportalbackend.lab.entity.Laboratory;
 import com.web.labportalbackend.lab.repository.LaboratoryRepository;
 import com.web.labportalbackend.lab.repository.MembershipRepository;
+import com.web.labportalbackend.notification.enums.NotificationEventType;
+import com.web.labportalbackend.notification.enums.NotificationTargetModule;
+import com.web.labportalbackend.notification.service.NotificationEmitter;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -45,6 +51,8 @@ public class PenaltyServiceImpl implements PenaltyService {
     private final BookingRepository bookingRepository;
     private final LaboratoryRepository laboratoryRepository;
     private final MembershipRepository membershipRepository;
+    private final NotificationEmitter notificationEmitter;
+    private final BookingOutboxService bookingOutboxService;
     private final AtomicReference<BigDecimal> configuredAmount = new AtomicReference<>();
 
     @Value("${booking.penalty.default-amount:0}")
@@ -140,7 +148,21 @@ public class PenaltyServiceImpl implements PenaltyService {
                 .status(PenaltyStatus.ACTIVE)
                 .build();
 
-        return PenaltyMapper.toResponse(penaltyRepository.save(penalty));
+        PenaltyEntity saved = penaltyRepository.save(penalty);
+        String message = "Quản lý PTN đã ghi nhận vi phạm cho ca sử dụng tại " + managedLab.getLabName() + ".";
+        notificationEmitter.emit(student.getId(), NotificationEventType.PENALTY_CREATED,
+                "Đã ghi nhận vi phạm", message, NotificationTargetModule.BOOKING,
+                booking != null ? booking.getId() : slot.getId(), null);
+        bookingOutboxService.enqueueEmail(booking != null ? booking.getId() : slot.getId(),
+                BookingEmailType.PENALTY_CREATED, student.getEmail(), BookingEmailData.builder()
+                        .studentName(student.getFullName())
+                        .labName(managedLab.getLabName())
+                        .startTime(slot.getStartTime())
+                        .endTime(slot.getEndTime())
+                        .status(saved.getStatus().name())
+                        .note(saved.getReason())
+                        .build());
+        return PenaltyMapper.toResponse(saved);
     }
 
     @Override

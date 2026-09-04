@@ -10,6 +10,7 @@ import com.web.labportalbackend.auth.repository.UserRepository;
 import com.web.labportalbackend.booking.entity.Booking;
 import com.web.labportalbackend.booking.entity.TimeSlot;
 import com.web.labportalbackend.booking.repository.BookingRepository;
+import com.web.labportalbackend.booking.outbox.BookingOutboxService;
 import com.web.labportalbackend.booking.service.CheckinWindowPolicy;
 import com.web.labportalbackend.booking.repository.TimeSlotRepository;
 import com.web.labportalbackend.common.enums.BookingStatus;
@@ -44,6 +45,7 @@ class FaceCheckinWriterIntegrationTest {
     @Autowired EntityManager entityManager;
     @MockitoBean SystemConfigService systemConfigService;
     @MockitoBean NotificationEmitter notificationEmitter;
+    @MockitoBean BookingOutboxService bookingOutboxService;
 
     @Test
     void successfulFaceMatchAtomicallyUpdatesBookingAndWritesLog() {

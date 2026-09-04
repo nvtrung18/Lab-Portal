@@ -23,14 +23,14 @@ public class BookingOutboxService {
     private final ObjectMapper objectMapper;
 
     @Transactional(propagation = Propagation.MANDATORY)
-    public String enqueueEmail(Long bookingId, BookingEmailType type, String email, BookingEmailData data) {
+    public String enqueueEmail(Long aggregateId, BookingEmailType type, String email, BookingEmailData data) {
         BookingEmailPayload payload = new BookingEmailPayload(
                 email, type, data.getStudentName(), data.getLabName(), data.getStartTime(),
                 data.getEndTime(), data.getStatus(), data.getNote());
         Instant now = Instant.now();
         BookingOutboxEvent event = new BookingOutboxEvent();
         event.setEventId(UUID.randomUUID().toString());
-        event.setAggregateId(bookingId);
+        event.setAggregateId(aggregateId);
         event.setEventType(BOOKING_EMAIL_REQUESTED);
         event.setEventVersion(CURRENT_VERSION);
         event.setPayloadJson(writePayload(payload));
