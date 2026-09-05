@@ -11,7 +11,7 @@ from pydantic import SecretStr, ValidationError
 
 from app.config import Settings
 from app.main import create_app
-from app.models import AssistantKey, AssistantRequest
+from app.models import AssistantKey, AssistantRequest, ToolPlanningRequest, ToolPlanningResponse
 from app.output_validation import OutputSchemaRegistry, StructuredOutputValidator
 from app.profiles import ProfileLoader
 from app.runtime import RuntimeGeneration
@@ -106,7 +106,7 @@ def test_shared_manifest_matches_python_assistant_and_tool_catalogs() -> None:
     profiles = ProfileLoader.from_file(settings.profile_config_path)
     registry = OutputSchemaRegistry.from_file(settings.output_schema_config_path, profiles)
 
-    assert CONTRACT["schemaVersion"] == "1.2.0"
+    assert CONTRACT["schemaVersion"] == "1.3.0"
     assert set(CONTRACT["assistantKeys"]) == {key.value for key in AssistantKey}
     assert set(CONTRACT["assistantKeys"]) == {key.value for key in profiles.profiles}
     assert set(CONTRACT["toolIds"]) == set(registry.tools)
@@ -130,6 +130,23 @@ def test_spring_request_fixture_matches_python_camel_case_model() -> None:
         assert forbidden_field not in schema["properties"]
         with pytest.raises(ValidationError):
             AssistantRequest.model_validate(request_contract["example"] | {forbidden_field: "unsafe"})
+
+
+def test_tool_planning_contract_matches_python_camel_case_models() -> None:
+    request_contract = CONTRACT["toolPlanningRequest"]
+    response_contract = CONTRACT["toolPlanningResponse"]
+
+    request = ToolPlanningRequest.model_validate(request_contract["example"])
+    response = ToolPlanningResponse.model_validate(response_contract["example"])
+
+    assert set(ToolPlanningRequest.model_json_schema(by_alias=True)["required"]) == set(
+        request_contract["requiredFields"]
+    )
+    assert set(ToolPlanningResponse.model_json_schema(by_alias=True)["required"]) == set(
+        response_contract["requiredFields"]
+    )
+    assert request.model_dump(by_alias=True, mode="json") == request_contract["example"]
+    assert response.model_dump(by_alias=True, mode="json") == response_contract["example"]
 
 
 def test_required_paths_and_hidden_legacy_alias_match_manifest() -> None:
@@ -285,7 +302,7 @@ def test_all_current_error_statuses_use_the_shared_safe_envelope() -> None:
         headers=valid_headers,
     )
     service_not_ready = client.post(
-        CONTRACT["routes"]["toolRequest"]["path"],
+        CONTRACT["routes"]["suggestions"]["path"],
         json=CONTRACT["assistantRequest"]["example"],
         headers=valid_headers,
     )

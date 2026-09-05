@@ -81,7 +81,7 @@ def test_checked_in_schema_registry_loads_all_profile_bundles_and_tools() -> Non
 
     assert registry.schema_version == "1.0.0"
     assert len(registry.schemas) == 5
-    assert len(registry.tools) == 17
+    assert len(registry.tools) == 19
     for assistant_key in AssistantKey:
         profile = _profiles().get_profile(assistant_key)
         schema = registry.get_schema(profile.schema_bundle)

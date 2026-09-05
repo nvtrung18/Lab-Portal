@@ -48,15 +48,15 @@ class AiAssistantRegistryServiceImplTest {
         AiAssistantProfile research = registry.getProfile(AiAssistantKey.RESEARCH_ASSISTANT);
 
         assertProfile(admin, AiAssistantDomain.ADMIN, true, Set.of(AiAssistantSystemRole.ADMIN), "admin", "admin-v1",
-                "admin", Set.of(AiAssistantToolGroup.ADMIN_READ, AiAssistantToolGroup.ADMIN_DRAFT),
+                "admin-knowledge", Set.of(AiAssistantToolGroup.ADMIN_READ, AiAssistantToolGroup.ADMIN_DRAFT),
                 "admin-assistant-v1");
         assertProfile(lab, AiAssistantDomain.LAB, true,
                 Set.of(AiAssistantSystemRole.ADMIN, AiAssistantSystemRole.LAB_MANAGER, AiAssistantSystemRole.STUDENT),
-                "lab", "lab-v1", "lab", Set.of(AiAssistantToolGroup.LAB_READ, AiAssistantToolGroup.LAB_DRAFT),
+                "lab", "lab-v1", "lab-knowledge", Set.of(AiAssistantToolGroup.LAB_READ, AiAssistantToolGroup.LAB_DRAFT),
                 "lab-assistant-v1");
         assertProfile(research, AiAssistantDomain.RESEARCH, true,
                 Set.of(AiAssistantSystemRole.ADMIN, AiAssistantSystemRole.LAB_MANAGER, AiAssistantSystemRole.STUDENT),
-                "research", "research-v1", "research",
+                "research", "research-v1", "research-knowledge",
                 Set.of(AiAssistantToolGroup.RESEARCH_READ, AiAssistantToolGroup.RESEARCH_DRAFT),
                 "research-assistant-v1");
 

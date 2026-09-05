@@ -4,6 +4,8 @@ import com.web.labportalbackend.ai.context.AiContextReadDeniedException;
 import com.web.labportalbackend.ai.context.AiDomainContext;
 import com.web.labportalbackend.ai.context.AiDomainContextBuilder;
 import com.web.labportalbackend.ai.context.AiLabContext;
+import com.web.labportalbackend.ai.context.AiLabAvailableSlotsContext;
+import com.web.labportalbackend.ai.context.AiBoundedList;
 import com.web.labportalbackend.ai.context.TrustedContextInput;
 import com.web.labportalbackend.ai.enums.AiAssistantDomain;
 import com.web.labportalbackend.ai.enums.AiCapability;
@@ -14,9 +16,12 @@ import com.web.labportalbackend.booking.repository.TimeSlotRepository;
 import com.web.labportalbackend.lab.repository.LaboratoryRepository;
 import java.util.Set;
 import org.springframework.stereotype.Component;
+import org.springframework.data.domain.PageRequest;
 
 @Component
 public class AiLabAssistantContextBuilder implements AiDomainContextBuilder {
+
+    private static final int AVAILABLE_SLOT_LIMIT = 50;
 
     private final LaboratoryRepository laboratoryRepository;
     private final TimeSlotRepository timeSlotRepository;
@@ -54,7 +59,13 @@ public class AiLabAssistantContextBuilder implements AiDomainContextBuilder {
         AiLabContext.ManagedSummary managedSummary = null;
         AiLabContext.LabPolicySnapshot labPolicySnapshot = null;
         AiLabContext.CheckinPolicySnapshot checkinPolicySnapshot = null;
-        if (capability == AiCapability.LAB_POLICY_READ) {
+        if (capability == AiCapability.LAB_AVAILABLE_SLOTS_READ) {
+            var slots = timeSlotRepository.findAiContextAvailableSlots(
+                    input.actorId(), labId, managedScope, input.builtAt(), selectedRoleName,
+                    PageRequest.of(0, AVAILABLE_SLOT_LIMIT + 1));
+            return new AiLabAvailableSlotsContext(lab,
+                    AiBoundedList.fromOverfetch(slots, AVAILABLE_SLOT_LIMIT), input.builtAt());
+        } else if (capability == AiCapability.LAB_POLICY_READ) {
             var config = systemConfigService.getConfig();
             labPolicySnapshot = new AiLabContext.LabPolicySnapshot(
                     config.booking().checkinWindowMinutes(), config.booking().cancelBeforeMinutes(),
@@ -94,6 +105,7 @@ public class AiLabAssistantContextBuilder implements AiDomainContextBuilder {
         return switch (capability) {
             case LAB_POLICY_READ -> "POLICY_INFORMATION_ONLY";
             case LAB_BOOKING_DRAFT -> "DRAFT_ONLY_NO_BOOKING_WRITE";
+            case LAB_SHIFT_CREATE_DRAFT -> "DRAFT_ONLY_NO_SHIFT_WRITE";
             default -> null;
         };
     }

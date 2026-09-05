@@ -262,14 +262,14 @@ public class AiCapabilityResolverImpl implements AiCapabilityResolver {
         List<AiAssistantSystemRole> ordered = switch (request.capability()) {
             case LAB_POLICY_READ -> List.of(AiAssistantSystemRole.STUDENT, AiAssistantSystemRole.LAB_MANAGER,
                     AiAssistantSystemRole.ADMIN);
-            case LAB_SLOT_READ, RESEARCH_GROUP_SUMMARY, RESEARCH_ASSIGNED_TASK_READ,
+            case LAB_SLOT_READ, LAB_AVAILABLE_SLOTS_READ, RESEARCH_GROUP_SUMMARY, RESEARCH_ASSIGNED_TASK_READ,
                     RESEARCH_TASK_SUGGESTION_DRAFT, RESEARCH_REPORT_REVIEW_DRAFT ->
                     List.of(AiAssistantSystemRole.STUDENT, AiAssistantSystemRole.LAB_MANAGER);
             case RESEARCH_PROJECT_SUMMARY ->
                     List.of(AiAssistantSystemRole.LAB_MANAGER, AiAssistantSystemRole.STUDENT);
             case LAB_OWN_BOOKING_READ, LAB_BOOKING_DRAFT, LAB_CHECKIN_GUIDANCE,
                     RESEARCH_TASK_PROPOSAL_DRAFT -> List.of(AiAssistantSystemRole.STUDENT);
-            case LAB_MANAGED_SUMMARY -> List.of(AiAssistantSystemRole.LAB_MANAGER);
+            case LAB_MANAGED_SUMMARY, LAB_SHIFT_CREATE_DRAFT -> List.of(AiAssistantSystemRole.LAB_MANAGER);
             default -> List.of(AiAssistantSystemRole.ADMIN);
         };
         return ordered.stream().filter(allowedRoles::contains).toList();

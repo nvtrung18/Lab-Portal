@@ -74,8 +74,10 @@ public class AiLabCapabilityPermissionAdapter implements AiCapabilityPermissionA
             return switch (request.capability()) {
                 case LAB_POLICY_READ -> policyRead(request, selectedSystemRole);
                 case LAB_SLOT_READ -> slotRead(actor, request, selectedSystemRole);
+                case LAB_AVAILABLE_SLOTS_READ -> availableSlotsRead(actor, request, selectedSystemRole);
                 case LAB_OWN_BOOKING_READ -> ownBookingRead(actor, request, selectedSystemRole);
                 case LAB_MANAGED_SUMMARY -> managedSummary(actor, request, selectedSystemRole);
+                case LAB_SHIFT_CREATE_DRAFT -> managedSummary(actor, request, selectedSystemRole);
                 case LAB_BOOKING_DRAFT -> bookingDraft(actor, request, selectedSystemRole);
                 case LAB_CHECKIN_GUIDANCE -> checkinGuidance(actor, request, selectedSystemRole);
                 default -> Evaluation.denied(AiCapabilityDenialReason.DOMAIN_MISMATCH);
@@ -117,6 +119,32 @@ public class AiLabCapabilityPermissionAdapter implements AiCapabilityPermissionA
                 return allow(AiResourceType.TIME_SLOT, slot.getId(), lab.getId(), AiResourceScope.MANAGED_LAB,
                         AiCapabilityEvidence.MANAGED_LAB);
             }
+        }
+        if (role == AiAssistantSystemRole.STUDENT) {
+            return Evaluation.denied(AiCapabilityDenialReason.NOT_LAB_MEMBER);
+        }
+        if (role == AiAssistantSystemRole.LAB_MANAGER) {
+            return Evaluation.denied(AiCapabilityDenialReason.NOT_MANAGED_LAB);
+        }
+        return Evaluation.denied(AiCapabilityDenialReason.ROLE_NOT_ALLOWED);
+    }
+
+    private Evaluation availableSlotsRead(User actor, AiCapabilityRequest request, AiAssistantSystemRole role) {
+        Laboratory lab = activeLab(request.resource().id());
+        if (lab == null) {
+            return unavailable();
+        }
+        if (role == AiAssistantSystemRole.STUDENT
+                && membershipRepository.existsByUserIdAndLaboratoryIdAndActiveTrueAndDeletedFalse(
+                actor.getId(), lab.getId())) {
+            return allow(AiResourceType.LABORATORY, lab.getId(), lab.getId(), AiResourceScope.LAB_MEMBER,
+                    AiCapabilityEvidence.LAB_MEMBERSHIP);
+        }
+        if (role == AiAssistantSystemRole.LAB_MANAGER
+                && laboratoryRepository.existsByIdAndManagerIdAndActiveTrueAndDeletedFalse(
+                lab.getId(), actor.getId())) {
+            return allow(AiResourceType.LABORATORY, lab.getId(), lab.getId(), AiResourceScope.MANAGED_LAB,
+                    AiCapabilityEvidence.MANAGED_LAB);
         }
         if (role == AiAssistantSystemRole.STUDENT) {
             return Evaluation.denied(AiCapabilityDenialReason.NOT_LAB_MEMBER);

@@ -44,8 +44,10 @@ TOOL_SCHEMAS_BY_ASSISTANT: Mapping[AssistantKey, frozenset[str]] = MappingProxyT
             {
                 "lab.policy.read",
                 "lab.slot.read",
+                "lab.available.slots.read",
                 "lab.own.booking.read",
                 "lab.managed.summary",
+                "lab.shift.create.draft",
                 "lab.booking.draft",
                 "lab.checkin.guidance",
             }

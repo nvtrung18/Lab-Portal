@@ -1,5 +1,5 @@
 {
-  "schemaVersion": "1.2.0",
+  "schemaVersion": "1.3.0",
   "headers": {
     "internalServiceToken": "X-Internal-Service-Token",
     "requestId": "X-Request-Id",
@@ -19,8 +19,10 @@
     "admin.account.action.draft",
     "lab.policy.read",
     "lab.slot.read",
+    "lab.available.slots.read",
     "lab.own.booking.read",
     "lab.managed.summary",
+    "lab.shift.create.draft",
     "lab.booking.draft",
     "lab.checkin.guidance",
     "research.project.summary",
@@ -35,7 +37,7 @@
     "ready": {"method": "GET", "path": "/ready", "openApi": true, "springClientConsumes": false},
     "modelInfo": {"method": "GET", "path": "/model-info", "openApi": true, "springClientConsumes": false},
     "chat": {"method": "POST", "path": "/v1/assistants/chat", "openApi": true, "springClientConsumes": true},
-    "toolRequest": {"method": "POST", "path": "/v1/assistants/tool-request", "openApi": true, "springClientConsumes": false},
+    "toolRequest": {"method": "POST", "path": "/v1/assistants/tool-request", "openApi": true, "springClientConsumes": true},
     "suggestions": {"method": "POST", "path": "/v1/assistants/suggestions", "openApi": true, "springClientConsumes": false},
     "legacySuggestions": {"method": "POST", "path": "/v1/research/suggestions", "openApi": false, "springClientConsumes": true}
   },
@@ -59,6 +61,37 @@
           {"resourceType": "TIME_SLOT", "resourceId": "slot-17"}
         ]
       }
+    }
+  },
+  "toolPlanningRequest": {
+    "requiredFields": ["input", "candidates"],
+    "example": {
+      "input": "Show authorized slot 17.",
+      "candidates": [
+        {
+          "assistantKey": "LAB_ASSISTANT",
+          "schemaVersion": "v1",
+          "toolId": "lab.slot.read",
+          "description": "Read authorized slot 17",
+          "resource": {"resourceType": "TIME_SLOT", "resourceId": 17},
+          "parentResource": null
+        }
+      ]
+    }
+  },
+  "toolPlanningResponse": {
+    "requiredFields": ["decision", "message", "toolRequest", "promptTokens", "completionTokens"],
+    "example": {
+      "decision": "TOOL_REQUEST",
+      "message": null,
+      "toolRequest": {
+        "assistantKey": "LAB_ASSISTANT",
+        "schemaVersion": "v1",
+        "toolId": "lab.slot.read",
+        "arguments": {"resource": {"resourceType": "TIME_SLOT", "resourceId": 17}}
+      },
+      "promptTokens": 10,
+      "completionTokens": 2
     }
   },
   "researchMvpRequest": {
@@ -205,16 +238,18 @@
   },
   "postErrors": {
     "chat": "AI_MODEL_NOT_READY",
-    "toolRequest": "AI_SERVICE_NOT_READY",
     "suggestions": "AI_SERVICE_NOT_READY",
     "legacySuggestions": "AI_SERVICE_NOT_READY"
   },
   "artifactReadyPostErrors": {
-    "toolRequest": "AI_SERVICE_NOT_READY",
     "suggestions": "AI_SERVICE_NOT_READY",
     "legacySuggestions": "AI_SERVICE_NOT_READY"
   },
   "artifactReadyPostResponses": {
+    "toolRequest": {
+      "statusCode": 200,
+      "bodyReference": "toolPlanningResponse.example"
+    },
     "chat": {
       "statusCode": 200,
       "bodyReference": "chatResponse.example"

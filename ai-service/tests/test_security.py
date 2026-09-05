@@ -340,7 +340,10 @@ def test_health_readiness_and_model_info_truth_remain_unchanged_behind_authentic
 
 def test_architecture_has_no_jwt_database_sql_or_dynamic_execution_dependencies() -> None:
     service_root = Path(__file__).resolve().parents[1]
-    requirements = (service_root / "requirements.txt").read_text(encoding="utf-8").lower()
+    requirements = "\n".join(
+        path.read_text(encoding="utf-8")
+        for path in sorted(service_root.glob("requirements*.txt"))
+    ).lower()
     app_source = "\n".join(
         path.read_text(encoding="utf-8")
         for path in sorted((service_root / "app").rglob("*.py"))

@@ -9,6 +9,7 @@ export const AUTH_TOKEN_KEY = 'access_token';
 export const REFRESH_TOKEN_KEY = 'refreshToken';
 export const USER_ROLE_KEY = 'user_role';
 export const USER_DATA_KEY = 'user_data';
+export const ASSISTANT_CHAT_SESSION_PREFIX = 'lab-portal.ai-chat.v1';
 
 export interface StoredUser {
   id: number;
@@ -87,6 +88,9 @@ export function setStoredUser(user: StoredUser) {
 }
 
 export function clearAuthTokens() {
+  Object.keys(sessionStorage)
+    .filter((key) => key.startsWith(`${ASSISTANT_CHAT_SESSION_PREFIX}.`))
+    .forEach((key) => sessionStorage.removeItem(key));
   localStorage.removeItem(AUTH_TOKEN_KEY);
   localStorage.removeItem(REFRESH_TOKEN_KEY);
   localStorage.removeItem(USER_ROLE_KEY);

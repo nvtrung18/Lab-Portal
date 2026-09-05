@@ -18,6 +18,30 @@ import java.util.Optional;
 @Repository
 public interface GroupRepository extends JpaRepository<GroupEntity, Long> {
 
+    @Query("""
+            SELECT DISTINCT new com.web.labportalbackend.ai.service.AiResearchToolCandidateResource(
+                g.id, g.name, p.id)
+            FROM GroupEntity g JOIN g.lab l JOIN ProjectEntity p
+              ON (g.project.id = p.id OR p.group.id = g.id)
+            WHERE g.active = true AND g.deleted = false
+              AND p.active = true AND p.deleted = false
+              AND l.active = true AND l.deleted = false AND p.lab.id = l.id
+              AND (g.project IS NULL OR g.project.id = p.id)
+              AND (p.group IS NULL OR p.group.id = g.id)
+              AND EXISTS (SELECT r.id FROM User roleActor JOIN roleActor.roles r
+                          WHERE roleActor.id = :actorId AND r.name = :selectedRoleName)
+              AND ((:selectedRoleName = 'LAB_MANAGER' AND l.manager.id = :actorId)
+                   OR (:selectedRoleName = 'STUDENT' AND EXISTS (
+                       SELECT gm.id FROM GroupMemberEntity gm
+                       WHERE gm.group.id = g.id AND gm.user.id = :actorId
+                         AND gm.active = true AND gm.deleted = false)))
+            ORDER BY g.id ASC
+            """)
+    List<com.web.labportalbackend.ai.service.AiResearchToolCandidateResource> findAiToolCandidateGroups(
+            @Param("actorId") Long actorId,
+            @Param("selectedRoleName") String selectedRoleName,
+            org.springframework.data.domain.Pageable pageable);
+
     @Lock(LockModeType.PESSIMISTIC_READ)
     @Query("""
             SELECT g

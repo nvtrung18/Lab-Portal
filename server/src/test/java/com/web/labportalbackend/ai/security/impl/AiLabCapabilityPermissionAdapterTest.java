@@ -106,6 +106,26 @@ class AiLabCapabilityPermissionAdapterTest {
     }
 
     @Test
+    void availableSlotListRequiresMembershipOrExactManagedLabWithoutAdminBypass() {
+        Laboratory lab = lab(10L, LabStatus.AVAILABLE);
+        when(laboratoryRepository.findById(10L)).thenReturn(Optional.of(lab));
+        when(membershipRepository.existsByUserIdAndLaboratoryIdAndActiveTrueAndDeletedFalse(7L, 10L))
+                .thenReturn(true);
+        when(laboratoryRepository.existsByIdAndManagerIdAndActiveTrueAndDeletedFalse(10L, 8L))
+                .thenReturn(true);
+
+        assertTrue(adapter.evaluate(user(7L, "STUDENT"), request(
+                AiCapability.LAB_AVAILABLE_SLOTS_READ, AiResourceType.LABORATORY, 10L,
+                AiRequestedAction.READ), AiAssistantSystemRole.STUDENT).allowed());
+        assertTrue(adapter.evaluate(user(8L, "LAB_MANAGER"), request(
+                AiCapability.LAB_AVAILABLE_SLOTS_READ, AiResourceType.LABORATORY, 10L,
+                AiRequestedAction.READ), AiAssistantSystemRole.LAB_MANAGER).allowed());
+        assertDenied(adapter.evaluate(user(1L, "ADMIN"), request(
+                AiCapability.LAB_AVAILABLE_SLOTS_READ, AiResourceType.LABORATORY, 10L,
+                AiRequestedAction.READ), AiAssistantSystemRole.ADMIN), ROLE_NOT_ALLOWED);
+    }
+
+    @Test
     void ownBookingReadDeniesAnotherStudentAndAllowsHistoricalOwner() {
         Laboratory lab = lab(10L, LabStatus.INACTIVE);
         Booking booking = booking(30L, user(7L, "STUDENT"), lab, null, BookingStatus.COMPLETED, NOW);
@@ -133,6 +153,21 @@ class AiLabCapabilityPermissionAdapterTest {
         assertDenied(adapter.evaluate(user(9L, "LAB_MANAGER"), request(
                 AiCapability.LAB_MANAGED_SUMMARY, AiResourceType.LABORATORY, 10L,
                 AiRequestedAction.READ), AiAssistantSystemRole.LAB_MANAGER), NOT_MANAGED_LAB);
+    }
+
+    @Test
+    void shiftCreateDraftRequiresExactActiveManagedLab() {
+        Laboratory lab = lab(10L, LabStatus.AVAILABLE);
+        when(laboratoryRepository.findById(10L)).thenReturn(Optional.of(lab));
+        when(laboratoryRepository.existsByIdAndManagerIdAndActiveTrueAndDeletedFalse(10L, 8L))
+                .thenReturn(true);
+
+        assertTrue(adapter.evaluate(user(8L, "LAB_MANAGER"), request(
+                AiCapability.LAB_SHIFT_CREATE_DRAFT, AiResourceType.LABORATORY, 10L,
+                AiRequestedAction.DRAFT), AiAssistantSystemRole.LAB_MANAGER).allowed());
+        assertDenied(adapter.evaluate(user(9L, "LAB_MANAGER"), request(
+                AiCapability.LAB_SHIFT_CREATE_DRAFT, AiResourceType.LABORATORY, 10L,
+                AiRequestedAction.DRAFT), AiAssistantSystemRole.LAB_MANAGER), NOT_MANAGED_LAB);
     }
 
     @Test

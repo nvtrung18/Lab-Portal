@@ -8,12 +8,27 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.data.domain.Pageable;
 
 import java.time.Instant;
 import java.util.List;
 
 @Repository
 public interface BookingRepository extends JpaRepository<Booking, Long> {
+
+    @Query("""
+            SELECT new com.web.labportalbackend.ai.context.AiLabContext$OwnBooking(
+                b.id, b.status,
+                new com.web.labportalbackend.ai.context.AiLabContext$Slot(
+                    ts.id, ts.startTime, ts.endTime, ts.status))
+            FROM Booking b JOIN b.timeSlot ts
+            WHERE b.user.id = :actorId
+              AND b.active = true AND b.deleted = false
+              AND ts.active = true AND ts.deleted = false
+            ORDER BY b.startTime DESC, b.id DESC
+            """)
+    List<AiLabContext.OwnBooking> findAiCandidateOwnBookings(
+            @Param("actorId") Long actorId, Pageable pageable);
 
     @Query("""
             SELECT new com.web.labportalbackend.face.dto.response.FaceCheckinCandidateResponse(

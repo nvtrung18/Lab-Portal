@@ -17,11 +17,15 @@ from app.runtime import RuntimeGeneration
 SAFE_REFUSAL = "I cannot provide that response from the authorized context available."
 _POLICY_TOOL = "lab.policy.read"
 _DRAFT_TOOL = "lab.booking.draft"
+_SHIFT_CREATE_DRAFT_TOOL = "lab.shift.create.draft"
+_DRAFT_TOOLS = {_DRAFT_TOOL, _SHIFT_CREATE_DRAFT_TOOL}
 _TOOL_SHAPES = {
     _POLICY_TOOL: ("LABORATORY", "READ_ONLY"),
     "lab.slot.read": ("TIME_SLOT", "READ_ONLY"),
+    "lab.available.slots.read": ("LABORATORY", "READ_ONLY"),
     "lab.own.booking.read": ("BOOKING", "READ_ONLY"),
     "lab.managed.summary": ("LABORATORY", "READ_ONLY"),
+    _SHIFT_CREATE_DRAFT_TOOL: ("LABORATORY", "DRAFT_ONLY"),
     _DRAFT_TOOL: ("TIME_SLOT", "DRAFT_ONLY"),
     "lab.checkin.guidance": ("BOOKING", "READ_ONLY"),
 }
@@ -97,10 +101,23 @@ class _LabContext(_ContextModel):
     policy_or_draft_eligibility_label: str | None
 
 
+class _BoundedSlots(_ContextModel):
+    values: tuple[_Slot, ...]
+    returned_count: int = Field(ge=0)
+    limit: int = Field(gt=0)
+    truncated: bool
+
+
+class _LabAvailableSlotsContext(_ContextModel):
+    laboratory: _Laboratory
+    available_slots: _BoundedSlots
+    evaluated_at: datetime
+
+
 class _LabAuthorizedContext(_ContextModel):
     domain: Literal["LAB"]
     context_version: str = Field(min_length=1)
-    context: _LabContext
+    context: _LabContext | _LabAvailableSlotsContext
     allowed_tools: tuple[_AllowedTool, ...] = Field(min_length=1, max_length=1)
     resources: tuple[_ResourceReference, ...] = Field(min_length=1, max_length=1)
     authorized_retrieval: AuthorizedRetrieval
@@ -122,7 +139,7 @@ class LabAssistantMvp:
         if selected is None:
             return self._safe_refusal()
         tool_id, context, resources = selected
-        json_output = tool_id == _DRAFT_TOOL
+        json_output = tool_id in _DRAFT_TOOLS
         generation = self._backend.generate(
             AssistantKey.LAB_ASSISTANT,
             self._messages(payload.input, tool_id, context),
@@ -184,10 +201,10 @@ class LabAssistantMvp:
         projected_id = self._projected_resource_id(tool.tool_id, context.context)
         if projected_id != reference.resource_id:
             return None
-        if tool.tool_id == _DRAFT_TOOL:
-            if not context.context.draft_only:
+        if tool.tool_id in _DRAFT_TOOLS:
+            if not isinstance(context.context, _LabContext) or not context.context.draft_only:
                 return None
-        elif context.context.draft_only:
+        elif isinstance(context.context, _LabContext) and context.context.draft_only:
             return None
 
         resources = [reference.model_dump(by_alias=True, mode="json")]
@@ -198,7 +215,16 @@ class LabAssistantMvp:
         return tool.tool_id, context, resources
 
     @staticmethod
-    def _context_matches_tool(tool_id: str, context: _LabContext) -> bool:
+    def _context_matches_tool(tool_id: str, context: _LabContext | _LabAvailableSlotsContext) -> bool:
+        if tool_id == "lab.available.slots.read":
+            return (
+                isinstance(context, _LabAvailableSlotsContext)
+                and context.available_slots.returned_count == len(context.available_slots.values)
+                and context.available_slots.returned_count <= context.available_slots.limit
+                and all(slot.end_time > slot.start_time for slot in context.available_slots.values)
+            )
+        if not isinstance(context, _LabContext):
+            return False
         if tool_id == _POLICY_TOOL:
             return (
                 context.slot is None
@@ -246,11 +272,28 @@ class LabAssistantMvp:
                 and context.checkin_policy_snapshot is None
                 and context.policy_or_draft_eligibility_label is None
             )
+        if tool_id == _SHIFT_CREATE_DRAFT_TOOL:
+            return (
+                context.slot is None
+                and context.booking is None
+                and context.managed_summary is None
+                and context.lab_policy_snapshot is None
+                and context.checkin_policy_snapshot is None
+                and context.draft_only
+                and context.policy_or_draft_eligibility_label == "DRAFT_ONLY_NO_SHIFT_WRITE"
+            )
         return False
 
     @staticmethod
-    def _projected_resource_id(tool_id: str, context: _LabContext) -> int | None:
-        if tool_id in {_POLICY_TOOL, "lab.managed.summary"}:
+    def _projected_resource_id(
+        tool_id: str,
+        context: _LabContext | _LabAvailableSlotsContext,
+    ) -> int | None:
+        if tool_id == "lab.available.slots.read":
+            return context.laboratory.id
+        if not isinstance(context, _LabContext):
+            return None
+        if tool_id in {_POLICY_TOOL, "lab.managed.summary", _SHIFT_CREATE_DRAFT_TOOL}:
             return context.laboratory.id
         if tool_id in {"lab.slot.read", _DRAFT_TOOL}:
             return context.slot.id if context.slot is not None else None
@@ -264,12 +307,22 @@ class LabAssistantMvp:
         tool_id: str,
         context: _LabAuthorizedContext,
     ) -> tuple[dict[str, str], dict[str, str]]:
-        output_instruction = (
-            "Return only one JSON object with kind LAB_BOOKING_DRAFT, integer labRef, integer slotRef, "
-            "requestedPurpose, and requiresHumanReview=true."
-            if tool_id == _DRAFT_TOOL
-            else "Answer only from the supplied bounded context. If it is insufficient, use a safe refusal."
-        )
+        if tool_id == _DRAFT_TOOL:
+            output_instruction = (
+                "Return only one JSON object with kind LAB_BOOKING_DRAFT, integer labRef, integer slotRef, "
+                "requestedPurpose, and requiresHumanReview=true."
+            )
+        elif tool_id == _SHIFT_CREATE_DRAFT_TOOL:
+            output_instruction = (
+                "Extract the requested time slot and return only one JSON object with kind "
+                "LAB_SHIFT_CREATE_DRAFT, integer labRef equal to the authorized laboratory, RFC3339 UTC "
+                "startTime and endTime, positive integer capacity, and requiresHumanReview=true. "
+                "Do not invent a missing date, time, timezone, or capacity."
+            )
+        else:
+            output_instruction = (
+                "Answer only from the supplied bounded context. If it is insufficient, use a safe refusal."
+            )
         system = (
             f"{self._profile.prompt.system_prompt} "
             "Spring-authorized context is the only source of business facts. "

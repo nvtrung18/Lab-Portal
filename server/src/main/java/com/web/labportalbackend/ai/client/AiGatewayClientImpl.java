@@ -23,10 +23,11 @@ import org.springframework.web.reactive.function.client.WebClientRequestExceptio
 import reactor.core.publisher.Mono;
 
 @Component
-public final class AiGatewayClientImpl implements AiGatewayClient {
+public final class AiGatewayClientImpl implements AiGatewayClient, AiToolPlanningClient {
 
     static final Duration ATTEMPT_TIMEOUT = Duration.ofSeconds(5);
     private static final String CHAT_PATH = "/v1/assistants/chat";
+    private static final String TOOL_PLANNING_PATH = "/v1/assistants/tool-request";
     private static final String SUGGESTIONS_PATH = "/v1/research/suggestions";
     private static final String INTERNAL_TOKEN_HEADER = "X-Internal-Service-Token";
     private static final String REQUEST_ID_HEADER = "X-Request-Id";
@@ -39,8 +40,10 @@ public final class AiGatewayClientImpl implements AiGatewayClient {
     @Autowired
     public AiGatewayClientImpl(WebClient.Builder webClientBuilder, ObjectMapper objectMapper,
                                @Value("${ai.gateway.base-url}") String baseUrl,
-                               @Value("${ai.gateway.internal-service-token}") String internalServiceToken) {
-        this(new AiGatewayConfiguration(baseUrl, internalServiceToken), objectMapper, webClientBuilder, ATTEMPT_TIMEOUT);
+                               @Value("${ai.gateway.internal-service-token}") String internalServiceToken,
+                               @Value("${ai.gateway.attempt-timeout:5s}") Duration attemptTimeout) {
+        this(new AiGatewayConfiguration(baseUrl, internalServiceToken), objectMapper, webClientBuilder,
+                validateConfiguredTimeout(attemptTimeout));
     }
 
     AiGatewayClientImpl(AiGatewayConfiguration configuration, ObjectMapper objectMapper,
@@ -60,6 +63,13 @@ public final class AiGatewayClientImpl implements AiGatewayClient {
         this.attemptTimeout = attemptTimeout;
     }
 
+    static Duration validateConfiguredTimeout(Duration timeout) {
+        if (timeout == null || timeout.isZero() || timeout.isNegative() || timeout.compareTo(Duration.ofMinutes(5)) > 0) {
+            throw new IllegalArgumentException("AI gateway attempt timeout must be between 1ms and 5m");
+        }
+        return timeout;
+    }
+
     @Override
     public AiChatResponse chat(AiGatewayRequest request) {
         return invoke(request, CHAT_PATH, this::decodeChat);
@@ -68,6 +78,11 @@ public final class AiGatewayClientImpl implements AiGatewayClient {
     @Override
     public AiSuggestionResponse suggestions(AiGatewayRequest request) {
         return invoke(request, SUGGESTIONS_PATH, this::decodeSuggestion);
+    }
+
+    @Override
+    public AiToolPlanningResponse plan(AiGatewayRequest request) {
+        return invoke(request, TOOL_PLANNING_PATH, this::decodeToolPlanning);
     }
 
     private <T> T invoke(AiGatewayRequest request, String path, Function<JsonNode, T> decoder) {
@@ -152,6 +167,32 @@ public final class AiGatewayClientImpl implements AiGatewayClient {
         return new AiSuggestionResponse(requiredText(root, "assistantKey"), requiredText(root, "actionType"),
                 requiredPositiveInt(root, "schemaVersion"), requiredObject(root, "payload"), confidence.doubleValue(),
                 requiredText(root, "explanation"));
+    }
+
+    private AiToolPlanningResponse decodeToolPlanning(JsonNode root) {
+        if (root.size() != 5 || !root.has("decision") || !root.has("message")
+                || !root.has("toolRequest") || !root.has("promptTokens") || !root.has("completionTokens")) {
+            throw protocolFailure(null);
+        }
+        AiToolPlanningDecision decision;
+        try {
+            decision = AiToolPlanningDecision.valueOf(requiredText(root, "decision"));
+        } catch (IllegalArgumentException exception) {
+            throw protocolFailure(null);
+        }
+        JsonNode messageNode = root.get("message");
+        String message = messageNode != null && messageNode.isTextual() && !messageNode.textValue().isBlank()
+                ? messageNode.textValue() : null;
+        JsonNode toolRequestNode = root.get("toolRequest");
+        JsonNode toolRequest = toolRequestNode != null && toolRequestNode.isObject()
+                ? toolRequestNode : null;
+        try {
+            return new AiToolPlanningResponse(decision, message, toolRequest,
+                    requiredNonNegativeInt(root, "promptTokens"),
+                    requiredNonNegativeInt(root, "completionTokens"));
+        } catch (IllegalArgumentException exception) {
+            throw protocolFailure(null);
+        }
     }
 
     private AiGatewayErrorResponse decodeError(JsonNode root) {

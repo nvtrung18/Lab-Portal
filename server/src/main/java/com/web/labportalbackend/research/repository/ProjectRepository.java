@@ -17,6 +17,29 @@ import java.util.Optional;
 @Repository
 public interface ProjectRepository extends JpaRepository<ProjectEntity, Long> {
 
+    @Query("""
+            SELECT DISTINCT new com.web.labportalbackend.ai.service.AiResearchToolCandidateResource(
+                p.id, p.title, p.id)
+            FROM ProjectEntity p JOIN p.lab l
+            WHERE p.active = true AND p.deleted = false AND l.active = true AND l.deleted = false
+              AND EXISTS (SELECT r.id FROM User roleActor JOIN roleActor.roles r
+                          WHERE roleActor.id = :actorId AND r.name = :selectedRoleName)
+              AND ((:selectedRoleName = 'LAB_MANAGER' AND l.manager.id = :actorId)
+                   OR (:selectedRoleName = 'STUDENT' AND (
+                       EXISTS (SELECT gm.id FROM GroupMemberEntity gm JOIN gm.group g
+                               WHERE gm.user.id = :actorId AND gm.active = true AND gm.deleted = false
+                                 AND g.active = true AND g.deleted = false AND g.lab.id = l.id
+                                 AND (g.project.id = p.id OR p.group.id = g.id))
+                       OR EXISTS (SELECT t.id FROM TaskEntity t
+                                  WHERE t.projectId = p.id AND t.assigneeId = :actorId
+                                    AND t.active = true AND t.deleted = false))))
+            ORDER BY p.id ASC
+            """)
+    List<com.web.labportalbackend.ai.service.AiResearchToolCandidateResource> findAiToolCandidateProjects(
+            @Param("actorId") Long actorId,
+            @Param("selectedRoleName") String selectedRoleName,
+            org.springframework.data.domain.Pageable pageable);
+
     @Lock(LockModeType.PESSIMISTIC_READ)
     @Query("""
             SELECT p

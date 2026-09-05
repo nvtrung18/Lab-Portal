@@ -10,12 +10,24 @@ import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.Optional;
 
 @Repository
 public interface LaboratoryRepository extends JpaRepository<Laboratory, Long> {
+
+    @Query("""
+            SELECT new com.web.labportalbackend.ai.context.AiLabContext$Laboratory(l.id, l.labName, l.status)
+            FROM Membership m JOIN m.laboratory l
+            WHERE m.user.id = :actorId
+              AND m.active = true AND m.deleted = false
+              AND l.active = true AND l.deleted = false
+            ORDER BY l.id ASC
+            """)
+    List<AiLabContext.Laboratory> findAiCandidateLabsForStudent(
+            @Param("actorId") Long actorId, Pageable pageable);
 
     @Lock(LockModeType.PESSIMISTIC_READ)
     @EntityGraph(type = EntityGraph.EntityGraphType.FETCH)

@@ -13,6 +13,7 @@ from app.profiles import ProfileLoader
 from app.research_mvp import ResearchAssistantMvp
 from app.routes.foundation import router
 from app.security import InternalSecurityMiddleware, safe_error_response
+from app.tool_planner import ToolPlanner
 
 
 async def validation_error_handler(request: Request, _exception: RequestValidationError) -> JSONResponse:
@@ -78,6 +79,7 @@ def create_app(
         if runtime_backend is not None
         else None
     )
+    application.state.tool_planner = ToolPlanner(runtime_backend) if runtime_backend is not None else None
     application.include_router(router)
     application.add_middleware(InternalSecurityMiddleware, settings=resolved_settings)
     application.add_exception_handler(RequestValidationError, validation_error_handler)

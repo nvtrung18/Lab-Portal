@@ -8,10 +8,12 @@ import com.web.labportalbackend.ai.enums.AiAssistantKey;
 import com.web.labportalbackend.ai.enums.AiCapability;
 import com.web.labportalbackend.ai.enums.AiResourceScope;
 import com.web.labportalbackend.ai.enums.AiResourceType;
+import com.web.labportalbackend.ai.rag.service.AiAuthorizedRetrieval;
 import com.web.labportalbackend.ai.service.AiAuthorizedToolPolicy;
 import com.web.labportalbackend.ai.service.AiCapabilityDecision;
 import com.web.labportalbackend.ai.service.impl.AiToolRegistryServiceImpl;
 import java.time.Instant;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 
 class AiAuthorizedContextTest {
@@ -47,6 +49,22 @@ class AiAuthorizedContextTest {
                         20L, null, null, AiResourceScope.EXISTING_BUSINESS_PERMISSION),
                 new AiAuthorizedToolPolicy(new AiToolRegistryServiceImpl().get(AiCapability.RESEARCH_PROJECT_SUMMARY)),
                 "P5A-T6-v1", Instant.EPOCH, AiAuthorizedContext.Freshness.LIVE_READ_NO_CACHE, domainContext()));
+    }
+
+    @Test
+    void convertsBoundedAvailableSlotsContextForThePythonBoundary() {
+        AiCapability capability = AiCapability.LAB_AVAILABLE_SLOTS_READ;
+        AiDomainContext availableSlots = new AiLabAvailableSlotsContext(
+                new AiLabContext.Laboratory(10L, "Lab", null),
+                new AiBoundedList<>(List.of(), 0, 50, false), Instant.EPOCH);
+        AiAuthorizedContext authorized = new AiAuthorizedContext("request-1",
+                AiAssistantKey.LAB_ASSISTANT, AiAssistantDomain.LAB, capability,
+                resource(), new AiAuthorizedToolPolicy(new AiToolRegistryServiceImpl().get(capability)),
+                "P5A-T6-v1", Instant.EPOCH, AiAuthorizedContext.Freshness.LIVE_READ_NO_CACHE,
+                availableSlots);
+
+        assertDoesNotThrow(() -> AiPythonAuthorizedContext.from(
+                authorized, AiAuthorizedRetrieval.empty("lab-knowledge")));
     }
 
     private static AiAuthorizedContext context(AiCapability capability) {

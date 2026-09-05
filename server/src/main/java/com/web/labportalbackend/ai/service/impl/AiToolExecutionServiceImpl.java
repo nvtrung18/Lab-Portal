@@ -8,6 +8,7 @@ import com.web.labportalbackend.ai.context.AiContextBuildRequest;
 import com.web.labportalbackend.ai.context.AiContextFacade;
 import com.web.labportalbackend.ai.context.AiDomainContext;
 import com.web.labportalbackend.ai.context.AiLabContext;
+import com.web.labportalbackend.ai.context.AiLabAvailableSlotsContext;
 import com.web.labportalbackend.ai.context.AiResearchAssistantContext;
 import com.web.labportalbackend.ai.enums.AiActionRiskBoundary;
 import com.web.labportalbackend.ai.enums.AiAssistantDomain;
@@ -325,7 +326,7 @@ public final class AiToolExecutionServiceImpl implements AiToolExecutionService 
     private static boolean matchesDomain(AiAssistantDomain domain, AiDomainContext context) {
         return context != null && switch (domain) {
             case ADMIN -> context instanceof AiAdminContext;
-            case LAB -> context instanceof AiLabContext;
+            case LAB -> context instanceof AiLabContext || context instanceof AiLabAvailableSlotsContext;
             case RESEARCH -> context instanceof AiResearchAssistantContext;
         };
     }

@@ -15,6 +15,19 @@ VALID_REQUEST = {
     "input": "Summarize the authorized lab context.",
     "authorizedContext": {"lab": {"id": 17, "name": "Chemistry Lab"}},
 }
+VALID_TOOL_PLANNING_REQUEST = {
+    "input": "Show slot 17.",
+    "candidates": [
+        {
+            "assistantKey": "LAB_ASSISTANT",
+            "schemaVersion": "v1",
+            "toolId": "lab.slot.read",
+            "description": "Read authorized slot 17",
+            "resource": {"resourceType": "TIME_SLOT", "resourceId": 17},
+            "parentResource": None,
+        }
+    ],
+}
 TEST_REQUEST_ID = "test-request-123"
 INTERNAL_HEADERS = {
     "X-Internal-Service-Token": "test-only-internal-service-token",
@@ -58,10 +71,11 @@ def test_required_routes_are_registered() -> None:
         "/v1/assistants/suggestions",
     }.issubset(schema["paths"])
     assert "/v1/research/suggestions" not in schema["paths"]
-    for path in ("/v1/assistants/tool-request", "/v1/assistants/suggestions"):
-        responses = schema["paths"][path]["post"]["responses"]
-        assert "503" in responses
-        assert "200" not in responses
+    tool_responses = schema["paths"]["/v1/assistants/tool-request"]["post"]["responses"]
+    assert {"200", "503"}.issubset(tool_responses)
+    suggestion_responses = schema["paths"]["/v1/assistants/suggestions"]["post"]["responses"]
+    assert "503" in suggestion_responses
+    assert "200" not in suggestion_responses
     chat_responses = schema["paths"]["/v1/assistants/chat"]["post"]["responses"]
     assert {"200", "503"}.issubset(chat_responses)
 
@@ -138,19 +152,17 @@ def test_chat_accepts_authorized_contract_and_returns_model_not_ready() -> None:
     }
 
 
-def test_tool_request_is_advisory_and_never_executes() -> None:
-    request = VALID_REQUEST | {
-        "input": "Run this function.",
-        "authorizedContext": {"tool": {"name": "arbitrary.function"}},
-    }
-
-    response = TestClient(app, headers=INTERNAL_HEADERS).post("/v1/assistants/tool-request", json=request)
+def test_tool_request_requires_the_model_but_never_executes_a_candidate() -> None:
+    response = TestClient(app, headers=INTERNAL_HEADERS).post(
+        "/v1/assistants/tool-request",
+        json=VALID_TOOL_PLANNING_REQUEST,
+    )
 
     assert response.status_code == 503
     assert response.json() == {
-        "errorCode": "AI_SERVICE_NOT_READY",
-        "message": "AI tool requests are not available.",
-        "retryable": False,
+        "errorCode": "AI_MODEL_NOT_READY",
+        "message": "AI model is not loaded.",
+        "retryable": True,
         "requestId": TEST_REQUEST_ID,
     }
 

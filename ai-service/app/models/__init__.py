@@ -6,7 +6,12 @@ from app.models.contracts import (
     ErrorResponse,
     HealthResponse,
     ModelInfoResponse,
+    PlannedToolRequest,
     ReadinessResponse,
+    ToolCandidate,
+    ToolPlanningRequest,
+    ToolPlanningResponse,
+    ToolResourceReference,
 )
 
 __all__ = [
@@ -17,5 +22,10 @@ __all__ = [
     "ErrorResponse",
     "HealthResponse",
     "ModelInfoResponse",
+    "PlannedToolRequest",
     "ReadinessResponse",
+    "ToolCandidate",
+    "ToolPlanningRequest",
+    "ToolPlanningResponse",
+    "ToolResourceReference",
 ]

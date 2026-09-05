@@ -199,8 +199,10 @@ _TOOL_SHAPES: Mapping[str, tuple[AssistantKey, str, str | None, str]] = MappingP
         "admin.account.action.draft": (AssistantKey.ADMIN_ASSISTANT, "USER_ACCOUNT", None, "DRAFT_ONLY"),
         "lab.policy.read": (AssistantKey.LAB_ASSISTANT, "LABORATORY", None, "READ_ONLY"),
         "lab.slot.read": (AssistantKey.LAB_ASSISTANT, "TIME_SLOT", None, "READ_ONLY"),
+        "lab.available.slots.read": (AssistantKey.LAB_ASSISTANT, "LABORATORY", None, "READ_ONLY"),
         "lab.own.booking.read": (AssistantKey.LAB_ASSISTANT, "BOOKING", None, "READ_ONLY"),
         "lab.managed.summary": (AssistantKey.LAB_ASSISTANT, "LABORATORY", None, "READ_ONLY"),
+        "lab.shift.create.draft": (AssistantKey.LAB_ASSISTANT, "LABORATORY", None, "DRAFT_ONLY"),
         "lab.booking.draft": (AssistantKey.LAB_ASSISTANT, "TIME_SLOT", None, "DRAFT_ONLY"),
         "lab.checkin.guidance": (AssistantKey.LAB_ASSISTANT, "BOOKING", None, "READ_ONLY"),
         "research.project.summary": (AssistantKey.RESEARCH_ASSISTANT, "PROJECT", None, "READ_ONLY"),
@@ -616,6 +618,9 @@ class StructuredOutputValidator:
             "LAB_BOOKING_DRAFT": [
                 {"resourceType": "LABORATORY", "resourceId": candidate.get("labRef")},
                 {"resourceType": "TIME_SLOT", "resourceId": candidate.get("slotRef")},
+            ],
+            "LAB_SHIFT_CREATE_DRAFT": [
+                {"resourceType": "LABORATORY", "resourceId": candidate.get("labRef")},
             ],
             "RESEARCH_TASK_PROPOSAL_DRAFT": [
                 {"resourceType": "PROJECT", "resourceId": candidate.get("projectRef")},
