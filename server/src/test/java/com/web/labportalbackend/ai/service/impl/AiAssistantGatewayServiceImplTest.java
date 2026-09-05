@@ -13,6 +13,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.web.labportalbackend.ai.client.AiChatResponse;
@@ -26,6 +27,7 @@ import com.web.labportalbackend.ai.context.AiContextFacade;
 import com.web.labportalbackend.ai.context.AiContextReadDeniedException;
 import com.web.labportalbackend.ai.context.AiDomainContext;
 import com.web.labportalbackend.ai.context.AiLabContext;
+import com.web.labportalbackend.ai.context.AiPythonAuthorizedContext;
 import com.web.labportalbackend.ai.context.AiResearchAssistantContext;
 import com.web.labportalbackend.ai.dto.request.AiAssistantChatRequest;
 import com.web.labportalbackend.ai.dto.response.AiAssistantChatResponse;
@@ -83,6 +85,20 @@ class AiAssistantGatewayServiceImplTest {
     private final ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
     private final AiAssistantGatewayServiceImpl service = new AiAssistantGatewayServiceImpl(
             availabilityService, contextFacade, gatewayClient, objectMapper, auditUsageService, ragRetrievalService);
+
+    @Test
+    void parentResourceTypeRemainsExplicitlyNullWithProductionJacksonInclusion() {
+        ObjectMapper productionMapper = new ObjectMapper()
+                .setSerializationInclusion(JsonInclude.Include.NON_NULL);
+        AiPythonAuthorizedContext.AllowedTool tool = new AiPythonAuthorizedContext.AllowedTool(
+                "research.group.summary", "v1", AiResourceType.GROUP, null,
+                List.of("resource"), AiActionRiskBoundary.READ_ONLY);
+
+        JsonNode serialized = productionMapper.valueToTree(tool);
+
+        assertTrue(serialized.has("parentResourceType"));
+        assertTrue(serialized.path("parentResourceType").isNull());
+    }
 
     @Test
     void adminSystemSummaryProjectsOnlyBoundedAuthorizedContextToPython() {

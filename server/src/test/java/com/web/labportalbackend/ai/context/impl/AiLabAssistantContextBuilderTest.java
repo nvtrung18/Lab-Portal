@@ -6,6 +6,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.any;
 
 import com.web.labportalbackend.ai.context.*;
 import com.web.labportalbackend.ai.enums.*;
@@ -19,8 +20,33 @@ import java.time.Instant;
 import java.util.Optional;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
+import java.util.List;
 
 class AiLabAssistantContextBuilderTest {
+    @Test void availableSlotsAreBoundedAndReadWithFreshAuthorizedScope() {
+        LaboratoryRepository labs = mock(LaboratoryRepository.class);
+        TimeSlotRepository slots = mock(TimeSlotRepository.class);
+        Instant readAt = Instant.parse("2026-09-05T08:00:00Z");
+        when(labs.findAiContextLaboratory(7L, 10L, "STUDENT"))
+                .thenReturn(Optional.of(new AiLabContext.Laboratory(10L, "Lab", null)));
+        List<AiLabContext.Slot> overfetch = java.util.stream.LongStream.rangeClosed(1, 51)
+                .mapToObj(id -> new AiLabContext.Slot(id, readAt.plusSeconds(id * 3600),
+                        readAt.plusSeconds((id + 1) * 3600),
+                        com.web.labportalbackend.common.enums.TimeSlotStatus.AVAILABLE))
+                .toList();
+        when(slots.findAiContextAvailableSlots(
+                org.mockito.ArgumentMatchers.eq(7L), org.mockito.ArgumentMatchers.eq(10L),
+                org.mockito.ArgumentMatchers.eq(false), org.mockito.ArgumentMatchers.eq(readAt),
+                org.mockito.ArgumentMatchers.eq("STUDENT"), any())).thenReturn(overfetch);
+        AiLabAssistantContextBuilder builder = new AiLabAssistantContextBuilder(
+                labs, slots, mock(BookingRepository.class), mock(SystemConfigService.class));
+
+        AiLabAvailableSlotsContext context = (AiLabAvailableSlotsContext) builder.build(availableSlotsInput(readAt));
+
+        assertEquals(50, context.availableSlots().returnedCount());
+        assertEquals(true, context.availableSlots().truncated());
+        assertEquals(readAt, context.evaluatedAt());
+    }
     @Test void currentAcceptedActorIsBoundToLabProjection() {
         LaboratoryRepository labs = mock(LaboratoryRepository.class);
         when(labs.findAiContextLaboratory(7L, 10L, "STUDENT")).thenReturn(Optional.of(new AiLabContext.Laboratory(10L, "Lab", null)));
@@ -127,5 +153,15 @@ class AiLabAssistantContextBuilderTest {
                 AiCapabilityDecisionReason.ALLOWED_BY_EFFECTIVE_PERMISSION, null,
                 AiActionRiskBoundary.READ_ONLY, Set.of(), null);
         return new TrustedContextInput(d, 7L, null, Instant.now());
+    }
+
+    private static TrustedContextInput availableSlotsInput(Instant readAt) {
+        AiCapabilityDecision d = new AiCapabilityDecision(true, 7L, AiAssistantSystemRole.STUDENT,
+                AiAssistantKey.LAB_ASSISTANT, AiAssistantDomain.LAB, AiCapability.LAB_AVAILABLE_SLOTS_READ,
+                new AiCapabilityDecision.ResolvedResource(AiResourceType.LABORATORY, 10L, 10L,
+                        null, null, null, AiResourceScope.LAB_MEMBER),
+                AiCapabilityDecisionReason.ALLOWED_BY_EFFECTIVE_PERMISSION, null,
+                AiActionRiskBoundary.READ_ONLY, Set.of(), null);
+        return new TrustedContextInput(d, 7L, null, readAt);
     }
 }

@@ -1,47 +1,22 @@
 import axios from 'axios';
-import { Bot, BookOpen, Send, ShieldCheck, Sparkles } from 'lucide-react';
-import { FormEvent, useMemo, useState } from 'react';
+import { Bot, BookOpen, CalendarClock, Check, Send, ShieldCheck, Sparkles, UserRound, X } from 'lucide-react';
+import { FormEvent, useEffect, useRef, useState } from 'react';
 
-import { getStoredRole } from '../../../shared/api';
 import { Button } from '../../../shared/components';
 import type { Response } from '../../../shared/types';
-import { useAssistantChat } from '../hooks';
-import type {
-  AssistantCapability,
-  AssistantChatResponse,
-  AssistantKey,
-} from '../types';
+import { useResolveAssistantAction, useUnifiedAssistantChat } from '../hooks';
+import type { UnifiedChatResponse } from '../types';
 
-interface CapabilityOption {
-  value: AssistantCapability;
-  label: string;
-  assistantKey: AssistantKey;
-  resourceLabel?: string;
-  parentResourceLabel?: string;
+interface ChatTurn {
+  id: string;
+  question: string;
+  response?: UnifiedChatResponse;
+  error?: string;
+  actionError?: string;
 }
 
-const capabilityOptions: CapabilityOption[] = [
-  { value: 'ADMIN_SYSTEM_SUMMARY', label: 'Tóm tắt trạng thái hệ thống', assistantKey: 'ADMIN_ASSISTANT' },
-  { value: 'ADMIN_AUDIT_SUMMARY', label: 'Tóm tắt nhật ký kiểm toán', assistantKey: 'ADMIN_ASSISTANT' },
-  { value: 'ADMIN_USER_STATUS_LOOKUP', label: 'Tra cứu trạng thái người dùng', assistantKey: 'ADMIN_ASSISTANT', resourceLabel: 'ID người dùng' },
-  { value: 'ADMIN_CONFIG_DRAFT', label: 'Soạn thảo đề xuất cấu hình', assistantKey: 'ADMIN_ASSISTANT' },
-  { value: 'ADMIN_ACCOUNT_ACTION_DRAFT', label: 'Soạn thảo thao tác tài khoản', assistantKey: 'ADMIN_ASSISTANT', resourceLabel: 'ID người dùng' },
-  { value: 'LAB_POLICY_READ', label: 'Tra cứu chính sách PTN', assistantKey: 'LAB_ASSISTANT', resourceLabel: 'ID PTN' },
-  { value: 'LAB_SLOT_READ', label: 'Tra cứu khung giờ', assistantKey: 'LAB_ASSISTANT', resourceLabel: 'ID khung giờ' },
-  { value: 'LAB_OWN_BOOKING_READ', label: 'Tra cứu booking của tôi', assistantKey: 'LAB_ASSISTANT', resourceLabel: 'ID booking' },
-  { value: 'LAB_MANAGED_SUMMARY', label: 'Tóm tắt PTN đang quản lý', assistantKey: 'LAB_ASSISTANT', resourceLabel: 'ID PTN' },
-  { value: 'LAB_BOOKING_DRAFT', label: 'Soạn thảo booking', assistantKey: 'LAB_ASSISTANT', resourceLabel: 'ID khung giờ' },
-  { value: 'LAB_CHECKIN_GUIDANCE', label: 'Hướng dẫn check-in', assistantKey: 'LAB_ASSISTANT', resourceLabel: 'ID booking' },
-  { value: 'RESEARCH_PROJECT_SUMMARY', label: 'Tóm tắt dự án nghiên cứu', assistantKey: 'RESEARCH_ASSISTANT', resourceLabel: 'ID dự án' },
-  { value: 'RESEARCH_GROUP_SUMMARY', label: 'Tóm tắt nhóm nghiên cứu', assistantKey: 'RESEARCH_ASSISTANT', resourceLabel: 'ID nhóm' },
-  { value: 'RESEARCH_ASSIGNED_TASK_READ', label: 'Tra cứu nhiệm vụ được giao', assistantKey: 'RESEARCH_ASSISTANT', resourceLabel: 'ID nhiệm vụ' },
-  { value: 'RESEARCH_TASK_PROPOSAL_DRAFT', label: 'Soạn đề xuất nhiệm vụ', assistantKey: 'RESEARCH_ASSISTANT', resourceLabel: 'ID nhóm', parentResourceLabel: 'ID dự án' },
-  { value: 'RESEARCH_TASK_SUGGESTION_DRAFT', label: 'Gợi ý xử lý nhiệm vụ', assistantKey: 'RESEARCH_ASSISTANT', resourceLabel: 'ID nhiệm vụ' },
-  { value: 'RESEARCH_REPORT_REVIEW_DRAFT', label: 'Soạn nhận xét báo cáo', assistantKey: 'RESEARCH_ASSISTANT', resourceLabel: 'ID báo cáo' },
-];
-
-function normalizeRole(role: string | null) {
-  return role?.replace(/^ROLE_/, '').toUpperCase() ?? '';
+function newTurnId() {
+  return typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : `${Date.now()}`;
 }
 
 function getErrorMessage(error: unknown) {
@@ -52,127 +27,202 @@ function getErrorMessage(error: unknown) {
   return 'Không thể kết nối với trợ lý AI.';
 }
 
-function AssistantAnswer({ response }: { response: AssistantChatResponse }) {
+function responseLabel(response: UnifiedChatResponse) {
+  if (response.type === 'CLARIFICATION_REQUIRED') return 'Cần thêm thông tin';
+  if (response.type === 'REFUSED') return 'Yêu cầu bị từ chối';
+  if (response.type === 'ACTION_PREVIEW') return 'Bản xem trước';
+  if (response.type === 'ACTION_RESULT') return 'Kết quả thao tác';
+  return 'Câu trả lời';
+}
+
+function AssistantAnswer({ response, actionError, actionPending, onResolve }: {
+  response: UnifiedChatResponse;
+  actionError?: string;
+  actionPending: boolean;
+  onResolve: (suggestionId: number, decision: 'confirm' | 'cancel') => void;
+}) {
   return (
-    <article aria-live="polite" className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-      <div className="flex items-center gap-2 text-sm font-semibold text-slate-950 dark:text-white">
-        <Sparkles aria-hidden="true" className="h-5 w-5" />
-        Phản hồi có kiểm soát
+    <div className="min-w-0 flex-1">
+      <div className="mb-2 flex flex-wrap items-center gap-2 text-xs">
+        <span className="rounded-full bg-slate-200 px-2 py-1 font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+          {responseLabel(response)}
+        </span>
+        {response.assistantKey ? <span className="text-slate-500 dark:text-slate-400">{response.assistantKey}</span> : null}
       </div>
-      <p className="mt-4 whitespace-pre-wrap text-sm leading-7 text-slate-700 dark:text-slate-200">{response.answer}</p>
-      <div className="mt-5 flex flex-wrap gap-2 text-xs text-slate-500 dark:text-slate-400">
+      <p className="whitespace-pre-wrap text-sm leading-7 text-slate-700 dark:text-slate-200">{response.answer}</p>
+      {response.actionPreview ? (
+        <div className="mt-4 rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-100">
+          <p className="flex items-center gap-2 font-semibold"><CalendarClock aria-hidden="true" className="h-4 w-4" /> Xem trước ca Lab</p>
+          <dl className="mt-3 grid gap-2 sm:grid-cols-2">
+            <div><dt className="text-xs opacity-70">Lab</dt><dd>#{response.actionPreview.labId}</dd></div>
+            <div><dt className="text-xs opacity-70">Sức chứa</dt><dd>{response.actionPreview.capacity} người</dd></div>
+            <div><dt className="text-xs opacity-70">Bắt đầu</dt><dd>{new Date(response.actionPreview.startTime).toLocaleString('vi-VN')}</dd></div>
+            <div><dt className="text-xs opacity-70">Kết thúc</dt><dd>{new Date(response.actionPreview.endTime).toLocaleString('vi-VN')}</dd></div>
+          </dl>
+          <p className="mt-3 text-xs">Chưa có dữ liệu nào được ghi. Backend sẽ kiểm tra lại quyền và trạng thái khi bạn xác nhận.</p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <Button disabled={actionPending} onClick={() => onResolve(response.actionPreview!.suggestionId, 'confirm')} type="button">
+              <Check aria-hidden="true" className="h-4 w-4" /> Xác nhận tạo ca
+            </Button>
+            <Button disabled={actionPending} onClick={() => onResolve(response.actionPreview!.suggestionId, 'cancel')} type="button" variant="secondary">
+              <X aria-hidden="true" className="h-4 w-4" /> Hủy
+            </Button>
+          </div>
+          {actionError ? <p className="mt-3 text-sm font-medium text-red-700 dark:text-red-300" role="alert">{actionError}</p> : null}
+        </div>
+      ) : null}
+      <div className="mt-3 flex flex-wrap gap-2 text-xs text-slate-500 dark:text-slate-400">
         <span className="rounded-full bg-slate-100 px-2 py-1 dark:bg-slate-800">Prompt: {response.promptTokens} tokens</span>
         <span className="rounded-full bg-slate-100 px-2 py-1 dark:bg-slate-800">Completion: {response.completionTokens} tokens</span>
       </div>
       {response.citations.length ? (
-        <section className="mt-5 border-t border-slate-200 pt-4 dark:border-slate-800">
-          <h2 className="flex items-center gap-2 text-sm font-semibold text-slate-950 dark:text-white">
-            <BookOpen aria-hidden="true" className="h-4 w-4" /> Nguồn được cấp quyền
-          </h2>
+        <details className="mt-4 border-t border-slate-200 pt-3 dark:border-slate-800">
+          <summary className="flex cursor-pointer list-none items-center gap-2 text-sm font-semibold text-slate-800 dark:text-slate-100">
+            <BookOpen aria-hidden="true" className="h-4 w-4" />
+            {response.citations.length} nguồn RAG được cấp quyền
+          </summary>
           <ul className="mt-3 grid gap-2 sm:grid-cols-2">
             {response.citations.map((citation) => (
-              <li className="rounded-md border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300" key={`${citation.documentId}-${citation.chunkIndex}`}>
+              <li className="rounded-md border border-slate-200 bg-white p-3 text-xs text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300" key={`${citation.documentId}-${citation.chunkIndex}`}>
                 <p className="font-semibold text-slate-900 dark:text-white">{citation.sourceType} · {citation.resourceId}</p>
                 <p className="mt-1">Phiên bản {citation.version}, đoạn {citation.chunkIndex + 1}{citation.pageNumber ? `, trang ${citation.pageNumber}` : ''}</p>
               </li>
             ))}
           </ul>
-        </section>
+        </details>
       ) : null}
-    </article>
+    </div>
   );
 }
 
 export function AssistantPage() {
-  const role = normalizeRole(getStoredRole());
-  const availableOptions = useMemo(
-    () => capabilityOptions.filter((option) => role === 'ADMIN' ? option.assistantKey === 'ADMIN_ASSISTANT' : option.assistantKey !== 'ADMIN_ASSISTANT'),
-    [role],
-  );
-  const [capability, setCapability] = useState<AssistantCapability>(availableOptions[0]?.value ?? 'LAB_POLICY_READ');
   const [input, setInput] = useState('');
-  const [resourceId, setResourceId] = useState('');
-  const [parentResourceId, setParentResourceId] = useState('');
+  const [turns, setTurns] = useState<ChatTurn[]>([]);
   const [validationError, setValidationError] = useState('');
-  const chatMutation = useAssistantChat();
-  const selected = availableOptions.find((option) => option.value === capability) ?? availableOptions[0];
+  const conversationEndRef = useRef<HTMLDivElement>(null);
+  const chatMutation = useUnifiedAssistantChat();
+  const actionMutation = useResolveAssistantAction();
+
+  useEffect(() => {
+    conversationEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }, [turns]);
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const normalizedInput = input.trim();
-    if (!selected || !normalizedInput) {
-      setValidationError('Vui lòng nhập yêu cầu cho trợ lý.');
+    const question = input.trim();
+    if (!question || chatMutation.isPending) {
+      if (!question) setValidationError('Vui lòng nhập câu hỏi cho trợ lý.');
       return;
     }
-    if (selected.resourceLabel && Number(resourceId) <= 0) {
-      setValidationError(`Vui lòng nhập ${selected.resourceLabel.toLowerCase()} hợp lệ.`);
-      return;
-    }
-    if (selected.parentResourceLabel && Number(parentResourceId) <= 0) {
-      setValidationError(`Vui lòng nhập ${selected.parentResourceLabel.toLowerCase()} hợp lệ.`);
-      return;
-    }
+
+    const turnId = newTurnId();
+    setInput('');
     setValidationError('');
-    chatMutation.mutate({
-      assistantKey: selected.assistantKey,
-      request: {
-        input: normalizedInput,
-        capability: selected.value,
-        ...(selected.resourceLabel ? { resourceId: Number(resourceId) } : {}),
-        ...(selected.parentResourceLabel ? { parentResourceId: Number(parentResourceId) } : {}),
-      },
+    setTurns((current) => [...current, { id: turnId, question }]);
+    chatMutation.mutate({ input: question }, {
+      onSuccess: (response) => setTurns((current) => current.map((turn) => (
+        turn.id === turnId ? { ...turn, response } : turn
+      ))),
+      onError: (error) => setTurns((current) => current.map((turn) => (
+        turn.id === turnId ? { ...turn, error: getErrorMessage(error) } : turn
+      ))),
+    });
+  };
+
+  const handleResolveAction = (turnId: string, suggestionId: number, decision: 'confirm' | 'cancel') => {
+    actionMutation.mutate({ suggestionId, decision }, {
+      onSuccess: (actionResult) => setTurns((current) => current.map((turn) => (
+        turn.id === turnId && turn.response
+          ? {
+              ...turn,
+              actionError: undefined,
+              response: {
+                ...turn.response,
+                type: 'ACTION_RESULT',
+                answer: actionResult.status === 'EXECUTED'
+                  ? `Đã tạo ca Lab thành công (mã ca #${actionResult.targetId}).`
+                  : 'Đã hủy bản xem trước. Không có dữ liệu nào được ghi.',
+                actionPreview: null,
+                actionResult,
+              },
+            }
+          : turn
+      ))),
+      onError: (error) => setTurns((current) => current.map((turn) => (
+        turn.id === turnId ? { ...turn, actionError: getErrorMessage(error) } : turn
+      ))),
     });
   };
 
   return (
-    <section className="mx-auto max-w-6xl">
+    <section className="mx-auto max-w-5xl">
       <header className="mb-6">
         <p className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-slate-500"><Bot aria-hidden="true" className="h-4 w-4" /> Smart Research Lab</p>
-        <h1 className="mt-1 text-2xl font-semibold text-slate-950 dark:text-white">Trợ lý AI</h1>
-        <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600 dark:text-slate-300">Trợ lý chỉ đọc dữ liệu trong phạm vi bạn được cấp quyền. Nội dung soạn thảo không tự động thay đổi dữ liệu nghiệp vụ.</p>
+        <h1 className="mt-1 text-2xl font-semibold text-slate-950 dark:text-white">Hỏi đáp với trợ lý AI</h1>
+        <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600 dark:text-slate-300">Chỉ cần nhập câu hỏi. Spring tự xác định nghiệp vụ, dữ liệu và quyền được phép trước khi gọi model.</p>
       </header>
 
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,380px)_minmax(0,1fr)]">
-        <form className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900" onSubmit={handleSubmit}>
-          <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200" htmlFor="assistant-capability">Nghiệp vụ hỗ trợ</label>
-          <select id="assistant-capability" className="mt-2 min-h-11 w-full rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-950 outline-none focus-visible:ring-2 focus-visible:ring-slate-500 dark:border-slate-700 dark:bg-slate-950 dark:text-white" value={capability} onChange={(event) => { setCapability(event.target.value as AssistantCapability); setResourceId(''); setParentResourceId(''); chatMutation.reset(); }}>
-            {availableOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-          </select>
-
-          {selected?.parentResourceLabel ? <NumberInput id="assistant-parent-resource" label={selected.parentResourceLabel} value={parentResourceId} onChange={setParentResourceId} /> : null}
-          {selected?.resourceLabel ? <NumberInput id="assistant-resource" label={selected.resourceLabel} value={resourceId} onChange={setResourceId} /> : null}
-
-          <label className="mt-4 block text-sm font-semibold text-slate-700 dark:text-slate-200" htmlFor="assistant-input">Yêu cầu</label>
-          <textarea id="assistant-input" className="mt-2 min-h-40 w-full resize-y rounded-md border border-slate-300 bg-white px-3 py-2 text-base text-slate-950 outline-none focus-visible:ring-2 focus-visible:ring-slate-500 dark:border-slate-700 dark:bg-slate-950 dark:text-white" maxLength={32768} placeholder="Mô tả rõ nội dung bạn cần tra cứu hoặc soạn thảo..." value={input} onChange={(event) => setInput(event.target.value)} />
-
-          {validationError ? <p className="mt-3 text-sm font-medium text-red-700 dark:text-red-300" role="alert">{validationError}</p> : null}
-          {chatMutation.isError ? <p className="mt-3 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-200" role="alert">{getErrorMessage(chatMutation.error)}</p> : null}
-
-          <Button className="mt-4 w-full" loading={chatMutation.isPending} loadingText="Đang xử lý..." type="submit">
-            <Send aria-hidden="true" className="h-4 w-4" /> Gửi yêu cầu
-          </Button>
-          <p className="mt-3 flex items-start gap-2 text-xs leading-5 text-slate-500 dark:text-slate-400"><ShieldCheck aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0" /> Mọi yêu cầu đều đi qua Spring authorization và được ghi audit.</p>
-        </form>
-
-        <div>
-          {chatMutation.data ? <AssistantAnswer response={chatMutation.data} /> : (
-            <div className="flex min-h-72 flex-col items-center justify-center rounded-lg border border-dashed border-slate-300 bg-slate-50 p-8 text-center dark:border-slate-700 dark:bg-slate-900/60">
-              <Sparkles aria-hidden="true" className="h-8 w-8 text-slate-400" />
-              <h2 className="mt-3 text-base font-semibold text-slate-950 dark:text-white">Sẵn sàng hỗ trợ theo ngữ cảnh</h2>
-              <p className="mt-2 max-w-md text-sm leading-6 text-slate-600 dark:text-slate-300">Chọn nghiệp vụ, cung cấp đúng mã tài nguyên và nhập câu hỏi. Nếu model local chưa sẵn sàng, hệ thống sẽ từ chối an toàn.</p>
-            </div>
-          )}
+      <div className="flex min-h-[680px] flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <div className="flex items-center gap-2 border-b border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-600 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300 sm:px-6">
+          <ShieldCheck aria-hidden="true" className="h-4 w-4 shrink-0" />
+          Không cần chọn chủ đề hoặc tài nguyên; backend kiểm tra lại quyền cho từng yêu cầu.
         </div>
+
+        <div aria-live="polite" className="flex-1 space-y-5 overflow-y-auto p-4 sm:p-6">
+          {turns.length === 0 ? (
+            <div className="flex min-h-96 flex-col items-center justify-center text-center">
+              <Sparkles aria-hidden="true" className="h-9 w-9 text-slate-400" />
+              <h2 className="mt-4 text-lg font-semibold text-slate-950 dark:text-white">Bạn muốn biết điều gì?</h2>
+              <p className="mt-2 max-w-lg text-sm leading-6 text-slate-600 dark:text-slate-300">Hỏi bằng ngôn ngữ tự nhiên về hệ thống, phòng thí nghiệm, booking hoặc nghiên cứu trong phạm vi quyền của bạn.</p>
+            </div>
+          ) : turns.map((turn) => (
+            <article className="space-y-3" key={turn.id}>
+              <div className="ml-auto max-w-[85%] rounded-2xl rounded-br-md bg-slate-900 px-4 py-3 text-white dark:bg-slate-100 dark:text-slate-950">
+                <div className="mb-1 flex items-center gap-2 text-xs font-semibold opacity-70"><UserRound aria-hidden="true" className="h-3.5 w-3.5" /> Bạn</div>
+                <p className="whitespace-pre-wrap text-sm leading-6">{turn.question}</p>
+              </div>
+              <div className="mr-auto flex max-w-[94%] gap-3 rounded-2xl rounded-bl-md border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-950">
+                <div className="mt-0.5 h-fit rounded-full bg-white p-2 shadow-sm dark:bg-slate-900"><Bot aria-hidden="true" className="h-4 w-4" /></div>
+                {turn.response ? <AssistantAnswer
+                  actionError={turn.actionError}
+                  actionPending={actionMutation.isPending}
+                  response={turn.response}
+                  onResolve={(suggestionId, decision) => handleResolveAction(turn.id, suggestionId, decision)}
+                /> : turn.error ? (
+                  <p className="text-sm leading-6 text-red-700 dark:text-red-300" role="alert">{turn.error}</p>
+                ) : (
+                  <p className="text-sm text-slate-500 dark:text-slate-400" role="status">Đang xác định nghiệp vụ và dựng context được cấp quyền…</p>
+                )}
+              </div>
+            </article>
+          ))}
+          <div ref={conversationEndRef} />
+        </div>
+
+        <form className="border-t border-slate-200 p-4 dark:border-slate-800 sm:p-5" onSubmit={handleSubmit}>
+          <label className="sr-only" htmlFor="assistant-input">Câu hỏi</label>
+          <textarea
+            id="assistant-input"
+            className="min-h-24 w-full resize-y rounded-lg border border-slate-300 bg-white px-3 py-3 text-base text-slate-950 outline-none focus-visible:ring-2 focus-visible:ring-slate-500 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-950 dark:text-white"
+            disabled={chatMutation.isPending}
+            maxLength={32768}
+            placeholder="Nhập câu hỏi… (Enter để gửi, Shift + Enter để xuống dòng)"
+            value={input}
+            onChange={(event) => { setInput(event.target.value); setValidationError(''); }}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                event.currentTarget.form?.requestSubmit();
+              }
+            }}
+          />
+          {validationError ? <p className="mt-2 text-sm font-medium text-red-700 dark:text-red-300" role="alert">{validationError}</p> : null}
+          <div className="mt-3 flex items-center justify-between gap-3">
+            <p className="flex items-start gap-2 text-xs leading-5 text-slate-500 dark:text-slate-400"><ShieldCheck aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0" /> AI không nhận quyền truy cập DB trực tiếp và không thể tự mở rộng phạm vi dữ liệu.</p>
+            <Button loading={chatMutation.isPending} loadingText="Đang trả lời…" type="submit"><Send aria-hidden="true" className="h-4 w-4" /> Gửi</Button>
+          </div>
+        </form>
       </div>
     </section>
-  );
-}
-
-function NumberInput({ id, label, onChange, value }: { id: string; label: string; onChange: (value: string) => void; value: string }) {
-  return (
-    <label className="mt-4 block text-sm font-semibold text-slate-700 dark:text-slate-200" htmlFor={id}>
-      {label}
-      <input id={id} className="mt-2 min-h-11 w-full rounded-md border border-slate-300 bg-white px-3 text-base text-slate-950 outline-none focus-visible:ring-2 focus-visible:ring-slate-500 dark:border-slate-700 dark:bg-slate-950 dark:text-white" min={1} inputMode="numeric" type="number" value={value} onChange={(event) => onChange(event.target.value)} />
-    </label>
   );
 }

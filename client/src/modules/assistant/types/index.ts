@@ -42,3 +42,42 @@ export interface AssistantChatResponse {
   completionTokens: number;
   citations: AssistantCitation[];
 }
+
+export type UnifiedChatResponseType =
+  | 'ANSWER'
+  | 'CLARIFICATION_REQUIRED'
+  | 'REFUSED'
+  | 'ACTION_PREVIEW'
+  | 'ACTION_RESULT';
+
+export interface UnifiedChatRequest {
+  input: string;
+}
+
+export interface UnifiedChatResponse {
+  type: UnifiedChatResponseType;
+  assistantKey: AssistantKey | null;
+  answer: string;
+  promptTokens: number;
+  completionTokens: number;
+  citations: AssistantCitation[];
+  actionPreview: AssistantActionPreview | null;
+  actionResult: AssistantActionResult | null;
+}
+
+export interface AssistantActionPreview {
+  suggestionId: number;
+  actionType: 'CREATE_LAB_SHIFT';
+  status: 'AWAITING_CONFIRMATION';
+  labId: number;
+  startTime: string;
+  endTime: string;
+  capacity: number;
+}
+
+export interface AssistantActionResult {
+  suggestionId: number;
+  actionType: 'CREATE_LAB_SHIFT';
+  status: 'EXECUTED' | 'CANCELLED';
+  targetId: number | null;
+}

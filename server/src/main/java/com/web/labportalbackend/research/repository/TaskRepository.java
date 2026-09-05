@@ -20,6 +20,32 @@ import java.util.Optional;
 
 @Repository
 public interface TaskRepository extends JpaRepository<TaskEntity, Long> {
+
+    @Query("""
+            SELECT DISTINCT new com.web.labportalbackend.ai.service.AiResearchToolCandidateResource(
+                t.id, t.title, t.projectId)
+            FROM TaskEntity t JOIN ProjectEntity p ON p.id = t.projectId JOIN p.lab l
+                 JOIN GroupEntity g ON g.id = t.groupId
+            WHERE t.active = true AND t.deleted = false
+              AND p.active = true AND p.deleted = false
+              AND g.active = true AND g.deleted = false
+              AND l.active = true AND l.deleted = false AND g.lab.id = l.id
+              AND (g.project.id = p.id OR p.group.id = g.id)
+              AND (g.project IS NULL OR g.project.id = p.id)
+              AND (p.group IS NULL OR p.group.id = g.id)
+              AND EXISTS (SELECT r.id FROM User roleActor JOIN roleActor.roles r
+                          WHERE roleActor.id = :actorId AND r.name = :selectedRoleName)
+              AND ((:selectedRoleName = 'LAB_MANAGER' AND l.manager.id = :actorId)
+                   OR (:selectedRoleName = 'STUDENT' AND (t.assigneeId = :actorId OR EXISTS (
+                       SELECT gm.id FROM GroupMemberEntity gm
+                       WHERE gm.group.id = g.id AND gm.user.id = :actorId
+                         AND gm.active = true AND gm.deleted = false))))
+            ORDER BY t.id ASC
+            """)
+    List<com.web.labportalbackend.ai.service.AiResearchToolCandidateResource> findAiToolCandidateTasks(
+            @Param("actorId") Long actorId,
+            @Param("selectedRoleName") String selectedRoleName,
+            Pageable pageable);
     Optional<TaskEntity> findByIdAndDeletedFalseAndActiveTrue(Long id);
 
     @Lock(LockModeType.PESSIMISTIC_READ)

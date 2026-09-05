@@ -63,16 +63,35 @@ def _client(backend: StubGenerationBackend) -> TestClient:
 
 def _request(tool_id: str, resource_type: str, resource_id: int):
     lab_id = 10
-    context = {
-        "laboratory": {"id": lab_id, "name": "Authorized Lab", "status": "ACTIVE"},
-        "slot": None,
-        "booking": None,
-        "managedSummary": None,
-        "labPolicySnapshot": None,
-        "checkinPolicySnapshot": None,
-        "draftOnly": tool_id == "lab.booking.draft",
-        "policyOrDraftEligibilityLabel": None,
-    }
+    if tool_id == "lab.available.slots.read":
+        context = {
+            "laboratory": {"id": lab_id, "name": "Authorized Lab", "status": "ACTIVE"},
+            "availableSlots": {
+                "values": [
+                    {
+                        "id": 17,
+                        "startTime": "2026-09-01T08:00:00Z",
+                        "endTime": "2026-09-01T09:00:00Z",
+                        "status": "AVAILABLE",
+                    }
+                ],
+                "returnedCount": 1,
+                "limit": 50,
+                "truncated": False,
+            },
+            "evaluatedAt": "2026-08-31T08:00:00Z",
+        }
+    else:
+        context = {
+            "laboratory": {"id": lab_id, "name": "Authorized Lab", "status": "ACTIVE"},
+            "slot": None,
+            "booking": None,
+            "managedSummary": None,
+            "labPolicySnapshot": None,
+            "checkinPolicySnapshot": None,
+            "draftOnly": tool_id in {"lab.booking.draft", "lab.shift.create.draft"},
+            "policyOrDraftEligibilityLabel": None,
+        }
     if resource_type == "TIME_SLOT":
         context["slot"] = {
             "id": resource_id,
@@ -106,6 +125,8 @@ def _request(tool_id: str, resource_type: str, resource_id: int):
         }
     if tool_id == "lab.booking.draft":
         context["policyOrDraftEligibilityLabel"] = "DRAFT_ONLY_NO_BOOKING_WRITE"
+    if tool_id == "lab.shift.create.draft":
+        context["policyOrDraftEligibilityLabel"] = "DRAFT_ONLY_NO_SHIFT_WRITE"
 
     return {
         "assistantKey": "LAB_ASSISTANT",
@@ -121,7 +142,9 @@ def _request(tool_id: str, resource_type: str, resource_id: int):
                     "resourceType": resource_type,
                     "parentResourceType": None,
                     "argumentNames": ["resource"],
-                    "riskBoundary": "DRAFT_ONLY" if tool_id == "lab.booking.draft" else "READ_ONLY",
+                    "riskBoundary": "DRAFT_ONLY"
+                    if tool_id in {"lab.booking.draft", "lab.shift.create.draft"}
+                    else "READ_ONLY",
                 }
             ],
             "resources": [{"resourceType": resource_type, "resourceId": resource_id}],
@@ -162,6 +185,7 @@ def test_lab_malicious_document_cannot_widen_authorized_resource() -> None:
     ("tool_id", "resource_type", "resource_id"),
     [
         ("lab.slot.read", "TIME_SLOT", 17),
+        ("lab.available.slots.read", "LABORATORY", 10),
         ("lab.own.booking.read", "BOOKING", 21),
         ("lab.managed.summary", "LABORATORY", 10),
         ("lab.checkin.guidance", "BOOKING", 21),
@@ -234,6 +258,30 @@ def test_lab_booking_draft_with_unapproved_lab_reference_fails_closed() -> None:
 
     assert response.status_code == 200
     assert response.json()["metadata"] == {"safeRefusal": True}
+
+
+def test_lab_shift_create_returns_validated_non_executable_draft() -> None:
+    draft = {
+        "kind": "LAB_SHIFT_CREATE_DRAFT",
+        "labRef": 10,
+        "startTime": "2026-09-10T01:00:00Z",
+        "endTime": "2026-09-10T03:00:00Z",
+        "capacity": 20,
+        "requiresHumanReview": True,
+    }
+    backend = StubGenerationBackend(json.dumps(draft))
+
+    response = _client(backend).post(
+        "/v1/assistants/chat",
+        json=_request("lab.shift.create.draft", "LABORATORY", 10),
+    )
+
+    assert response.status_code == 200
+    assert json.loads(response.json()["answer"]) == draft
+    assert response.json()["metadata"] == {
+        "resourceReferences": [{"resourceType": "LABORATORY", "resourceId": 10}],
+        "draftOnly": True,
+    }
 
 
 def test_policy_read_returns_guidance_from_authorized_policy_snapshot() -> None:

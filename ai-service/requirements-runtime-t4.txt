@@ -1,4 +1,4 @@
--r requirements.txt
+-r requirements-api.txt
 --extra-index-url https://download.pytorch.org/whl/cu118
 
 accelerate==1.6.0

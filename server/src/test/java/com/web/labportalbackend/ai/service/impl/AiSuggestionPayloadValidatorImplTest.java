@@ -304,6 +304,20 @@ class AiSuggestionPayloadValidatorImplTest {
         return new AiSuggestionResponse("assistant", actionType, 1, payload, 0.5, "explanation");
     }
 
+    @Test
+    void createLabShiftRequiresExactTypedPayload() throws Exception {
+        JsonNode payload = OBJECT_MAPPER.readTree("""
+                {"kind":"LAB_SHIFT_CREATE_DRAFT","labRef":10,
+                 "startTime":"2026-09-10T01:00:00Z","endTime":"2026-09-10T03:00:00Z",
+                 "capacity":20,"requiresHumanReview":true}
+                """);
+
+        assertDoesNotThrow(() -> validator.validate(response("CREATE_LAB_SHIFT", payload)));
+
+        ((ObjectNode) payload).put("labRef", 0);
+        assertInvalid(() -> validator.validate(response("CREATE_LAB_SHIFT", payload)));
+    }
+
     private static String repeated(char value, int count) {
         return String.valueOf(value).repeat(count);
     }

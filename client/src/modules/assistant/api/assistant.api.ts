@@ -1,6 +1,13 @@
 import { apiClient } from '../../../shared/api';
 import type { Response } from '../../../shared/types';
-import type { AssistantChatRequest, AssistantChatResponse, AssistantKey } from '../types';
+import type {
+  AssistantChatRequest,
+  AssistantChatResponse,
+  AssistantKey,
+  UnifiedChatRequest,
+  UnifiedChatResponse,
+  AssistantActionResult,
+} from '../types';
 
 export async function chatWithAssistant(
   assistantKey: AssistantKey,
@@ -11,6 +18,26 @@ export async function chatWithAssistant(
     `/api/ai/assistants/${assistantKey}/chat`,
     request,
     { headers: { 'X-Request-Id': requestId } },
+  );
+  return response.data.data;
+}
+
+export async function chatWithUnifiedAssistant(request: UnifiedChatRequest): Promise<UnifiedChatResponse> {
+  const requestId = typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : `${Date.now()}`;
+  const response = await apiClient.post<Response<UnifiedChatResponse>>(
+    '/api/ai/chat',
+    request,
+    { headers: { 'X-Request-Id': requestId } },
+  );
+  return response.data.data;
+}
+
+export async function resolveAssistantAction(
+  suggestionId: number,
+  decision: 'confirm' | 'cancel',
+): Promise<AssistantActionResult> {
+  const response = await apiClient.post<Response<AssistantActionResult>>(
+    `/api/ai/actions/${suggestionId}/${decision}`,
   );
   return response.data.data;
 }

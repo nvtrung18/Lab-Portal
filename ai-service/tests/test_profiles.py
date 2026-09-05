@@ -204,7 +204,6 @@ def test_loaded_profiles_are_immutable_and_read_only() -> None:
     ("path", "expected_error"),
     [
         ("/v1/assistants/chat", "AI_MODEL_NOT_READY"),
-        ("/v1/assistants/tool-request", "AI_SERVICE_NOT_READY"),
         ("/v1/assistants/suggestions", "AI_SERVICE_NOT_READY"),
     ],
 )

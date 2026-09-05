@@ -8,6 +8,7 @@ import com.web.labportalbackend.ai.service.AiSuggestionPayloadValidator;
 import com.web.labportalbackend.research.enums.TaskPriority;
 import com.web.labportalbackend.research.enums.TaskType;
 import java.time.DateTimeException;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Set;
 import org.springframework.stereotype.Service;
@@ -24,6 +25,8 @@ public class AiSuggestionPayloadValidatorImpl implements AiSuggestionPayloadVali
     private static final Set<String> CREATE_REPORT_REVIEW_COMMENT_FIELDS = Set.of("reportId", "comment", "suggestedDecision");
     private static final Set<String> CREATE_TASK_PROPOSAL_FIELDS = Set.of(
             "projectId", "groupId", "milestoneId", "title", "description", "priority", "type", "dueDate");
+    private static final Set<String> CREATE_LAB_SHIFT_FIELDS = Set.of(
+            "kind", "labRef", "startTime", "endTime", "capacity", "requiresHumanReview");
     private static final Set<String> TASK_PRIORITIES = enumNames(TaskPriority.values());
     private static final Set<String> TASK_TYPES = enumNames(TaskType.values());
     private static final Set<String> REPORT_DECISIONS = Set.of("REQUEST_REVISION", "REJECT");
@@ -42,6 +45,7 @@ public class AiSuggestionPayloadValidatorImpl implements AiSuggestionPayloadVali
                 case "CREATE_MILESTONE" -> validateCreateMilestone(payload);
                 case "CREATE_REPORT_REVIEW_COMMENT" -> validateCreateReportReviewComment(payload);
                 case "CREATE_TASK_PROPOSAL" -> validateCreateTaskProposal(payload);
+                case "CREATE_LAB_SHIFT" -> validateCreateLabShift(payload);
                 default -> throw invalid();
             }
         } catch (AiSuggestionPayloadValidationException exception) {
@@ -103,6 +107,22 @@ public class AiSuggestionPayloadValidatorImpl implements AiSuggestionPayloadVali
         nullableDate(payload, "dueDate");
     }
 
+    private void validateCreateLabShift(ObjectNode payload) {
+        validateExactFields(payload, CREATE_LAB_SHIFT_FIELDS);
+        requiredExactText(payload, "kind", "LAB_SHIFT_CREATE_DRAFT");
+        requiredPositiveIdentifier(payload, "labRef");
+        requiredInstant(payload, "startTime");
+        requiredInstant(payload, "endTime");
+        JsonNode capacity = required(payload, "capacity");
+        if (!capacity.isIntegralNumber() || !capacity.canConvertToInt() || capacity.intValue() <= 0) {
+            throw invalid();
+        }
+        JsonNode review = required(payload, "requiresHumanReview");
+        if (!review.isBoolean() || !review.booleanValue()) {
+            throw invalid();
+        }
+    }
+
     private void validateExactFields(ObjectNode payload, Set<String> expectedFields) {
         if (payload.size() != expectedFields.size()) {
             throw invalid();
@@ -142,6 +162,25 @@ public class AiSuggestionPayloadValidatorImpl implements AiSuggestionPayloadVali
 
     private void requiredText(ObjectNode payload, String field, int minimumLength, int maximumLength) {
         validateText(required(payload, field), minimumLength, maximumLength);
+    }
+
+    private void requiredExactText(ObjectNode payload, String field, String expected) {
+        JsonNode node = required(payload, field);
+        if (!node.isTextual() || !expected.equals(node.textValue())) {
+            throw invalid();
+        }
+    }
+
+    private void requiredInstant(ObjectNode payload, String field) {
+        JsonNode node = required(payload, field);
+        if (!node.isTextual()) {
+            throw invalid();
+        }
+        try {
+            Instant.parse(node.textValue());
+        } catch (DateTimeException exception) {
+            throw invalid();
+        }
     }
 
     private void nullableDescription(ObjectNode payload, String field, int maximumLength) {

@@ -71,17 +71,17 @@ public class AiAssistantRegistryServiceImpl implements AiAssistantRegistry {
     static List<AiAssistantProfile> defaultCatalog() {
         return List.of(
                 new AiAssistantProfile(AiAssistantKey.ADMIN_ASSISTANT, AiAssistantDomain.ADMIN, true,
-                        Set.of(AiAssistantSystemRole.ADMIN), "admin", "admin-v1", null, "admin",
+                        Set.of(AiAssistantSystemRole.ADMIN), "admin", "admin-v1", null, "admin-knowledge",
                         AiQuotaPolicyReference.AI_CONFIG_QUOTA,
                         Set.of(AiAssistantToolGroup.ADMIN_READ, AiAssistantToolGroup.ADMIN_DRAFT),
                         "admin-assistant-v1"),
                 new AiAssistantProfile(AiAssistantKey.LAB_ASSISTANT, AiAssistantDomain.LAB, true,
                         Set.of(AiAssistantSystemRole.ADMIN, AiAssistantSystemRole.LAB_MANAGER, AiAssistantSystemRole.STUDENT),
-                        "lab", "lab-v1", null, "lab", AiQuotaPolicyReference.AI_CONFIG_QUOTA,
+                        "lab", "lab-v1", null, "lab-knowledge", AiQuotaPolicyReference.AI_CONFIG_QUOTA,
                         Set.of(AiAssistantToolGroup.LAB_READ, AiAssistantToolGroup.LAB_DRAFT), "lab-assistant-v1"),
                 new AiAssistantProfile(AiAssistantKey.RESEARCH_ASSISTANT, AiAssistantDomain.RESEARCH, true,
                         Set.of(AiAssistantSystemRole.ADMIN, AiAssistantSystemRole.LAB_MANAGER, AiAssistantSystemRole.STUDENT),
-                        "research", "research-v1", null, "research", AiQuotaPolicyReference.AI_CONFIG_QUOTA,
+                        "research", "research-v1", null, "research-knowledge", AiQuotaPolicyReference.AI_CONFIG_QUOTA,
                         Set.of(AiAssistantToolGroup.RESEARCH_READ, AiAssistantToolGroup.RESEARCH_DRAFT),
                         "research-assistant-v1"));
     }

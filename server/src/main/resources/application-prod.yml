@@ -46,6 +46,7 @@ ai:
   gateway:
     base-url: ${AI_GATEWAY_BASE_URL}
     internal-service-token: ${AI_INTERNAL_SERVICE_TOKEN}
+    attempt-timeout: ${AI_GATEWAY_ATTEMPT_TIMEOUT:5s}
 
 face:
   service:

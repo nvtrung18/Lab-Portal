@@ -1,5 +1,6 @@
 package com.web.labportalbackend.ai.context;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.web.labportalbackend.ai.enums.AiActionRiskBoundary;
 import com.web.labportalbackend.ai.enums.AiAssistantDomain;
 import com.web.labportalbackend.ai.enums.AiResourceType;
@@ -82,6 +83,7 @@ public record AiPythonAuthorizedContext(
             String toolId,
             String schemaVersion,
             AiResourceType resourceType,
+            @JsonInclude(JsonInclude.Include.ALWAYS)
             AiResourceType parentResourceType,
             List<String> argumentNames,
             AiActionRiskBoundary riskBoundary) {
@@ -120,7 +122,7 @@ public record AiPythonAuthorizedContext(
     private static boolean matchesDomainContext(AiAssistantDomain domain, AiDomainContext context) {
         return switch (domain) {
             case ADMIN -> context instanceof AiAdminContext;
-            case LAB -> context instanceof AiLabContext;
+            case LAB -> context instanceof AiLabContext || context instanceof AiLabAvailableSlotsContext;
             case RESEARCH -> context instanceof AiResearchAssistantContext;
         };
     }

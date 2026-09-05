@@ -617,7 +617,6 @@ def test_health_remains_up_independently_of_artifact_state() -> None:
     "path",
     [
         "/v1/assistants/chat",
-        "/v1/assistants/tool-request",
         "/v1/assistants/suggestions",
     ],
 )

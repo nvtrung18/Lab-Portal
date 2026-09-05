@@ -108,26 +108,43 @@
       "schema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "$id": "https://lab-portal.local/schemas/p8/lab-structured-draft/1.0.0",
-        "type": "object",
-        "required": ["kind", "labRef", "slotRef", "requestedPurpose", "requiresHumanReview"],
-        "additionalProperties": false,
-        "properties": {
-          "kind": {"const": "LAB_BOOKING_DRAFT"},
-          "labRef": {
-            "oneOf": [
-              {"type": "integer", "minimum": 1},
-              {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"}
-            ]
+        "oneOf": [
+          {
+            "type": "object",
+            "required": ["kind", "labRef", "slotRef", "requestedPurpose", "requiresHumanReview"],
+            "additionalProperties": false,
+            "properties": {
+              "kind": {"const": "LAB_BOOKING_DRAFT"},
+              "labRef": {
+                "oneOf": [
+                  {"type": "integer", "minimum": 1},
+                  {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"}
+                ]
+              },
+              "slotRef": {
+                "oneOf": [
+                  {"type": "integer", "minimum": 1},
+                  {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"}
+                ]
+              },
+              "requestedPurpose": {"type": "string", "minLength": 1, "maxLength": 2000},
+              "requiresHumanReview": {"const": true}
+            }
           },
-          "slotRef": {
-            "oneOf": [
-              {"type": "integer", "minimum": 1},
-              {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"}
-            ]
-          },
-          "requestedPurpose": {"type": "string", "minLength": 1, "maxLength": 2000},
-          "requiresHumanReview": {"const": true}
-        }
+          {
+            "type": "object",
+            "required": ["kind", "labRef", "startTime", "endTime", "capacity", "requiresHumanReview"],
+            "additionalProperties": false,
+            "properties": {
+              "kind": {"const": "LAB_SHIFT_CREATE_DRAFT"},
+              "labRef": {"type": "integer", "minimum": 1},
+              "startTime": {"type": "string", "format": "date-time"},
+              "endTime": {"type": "string", "format": "date-time"},
+              "capacity": {"type": "integer", "minimum": 1},
+              "requiresHumanReview": {"const": true}
+            }
+          }
+        ]
       }
     },
     {
@@ -216,8 +233,10 @@
     {"toolId": "admin.account.action.draft", "assistantKey": "ADMIN_ASSISTANT", "schemaVersion": "v1", "resourceType": "USER_ACCOUNT", "parentResourceType": null, "argumentNames": ["resource"], "riskBoundary": "DRAFT_ONLY"},
     {"toolId": "lab.policy.read", "assistantKey": "LAB_ASSISTANT", "schemaVersion": "v1", "resourceType": "LABORATORY", "parentResourceType": null, "argumentNames": ["resource"], "riskBoundary": "READ_ONLY"},
     {"toolId": "lab.slot.read", "assistantKey": "LAB_ASSISTANT", "schemaVersion": "v1", "resourceType": "TIME_SLOT", "parentResourceType": null, "argumentNames": ["resource"], "riskBoundary": "READ_ONLY"},
+    {"toolId": "lab.available.slots.read", "assistantKey": "LAB_ASSISTANT", "schemaVersion": "v1", "resourceType": "LABORATORY", "parentResourceType": null, "argumentNames": ["resource"], "riskBoundary": "READ_ONLY"},
     {"toolId": "lab.own.booking.read", "assistantKey": "LAB_ASSISTANT", "schemaVersion": "v1", "resourceType": "BOOKING", "parentResourceType": null, "argumentNames": ["resource"], "riskBoundary": "READ_ONLY"},
     {"toolId": "lab.managed.summary", "assistantKey": "LAB_ASSISTANT", "schemaVersion": "v1", "resourceType": "LABORATORY", "parentResourceType": null, "argumentNames": ["resource"], "riskBoundary": "READ_ONLY"},
+    {"toolId": "lab.shift.create.draft", "assistantKey": "LAB_ASSISTANT", "schemaVersion": "v1", "resourceType": "LABORATORY", "parentResourceType": null, "argumentNames": ["resource"], "riskBoundary": "DRAFT_ONLY"},
     {"toolId": "lab.booking.draft", "assistantKey": "LAB_ASSISTANT", "schemaVersion": "v1", "resourceType": "TIME_SLOT", "parentResourceType": null, "argumentNames": ["resource"], "riskBoundary": "DRAFT_ONLY"},
     {"toolId": "lab.checkin.guidance", "assistantKey": "LAB_ASSISTANT", "schemaVersion": "v1", "resourceType": "BOOKING", "parentResourceType": null, "argumentNames": ["resource"], "riskBoundary": "READ_ONLY"},
     {"toolId": "research.project.summary", "assistantKey": "RESEARCH_ASSISTANT", "schemaVersion": "v1", "resourceType": "PROJECT", "parentResourceType": null, "argumentNames": ["resource"], "riskBoundary": "READ_ONLY"},

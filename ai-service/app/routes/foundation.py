@@ -13,6 +13,8 @@ from app.models import (
     HealthResponse,
     ModelInfoResponse,
     ReadinessResponse,
+    ToolPlanningRequest,
+    ToolPlanningResponse,
 )
 from app.security import safe_error_response
 
@@ -139,17 +141,18 @@ def chat(request: Request, payload: AssistantRequest) -> ChatResponse | JSONResp
 
 @router.post(
     "/v1/assistants/tool-request",
-    response_model=ErrorResponse,
-    status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+    response_model=ToolPlanningResponse,
+    responses={status.HTTP_503_SERVICE_UNAVAILABLE: {"model": ErrorResponse}},
 )
-def tool_request(request: Request, payload: AssistantRequest) -> JSONResponse:
-    request.app.state.profile_loader.get_profile(payload.assistant_key)
-    request.app.state.artifact_loader.get_state(payload.assistant_key)
+def tool_request(request: Request, payload: ToolPlanningRequest) -> ToolPlanningResponse | JSONResponse:
+    planner = request.app.state.tool_planner
+    if request.app.state.artifact_loader.ready and planner is not None:
+        return planner.plan(payload)
     return _error_response(
         request,
-        error_code="AI_SERVICE_NOT_READY",
-        message="AI tool requests are not available.",
-        retryable=False,
+        error_code="AI_MODEL_NOT_READY",
+        message="AI model is not loaded.",
+        retryable=True,
         status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
     )
 

@@ -122,6 +122,47 @@ class AiGatewayClientImplTest {
     }
 
     @Test
+    void toolPlanningDecodesCanonicalRequestAndUsesDedicatedPath() throws Exception {
+        List<ClientRequest> requests = new ArrayList<>();
+        AiToolPlanningClient client = client(recordingExchange(requests, json(HttpStatus.OK, """
+                {"decision":"TOOL_REQUEST","message":null,
+                 "toolRequest":{"assistantKey":"LAB_ASSISTANT","schemaVersion":"v1",
+                  "toolId":"lab.slot.read","arguments":{"resource":{"resourceType":"TIME_SLOT","resourceId":17}}},
+                 "promptTokens":10,"completionTokens":2}
+                """)));
+
+        AiToolPlanningResponse response = client.plan(request("{}", "plan-request"));
+
+        assertEquals(AiToolPlanningDecision.TOOL_REQUEST, response.decision());
+        assertEquals("lab.slot.read", response.toolRequest().get("toolId").asText());
+        assertEquals(10, response.promptTokens());
+        assertRequest(requests.getFirst(), "/v1/assistants/tool-request", "plan-request");
+    }
+
+    @Test
+    void toolPlanningRejectsAnInconsistentOrExtendedResponse() throws Exception {
+        AiToolPlanningClient client = client(recordingExchange(new ArrayList<>(), json(HttpStatus.OK, """
+                {"decision":"REFUSAL","message":"Denied","toolRequest":null,
+                 "promptTokens":1,"completionTokens":1,"unexpected":"unsafe"}
+                """)));
+
+        AiGatewayException exception = assertThrows(AiGatewayException.class,
+                () -> client.plan(request("{}", null)));
+
+        assertEquals(AiGatewayFailureCategory.PROTOCOL, exception.failure().category());
+    }
+
+    @Test
+    void configuredAttemptTimeoutMustBePositiveAndBounded() {
+        assertEquals(Duration.ofSeconds(180),
+                AiGatewayClientImpl.validateConfiguredTimeout(Duration.ofSeconds(180)));
+        assertThrows(IllegalArgumentException.class,
+                () -> AiGatewayClientImpl.validateConfiguredTimeout(Duration.ZERO));
+        assertThrows(IllegalArgumentException.class,
+                () -> AiGatewayClientImpl.validateConfiguredTimeout(Duration.ofMinutes(5).plusMillis(1)));
+    }
+
+    @Test
     void fourHundredNeverRetriesEvenWhenErrorBodyClaimsRetryable() throws Exception {
         AtomicInteger attempts = new AtomicInteger();
         AiGatewayClient client = client(request -> {
@@ -220,11 +261,11 @@ class AiGatewayClientImplTest {
         assertEquals(expectedCategory, exception.failure().category());
     }
 
-    private static AiGatewayClient client(ExchangeFunction exchangeFunction) {
+    private static AiGatewayClientImpl client(ExchangeFunction exchangeFunction) {
         return client(exchangeFunction, Duration.ofSeconds(5));
     }
 
-    private static AiGatewayClient client(ExchangeFunction exchangeFunction, Duration timeout) {
+    private static AiGatewayClientImpl client(ExchangeFunction exchangeFunction, Duration timeout) {
         return new AiGatewayClientImpl(new AiGatewayConfiguration("https://ai.example.invalid", "test-token"),
                 OBJECT_MAPPER, exchangeFunction, timeout);
     }

@@ -41,6 +41,40 @@ class AssistantRequest(ContractModel):
     authorized_context: dict[str, JsonValue] = Field(default_factory=dict)
 
 
+class ToolResourceReference(ContractModel):
+    resource_type: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=50)]
+    resource_id: int | None = Field(gt=0)
+
+
+class ToolCandidate(ContractModel):
+    assistant_key: AssistantKey
+    schema_version: Literal["v1"]
+    tool_id: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=128)]
+    description: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=512)]
+    resource: ToolResourceReference
+    parent_resource: ToolResourceReference | None
+
+
+class ToolPlanningRequest(ContractModel):
+    input: RequestInput
+    candidates: tuple[ToolCandidate, ...] = Field(min_length=1, max_length=200)
+
+
+class PlannedToolRequest(ContractModel):
+    assistant_key: AssistantKey
+    schema_version: Literal["v1"]
+    tool_id: str
+    arguments: dict[str, JsonValue]
+
+
+class ToolPlanningResponse(ContractModel):
+    decision: Literal["TOOL_REQUEST", "CLARIFICATION", "REFUSAL"]
+    message: str | None
+    tool_request: PlannedToolRequest | None
+    prompt_tokens: int = Field(ge=0)
+    completion_tokens: int = Field(ge=0)
+
+
 class ChatResponse(ContractModel):
     assistant_key: AssistantKey
     answer: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=32_768)]
