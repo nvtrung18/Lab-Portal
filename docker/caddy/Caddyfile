@@ -1,0 +1,30 @@
+{$APP_DOMAIN} {
+    encode gzip
+
+    root * /srv/frontend
+    try_files {path} /index.html
+    file_server
+
+    header {
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "SAMEORIGIN"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        Permissions-Policy "camera=(self), microphone=()"
+    }
+}
+
+{$API_DOMAIN} {
+    encode gzip
+
+    request_body {
+        max_size 55MB
+    }
+
+    header {
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        Referrer-Policy "no-referrer"
+    }
+
+    reverse_proxy backend:8080
+}

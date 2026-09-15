@@ -1,0 +1,171 @@
+name: lab-portal-prod
+
+services:
+  mysql:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?MYSQL_ROOT_PASSWORD is required}
+      MYSQL_DATABASE: ${DB_NAME:?DB_NAME is required}
+      MYSQL_USER: ${DB_USERNAME:?DB_USERNAME is required}
+      MYSQL_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
+    volumes:
+      - lab_portal_mysql_data:/var/lib/mysql
+    command:
+      - mysqld
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p\"$${MYSQL_ROOT_PASSWORD}\""]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?REDIS_PASSWORD is required}
+    command: ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD:?REDIS_PASSWORD is required}"]
+    volumes:
+      - lab_portal_redis_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a \"$${REDIS_PASSWORD}\" ping | grep PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
+  ai-service:
+    build:
+      context: .
+      dockerfile: docker/ai-service/Dockerfile
+    restart: unless-stopped
+    environment:
+      AI_ENVIRONMENT: production
+      AI_INTERNAL_SERVICE_TOKEN: ${AI_INTERNAL_SERVICE_TOKEN:?AI_INTERNAL_SERVICE_TOKEN is required}
+      AI_MODEL_ARTIFACTS_PATH: ${AI_MODEL_ARTIFACTS_PATH:-config/model-artifacts.runtime-t4.json}
+      AI_MODEL_ARTIFACT_ROOT: /runtime-artifacts
+      AI_RUNTIME_LOAD_ENABLED: ${AI_RUNTIME_LOAD_ENABLED:-true}
+      AI_RUNTIME_DEVICE: ${AI_RUNTIME_DEVICE:-cpu}
+      AI_REQUEST_TIMEOUT_SECONDS: ${AI_REQUEST_TIMEOUT_SECONDS:-240}
+    volumes:
+      - ${AI_MODEL_ARTIFACT_ROOT_HOST:?AI_MODEL_ARTIFACT_ROOT_HOST is required}:/runtime-artifacts:ro
+    expose:
+      - "8090"
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import os,urllib.request; urllib.request.urlopen(urllib.request.Request('http://localhost:8090/ready', headers={'X-Internal-Service-Token': os.environ['AI_INTERNAL_SERVICE_TOKEN']}), timeout=10)\""]
+      interval: 30s
+      timeout: 15s
+      retries: 20
+      start_period: 10m
+
+  face-service:
+    build:
+      context: .
+      dockerfile: docker/face-service/Dockerfile
+    restart: unless-stopped
+    environment:
+      FACE_ENVIRONMENT: production
+      FACE_INTERNAL_SERVICE_TOKEN: ${FACE_INTERNAL_SERVICE_TOKEN:?FACE_INTERNAL_SERVICE_TOKEN is required}
+      FACE_CHALLENGE_SECRET: ${FACE_CHALLENGE_SECRET:?FACE_CHALLENGE_SECRET is required}
+      FACE_PROCESSOR_MODE: ${FACE_PROCESSOR_MODE:-opencv}
+      FACE_DETECTOR_MODEL_PATH: /models/face_detection_yunet_2023mar.onnx
+      FACE_RECOGNIZER_MODEL_PATH: /models/face_recognition_sface_2021dec.onnx
+      FACE_LIVENESS_MODEL_PATH: /models/minifasnet_v2.onnx
+    expose:
+      - "8091"
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import os,urllib.request; urllib.request.urlopen(urllib.request.Request('http://localhost:8091/health', headers={'X-Internal-Service-Token': os.environ['FACE_INTERNAL_SERVICE_TOKEN']}), timeout=10)\""]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+      start_period: 60s
+
+  backend:
+    build:
+      context: .
+      dockerfile: docker/backend/Dockerfile
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      PORT: 8080
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: ${DB_NAME:?DB_NAME is required}
+      DB_USERNAME: ${DB_USERNAME:?DB_USERNAME is required}
+      DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?REDIS_PASSWORD is required}
+      REDIS_SSL_ENABLED: "false"
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
+      JWT_EXPIRATION: ${JWT_EXPIRATION:-86400000}
+      JWT_REFRESH_EXPIRATION: ${JWT_REFRESH_EXPIRATION:-604800000}
+      MAIL_HOST: ${MAIL_HOST:?MAIL_HOST is required}
+      MAIL_PORT: ${MAIL_PORT:-587}
+      MAIL_USERNAME: ${MAIL_USERNAME:?MAIL_USERNAME is required}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:?MAIL_PASSWORD is required}
+      MAIL_FROM: ${MAIL_FROM:?MAIL_FROM is required}
+      MAIL_SMTP_AUTH: ${MAIL_SMTP_AUTH:-true}
+      MAIL_SMTP_STARTTLS_ENABLE: ${MAIL_SMTP_STARTTLS_ENABLE:-true}
+      APP_CORS_ALLOWED_ORIGINS: https://${APP_DOMAIN:?APP_DOMAIN is required}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      CV_STORAGE_PATH: /app/uploads/cv
+      REPORT_STORAGE_PATH: /app/storage/reports
+      PRODUCT_STORAGE_PATH: /app/storage/products
+      AI_GATEWAY_BASE_URL: http://ai-service:8090
+      AI_INTERNAL_SERVICE_TOKEN: ${AI_INTERNAL_SERVICE_TOKEN:?AI_INTERNAL_SERVICE_TOKEN is required}
+      AI_GATEWAY_ATTEMPT_TIMEOUT: ${AI_GATEWAY_ATTEMPT_TIMEOUT:-240s}
+      FACE_SERVICE_BASE_URL: http://face-service:8091
+      FACE_INTERNAL_SERVICE_TOKEN: ${FACE_INTERNAL_SERVICE_TOKEN:?FACE_INTERNAL_SERVICE_TOKEN is required}
+      FACE_EMBEDDING_ENCRYPTION_KEY: ${FACE_EMBEDDING_ENCRYPTION_KEY:?FACE_EMBEDDING_ENCRYPTION_KEY is required}
+      DEV_SEED_ENABLED: "false"
+    volumes:
+      - lab_portal_backend_storage:/app/storage
+      - lab_portal_backend_uploads:/app/uploads
+    expose:
+      - "8080"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      ai-service:
+        condition: service_healthy
+      face-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget --spider -q http://127.0.0.1:8080/api/actuator/health/readiness || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 30
+      start_period: 90s
+
+  caddy:
+    build:
+      context: .
+      dockerfile: docker/caddy/Dockerfile
+      args:
+        VITE_API_BASE_URL: https://${API_DOMAIN:?API_DOMAIN is required}
+    restart: unless-stopped
+    environment:
+      APP_DOMAIN: ${APP_DOMAIN:?APP_DOMAIN is required}
+      API_DOMAIN: ${API_DOMAIN:?API_DOMAIN is required}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - lab_portal_caddy_data:/data
+      - lab_portal_caddy_config:/config
+    depends_on:
+      backend:
+        condition: service_healthy
+
+volumes:
+  lab_portal_mysql_data:
+  lab_portal_redis_data:
+  lab_portal_backend_storage:
+  lab_portal_backend_uploads:
+  lab_portal_caddy_data:
+  lab_portal_caddy_config:
