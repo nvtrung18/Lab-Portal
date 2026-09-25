@@ -1,4 +1,8 @@
 spring:
+  flyway:
+    locations:
+      - classpath:db/migration
+      - classpath:db/migration-prod
   datasource:
     url: jdbc:mysql://${DB_HOST}:${DB_PORT}/${DB_NAME}?useUnicode=true&characterEncoding=utf8&connectionCollation=utf8mb4_unicode_ci&serverTimezone=UTC&useSSL=true
     username: ${DB_USERNAME}
@@ -27,6 +31,10 @@ app:
   auth:
     google:
       client-id: ${GOOGLE_CLIENT_ID}
+    bootstrap-admin:
+      username: ${BOOTSTRAP_ADMIN_USERNAME:}
+      email: ${BOOTSTRAP_ADMIN_EMAIL:}
+      password: ${BOOTSTRAP_ADMIN_PASSWORD:}
   mail:
     from: ${MAIL_FROM:}
   cors:
