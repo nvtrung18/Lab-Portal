@@ -24,6 +24,7 @@ import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.FilterType;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -195,7 +196,9 @@ class TaskProposalControllerTest {
         when(taskProposalService.submit(any()))
                 .thenThrow(new TaskProposalNotificationException(internalCause));
 
-        mockMvc.perform(request(VALID_BODY).with(user("student").roles("STUDENT")))
+        mockMvc.perform(request(VALID_BODY)
+                        .header(HttpHeaders.ACCEPT_LANGUAGE, "en")
+                        .with(user("student").roles("STUDENT")))
                 .andExpect(status().isInternalServerError())
                 .andExpect(jsonPath("$.code").value(500))
                 .andExpect(jsonPath("$.message")
