@@ -1,4 +1,5 @@
 import { Modal } from '../../../shared/components';
+import { useI18n } from '../../../shared/i18n';
 import { ReportDiscussionPanel } from './ReportDiscussionPanel';
 
 interface ReportCommentsModalProps {
@@ -17,12 +18,13 @@ export function ReportCommentsModal({
   taskTitle,
   version,
 }: ReportCommentsModalProps) {
+  const { t } = useI18n();
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
       size="lg"
-      title={`Ý kiến góp ý: ${taskTitle} (Bản v${version})`}
+      title={t('research.report.commentsTitle', undefined, { task: taskTitle, version })}
     >
       <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
         <ReportDiscussionPanel

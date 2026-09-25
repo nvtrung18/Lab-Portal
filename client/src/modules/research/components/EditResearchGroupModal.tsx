@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 
 import { Button, Modal } from '../../../shared/components';
+import { useI18n } from '../../../shared/i18n';
 import { VALIDATION_MESSAGES } from '../../../shared/utils';
 import type {
   GroupStatus,
@@ -36,6 +37,7 @@ export function EditResearchGroupModal({
   onClose,
   onSubmit,
 }: EditResearchGroupModalProps) {
+  const { t } = useI18n();
   const [form, setForm] = useState(emptyForm);
   const [touched, setTouched] = useState(false);
 
@@ -87,26 +89,25 @@ export function EditResearchGroupModal({
         footer={(
           <>
             <Button onClick={onClose} variant="outline">
-              Hủy
+              {t('common.cancel')}
             </Button>
             <Button
               disabled={isLoadingStudents}
               loading={isSubmitting}
-              loadingText="Đang lưu..."
+              loadingText={t('common.saving')}
               type="submit"
             >
-              Lưu thay đổi
+              {t('common.save')}
             </Button>
           </>
         )}
         onClose={onClose}
         size="lg"
-        subtitle={<>Đề tài: {group.projectTitle ?? 'Chưa cập nhật'}</>}
-        title="Sửa thông tin nhóm nghiên cứu"
+        title={t('research.group.editTitle')}
       >
         <div className="space-y-4">
           <label className="block text-sm font-medium text-slate-700">
-            Tên nhóm
+            {t('research.group.nameLabel')}
             <input
               className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
               value={form.name}
@@ -119,7 +120,7 @@ export function EditResearchGroupModal({
           </label>
 
           <label className="block text-sm font-medium text-slate-700">
-            Mục tiêu nhóm
+            {t('research.group.objectiveLabel')}
             <textarea
               className="mt-1 min-h-20 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
               value={form.objective}
@@ -128,7 +129,7 @@ export function EditResearchGroupModal({
           </label>
 
           <label className="block text-sm font-medium text-slate-700">
-            Kế hoạch thực hiện
+            {t('research.group.planLabel')}
             <textarea
               className="mt-1 min-h-20 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
               value={form.plan}
@@ -137,16 +138,16 @@ export function EditResearchGroupModal({
           </label>
 
           <label className="block text-sm font-medium text-slate-700">
-            Trạng thái
+            {t('research.group.status')}
             <select
               className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
               value={form.status}
               onChange={(event) => setForm((current) => ({ ...current, status: event.target.value as GroupStatus }))}
             >
-              <option value="ACTIVE">Đang hoạt động</option>
-              <option value="PAUSED">Tạm dừng</option>
-              <option value="COMPLETED">Hoàn thành</option>
-              <option value="ARCHIVED">Đã lưu trữ</option>
+              <option value="ACTIVE">{t('research.group.active')}</option>
+              <option value="PAUSED">{t('research.group.paused')}</option>
+              <option value="COMPLETED">{t('research.group.completed')}</option>
+              <option value="ARCHIVED">{t('research.group.archived')}</option>
             </select>
           </label>
 

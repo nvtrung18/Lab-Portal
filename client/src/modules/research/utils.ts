@@ -1,5 +1,6 @@
 import axios from 'axios';
 
+import { getStoredLocale, translate, translateBackendMessage, type Locale } from '../../shared/i18n';
 import type { GroupStatus, MilestoneStatus, ProjectStatus, ResearchPriority, TopicStatus } from './types';
 
 interface ApiErrorMessageContext {
@@ -10,90 +11,96 @@ interface ApiErrorMessageContext {
 
 export function getApiErrorMessage(error: unknown, context: string | ApiErrorMessageContext = {}) {
   const options = typeof context === 'string' ? { fallback: context } : context;
+  const locale = getStoredLocale();
 
   if (axios.isAxiosError(error)) {
     if (!error.response) {
-      return 'Không thể kết nối tới máy chủ. Vui lòng kiểm tra BE hoặc VITE_API_BASE_URL.';
+      return translate('common.networkError', locale);
     }
 
     const status = error.response.status;
+    const data = error.response.data as { message?: string; errors?: string[] } | undefined;
+    const apiMessage = translateBackendMessage(data?.message ?? data?.errors?.[0], locale);
     if (status === 401) {
-      return 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.';
+      return translate('common.sessionExpired', locale);
     }
     if (status === 403) {
-      return options.forbidden ?? 'Bạn không có quyền xem dữ liệu này.';
+      return options.forbidden ?? translate('research.forbidden', locale);
     }
     if (status === 404) {
-      return options.notFound ?? 'Không tìm thấy dữ liệu.';
+      return options.notFound ?? translate('common.notFound', locale);
+    }
+    if (apiMessage && (status === 400 || status === 409)) {
+      return apiMessage;
     }
     if (status >= 500) {
-      return 'Hệ thống đang gặp sự cố. Vui lòng thử lại sau.';
+      return translate('common.serverFailure', locale);
     }
   }
 
-  return options.fallback ?? 'Không thể tải dữ liệu.';
+  return options.fallback ?? translate('common.loadError', locale);
 }
 
-export function formatTopicStatus(status?: TopicStatus | null) {
-  const labels: Record<TopicStatus, string> = {
-    RECRUITING: 'Đang tuyển',
-    ONGOING: 'Đang thực hiện',
-    PAUSED: 'Tạm dừng',
-    COMPLETED: 'Kết thúc',
-  };
-  return status ? labels[status] ?? status : 'Chưa cập nhật';
+export function formatTopicStatus(status?: TopicStatus | null, locale: Locale = getStoredLocale()) {
+  const key = ({
+    RECRUITING: 'research.topic.recruiting',
+    ONGOING: 'research.topic.ongoing',
+    PAUSED: 'research.topic.paused',
+    COMPLETED: 'research.topic.completed',
+  } as Record<string, string>)[status ?? ''];
+  return status ? translate(key ?? '', locale, status) : translate('common.notUpdated', locale);
 }
 
-export function formatGroupStatus(status?: GroupStatus | null) {
-  const labels: Record<GroupStatus, string> = {
-    ACTIVE: 'Đang hoạt động',
-    PAUSED: 'Tạm dừng',
-    COMPLETED: 'Hoàn thành',
-    ARCHIVED: 'Đã lưu trữ',
-  };
-  return status ? labels[status] ?? status : 'Chưa cập nhật';
+export function formatGroupStatus(status?: GroupStatus | null, locale: Locale = getStoredLocale()) {
+  const key = ({
+    ACTIVE: 'research.group.active',
+    PAUSED: 'research.group.paused',
+    COMPLETED: 'research.group.completed',
+    ARCHIVED: 'research.group.archived',
+  } as Record<string, string>)[status ?? ''];
+  return status ? translate(key ?? '', locale, status) : translate('common.notUpdated', locale);
 }
 
-export function formatProjectStatus(status?: ProjectStatus | null) {
-  const labels: Record<ProjectStatus, string> = {
-    DRAFT: 'Mới tạo',
-    PLANNED: 'Mới tạo',
-    ONGOING: 'Đang thực hiện',
-    WAITING_REVIEW: 'Chờ phản biện',
-    COMPLETED: 'Hoàn thành',
-    ARCHIVED: 'Đã lưu trữ',
-    CANCELLED: 'Đã hủy',
-  };
-  return status ? labels[status] ?? status : 'Chưa cập nhật';
+export function formatProjectStatus(status?: ProjectStatus | null, locale: Locale = getStoredLocale()) {
+  const key = ({
+    DRAFT: 'research.project.new',
+    PLANNED: 'research.project.new',
+    ONGOING: 'research.project.ongoing',
+    WAITING_REVIEW: 'research.project.waitingReview',
+    COMPLETED: 'research.project.completed',
+    ARCHIVED: 'research.project.archived',
+    CANCELLED: 'research.project.cancelled',
+  } as Record<string, string>)[status ?? ''];
+  return status ? translate(key ?? '', locale, status) : translate('common.notUpdated', locale);
 }
 
-export function formatPriority(priority?: ResearchPriority | null) {
-  const labels: Record<ResearchPriority, string> = {
-    HIGH: 'Cao',
-    MEDIUM: 'Trung bình',
-    LOW: 'Thấp',
-  };
-  return priority ? labels[priority] ?? priority : 'Chưa cập nhật';
+export function formatPriority(priority?: ResearchPriority | null, locale: Locale = getStoredLocale()) {
+  const key = ({
+    HIGH: 'research.priority.high',
+    MEDIUM: 'research.priority.medium',
+    LOW: 'research.priority.low',
+  } as Record<string, string>)[priority ?? ''];
+  return priority ? translate(key ?? '', locale, priority) : translate('common.notUpdated', locale);
 }
 
-export function formatGroupRole(role?: 'LEADER' | 'MEMBER' | null) {
-  const labels = {
-    LEADER: 'Trưởng nhóm',
-    MEMBER: 'Thành viên',
-  } as const;
-  return role ? labels[role] ?? role : 'Chưa cập nhật';
+export function formatGroupRole(role?: 'LEADER' | 'MEMBER' | null, locale: Locale = getStoredLocale()) {
+  const key = ({
+    LEADER: 'research.role.leader',
+    MEMBER: 'research.role.member',
+  } as Record<string, string>)[role ?? ''];
+  return role ? translate(key ?? '', locale, role) : translate('common.notUpdated', locale);
 }
 
-export function formatMilestoneStatus(status?: MilestoneStatus | null) {
-  const labels: Record<MilestoneStatus, string> = {
-    NOT_STARTED: 'Chưa bắt đầu',
-    IN_PROGRESS: 'Đang thực hiện',
-    WAITING_REVIEW: 'Chờ duyệt',
-    COMPLETED: 'Hoàn thành',
-    OVERDUE: 'Quá hạn',
-    CANCELLED: 'Đã hủy',
-  };
-  return status ? labels[status] ?? status : 'Chưa cập nhật';
+export function formatMilestoneStatus(status?: MilestoneStatus | null, locale: Locale = getStoredLocale()) {
+  const key = ({
+    NOT_STARTED: 'research.milestone.notStarted',
+    IN_PROGRESS: 'research.milestone.inProgress',
+    WAITING_REVIEW: 'research.milestone.waitingReview',
+    COMPLETED: 'research.milestone.completed',
+    OVERDUE: 'research.milestone.overdue',
+    CANCELLED: 'research.milestone.cancelled',
+  } as Record<string, string>)[status ?? ''];
+  return status ? translate(key ?? '', locale, status) : translate('common.notUpdated', locale);
 }
 
 export function isMilestoneOverdue(deadline?: string | null, status?: MilestoneStatus | null) {
@@ -137,14 +144,13 @@ export function getStatusClass(status?: string | null) {
   }
 }
 
-export function formatDate(value?: string | null) {
+export function formatDate(value?: string | null, locale: Locale = getStoredLocale()) {
   if (!value) {
-    return 'Chưa cập nhật';
+    return translate('common.notUpdated', locale);
   }
-  return new Intl.DateTimeFormat('vi-VN').format(new Date(value));
+  return new Intl.DateTimeFormat(locale === 'en' ? 'en-US' : 'vi-VN').format(new Date(value));
 }
 
-export function formatReportSubmitterName(report: { submittedByName?: string | null }) {
-  return report.submittedByName || 'Không rõ người nộp';
+export function formatReportSubmitterName(report: { submittedByName?: string | null }, locale: Locale = getStoredLocale()) {
+  return report.submittedByName || translate('research.unknownSubmitter', locale);
 }
-

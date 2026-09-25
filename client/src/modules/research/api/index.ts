@@ -1,4 +1,5 @@
 import { apiClient } from '../../../shared/api';
+import { getStoredLocale, translate } from '../../../shared/i18n';
 import type { Response } from '../../../shared/types';
 export { getProjectDashboardStats } from './dashboardApi';
 export * from './taskApi';
@@ -243,7 +244,7 @@ function normalizeProduct(product: RawResearchProduct): ResearchProduct {
     submittedByName: product.submittedByName ?? product.submitted_by_name ?? null,
     submittedByEmail: product.submittedByEmail ?? product.submitted_by_email ?? null,
     productType: product.productType ?? product.product_type ?? 'OTHER',
-    title: product.title ?? 'Sản phẩm nghiên cứu',
+    title: product.title ?? translate('research.product.title', getStoredLocale()),
     description: product.description ?? null,
     fileUrl: product.fileUrl ?? product.file_url ?? null,
     fileName: product.fileName ?? product.file_name ?? null,

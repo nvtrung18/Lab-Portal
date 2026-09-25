@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 
 import { Button, Modal } from '../../../shared/components';
+import { useI18n } from '../../../shared/i18n';
 import { VALIDATION_MESSAGES } from '../../../shared/utils';
 import type { CreateResearchProjectPayload, ProjectStatus, ResearchPriority, ResearchProject } from '../types';
 
@@ -54,6 +55,7 @@ export function CreateResearchProjectModal({
   onClose,
   onSubmit,
 }: CreateResearchProjectModalProps) {
+  const { t } = useI18n();
   const [form, setForm] = useState(initialForm);
   const [touched, setTouched] = useState(false);
 
@@ -106,25 +108,24 @@ export function CreateResearchProjectModal({
         footer={(
           <>
             <Button onClick={onClose} variant="outline">
-              Hủy
+              {t('common.cancel')}
             </Button>
             <Button
               loading={isSubmitting}
-              loadingText={isEditing ? 'Đang lưu...' : 'Đang tạo...'}
+              loadingText={isEditing ? t('common.saving') : t('common.creating')}
               type="submit"
             >
-              {isEditing ? 'Lưu thay đổi' : 'Tạo đề tài nghiên cứu'}
+              {isEditing ? t('common.save') : t('research.project.createTitle')}
             </Button>
           </>
         )}
         onClose={onClose}
         size="xl"
-        subtitle={isEditing ? 'Cập nhật thông tin đề tài trong PTN đang quản lý.' : 'Đề tài được tạo trong PTN đang quản lý.'}
-        title={isEditing ? 'Sửa đề tài nghiên cứu' : 'Tạo đề tài nghiên cứu'}
+        title={isEditing ? t('research.project.editTitle') : t('research.project.createTitle')}
       >
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="block text-sm font-medium text-slate-700">
-            Mã đề tài
+            {t('research.project.code')}
             <input
               className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
               value={form.code}
@@ -133,20 +134,20 @@ export function CreateResearchProjectModal({
           </label>
 
           <label className="block text-sm font-medium text-slate-700">
-            Mức độ ưu tiên
+            {t('research.project.priority')}
             <select
               className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
               value={form.priority}
               onChange={(event) => setForm((current) => ({ ...current, priority: event.target.value as ResearchPriority }))}
             >
-              <option value="HIGH">Cao</option>
-              <option value="MEDIUM">Trung bình</option>
-              <option value="LOW">Thấp</option>
+              <option value="HIGH">{t('research.priority.high')}</option>
+              <option value="MEDIUM">{t('research.priority.medium')}</option>
+              <option value="LOW">{t('research.priority.low')}</option>
             </select>
           </label>
 
           <label className="block text-sm font-medium text-slate-700 sm:col-span-2">
-            Tên đề tài
+            {t('research.project.title')}
             <input
               className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
               value={form.title}
@@ -157,7 +158,7 @@ export function CreateResearchProjectModal({
           </label>
 
           <label className="block text-sm font-medium text-slate-700 sm:col-span-2">
-            Chủ đề nghiên cứu
+            {t('research.project.direction')}
             <input
               className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
               value={form.researchDirection}
@@ -166,7 +167,7 @@ export function CreateResearchProjectModal({
           </label>
 
           <label className="block text-sm font-medium text-slate-700 sm:col-span-2">
-            Mô tả đề tài
+            {t('research.project.description')}
             <textarea
               className="mt-1 min-h-24 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
               value={form.description}
@@ -175,7 +176,7 @@ export function CreateResearchProjectModal({
           </label>
 
           <label className="block text-sm font-medium text-slate-700 sm:col-span-2">
-            Mục tiêu nghiên cứu
+            {t('research.project.objective')}
             <textarea
               className="mt-1 min-h-20 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
               value={form.objective}
@@ -184,7 +185,7 @@ export function CreateResearchProjectModal({
           </label>
 
           <label className="block text-sm font-medium text-slate-700">
-            Ngày bắt đầu
+            {t('research.project.startDateLabel')}
             <input
               className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
               type="date"
@@ -195,7 +196,7 @@ export function CreateResearchProjectModal({
           </label>
 
           <label className="block text-sm font-medium text-slate-700">
-            Ngày kết thúc dự kiến
+            {t('research.project.expectedEndDateLabel')}
             <input
               className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
               type="date"
@@ -207,22 +208,22 @@ export function CreateResearchProjectModal({
           </label>
 
           <label className="block text-sm font-medium text-slate-700">
-            Trạng thái
+            {t('research.project.status')}
             <select
               className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
               value={form.status}
               onChange={(event) => setForm((current) => ({ ...current, status: event.target.value as ProjectStatus }))}
             >
-              <option value="DRAFT">Mới tạo</option>
-              <option value="ONGOING">Đang thực hiện</option>
-              <option value="WAITING_REVIEW">Chờ phản biện</option>
-              <option value="COMPLETED">Hoàn thành</option>
-              <option value="CANCELLED">Đã hủy</option>
+              <option value="DRAFT">{t('research.project.new')}</option>
+              <option value="ONGOING">{t('research.project.ongoing')}</option>
+              <option value="WAITING_REVIEW">{t('research.project.waitingReview')}</option>
+              <option value="COMPLETED">{t('research.project.completed')}</option>
+              <option value="CANCELLED">{t('research.project.cancelled')}</option>
             </select>
           </label>
 
           <label className="block text-sm font-medium text-slate-700 sm:col-span-2">
-            Sản phẩm cần nộp
+            {t('research.project.requiredProducts')}
             <textarea
               className="mt-1 min-h-20 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
               value={form.requiredProducts}
@@ -231,7 +232,7 @@ export function CreateResearchProjectModal({
           </label>
 
           <label className="block text-sm font-medium text-slate-700 sm:col-span-2">
-            Tiêu chí đánh giá
+            {t('research.project.evaluationCriteria')}
             <textarea
               className="mt-1 min-h-20 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
               value={form.evaluationCriteria}

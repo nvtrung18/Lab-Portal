@@ -9,5 +9,6 @@ public enum BookingEmailType {
     SLOT_CANCELLED,
     SESSION_COMPLETED,
     CHECKED_IN,
+    CLEANING_ASSIGNED,
     PENALTY_CREATED
 }

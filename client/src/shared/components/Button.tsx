@@ -12,19 +12,19 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const VARIANT_CLASSES: Record<ButtonVariant, string> = {
-  primary: 'bg-slate-900 text-white shadow-sm hover:bg-slate-800 focus-visible:ring-slate-500 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-200 dark:border-transparent',
-  secondary: 'bg-slate-100 text-slate-900 hover:bg-slate-200 focus-visible:ring-slate-400 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700 dark:border-slate-700',
+  primary: 'app-button app-button-primary shadow-sm focus-visible:ring-slate-500',
+  secondary: 'app-button app-button-secondary focus-visible:ring-slate-400',
   outline:
-    'border border-slate-300 bg-white text-slate-800 shadow-sm hover:bg-slate-50 focus-visible:ring-slate-400 dark:border-slate-700 dark:bg-transparent dark:text-slate-200 dark:hover:bg-slate-800',
-  ghost: 'text-slate-700 hover:bg-slate-100 hover:text-slate-950 focus-visible:ring-slate-400 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white',
-  danger: 'bg-red-700 text-white shadow-sm hover:bg-red-800 focus-visible:ring-red-500 dark:bg-red-600 dark:hover:bg-red-700',
-  success: 'bg-emerald-700 text-white shadow-sm hover:bg-emerald-800 focus-visible:ring-emerald-500 dark:bg-emerald-600 dark:hover:bg-emerald-700',
+    'app-button app-button-outline border shadow-sm focus-visible:ring-slate-400',
+  ghost: 'app-button app-button-ghost focus-visible:ring-slate-400',
+  danger: 'app-button app-button-danger shadow-sm focus-visible:ring-red-500',
+  success: 'app-button app-button-success shadow-sm focus-visible:ring-emerald-500',
 };
 
 const SIZE_CLASSES: Record<ButtonSize, string> = {
-  sm: 'min-h-11 px-3 py-2 text-sm',
-  md: 'min-h-11 px-4 py-2 text-sm',
-  lg: 'min-h-12 px-5 py-3 text-base',
+  sm: 'min-h-11 w-32 px-3 py-2 text-sm',
+  md: 'min-h-11 w-40 px-4 py-2 text-sm',
+  lg: 'min-h-12 w-48 px-5 py-3 text-base',
 };
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(

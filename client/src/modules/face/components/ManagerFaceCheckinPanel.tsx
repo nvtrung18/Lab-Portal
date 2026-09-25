@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { queryKeys } from '../../../shared/api';
 import { Button, EmptyState, ErrorState, Modal, toast } from '../../../shared/components';
+import { translate, translateBackendMessage, useI18n } from '../../../shared/i18n';
 import type { Response } from '../../../shared/types';
 import { cameraErrorMessage, openCamera } from '../../../shared/utils';
 import { invalidateAttendanceQueries } from '../../booking/hooks';
@@ -26,30 +27,30 @@ function wait(milliseconds: number) {
 function errorMessage(error: unknown) {
   if (axios.isAxiosError(error)) {
     const body = error.response?.data as Partial<Response<unknown>> | undefined;
-    return body?.message ?? body?.errors?.[0] ?? 'Không thể xác nhận khuôn mặt. Vui lòng thử lại.';
+    return translateBackendMessage(body?.message ?? body?.errors?.[0]) ?? translate('face.error');
   }
-  return error instanceof Error ? error.message : 'Không thể xác nhận khuôn mặt. Vui lòng thử lại.';
+  return translateBackendMessage(error instanceof Error ? error.message : null) ?? translate('face.error');
 }
 
 function faceFailureMessage(reason: string | null) {
   const messages: Record<string, string> = {
-    NO_FACE: 'Không phát hiện khuôn mặt trong khung hình.',
-    MULTIPLE_FACES: 'Có nhiều hơn một khuôn mặt trong khung hình.',
-    LOW_QUALITY: 'Hình ảnh chưa đủ rõ hoặc ánh sáng chưa phù hợp.',
-    NO_MATCH: 'Khuôn mặt không khớp với người đăng ký nào trong ca đã chọn.',
-    SPOOF_DETECTED: 'Không xác minh được khuôn mặt thật.',
-    CHALLENGE_MISSING: 'Thiếu dữ liệu quan sát trực tiếp từ camera. Hãy mở camera và thực hiện lại.',
-    CHALLENGE_INVALID: 'Phiên xác minh đã hết hạn hoặc không hợp lệ. Hãy thực hiện lại.',
-    CHALLENGE_FACE_INVALID: 'Mất khuôn mặt hoặc có nhiều người khi quay đầu. Hãy thực hiện lại.',
-    CHALLENGE_START_NOT_FRONTAL: 'Ảnh đầu tiên chưa nhìn thẳng vào camera.',
-    CHALLENGE_TURN_NOT_DETECTED: 'Chưa phát hiện đúng chuyển động quay đầu theo hướng dẫn.',
-    OBSERVATION_TOO_SHORT: 'Camera chưa quan sát đủ lâu. Hãy nhìn thẳng và giữ yên thêm vài giây.',
-    OBSERVATION_FACE_INVALID: 'Camera bị mất khuôn mặt, ảnh bị mờ hoặc có nhiều người trong lúc nhận diện.',
-    OBSERVATION_NOT_FRONTAL: 'Hãy nhìn thẳng vào camera trong suốt quá trình nhận diện.',
-    OBSERVATION_NOT_LIVE: 'Chuỗi camera chưa đủ biến thiên tự nhiên để xác minh khuôn mặt thật.',
-    SERVICE_ERROR: 'Dịch vụ nhận diện khuôn mặt đang không khả dụng.',
+    NO_FACE: translate('face.noFace'),
+    MULTIPLE_FACES: translate('face.multipleFaces'),
+    LOW_QUALITY: translate('face.lowQuality'),
+    NO_MATCH: translate('face.noMatchManager'),
+    SPOOF_DETECTED: translate('face.spoofDetected'),
+    CHALLENGE_MISSING: translate('face.challengeMissing'),
+    CHALLENGE_INVALID: translate('face.challengeInvalid'),
+    CHALLENGE_FACE_INVALID: translate('face.observationInvalid'),
+    CHALLENGE_START_NOT_FRONTAL: translate('face.notFrontal'),
+    CHALLENGE_TURN_NOT_DETECTED: translate('face.challengeInvalid'),
+    OBSERVATION_TOO_SHORT: translate('face.observationTooShort'),
+    OBSERVATION_FACE_INVALID: translate('face.observationInvalid'),
+    OBSERVATION_NOT_FRONTAL: translate('face.notFrontal'),
+    OBSERVATION_NOT_LIVE: translate('face.notLive'),
+    SERVICE_ERROR: translate('face.serviceError'),
   };
-  return reason ? messages[reason] ?? reason : 'Không thể xác nhận khuôn mặt.';
+  return reason ? messages[reason] ?? reason : translate('face.unknownFailure');
 }
 
 function captureFrame(video: HTMLVideoElement, maxWidth?: number, quality = 0.84): Promise<CameraFrame> {
@@ -58,7 +59,7 @@ function captureFrame(video: HTMLVideoElement, maxWidth?: number, quality = 0.84
   canvas.width = Math.round(video.videoWidth * scale);
   canvas.height = Math.round(video.videoHeight * scale);
   const context = canvas.getContext('2d');
-  if (!context) return Promise.reject(new Error('Không thể đọc hình ảnh từ camera.'));
+  if (!context) return Promise.reject(new Error(translate('face.readCameraError')));
   context.drawImage(video, 0, 0, canvas.width, canvas.height);
   const dataUrl = canvas.toDataURL('image/jpeg', quality);
   return Promise.resolve({ imageBase64: dataUrl.split(',', 2)[1], contentType: 'image/jpeg' });
@@ -76,6 +77,7 @@ function stablePosition(previous: FacePosition | null, current: FaceGuidanceResu
 }
 
 export function ManagerFaceCheckinPanel({ onCompleted }: { onCompleted: (result: FaceCheckinResult) => void }) {
+  const { locale, t } = useI18n();
   const queryClient = useQueryClient();
   const candidates = useQuery({
     queryKey: queryKeys.face.checkinCandidates,
@@ -88,7 +90,7 @@ export function ManagerFaceCheckinPanel({ onCompleted }: { onCompleted: (result:
   const [cameraActive, setCameraActive] = useState(false);
   const [cameraReady, setCameraReady] = useState(false);
   const [challenge, setChallenge] = useState<FaceChallenge | null>(null);
-  const [instruction, setInstruction] = useState('Đưa khuôn mặt vào giữa khung oval');
+  const [instruction, setInstruction] = useState(() => t('face.centerFace'));
   const [localError, setLocalError] = useState('');
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -135,10 +137,10 @@ export function ManagerFaceCheckinPanel({ onCompleted }: { onCompleted: (result:
         return;
       }
       if (result.bookingId === null) {
-        setLocalError('Không nhận được lượt đặt của người đã nhận diện.');
+        setLocalError(t('face.error'));
         return;
       }
-      toast.success('Đã nhận diện đúng thành viên và check-in thành công.');
+      toast.success(translate('face.managerSuccessToast'));
       const completedCandidate = candidates.data?.find((candidate) => candidate.bookingId === result.bookingId);
       if (completedCandidate) invalidateAttendanceQueries(queryClient, completedCandidate);
       stopCamera();
@@ -155,15 +157,15 @@ export function ManagerFaceCheckinPanel({ onCompleted }: { onCompleted: (result:
     if (!video || !activeChallenge || capturingRef.current) return;
     capturingRef.current = true;
     try {
-      setInstruction('Đang nhận diện tự động — nhìn thẳng và giữ vị trí tự nhiên');
+      setInstruction(t('face.managerStarting'));
       const primary = await captureFrame(video, undefined, 0.92);
       const frames: CameraFrame[] = [];
       for (let index = 0; index < 6; index += 1) {
-        setInstruction(`Đang quan sát khuôn mặt trực tiếp — không cần quay đầu (${index + 1}/6)`);
+        setInstruction(`${t('face.managerObserving')} (${index + 1}/6)`);
         await wait(400);
         frames.push(await captureFrame(video, undefined, 0.92));
       }
-      setInstruction('Đang đối chiếu với những người đã đăng ký trong ca');
+      setInstruction(t('face.managerComparing'));
       await checkin.mutateAsync({ primary, frames, activeChallenge });
     } catch (error) {
       setLocalError(errorMessage(error));
@@ -189,16 +191,16 @@ export function ManagerFaceCheckinPanel({ onCompleted }: { onCompleted: (result:
         const passed = result.singleFace && result.faceInGuide && result.facingForward
           && result.landmarksVisible && result.lightingGood && result.sharpnessGood && stable;
         const nextInstruction = !result.singleFace
-          ? result.detectedFaces === 0 ? 'Đưa một khuôn mặt vào giữa khung' : 'Chỉ để một người trong khung hình'
+          ? result.detectedFaces === 0 ? t('face.putOneFace') : t('face.multipleFaces')
           : !result.faceInGuide
-            ? 'Di chuyển khuôn mặt vào giữa oval và điều chỉnh khoảng cách'
+            ? t('face.centerFace')
             : !result.facingForward || !result.landmarksVisible
-              ? 'Nhìn thẳng và không che mắt, mũi hoặc miệng'
+              ? t('face.lookForward')
               : !result.lightingGood
-                ? 'Điều chỉnh để ánh sáng chiếu từ phía trước'
+                ? t('face.frontLighting')
                 : !result.sharpnessGood || !stable
-                  ? 'Giữ yên khuôn mặt để ảnh rõ nét'
-                  : 'Giữ nguyên vị trí — hệ thống đang chuẩn bị nhận diện';
+                  ? t('face.keepStill')
+                  : t('face.managerReady');
         previousPositionRef.current = result.singleFace ? result : null;
         stablePassesRef.current = passed ? stablePassesRef.current + 1 : 0;
         setInstruction(nextInstruction);
@@ -218,7 +220,7 @@ export function ManagerFaceCheckinPanel({ onCompleted }: { onCompleted: (result:
 
   const startCamera = async () => {
     if (!slotId) {
-      setLocalError('Hãy chọn ca sử dụng trước khi mở camera.');
+      setLocalError(t('face.chooseSlot'));
       return;
     }
     setCameraDialogOpen(true);
@@ -228,10 +230,10 @@ export function ManagerFaceCheckinPanel({ onCompleted }: { onCompleted: (result:
       const stream = await openCamera('user');
       streamRef.current = stream;
       const activeChallenge = await startFaceCheckinPassiveSession();
-      if (activeChallenge.action !== 'OBSERVE') throw new Error('Phiên quan sát camera không hợp lệ.');
+      if (activeChallenge.action !== 'OBSERVE') throw new Error(t('face.cameraSessionInvalid'));
       setChallenge(activeChallenge);
       setLocalError('');
-      setInstruction('Đưa khuôn mặt vào giữa khung oval');
+      setInstruction(t('face.centerFace'));
       previousPositionRef.current = null;
       stablePassesRef.current = 0;
       setCameraActive(true);
@@ -252,21 +254,21 @@ export function ManagerFaceCheckinPanel({ onCompleted }: { onCompleted: (result:
   };
 
   if (candidates.isLoading) return <div className="mt-4 h-48 animate-pulse rounded bg-slate-100 dark:bg-slate-800" />;
-  if (candidates.isError) return <ErrorState className="mt-4" onRetry={() => void candidates.refetch()}>Không thể tải các ca đang chờ check-in.</ErrorState>;
-  if ((candidates.data?.length ?? 0) === 0) return <EmptyState className="mt-4">Không có lượt đặt đã duyệt đang chờ check-in trong PTN bạn quản lý.</EmptyState>;
+  if (candidates.isError) return <ErrorState className="mt-4" onRetry={() => void candidates.refetch()}>{t('face.managerCandidatesError')}</ErrorState>;
+  if ((candidates.data?.length ?? 0) === 0) return <EmptyState className="mt-4">{t('face.managerNoCandidates')}</EmptyState>;
 
   return (
     <div className="mt-4">
       <div className="max-w-3xl">
         <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200" htmlFor="face-slot">
-          Ca sử dụng
+          {t('face.slot')}
           <select id="face-slot" className="mt-2 min-h-11 w-full rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:text-white" disabled={cameraActive} value={slotId} onChange={(event) => setSlotId(event.target.value)}>
-            <option value="">Chọn ca đang trong thời gian check-in</option>
-            {slots.map((slot) => <option key={slot.id} value={slot.id}>{slot.labName} — {new Date(slot.startTime).toLocaleString('vi-VN')}–{new Date(slot.endTime).toLocaleTimeString('vi-VN')}</option>)}
+            <option value="">{t('face.chooseSlotOption')}</option>
+            {slots.map((slot) => <option key={slot.id} value={slot.id}>{slot.labName} — {new Date(slot.startTime).toLocaleString(locale === 'en' ? 'en-US' : 'vi-VN')}–{new Date(slot.endTime).toLocaleTimeString(locale === 'en' ? 'en-US' : 'vi-VN')}</option>)}
           </select>
         </label>
         <div className="mt-3 flex flex-wrap gap-2">
-          <Button disabled={!slotId || cameraActive} type="button" onClick={() => void startCamera()}><Camera aria-hidden="true" className="h-4 w-4" /> Mở camera và tự động nhận diện</Button>
+          <Button className="w-full sm:w-auto" disabled={!slotId || cameraActive} type="button" onClick={() => void startCamera()}><Camera aria-hidden="true" className="h-4 w-4" /> {t('face.openAndRecognize')}</Button>
         </div>
         {localError && !cameraDialogOpen ? <p className="mt-3 rounded-md border border-red-200 bg-red-50 p-3 text-sm font-medium text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-200" role="alert">{localError}</p> : null}
       </div>
@@ -279,22 +281,21 @@ export function ManagerFaceCheckinPanel({ onCompleted }: { onCompleted: (result:
         isOpen={cameraDialogOpen}
         onClose={closeCameraDialog}
         size={completedBookingId ? 'lg' : '2xl'}
-        subtitle={completedBookingId ? 'Kết quả nhận diện đã được ghi nhận.' : 'Căn khuôn mặt vào giữa khung oval và nhìn thẳng vào camera.'}
-        title={completedBookingId ? 'Kết quả nhận diện khuôn mặt' : 'Camera nhận diện khuôn mặt'}
+        title={completedBookingId ? t('face.managerResultTitle') : t('face.managerCameraTitle')}
       >
         {completedBookingId ? (
           <div className="flex flex-col items-center py-8 text-center" role="status">
             <span className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-emerald-700"><CircleCheck aria-hidden="true" className="h-9 w-9" /></span>
-            <h3 className="mt-4 text-xl font-semibold text-slate-950">Check-in thành công</h3>
+            <h3 className="mt-4 text-xl font-semibold text-slate-950 dark:text-white">{t('face.managerSuccessTitle')}</h3>
             {recognizedStudentName ? <p className="mt-2 text-base font-semibold text-slate-800">{recognizedStudentName}</p> : null}
-            <p className="mt-2 text-sm text-slate-600">Lượt đặt #{completedBookingId} đã chuyển sang trạng thái “Đã xác nhận có mặt”.</p>
-            <Button className="mt-6" type="button" onClick={closeCameraDialog}>Hoàn tất</Button>
+            <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">{t('face.managerSuccessDetail')} #{completedBookingId}.</p>
+            <Button className="mt-6" type="button" onClick={closeCameraDialog}>{t('common.close')}</Button>
           </div>
         ) : (
           <div className="mx-auto w-full max-w-4xl">
-              <div className="relative aspect-video overflow-hidden rounded-md bg-slate-950 shadow-lg">
-                {cameraActive ? <video ref={videoRef} autoPlay muted playsInline className="h-full w-full object-cover" aria-label="Camera nhận diện khuôn mặt tại bàn check-in" onLoadedMetadata={() => setCameraReady(true)} /> : <div className="flex h-full items-center justify-center text-slate-400"><ScanFace aria-hidden="true" className="h-16 w-16" /></div>}
-                {cameraActive ? <div aria-hidden="true" className="pointer-events-none absolute inset-x-1/4 inset-y-4 rounded-full border-2 border-dashed border-white/90 shadow-[0_0_0_999px_rgba(15,23,42,0.28)]" /> : null}
+              <div className="relative aspect-[3/4] overflow-hidden rounded-md bg-slate-950 shadow-lg sm:aspect-video">
+                {cameraActive ? <video ref={videoRef} autoPlay muted playsInline className="h-full w-full -scale-x-100 object-cover" aria-label={t('face.managerCameraLabel')} onLoadedMetadata={() => setCameraReady(true)} /> : <div className="flex h-full items-center justify-center text-slate-400"><ScanFace aria-hidden="true" className="h-16 w-16" /></div>}
+                {cameraActive ? <div aria-hidden="true" className="pointer-events-none absolute inset-x-[18%] inset-y-8 rounded-full border-2 border-dashed border-white/90 shadow-[0_0_0_999px_rgba(15,23,42,0.28)] sm:inset-x-1/4 sm:inset-y-4" /> : null}
                 {cameraActive ? <p aria-live="assertive" className="absolute inset-x-3 bottom-3 rounded bg-slate-950/80 px-3 py-2 text-center text-sm font-semibold text-white">{instruction}</p> : null}
                 {localError ? <p className="absolute inset-x-3 top-3 rounded bg-red-700/90 px-3 py-2 text-center text-sm font-medium text-white" role="alert">{localError}</p> : null}
               </div>

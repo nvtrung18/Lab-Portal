@@ -40,6 +40,10 @@ public interface LaboratoryRepository extends JpaRepository<Laboratory, Long> {
             """)
     Optional<Laboratory> findByIdForStatusAuthorization(@Param("id") Long id);
 
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT l FROM Laboratory l WHERE l.id = :id AND l.deleted = false AND l.active = true")
+    Optional<Laboratory> findByIdForCleaningRotation(@Param("id") Long id);
+
     @Lock(LockModeType.PESSIMISTIC_READ)
     @EntityGraph(type = EntityGraph.EntityGraphType.FETCH)
     @Query("""

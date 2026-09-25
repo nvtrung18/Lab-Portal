@@ -60,6 +60,24 @@ class BookingOutboxEventDispatcherTest {
                 argThat((BookingEmailData data) -> "Vắng mặt không thông báo".equals(data.getNote())));
     }
 
+    @Test
+    void dispatchesCleaningAssignmentToCleaningEmailMethod() throws Exception {
+        ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
+        EmailService emailService = mock(EmailService.class);
+        BookingOutboxEventDispatcher dispatcher = new BookingOutboxEventDispatcher(objectMapper, emailService);
+        BookingEmailPayload payload = new BookingEmailPayload(
+                "student@example.com", BookingEmailType.CLEANING_ASSIGNED, "Student", "Lab A",
+                Instant.parse("2026-09-03T01:00:00Z"), Instant.parse("2026-09-03T02:00:00Z"),
+                "ASSIGNED", null);
+
+        dispatcher.dispatch(event(objectMapper.writeValueAsString(payload), 1));
+
+        verify(emailService).sendCleaningAssignedEmail(
+                org.mockito.ArgumentMatchers.eq("student@example.com"),
+                argThat((BookingEmailData data) -> "Lab A".equals(data.getLabName())
+                        && "ASSIGNED".equals(data.getStatus())));
+    }
+
     private BookingOutboxEvent event(String payload, int version) {
         BookingOutboxEvent event = new BookingOutboxEvent();
         event.setEventId("event-id");

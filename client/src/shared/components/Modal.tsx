@@ -2,6 +2,7 @@ import { X } from 'lucide-react';
 import { useEffect, useId, useRef } from 'react';
 import type { ReactNode } from 'react';
 
+import { useI18n } from '../i18n';
 import { Button } from './Button';
 
 export type ModalSize = 'sm' | 'md' | 'lg' | 'xl' | '2xl' | 'full';
@@ -35,7 +36,7 @@ export function Modal({
   centered = true,
   children,
   closeDisabled = false,
-  closeLabel = 'Đóng',
+  closeLabel,
   closeOnEscape = true,
   footer,
   isOpen = true,
@@ -44,6 +45,8 @@ export function Modal({
   title,
   size = 'md',
 }: ModalProps) {
+  const { t } = useI18n();
+  const resolvedCloseLabel = closeLabel ?? t('common.close');
   const titleId = useId();
   const dialogRef = useRef<HTMLElement>(null);
   const onCloseRef = useRef(onClose);
@@ -125,9 +128,9 @@ export function Modal({
             </h3>
             {subtitle ? <div className="mt-1 text-sm text-slate-600 dark:text-slate-300">{subtitle}</div> : null}
           </div>
-          <Button aria-label={closeLabel} disabled={closeDisabled} onClick={onClose} size="sm" variant="ghost">
+          <Button aria-label={resolvedCloseLabel} disabled={closeDisabled} onClick={onClose} size="sm" variant="ghost">
             <X aria-hidden="true" className="h-5 w-5" />
-            <span className="sr-only">{closeLabel}</span>
+            <span className="sr-only">{resolvedCloseLabel}</span>
           </Button>
         </header>
         <div className="min-h-0 min-w-0 flex-1 overscroll-contain overflow-y-auto px-4 py-4 sm:px-6 sm:py-5">

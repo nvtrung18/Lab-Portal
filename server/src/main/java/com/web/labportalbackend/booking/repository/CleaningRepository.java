@@ -2,11 +2,13 @@ package com.web.labportalbackend.booking.repository;
 
 import com.web.labportalbackend.booking.entity.CleaningEntity;
 import com.web.labportalbackend.common.enums.CleaningStatus;
+import com.web.labportalbackend.common.enums.TimeSlotStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -23,6 +25,55 @@ public interface CleaningRepository extends JpaRepository<CleaningEntity, Long> 
     Optional<CleaningEntity> findFirstBySlotIdAndStaffIsNullAndStatus(Long slotId, CleaningStatus status);
 
     boolean existsBySlotId(Long slotId);
+
+    @Query("""
+            SELECT DISTINCT c.staff.id
+            FROM CleaningEntity c
+            WHERE c.slot.lab.id = :labId
+              AND c.staff IS NOT NULL
+              AND c.status IN :statuses
+              AND c.deleted = false
+              AND c.active = true
+            """)
+    List<Long> findAssignedStaffIdsByLabIdAndStatuses(
+            @Param("labId") Long labId,
+            @Param("statuses") List<CleaningStatus> statuses
+    );
+
+    @Query("""
+            SELECT DISTINCT c.staff.id
+            FROM CleaningEntity c
+            WHERE c.slot.lab.id = :labId
+              AND c.rotationRound = :rotationRound
+              AND c.staff IS NOT NULL
+              AND c.status IN :statuses
+              AND c.deleted = false
+              AND c.active = true
+            """)
+    List<Long> findCompletedStaffIdsByLabIdAndRotationRoundAndStatuses(
+            @Param("labId") Long labId,
+            @Param("rotationRound") Integer rotationRound,
+            @Param("statuses") List<CleaningStatus> statuses
+    );
+
+    @Query("""
+            SELECT DISTINCT c.slot.id
+            FROM CleaningEntity c
+            WHERE c.status = :status
+              AND c.staff IS NULL
+              AND c.deleted = false
+              AND c.active = true
+              AND c.slot.endTime <= :cutoff
+              AND c.slot.status NOT IN :hiddenSlotStatuses
+              AND c.slot.deleted = false
+              AND c.slot.active = true
+            ORDER BY c.slot.id
+            """)
+    List<Long> findPendingUnassignedEndedSlotIds(
+            @Param("cutoff") Instant cutoff,
+            @Param("hiddenSlotStatuses") List<TimeSlotStatus> hiddenSlotStatuses,
+            @Param("status") CleaningStatus status
+    );
 
     @Query("SELECT c FROM CleaningEntity c WHERE c.slot.lab.id = :labId AND c.deleted = false AND c.active = true ORDER BY c.slot.startTime DESC, c.createdAt DESC")
     List<CleaningEntity> findActiveByLabId(@Param("labId") Long labId);
@@ -64,4 +115,3 @@ public interface CleaningRepository extends JpaRepository<CleaningEntity, Long> 
             @Param("completedStatuses") List<CleaningStatus> completedStatuses
     );
 }
-

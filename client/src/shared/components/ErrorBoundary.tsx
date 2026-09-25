@@ -1,5 +1,6 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
 
+import { translate } from '../i18n';
 import { Button } from './Button';
 import { getHomePath } from './errorNavigation';
 
@@ -40,14 +41,14 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     }
 
     return (
-      <main className="flex min-h-screen items-center justify-center bg-slate-100 px-4 py-10 text-slate-900">
-        <section className="w-full max-w-lg rounded-lg border border-slate-200 bg-white p-6 text-center shadow-sm">
-          <h1 className="text-xl font-semibold text-slate-950">Đã xảy ra lỗi giao diện.</h1>
-          <p className="mt-2 text-sm text-slate-600">Vui lòng thử tải lại trang.</p>
+      <main className="app-shell flex min-h-screen items-center justify-center px-4 py-10 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+        <section className="w-full max-w-lg rounded-lg border border-slate-200 bg-white p-6 text-center shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <h1 className="text-xl font-semibold text-slate-950 dark:text-white">{translate('common.uiError')}</h1>
+          <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">{translate('common.reloadPage')}</p>
           <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
-            <Button onClick={this.handleReload}>Tải lại trang</Button>
+            <Button onClick={this.handleReload}>{translate('common.reloadPage')}</Button>
             <Button variant="outline" onClick={this.handleGoHome}>
-              Quay về trang chủ
+              {translate('common.goHome')}
             </Button>
           </div>
         </section>

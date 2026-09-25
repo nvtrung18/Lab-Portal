@@ -1,25 +1,26 @@
 import type { RawResearchTask, ResearchTask, ResearchTaskStatus, TaskColumn } from './types';
+import { getStoredLocale, translate, type Locale } from '../../shared/i18n';
 
 export type TaskBoardRole = 'LAB_MANAGER' | 'GROUP_LEADER' | 'STUDENT_MEMBER';
 
 export const TASK_COLUMNS: TaskColumn[] = ['TODO', 'DOING', 'WAITING_REVIEW', 'NEEDS_REVISION', 'DONE'];
 
-const taskStatusLabels: Record<ResearchTaskStatus, string> = {
-  TODO: 'Cần làm',
-  DOING: 'Đang thực hiện',
-  WAITING_REVIEW: 'Chờ duyệt',
-  NEEDS_REVISION: 'Cần chỉnh sửa',
-  DONE: 'Hoàn thành',
-  OVERDUE: 'Quá hạn',
-  CANCELLED: 'Đã hủy',
+const taskStatusKeys: Record<ResearchTaskStatus, string> = {
+  TODO: 'research.task.status.todo',
+  DOING: 'research.task.status.doing',
+  WAITING_REVIEW: 'research.task.status.waitingReview',
+  NEEDS_REVISION: 'research.task.status.needsRevision',
+  DONE: 'research.task.status.done',
+  OVERDUE: 'research.task.status.overdue',
+  CANCELLED: 'research.task.status.cancelled',
 };
 
-const taskColumnLabels: Record<TaskColumn, string> = {
-  TODO: 'Cần làm',
-  DOING: 'Đang thực hiện',
-  WAITING_REVIEW: 'Chờ duyệt',
-  NEEDS_REVISION: 'Cần chỉnh sửa',
-  DONE: 'Hoàn thành',
+const taskColumnKeys: Record<TaskColumn, string> = {
+  TODO: 'research.task.status.todo',
+  DOING: 'research.task.status.doing',
+  WAITING_REVIEW: 'research.task.status.waitingReview',
+  NEEDS_REVISION: 'research.task.status.needsRevision',
+  DONE: 'research.task.status.done',
 };
 
 function normalizeStatus(status?: RawResearchTask['status']): ResearchTaskStatus {
@@ -32,12 +33,12 @@ function normalizeStatus(status?: RawResearchTask['status']): ResearchTaskStatus
   return status ?? 'TODO';
 }
 
-export function formatTaskStatus(status: ResearchTaskStatus) {
-  return taskStatusLabels[status];
+export function formatTaskStatus(status: ResearchTaskStatus, locale: Locale = getStoredLocale()) {
+  return translate(taskStatusKeys[status], locale, status);
 }
 
-export function formatTaskColumn(column: TaskColumn) {
-  return taskColumnLabels[column];
+export function formatTaskColumn(column: TaskColumn, locale: Locale = getStoredLocale()) {
+  return translate(taskColumnKeys[column], locale, column);
 }
 
 export function getTaskColumn(status: ResearchTaskStatus): TaskColumn {
@@ -168,17 +169,18 @@ export function getTaskDragDisabledReason(
   task: ResearchTask,
   role?: TaskBoardRole,
   currentUserId?: number | null,
+  locale: Locale = getStoredLocale(),
 ) {
   if (role === 'STUDENT_MEMBER') {
     if (currentUserId == null || task.assignedToStudentId !== currentUserId) {
-      return 'Bạn chỉ có thể cập nhật nhiệm vụ được giao cho mình.';
+      return translate('research.task.drag.onlyAssigned', locale);
     }
     if (!canDragTask(task, role, currentUserId)) {
-      return 'Trạng thái hiện tại không cho phép bạn cập nhật nhiệm vụ bằng kéo thả.';
+      return translate('research.task.drag.statusLocked', locale);
     }
   }
   if ((role === 'LAB_MANAGER' || role === 'GROUP_LEADER') && !canDragTask(task, role, currentUserId)) {
-    return 'Nhiệm vụ đã kết thúc và không thể kéo thả.';
+    return translate('research.task.drag.finished', locale);
   }
   return undefined;
 }

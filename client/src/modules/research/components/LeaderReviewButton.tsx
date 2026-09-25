@@ -1,6 +1,7 @@
 import { useState } from 'react';
 
 import { Button } from '../../../shared/components';
+import { useI18n } from '../../../shared/i18n';
 import { useLeaderReviewReport } from '../hooks';
 import type { ResearchReport } from '../types';
 import { LeaderReviewModal } from './LeaderReviewModal';
@@ -12,6 +13,7 @@ interface LeaderReviewButtonProps {
 }
 
 export function LeaderReviewButton({ report, groupId, currentUserId }: LeaderReviewButtonProps) {
+  const { t } = useI18n();
   const [isOpen, setIsOpen] = useState(false);
   const leaderReview = useLeaderReviewReport(
     report.id,
@@ -33,7 +35,7 @@ export function LeaderReviewButton({ report, groupId, currentUserId }: LeaderRev
   return (
     <>
       <Button onClick={() => setIsOpen(true)} size="sm">
-        Đánh giá báo cáo
+        {t('research.review.title')}
       </Button>
       <LeaderReviewModal
         decision={null}

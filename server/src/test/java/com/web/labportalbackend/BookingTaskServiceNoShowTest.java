@@ -17,6 +17,7 @@ import com.web.labportalbackend.booking.service.CleaningService;
 import com.web.labportalbackend.booking.service.PenaltyService;
 import com.web.labportalbackend.booking.service.impl.BookingTaskServiceImpl;
 import com.web.labportalbackend.common.enums.BookingStatus;
+import com.web.labportalbackend.common.enums.CleaningStatus;
 import com.web.labportalbackend.common.enums.PenaltyStatus;
 import com.web.labportalbackend.common.enums.PenaltyType;
 import com.web.labportalbackend.common.enums.TimeSlotStatus;
@@ -150,6 +151,23 @@ class BookingTaskServiceNoShowTest {
         assertEquals(TimeSlotStatus.EXPIRED, available.getStatus());
         assertEquals(TimeSlotStatus.EXPIRED, full.getStatus());
         verify(timeSlotRepository).saveAll(List.of(available, full));
+    }
+
+    @Test
+    void processesNewEndedSlotsAndRetriesPendingUnassignedTasksInBatches() {
+        TimeSlot newSlot = new TimeSlot();
+        newSlot.setId(40L);
+        when(timeSlotRepository.findEndedSlotsWithoutCleaning(any(Instant.class), anyList()))
+                .thenReturn(List.of(newSlot));
+        when(cleaningRepository.findPendingUnassignedEndedSlotIds(
+                any(Instant.class), anyList(), eq(CleaningStatus.PENDING)))
+                .thenReturn(List.of(41L));
+
+        int created = bookingTaskService.createCleaningTasksForEndedSlots();
+
+        assertEquals(1, created);
+        verify(cleaningService).createCleaningTask(40L);
+        verify(cleaningService).createCleaningTask(41L);
     }
 
     @Test

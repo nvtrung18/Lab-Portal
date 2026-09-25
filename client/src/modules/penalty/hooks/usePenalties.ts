@@ -3,17 +3,19 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { queryKeys } from '../../../shared/api';
 import { toast } from '../../../shared/components';
+import { getStoredLocale, translate, translateBackendMessage } from '../../../shared/i18n';
 import { createPenalty, getMyPenalties, getSlotPenalties, submitComplaint } from '../api';
 import type { CreateComplaintPayload, CreatePenaltyPayload } from '../types';
 
 export const PENALTIES_QUERY_KEY = queryKeys.penalties.mine;
 
-function getErrorMessage(error: unknown, fallback: string) {
+function getErrorMessage(error: unknown, fallbackKey: string) {
+  const locale = getStoredLocale();
   if (axios.isAxiosError(error)) {
     const data = error.response?.data as { message?: string; errors?: string[] } | undefined;
-    return data?.message ?? data?.errors?.[0] ?? fallback;
+    return translateBackendMessage(data?.message ?? data?.errors?.[0], locale) ?? translate(fallbackKey, locale);
   }
-  return fallback;
+  return translate(fallbackKey, getStoredLocale());
 }
 
 export function useMyPenalties() {
@@ -33,10 +35,10 @@ export function useSubmitComplaint() {
     mutationFn: (payload: CreateComplaintPayload) => submitComplaint(payload),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: PENALTIES_QUERY_KEY });
-      toast.success('Đã gửi khiếu nại thành công.');
+      toast.success(translate('penalty.toast.complaintSubmitted'));
     },
     onError: (error) => {
-      toast.error(getErrorMessage(error, 'Không thể gửi khiếu nại. Vui lòng thử lại sau.'));
+      toast.error(getErrorMessage(error, 'penalty.toast.complaintSubmitFailed'));
     },
   });
 }
@@ -65,10 +67,10 @@ export function useCreatePenalty(slotId?: number | null) {
         queryClient.invalidateQueries({ queryKey: queryKeys.penalties.bySlot(effectiveSlotId) }),
         queryClient.invalidateQueries({ queryKey: PENALTIES_QUERY_KEY }),
       ]);
-      toast.success('Đã ghi nhận vi phạm.');
+      toast.success(translate('penalty.toast.created'));
     },
     onError: (error) => {
-      toast.error(getErrorMessage(error, 'Không thể ghi nhận vi phạm. Vui lòng thử lại sau.'));
+      toast.error(getErrorMessage(error, 'penalty.toast.createFailed'));
     },
   });
 }

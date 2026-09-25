@@ -1,21 +1,25 @@
-export const BOOKING_STATUS_LABELS: Record<string, string> = {
-  PENDING_APPROVAL: 'Chờ phê duyệt',
-  APPROVED: 'Đã phê duyệt',
-  REJECTED: 'Không được phê duyệt',
-  CANCELLED_BY_STUDENT: 'Sinh viên đã hủy',
-  CANCELLED_BY_MANAGER: 'Quản lý đã hủy',
-  CHECKED_IN: 'Đã xác nhận có mặt',
-  IN_PROGRESS: 'Đang sử dụng',
-  COMPLETED: 'Đã kết thúc',
-  NO_SHOW: 'Vắng mặt',
-  PENDING: 'Chờ phê duyệt',
-  CONFIRMED: 'Đã phê duyệt',
-  CANCELLED: 'Đã hủy',
-  WAITLISTED: 'Danh sách chờ',
+import { getStoredLocale, translate, type Locale } from '../../../shared/i18n';
+
+const BOOKING_STATUS_KEYS: Record<string, string> = {
+  PENDING_APPROVAL: 'booking.status.pendingApproval',
+  APPROVED: 'booking.status.approved',
+  REJECTED: 'booking.status.rejected',
+  CANCELLED_BY_STUDENT: 'booking.status.cancelledByStudent',
+  CANCELLED_BY_MANAGER: 'booking.status.cancelledByManager',
+  CHECKED_IN: 'booking.status.checkedIn',
+  IN_PROGRESS: 'booking.status.inProgress',
+  COMPLETED: 'booking.status.completed',
+  NO_SHOW: 'booking.status.noShow',
+  PENDING: 'booking.status.pendingApproval',
+  CONFIRMED: 'booking.status.approved',
+  CANCELLED: 'booking.status.cancelled',
+  WAITLISTED: 'booking.status.waitlisted',
 };
 
-export function getBookingStatusLabel(status?: string | null) {
-  return status ? BOOKING_STATUS_LABELS[status] ?? status : 'Chưa đăng ký';
+export function getBookingStatusLabel(status?: string | null, locale: Locale = getStoredLocale()) {
+  return status
+    ? translate(BOOKING_STATUS_KEYS[status] ?? '', locale, status)
+    : translate('booking.status.notRegistered', locale);
 }
 
 export function isCancellableBooking(status?: string | null, startTime?: string) {

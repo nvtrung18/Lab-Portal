@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 
 import { getStoredRole } from '../../../shared/api';
 import { Button, ConfirmDialog, EmptyState, ErrorState, Modal } from '../../../shared/components';
+import { translate, translateBackendMessage, useI18n } from '../../../shared/i18n';
 import type { Response } from '../../../shared/types';
 import { cameraErrorMessage, openCamera } from '../../../shared/utils';
 import { useProfile } from '../../user/hooks';
@@ -14,17 +15,9 @@ import type { FaceChallenge, FaceGuidanceResult, FaceImageRequest } from '../typ
 function errorMessage(error: unknown) {
   if (axios.isAxiosError(error)) {
     const body = error.response?.data as Partial<Response<unknown>> | undefined;
-    if (body?.message === 'Face registration did not produce an acceptable embedding') {
-      return 'Ảnh khuôn mặt chưa đạt yêu cầu. Hãy chụp chính diện, đủ sáng, rõ nét và không che khuôn mặt.';
-    }
-    if (body?.message === 'Face service is temporarily unavailable') {
-      return 'Dịch vụ nhận diện khuôn mặt đang tạm thời không khả dụng. Vui lòng thử lại sau.';
-    }
-    return body?.message === 'Camera API is unavailable'
-      ? 'Trình duyệt không hỗ trợ camera.'
-      : 'Không thể cập nhật hồ sơ khuôn mặt.';
+    return translateBackendMessage(body?.message ?? body?.errors?.[0]) ?? translate('face.error');
   }
-  return error instanceof Error ? error.message : 'Không thể cập nhật hồ sơ khuôn mặt.';
+  return translateBackendMessage(error instanceof Error ? error.message : null) ?? translate('face.error');
 }
 
 type FacePosition = Pick<FaceGuidanceResult, 'centerX' | 'centerY' | 'faceWidthRatio' | 'faceHeightRatio'>;
@@ -40,12 +33,12 @@ function readCameraFrame(video: HTMLVideoElement, maxWidth?: number, quality = 0
   canvas.width = Math.round(video.videoWidth * scale);
   canvas.height = Math.round(video.videoHeight * scale);
   const context = canvas.getContext('2d');
-  if (!context) return Promise.reject(new Error('Không thể đọc hình ảnh từ camera.'));
+  if (!context) return Promise.reject(new Error(translate('face.readCameraError')));
   context.drawImage(video, 0, 0, canvas.width, canvas.height);
   return new Promise<Pick<FaceImageRequest, 'imageBase64' | 'contentType'>>((resolve, reject) => {
     canvas.toBlob(async (blob) => {
       if (!blob) {
-        reject(new Error('Không thể tạo ảnh từ camera.'));
+        reject(new Error(translate('face.imageReadFailed')));
         return;
       }
       try {
@@ -78,7 +71,12 @@ function isStablePosition(previous: FacePosition | null, current: FaceGuidanceRe
     && Math.abs(previous.faceHeightRatio - current.faceHeightRatio) <= 0.035;
 }
 
-export function FaceProfilePage() {
+interface FaceProfilePageProps {
+  embedded?: boolean;
+}
+
+export function FaceProfilePage({ embedded = false }: FaceProfilePageProps = {}) {
+  const { locale, t } = useI18n();
   const isAdmin = getStoredRole()?.replace(/^ROLE_/, '') === 'ADMIN';
   const currentUser = useProfile();
   const hasActiveLabMembership = currentUser.data?.memberships?.some(
@@ -224,7 +222,7 @@ export function FaceProfilePage() {
       return;
     }
     if (!privacyAccepted) {
-      setLocalError('Bạn cần xác nhận đồng ý sử dụng dữ liệu khuôn mặt trước khi mở camera.');
+      setLocalError(t('face.profile.consentRequired'));
       return;
     }
     setLocalError('');
@@ -260,7 +258,7 @@ export function FaceProfilePage() {
   const captureCamera = () => {
     const video = videoRef.current;
     if (!video || !cameraReady || !guidanceReadyRef.current || video.videoWidth === 0 || capturingRef.current) {
-      setLocalError('Các điều kiện nhận diện chưa đạt. Hãy làm theo cảnh báo hiển thị cạnh camera.');
+      setLocalError(t('face.profile.captureRequirements'));
       return;
     }
     capturingRef.current = true;
@@ -316,7 +314,7 @@ export function FaceProfilePage() {
 
   const saveCapturedFace = () => {
     if (!image) {
-      setLocalError('Vui lòng mở camera và chụp ảnh khuôn mặt rõ nét.');
+      setLocalError(t('face.profile.modalCameraSubtitle'));
       return;
     }
     setLocalError('');
@@ -343,84 +341,82 @@ export function FaceProfilePage() {
     && guidance.facingForward && guidance.landmarksVisible && guidance.lightingGood
     && guidance.sharpnessGood && stable);
   const adjustmentInstruction = !cameraReady
-    ? 'Đang khởi tạo camera...'
+    ? t('face.capturing')
     : !guidance?.singleFace
-      ? guidance?.detectedFaces === 0 ? 'Đưa một khuôn mặt vào giữa khung' : 'Chỉ để một người trong khung hình'
+      ? guidance?.detectedFaces === 0 ? t('face.putOneFace') : t('face.multipleFaces')
       : !guidance.faceInGuide
-        ? 'Di chuyển khuôn mặt vào giữa oval và điều chỉnh khoảng cách'
+        ? t('face.centerFace')
         : !guidance.facingForward || !guidance.landmarksVisible
-          ? 'Nhìn thẳng và không che mắt, mũi hoặc miệng'
+          ? t('face.lookForward')
           : !guidance.lightingGood
-            ? 'Điều chỉnh để ánh sáng chiếu từ phía trước'
+            ? t('face.frontLighting')
             : !guidance.sharpnessGood || !stable
-              ? 'Giữ yên khuôn mặt để ảnh rõ nét'
-              : 'Giữ nguyên vị trí — hệ thống sẽ tự chụp';
+              ? t('face.keepStill')
+              : t('face.ready');
   const captureInstruction = capturePhase === 'FRONT'
-    ? 'ĐANG CHỤP ẢNH CHÍNH DIỆN — tiếp tục nhìn thẳng'
+    ? t('face.profile.captureFront')
     : capturePhase === 'LEFT_PREPARE'
-      ? `CHUẨN BỊ: quay đầu nhẹ sang TRÁI sau ${turnCountdown ?? 0} giây`
+      ? t('face.profile.prepareLeft', undefined, { seconds: turnCountdown ?? 0 })
       : capturePhase === 'LEFT_CAPTURE'
-        ? `ĐANG GHI GÓC TRÁI — giữ khuôn mặt trong khung (${capturedChallengeFrames}/12)`
+        ? t('face.profile.captureLeft', undefined, { captured: capturedChallengeFrames })
         : capturePhase === 'RIGHT_PREPARE'
-          ? `CHUẨN BỊ: quay đầu nhẹ sang PHẢI sau ${turnCountdown ?? 0} giây`
+          ? t('face.profile.prepareRight', undefined, { seconds: turnCountdown ?? 0 })
           : capturePhase === 'RIGHT_CAPTURE'
-            ? `ĐANG GHI GÓC PHẢI — giữ khuôn mặt trong khung (${capturedChallengeFrames}/12)`
+            ? t('face.profile.captureRight', undefined, { captured: capturedChallengeFrames })
         : capturePhase === 'COMPLETE'
-          ? 'ĐÃ GHI NHẬN CHÍNH DIỆN, TRÁI VÀ PHẢI — đang hoàn tất'
+          ? t('face.profile.captureComplete')
           : adjustmentInstruction;
   return (
-    <section className="mx-auto max-w-5xl">
+    <section className={embedded ? 'w-full' : 'mx-auto max-w-5xl'}>
       <header className="mb-6">
-        <p className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-slate-500"><Shield aria-hidden="true" className="h-4 w-4" /> Sinh trắc học có kiểm soát</p>
-        <h1 className="mt-1 text-2xl font-semibold text-slate-950 dark:text-white">Hồ sơ khuôn mặt</h1>
-        <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600 dark:text-slate-300">Ảnh chỉ được dùng để tạo mẫu nhận diện đã mã hóa và phục vụ check-in.</p>
+        <p className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-slate-500"><Shield aria-hidden="true" className="h-4 w-4" /> {t('face.profile.badge')}</p>
+        <h1 className="mt-1 text-2xl font-semibold text-slate-950 dark:text-white">{t('face.profile.title')}</h1>
       </header>
 
       {isAdmin ? (
         <section className="mb-5 rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
-              <h2 className="text-base font-semibold text-slate-950 dark:text-white">Hồ sơ khuôn mặt đã đăng ký</h2>
-              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Chỉ hiển thị metadata; embedding khuôn mặt không được trả về giao diện.</p>
+              <h2 className="text-base font-semibold text-slate-950 dark:text-white">{t('face.profile.adminProfiles')}</h2>
             </div>
             <label className="block w-full max-w-xs text-sm font-semibold text-slate-700 dark:text-slate-200" htmlFor="face-target-user">
-              Tra cứu trực tiếp theo User ID
+              {t('face.profile.targetUser')}
               <input id="face-target-user" className="mt-2 min-h-11 w-full rounded-md border border-slate-300 bg-white px-3 text-base dark:border-slate-700 dark:bg-slate-950 dark:text-white" min={1} type="number" value={targetInput} onChange={(event) => setTargetInput(event.target.value)} />
             </label>
           </div>
           {adminProfiles.isLoading ? <div className="mt-4 h-24 animate-pulse rounded bg-slate-100 dark:bg-slate-800" />
-            : adminProfiles.isError ? <ErrorState className="mt-4" onRetry={() => void adminProfiles.refetch()}>Không thể tải danh sách hồ sơ khuôn mặt.</ErrorState>
-              : (adminProfiles.data?.length ?? 0) === 0 ? <EmptyState className="mt-4">Chưa có hồ sơ khuôn mặt nào được đăng ký.</EmptyState>
-                : <div className="mt-4 overflow-x-auto"><table className="w-full min-w-[640px] text-left text-sm"><thead className="border-b border-slate-200 text-xs uppercase text-slate-500 dark:border-slate-700 dark:text-slate-400"><tr><th className="px-3 py-2">User ID</th><th className="px-3 py-2">Trạng thái</th><th className="px-3 py-2">Model</th><th className="px-3 py-2">Cập nhật</th><th className="px-3 py-2 text-right">Thao tác</th></tr></thead><tbody className="divide-y divide-slate-200 dark:divide-slate-800">{adminProfiles.data?.map((item) => <tr className={targetUserId === item.userId ? 'bg-blue-50 dark:bg-blue-950/30' : ''} key={item.userId}><td className="px-3 py-3 font-semibold text-slate-950 dark:text-white">{item.userId}</td><td className="px-3 py-3 text-slate-600 dark:text-slate-300">{item.status}</td><td className="px-3 py-3 text-slate-600 dark:text-slate-300">{item.embeddingModel}</td><td className="px-3 py-3 text-slate-600 dark:text-slate-300">{new Date(item.updatedAt).toLocaleString('vi-VN')}</td><td className="px-3 py-3 text-right"><Button type="button" variant="outline" onClick={() => setTargetInput(String(item.userId))}>Quản lý</Button></td></tr>)}</tbody></table></div>}
+            : adminProfiles.isError ? <ErrorState className="mt-4" onRetry={() => void adminProfiles.refetch()}>{t('face.profile.loadProfilesFailed')}</ErrorState>
+              : (adminProfiles.data?.length ?? 0) === 0 ? <EmptyState className="mt-4">{t('face.profile.emptyProfiles')}</EmptyState>
+                : <div className="mt-4 overflow-x-auto"><table className="w-full min-w-[640px] text-left text-sm"><thead className="border-b border-slate-200 text-xs uppercase text-slate-500 dark:border-slate-700 dark:text-slate-400"><tr><th className="px-3 py-2">{t('face.profile.userId')}</th><th className="px-3 py-2">{t('face.profile.status')}</th><th className="px-3 py-2">{t('face.profile.model')}</th><th className="px-3 py-2">{t('face.profile.updated')}</th><th className="px-3 py-2 text-right">{t('face.profile.actions')}</th></tr></thead><tbody className="divide-y divide-slate-200 dark:divide-slate-800">{adminProfiles.data?.map((item) => <tr className={targetUserId === item.userId ? 'bg-blue-50 dark:bg-blue-950/30' : ''} key={item.userId}><td className="px-3 py-3 font-semibold text-slate-950 dark:text-white">{item.userId}</td><td className="px-3 py-3 text-slate-600 dark:text-slate-300">{item.status}</td><td className="px-3 py-3 text-slate-600 dark:text-slate-300">{item.embeddingModel}</td><td className="px-3 py-3 text-slate-600 dark:text-slate-300">{new Date(item.updatedAt).toLocaleString(locale === 'en' ? 'en-US' : 'vi-VN')}</td><td className="px-3 py-3 text-right"><Button type="button" variant="outline" onClick={() => setTargetInput(String(item.userId))}>{t('face.profile.manage')}</Button></td></tr>)}</tbody></table></div>}
         </section>
       ) : null}
 
-      {!isAdmin && currentUser.isLoading ? <div className="h-32 animate-pulse rounded-lg bg-slate-100 dark:bg-slate-800" aria-label="Đang kiểm tra quyền đăng ký khuôn mặt" /> : !enabled ? <EmptyState>{isAdmin ? 'Nhập ID người dùng để xem trạng thái đồng ý và hồ sơ khuôn mặt.' : 'Bạn cần được duyệt vào ít nhất một phòng thí nghiệm trước khi đăng ký khuôn mặt.'}</EmptyState> : (
+      {!isAdmin && currentUser.isLoading ? <div className="h-32 animate-pulse rounded-lg bg-slate-100 dark:bg-slate-800" aria-label={t('face.profile.checkingAccess')} /> : !enabled ? <EmptyState>{isAdmin ? t('face.profile.adminTargetRequired') : t('face.profile.membershipRequired')}</EmptyState> : (
         <div>
           <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-            <h2 className="flex items-center gap-2 text-base font-semibold text-slate-950 dark:text-white"><Camera aria-hidden="true" className="h-5 w-5" /> Mẫu khuôn mặt</h2>
-            {profile.isLoading ? <div className="mt-4 h-20 animate-pulse rounded bg-slate-100 dark:bg-slate-800" /> : profile.isError ? <ErrorState className="mt-4" onRetry={() => void profile.refetch()}>Không thể tải hồ sơ khuôn mặt.</ErrorState> : (
+            <h2 className="flex items-center gap-2 text-base font-semibold text-slate-950 dark:text-white"><Camera aria-hidden="true" className="h-5 w-5" /> {t('face.profile.sample')}</h2>
+            {profile.isLoading ? <div className="mt-4 h-20 animate-pulse rounded bg-slate-100 dark:bg-slate-800" /> : profile.isError ? <ErrorState className="mt-4" onRetry={() => void profile.refetch()}>{t('face.profile.loadFailed')}</ErrorState> : (
               <div className="mt-4">
-                {profile.data ? <div className="mb-4 rounded-md bg-slate-50 p-3 text-sm text-slate-600 dark:bg-slate-950 dark:text-slate-300"><p>Trạng thái: <strong>{profile.data.status}</strong></p><p className="mt-1">Model: {profile.data.embeddingModel}</p></div> : <p className="mb-4 text-sm text-slate-600 dark:text-slate-300">Chưa đăng ký hồ sơ khuôn mặt.</p>}
-                {consent.isLoading ? <div className="mb-4 h-28 animate-pulse rounded bg-slate-100 dark:bg-slate-800" aria-label="Đang tải thông tin quyền riêng tư" /> : consent.isError ? <ErrorState className="mb-4" onRetry={() => void consent.refetch()}>Không thể tải trạng thái đồng ý sử dụng dữ liệu.</ErrorState> : (
+                {profile.data ? <div className="mb-4 rounded-md bg-slate-50 p-3 text-sm text-slate-600 dark:bg-slate-950 dark:text-slate-300"><p>{t('face.profile.status')}: <strong>{profile.data.status}</strong></p><p className="mt-1">{t('face.profile.model')}: {profile.data.embeddingModel}</p></div> : <p className="mb-4 text-sm text-slate-600 dark:text-slate-300">{t('face.profile.notRegistered')}</p>}
+                {consent.isLoading ? <div className="mb-4 h-28 animate-pulse rounded bg-slate-100 dark:bg-slate-800" aria-label={t('common.loading')} /> : consent.isError ? <ErrorState className="mb-4" onRetry={() => void consent.refetch()}>{t('face.profile.consentLoadFailed')}</ErrorState> : (
                   <div className={`mb-4 rounded-md border p-4 ${consent.data?.status === 'GRANTED' ? 'border-emerald-200 bg-emerald-50 dark:border-emerald-900 dark:bg-emerald-950/40' : 'border-blue-200 bg-blue-50 dark:border-blue-900 dark:bg-blue-950/40'}`}>
                     <div className="flex items-start gap-3">
                       <Shield aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0 text-blue-700 dark:text-blue-300" />
                       <div>
-                        <h3 className="text-sm font-semibold text-slate-950 dark:text-white">Quyền sử dụng dữ liệu khuôn mặt và camera</h3>
+                        <h3 className="text-sm font-semibold text-slate-950 dark:text-white">{t('face.profile.privacyStatus')}</h3>
                         {consent.data?.status === 'GRANTED' ? (
-                          <p className="mt-1 text-sm text-emerald-800 dark:text-emerald-200">Bạn đã đồng ý cho hệ thống xử lý dữ liệu khuôn mặt phục vụ check-in phòng thí nghiệm.</p>
+                          <p className="mt-1 text-sm text-emerald-800 dark:text-emerald-200">{t('face.profile.consentGranted')}</p>
                         ) : (
                           <>
-                            <p className="mt-1 text-sm leading-6 text-slate-700 dark:text-slate-200">Bạn có đồng ý cho Lab Portal sử dụng dữ liệu khuôn mặt của bạn để tạo mẫu nhận diện và phục vụ check-in phòng thí nghiệm không?</p>
+                            <p className="mt-1 text-sm leading-6 text-slate-700 dark:text-slate-200">{t('face.profile.consentQuestion')}</p>
                             <ul className="mt-2 list-disc space-y-1 pl-5 text-xs leading-5 text-slate-600 dark:text-slate-300">
-                              <li>Camera chỉ được mở sau khi bạn xác nhận và trình duyệt cấp quyền.</li>
-                              <li>Ảnh camera được xử lý tạm thời; hệ thống chỉ lưu embedding đã mã hóa.</li>
-                              <li>Bạn có thể rút lại đồng ý và xóa hồ sơ khuôn mặt bất kỳ lúc nào.</li>
+                              <li>{t('face.profile.consentCamera')}</li>
+                              <li>{t('face.profile.consentStorage')}</li>
+                              <li>{t('face.profile.consentWithdraw')}</li>
                             </ul>
                             <label className="mt-3 flex cursor-pointer items-start gap-2 text-sm font-medium text-slate-800 dark:text-slate-100">
                               <input className="mt-0.5 h-4 w-4 rounded border-slate-300" type="checkbox" checked={privacyAccepted} onChange={(event) => { setPrivacyAccepted(event.target.checked); setLocalError(''); }} />
-                              <span>Tôi đã đọc, hiểu và đồng ý cho hệ thống xử lý dữ liệu khuôn mặt của tôi.</span>
+                              <span>{t('face.profile.consentCheckbox')}</span>
                             </label>
                           </>
                         )}
@@ -428,11 +424,10 @@ export function FaceProfilePage() {
                     </div>
                   </div>
                 )}
-                <Button type="button" variant={consent.data?.status === 'GRANTED' ? 'outline' : 'success'} disabled={consent.isLoading || consent.isError || (consent.data?.status !== 'GRANTED' && !privacyAccepted)} loading={actions.consent.isPending} loadingText="Đang ghi nhận đồng ý..." onClick={requestConsentAndOpenCamera}><Camera aria-hidden="true" className="h-4 w-4" /> {consent.data?.status === 'GRANTED' ? 'Mở camera' : 'Tôi đồng ý và mở camera'}</Button>
-                <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">Ảnh được chụp trực tiếp để kiểm tra chất lượng và liveness; hệ thống chỉ lưu embedding đã mã hóa.</p>
+                <Button type="button" variant={consent.data?.status === 'GRANTED' ? 'outline' : 'success'} disabled={consent.isLoading || consent.isError || (consent.data?.status !== 'GRANTED' && !privacyAccepted)} loading={actions.consent.isPending} loadingText={t('common.loading')} onClick={requestConsentAndOpenCamera}><Camera aria-hidden="true" className="h-4 w-4" /> {consent.data?.status === 'GRANTED' ? t('face.profile.openCamera') : t('face.profile.acceptAndOpenCamera')}</Button>
                 <div className="mt-4 flex flex-wrap gap-2">
-                  {profile.data ? <Button aria-label="Xóa hồ sơ khuôn mặt" loading={actions.remove.isPending} variant="danger" onClick={() => setPendingConfirmation('REMOVE_PROFILE')}><Trash2 aria-hidden="true" className="h-4 w-4" /> Xóa hồ sơ</Button> : null}
-                  {consent.data?.status === 'GRANTED' ? <Button type="button" loading={actions.consent.isPending} variant="outline" onClick={() => setPendingConfirmation('WITHDRAW_CONSENT')}>Rút lại đồng ý</Button> : null}
+                  {profile.data ? <Button aria-label={t('face.profile.remove')} loading={actions.remove.isPending} variant="danger" onClick={() => setPendingConfirmation('REMOVE_PROFILE')}><Trash2 aria-hidden="true" className="h-4 w-4" /> {t('face.profile.remove')}</Button> : null}
+                  {consent.data?.status === 'GRANTED' ? <Button type="button" loading={actions.consent.isPending} variant="outline" onClick={() => setPendingConfirmation('WITHDRAW_CONSENT')}>{t('face.profile.withdraw')}</Button> : null}
                 </div>
               </div>
             )}
@@ -448,50 +443,47 @@ export function FaceProfilePage() {
         isOpen={cameraDialogOpen}
         onClose={closeCameraDialog}
         size={faceSaveComplete ? 'lg' : '2xl'}
-        subtitle={faceSaveComplete ? 'Kết quả đã được lưu an toàn vào hồ sơ.' : image && !cameraActive ? 'Kiểm tra kết quả trước khi lưu hồ sơ khuôn mặt.' : 'Giữ khuôn mặt giữa khung và làm theo hướng dẫn trên màn hình.'}
-        title={faceSaveComplete ? 'Kết quả đăng ký khuôn mặt' : image && !cameraActive ? 'Kết quả chụp khuôn mặt' : 'Camera đăng ký khuôn mặt'}
+        title={faceSaveComplete ? t('face.profile.modalSavedTitle') : image && !cameraActive ? t('face.profile.modalReviewTitle') : t('face.profile.modalCameraTitle')}
       >
         {faceSaveComplete ? (
           <div className="flex flex-col items-center py-8 text-center" role="status">
             <span className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-emerald-700"><CircleCheck aria-hidden="true" className="h-9 w-9" /></span>
-            <h3 className="mt-4 text-xl font-semibold text-slate-950">Đã lưu hồ sơ khuôn mặt</h3>
-            <p className="mt-2 max-w-lg text-sm text-slate-600">Mẫu chính diện và các góc kiểm tra đã được xử lý. Hệ thống chỉ lưu embedding đã mã hóa.</p>
-            <Button className="mt-6" type="button" onClick={closeCameraDialog}>Hoàn tất</Button>
+            <h3 className="mt-4 text-xl font-semibold text-slate-950">{t('face.profile.saved')}</h3>
+            <p className="mt-2 max-w-lg text-sm text-slate-600">{t('face.profile.savedDetail')}</p>
+            <Button className="mt-6" type="button" onClick={closeCameraDialog}>{t('face.profile.finish')}</Button>
           </div>
         ) : image && !cameraActive ? (
           <div className="mx-auto max-w-2xl">
-            <img alt="Ảnh khuôn mặt chính diện vừa chụp" className="aspect-video w-full rounded-md border border-slate-200 object-cover" src={previewUrl} />
-            <div className="mt-4 flex items-start gap-2 rounded-md bg-emerald-50 p-3 text-sm text-emerald-800" role="status"><CircleCheck aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0" /><span>Đã thu đủ mẫu chính diện, trái và phải. Bạn có thể lưu kết quả hoặc chụp lại.</span></div>
+            <img alt={t('face.profile.capturedImageAlt')} className="aspect-[3/4] w-full rounded-md border border-slate-200 object-cover sm:aspect-video" src={previewUrl} />
+            <div className="mt-4 flex items-start gap-2 rounded-md bg-emerald-50 p-3 text-sm text-emerald-800" role="status"><CircleCheck aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0" /><span>{t('face.profile.captured')}</span></div>
             {actions.save.error ? <p className="mt-3 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700" role="alert">{errorMessage(actions.save.error)}</p> : null}
             <div className="mt-5 flex flex-col-reverse justify-end gap-2 sm:flex-row">
-              <Button disabled={actions.save.isPending} type="button" variant="outline" onClick={() => void startCamera()}>Chụp lại</Button>
-              <Button loading={actions.save.isPending} loadingText="Đang xử lý..." type="button" onClick={saveCapturedFace}>{profile.data ? 'Cập nhật mẫu này' : 'Đăng ký mẫu này'}</Button>
+              <Button disabled={actions.save.isPending} type="button" variant="outline" onClick={() => void startCamera()}>{t('face.profile.retake')}</Button>
+              <Button loading={actions.save.isPending} loadingText={t('common.loading')} type="button" onClick={saveCapturedFace}>{profile.data ? t('face.profile.updateSample') : t('face.profile.registerSample')}</Button>
             </div>
           </div>
         ) : (
           <div className="mx-auto w-full max-w-4xl">
-              <div className="relative aspect-video overflow-hidden rounded-md border border-slate-300 bg-slate-950 shadow-lg">
-                {cameraActive ? <video ref={videoRef} autoPlay muted playsInline aria-label="Hình ảnh trực tiếp từ camera" className="aspect-video w-full object-cover" onLoadedMetadata={() => setCameraReady(true)} /> : <div className="flex aspect-video items-center justify-center text-slate-400"><Camera aria-hidden="true" className="h-16 w-16" /></div>}
-                {cameraActive ? <div aria-hidden="true" className="pointer-events-none absolute inset-x-1/4 inset-y-4 rounded-full border-2 border-dashed border-white/90 shadow-[0_0_0_999px_rgba(15,23,42,0.28)]" /> : null}
+              <div className="relative aspect-[3/4] overflow-hidden rounded-md border border-slate-300 bg-slate-950 shadow-lg sm:aspect-video">
+                {cameraActive ? <video ref={videoRef} autoPlay muted playsInline aria-label={t('face.profile.liveCamera')} className="h-full w-full -scale-x-100 object-cover" onLoadedMetadata={() => setCameraReady(true)} /> : <div className="flex h-full items-center justify-center text-slate-400"><Camera aria-hidden="true" className="h-16 w-16" /></div>}
+                {cameraActive ? <div aria-hidden="true" className="pointer-events-none absolute inset-x-[18%] inset-y-8 rounded-full border-2 border-dashed border-white/90 shadow-[0_0_0_999px_rgba(15,23,42,0.28)] sm:inset-x-1/4 sm:inset-y-4" /> : null}
                 {countdown !== null ? <div aria-live="assertive" className="absolute inset-0 flex items-center justify-center"><span className="flex h-20 w-20 items-center justify-center rounded-full bg-slate-950/80 text-4xl font-bold text-white">{countdown || '✓'}</span></div> : null}
-                <p aria-live="assertive" className="absolute inset-x-3 bottom-3 rounded bg-slate-950/75 px-3 py-2 text-center text-xs font-medium text-white">{cameraActive ? captureInstruction : 'Camera chưa sẵn sàng'}</p>
+                <p aria-live="assertive" className="absolute inset-x-3 bottom-3 rounded bg-slate-950/75 px-3 py-2 text-center text-xs font-medium text-white">{cameraActive ? captureInstruction : t('face.profile.cameraNotReady')}</p>
                 {localError ? <p className="absolute inset-x-3 top-3 rounded bg-red-700/90 px-3 py-2 text-center text-sm font-medium text-white" role="alert">{localError}</p> : null}
-                {cameraActive && cameraReady && allConditionsPassed && capturePhase === 'IDLE' ? <Button className="absolute right-3 top-3" type="button" onClick={captureCamera}>Chụp ngay</Button> : null}
+                {cameraActive && cameraReady && allConditionsPassed && capturePhase === 'IDLE' ? <Button className="absolute right-3 top-3" type="button" onClick={captureCamera}>{t('face.profile.captureNow')}</Button> : null}
               </div>
           </div>
         )}
       </Modal>
 
       <ConfirmDialog
-        confirmLabel={pendingConfirmation === 'REMOVE_PROFILE' ? 'Xóa hồ sơ' : 'Rút đồng ý'}
+        confirmLabel={pendingConfirmation === 'REMOVE_PROFILE' ? t('face.profile.removeConfirmLabel') : t('face.profile.withdrawConfirmLabel')}
         isOpen={pendingConfirmation !== null}
         isPending={actions.remove.isPending || actions.consent.isPending}
-        message={pendingConfirmation === 'REMOVE_PROFILE'
-          ? 'Hồ sơ khuôn mặt hiện tại sẽ bị xóa.'
-          : 'Rút đồng ý sẽ vô hiệu hóa việc sử dụng hồ sơ khuôn mặt để nhận diện.'}
+        message={pendingConfirmation === 'REMOVE_PROFILE' ? t('face.profile.removeMessage') : t('face.profile.withdrawMessage')}
         onCancel={() => setPendingConfirmation(null)}
         onConfirm={confirmFaceAction}
-        title={pendingConfirmation === 'REMOVE_PROFILE' ? 'Xóa hồ sơ khuôn mặt?' : 'Rút lại đồng ý?'}
+        title={pendingConfirmation === 'REMOVE_PROFILE' ? t('face.profile.removeConfirm') : t('face.profile.withdrawConfirm')}
       />
 
       {!cameraDialogOpen && (localError || mutationError) ? <p className="mt-5 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-200" role="alert">{localError || errorMessage(mutationError)}</p> : null}

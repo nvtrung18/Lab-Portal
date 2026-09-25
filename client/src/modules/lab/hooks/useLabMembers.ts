@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { queryKeys } from '../../../shared/api';
 import { toast } from '../../../shared/components';
+import { translate } from '../../../shared/i18n';
 import { USER_ME_QUERY_KEY } from '../../user/hooks';
 import { getLabMembers, removeLabMember } from '../api';
 
@@ -21,14 +22,14 @@ export function useRemoveLabMember() {
     mutationFn: ({ labId, userId }: { labId: number; userId: number }) =>
       removeLabMember(labId, userId),
     onSuccess: (_member, variables) => {
-      toast.success('Đã xóa thành viên khỏi lab.');
+      toast.success(translate('lab.toast.memberRemoved'));
       void queryClient.invalidateQueries({
         queryKey: queryKeys.labs.members(variables.labId),
       });
       void queryClient.invalidateQueries({ queryKey: USER_ME_QUERY_KEY });
     },
     onError: () => {
-      toast.error('Không thể xóa thành viên khỏi lab.');
+      toast.error(translate('lab.toast.memberRemoveFailed'));
     },
   });
 }

@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 
 import { ConfirmDialog, LoadingState } from '../../../shared/components';
+import { translate, useI18n, type Locale } from '../../../shared/i18n';
 import { getManagedLabId } from '../../../shared/utils/membership';
 import { useCreatePenalty, useSlotPenalties } from '../../penalty/hooks';
 import { formatPenaltyType } from '../../penalty/utils';
@@ -11,15 +12,15 @@ import type { BookingResponse } from '../api';
 import { useCompleteSlot, useReviewBooking, useSlot, useSlotRegistrations } from '../hooks';
 import { getBookingStatusLabel, isUsableSlot } from '../utils';
 
-function formatDateTime(value?: string) {
+function formatDateTime(value: string | undefined, locale: Locale) {
   if (!value) {
-    return 'Chưa cập nhật';
+    return translate('common.notUpdated', locale);
   }
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) {
-    return 'Chưa cập nhật';
+    return translate('common.notUpdated', locale);
   }
-  return new Intl.DateTimeFormat('vi-VN', {
+  return new Intl.DateTimeFormat(locale === 'en' ? 'en-US' : 'vi-VN', {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
@@ -33,6 +34,7 @@ function canCreatePenalty(booking: BookingResponse) {
 }
 
 export function SlotDetailPage() {
+  const { locale, t } = useI18n();
   const { slotId } = useParams();
   const numericSlotId = Number(slotId);
   const [cancelSlotId, setCancelSlotId] = useState<number | null>(null);
@@ -109,14 +111,11 @@ export function SlotDetailPage() {
     <section className="space-y-6">
       <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
         <Link className="text-sm font-semibold text-slate-600 hover:text-slate-950" to="/app/lab-slots">
-          Quay lại danh sách
+          {t('common.backToList')}
         </Link>
         <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
-          <h1 className="text-xl font-semibold text-slate-950">Chi tiết ca sử dụng</h1>
-            <p className="mt-2 text-sm text-slate-600">
-              Danh sách sinh viên đăng ký sử dụng khung giờ và vi phạm đã ghi nhận.
-            </p>
+          <h1 className="text-xl font-semibold text-slate-950 dark:text-white">{t('slotDetail.title')}</h1>
           </div>
           {canCancelSlot && slot ? (
             <button
@@ -124,7 +123,7 @@ export function SlotDetailPage() {
               className="w-fit rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-700"
               onClick={() => setCancelSlotId(slot.id)}
             >
-              Hủy khung giờ
+              {t('slot.cancel')}
             </button>
           ) : canCompleteSlot && slot ? (
             <button
@@ -133,7 +132,7 @@ export function SlotDetailPage() {
               disabled={completeSlot.isPending}
               onClick={() => setPendingConfirmation({ type: 'COMPLETE' })}
             >
-              {completeSlot.isPending ? 'Đang kết thúc...' : 'Kết thúc ca lab'}
+              {completeSlot.isPending ? t('slotDetail.completing') : t('slotDetail.complete')}
             </button>
           ) : null}
         </div>
@@ -145,40 +144,40 @@ export function SlotDetailPage() {
         ) : slot ? (
           <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <div>
-              <dt className="text-sm text-slate-500">Thời gian</dt>
-              <dd className="mt-1 text-sm font-semibold text-slate-950">
-                {formatDateTime(slot.startTime)} - {formatDateTime(slot.endTime)}
+              <dt className="text-sm text-slate-500">{t('slot.time')}</dt>
+              <dd className="mt-1 text-sm font-semibold text-slate-950 dark:text-slate-100">
+                {formatDateTime(slot.startTime, locale)} - {formatDateTime(slot.endTime, locale)}
               </dd>
             </div>
             <div>
-              <dt className="text-sm text-slate-500">Sức chứa</dt>
-              <dd className="mt-1 text-sm font-semibold text-slate-950">{slot.capacity}</dd>
+              <dt className="text-sm text-slate-500">{t('slot.capacity')}</dt>
+              <dd className="mt-1 text-sm font-semibold text-slate-950 dark:text-slate-100">{slot.capacity}</dd>
             </div>
             <div>
-              <dt className="text-sm text-slate-500">Chờ phê duyệt</dt>
-              <dd className="mt-1 text-sm font-semibold text-slate-950">{counts.pending}</dd>
+              <dt className="text-sm text-slate-500">{t('slotDetail.pending')}</dt>
+              <dd className="mt-1 text-sm font-semibold text-slate-950 dark:text-slate-100">{counts.pending}</dd>
             </div>
             <div>
-              <dt className="text-sm text-slate-500">Đã phê duyệt</dt>
-              <dd className="mt-1 text-sm font-semibold text-slate-950">{counts.approved}</dd>
+              <dt className="text-sm text-slate-500">{t('slot.approved')}</dt>
+              <dd className="mt-1 text-sm font-semibold text-slate-950 dark:text-slate-100">{counts.approved}</dd>
             </div>
           </dl>
         ) : (
-          <p className="text-sm text-slate-600">Không tìm thấy khung giờ sử dụng.</p>
+          <p className="text-sm text-slate-600">{t('slotDetail.notFound')}</p>
         )}
       </div>
 
       <div className="rounded-lg border border-slate-200 bg-white shadow-sm">
         <div className="border-b border-slate-200 px-5 py-4">
-          <h3 className="text-lg font-semibold text-slate-950">Danh sách đăng ký</h3>
+          <h3 className="text-lg font-semibold text-slate-950 dark:text-white">{t('slotDetail.registrations')}</h3>
         </div>
         {isLoading ? (
-          <div className="p-5 text-sm text-slate-600">Đang tải danh sách đăng ký...</div>
+          <div className="p-5 text-sm text-slate-600">{t('slotDetail.loadingRegistrations')}</div>
         ) : isError ? (
           <div className="p-5 text-sm text-red-700">
-            Không thể tải danh sách đăng ký.
+            {t('slotDetail.loadRegistrationsFailed')}
             <button className="ml-3 font-semibold underline" type="button" onClick={() => refetch()}>
-              Tải lại
+              {t('common.retry')}
             </button>
           </div>
         ) : registrations.length ? (
@@ -186,12 +185,12 @@ export function SlotDetailPage() {
             <table className="w-full min-w-[720px] divide-y divide-slate-200 text-sm">
               <thead className="bg-slate-50 text-left text-slate-500">
                 <tr>
-                  <th className="px-5 py-3 font-semibold">Sinh viên</th>
-                  <th className="px-5 py-3 font-semibold">Email</th>
-                  <th className="px-5 py-3 font-semibold">Thời gian đăng ký</th>
-                  <th className="px-5 py-3 font-semibold">Trạng thái</th>
-                  <th className="px-5 py-3 font-semibold">Vi phạm đã ghi nhận</th>
-                  <th className="px-5 py-3 font-semibold">Thao tác</th>
+                  <th className="px-5 py-3 font-semibold">{t('slotDetail.student')}</th>
+                  <th className="px-5 py-3 font-semibold">{t('common.email')}</th>
+                  <th className="px-5 py-3 font-semibold">{t('slotDetail.registrationTime')}</th>
+                  <th className="px-5 py-3 font-semibold">{t('slot.statusLabel')}</th>
+                  <th className="px-5 py-3 font-semibold">{t('slotDetail.recordedPenalties')}</th>
+                  <th className="px-5 py-3 font-semibold">{t('common.actions')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200">
@@ -201,11 +200,11 @@ export function SlotDetailPage() {
                   return (
                     <tr key={booking.id}>
                       <td className="px-5 py-3 font-medium text-slate-950">
-                        {booking.studentName || 'Chưa cập nhật'}
+                        {booking.studentName || t('common.notUpdated')}
                       </td>
-                      <td className="px-5 py-3 text-slate-600">{booking.studentEmail || 'Chưa cập nhật'}</td>
-                      <td className="px-5 py-3 text-slate-600">{formatDateTime(booking.createdAt)}</td>
-                      <td className="px-5 py-3 text-slate-700">{getBookingStatusLabel(booking.status)}</td>
+                      <td className="px-5 py-3 text-slate-600">{booking.studentEmail || t('common.notUpdated')}</td>
+                      <td className="px-5 py-3 text-slate-600">{formatDateTime(booking.createdAt, locale)}</td>
+                      <td className="px-5 py-3 text-slate-700">{getBookingStatusLabel(booking.status, locale)}</td>
                       <td className="px-5 py-3">
                         {penalties.length ? (
                           <div className="flex flex-wrap gap-1.5">
@@ -220,7 +219,7 @@ export function SlotDetailPage() {
                             ))}
                           </div>
                         ) : (
-                          <span className="text-slate-500">-</span>
+                          <span className="text-slate-500">{t('common.none')}</span>
                         )}
                       </td>
                       <td className="px-5 py-3">
@@ -233,7 +232,7 @@ export function SlotDetailPage() {
                                 disabled={reviewBooking.isPending}
                                 onClick={() => handleReview(booking.id, 'APPROVE')}
                               >
-                                Phê duyệt
+                                {t('common.approve')}
                               </button>
                               <button
                                 type="button"
@@ -241,7 +240,7 @@ export function SlotDetailPage() {
                                 disabled={reviewBooking.isPending}
                                 onClick={() => handleReview(booking.id, 'REJECT')}
                               >
-                                Từ chối
+                                {t('common.reject')}
                               </button>
                             </>
                           ) : null}
@@ -252,12 +251,12 @@ export function SlotDetailPage() {
                               className="rounded-md border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-700"
                               onClick={() => setSelectedBooking(booking)}
                             >
-                              Ghi nhận vi phạm
+                              {t('slotDetail.recordPenalty')}
                             </button>
                           ) : null}
 
                           {(!canMutateSlot || (booking.status !== 'PENDING_APPROVAL' && !canCreatePenalty(booking))) ? (
-                            <span className="text-slate-500">Không có thao tác</span>
+                            <span className="text-slate-500">{t('common.noActions')}</span>
                           ) : null}
                         </div>
                       </td>
@@ -268,7 +267,7 @@ export function SlotDetailPage() {
             </table>
           </div>
         ) : (
-          <div className="p-5 text-sm text-slate-600">Chưa có sinh viên đăng ký khung giờ này.</div>
+          <div className="p-5 text-sm text-slate-600">{t('slotDetail.noRegistrations')}</div>
         )}
       </div>
 
@@ -291,20 +290,20 @@ export function SlotDetailPage() {
       />
       <ConfirmDialog
         confirmLabel={pendingConfirmation?.type === 'COMPLETE'
-          ? 'Kết thúc ca'
-          : pendingConfirmation?.decision === 'APPROVE' ? 'Phê duyệt' : 'Từ chối'}
+          ? t('slotDetail.complete')
+          : pendingConfirmation?.decision === 'APPROVE' ? t('common.approve') : t('common.reject')}
         isOpen={pendingConfirmation !== null}
         isPending={reviewBooking.isPending || completeSlot.isPending}
         message={pendingConfirmation?.type === 'COMPLETE'
-          ? 'Bạn có chắc muốn kết thúc ca sử dụng Lab ngay bây giờ không?'
+          ? t('slotDetail.confirmComplete')
           : pendingConfirmation?.decision === 'APPROVE'
-            ? 'Phê duyệt đăng ký sử dụng PTN này?'
-            : 'Từ chối đăng ký sử dụng PTN này?'}
+            ? t('slotDetail.confirmApprove')
+            : t('slotDetail.confirmReject')}
         onCancel={() => setPendingConfirmation(null)}
         onConfirm={confirmPendingAction}
         title={pendingConfirmation?.type === 'COMPLETE'
-          ? 'Kết thúc ca sử dụng?'
-          : pendingConfirmation?.decision === 'APPROVE' ? 'Phê duyệt đăng ký?' : 'Từ chối đăng ký?'}
+          ? t('slotDetail.confirmCompleteTitle')
+          : pendingConfirmation?.decision === 'APPROVE' ? t('slotDetail.confirmApproveTitle') : t('slotDetail.confirmRejectTitle')}
         variant={pendingConfirmation?.type === 'REVIEW' && pendingConfirmation.decision === 'APPROVE'
           ? 'success'
           : 'danger'}

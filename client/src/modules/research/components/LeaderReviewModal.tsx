@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 
 import { Button, Modal } from '../../../shared/components';
+import { useI18n } from '../../../shared/i18n';
 import type { LeaderReportDecision } from '../types';
 
 interface LeaderReviewModalProps {
@@ -11,19 +12,8 @@ interface LeaderReviewModalProps {
   onSubmit: (decision: LeaderReportDecision, comment: string) => void;
 }
 
-const DECISION_LABELS: Record<LeaderReportDecision, string> = {
-  ACCEPT: 'Chấp nhận cấp nhóm',
-  REQUEST_REVISION: 'Yêu cầu chỉnh sửa',
-  REJECT: 'Từ chối',
-};
-
-const NOTE_PLACEHOLDERS: Record<LeaderReportDecision, string> = {
-  ACCEPT: 'Báo cáo đã đạt yêu cầu cấp nhóm để chuyển quản lý.',
-  REQUEST_REVISION: 'Cần bổ sung kết quả và chỉnh sửa biểu đồ theo góp ý.',
-  REJECT: 'Báo cáo chưa đúng tiến độ và nội dung được giao.',
-};
-
 export function LeaderReviewModal({ isOpen, isSubmitting, decision, onClose, onSubmit }: LeaderReviewModalProps) {
+  const { t } = useI18n();
   const [localDecision, setLocalDecision] = useState<LeaderReportDecision>('ACCEPT');
   const [note, setNote] = useState('');
   const trimmedNote = note.trim();
@@ -50,31 +40,31 @@ export function LeaderReviewModal({ isOpen, isSubmitting, decision, onClose, onS
       footer={(
         <>
           <Button disabled={isSubmitting} onClick={onClose} size="sm" variant="outline">
-            Đóng
+            {t('common.close')}
           </Button>
           <Button
             disabled={isSubmitDisabled}
             loading={isSubmitting}
-            loadingText="Đang xử lý..."
+            loadingText={t('common.processing')}
             onClick={handleSubmit}
             size="sm"
             variant={localDecision === 'REJECT' ? 'danger' : 'primary'}
           >
-            {DECISION_LABELS[localDecision]}
+            {getDecisionLabel(localDecision, t)}
           </Button>
         </>
       )}
       isOpen={isOpen}
       onClose={onClose}
       size="md"
-      title="Xử lý báo cáo"
+      title={t('research.review.title')}
     >
       <div className="space-y-4">
         {/* Decision selector when opened from a generic action button */}
         {decision === null ? (
           <div>
             <label className="block text-xs font-medium uppercase tracking-wider text-slate-500">
-              Quyết định kiểm tra
+              {t('research.review.decision')}
             </label>
             <div className="mt-2 flex flex-wrap gap-2">
               {(['ACCEPT', 'REQUEST_REVISION', 'REJECT'] as LeaderReportDecision[]).map((d) => {
@@ -94,7 +84,7 @@ export function LeaderReviewModal({ isOpen, isSubmitting, decision, onClose, onS
                         : 'bg-white text-slate-600 ring-slate-200 hover:bg-slate-50'
                     }`}
                   >
-                    {DECISION_LABELS[d]}
+                    {getDecisionLabel(d, t)}
                   </button>
                 );
               })}
@@ -105,13 +95,13 @@ export function LeaderReviewModal({ isOpen, isSubmitting, decision, onClose, onS
         {/* Comment Note Text Area */}
         <div>
           <label className="block text-xs font-medium uppercase tracking-wider text-slate-500" htmlFor="leader-review-note">
-            Ghi chú / Nhận xét của Trưởng nhóm
+            {t('research.review.note')}
           </label>
           <textarea
             className="mt-2 min-h-32 w-full resize-y rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
             id="leader-review-note"
             maxLength={5000}
-            placeholder={NOTE_PLACEHOLDERS[localDecision]}
+            placeholder={getDecisionMessage(localDecision, t)}
             value={note}
             onChange={(event) => setNote(event.target.value)}
           />
@@ -120,4 +110,12 @@ export function LeaderReviewModal({ isOpen, isSubmitting, decision, onClose, onS
       </div>
     </Modal>
   );
+}
+
+function getDecisionLabel(decision: LeaderReportDecision, t: ReturnType<typeof useI18n>['t']) {
+  return t(`research.review.${decision === 'REQUEST_REVISION' ? 'requestRevision' : decision === 'ACCEPT' ? 'accept' : 'reject'}`);
+}
+
+function getDecisionMessage(decision: LeaderReportDecision, t: ReturnType<typeof useI18n>['t']) {
+  return t(`research.review.${decision === 'REQUEST_REVISION' ? 'requestRevisionMessage' : decision === 'ACCEPT' ? 'acceptMessage' : 'rejectMessage'}`);
 }

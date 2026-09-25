@@ -172,6 +172,17 @@ public class SmtpEmailService implements EmailService {
     }
 
     @Override
+    public void sendCleaningAssignedEmail(String email, BookingEmailData data) {
+        sendEmail(email, "Phân công vệ sinh phòng thí nghiệm", String.join("\n",
+                greeting(data),
+                "Bạn được phân công vệ sinh phòng thí nghiệm sau ca sử dụng.",
+                "PTN: " + data.getLabName(),
+                "Ca vừa kết thúc: " + formatRange(data),
+                "Vui lòng hoàn thành nhiệm vụ và xác nhận trên hệ thống."
+        ));
+    }
+
+    @Override
     public void sendPenaltyCreatedEmail(String email, BookingEmailData data) {
         sendEmail(email, "Thông báo ghi nhận vi phạm", String.join("\n",
                 greeting(data),

@@ -8,6 +8,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -17,7 +18,10 @@ import com.web.labportalbackend.auth.entity.User;
 import com.web.labportalbackend.auth.repository.UserRepository;
 import com.web.labportalbackend.booking.entity.Booking;
 import com.web.labportalbackend.booking.entity.TimeSlot;
+import com.web.labportalbackend.booking.dto.request.StudentSelfCheckinRequest;
+import com.web.labportalbackend.booking.dto.response.BookingResponse;
 import com.web.labportalbackend.booking.repository.BookingRepository;
+import com.web.labportalbackend.booking.service.CheckinService;
 import com.web.labportalbackend.booking.service.CheckinWindowPolicy;
 import com.web.labportalbackend.common.enums.BookingStatus;
 import com.web.labportalbackend.common.enums.TimeSlotStatus;
@@ -26,6 +30,7 @@ import com.web.labportalbackend.face.client.FaceMatchResponse;
 import com.web.labportalbackend.face.client.FaceProcessingClient;
 import com.web.labportalbackend.face.dto.request.FaceCheckinRequest;
 import com.web.labportalbackend.face.dto.request.FaceChallengeFrameRequest;
+import com.web.labportalbackend.face.dto.request.StudentFaceCheckinRequest;
 import com.web.labportalbackend.face.entity.FaceConsentLogEntity;
 import com.web.labportalbackend.face.entity.FaceProfileEntity;
 import com.web.labportalbackend.face.entity.FaceSecurityConfigEntity;
@@ -62,6 +67,7 @@ class FaceCheckinServiceImplTest {
     private final FaceProcessingClient processingClient = mock(FaceProcessingClient.class);
     private final FaceEmbeddingCipher cipher = new FaceEmbeddingCipher(KEY);
     private final FaceCheckinWriter writer = mock(FaceCheckinWriter.class);
+    private final CheckinService checkinService = mock(CheckinService.class);
     private final User manager = mock(User.class);
     private final User student = mock(User.class);
     private final Booking booking = mock(Booking.class);
@@ -71,7 +77,7 @@ class FaceCheckinServiceImplTest {
     void setUp() {
         service = new FaceCheckinServiceImpl(userRepository, bookingRepository, consentRepository,
                 profileRepository, configRepository, new CheckinWindowPolicy(systemConfigService), processingClient, cipher,
-                writer, new ObjectMapper());
+                writer, new ObjectMapper(), checkinService);
         SecurityContextHolder.getContext().setAuthentication(
                 new UsernamePasswordAuthenticationToken("manager", "n/a", List.of()));
         when(userRepository.findByEmailOrUsername("manager", "manager")).thenReturn(Optional.of(manager));
@@ -124,6 +130,58 @@ class FaceCheckinServiceImplTest {
                 List.of(0.1, 0.2), List.of(0.3, 0.4), List.of(0.5, 0.6))));
         assertTrue(forwarded.getValue().challengeFrames().size() == 4);
         verify(writer).complete(7L, 3L, 11L, 0.91, 0.0003);
+    }
+
+    @Test
+    void studentFaceCheckinRequiresFaceMatchAndDelegatesGpsAndNetworkEvidence() {
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken("student", "n/a", List.of()));
+        when(userRepository.findByEmailOrUsername("student", "student")).thenReturn(Optional.of(student));
+        when(student.hasRole("STUDENT")).thenReturn(true);
+        when(bookingRepository.findById(11L)).thenReturn(Optional.of(booking));
+        FaceProfileEntity profile = mock(FaceProfileEntity.class);
+        when(profile.getEncryptedEmbedding()).thenReturn(cipher.encrypt("[[0.1,0.2]]"));
+        when(profileRepository.findByUserIdAndProfileStatusAndActiveTrueAndDeletedFalse(7L, FaceProfileStatus.ACTIVE))
+                .thenReturn(Optional.of(profile));
+        when(processingClient.match(any())).thenReturn(
+                new FaceMatchResponse("MATCH", 0.93, 0.89, false, true, null));
+        Instant checkedInAt = Instant.parse("2026-08-31T00:00:00Z");
+        when(checkinService.selfCheckinByCurrentStudent(any(StudentSelfCheckinRequest.class), eq("203.0.113.42")))
+                .thenReturn(BookingResponse.builder().id(11L).build());
+        when(writer.recordStudentSuccess(booking, student, 0.93, 0.89)).thenReturn(checkedInAt);
+
+        var response = service.checkInForCurrentStudent(studentRequest(), "203.0.113.42");
+
+        assertTrue(response.checkedIn());
+        assertTrue(response.bookingId().equals(11L));
+        assertTrue(response.userId().equals(7L));
+        assertTrue(response.checkedInAt().equals(checkedInAt));
+        ArgumentCaptor<StudentSelfCheckinRequest> evidence = ArgumentCaptor.forClass(StudentSelfCheckinRequest.class);
+        verify(checkinService).selfCheckinByCurrentStudent(evidence.capture(), eq("203.0.113.42"));
+        assertTrue(evidence.getValue().bookingId().equals(11L));
+        assertTrue(evidence.getValue().latitude().equals(new BigDecimal("10.762700")));
+        assertTrue(evidence.getValue().longitude().equals(new BigDecimal("106.660172")));
+        verify(writer).recordStudentSuccess(booking, student, 0.93, 0.89);
+    }
+
+    @Test
+    void studentFaceMismatchDoesNotAttemptGpsCheckinOrPersistAttendance() {
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken("student", "n/a", List.of()));
+        when(userRepository.findByEmailOrUsername("student", "student")).thenReturn(Optional.of(student));
+        when(student.hasRole("STUDENT")).thenReturn(true);
+        when(bookingRepository.findById(11L)).thenReturn(Optional.of(booking));
+        FaceProfileEntity profile = mock(FaceProfileEntity.class);
+        when(profile.getEncryptedEmbedding()).thenReturn(cipher.encrypt("[[0.1,0.2]]"));
+        when(profileRepository.findByUserIdAndProfileStatusAndActiveTrueAndDeletedFalse(7L, FaceProfileStatus.ACTIVE))
+                .thenReturn(Optional.of(profile));
+        when(processingClient.match(any())).thenReturn(
+                new FaceMatchResponse("NO_MATCH", 0.41, 0.88, false, true, "NO_MATCH"));
+
+        var response = service.checkInForCurrentStudent(studentRequest(), "203.0.113.42");
+
+        assertFalse(response.checkedIn());
+        verifyNoInteractions(checkinService, writer);
     }
 
     @Test
@@ -198,6 +256,19 @@ class FaceCheckinServiceImplTest {
     private FaceCheckinRequest request() {
         String image = Base64.getEncoder().encodeToString("image".getBytes());
         return new FaceCheckinRequest(21L,
+                image, "image/jpeg",
+                List.of(
+                        new FaceChallengeFrameRequest(image, "image/jpeg"),
+                        new FaceChallengeFrameRequest(image, "image/jpeg"),
+                        new FaceChallengeFrameRequest(image, "image/jpeg"),
+                        new FaceChallengeFrameRequest(image, "image/jpeg")),
+                "signed-challenge");
+    }
+
+    private StudentFaceCheckinRequest studentRequest() {
+        String image = Base64.getEncoder().encodeToString("image".getBytes());
+        return new StudentFaceCheckinRequest(11L,
+                new BigDecimal("10.762700"), new BigDecimal("106.660172"), new BigDecimal("25.00"),
                 image, "image/jpeg",
                 List.of(
                         new FaceChallengeFrameRequest(image, "image/jpeg"),

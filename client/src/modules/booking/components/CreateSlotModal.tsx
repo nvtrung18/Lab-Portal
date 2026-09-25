@@ -1,7 +1,7 @@
 import { type FormEvent, useMemo, useState } from 'react';
 
 import { Button, Modal } from '../../../shared/components';
-import { VALIDATION_MESSAGES } from '../../../shared/utils';
+import { useI18n } from '../../../shared/i18n';
 import { useCreateSlot } from '../hooks';
 
 interface CreateSlotModalProps {
@@ -54,6 +54,7 @@ function Time24HourSelect({
   value: string;
   onChange: (value: string) => void;
 }) {
+  const { t } = useI18n();
   const [hour = '', minute = ''] = value.split(':', 2);
   const selectClassName = 'min-h-11 w-full rounded-md border border-slate-300 bg-white px-3 text-sm outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10';
 
@@ -62,33 +63,33 @@ function Time24HourSelect({
       <legend className="text-sm font-medium text-slate-700">{label}</legend>
       <div className="mt-1 grid grid-cols-[1fr_auto_1fr] items-center gap-2">
         <select
-          aria-label={`${label} - giờ, định dạng 24 giờ`}
+          aria-label={`${label} - ${t('booking.hour')}`}
           className={selectClassName}
           id={`${id}-hour`}
           value={hour}
           onChange={(event) => onChange(event.target.value ? `${event.target.value}:${minute || '00'}` : '')}
         >
-          <option value="">Giờ</option>
+          <option value="">{t('booking.hour')}</option>
           {HOURS_24.map((item) => <option key={item} value={item}>{item}</option>)}
         </select>
         <span aria-hidden="true" className="font-semibold text-slate-500">:</span>
         <select
-          aria-label={`${label} - phút`}
+          aria-label={`${label} - ${t('booking.minute')}`}
           className={selectClassName}
           id={`${id}-minute`}
           value={minute}
           onChange={(event) => onChange(event.target.value ? `${hour || '00'}:${event.target.value}` : '')}
         >
-          <option value="">Phút</option>
+          <option value="">{t('booking.minute')}</option>
           {MINUTES.map((item) => <option key={item} value={item}>{item}</option>)}
         </select>
       </div>
-      <p className="mt-1 text-xs text-slate-500">Định dạng 24 giờ (00:00–23:59)</p>
     </fieldset>
   );
 }
 
 export function CreateSlotModal({ labId, isOpen, onClose }: CreateSlotModalProps) {
+  const { locale, t } = useI18n();
   const [form, setForm] = useState<FormState>(initialForm);
   const [error, setError] = useState('');
   const createSlot = useCreateSlot();
@@ -97,26 +98,26 @@ export function CreateSlotModal({ labId, isOpen, onClose }: CreateSlotModalProps
   const capacity = Number(form.capacity);
   const validationError = useMemo(() => {
     if (!form.date) {
-      return VALIDATION_MESSAGES.required;
+      return t('validation.required');
     }
     if (!form.startTime) {
-      return VALIDATION_MESSAGES.required;
+      return t('validation.required');
     }
     if (!form.endTime) {
-      return VALIDATION_MESSAGES.required;
+      return t('validation.required');
     }
     if (!Number.isFinite(capacity) || capacity <= 0) {
-      return 'Sức chứa phải lớn hơn 0.';
+      return t('booking.capacityPositive');
     }
 
     const start = new Date(toLocalDateTime(form.date, form.startTime));
     const end = new Date(toLocalDateTime(form.date, form.endTime));
     if (start >= end) {
-      return VALIDATION_MESSAGES.dateRange;
+      return t('validation.dateRange');
     }
 
     return '';
-  }, [capacity, form.date, form.endTime, form.startTime]);
+  }, [capacity, form.date, form.endTime, form.startTime, t]);
 
   if (!isOpen) {
     return null;
@@ -168,44 +169,42 @@ export function CreateSlotModal({ labId, isOpen, onClose }: CreateSlotModalProps
         footer={(
           <>
             <Button disabled={isSubmitting} onClick={handleClose} variant="outline">
-              Hủy
+              {t('common.cancel')}
             </Button>
-            <Button loading={isSubmitting} loadingText="Đang tạo..." type="submit">
-              Tạo khung giờ
+            <Button loading={isSubmitting} loadingText={t('booking.creatingSlot')} type="submit">
+              {t('booking.createSlot')}
             </Button>
           </>
         )}
         onClose={handleClose}
         size="lg"
-        subtitle="Khung giờ sẽ được tạo cho PTN bạn đang quản lý."
-        title="Tạo khung giờ sử dụng"
+        title={t('booking.createSlot')}
       >
         <div className="space-y-4">
           <div>
             <label className="text-sm font-medium text-slate-700" htmlFor="slot-date">
-              Ngày
+              {t('booking.date')}
             </label>
             <input
               id="slot-date"
               type="date"
-              lang="vi-VN"
+              lang={locale === 'en' ? 'en-US' : 'vi-VN'}
               min={todayInputValue()}
               className="mt-1 min-h-11 w-full rounded-md border border-slate-300 px-3 py-2 text-base outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
               value={form.date}
               onChange={(event) => updateField('date', event.target.value)}
             />
-            <p className="mt-1 text-xs text-slate-500">Chọn theo định dạng ngày/tháng/năm.</p>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
-            <Time24HourSelect id="slot-start" label="Giờ bắt đầu" value={form.startTime} onChange={(value) => updateField('startTime', value)} />
-            <Time24HourSelect id="slot-end" label="Giờ kết thúc" value={form.endTime} onChange={(value) => updateField('endTime', value)} />
+            <Time24HourSelect id="slot-start" label={t('booking.startTime')} value={form.startTime} onChange={(value) => updateField('startTime', value)} />
+            <Time24HourSelect id="slot-end" label={t('booking.endTime')} value={form.endTime} onChange={(value) => updateField('endTime', value)} />
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label className="text-sm font-medium text-slate-700" htmlFor="slot-capacity">
-                Sức chứa
+                {t('booking.capacity')}
               </label>
               <input
                 id="slot-capacity"
@@ -218,7 +217,7 @@ export function CreateSlotModal({ labId, isOpen, onClose }: CreateSlotModalProps
             </div>
             <div>
               <label className="text-sm font-medium text-slate-700" htmlFor="slot-status">
-                Trạng thái
+                {t('booking.slotStatus')}
               </label>
               <select
                 id="slot-status"
@@ -226,9 +225,9 @@ export function CreateSlotModal({ labId, isOpen, onClose }: CreateSlotModalProps
                 value={form.status}
                 onChange={(event) => updateField('status', event.target.value)}
               >
-                <option value="AVAILABLE">Còn chỗ</option>
-                <option value="CLOSED">Đã đóng</option>
-                <option value="MAINTENANCE">Bảo trì</option>
+                <option value="AVAILABLE">{t('booking.available')}</option>
+                <option value="CLOSED">{t('booking.closed')}</option>
+                <option value="MAINTENANCE">{t('booking.maintenance')}</option>
               </select>
             </div>
           </div>

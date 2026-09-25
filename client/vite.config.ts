@@ -1,5 +1,7 @@
 import react from '@vitejs/plugin-react';
 import { defineConfig, loadEnv } from 'vite';
+import fs from 'node:fs';
+import path from 'node:path';
 
 export function validateApiBaseUrl(value: string | undefined, mode: string) {
   const normalized = value?.trim();
@@ -35,7 +37,32 @@ export function validateApiBaseUrl(value: string | undefined, mode: string) {
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
   validateApiBaseUrl(env.VITE_API_BASE_URL, mode);
+
+  const certDir = path.resolve(process.cwd(), '../.local-certs');
+  const certPath = path.join(certDir, 'lab-ip.pem');
+  const keyPath = path.join(certDir, 'lab-ip-key.pem');
+  const hasLocalCertificate = mode !== 'production'
+    && fs.existsSync(certPath)
+    && fs.existsSync(keyPath);
+
   return {
     plugins: [react()],
+    server: {
+      host: '0.0.0.0',
+      ...(hasLocalCertificate
+        ? {
+            https: {
+              cert: fs.readFileSync(certPath),
+              key: fs.readFileSync(keyPath),
+            },
+          }
+        : {}),
+      proxy: {
+        '/api': {
+          target: 'http://127.0.0.1:8080',
+          xfwd: true,
+        },
+      },
+    },
   };
 });

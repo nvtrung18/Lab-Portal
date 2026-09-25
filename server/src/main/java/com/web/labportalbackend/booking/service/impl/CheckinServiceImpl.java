@@ -5,20 +5,25 @@ import com.web.labportalbackend.admin.audit.enums.AuditModule;
 import com.web.labportalbackend.admin.audit.service.AuditLogService;
 import com.web.labportalbackend.auth.entity.User;
 import com.web.labportalbackend.auth.repository.UserRepository;
+import com.web.labportalbackend.booking.dto.request.StudentSelfCheckinRequest;
 import com.web.labportalbackend.booking.dto.response.BookingResponse;
 import com.web.labportalbackend.booking.dto.response.CheckinQrResponse;
 import com.web.labportalbackend.booking.dto.response.CheckinQrHistoryResponse;
 import com.web.labportalbackend.booking.dto.response.CheckinQrRequestResponse;
 import com.web.labportalbackend.booking.entity.Booking;
+import com.web.labportalbackend.booking.entity.StudentSelfCheckinLogEntity;
 import com.web.labportalbackend.booking.event.BookingEmailType;
 import com.web.labportalbackend.booking.outbox.BookingOutboxService;
 import com.web.labportalbackend.booking.mapper.BookingMapper;
 import com.web.labportalbackend.booking.repository.BookingRepository;
+import com.web.labportalbackend.booking.repository.StudentSelfCheckinLogRepository;
 import com.web.labportalbackend.booking.service.CheckinService;
 import com.web.labportalbackend.booking.service.CheckinWindowPolicy;
 import com.web.labportalbackend.common.enums.BookingStatus;
 import com.web.labportalbackend.common.email.BookingEmailData;
 import com.web.labportalbackend.common.enums.TimeSlotStatus;
+import com.web.labportalbackend.common.location.GeoDistance;
+import com.web.labportalbackend.common.network.IpNetworkMatcher;
 import com.web.labportalbackend.face.entity.FaceCheckinLogEntity;
 import com.web.labportalbackend.face.enums.FaceCheckinMethod;
 import com.web.labportalbackend.face.enums.FaceCheckinResult;
@@ -26,7 +31,9 @@ import com.web.labportalbackend.face.enums.FaceFallbackReason;
 import com.web.labportalbackend.face.repository.FaceCheckinLogRepository;
 import com.web.labportalbackend.face.service.FaceFallbackPolicy;
 import com.web.labportalbackend.lab.entity.Laboratory;
+import com.web.labportalbackend.lab.entity.LaboratoryAllowedNetwork;
 import com.web.labportalbackend.lab.repository.LaboratoryRepository;
+import com.web.labportalbackend.lab.repository.LaboratoryAllowedNetworkRepository;
 import com.web.labportalbackend.notification.enums.NotificationEventType;
 import com.web.labportalbackend.notification.enums.NotificationTargetModule;
 import com.web.labportalbackend.notification.service.NotificationEmitter;
@@ -48,6 +55,8 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.nio.charset.StandardCharsets;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 @Service
 @RequiredArgsConstructor
@@ -66,9 +75,67 @@ public class CheckinServiceImpl implements CheckinService {
     private final CheckinWindowPolicy checkinWindowPolicy;
     private final FaceFallbackPolicy faceFallbackPolicy;
     private final FaceCheckinLogRepository faceCheckinLogRepository;
+    private final LaboratoryAllowedNetworkRepository laboratoryAllowedNetworkRepository;
+    private final StudentSelfCheckinLogRepository studentSelfCheckinLogRepository;
     private final AuditLogService auditLogService;
     private final NotificationEmitter notificationEmitter;
     private final BookingOutboxService bookingOutboxService;
+
+    @Override
+    @Transactional
+    public BookingResponse selfCheckinByCurrentStudent(StudentSelfCheckinRequest request, String clientIp) {
+        User student = getCurrentUser();
+        if (!student.hasRole("STUDENT")) {
+            throw new AccessDeniedException("Chỉ sinh viên mới được tự check-in.");
+        }
+
+        Booking booking = bookingRepository.findById(request.bookingId())
+                .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy đăng ký sử dụng PTN."));
+        if (booking.getUser() == null || !Objects.equals(booking.getUser().getId(), student.getId())) {
+            throw new AccessDeniedException("Bạn không có quyền check-in cho đăng ký này.");
+        }
+        validateBookingCanCheckIn(booking);
+        checkinWindowPolicy.validate(booking, Instant.now());
+
+        Laboratory laboratory = booking.getLab();
+        if (laboratory == null || laboratory.getId() == null
+                || !Boolean.TRUE.equals(laboratory.getCheckinEnabled())) {
+            throw new IllegalStateException("PTN chưa bật tự check-in bằng vị trí và mạng.");
+        }
+        validateCheckinPolicy(laboratory);
+
+        String normalizedClientIp = IpNetworkMatcher.normalizeAddress(clientIp);
+        if (!isAllowedNetwork(laboratory.getId(), normalizedClientIp)) {
+            throw new AccessDeniedException("Sai IP/mạng: mạng hiện tại không được phép check-in tại PTN này.");
+        }
+        if (request.accuracyMeters().compareTo(BigDecimal.valueOf(laboratory.getCheckinMaxAccuracyMeters())) > 0) {
+            throw new IllegalStateException("Sai GPS: độ chính xác GPS hiện tại chưa đạt yêu cầu của PTN.");
+        }
+
+        double distance = GeoDistance.distanceMeters(
+                request.latitude().doubleValue(), request.longitude().doubleValue(),
+                laboratory.getCheckinLatitude().doubleValue(), laboratory.getCheckinLongitude().doubleValue());
+        if (distance > laboratory.getCheckinRadiusMeters()) {
+            throw new AccessDeniedException("Sai GPS: vị trí hiện tại nằm ngoài bán kính check-in của PTN.");
+        }
+
+        booking.setStatus(BookingStatus.CHECKED_IN);
+        Booking saved = bookingRepository.save(booking);
+        studentSelfCheckinLogRepository.save(StudentSelfCheckinLogEntity.builder()
+                .booking(saved)
+                .user(student)
+                .lab(laboratory)
+                .clientIp(normalizedClientIp)
+                .latitude(request.latitude())
+                .longitude(request.longitude())
+                .accuracyMeters(request.accuracyMeters())
+                .distanceMeters(BigDecimal.valueOf(distance).setScale(2, RoundingMode.HALF_UP))
+                .build());
+        notifyCheckedIn(saved, "GPS và mạng sinh viên");
+        auditLogService.log(student, AuditAction.STUDENT_SELF_CHECKIN, AuditModule.BOOKING,
+                "BOOKING", saved.getId(), "Student self check-in passed network and GPS validation");
+        return BookingMapper.toResponse(saved);
+    }
 
     @Override
     @Transactional
@@ -315,6 +382,28 @@ public class CheckinServiceImpl implements CheckinService {
         if (booking.getTimeSlot() == null || booking.getTimeSlot().getStatus() == TimeSlotStatus.CANCELLED) {
             throw new IllegalStateException("Khung giờ sử dụng đã bị hủy.");
         }
+    }
+
+    private void validateCheckinPolicy(Laboratory laboratory) {
+        if (laboratory.getCheckinLatitude() == null || laboratory.getCheckinLongitude() == null
+                || laboratory.getCheckinRadiusMeters() == null || laboratory.getCheckinMaxAccuracyMeters() == null
+                || laboratory.getCheckinRadiusMeters() <= 0 || laboratory.getCheckinMaxAccuracyMeters() <= 0) {
+            throw new IllegalStateException("Cấu hình vị trí và độ chính xác GPS của PTN chưa đầy đủ.");
+        }
+    }
+
+    private boolean isAllowedNetwork(Long laboratoryId, String clientIp) {
+        return laboratoryAllowedNetworkRepository
+                .findByLaboratoryIdAndActiveTrueAndDeletedFalseOrderByCreatedAtAscIdAsc(laboratoryId)
+                .stream()
+                .map(LaboratoryAllowedNetwork::getNetworkValue)
+                .anyMatch(network -> {
+                    try {
+                        return IpNetworkMatcher.matches(clientIp, network);
+                    } catch (IllegalArgumentException ignored) {
+                        return false;
+                    }
+                });
     }
 
     private String createToken() {

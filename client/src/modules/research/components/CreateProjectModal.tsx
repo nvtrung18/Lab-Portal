@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 
 import { Button, Modal } from '../../../shared/components';
+import { useI18n } from '../../../shared/i18n';
 import { VALIDATION_MESSAGES } from '../../../shared/utils';
 import type { CreateProjectPayload, ResearchGroup } from '../types';
 
@@ -26,6 +27,7 @@ const initialForm = {
 };
 
 export function CreateProjectModal({ group, isOpen, isSubmitting, onClose, onSubmit }: CreateProjectModalProps) {
+  const { t } = useI18n();
   const [form, setForm] = useState(initialForm);
   const [touched, setTouched] = useState(false);
 
@@ -75,67 +77,66 @@ export function CreateProjectModal({ group, isOpen, isSubmitting, onClose, onSub
         footer={(
           <>
             <Button onClick={onClose} variant="outline">
-              Hủy
+              {t('common.cancel')}
             </Button>
-            <Button loading={isSubmitting} loadingText="Đang tạo..." type="submit">
-              Tạo đề tài nghiên cứu
+            <Button loading={isSubmitting} loadingText={t('common.creating')} type="submit">
+              {t('research.project.createTitle')}
             </Button>
           </>
         )}
         onClose={onClose}
         size="xl"
-        subtitle={<>Nhóm thực hiện: {group.name}</>}
-        title="Tạo đề tài nghiên cứu"
+        title={t('research.project.createTitle')}
       >
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="block text-sm font-medium text-slate-700">
-            Mã đề tài
+            {t('research.project.code')}
             <input className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10" value={form.code} onChange={(event) => setForm((current) => ({ ...current, code: event.target.value }))} />
           </label>
 
           <label className="block text-sm font-medium text-slate-700">
-            Mức độ ưu tiên
+            {t('research.project.priority')}
             <select className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10" value={form.priority} onChange={(event) => setForm((current) => ({ ...current, priority: event.target.value as typeof form.priority }))}>
-              <option value="HIGH">Cao</option>
-              <option value="MEDIUM">Trung bình</option>
-              <option value="LOW">Thấp</option>
+              <option value="HIGH">{t('research.priority.high')}</option>
+              <option value="MEDIUM">{t('research.priority.medium')}</option>
+              <option value="LOW">{t('research.priority.low')}</option>
             </select>
           </label>
 
           <label className="block text-sm font-medium text-slate-700 sm:col-span-2">
-            Tên đề tài
+            {t('research.project.title')}
             <input className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10" value={form.title} onBlur={() => setTouched(true)} onChange={(event) => setForm((current) => ({ ...current, title: event.target.value }))} />
             {titleError ? <span className="mt-1 block text-xs text-red-600">{titleError}</span> : null}
           </label>
 
           <label className="block text-sm font-medium text-slate-700 sm:col-span-2">
-            Mục tiêu nghiên cứu
+            {t('research.project.objective')}
             <textarea className="mt-1 min-h-20 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10" value={form.objective} onChange={(event) => setForm((current) => ({ ...current, objective: event.target.value }))} />
           </label>
 
           <label className="block text-sm font-medium text-slate-700 sm:col-span-2">
-            Mô tả đề tài
+            {t('research.project.description')}
             <textarea className="mt-1 min-h-24 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10" value={form.description} onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))} />
           </label>
 
           <label className="block text-sm font-medium text-slate-700">
-            Thời gian bắt đầu
+            {t('research.project.startDateLabel')}
             <input className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10" type="date" value={form.startDate} onBlur={() => setTouched(true)} onChange={(event) => setForm((current) => ({ ...current, startDate: event.target.value }))} />
           </label>
 
           <label className="block text-sm font-medium text-slate-700">
-            Thời gian kết thúc dự kiến
+            {t('research.project.expectedEndDateLabel')}
             <input className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10" type="date" value={form.expectedEndDate} onBlur={() => setTouched(true)} onChange={(event) => setForm((current) => ({ ...current, expectedEndDate: event.target.value }))} />
             {dateError ? <span className="mt-1 block text-xs text-red-600">{dateError}</span> : null}
           </label>
 
           <label className="block text-sm font-medium text-slate-700 sm:col-span-2">
-            Sản phẩm cần nộp
+            {t('research.project.requiredProducts')}
             <textarea className="mt-1 min-h-20 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10" value={form.requiredProducts} onChange={(event) => setForm((current) => ({ ...current, requiredProducts: event.target.value }))} />
           </label>
 
           <label className="block text-sm font-medium text-slate-700 sm:col-span-2">
-            Tiêu chí đánh giá
+            {t('research.project.evaluationCriteria')}
             <textarea className="mt-1 min-h-20 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10" value={form.evaluationCriteria} onChange={(event) => setForm((current) => ({ ...current, evaluationCriteria: event.target.value }))} />
           </label>
         </div>

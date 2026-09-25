@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { queryKeys } from '../../../shared/api';
 import { toast } from '../../../shared/components';
+import { getStoredLocale, translate, translateBackendMessage } from '../../../shared/i18n';
 import {
   cancelSlot,
   completeSlot,
@@ -57,23 +58,24 @@ export function useCompleteSlot(labId?: number | null, slotId?: number | null) {
       void queryClient.invalidateQueries({ queryKey: queryKeys.slots.detail(slotId as number) });
       void queryClient.invalidateQueries({ queryKey: queryKeys.slots.bookings(slotId as number) });
       void queryClient.invalidateQueries({ queryKey: queryKeys.bookings.mine });
-      toast.success('Đã kết thúc ca sử dụng lab.');
+      toast.success(translate('booking.toast.slotCompleted'));
     },
-    onError: (error) => toast.error(getErrorMessage(error, 'Không thể kết thúc ca sử dụng lab.')),
+    onError: (error) => toast.error(getErrorMessage(error, 'booking.toast.slotCompleteFailed')),
   });
 }
 
-function getErrorMessage(error: unknown, fallback = 'Không thể tạo khung giờ sử dụng.') {
+function getErrorMessage(error: unknown, fallbackKey = 'booking.toast.slotCreateFailed') {
+  const locale = getStoredLocale();
   if (axios.isAxiosError(error)) {
     const data = error.response?.data as { message?: string; errors?: string[] } | undefined;
     const message = data?.message ?? data?.errors?.[0];
     if (message === 'Time slot overlaps with an existing slot in this lab') {
-      return 'Khung giờ này bị trùng với một ca sử dụng đang hoạt động. Vui lòng chọn thời gian khác.';
+      return translate('booking.slot.overlap', locale);
     }
-    return message ?? fallback;
+    return translateBackendMessage(message, locale) ?? translate(fallbackKey, locale);
   }
 
-  return fallback;
+  return translate(fallbackKey, locale);
 }
 
 export function useCreateSlot() {
@@ -84,10 +86,10 @@ export function useCreateSlot() {
     onSuccess: (_slot, payload) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.slots.byLab(payload.labId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.cleaning.overview(payload.labId) });
-      toast.success('Đã tạo khung giờ sử dụng thành công.');
+      toast.success(translate('booking.toast.slotCreated'));
     },
     onError: (error) => {
-      toast.error(getErrorMessage(error));
+      toast.error(getErrorMessage(error, 'booking.toast.slotCreateFailed'));
     },
   });
 }
@@ -105,10 +107,10 @@ export function useCancelSlot(labId?: number | null, slotId?: number | null) {
       queryClient.invalidateQueries({ queryKey: queryKeys.slots.detail(slotId ?? payload.slotId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.slots.bookings(slotId ?? payload.slotId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.bookings.mine });
-      toast.success('Đã hủy khung giờ sử dụng.');
+      toast.success(translate('booking.toast.slotCancelled'));
     },
     onError: (error) => {
-      toast.error(getErrorMessage(error, 'Không thể hủy khung giờ sử dụng.'));
+      toast.error(getErrorMessage(error, 'booking.toast.slotCancelFailed'));
     },
   });
 }

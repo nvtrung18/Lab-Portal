@@ -17,6 +17,8 @@ public final class LabMapper {
         lab.setLocation(request.getLocation());
         lab.setCapacity(request.getCapacity());
         lab.setDepartment(request.getDepartment());
+        lab.setCheckinLatitude(request.getCheckinLatitude());
+        lab.setCheckinLongitude(request.getCheckinLongitude());
         return lab;
     }
 

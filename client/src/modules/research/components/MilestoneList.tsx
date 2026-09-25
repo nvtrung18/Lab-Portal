@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 
 import { Button, EmptyState, ErrorState, LoadingState } from '../../../shared/components';
+import { useI18n } from '../../../shared/i18n';
 import { useCreateMilestone, useMilestonesByProject, useMilestonesByGroup, useMyMilestonesByGroup, useResearchEligibleStudents, useUpdateMilestone, useResearchGroupMembers } from '../hooks';
 import type { ResearchMilestone } from '../types';
 import type { TaskBoardRole } from '../taskBoardHelpers';
@@ -32,10 +33,11 @@ export function MilestoneList({
   taskBoardCurrentUserId,
   groupId,
   groupRole,
-  emptyMessage = 'Chưa có mốc nghiên cứu nào.',
-  title = 'Mốc nghiên cứu',
-  description = 'Các giai đoạn chính cần hoàn thành trong đề tài.',
+  emptyMessage,
+  title,
+  description,
 }: MilestoneListProps) {
+  const { locale, t } = useI18n();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [detailMilestoneId, setDetailMilestoneId] = useState<number | null>(null);
   const [editingMilestone, setEditingMilestone] = useState<ResearchMilestone | null>(null);
@@ -50,13 +52,12 @@ export function MilestoneList({
   const error = groupId ? (isMember ? myGroupError : allGroupError) : projectError;
   const refetch = groupId ? (isMember ? refetchMyGroup : refetchAllGroup) : refetchProject;
   const errorMessage = getApiErrorMessage(error, {
-    fallback: 'Không thể tải danh sách mốc nghiên cứu.',
-    forbidden: 'Bạn không có quyền xem mốc nghiên cứu của nhóm này.',
+    fallback: t('research.milestone.loadFailed'),
+    forbidden: t('research.milestone.forbidden'),
   });
 
-  const resolvedTitle = isMember ? 'Mốc của tôi' : title;
-  const resolvedDescription = isMember ? 'Chỉ hiển thị các mốc nghiên cứu có nhiệm vụ được giao cho bạn.' : description;
-  const resolvedEmptyMessage = isMember ? 'Bạn chưa được giao mốc nghiên cứu nào trong nhóm này.' : emptyMessage;
+  const resolvedTitle = isMember ? t('research.milestone.myTitle') : title ?? t('research.milestone.title');
+  const resolvedEmptyMessage = isMember ? t('research.milestone.memberEmpty') : emptyMessage ?? t('research.milestone.empty');
 
   const { data: students = [], isLoading: isLoadingStudents } = useResearchEligibleStudents(
     canCreate && !groupId ? labId : null,
@@ -105,17 +106,16 @@ export function MilestoneList({
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h3 className="text-lg font-semibold text-slate-950">{resolvedTitle}</h3>
-          <p className="mt-1 text-sm text-slate-600">{resolvedDescription}</p>
         </div>
         {canCreate ? (
           <Button onClick={() => setIsCreateOpen(true)}>
-            Tạo mốc nghiên cứu
+            {t('research.milestone.createTitle')}
           </Button>
         ) : null}
       </div>
 
       {isLoading ? (
-        <LoadingState className="mt-5">Đang tải danh sách mốc nghiên cứu...</LoadingState>
+        <LoadingState className="mt-5">{t('research.milestone.loading')}</LoadingState>
       ) : isError ? (
         <ErrorState className="mt-5" onRetry={() => refetch()}>
           {errorMessage}
@@ -128,7 +128,7 @@ export function MilestoneList({
             </p>
             {canCreate && (
               <Button onClick={() => setIsCreateOpen(true)} size="sm">
-                Tạo mốc nghiên cứu
+                {t('research.milestone.createTitle')}
               </Button>
             )}
           </div>
@@ -144,26 +144,24 @@ export function MilestoneList({
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div className="min-w-0 flex-1">
                     <h4 className="text-base font-semibold text-slate-950">{milestone.title}</h4>
-                    <p className="mt-2 text-sm text-slate-600">
-                      {milestone.description || 'Chưa cập nhật mô tả công việc.'}
-                    </p>
+                    {milestone.description ? <p className="mt-2 text-sm text-slate-600">{milestone.description}</p> : null}
                     <dl className="mt-3 grid gap-3 text-sm text-slate-600 sm:grid-cols-2">
                       <div>
-                        <dt className="font-semibold text-slate-700">Hạn hoàn thành</dt>
-                        <dd className="mt-1">{formatDate(milestone.deadline)}</dd>
+                        <dt className="font-semibold text-slate-700">{t('research.milestone.dueDate')}</dt>
+                        <dd className="mt-1">{formatDate(milestone.deadline, locale)}</dd>
                       </div>
                       <div>
-                        <dt className="font-semibold text-slate-700">Ngày tạo</dt>
-                        <dd className="mt-1">{formatDate(milestone.createdAt)}</dd>
+                        <dt className="font-semibold text-slate-700">{t('research.group.createdAt')}</dt>
+                        <dd className="mt-1">{formatDate(milestone.createdAt, locale)}</dd>
                       </div>
                       {isMember ? (
                         <>
                           <div>
-                            <dt className="font-semibold text-slate-700">Số nhiệm vụ của tôi</dt>
+                            <dt className="font-semibold text-slate-700">{t('research.milestone.myTaskCount')}</dt>
                             <dd className="mt-1 font-medium text-slate-950">{milestone.myTaskCount ?? 0}</dd>
                           </div>
                           <div>
-                            <dt className="font-semibold text-slate-700">Số nhiệm vụ đã hoàn thành</dt>
+                            <dt className="font-semibold text-slate-700">{t('research.milestone.myCompletedTaskCount')}</dt>
                             <dd className="mt-1 font-medium text-emerald-700">{milestone.myCompletedTaskCount ?? 0}</dd>
                           </div>
                         </>
@@ -171,11 +169,11 @@ export function MilestoneList({
                     </dl>
                     <div className="mt-3 max-w-sm">
                       <div className="flex items-center justify-between text-sm">
-                        <span className="font-semibold text-slate-700">Tỷ lệ hoàn thành</span>
+                        <span className="font-semibold text-slate-700">{t('research.group.progress')}</span>
                         <span className="font-semibold text-slate-950">{milestone.progressPercent}%</span>
                       </div>
                       <div
-                        aria-label={`Tỷ lệ hoàn thành ${milestone.progressPercent}%`}
+                        aria-label={`${t('research.group.progress')} ${milestone.progressPercent}%`}
                         aria-valuemax={100}
                         aria-valuemin={0}
                         aria-valuenow={milestone.progressPercent}
@@ -190,17 +188,17 @@ export function MilestoneList({
                     </div>
                     <div className="mt-4 flex flex-wrap gap-2">
                       <Button onClick={() => setDetailMilestoneId(milestone.id)} size="sm" variant="outline">
-                        Xem chi tiết
+                        {t('research.milestone.viewDetails')}
                       </Button>
                       {canCreate ? (
                         <Button onClick={() => setEditingMilestone(milestone)} size="sm" variant="outline">
-                          Sửa mốc
+                          {t('research.milestone.edit')}
                         </Button>
                       ) : null}
                     </div>
                   </div>
                   <span className={`w-fit shrink-0 rounded-full px-3 py-1 text-xs font-semibold ring-1 ${getStatusClass(displayedStatus)}`}>
-                    {formatMilestoneStatus(displayedStatus)}
+                    {formatMilestoneStatus(displayedStatus, locale)}
                   </span>
                 </div>
               </li>

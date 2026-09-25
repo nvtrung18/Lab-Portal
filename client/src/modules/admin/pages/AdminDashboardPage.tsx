@@ -1,6 +1,9 @@
 import { useMemo } from 'react';
+import { Activity, ArrowRight, ClipboardList, FlaskConical, UsersRound, type LucideIcon } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 import { EmptyState, ErrorState } from '../../../shared/components';
+import { useI18n, type Locale } from '../../../shared/i18n';
 import { AdminStatCard } from '../components';
 import { useAdminDashboardStats } from '../hooks';
 import type { AdminDashboardStats } from '../api';
@@ -8,31 +11,30 @@ import type { AdminDashboardStats } from '../api';
 interface StatItem {
   title: string;
   value: number | string | null | undefined;
-  description?: string;
   suffix?: string;
 }
 
 interface StatSection {
   title: string;
+  icon: LucideIcon;
   items: StatItem[];
+  to?: string;
 }
-
-const numberFormatter = new Intl.NumberFormat('vi-VN');
 
 function toFiniteNumber(value: unknown) {
   return typeof value === 'number' && Number.isFinite(value) ? value : 0;
 }
 
-function formatCount(value: unknown) {
-  return numberFormatter.format(toFiniteNumber(value));
+function formatCount(value: unknown, locale: Locale) {
+  return new Intl.NumberFormat(locale === 'en' ? 'en-US' : 'vi-VN').format(toFiniteNumber(value));
 }
 
-function formatAverageScore(value: number | null | undefined) {
+function formatAverageScore(value: number | null | undefined, locale: Locale, t: (key: string, fallback?: string) => string) {
   if (value === null || value === undefined || !Number.isFinite(value)) {
-    return 'Chưa có';
+    return t('common.notUpdated');
   }
 
-  return numberFormatter.format(value);
+  return new Intl.NumberFormat(locale === 'en' ? 'en-US' : 'vi-VN').format(value);
 }
 
 function hasAnyDashboardData(stats?: AdminDashboardStats | null) {
@@ -64,120 +66,112 @@ function hasAnyDashboardData(stats?: AdminDashboardStats | null) {
   return values.some((value) => typeof value === 'number' && Number.isFinite(value) && value > 0);
 }
 
-function buildSections(stats: AdminDashboardStats): StatSection[] {
+function buildSections(
+  stats: AdminDashboardStats,
+  locale: Locale,
+  t: (key: string, fallback?: string) => string,
+): StatSection[] {
   return [
     {
-      title: 'Người dùng',
+      title: t('adminDashboard.users'),
+      icon: UsersRound,
+      to: '/admin/users',
       items: [
         {
-          title: 'Tổng số người dùng',
-          value: formatCount(stats.users?.total),
-          description: 'Tài khoản đã đăng ký thành công',
+          title: t('adminDashboard.userTotal'),
+          value: formatCount(stats.users?.total, locale),
         },
         {
-          title: 'Tài khoản hoạt động',
-          value: formatCount(stats.users?.active),
-          description: 'Người dùng đang có trạng thái ACTIVE',
+          title: t('adminDashboard.activeAccounts'),
+          value: formatCount(stats.users?.active, locale),
         },
         {
-          title: 'Tài khoản bị khóa',
-          value: formatCount(stats.users?.banned),
-          description: 'Tài khoản đang bị khóa hoặc tạm ngừng',
+          title: t('adminDashboard.bannedAccounts'),
+          value: formatCount(stats.users?.banned, locale),
         },
         {
-          title: 'Manager chưa được gán PTN',
-          value: formatCount(stats.users?.unassignedManagers),
-          description: 'Quản lý PTN chưa phụ trách phòng nào',
+          title: t('adminDashboard.unassignedManagers'),
+          value: formatCount(stats.users?.unassignedManagers, locale),
         },
       ],
     },
     {
-      title: 'Phòng thí nghiệm',
+      title: t('adminDashboard.labs'),
+      icon: FlaskConical,
+      to: '/admin/labs',
       items: [
         {
-          title: 'Tổng số PTN',
-          value: formatCount(stats.labs?.total),
-          description: 'Toàn bộ phòng thí nghiệm trong hệ thống',
+          title: t('adminDashboard.labTotal'),
+          value: formatCount(stats.labs?.total, locale),
         },
         {
-          title: 'PTN đang hoạt động',
-          value: formatCount(stats.labs?.active),
-          description: 'Phòng thí nghiệm sẵn sàng vận hành',
+          title: t('adminDashboard.activeLabs'),
+          value: formatCount(stats.labs?.active, locale),
         },
         {
-          title: 'PTN tạm ngừng',
-          value: formatCount(stats.labs?.inactive),
-          description: 'Phòng thí nghiệm đang ngừng hoạt động',
+          title: t('adminDashboard.inactiveLabs'),
+          value: formatCount(stats.labs?.inactive, locale),
         },
         {
-          title: 'PTN chưa có manager',
-          value: formatCount(stats.labs?.withoutManager),
-          description: 'Phòng chưa được phân công quản lý',
+          title: t('adminDashboard.labsWithoutManager'),
+          value: formatCount(stats.labs?.withoutManager, locale),
         },
       ],
     },
     {
-      title: 'Vận hành',
+      title: t('adminDashboard.operations'),
+      icon: Activity,
       items: [
         {
-          title: 'Hồ sơ ứng tuyển chờ duyệt',
-          value: formatCount(stats.operations?.pendingApplications),
-          description: 'Hồ sơ đang chờ quản lý PTN duyệt',
+          title: t('adminDashboard.pendingApplications'),
+          value: formatCount(stats.operations?.pendingApplications, locale),
         },
         {
-          title: 'Ca sử dụng hôm nay',
-          value: formatCount(stats.operations?.todaySlots),
-          description: 'Ca sử dụng bắt đầu trong ngày',
+          title: t('adminDashboard.todaySlots'),
+          value: formatCount(stats.operations?.todaySlots, locale),
         },
         {
-          title: 'Booking hôm nay',
-          value: formatCount(stats.operations?.todayBookings),
-          description: 'Lượt đặt phòng diễn ra trong ngày',
+          title: t('adminDashboard.todayBookings'),
+          value: formatCount(stats.operations?.todayBookings, locale),
         },
         {
-          title: 'Khiếu nại chờ xử lý',
-          value: formatCount(stats.operations?.pendingComplaints),
-          description: 'Khiếu nại đang chờ quản lý xử lý',
+          title: t('adminDashboard.pendingComplaints'),
+          value: formatCount(stats.operations?.pendingComplaints, locale),
         },
         {
-          title: 'Nhiệm vụ vệ sinh chờ hoàn thành',
-          value: formatCount(stats.operations?.pendingCleaningTasks),
-          description: 'Nhiệm vụ chưa hoàn tất',
+          title: t('adminDashboard.pendingCleaningTasks'),
+          value: formatCount(stats.operations?.pendingCleaningTasks, locale),
         },
       ],
     },
     {
-      title: 'Nghiên cứu khoa học',
+      title: t('adminDashboard.research'),
+      icon: ClipboardList,
       items: [
         {
-          title: 'Đề tài đang thực hiện',
-          value: formatCount(stats.research?.activeProjects),
-          description: 'Đề tài đang ở trạng thái triển khai',
+          title: t('adminDashboard.activeProjects'),
+          value: formatCount(stats.research?.activeProjects, locale),
         },
         {
-          title: 'Nhóm nghiên cứu đang hoạt động',
-          value: formatCount(stats.research?.activeGroups),
-          description: 'Nhóm nghiên cứu còn hoạt động',
+          title: t('adminDashboard.activeResearchGroups'),
+          value: formatCount(stats.research?.activeGroups, locale),
         },
         {
-          title: 'Báo cáo chờ duyệt',
-          value: formatCount(stats.research?.pendingReports),
-          description: 'Báo cáo chờ quản lý PTN duyệt',
+          title: t('adminDashboard.pendingReports'),
+          value: formatCount(stats.research?.pendingReports, locale),
         },
         {
-          title: 'Sản phẩm đã nộp',
-          value: formatCount(stats.research?.submittedProducts),
-          description: 'Sản phẩm nghiên cứu đã được nộp',
+          title: t('adminDashboard.submittedProducts'),
+          value: formatCount(stats.research?.submittedProducts, locale),
         },
         {
-          title: 'Điểm đánh giá trung bình',
-          value: formatAverageScore(stats.research?.averageEvaluationScore),
+          title: t('adminDashboard.averageScore'),
+          value: formatAverageScore(stats.research?.averageEvaluationScore, locale, t),
           suffix:
             typeof stats.research?.averageEvaluationScore === 'number' &&
             Number.isFinite(stats.research.averageEvaluationScore)
-              ? 'điểm'
+              ? t('adminDashboard.point')
               : undefined,
-          description: 'Điểm trung bình từ các đánh giá đã ghi nhận',
         },
       ],
     },
@@ -185,78 +179,96 @@ function buildSections(stats: AdminDashboardStats): StatSection[] {
 }
 
 export function AdminDashboardPage() {
+  const { locale, t } = useI18n();
   const { data: stats, isError, isLoading, refetch } = useAdminDashboardStats();
-  const sections = useMemo(() => (stats ? buildSections(stats) : []), [stats]);
-
-  if (isLoading) {
-    return (
-      <section className="rounded-lg border border-slate-800 bg-slate-900 p-6 shadow-sm">
-        <DashboardHeader />
-        <p className="mt-6 text-sm text-slate-300">Đang tải dữ liệu tổng quan...</p>
-        <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          {Array.from({ length: 8 }).map((_, index) => (
-            <AdminStatCard key={index} loading title="Đang tải" value={0} />
-          ))}
-        </div>
-      </section>
-    );
-  }
-
-  if (isError) {
-    return (
-      <section className="rounded-lg border border-slate-800 bg-slate-900 p-6 shadow-sm">
-        <DashboardHeader />
-        <ErrorState
-          className="mt-6 border-red-900/70 bg-red-950/40 text-red-200"
-          onRetry={() => void refetch()}
-        >
-          Không thể tải dữ liệu dashboard.
-        </ErrorState>
-      </section>
-    );
-  }
-
-  if (!hasAnyDashboardData(stats)) {
-    return (
-      <section className="rounded-lg border border-slate-800 bg-slate-900 p-6 shadow-sm">
-        <DashboardHeader />
-        <EmptyState className="mt-6 border-slate-700 bg-slate-800 text-slate-300">
-          Chưa có dữ liệu thống kê.
-        </EmptyState>
-      </section>
-    );
-  }
+  const sections = useMemo(() => (stats ? buildSections(stats, locale, t) : []), [locale, stats, t]);
+  const quickActions = [
+    { icon: UsersRound, label: t('nav.users'), to: '/admin/users' },
+    { icon: FlaskConical, label: t('nav.labsAdmin'), to: '/admin/labs' },
+    { icon: Activity, label: t('nav.adminOperations'), to: '/admin/operational-logs' },
+  ];
 
   return (
-    <section className="rounded-lg border border-slate-800 bg-slate-900 p-6 shadow-sm">
-      <DashboardHeader />
-      <div className="mt-8 space-y-8">
-        {sections.map((section) => (
-          <section key={section.title}>
-            <h3 className="text-base font-semibold text-white">{section.title}</h3>
-            <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-5">
-              {section.items.map((item) => (
-                <AdminStatCard
-                  key={item.title}
-                  title={item.title}
-                  value={item.value}
-                  description={item.description}
-                  suffix={item.suffix}
-                />
-              ))}
-            </div>
-          </section>
+    <section className="mx-auto max-w-7xl space-y-7">
+      <DashboardHeader t={t} />
+
+      <nav aria-label={t('dashboard.quickAccess')} className="grid gap-3 sm:grid-cols-3">
+        {quickActions.map(({ icon: Icon, label, to }) => (
+          <Link className="app-action-card flex min-h-16 items-center gap-3 px-4 py-3 text-sm font-semibold" key={to} to={to}>
+            <span className="app-icon-badge flex h-10 w-10 shrink-0 items-center justify-center rounded-xl">
+              <Icon aria-hidden="true" className="h-5 w-5" />
+            </span>
+            <span className="min-w-0 flex-1 truncate">{label}</span>
+            <ArrowRight aria-hidden="true" className="h-4 w-4 shrink-0 opacity-70" />
+          </Link>
         ))}
-      </div>
+      </nav>
+
+      {isLoading ? (
+        <section aria-live="polite" className="space-y-3">
+          <p className="text-sm font-medium text-slate-600 dark:text-slate-300">{t('adminDashboard.loading')}</p>
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            {Array.from({ length: 8 }).map((_, index) => (
+              <AdminStatCard key={index} loading title={t('common.loading')} value={0} />
+            ))}
+          </div>
+        </section>
+      ) : isError ? (
+        <ErrorState className="app-surface-elevated" onRetry={() => void refetch()}>
+          {t('adminDashboard.loadError')}
+        </ErrorState>
+      ) : !hasAnyDashboardData(stats) ? (
+        <EmptyState className="app-surface-elevated">{t('adminDashboard.empty')}</EmptyState>
+      ) : (
+        <div className="grid gap-5 xl:grid-cols-2">
+          {sections.map((section) => {
+            const Icon = section.icon;
+
+            return (
+              <section className="app-surface rounded-2xl p-4 sm:p-5" key={section.title}>
+                <div className="flex min-w-0 items-center justify-between gap-3">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <span className="app-icon-badge flex h-10 w-10 shrink-0 items-center justify-center rounded-xl">
+                      <Icon aria-hidden="true" className="h-5 w-5" />
+                    </span>
+                    <h2 className="truncate text-base font-semibold text-slate-950 dark:text-white">{section.title}</h2>
+                  </div>
+                  {section.to ? (
+                    <Link
+                      aria-label={`${t('dashboard.viewAll')}: ${section.title}`}
+                      className="app-action-card flex h-11 w-11 shrink-0 items-center justify-center"
+                      to={section.to}
+                    >
+                      <ArrowRight aria-hidden="true" className="h-4 w-4" />
+                    </Link>
+                  ) : null}
+                </div>
+                <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                  {section.items.map((item) => (
+                    <AdminStatCard
+                      key={item.title}
+                      title={item.title}
+                      value={item.value}
+                      suffix={item.suffix}
+                    />
+                  ))}
+                </div>
+              </section>
+            );
+          })}
+        </div>
+      )}
     </section>
   );
 }
 
-function DashboardHeader() {
+function DashboardHeader({ t }: { t: (key: string, fallback?: string) => string }) {
   return (
-    <header>
-      <h2 className="text-xl font-semibold text-white">Tổng quan quản trị</h2>
-      <p className="mt-2 text-sm text-slate-300">Theo dõi trạng thái vận hành toàn hệ thống.</p>
+    <header className="flex items-end justify-between gap-4">
+      <div>
+        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-600 dark:text-slate-300">{t('layout.adminRole')}</p>
+        <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-950 dark:text-white sm:text-3xl">{t('adminDashboard.title')}</h1>
+      </div>
     </header>
   );
 }

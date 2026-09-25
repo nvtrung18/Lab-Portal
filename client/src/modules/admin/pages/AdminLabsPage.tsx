@@ -1,8 +1,11 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { Button, EmptyState, ErrorState, LoadingState } from '../../../shared/components';
 import { LAB_MANAGER } from '../../../shared/constants/roles';
+import { useI18n } from '../../../shared/i18n';
+import { getCurrentCoordinates } from '../../../shared/utils';
 import type { LabResponse } from '../../lab/api';
+import { LabCheckinPolicyCard } from '../../lab/components';
 import { isLabActive, isLabInactive } from '../../lab/utils/labStatus';
 import type { AdminUser } from '../api';
 import {
@@ -27,16 +30,16 @@ function statusClassName(status: string) {
   return 'bg-slate-800 text-slate-200 ring-slate-700';
 }
 
-function formatLabStatus(status: string) {
-  const labels: Record<string, string> = {
-    AVAILABLE: 'Đang hoạt động',
-    ACTIVE: 'Đang hoạt động',
-    MAINTENANCE: 'Đang bảo trì',
-    INACTIVE: 'Ngừng hoạt động',
-    ARCHIVED: 'Đã lưu trữ',
-    CLOSED: 'Đã đóng',
+function formatLabStatus(status: string, t: (key: string, fallback?: string) => string) {
+  const keys: Record<string, string> = {
+    AVAILABLE: 'adminLabs.active',
+    ACTIVE: 'adminLabs.active',
+    MAINTENANCE: 'adminLabs.maintenance',
+    INACTIVE: 'adminLabs.inactive',
+    ARCHIVED: 'adminLabs.archived',
+    CLOSED: 'adminLabs.closed',
   };
-  return labels[status] ?? status;
+  return t(keys[status] ?? '', status);
 }
 
 const labStatusFilterOptions = ['', 'ACTIVE', 'INACTIVE'];
@@ -73,6 +76,7 @@ interface AssignManagerModalProps {
 }
 
 function AssignManagerModal({ lab, onClose }: AssignManagerModalProps) {
+  const { t } = useI18n();
   const assignMutation = useAssignLabManager();
   const { data: managerOptions = [] } = useAssignableManagers();
   const [managerId, setManagerId] = useState('');
@@ -96,11 +100,8 @@ function AssignManagerModal({ lab, onClose }: AssignManagerModalProps) {
       <div className="max-h-[calc(100dvh-1rem)] w-full max-w-lg overflow-y-auto rounded-lg border border-slate-800 bg-slate-900 p-4 shadow-xl sm:p-6">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h3 className="text-lg font-semibold text-white">Gán quản lý PTN</h3>
+            <h3 className="text-lg font-semibold text-white">{t('adminLabs.assignTitle')}</h3>
             <p className="mt-1 text-sm text-slate-400">{lab.labName}</p>
-            <p className="mt-1 text-xs text-slate-500">
-              Quản lý hiện tại: {lab.manager?.fullName || lab.manager?.email || 'Chưa gán'}
-            </p>
           </div>
           <Button
             size="sm"
@@ -108,17 +109,17 @@ function AssignManagerModal({ lab, onClose }: AssignManagerModalProps) {
             disabled={assignMutation.isPending}
             onClick={onClose}
           >
-            Đóng
+            {t('common.close')}
           </Button>
         </div>
 
         <div className="mt-6">
           <label className="block text-sm font-medium text-slate-300" htmlFor="managerId">
-            Người quản lý
+            {t('adminLabs.manager')}
           </label>
           {managerOptions.length === 0 ? (
             <div className="mt-2 rounded-md border border-dashed border-slate-700 p-4 text-sm text-slate-400">
-              Không có quản lý PTN nào khả dụng.
+              {t('adminLabs.noManagerAvailable')}
             </div>
           ) : (
             <select
@@ -128,7 +129,7 @@ function AssignManagerModal({ lab, onClose }: AssignManagerModalProps) {
               disabled={assignMutation.isPending}
               onChange={(event) => setManagerId(event.target.value)}
             >
-              <option value="" className="bg-slate-900 text-slate-100">Chọn người quản lý</option>
+              <option value="" className="bg-slate-900 text-slate-100">{t('adminLabs.chooseManager')}</option>
               {managerOptions.map((user) => (
                 <option key={user.id} value={user.id} className="bg-slate-900 text-slate-100">
                   {user.fullName || user.email}
@@ -145,17 +146,17 @@ function AssignManagerModal({ lab, onClose }: AssignManagerModalProps) {
             disabled={assignMutation.isPending}
             onClick={onClose}
           >
-            Hủy
+            {t('common.cancel')}
           </Button>
           <Button
             size="sm"
             variant="primary"
             disabled={assignMutation.isPending || !managerId}
             loading={assignMutation.isPending}
-            loadingText="Đang gán..."
+            loadingText={t('common.loading')}
             onClick={() => void handleSubmit()}
           >
-            Xác nhận
+            {t('common.confirm')}
           </Button>
         </div>
       </div>
@@ -169,6 +170,7 @@ interface AddLabModalProps {
 }
 
 function AddLabModal({ open, onClose }: AddLabModalProps) {
+  const { t } = useI18n();
   const createMutation = useCreateLabWithManager();
   const managerOptions = useAvailableManagers();
   const [form, setForm] = useState({
@@ -178,17 +180,61 @@ function AddLabModal({ open, onClose }: AddLabModalProps) {
     capacity: '1',
     location: '',
     managerId: '',
+    checkinLatitude: '',
+    checkinLongitude: '',
   });
-
-  if (!open) {
-    return null;
-  }
+  const [isLocating, setIsLocating] = useState(false);
+  const [locationError, setLocationError] = useState('');
+  const autoLocationAttempted = useRef(false);
 
   const updateField = (field: keyof typeof form, value: string) => {
     setForm((current) => ({ ...current, [field]: value }));
   };
 
+  const handleUseCurrentLocation = useCallback(async () => {
+    setLocationError('');
+    setIsLocating(true);
+    try {
+      const coordinates = await getCurrentCoordinates();
+      setForm((current) => ({
+        ...current,
+        checkinLatitude: String(coordinates.latitude),
+        checkinLongitude: String(coordinates.longitude),
+      }));
+    } catch (error) {
+      setLocationError(error instanceof Error ? error.message : t('common.gpsUnavailable'));
+    } finally {
+      setIsLocating(false);
+    }
+  }, [t]);
+
+  useEffect(() => {
+    if (!open) {
+      autoLocationAttempted.current = false;
+      return;
+    }
+    if (autoLocationAttempted.current || form.checkinLatitude || form.checkinLongitude) return;
+    autoLocationAttempted.current = true;
+    void handleUseCurrentLocation();
+  }, [form.checkinLatitude, form.checkinLongitude, handleUseCurrentLocation, open]);
+
+  if (!open) {
+    return null;
+  }
+
   const handleSubmit = async () => {
+    const latitude = form.checkinLatitude.trim() ? Number(form.checkinLatitude) : null;
+    const longitude = form.checkinLongitude.trim() ? Number(form.checkinLongitude) : null;
+    const hasPartialCoordinates = (latitude == null) !== (longitude == null);
+    const hasInvalidCoordinates = latitude != null
+      && longitude != null
+      && (!Number.isFinite(latitude) || latitude < -90 || latitude > 90
+        || !Number.isFinite(longitude) || longitude < -180 || longitude > 180);
+    if (latitude == null || longitude == null || hasPartialCoordinates || hasInvalidCoordinates) {
+      setLocationError(t('adminLabs.gpsRequired'));
+      return;
+    }
+
     await createMutation.mutateAsync({
       labName: form.labName.trim(),
       department: form.department.trim() || null,
@@ -196,6 +242,8 @@ function AddLabModal({ open, onClose }: AddLabModalProps) {
       capacity: Number(form.capacity),
       location: form.location.trim(),
       managerId: form.managerId ? Number(form.managerId) : null,
+      checkinLatitude: latitude,
+      checkinLongitude: longitude,
     });
     setForm({
       labName: '',
@@ -204,22 +252,30 @@ function AddLabModal({ open, onClose }: AddLabModalProps) {
       capacity: '1',
       location: '',
       managerId: '',
+      checkinLatitude: '',
+      checkinLongitude: '',
     });
+    setLocationError('');
     onClose();
   };
 
+  const latitude = form.checkinLatitude.trim() ? Number(form.checkinLatitude) : null;
+  const longitude = form.checkinLongitude.trim() ? Number(form.checkinLongitude) : null;
+  const coordinatesValid = latitude != null && longitude != null
+    && Number.isFinite(latitude) && latitude >= -90 && latitude <= 90
+    && Number.isFinite(longitude) && longitude >= -180 && longitude <= 180;
   const canSubmit =
     form.labName.trim().length >= 3 &&
     form.location.trim().length >= 3 &&
-    Number(form.capacity) >= 1;
+    Number(form.capacity) >= 1 &&
+    coordinatesValid;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-slate-950/70 p-2 sm:p-4">
       <div className="max-h-[calc(100dvh-1rem)] w-full max-w-2xl overflow-y-auto rounded-lg border border-slate-800 bg-slate-900 p-4 shadow-xl sm:p-6">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h3 className="text-lg font-semibold text-white">Thêm phòng thí nghiệm</h3>
-            <p className="mt-1 text-sm text-slate-400">Tạo PTN mới và phân công quản lý nếu cần.</p>
+            <h3 className="text-lg font-semibold text-white">{t('adminLabs.addTitle')}</h3>
           </div>
           <Button
             size="sm"
@@ -227,13 +283,13 @@ function AddLabModal({ open, onClose }: AddLabModalProps) {
             disabled={createMutation.isPending}
             onClick={onClose}
           >
-            Đóng
+            {t('common.close')}
           </Button>
         </div>
 
         <div className="mt-6 grid gap-4 sm:grid-cols-2">
           <label className="space-y-2">
-            <span className="text-sm font-medium text-slate-300">Tên PTN</span>
+            <span className="text-sm font-medium text-slate-300">{t('adminLabs.labName')}</span>
             <input
               className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none focus:border-white"
               value={form.labName}
@@ -241,7 +297,7 @@ function AddLabModal({ open, onClose }: AddLabModalProps) {
             />
           </label>
           <label className="space-y-2">
-            <span className="text-sm font-medium text-slate-300">Khoa/Bộ môn</span>
+            <span className="text-sm font-medium text-slate-300">{t('adminLabs.department')}</span>
             <input
               className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none focus:border-white"
               value={form.department}
@@ -249,7 +305,7 @@ function AddLabModal({ open, onClose }: AddLabModalProps) {
             />
           </label>
           <label className="space-y-2">
-            <span className="text-sm font-medium text-slate-300">Sức chứa</span>
+            <span className="text-sm font-medium text-slate-300">{t('adminLabs.capacity')}</span>
             <input
               className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none focus:border-white"
               min={1}
@@ -259,15 +315,51 @@ function AddLabModal({ open, onClose }: AddLabModalProps) {
             />
           </label>
           <label className="space-y-2">
-            <span className="text-sm font-medium text-slate-300">Vị trí</span>
+            <span className="text-sm font-medium text-slate-300">{t('adminLabs.location')}</span>
             <input
               className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none focus:border-white"
               value={form.location}
               onChange={(event) => updateField('location', event.target.value)}
             />
           </label>
+          <div className="space-y-3 rounded-md border border-slate-700 bg-slate-950/60 p-3 sm:col-span-2">
+            <div>
+              <p className="text-sm font-medium text-slate-300">{t('adminLabs.coordinates')}</p>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <label className="space-y-1">
+                <span className="text-xs font-medium text-slate-400">{t('adminLabs.latitude')}</span>
+                <input
+                  className="w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-white outline-none focus:border-white"
+                  inputMode="decimal"
+                  readOnly
+                  value={form.checkinLatitude}
+                />
+              </label>
+              <label className="space-y-1">
+                <span className="text-xs font-medium text-slate-400">{t('adminLabs.longitude')}</span>
+                <input
+                  className="w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-white outline-none focus:border-white"
+                  inputMode="decimal"
+                  readOnly
+                  value={form.checkinLongitude}
+                />
+              </label>
+            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={isLocating || createMutation.isPending}
+              loading={isLocating}
+              loadingText={t('adminLabs.gettingLocation')}
+              onClick={() => void handleUseCurrentLocation()}
+            >
+              {t('adminLabs.currentLocation')}
+            </Button>
+            {locationError ? <p className="text-sm text-red-300" role="alert">{locationError}</p> : null}
+          </div>
           <label className="space-y-2 sm:col-span-2">
-            <span className="text-sm font-medium text-slate-300">Mô tả</span>
+            <span className="text-sm font-medium text-slate-300">{t('adminLabs.description')}</span>
             <textarea
               className="min-h-24 w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none focus:border-white"
               value={form.description}
@@ -275,10 +367,10 @@ function AddLabModal({ open, onClose }: AddLabModalProps) {
             />
           </label>
           <label className="space-y-2 sm:col-span-2">
-            <span className="text-sm font-medium text-slate-300">Quản lý PTN (không bắt buộc)</span>
+            <span className="text-sm font-medium text-slate-300">{t('adminLabs.optionalManager')}</span>
             {managerOptions.length === 0 ? (
               <div className="rounded-md border border-dashed border-slate-700 p-4 text-sm text-slate-400">
-                Không có quản lý PTN khả dụng.
+                {t('adminLabs.noManagerAvailableForAssignment')}
               </div>
             ) : (
               <select
@@ -286,7 +378,7 @@ function AddLabModal({ open, onClose }: AddLabModalProps) {
                 value={form.managerId}
                 onChange={(event) => updateField('managerId', event.target.value)}
               >
-                <option value="" className="bg-slate-900 text-slate-100">Chưa phân công quản lý</option>
+                <option value="" className="bg-slate-900 text-slate-100">{t('adminLabs.notAssigned')}</option>
                 {managerOptions.map((user) => (
                   <option key={user.id} value={user.id} className="bg-slate-900 text-slate-100">
                     {user.fullName || user.email}
@@ -304,17 +396,17 @@ function AddLabModal({ open, onClose }: AddLabModalProps) {
             disabled={createMutation.isPending}
             onClick={onClose}
           >
-            Hủy
+            {t('common.cancel')}
           </Button>
           <Button
             size="sm"
             variant="primary"
             disabled={createMutation.isPending || !canSubmit}
             loading={createMutation.isPending}
-            loadingText="Đang tạo..."
+            loadingText={t('adminLabs.creating')}
             onClick={() => void handleSubmit()}
           >
-            Tạo PTN
+            {t('adminLabs.create')}
           </Button>
         </div>
       </div>
@@ -328,20 +420,21 @@ interface LabDetailModalProps {
 }
 
 function LabDetailModal({ lab, onClose }: LabDetailModalProps) {
+  const { locale, t } = useI18n();
   if (!lab) {
     return null;
   }
 
   const details = [
-    { label: 'Tên PTN', value: lab.labName },
-    { label: 'Khoa/Bộ môn', value: lab.department || 'Chưa cập nhật' },
-    { label: 'Vị trí', value: lab.location || 'Chưa cập nhật' },
-    { label: 'Sức chứa', value: lab.capacity != null ? String(lab.capacity) : 'Chưa cập nhật' },
-    { label: 'Quản lý', value: lab.manager?.fullName || lab.manager?.email || 'Chưa gán' },
-    { label: 'Trạng thái', value: formatLabStatus(lab.status) },
-    { label: 'Mô tả', value: lab.description || 'Chưa có mô tả' },
-    { label: 'Ngày tạo', value: lab.createdAt ? new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date(lab.createdAt)) : 'Chưa cập nhật' },
-    { label: 'Cập nhật lần cuối', value: lab.updatedAt ? new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date(lab.updatedAt)) : 'Chưa cập nhật' },
+    { label: t('adminLabs.labName'), value: lab.labName },
+    { label: t('adminLabs.department'), value: lab.department || t('adminLabs.noUpdated') },
+    { label: t('adminLabs.location'), value: lab.location || t('adminLabs.noUpdated') },
+    { label: t('adminLabs.capacity'), value: lab.capacity != null ? String(lab.capacity) : t('adminLabs.noUpdated') },
+    { label: t('adminLabs.manager'), value: lab.manager?.fullName || lab.manager?.email || t('adminLabs.notAssigned') },
+    { label: t('adminLabs.tableStatus'), value: formatLabStatus(lab.status, t) },
+    { label: t('adminLabs.description'), value: lab.description || t('adminLabs.noDescription') },
+    { label: t('adminLabs.createdAt'), value: lab.createdAt ? new Intl.DateTimeFormat(locale === 'en' ? 'en-US' : 'vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date(lab.createdAt)) : t('adminLabs.noUpdated') },
+    { label: t('adminLabs.updatedAt'), value: lab.updatedAt ? new Intl.DateTimeFormat(locale === 'en' ? 'en-US' : 'vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date(lab.updatedAt)) : t('adminLabs.noUpdated') },
   ];
 
   return (
@@ -349,7 +442,7 @@ function LabDetailModal({ lab, onClose }: LabDetailModalProps) {
       <div className="max-h-[calc(100dvh-1rem)] w-full max-w-lg overflow-y-auto rounded-lg border border-slate-800 bg-slate-900 p-4 shadow-xl sm:p-6">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h3 className="text-lg font-semibold text-white">Chi tiết phòng thí nghiệm</h3>
+            <h3 className="text-lg font-semibold text-white">{t('adminLabs.detailTitle')}</h3>
             <p className="mt-1 text-sm text-slate-400">{lab.labName}</p>
           </div>
           <Button
@@ -357,7 +450,7 @@ function LabDetailModal({ lab, onClose }: LabDetailModalProps) {
             variant="outline"
             onClick={onClose}
           >
-            Đóng
+            {t('common.close')}
           </Button>
         </div>
 
@@ -372,7 +465,7 @@ function LabDetailModal({ lab, onClose }: LabDetailModalProps) {
 
         {!lab.manager ? (
           <div className="mt-4 rounded-md border border-amber-800 bg-amber-950/50 px-3 py-2 text-xs font-medium text-amber-300">
-            PTN này chưa được phân công quản lý.
+            {t('adminLabs.noManagerAssigned')}
           </div>
         ) : null}
 
@@ -382,9 +475,35 @@ function LabDetailModal({ lab, onClose }: LabDetailModalProps) {
             variant="outline"
             onClick={onClose}
           >
-            Đóng
+            {t('common.close')}
           </Button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+interface LabCheckinPolicyModalProps {
+  lab: LabResponse | null;
+  onClose: () => void;
+}
+
+function LabCheckinPolicyModal({ lab, onClose }: LabCheckinPolicyModalProps) {
+  const { t } = useI18n();
+  if (!lab) {
+    return null;
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-slate-950/70 p-2 sm:p-4">
+      <div className="max-h-[calc(100dvh-1rem)] w-full max-w-5xl overflow-y-auto rounded-lg border border-slate-800 bg-slate-100 p-3 shadow-xl sm:p-5">
+        <div className="mb-3 flex items-start justify-between gap-4 rounded-lg bg-slate-900 p-4">
+          <div>
+            <h3 className="text-lg font-semibold text-white">{t('adminLabs.checkinPolicyTitle')}</h3>
+          </div>
+          <Button size="sm" variant="outline" onClick={onClose}>{t('common.close')}</Button>
+        </div>
+        <LabCheckinPolicyCard labId={lab.id} />
       </div>
     </div>
   );
@@ -399,6 +518,7 @@ interface ConfirmStatusModalProps {
 }
 
 function ConfirmStatusModal({ lab, action, isLoading, onClose, onConfirm }: ConfirmStatusModalProps) {
+  const { t } = useI18n();
   if (!lab || !action) {
     return null;
   }
@@ -409,12 +529,12 @@ function ConfirmStatusModal({ lab, action, isLoading, onClose, onConfirm }: Conf
     <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-slate-950/70 p-2 sm:p-4">
       <div className="w-full max-w-md rounded-lg border border-slate-800 bg-slate-900 p-6 shadow-xl">
         <h3 className="text-lg font-semibold text-white">
-          {isDeactivate ? 'Xác nhận ngừng hoạt động' : 'Xác nhận khôi phục hoạt động'}
+          {isDeactivate ? t('adminLabs.confirmDeactivateTitle') : t('adminLabs.confirmRestoreTitle')}
         </h3>
         <p className="mt-3 text-sm text-slate-300">
           {isDeactivate
-            ? `Bạn có chắc muốn ngừng hoạt động PTN "${lab.labName}"? PTN sẽ không còn hiển thị cho sinh viên ứng tuyển và không thể tạo lịch sử dụng mới, nhưng dữ liệu lịch sử vẫn được giữ lại.`
-            : `Bạn có chắc muốn khôi phục hoạt động PTN "${lab.labName}"?`}
+            ? t('adminLabs.confirmDeactivateMessage', undefined, { lab: lab.labName })
+            : t('adminLabs.confirmRestoreMessage', undefined, { lab: lab.labName })}
         </p>
         <div className="mt-6 flex justify-end gap-3">
           <Button
@@ -423,17 +543,17 @@ function ConfirmStatusModal({ lab, action, isLoading, onClose, onConfirm }: Conf
             disabled={isLoading}
             onClick={onClose}
           >
-            Hủy
+            {t('common.cancel')}
           </Button>
           <Button
             size="sm"
             variant={isDeactivate ? 'danger' : 'primary'}
             disabled={isLoading}
             loading={isLoading}
-            loadingText="Đang xử lý..."
+            loadingText={t('adminLabs.processing')}
             onClick={onConfirm}
           >
-            Xác nhận
+            {t('common.confirm')}
           </Button>
         </div>
       </div>
@@ -444,6 +564,7 @@ function ConfirmStatusModal({ lab, action, isLoading, onClose, onConfirm }: Conf
 // --- Main Page ---
 
 export function AdminLabsPage() {
+  const { t } = useI18n();
   const { data: labs = [], isLoading, isError, refetch } = useAdminLabs();
   const { data: users = [] } = useAdminUsers();
   const updateStatusMutation = useUpdateLabStatus();
@@ -452,6 +573,7 @@ export function AdminLabsPage() {
   const [managerFilter, setManagerFilter] = useState('');
   const [selectedLab, setSelectedLab] = useState<LabResponse | null>(null);
   const [detailLab, setDetailLab] = useState<LabResponse | null>(null);
+  const [policyLab, setPolicyLab] = useState<LabResponse | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [confirmStatus, setConfirmStatus] = useState<{
     lab: LabResponse;
@@ -524,19 +646,19 @@ export function AdminLabsPage() {
       {/* Warning banners */}
       {labsWithoutManager.length > 0 ? (
         <div className="rounded-lg border border-amber-800 bg-amber-950/30 px-4 py-3 text-sm text-amber-300">
-          <span className="font-semibold">Cảnh báo:</span>{' '}
+          <span className="font-semibold">{t('adminLabs.alert')}</span>{' '}
           {labsWithoutManager.length === 1
-            ? `PTN "${labsWithoutManager[0].labName}" đang hoạt động nhưng chưa có quản lý.`
-            : `${labsWithoutManager.length} PTN đang hoạt động chưa có quản lý: ${labsWithoutManager.map((l) => `"${l.labName}"`).join(', ')}.`}
+            ? t('adminLabs.activeWithoutManager', undefined, { lab: labsWithoutManager[0].labName })
+            : t('adminLabs.activeWithoutManagers', undefined, { count: labsWithoutManager.length, labs: labsWithoutManager.map((l) => `"${l.labName}"`).join(', ') })}
         </div>
       ) : null}
 
       {unassignedManagers.length > 0 ? (
         <div className="rounded-lg border border-blue-800 bg-blue-950/30 px-4 py-3 text-sm text-blue-300">
-          <span className="font-semibold">Thông tin:</span>{' '}
+          <span className="font-semibold">{t('adminLabs.info')}</span>{' '}
           {unassignedManagers.length === 1
-            ? `Quản lý "${unassignedManagers[0].fullName || unassignedManagers[0].email}" chưa được gán PTN.`
-            : `${unassignedManagers.length} quản lý chưa được gán PTN: ${unassignedManagers.map((u) => `"${u.fullName || u.email}"`).join(', ')}.`}
+            ? t('adminLabs.unassignedManager', undefined, { manager: unassignedManagers[0].fullName || unassignedManagers[0].email })
+            : t('adminLabs.unassignedManagers', undefined, { count: unassignedManagers.length, managers: unassignedManagers.map((u) => `"${u.fullName || u.email}"`).join(', ') })}
         </div>
       ) : null}
 
@@ -544,13 +666,12 @@ export function AdminLabsPage() {
       <div className="rounded-lg border border-slate-800 bg-slate-900 p-6 shadow-sm">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h2 className="text-xl font-semibold text-white">Phòng thí nghiệm</h2>
-            <p className="mt-1 text-sm text-slate-400">Quản lý toàn bộ PTN và phân công quản lý.</p>
+            <h2 className="text-xl font-semibold text-white">{t('adminLabs.title')}</h2>
           </div>
           <div className="flex gap-3">
             <input
               className="rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none placeholder:text-slate-500 focus:border-white"
-              placeholder="Tìm theo tên PTN"
+              placeholder={t('adminLabs.searchPlaceholder')}
               value={search}
               onChange={(event) => setSearch(event.target.value)}
             />
@@ -562,10 +683,10 @@ export function AdminLabsPage() {
               {labStatusFilterOptions.map((status) => (
                 <option key={status || 'all'} value={status} className="bg-slate-900 text-slate-100">
                   {status === 'ACTIVE'
-                    ? 'Đang hoạt động'
+                    ? t('adminLabs.active')
                     : status === 'INACTIVE'
-                      ? 'Ngừng hoạt động'
-                      : 'Tất cả trạng thái'}
+                      ? t('adminLabs.inactive')
+                      : t('adminLabs.allStatuses')}
                 </option>
               ))}
             </select>
@@ -574,15 +695,15 @@ export function AdminLabsPage() {
               value={managerFilter}
               onChange={(event) => setManagerFilter(event.target.value)}
             >
-              <option value="" className="bg-slate-900 text-slate-100">Tất cả phân công</option>
-              <option value="NO_MANAGER" className="bg-slate-900 text-slate-100">Chưa có quản lý</option>
+              <option value="" className="bg-slate-900 text-slate-100">{t('adminLabs.allAssignments')}</option>
+              <option value="NO_MANAGER" className="bg-slate-900 text-slate-100">{t('adminLabs.noManager')}</option>
             </select>
             <Button
               size="sm"
               variant="primary"
               onClick={() => setIsAddModalOpen(true)}
             >
-              Thêm PTN
+              {t('adminLabs.add')}
             </Button>
           </div>
         </div>
@@ -594,31 +715,31 @@ export function AdminLabsPage() {
             <table className="w-full min-w-[760px] divide-y divide-slate-800 text-sm">
               <thead>
                 <tr className="text-left text-xs font-semibold uppercase text-slate-400">
-                  <th className="px-3 py-3">Tên PTN</th>
-                  <th className="px-3 py-3">Khoa/Bộ môn</th>
-                  <th className="px-3 py-3">Quản lý PTN</th>
-                  <th className="px-3 py-3">Sức chứa</th>
-                  <th className="px-3 py-3">Vị trí</th>
-                  <th className="px-3 py-3">Trạng thái</th>
-                  <th className="px-3 py-3 text-right">Thao tác</th>
+                  <th className="px-3 py-3">{t('adminLabs.tableName')}</th>
+                  <th className="px-3 py-3">{t('adminLabs.tableDepartment')}</th>
+                  <th className="px-3 py-3">{t('adminLabs.tableManager')}</th>
+                  <th className="px-3 py-3">{t('adminLabs.tableCapacity')}</th>
+                  <th className="px-3 py-3">{t('adminLabs.tableLocation')}</th>
+                  <th className="px-3 py-3">{t('adminLabs.tableStatus')}</th>
+                  <th className="px-3 py-3 text-right">{t('adminLabs.tableActions')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800">
                 {filteredLabs.map((lab) => (
                   <tr key={lab.id} className="transition-colors hover:bg-slate-950/30">
                     <td className="px-3 py-4 font-medium text-slate-100">{lab.labName}</td>
-                    <td className="px-3 py-4 text-slate-300">{lab.department || 'Chưa cập nhật'}</td>
+                    <td className="px-3 py-4 text-slate-300">{lab.department || t('adminLabs.noUpdated')}</td>
                     <td className="px-3 py-4">
                       {lab.manager ? (
                         <span className="text-slate-300">{lab.manager.fullName || lab.manager.email}</span>
                       ) : (
                         <span className="inline-flex items-center rounded-full bg-amber-950 px-2 py-0.5 text-xs font-medium text-amber-300 ring-1 ring-inset ring-amber-800">
-                          Chưa có quản lý
+                          {t('adminLabs.noManager')}
                         </span>
                       )}
                     </td>
-                    <td className="px-3 py-4 text-slate-300">{lab.capacity ?? 'Chưa cập nhật'}</td>
-                    <td className="px-3 py-4 text-slate-300">{lab.location || 'Chưa cập nhật'}</td>
+                    <td className="px-3 py-4 text-slate-300">{lab.capacity ?? t('adminLabs.noUpdated')}</td>
+                    <td className="px-3 py-4 text-slate-300">{lab.location || t('adminLabs.noUpdated')}</td>
                     <td className="px-3 py-4">
                       <span
                         className={[
@@ -626,7 +747,7 @@ export function AdminLabsPage() {
                           statusClassName(lab.status),
                         ].join(' ')}
                       >
-                        {formatLabStatus(lab.status)}
+                        {formatLabStatus(lab.status, t)}
                       </span>
                     </td>
                     <td className="px-3 py-4">
@@ -636,7 +757,14 @@ export function AdminLabsPage() {
                           variant="outline"
                           onClick={() => setDetailLab(lab)}
                         >
-                          Xem chi tiết
+                          {t('adminLabs.details')}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setPolicyLab(lab)}
+                        >
+                          Self-check-in
                         </Button>
                         {!lab.manager && (
                           <Button
@@ -644,7 +772,7 @@ export function AdminLabsPage() {
                             variant="primary"
                             onClick={() => setSelectedLab(lab)}
                           >
-                            Gán quản lý
+                            {t('adminLabs.assign')}
                           </Button>
                         )}
                         {isLabInactive(lab) ? (
@@ -654,7 +782,7 @@ export function AdminLabsPage() {
                             disabled={updateStatusMutation.isPending}
                             onClick={() => handleRestore(lab)}
                           >
-                            Khôi phục
+                            {t('adminLabs.restore')}
                           </Button>
                         ) : null}
                         {isLabActive(lab) || lab.status === 'MAINTENANCE' ? (
@@ -664,7 +792,7 @@ export function AdminLabsPage() {
                             disabled={updateStatusMutation.isPending}
                             onClick={() => handleDeactivate(lab)}
                           >
-                            Ngừng hoạt động
+                            {t('adminLabs.deactivate')}
                           </Button>
                         ) : null}
                       </div>
@@ -680,6 +808,7 @@ export function AdminLabsPage() {
       <AddLabModal open={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} />
       <AssignManagerModal lab={selectedLab} onClose={() => setSelectedLab(null)} />
       <LabDetailModal lab={detailLab} onClose={() => setDetailLab(null)} />
+      <LabCheckinPolicyModal lab={policyLab} onClose={() => setPolicyLab(null)} />
       <ConfirmStatusModal
         lab={confirmStatus?.lab ?? null}
         action={confirmStatus?.action ?? null}

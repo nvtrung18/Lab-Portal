@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import QRCode from 'qrcode';
 
 import { Button, Modal } from '../../../shared/components';
+import { useI18n } from '../../../shared/i18n';
 import type { BookingResponse, CheckinQrResponse } from '../api';
 
 interface CheckinQrModalProps {
@@ -28,6 +29,7 @@ export function CheckinQrModal({
   onRegenerate,
   onClose,
 }: CheckinQrModalProps) {
+  const { t } = useI18n();
   const [remainingSeconds, setRemainingSeconds] = useState(0);
   const [qrImageUrl, setQrImageUrl] = useState('');
 
@@ -84,43 +86,49 @@ export function CheckinQrModal({
       footer={(
         <>
           <Button disabled={isCreating} onClick={onClose} variant="outline">
-            Đóng
+            {t('common.close')}
           </Button>
           {onRegenerate ? (
-            <Button disabled={!expired && !rejected} loading={isCreating} loadingText="Đang gửi..." onClick={onRegenerate}>
-              Gửi lại yêu cầu
+            <Button disabled={!expired && !rejected} loading={isCreating} loadingText={t('checkin.sendingQrRequest')} onClick={onRegenerate}>
+              {t('checkin.resendQrRequest')}
             </Button>
           ) : null}
         </>
       )}
       onClose={onClose}
       size="sm"
-      title="Mã QR check-in"
+      title={t('checkin.qrTitle')}
     >
       <section className="text-center">
         <p className="mt-2 text-sm text-slate-600">
-          {pending ? 'Yêu cầu đã gửi tới quản lý PTN. Màn hình sẽ tự cập nhật khi được duyệt.' : rejected ? 'Quản lý PTN đã từ chối yêu cầu QR.' : 'Vui lòng đưa mã này cho quản lý PTN quét để xác nhận có mặt.'}
+          {pending ? t('checkin.qrPendingDescription') : rejected ? t('checkin.qrRejectedDescription') : t('checkin.qrApprovedDescription')}
         </p>
 
         <div className="mt-5 rounded-lg border border-slate-200 bg-slate-50 p-4">
           {qrImageUrl ? (
-            <img className="mx-auto h-auto w-full max-w-64 rounded bg-white p-2" src={qrImageUrl} alt="Mã QR check-in" />
+            <img className="mx-auto h-auto w-full max-w-64 rounded bg-white p-2" src={qrImageUrl} alt={t('checkin.qrAlt')} />
           ) : (
-            <div className="flex aspect-square items-center justify-center text-sm text-slate-500">Chưa có mã QR</div>
+            <div className="flex aspect-square items-center justify-center text-sm text-slate-500">{t('checkin.qrNotAvailable')}</div>
           )}
         </div>
 
         {qr?.token ? (
           <div className="mt-4 rounded-md bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-700">
-            Mã dự phòng: <span className="break-all">{qr.token}</span>
+            {t('checkin.fallbackCode')}: <span className="break-all">{qr.token}</span>
           </div>
         ) : null}
 
         <p className="mt-4 text-sm font-medium text-slate-700">
-          {pending ? 'Đang chờ duyệt.' : rejected ? 'Yêu cầu đã bị từ chối.' : expired ? 'Mã QR đã hết hạn.' : `Mã QR hết hạn sau ${remainingSeconds} giây.`}
+          {pending
+            ? t('checkin.qrPendingStatus')
+            : rejected
+              ? t('checkin.qrRejectedStatus')
+              : expired
+                ? t('checkin.qrExpired')
+                : t('checkin.qrExpiresIn', undefined, { seconds: remainingSeconds })}
         </p>
         <p className="mt-1 text-xs text-slate-500">
-          Đăng ký #{booking.id} - {booking.labName ?? 'PTN'}
+          {t('checkin.bookingLabel')} #{booking.id} - {booking.labName ?? t('lab.shortName')}
         </p>
 
       </section>

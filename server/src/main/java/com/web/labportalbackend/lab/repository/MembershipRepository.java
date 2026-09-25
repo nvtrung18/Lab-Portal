@@ -36,6 +36,8 @@ public interface MembershipRepository extends JpaRepository<Membership, Long> {
      */
     List<Membership> findByLaboratoryIdAndDeletedFalse(Long labId);
 
+    List<Membership> findByLaboratoryIdAndActiveTrueAndDeletedFalseOrderByCreatedAtAscIdAsc(Long labId);
+
     /**
      * Find all laboratory memberships for a user.
      */

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 
 import { Button, Modal } from '../../../shared/components';
+import { useI18n } from '../../../shared/i18n';
 import { VALIDATION_MESSAGES } from '../../../shared/utils';
 import type { CreateMilestonePayload, MilestoneStatus, ResearchEligibleStudent } from '../types';
 
@@ -34,6 +35,7 @@ export function CreateMilestoneModal({
   onClose,
   onSubmit,
 }: CreateMilestoneModalProps) {
+  const { t } = useI18n();
   const [form, setForm] = useState(initialForm);
   const [touched, setTouched] = useState(false);
   useEffect(() => {
@@ -53,9 +55,9 @@ export function CreateMilestoneModal({
   const completedProgressIsValid = form.status !== 'COMPLETED' || form.progressPercent === 100;
   const progressError =
     touched && !progressIsValid
-      ? 'Tỷ lệ hoàn thành phải nằm trong khoảng từ 0 đến 100.'
+      ? t('research.milestone.progressError')
       : touched && !completedProgressIsValid
-        ? 'Mốc đã hoàn thành phải có tỷ lệ hoàn thành là 100%.'
+        ? t('research.milestone.completedError')
         : null;
   const canSubmit = trimmedTitle.length >= 3 && progressIsValid && completedProgressIsValid;
 
@@ -84,37 +86,37 @@ export function CreateMilestoneModal({
         footer={(
           <>
             <Button onClick={onClose} variant="outline">
-              Hủy
+              {t('common.cancel')}
             </Button>
             <Button
               disabled={isLoadingStudents}
               loading={isSubmitting}
-              loadingText="Đang tạo..."
+              loadingText={t('common.creating')}
               type="submit"
             >
-              Tạo mốc nghiên cứu
+              {t('research.milestone.createTitle')}
             </Button>
           </>
         )}
         onClose={onClose}
         size="lg"
-        title="Tạo mốc nghiên cứu"
+        title={t('research.milestone.createTitle')}
       >
         <div className="space-y-4">
           <label className="block text-sm font-medium text-slate-700">
-            Tên mốc nghiên cứu
+            {t('research.milestone.name')}
             <input
               className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
               value={form.title}
               onBlur={() => setTouched(true)}
               onChange={(event) => setForm((current) => ({ ...current, title: event.target.value }))}
-              placeholder="Ví dụ: Hoàn thành khảo sát tài liệu"
+              placeholder={t('research.milestone.example')}
             />
             {titleError ? <span className="mt-1 block text-xs text-red-600">{titleError}</span> : null}
           </label>
 
           <label className="block text-sm font-medium text-slate-700">
-            Mô tả công việc
+            {t('research.milestone.description')}
             <textarea
               className="mt-1 min-h-20 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
               value={form.description}
@@ -124,14 +126,14 @@ export function CreateMilestoneModal({
 
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="block text-sm font-medium text-slate-700">
-              Người phụ trách
+              {t('research.milestone.assignee')}
               <select
                 className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
                 disabled={isLoadingStudents}
                 value={form.assignedToStudentId}
                 onChange={(event) => setForm((current) => ({ ...current, assignedToStudentId: event.target.value }))}
               >
-                <option value="">Chưa phân công</option>
+                <option value="">{t('common.notAssigned')}</option>
                 {students.map((student) => (
                   <option key={student.userId} value={student.userId}>
                     {student.fullName ?? student.email}
@@ -141,7 +143,7 @@ export function CreateMilestoneModal({
             </label>
 
             <label className="block text-sm font-medium text-slate-700">
-              Hạn hoàn thành
+              {t('research.milestone.dueDate')}
               <input
                 className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
                 type="date"
@@ -153,7 +155,7 @@ export function CreateMilestoneModal({
 
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="block text-sm font-medium text-slate-700">
-              Trạng thái
+              {t('research.milestone.status')}
               <select
                 className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
                 value={form.status}
@@ -166,17 +168,17 @@ export function CreateMilestoneModal({
                   }));
                 }}
               >
-                <option value="NOT_STARTED">Chưa bắt đầu</option>
-                <option value="IN_PROGRESS">Đang thực hiện</option>
-                <option value="WAITING_REVIEW">Chờ duyệt</option>
-                <option value="COMPLETED">Hoàn thành</option>
-                <option value="OVERDUE">Quá hạn</option>
-                <option value="CANCELLED">Đã hủy</option>
+                <option value="NOT_STARTED">{t('research.milestone.notStarted')}</option>
+                <option value="IN_PROGRESS">{t('research.milestone.inProgress')}</option>
+                <option value="WAITING_REVIEW">{t('research.milestone.waitingReview')}</option>
+                <option value="COMPLETED">{t('research.milestone.completed')}</option>
+                <option value="OVERDUE">{t('research.milestone.overdue')}</option>
+                <option value="CANCELLED">{t('research.milestone.cancelled')}</option>
               </select>
             </label>
 
             <label className="block text-sm font-medium text-slate-700">
-              Tỷ lệ hoàn thành (%)
+              {t('research.milestone.progressLabel')}
               <input
                 className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
                 type="number"
@@ -190,7 +192,7 @@ export function CreateMilestoneModal({
           </div>
 
           <label className="block text-sm font-medium text-slate-700">
-            File/link minh chứng
+            {t('research.milestone.evidence')}
             <input
               className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
               type="url"
@@ -201,7 +203,7 @@ export function CreateMilestoneModal({
           </label>
 
           <label className="block text-sm font-medium text-slate-700">
-            Nhận xét của quản lý PTN
+            {t('research.milestone.managerNote')}
             <textarea
               className="mt-1 min-h-20 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
               value={form.managerComment}

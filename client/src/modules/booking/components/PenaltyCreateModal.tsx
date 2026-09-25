@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 
 import { Button, Modal } from '../../../shared/components';
+import { useI18n } from '../../../shared/i18n';
 import type { BookingResponse } from '../api';
 import type { LabSlot } from '../types';
-import { formatPenaltyType } from '../../penalty/utils';
+import { formatDateTime, formatPenaltyType } from '../../penalty/utils';
 
 const PENALTY_TYPES = ['NO_SHOW', 'LATE_CHECKIN', 'CLEANING_FAILED', 'RULE_VIOLATION', 'OTHER'] as const;
 
@@ -21,25 +22,6 @@ interface PenaltyCreateModalProps {
     point: number;
     reason: string;
   }) => void;
-}
-
-function formatDateTime(value?: string | null) {
-  if (!value) {
-    return 'Chưa cập nhật';
-  }
-
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return 'Chưa cập nhật';
-  }
-
-  return new Intl.DateTimeFormat('vi-VN', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(date);
 }
 
 function inferPenaltyType(booking: BookingResponse | null, slot?: LabSlot | null) {
@@ -72,6 +54,7 @@ export function PenaltyCreateModal({
   onClose,
   onSubmit,
 }: PenaltyCreateModalProps) {
+  const { locale, t } = useI18n();
   const inferredType = useMemo(() => inferPenaltyType(booking, slot), [booking, slot]);
   const [type, setType] = useState(inferredType);
   const [point, setPoint] = useState(1);
@@ -93,7 +76,7 @@ export function PenaltyCreateModal({
 
   const trimmedReason = reason.trim();
   const reasonError =
-    touched && trimmedReason.length < 10 ? 'Lý do vi phạm cần tối thiểu 10 ký tự.' : null;
+    touched && trimmedReason.length < 10 ? t('penalty.reasonMinLength') : null;
   const canSubmit = Boolean(type) && trimmedReason.length >= 10 && point >= 0 && !isSubmitting;
 
   const handleSubmit = () => {
@@ -117,39 +100,38 @@ export function PenaltyCreateModal({
       footer={(
         <>
           <Button disabled={isSubmitting} onClick={onClose} variant="outline">
-            Hủy
+            {t('common.cancel')}
           </Button>
-          <Button disabled={!canSubmit} loading={isSubmitting} loadingText="Đang ghi nhận..." onClick={handleSubmit}>
-            Xác nhận ghi nhận
+          <Button disabled={!canSubmit} loading={isSubmitting} loadingText={t('penalty.creating')} onClick={handleSubmit}>
+            {t('penalty.createConfirm')}
           </Button>
         </>
       )}
       onClose={onClose}
       size="lg"
-      subtitle="Ghi nhận vi phạm cho sinh viên trong ca sử dụng PTN."
-      title="Ghi nhận vi phạm"
+      title={t('penalty.createTitle')}
     >
         <div className="space-y-5">
           <dl className="grid gap-4 rounded-md bg-slate-50 p-4 text-sm sm:grid-cols-2">
             <div>
-              <dt className="text-slate-500">Sinh viên</dt>
-              <dd className="mt-1 font-semibold text-slate-950">{booking.studentName ?? 'Chưa cập nhật'}</dd>
-              <dd className="text-slate-600">{booking.studentEmail ?? 'Chưa cập nhật'}</dd>
+              <dt className="text-slate-500">{t('penalty.student')}</dt>
+              <dd className="mt-1 font-semibold text-slate-950">{booking.studentName ?? t('common.notUpdated')}</dd>
+              <dd className="text-slate-600">{booking.studentEmail ?? t('common.notUpdated')}</dd>
             </div>
             <div>
-              <dt className="text-slate-500">PTN</dt>
-              <dd className="mt-1 font-semibold text-slate-950">{slot.labName ?? booking.labName ?? 'Chưa cập nhật'}</dd>
+              <dt className="text-slate-500">{t('penalty.lab')}</dt>
+              <dd className="mt-1 font-semibold text-slate-950">{slot.labName ?? booking.labName ?? t('common.notUpdated')}</dd>
             </div>
             <div className="sm:col-span-2">
-              <dt className="text-slate-500">Khung giờ</dt>
+              <dt className="text-slate-500">{t('penalty.slot')}</dt>
               <dd className="mt-1 font-semibold text-slate-950">
-                {formatDateTime(slot.startTime)} - {formatDateTime(slot.endTime)}
+                {formatDateTime(slot.startTime, locale)} - {formatDateTime(slot.endTime, locale)}
               </dd>
             </div>
           </dl>
 
           <label className="block text-sm font-medium text-slate-700">
-            Loại vi phạm
+            {t('penalty.typeLabel')}
             <select
               className="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-slate-500 focus:outline-none"
               value={type}
@@ -158,14 +140,14 @@ export function PenaltyCreateModal({
             >
               {PENALTY_TYPES.map((penaltyType) => (
                 <option key={penaltyType} value={penaltyType}>
-                  {formatPenaltyType(penaltyType)}
+                  {formatPenaltyType(penaltyType, locale)}
                 </option>
               ))}
             </select>
           </label>
 
           <label className="block text-sm font-medium text-slate-700">
-            Điểm vi phạm
+            {t('penalty.points')}
             <input
               className="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-slate-500 focus:outline-none"
               min={0}
@@ -177,11 +159,11 @@ export function PenaltyCreateModal({
           </label>
 
           <label className="block text-sm font-medium text-slate-700">
-            Lý do vi phạm
+            {t('penalty.reasonLabel')}
             <textarea
               className="mt-2 min-h-32 w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-slate-500 focus:outline-none"
               maxLength={1000}
-              placeholder="Nhập lý do hoặc mô tả chi tiết vi phạm..."
+              placeholder={t('penalty.reasonPlaceholder')}
               value={reason}
               onBlur={() => setTouched(true)}
               onChange={(event) => setReason(event.target.value)}

@@ -1,7 +1,9 @@
 import { useMyCleaningTasks } from '../hooks';
+import { useI18n } from '../../../shared/i18n';
 import { CleaningItem } from './CleaningItem';
 
 export function MyCleaningTasks() {
+  const { t } = useI18n();
   const { data: tasks = [], isError, isFetching, isLoading, refetch } = useMyCleaningTasks();
 
   if (isLoading) {
@@ -20,13 +22,13 @@ export function MyCleaningTasks() {
   if (isError) {
     return (
       <section className="rounded-lg border border-red-200 bg-white p-5 text-sm text-red-700 shadow-sm">
-        <p>Không thể tải danh sách nhiệm vụ vệ sinh.</p>
+        <p>{t('cleaning.loadFailed')}</p>
         <button
           type="button"
           className="mt-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-100"
           onClick={() => refetch()}
         >
-          Tải lại
+          {t('common.retry')}
         </button>
       </section>
     );
@@ -36,19 +38,16 @@ export function MyCleaningTasks() {
     <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
       <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h3 className="text-lg font-semibold text-slate-950">Nhiệm vụ vệ sinh của tôi</h3>
-          <p className="mt-1 text-sm text-slate-600">
-            Danh sách các nhiệm vụ vệ sinh đang được phân công cho bạn.
-          </p>
+          <h3 className="text-lg font-semibold text-slate-950">{t('cleaning.myTasks')}</h3>
         </div>
         {isFetching ? (
-          <span className="text-xs font-medium text-slate-500">Đang cập nhật...</span>
+          <span className="text-xs font-medium text-slate-500">{t('cleaning.updating')}</span>
         ) : null}
       </div>
 
       {!tasks.length ? (
         <div className="rounded-md border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
-          Hiện chưa có nhiệm vụ vệ sinh nào cần thực hiện.
+          {t('cleaning.noTasks')}
         </div>
       ) : (
         <div className="space-y-3">

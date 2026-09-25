@@ -18,9 +18,12 @@ import com.web.labportalbackend.admin.systemconfig.service.SystemConfigService;
 import com.web.labportalbackend.auth.entity.User;
 import com.web.labportalbackend.auth.repository.UserRepository;
 import com.web.labportalbackend.booking.entity.Booking;
+import com.web.labportalbackend.booking.dto.request.StudentSelfCheckinRequest;
+import com.web.labportalbackend.booking.dto.response.BookingResponse;
 import com.web.labportalbackend.booking.outbox.BookingOutboxService;
 import com.web.labportalbackend.booking.entity.TimeSlot;
 import com.web.labportalbackend.booking.repository.BookingRepository;
+import com.web.labportalbackend.booking.repository.StudentSelfCheckinLogRepository;
 import com.web.labportalbackend.booking.service.impl.CheckinServiceImpl;
 import com.web.labportalbackend.common.enums.BookingStatus;
 import com.web.labportalbackend.common.enums.TimeSlotStatus;
@@ -30,11 +33,14 @@ import com.web.labportalbackend.face.enums.FaceFallbackReason;
 import com.web.labportalbackend.face.repository.FaceCheckinLogRepository;
 import com.web.labportalbackend.face.service.FaceFallbackPolicy;
 import com.web.labportalbackend.lab.entity.Laboratory;
+import com.web.labportalbackend.lab.entity.LaboratoryAllowedNetwork;
 import com.web.labportalbackend.lab.repository.LaboratoryRepository;
+import com.web.labportalbackend.lab.repository.LaboratoryAllowedNetworkRepository;
 import com.web.labportalbackend.notification.service.NotificationEmitter;
 import com.web.labportalbackend.notification.enums.NotificationEventType;
 import com.web.labportalbackend.notification.enums.NotificationTargetModule;
 import java.nio.charset.StandardCharsets;
+import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
@@ -64,6 +70,8 @@ class CheckinServiceImplTest {
     private final SystemConfigService systemConfigService = mock(SystemConfigService.class);
     private final FaceFallbackPolicy fallbackPolicy = mock(FaceFallbackPolicy.class);
     private final FaceCheckinLogRepository logRepository = mock(FaceCheckinLogRepository.class);
+    private final LaboratoryAllowedNetworkRepository networkRepository = mock(LaboratoryAllowedNetworkRepository.class);
+    private final StudentSelfCheckinLogRepository selfCheckinLogRepository = mock(StudentSelfCheckinLogRepository.class);
     private final AuditLogService auditLogService = mock(AuditLogService.class);
     private final NotificationEmitter notificationEmitter = mock(NotificationEmitter.class);
     private final BookingOutboxService bookingOutboxService = mock(BookingOutboxService.class);
@@ -78,7 +86,8 @@ class CheckinServiceImplTest {
     void setUp() {
         service = new CheckinServiceImpl(bookingRepository, userRepository, laboratoryRepository,
                 redisTemplate, new CheckinWindowPolicy(systemConfigService), fallbackPolicy,
-                logRepository, auditLogService, notificationEmitter, bookingOutboxService);
+                logRepository, networkRepository, selfCheckinLogRepository,
+                auditLogService, notificationEmitter, bookingOutboxService);
         when(redisTemplate.opsForValue()).thenReturn(valueOperations);
         when(redisTemplate.opsForSet()).thenReturn(setOperations);
         when(userRepository.findByUsername("actor")).thenReturn(Optional.of(actor));
@@ -274,5 +283,104 @@ class CheckinServiceImplTest {
 
         verify(bookingRepository, never()).save(any());
         verify(logRepository, never()).save(any());
+    }
+
+    @Test
+    void studentSelfCheckinRequiresBothAllowlistedNetworkAndGpsPolicy() {
+        when(actor.hasRole("STUDENT")).thenReturn(true);
+        when(booking.getUser()).thenReturn(actor);
+        when(lab.getCheckinEnabled()).thenReturn(true);
+        when(lab.getCheckinLatitude()).thenReturn(new BigDecimal("10.762622"));
+        when(lab.getCheckinLongitude()).thenReturn(new BigDecimal("106.660172"));
+        when(lab.getCheckinRadiusMeters()).thenReturn(600);
+        when(lab.getCheckinMaxAccuracyMeters()).thenReturn(100);
+        LaboratoryAllowedNetwork network = mock(LaboratoryAllowedNetwork.class);
+        when(network.getNetworkValue()).thenReturn("203.0.113.0/24");
+        when(networkRepository.findByLaboratoryIdAndActiveTrueAndDeletedFalseOrderByCreatedAtAscIdAsc(5L))
+                .thenReturn(List.of(network));
+
+        BookingResponse response = service.selfCheckinByCurrentStudent(
+                new StudentSelfCheckinRequest(11L, new BigDecimal("10.762700"),
+                        new BigDecimal("106.660172"), new BigDecimal("25.00")),
+                "203.0.113.42");
+
+        assertEquals(11L, response.getId());
+        verify(booking).setStatus(BookingStatus.CHECKED_IN);
+        verify(bookingRepository).save(booking);
+        verify(selfCheckinLogRepository).save(any());
+        verify(auditLogService).log(actor, AuditAction.STUDENT_SELF_CHECKIN, AuditModule.BOOKING,
+                "BOOKING", 11L, "Student self check-in passed network and GPS validation");
+    }
+
+    @Test
+    void studentSelfCheckinRejectsAnUnallowlistedNetworkBeforePersistence() {
+        when(actor.hasRole("STUDENT")).thenReturn(true);
+        when(booking.getUser()).thenReturn(actor);
+        when(lab.getCheckinEnabled()).thenReturn(true);
+        when(lab.getCheckinLatitude()).thenReturn(new BigDecimal("10.762622"));
+        when(lab.getCheckinLongitude()).thenReturn(new BigDecimal("106.660172"));
+        when(lab.getCheckinRadiusMeters()).thenReturn(600);
+        when(lab.getCheckinMaxAccuracyMeters()).thenReturn(100);
+        LaboratoryAllowedNetwork network = mock(LaboratoryAllowedNetwork.class);
+        when(network.getNetworkValue()).thenReturn("198.51.100.0/24");
+        when(networkRepository.findByLaboratoryIdAndActiveTrueAndDeletedFalseOrderByCreatedAtAscIdAsc(5L))
+                .thenReturn(List.of(network));
+
+        AccessDeniedException exception = assertThrows(AccessDeniedException.class, () -> service.selfCheckinByCurrentStudent(
+                new StudentSelfCheckinRequest(11L, new BigDecimal("10.762622"),
+                        new BigDecimal("106.660172"), new BigDecimal("25.00")),
+                "203.0.113.42"));
+
+        assertEquals("Sai IP/mạng: mạng hiện tại không được phép check-in tại PTN này.", exception.getMessage());
+        verify(bookingRepository, never()).save(any());
+        verify(selfCheckinLogRepository, never()).save(any());
+    }
+
+    @Test
+    void studentSelfCheckinRejectsGpsOutsideConfiguredRadiusBeforePersistence() {
+        when(actor.hasRole("STUDENT")).thenReturn(true);
+        when(booking.getUser()).thenReturn(actor);
+        when(lab.getCheckinEnabled()).thenReturn(true);
+        when(lab.getCheckinLatitude()).thenReturn(new BigDecimal("10.762622"));
+        when(lab.getCheckinLongitude()).thenReturn(new BigDecimal("106.660172"));
+        when(lab.getCheckinRadiusMeters()).thenReturn(600);
+        when(lab.getCheckinMaxAccuracyMeters()).thenReturn(100);
+        LaboratoryAllowedNetwork network = mock(LaboratoryAllowedNetwork.class);
+        when(network.getNetworkValue()).thenReturn("203.0.113.0/24");
+        when(networkRepository.findByLaboratoryIdAndActiveTrueAndDeletedFalseOrderByCreatedAtAscIdAsc(5L))
+                .thenReturn(List.of(network));
+
+        AccessDeniedException exception = assertThrows(AccessDeniedException.class, () -> service.selfCheckinByCurrentStudent(
+                new StudentSelfCheckinRequest(11L, new BigDecimal("10.771000"),
+                        new BigDecimal("106.660172"), new BigDecimal("25.00")),
+                "203.0.113.42"));
+
+        assertEquals("Sai GPS: vị trí hiện tại nằm ngoài bán kính check-in của PTN.", exception.getMessage());
+        verify(bookingRepository, never()).save(any());
+        verify(selfCheckinLogRepository, never()).save(any());
+    }
+
+    @Test
+    void studentSelfCheckinRejectsGpsAccuracyBeforePersistence() {
+        when(actor.hasRole("STUDENT")).thenReturn(true);
+        when(booking.getUser()).thenReturn(actor);
+        when(lab.getCheckinEnabled()).thenReturn(true);
+        when(lab.getCheckinLatitude()).thenReturn(new BigDecimal("10.762622"));
+        when(lab.getCheckinLongitude()).thenReturn(new BigDecimal("106.660172"));
+        when(lab.getCheckinRadiusMeters()).thenReturn(600);
+        when(lab.getCheckinMaxAccuracyMeters()).thenReturn(100);
+        LaboratoryAllowedNetwork network = mock(LaboratoryAllowedNetwork.class);
+        when(network.getNetworkValue()).thenReturn("203.0.113.0/24");
+        when(networkRepository.findByLaboratoryIdAndActiveTrueAndDeletedFalseOrderByCreatedAtAscIdAsc(5L))
+                .thenReturn(List.of(network));
+
+        IllegalStateException exception = assertThrows(IllegalStateException.class, () -> service.selfCheckinByCurrentStudent(
+                new StudentSelfCheckinRequest(11L, new BigDecimal("10.762622"),
+                        new BigDecimal("106.660172"), new BigDecimal("101.00")),
+                "203.0.113.42"));
+
+        assertEquals("Sai GPS: độ chính xác GPS hiện tại chưa đạt yêu cầu của PTN.", exception.getMessage());
+        verify(bookingRepository, never()).save(any());
+        verify(selfCheckinLogRepository, never()).save(any());
     }
 }

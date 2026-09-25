@@ -5,6 +5,7 @@ import com.web.labportalbackend.face.dto.request.FaceConsentRequest;
 import com.web.labportalbackend.face.dto.request.FaceGuidanceRequest;
 import com.web.labportalbackend.face.dto.request.FaceCheckinRequest;
 import com.web.labportalbackend.face.dto.request.FaceRegistrationRequest;
+import com.web.labportalbackend.face.dto.request.StudentFaceCheckinRequest;
 import com.web.labportalbackend.face.dto.response.FaceConsentResponse;
 import com.web.labportalbackend.face.dto.response.FaceChallengeResponse;
 import com.web.labportalbackend.face.dto.response.FaceGuidanceResponse;
@@ -13,10 +14,14 @@ import com.web.labportalbackend.face.dto.response.FaceProfileResponse;
 import com.web.labportalbackend.face.dto.response.FaceCheckinCandidateResponse;
 import com.web.labportalbackend.face.service.FaceProfileService;
 import com.web.labportalbackend.face.service.FaceCheckinService;
+import com.web.labportalbackend.common.network.ClientIpResolver;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -35,6 +40,12 @@ public class FaceProfileController {
 
     private final FaceProfileService faceProfileService;
     private final FaceCheckinService faceCheckinService;
+    private final ClientIpResolver clientIpResolver;
+    private final MessageSource messageSource;
+
+    private String message(String key, Object... arguments) {
+        return messageSource.getMessage(key, arguments, key, LocaleContextHolder.getLocale());
+    }
 
     @GetMapping("/profiles")
     @PreAuthorize("hasRole('ADMIN')")
@@ -48,7 +59,23 @@ public class FaceProfileController {
     @Operation(summary = "Identify and check in a registered student within the selected managed-lab slot")
     public ResponseEntity<Response<FaceCheckinResponse>> checkIn(
             @Valid @RequestBody FaceCheckinRequest request) {
-        return ResponseEntity.ok(Response.ok("Đã hoàn tất đối chiếu khuôn mặt", faceCheckinService.checkIn(request)));
+        return ResponseEntity.ok(Response.ok(message("face.managerCheckinSuccess"), faceCheckinService.checkIn(request)));
+    }
+
+    @PostMapping("/check-in/self")
+    @PreAuthorize("hasRole('STUDENT')")
+    @Operation(summary = "Student FaceID self check-in",
+            description = "Check in using the student's registered face profile, laboratory allowlisted network and browser GPS")
+    public ResponseEntity<Response<FaceCheckinResponse>> checkInForCurrentStudent(
+            @Valid @RequestBody StudentFaceCheckinRequest request,
+            HttpServletRequest httpRequest) {
+        FaceCheckinResponse result = faceCheckinService.checkInForCurrentStudent(
+                request, clientIpResolver.resolve(httpRequest));
+        String message = result.checkedIn()
+                ? message("face.studentCheckinSuccess")
+                : message("face.studentCheckinFailure",
+                        result.failureReason() == null ? "UNKNOWN" : result.failureReason());
+        return ResponseEntity.ok(Response.ok(message, result));
     }
 
     @GetMapping("/check-in/candidates")
@@ -73,12 +100,19 @@ public class FaceProfileController {
         return ResponseEntity.ok(Response.ok(faceCheckinService.startPassiveSession()));
     }
 
+    @PostMapping("/check-in/self/passive-session")
+    @PreAuthorize("hasRole('STUDENT')")
+    @Operation(summary = "Start a passive camera observation for student FaceID self check-in")
+    public ResponseEntity<Response<FaceChallengeResponse>> startStudentCheckInPassiveSession() {
+        return ResponseEntity.ok(Response.ok(faceCheckinService.startPassiveSessionForCurrentStudent()));
+    }
+
     @PostMapping("/consent")
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Grant or withdraw the current user's face consent")
     public ResponseEntity<Response<FaceConsentResponse>> changeOwnConsent(
             @Valid @RequestBody FaceConsentRequest request) {
-        return ResponseEntity.ok(Response.ok("Face consent updated", faceProfileService.changeConsent(null, request)));
+        return ResponseEntity.ok(Response.ok(message("face.consentUpdated"), faceProfileService.changeConsent(null, request)));
     }
 
     @GetMapping("/consent")
@@ -108,7 +142,7 @@ public class FaceProfileController {
     @Operation(summary = "Register the current user's face profile")
     public ResponseEntity<Response<FaceProfileResponse>> registerOwnProfile(
             @Valid @RequestBody FaceRegistrationRequest request) {
-        return ResponseEntity.ok(Response.ok("Face profile registered", faceProfileService.register(null, request)));
+        return ResponseEntity.ok(Response.ok(message("face.profileRegistered"), faceProfileService.register(null, request)));
     }
 
     @PutMapping("/profile")
@@ -116,7 +150,7 @@ public class FaceProfileController {
     @Operation(summary = "Replace the current user's face profile")
     public ResponseEntity<Response<FaceProfileResponse>> updateOwnProfile(
             @Valid @RequestBody FaceRegistrationRequest request) {
-        return ResponseEntity.ok(Response.ok("Face profile updated", faceProfileService.register(null, request)));
+        return ResponseEntity.ok(Response.ok(message("face.profileUpdated"), faceProfileService.register(null, request)));
     }
 
     @GetMapping("/profile")
@@ -131,7 +165,7 @@ public class FaceProfileController {
     @Operation(summary = "Delete and invalidate the current user's face profile")
     public ResponseEntity<Response<Void>> deleteOwnProfile() {
         faceProfileService.deleteProfile(null);
-        return ResponseEntity.ok(Response.ok("Face profile deleted"));
+        return ResponseEntity.ok(Response.ok(message("face.profileDeleted")));
     }
 
     @PostMapping("/users/{userId}/consent")
@@ -140,7 +174,7 @@ public class FaceProfileController {
     public ResponseEntity<Response<FaceConsentResponse>> changeUserConsent(
             @PathVariable Long userId,
             @Valid @RequestBody FaceConsentRequest request) {
-        return ResponseEntity.ok(Response.ok("Face consent updated",
+        return ResponseEntity.ok(Response.ok(message("face.consentUpdated"),
                 faceProfileService.changeConsent(userId, request)));
     }
 
@@ -173,7 +207,7 @@ public class FaceProfileController {
     public ResponseEntity<Response<FaceProfileResponse>> registerUserProfile(
             @PathVariable Long userId,
             @Valid @RequestBody FaceRegistrationRequest request) {
-        return ResponseEntity.ok(Response.ok("Face profile registered",
+        return ResponseEntity.ok(Response.ok(message("face.profileRegistered"),
                 faceProfileService.register(userId, request)));
     }
 
@@ -183,7 +217,7 @@ public class FaceProfileController {
     public ResponseEntity<Response<FaceProfileResponse>> updateUserProfile(
             @PathVariable Long userId,
             @Valid @RequestBody FaceRegistrationRequest request) {
-        return ResponseEntity.ok(Response.ok("Face profile updated",
+        return ResponseEntity.ok(Response.ok(message("face.profileUpdated"),
                 faceProfileService.register(userId, request)));
     }
 
@@ -199,6 +233,6 @@ public class FaceProfileController {
     @Operation(summary = "Delete and invalidate a user's face profile as Admin")
     public ResponseEntity<Response<Void>> deleteUserProfile(@PathVariable Long userId) {
         faceProfileService.deleteProfile(userId);
-        return ResponseEntity.ok(Response.ok("Face profile deleted"));
+        return ResponseEntity.ok(Response.ok(message("face.profileDeleted")));
     }
 }

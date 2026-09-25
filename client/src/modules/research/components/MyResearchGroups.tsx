@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 
 import { Button, EmptyState, ErrorState, LoadingState, toast } from '../../../shared/components';
+import { useI18n } from '../../../shared/i18n';
 import { useMyResearchGroups } from '../hooks';
 import type { ResearchGroup } from '../types';
 import { formatGroupStatus, getStatusClass } from '../utils';
@@ -11,6 +12,7 @@ interface MyResearchGroupsProps {
 }
 
 export function MyResearchGroups({ labId, currentUserId }: MyResearchGroupsProps) {
+  const { locale, t } = useI18n();
   const navigate = useNavigate();
   const { data: groups = [], isError, isLoading, refetch } = useMyResearchGroups(labId);
 
@@ -18,12 +20,12 @@ export function MyResearchGroups({ labId, currentUserId }: MyResearchGroupsProps
     if (group.projectTitle) {
       return group.projectCode ? `${group.projectCode} - ${group.projectTitle}` : group.projectTitle;
     }
-    return 'Chưa có đề tài nghiên cứu';
+    return t('research.group.projectMissing');
   }
 
   function handleViewGroup(group: ResearchGroup) {
     if (!group.projectId) {
-      toast.error('Nhóm nghiên cứu này chưa được liên kết với đề tài nào.');
+      toast.error(t('research.group.notLinked'));
       return;
     }
     navigate(`/app/research/projects/${group.projectId}/groups/${group.id}`);
@@ -32,10 +34,7 @@ export function MyResearchGroups({ labId, currentUserId }: MyResearchGroupsProps
   return (
     <section className="space-y-6">
       <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="text-xl font-medium text-slate-950">Nhóm nghiên cứu của tôi</h2>
-        <p className="mt-2 text-sm text-slate-600">
-          Danh sách các nhóm nghiên cứu bạn tham gia trong Phòng thí nghiệm này. Chọn một nhóm để vào không gian làm việc chi tiết.
-        </p>
+        <h2 className="text-xl font-medium text-slate-950">{t('research.group.myGroupsTitle')}</h2>
       </div>
 
       {isLoading ? (
@@ -46,11 +45,11 @@ export function MyResearchGroups({ labId, currentUserId }: MyResearchGroupsProps
         </div>
       ) : isError ? (
         <ErrorState onRetry={() => refetch()}>
-          Không thể tải danh sách nhóm nghiên cứu của bạn.
+          {t('research.group.myGroupsLoadFailed')}
         </ErrorState>
       ) : groups.length === 0 ? (
         <EmptyState>
-          Bạn chưa được phân vào nhóm nghiên cứu nào trong PTN này.
+          {t('research.group.noMyGroups')}
         </EmptyState>
       ) : (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -69,13 +68,13 @@ export function MyResearchGroups({ labId, currentUserId }: MyResearchGroupsProps
                       {group.name}
                     </h3>
                     <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ring-1 ${getStatusClass(group.status)}`}>
-                      {formatGroupStatus(group.status)}
+                      {formatGroupStatus(group.status, locale)}
                     </span>
                   </div>
 
                   <div className="space-y-1">
                     <span className="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-                      Đề tài nghiên cứu
+                      {t('research.group.projectLabelShort')}
                     </span>
                     <p className="text-sm font-medium text-slate-800 line-clamp-2 leading-relaxed h-10">
                       {getProjectName(group)}
@@ -84,29 +83,29 @@ export function MyResearchGroups({ labId, currentUserId }: MyResearchGroupsProps
 
                   <div className="grid grid-cols-2 gap-4 border-t border-slate-100 pt-4 text-xs">
                     <div>
-                      <span className="block font-semibold text-slate-500">Vai trò của tôi</span>
+                      <span className="block font-semibold text-slate-500">{t('research.group.myRoleLabel')}</span>
                       <span className={`inline-flex mt-1 rounded-full px-2 py-0.5 font-medium ${
                         isLeader ? 'bg-blue-50 text-blue-700 ring-1 ring-blue-100' : 'bg-slate-50 text-slate-700 ring-1 ring-slate-100'
                       }`}>
-                        {isLeader ? 'Trưởng nhóm' : 'Thành viên'}
+                        {isLeader ? t('research.role.leader') : t('research.role.member')}
                       </span>
                     </div>
                     <div>
-                      <span className="block font-semibold text-slate-500">Trưởng nhóm</span>
-                      <span className="block mt-1 text-slate-800 font-medium truncate" title={group.leaderName || 'Chưa phân công'}>
-                        {group.leaderName || 'Chưa phân công'}
+                      <span className="block font-semibold text-slate-500">{t('research.group.leader')}</span>
+                      <span className="block mt-1 text-slate-800 font-medium truncate" title={group.leaderName || t('common.notAssigned')}>
+                        {group.leaderName || t('common.notAssigned')}
                       </span>
                     </div>
                     <div>
-                      <span className="block font-semibold text-slate-500">Thành viên</span>
+                      <span className="block font-semibold text-slate-500">{t('research.group.membersLabel')}</span>
                       <span className="block mt-1 text-slate-800 font-medium">
-                        {group.memberCount ?? group.members?.length ?? 0} người
+                        {group.memberCount ?? group.members?.length ?? 0} {t('research.group.people')}
                       </span>
                     </div>
                     <div>
-                      <span className="block font-semibold text-slate-500">Chủ đề tuyển</span>
-                      <span className="block mt-1 text-slate-800 font-medium truncate" title={group.topicName || 'Chưa cập nhật'}>
-                        {group.topicName || 'Chưa cập nhật'}
+                      <span className="block font-semibold text-slate-500">{t('research.group.topicRecruiting')}</span>
+                      <span className="block mt-1 text-slate-800 font-medium truncate" title={group.topicName || t('common.notUpdated')}>
+                        {group.topicName || t('common.notUpdated')}
                       </span>
                     </div>
                   </div>
@@ -118,7 +117,7 @@ export function MyResearchGroups({ labId, currentUserId }: MyResearchGroupsProps
                     size="sm"
                     className="w-full flex justify-center text-sm font-semibold py-2"
                   >
-                    Xem chi tiết nhóm
+                    {t('research.group.viewDetails')}
                   </Button>
                 </div>
               </article>

@@ -1,4 +1,5 @@
 import { EmptyState, ErrorState, LoadingState } from '../../../shared/components';
+import { useI18n } from '../../../shared/i18n';
 import { useCurrentUser } from '../../user/hooks';
 import { usePendingManagerReports } from '../hooks';
 import { ReportItem } from './ReportItem';
@@ -8,24 +9,22 @@ interface ManagerPendingReportsProps {
 }
 
 export function ManagerPendingReports({ labId }: ManagerPendingReportsProps) {
+  const { t } = useI18n();
   const { data: reports = [], isError, isLoading, refetch } = usePendingManagerReports(labId);
   const { data: currentUser } = useCurrentUser();
 
   return (
     <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <h3 className="text-lg font-semibold text-slate-950">Báo cáo chờ duyệt</h3>
-      <p className="mt-1 text-sm text-slate-600">
-        Báo cáo đã được trưởng nhóm kiểm tra và đang chờ quyết định cuối của quản lý PTN.
-      </p>
+      <h3 className="text-lg font-semibold text-slate-950">{t('research.report.managerPending')}</h3>
 
       {isLoading ? (
-        <LoadingState className="mt-5">Đang tải báo cáo chờ duyệt...</LoadingState>
+        <LoadingState className="mt-5">{t('research.report.pendingLoading')}</LoadingState>
       ) : isError ? (
         <ErrorState className="mt-5" onRetry={() => refetch()}>
-          Không thể tải danh sách báo cáo chờ duyệt.
+          {t('research.report.pendingLoadFailed')}
         </ErrorState>
       ) : !reports.length ? (
-        <EmptyState className="mt-5">Không có báo cáo nào đang chờ duyệt.</EmptyState>
+        <EmptyState className="mt-5">{t('research.report.emptyPending')}</EmptyState>
       ) : (
         <div className="mt-5 space-y-4">
           {reports.map((report) => (

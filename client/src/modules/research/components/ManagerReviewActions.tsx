@@ -1,6 +1,7 @@
 import { useState } from 'react';
 
 import { Button } from '../../../shared/components';
+import { useI18n } from '../../../shared/i18n';
 import { useSystemConfig } from '../../admin/hooks';
 import { useManagerReviewReport } from '../hooks';
 import type { ManagerReportDecision, ResearchReport } from '../types';
@@ -12,6 +13,7 @@ interface ManagerReviewActionsProps {
 }
 
 export function ManagerReviewActions({ labId, report }: ManagerReviewActionsProps) {
+  const { t } = useI18n();
   const [decision, setDecision] = useState<ManagerReportDecision | null>(null);
   const { data: systemConfig } = useSystemConfig();
   const managerReview = useManagerReviewReport(
@@ -37,16 +39,16 @@ export function ManagerReviewActions({ labId, report }: ManagerReviewActionsProp
 
   return (
     <section className="mt-4 rounded-md border border-amber-200 bg-amber-50 p-4">
-      <h6 className="text-sm font-semibold text-slate-900">Nhận xét của quản lý</h6>
+      <h6 className="text-sm font-semibold text-slate-900">{t('research.report.managerNoteTitle')}</h6>
       <div className="mt-3 flex flex-wrap gap-2">
         <Button onClick={() => setDecision('APPROVE')} size="sm">
-          Chấp nhận báo cáo
+          {t('research.report.accept')}
         </Button>
         <Button onClick={() => setDecision('REQUEST_REVISION')} size="sm" variant="outline">
-          Yêu cầu nộp lại
+          {t('research.report.requestRevision')}
         </Button>
         <Button onClick={() => setDecision('REJECT')} size="sm" variant="danger">
-          Từ chối
+          {t('research.report.reject')}
         </Button>
       </div>
       <ManagerReviewModal

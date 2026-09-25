@@ -1,13 +1,16 @@
+import { getStoredLocale, translate } from '../../../shared/i18n';
+
 export function formatCleaningStatus(status?: string | null) {
-  const labels: Record<string, string> = {
-    PENDING: 'Chưa phân công',
-    ASSIGNED: 'Đã phân công',
-    DONE: 'Đã hoàn thành',
-    COMPLETED: 'Đã hoàn thành',
-    CANCELLED: 'Đã hủy',
+  const keys: Record<string, string> = {
+    PENDING: 'cleaning.pending',
+    ASSIGNED: 'cleaning.assigned',
+    DONE: 'cleaning.done',
+    COMPLETED: 'cleaning.done',
+    CANCELLED: 'booking.status.cancelled',
   };
 
-  return labels[status ?? ''] ?? 'Chưa cập nhật';
+  const locale = getStoredLocale();
+  return translate(keys[status ?? ''] ?? 'common.notUpdated', locale, status ?? undefined);
 }
 
 export function getCleaningStatusClass(status?: string | null) {

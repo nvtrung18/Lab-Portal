@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { queryKeys } from '../../../shared/api';
 import { Button, EmptyState, ErrorState, LoadingState, toast } from '../../../shared/components';
+import { useI18n } from '../../../shared/i18n';
 import { useMyResearchTasks, useReportsByTask } from '../hooks';
 import { updateTaskStatus } from '../api';
 import type { ResearchReportStatus, ResearchTask, ResearchTaskStatus, TaskColumn } from '../types';
@@ -22,29 +23,27 @@ export function MyResearchTasks({
   groupId,
   projectId,
   currentUserId,
-  emptyMessage = 'Bạn chưa được giao nhiệm vụ nào trong nhóm này.',
+  emptyMessage,
 }: MyResearchTasksProps) {
+  const { t } = useI18n();
   const { data: tasks = [], error, isLoading, isError, refetch } = useMyResearchTasks(groupId);
   const errorMessage = getApiErrorMessage(error, {
-    fallback: 'Không thể tải nhiệm vụ của bạn.',
-    forbidden: 'Bạn không có quyền xem nhiệm vụ trong nhóm này.',
+    fallback: t('research.task.loadFailed'),
+    forbidden: t('research.task.forbidden'),
   });
 
   return (
     <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <h3 className="text-lg font-semibold text-slate-950">Nhiệm vụ của tôi</h3>
-      <p className="mt-1 text-sm text-slate-600">
-        Nộp báo cáo cho từng nhiệm vụ được phân công và theo dõi lịch sử các phiên bản đã nộp.
-      </p>
+      <h3 className="text-lg font-semibold text-slate-950">{t('research.task.myTitle')}</h3>
 
       {isLoading ? (
-        <LoadingState className="mt-5">Đang tải nhiệm vụ của bạn...</LoadingState>
+        <LoadingState className="mt-5">{t('research.task.loading')}</LoadingState>
       ) : isError ? (
         <ErrorState className="mt-5" onRetry={() => refetch()}>
           {errorMessage}
         </ErrorState>
       ) : !tasks.length ? (
-        <EmptyState className="mt-5">{emptyMessage}</EmptyState>
+        <EmptyState className="mt-5">{emptyMessage ?? t('research.task.empty')}</EmptyState>
       ) : (
         <div className="mt-5 space-y-4">
           {tasks.map((task) => (
@@ -73,6 +72,7 @@ function MyTaskReportCard({
   currentUserId?: number | null;
   task: ResearchTask;
 }) {
+  const { locale, t } = useI18n();
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [defaultOpenLatestReview, setDefaultOpenLatestReview] = useState(false);
@@ -87,10 +87,10 @@ function MyTaskReportCard({
       if (projectId) {
         queryClient.invalidateQueries({ queryKey: queryKeys.research.projectStats(projectId) });
       }
-      toast.success('Đã bắt đầu thực hiện nhiệm vụ.');
+      toast.success(t('research.task.started'));
     },
     onError: (error) => {
-      toast.error(getApiErrorMessage(error, { fallback: 'Không thể cập nhật trạng thái nhiệm vụ.' }));
+      toast.error(getApiErrorMessage(error, { fallback: t('common.loadError') }));
     },
   });
 
@@ -103,12 +103,12 @@ function MyTaskReportCard({
   const hasLatestReport = Boolean(latestReport ?? task.latestReportStatus);
   const assignedToCurrentUser = currentUserId != null && task.assignedToStudentId === currentUserId;
   const action = getMyTaskAction(task.status, latestReportStatus, hasLatestReport, assignedToCurrentUser);
-  const statusBadge = getMyTaskStatusBadge(task.status, latestReportStatus);
+  const statusBadge = getMyTaskStatusBadge(task.status, latestReportStatus, t);
   const uploadTitle = action === 'REPLACE'
-    ? 'Cập nhật báo cáo tiến độ'
+    ? t('research.task.updateReport')
     : action === 'RESUBMIT'
-    ? 'Nộp lại báo cáo tiến độ'
-    : 'Nộp báo cáo tiến độ';
+    ? t('research.task.resubmitReport')
+    : t('research.task.submitReport');
 
   return (
     <article className="rounded-md border border-slate-200 p-4">
@@ -116,16 +116,16 @@ function MyTaskReportCard({
         <div className="min-w-0 flex-1">
           {task.milestoneTitle ? (
             <p className="text-xs text-slate-500 mb-1">
-              Mốc: <span className="font-semibold text-slate-700">{task.milestoneTitle}</span>
+              {t('research.task.milestonePrefix')}: <span className="font-semibold text-slate-700">{task.milestoneTitle}</span>
             </p>
           ) : null}
           <h4 className="font-semibold text-slate-950">{task.title}</h4>
-          <p className="mt-1 text-sm text-slate-600">{task.description || 'Chưa cập nhật mô tả nhiệm vụ.'}</p>
+          {task.description ? <p className="mt-1 text-sm text-slate-600">{task.description}</p> : null}
           <p className="mt-2 text-xs text-slate-500">
-            Hạn hoàn thành: {formatDate(task.deadline)} · Trạng thái: {statusBadge.taskLabel}
+            {t('research.task.deadline')}: {formatDate(task.deadline, locale)} · {t('research.task.status')}: {statusBadge.taskLabel}
           </p>
           <div className="mt-3 flex flex-wrap items-center gap-2">
-            <span className="text-xs font-semibold text-slate-700">Trạng thái báo cáo mới nhất:</span>
+            <span className="text-xs font-semibold text-slate-700">{t('research.task.latestReportStatus')}:</span>
             <ReportStatusBadge status={latestReportStatus} />
           </div>
           {statusBadge.reportLabel ? (
@@ -133,12 +133,12 @@ function MyTaskReportCard({
           ) : null}
           {latestReportStatus === 'SUBMITTED' && (
             <p className="mt-2 text-xs italic text-blue-600 font-medium">
-              Báo cáo đang chờ kiểm tra. Bạn có thể cập nhật phiên bản này trước khi được xử lý.
+              {t('research.task.submittedPending')}
             </p>
           )}
           {latestReportStatus === 'LEADER_REVIEWED' && (
             <p className="mt-2 text-xs italic text-amber-600 font-medium">
-              Báo cáo đã được trưởng nhóm chấp nhận và đang chờ quản lý duyệt.
+              {t('research.task.leaderReviewedPending')}
             </p>
           )}
         </div>
@@ -150,12 +150,12 @@ function MyTaskReportCard({
               size="sm"
               loading={updateStatus.isPending}
             >
-              Bắt đầu thực hiện
+              {t('research.task.start')}
             </Button>
           ) : null}
           {action === 'SUBMIT' || action === 'RESUBMIT' || action === 'REPLACE' ? (
             <Button onClick={() => setIsUploadOpen(true)} size="sm" variant={action === 'REPLACE' ? 'outline' : 'primary'}>
-              {action === 'REPLACE' ? 'Cập nhật báo cáo' : action === 'RESUBMIT' ? 'Nộp lại báo cáo' : 'Nộp báo cáo'}
+              {action === 'REPLACE' ? t('research.task.updateReport') : action === 'RESUBMIT' ? t('research.task.resubmitReport') : t('research.task.submitReport')}
             </Button>
           ) : null}
         </div>
@@ -172,7 +172,7 @@ function MyTaskReportCard({
               size="sm"
               variant="outline"
             >
-              Xem lịch sử báo cáo
+              {t('research.task.history')}
             </Button>
             <Button
               onClick={() => {
@@ -182,7 +182,7 @@ function MyTaskReportCard({
               size="sm"
               variant="outline"
             >
-              Xem góp ý
+              {t('research.task.comments')}
             </Button>
           </>
         ) : null}
@@ -230,25 +230,6 @@ const BLOCKED_REPORT_STATUSES = new Set<ResearchReportStatus>([
   'APPROVED',
 ]);
 
-const TASK_STATUS_LABELS: Record<ResearchTaskStatus, string> = {
-  TODO: 'Cần làm',
-  DOING: 'Đang thực hiện',
-  WAITING_REVIEW: 'Chờ trưởng nhóm kiểm tra',
-  NEEDS_REVISION: 'Cần chỉnh sửa',
-  DONE: 'Hoàn thành',
-  OVERDUE: 'Đang thực hiện',
-  CANCELLED: 'Đã hủy',
-};
-
-const REPORT_STATUS_HELPERS: Record<ResearchReportStatus, string> = {
-  SUBMITTED: 'Chờ trưởng nhóm kiểm tra',
-  LEADER_REVIEWED: 'Chờ quản lý duyệt',
-  NEEDS_REVISION: 'Cần nộp lại báo cáo',
-  LEADER_REJECTED: 'Trưởng nhóm đã từ chối',
-  APPROVED: 'Đã hoàn thành',
-  MANAGER_REJECTED: 'Quản lý đã từ chối',
-};
-
 function getMyTaskAction(
   taskStatus: ResearchTaskStatus,
   latestReportStatus: ResearchReportStatus | null,
@@ -282,18 +263,42 @@ function getMyTaskAction(
 function getMyTaskStatusBadge(
   taskStatus: ResearchTaskStatus,
   latestReportStatus: ResearchReportStatus | null,
+  t: ReturnType<typeof useI18n>['t'],
 ) {
   if (taskStatus === 'DONE' || latestReportStatus === 'APPROVED') {
-    return { taskLabel: 'Hoàn thành', reportLabel: REPORT_STATUS_HELPERS.APPROVED };
+    return { taskLabel: t('research.task.status.done'), reportLabel: t('research.task.reportStatus.approved') };
   }
   if (latestReportStatus) {
     return {
-      taskLabel: TASK_STATUS_LABELS[taskStatus] ?? 'Cần làm',
-      reportLabel: REPORT_STATUS_HELPERS[latestReportStatus],
+      taskLabel: getTaskStatusLabel(taskStatus, t),
+      reportLabel: getReportStatusLabel(latestReportStatus, t),
     };
   }
   return {
-    taskLabel: TASK_STATUS_LABELS[taskStatus] ?? 'Cần làm',
+    taskLabel: getTaskStatusLabel(taskStatus, t),
     reportLabel: null,
   };
+}
+
+function getTaskStatusLabel(status: ResearchTaskStatus, t: ReturnType<typeof useI18n>['t']) {
+  return t(`research.task.status.${{
+    TODO: 'todo',
+    DOING: 'doing',
+    WAITING_REVIEW: 'waitingReview',
+    NEEDS_REVISION: 'needsRevision',
+    DONE: 'done',
+    OVERDUE: 'overdue',
+    CANCELLED: 'cancelled',
+  }[status]}`);
+}
+
+function getReportStatusLabel(status: ResearchReportStatus, t: ReturnType<typeof useI18n>['t']) {
+  return t(`research.task.reportStatus.${{
+    SUBMITTED: 'submitted',
+    LEADER_REVIEWED: 'leaderReviewed',
+    NEEDS_REVISION: 'needsRevision',
+    LEADER_REJECTED: 'leaderRejected',
+    APPROVED: 'approved',
+    MANAGER_REJECTED: 'managerRejected',
+  }[status]}`);
 }

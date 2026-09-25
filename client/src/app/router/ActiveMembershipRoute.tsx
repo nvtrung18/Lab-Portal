@@ -4,6 +4,7 @@ import { getStoredUser } from '../../shared/api';
 import { hasActiveMembership } from '../../shared/utils/membership';
 import { useCurrentUser } from '../../modules/user/hooks';
 import { LAB_MANAGER } from '../../shared/constants/roles';
+import { useI18n } from '../../shared/i18n';
 
 interface ActiveMembershipRouteProps {
   allowLabManager?: boolean;
@@ -11,6 +12,7 @@ interface ActiveMembershipRouteProps {
 
 export function ActiveMembershipRoute({ allowLabManager = false }: ActiveMembershipRouteProps) {
   const storedUser = getStoredUser();
+  const { t } = useI18n();
   const { data: currentUser, isLoading } = useCurrentUser();
   const user = currentUser
     ? {
@@ -35,7 +37,7 @@ export function ActiveMembershipRoute({ allowLabManager = false }: ActiveMembers
   if (isLoading && !storedUser) {
     return (
       <section className="rounded-lg border border-slate-200 bg-white p-6 text-sm text-slate-600 shadow-sm">
-        Đang kiểm tra membership...
+        {t('membership.checking')}
       </section>
     );
   }

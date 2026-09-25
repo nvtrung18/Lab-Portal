@@ -17,6 +17,7 @@ import com.web.labportalbackend.booking.outbox.BookingOutboxService;
 import com.web.labportalbackend.booking.repository.BookingRepository;
 import com.web.labportalbackend.booking.repository.TimeSlotBookingCounts;
 import com.web.labportalbackend.booking.repository.TimeSlotRepository;
+import com.web.labportalbackend.booking.service.CleaningService;
 import com.web.labportalbackend.booking.service.TimeSlotService;
 import com.web.labportalbackend.common.enums.BookingStatus;
 import com.web.labportalbackend.common.enums.LabStatus;
@@ -58,6 +59,7 @@ public class TimeSlotServiceImpl implements TimeSlotService {
     private final MembershipRepository membershipRepository;
     private final UserRepository userRepository;
     private final BookingRepository bookingRepository;
+    private final CleaningService cleaningService;
     private final BookingOutboxService bookingOutboxService;
     private final SystemConfigService systemConfigService;
     private final AuditLogService auditLogService;
@@ -247,6 +249,7 @@ public class TimeSlotServiceImpl implements TimeSlotService {
         bookingRepository.saveAll(activeBookings);
         slot.setStatus(TimeSlotStatus.CLOSED);
         TimeSlot saved = timeSlotRepository.save(slot);
+        cleaningService.createCleaningTask(saved.getId());
         activeBookings.forEach(booking -> {
             notificationEmitter.emit(
                     booking.getUser().getId(),

@@ -1,3 +1,4 @@
+import { useI18n } from '../../../shared/i18n';
 import type { ResearchReportComment } from '../types';
 
 interface CommentItemProps {
@@ -14,8 +15,9 @@ const ROLE_TONE_CLASSES: Record<RoleTone, string> = {
 };
 
 export function CommentItem({ comment, currentUserId }: CommentItemProps) {
+  const { locale, t } = useI18n();
   const isMine = currentUserId != null && comment.authorId === currentUserId;
-  const role = getCommentRole(comment);
+  const role = getCommentRole(comment, t);
 
   return (
     <article
@@ -28,11 +30,11 @@ export function CommentItem({ comment, currentUserId }: CommentItemProps) {
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <p className="break-words font-semibold text-slate-950">
-              {comment.authorName || comment.authorEmail || 'Người dùng'}
+              {comment.authorName || comment.authorEmail || t('common.unknownUser')}
             </p>
             {isMine ? (
               <span className="rounded-full bg-slate-900 px-2 py-0.5 text-xs font-semibold text-white">
-                Bạn
+                {t('research.you')}
               </span>
             ) : null}
           </div>
@@ -46,7 +48,7 @@ export function CommentItem({ comment, currentUserId }: CommentItemProps) {
             {role.label}
           </span>
           <time className="text-xs text-slate-500" dateTime={comment.createdAt}>
-            {formatCommentTime(comment.createdAt)}
+            {formatCommentTime(comment.createdAt, locale)}
           </time>
         </div>
       </header>
@@ -56,22 +58,22 @@ export function CommentItem({ comment, currentUserId }: CommentItemProps) {
   );
 }
 
-function getCommentRole(comment: ResearchReportComment): { label: string; tone: RoleTone } {
+function getCommentRole(comment: ResearchReportComment, t: ReturnType<typeof useI18n>['t']): { label: string; tone: RoleTone } {
   if (comment.authorRole === 'LAB_MANAGER') {
-    return { label: 'Quản lý PTN', tone: 'manager' };
+    return { label: t('research.role.manager'), tone: 'manager' };
   }
   if (comment.groupRole === 'LEADER') {
-    return { label: 'Trưởng nhóm', tone: 'leader' };
+    return { label: t('research.role.leader'), tone: 'leader' };
   }
-  return { label: 'Thành viên', tone: 'member' };
+  return { label: t('research.role.member'), tone: 'member' };
 }
 
-function formatCommentTime(value: string) {
+function formatCommentTime(value: string, locale: 'vi' | 'en') {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) {
     return value;
   }
-  return new Intl.DateTimeFormat('vi-VN', {
+  return new Intl.DateTimeFormat(locale === 'en' ? 'en-US' : 'vi-VN', {
     dateStyle: 'short',
     timeStyle: 'short',
   }).format(date);

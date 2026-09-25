@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 
 import { Button } from '../../../shared/components';
+import { useI18n } from '../../../shared/i18n';
 import type { UserProfileResponse } from '../../user/api/user.api';
 import {
   useCreateResearchLog,
@@ -21,11 +22,6 @@ interface LogPageProps {
 
 type MemberView = 'mine' | 'group';
 
-const logTypeLabels: Record<ResearchLogType, string> = {
-  MANUAL: 'Nhật ký thủ công',
-  SYSTEM: 'Sự kiện hệ thống',
-};
-
 function sortNewestFirst(logs: ResearchLog[]) {
   return [...logs].sort((left, right) => {
     const leftTime = left.createdAt ? new Date(left.createdAt).getTime() : 0;
@@ -43,6 +39,7 @@ function toNumberOrNull(value: string) {
 }
 
 export function LogPage({ projectId, currentUser, role, groupRole, groupId }: LogPageProps) {
+  const { t } = useI18n();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [milestoneFilter, setMilestoneFilter] = useState('');
   const [taskFilter, setTaskFilter] = useState('');
@@ -102,13 +99,10 @@ export function LogPage({ projectId, currentUser, role, groupRole, groupId }: Lo
     <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h3 className="text-lg font-semibold text-slate-950">Nhật ký nghiên cứu</h3>
-          <p className="mt-1 text-sm text-slate-600">
-            Theo dõi quá trình làm việc, kết quả và vấn đề phát sinh trong đề tài.
-          </p>
+          <h3 className="text-lg font-semibold text-slate-950">{t('research.log.pageTitle')}</h3>
         </div>
         <Button type="button" onClick={() => setIsCreateOpen(true)}>
-          Ghi nhật ký nghiên cứu
+          {t('research.log.createButton')}
         </Button>
       </div>
 
@@ -121,7 +115,7 @@ export function LogPage({ projectId, currentUser, role, groupRole, groupId }: Lo
             type="button"
             onClick={() => setMemberView('mine')}
           >
-            Nhật ký của tôi
+            {t('research.log.mine')}
           </button>
           <button
             className={`rounded px-3 py-1.5 text-sm font-semibold ${
@@ -130,7 +124,7 @@ export function LogPage({ projectId, currentUser, role, groupRole, groupId }: Lo
             type="button"
             onClick={() => setMemberView('group')}
           >
-            Nhật ký nhóm
+            {t('research.log.group')}
           </button>
         </div>
       ) : null}
@@ -140,7 +134,7 @@ export function LogPage({ projectId, currentUser, role, groupRole, groupId }: Lo
 
 
           <label className="block text-sm font-medium text-slate-700">
-            Mốc nghiên cứu
+            {t('research.log.milestone')}
             <select
               className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm"
               value={milestoneFilter}
@@ -149,7 +143,7 @@ export function LogPage({ projectId, currentUser, role, groupRole, groupId }: Lo
                 setTaskFilter('');
               }}
             >
-              <option value="">Tất cả mốc</option>
+              <option value="">{t('research.log.allMilestones')}</option>
               {milestones.map((milestone) => (
                 <option key={milestone.id} value={milestone.id}>{milestone.title}</option>
               ))}
@@ -157,13 +151,13 @@ export function LogPage({ projectId, currentUser, role, groupRole, groupId }: Lo
           </label>
 
           <label className="block text-sm font-medium text-slate-700">
-            Nhiệm vụ
+            {t('research.log.relatedTask')}
             <select
               className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm"
               value={taskFilter}
               onChange={(event) => setTaskFilter(event.target.value)}
             >
-              <option value="">Tất cả nhiệm vụ</option>
+              <option value="">{t('research.log.allTasks')}</option>
               {taskOptions.map((task) => (
                 <option key={task.id} value={task.id}>{task.title}</option>
               ))}
@@ -171,13 +165,13 @@ export function LogPage({ projectId, currentUser, role, groupRole, groupId }: Lo
           </label>
 
           <label className="block text-sm font-medium text-slate-700">
-            Người ghi
+            {t('research.log.author')}
             <select
               className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm"
               value={authorFilter}
               onChange={(event) => setAuthorFilter(event.target.value)}
             >
-              <option value="">Tất cả người ghi</option>
+              <option value="">{t('research.log.allAuthors')}</option>
               {authorOptions.map((author) => (
                 <option key={author.id} value={author.id}>{author.name}</option>
               ))}
@@ -185,15 +179,15 @@ export function LogPage({ projectId, currentUser, role, groupRole, groupId }: Lo
           </label>
 
           <label className="block text-sm font-medium text-slate-700">
-            Loại log
+            {t('research.log.type')}
             <select
               className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm"
               value={logTypeFilter}
               onChange={(event) => setLogTypeFilter(event.target.value)}
             >
-              <option value="">Tất cả loại log</option>
+              <option value="">{t('research.log.allTypes')}</option>
               {availableLogTypes.map((logType) => (
-                <option key={logType} value={logType}>{logTypeLabels[logType]}</option>
+                <option key={logType} value={logType}>{logType === 'SYSTEM' ? t('research.log.system') : t('research.log.manual')}</option>
               ))}
             </select>
           </label>
@@ -202,18 +196,18 @@ export function LogPage({ projectId, currentUser, role, groupRole, groupId }: Lo
 
       {isLoading ? (
         <p className="mt-5 rounded-md border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
-          Đang tải nhật ký nghiên cứu...
+          {t('research.log.loading')}
         </p>
       ) : isError ? (
         <div className="mt-5 rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-          Không thể tải nhật ký nghiên cứu.
+          {t('research.log.loadFailed')}
           <button className="ml-3 font-semibold underline" type="button" onClick={() => refetch()}>
-            Tải lại
+            {t('common.retry')}
           </button>
         </div>
       ) : !visibleLogs.length ? (
         <div className="mt-5 rounded-md border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
-          Chưa có nhật ký nghiên cứu nào.
+          {t('research.log.empty')}
         </div>
       ) : (
         <>
@@ -226,12 +220,12 @@ export function LogPage({ projectId, currentUser, role, groupRole, groupId }: Lo
             <div className="mt-6 flex justify-center">
               <Button
                 loading={isFetchingNextPage}
-                loadingText="Đang tải..."
+                loadingText={t('common.loading')}
                 type="button"
                 variant="outline"
                 onClick={() => fetchNextPage()}
               >
-                Tải thêm
+                {t('research.log.loadMore')}
               </Button>
             </div>
           ) : null}

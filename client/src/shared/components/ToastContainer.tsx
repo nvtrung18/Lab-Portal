@@ -1,6 +1,7 @@
 import { X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
+import { useI18n } from '../i18n';
 import { PENDING_TOAST_KEY, TOAST_EVENT, type ToastPayload } from './toast';
 
 interface ToastState extends ToastPayload {
@@ -14,14 +15,8 @@ const VARIANT_CLASSES = {
   info: 'border-blue-200 bg-blue-50 text-blue-800',
 } as const;
 
-const VARIANT_LABELS = {
-  success: 'Thành công',
-  error: 'Lỗi',
-  warning: 'Cảnh báo',
-  info: 'Thông tin',
-} as const;
-
 export function ToastContainer() {
+  const { t } = useI18n();
   const [toast, setToast] = useState<ToastState | null>(null);
 
   useEffect(() => {
@@ -67,10 +62,10 @@ export function ToastContainer() {
         ].join(' ')}
         role={toast.variant === 'error' ? 'alert' : 'status'}
       >
-        <p className="font-semibold">{toast.title ?? VARIANT_LABELS[toast.variant]}</p>
+        <p className="font-semibold">{toast.title ?? t(`common.${toast.variant}`)}</p>
         <p className="mt-1">{toast.message}</p>
         <button
-          aria-label="Đóng thông báo"
+          aria-label={t('common.close')}
           className="absolute right-1.5 top-1.5 flex h-11 w-11 items-center justify-center rounded-lg transition-colors duration-200 hover:bg-black/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-current"
           type="button"
           onClick={() => setToast(null)}

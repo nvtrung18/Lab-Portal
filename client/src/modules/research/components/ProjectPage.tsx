@@ -1,5 +1,6 @@
 import { useState } from 'react';
 
+import { useI18n } from '../../../shared/i18n';
 import { useCreateProject, useProjectsByGroup } from '../hooks';
 import type { ResearchGroup } from '../types';
 import { formatDate, formatPriority, formatProjectStatus, getStatusClass } from '../utils';
@@ -11,6 +12,7 @@ interface ProjectPageProps {
 }
 
 export function ProjectPage({ group, canCreate }: ProjectPageProps) {
+  const { locale, t } = useI18n();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const { data: projects = [], isError, isLoading, refetch } = useProjectsByGroup(group?.id);
   const createProject = useCreateProject(group?.id, group?.labId, group?.topicId);
@@ -18,7 +20,7 @@ export function ProjectPage({ group, canCreate }: ProjectPageProps) {
   if (!group) {
     return (
       <section className="rounded-lg border border-slate-200 bg-white p-6 text-sm text-slate-600 shadow-sm">
-        Chọn một nhóm nghiên cứu để xem danh sách đề tài.
+        {t('research.project.chooseGroupToView')}
       </section>
     );
   }
@@ -27,8 +29,7 @@ export function ProjectPage({ group, canCreate }: ProjectPageProps) {
     <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h3 className="text-lg font-semibold text-slate-950">Đề tài nghiên cứu</h3>
-          <p className="mt-1 text-sm text-slate-600">Danh sách đề tài thuộc nhóm nghiên cứu đang chọn.</p>
+          <h3 className="text-lg font-semibold text-slate-950">{t('research.project.title')}</h3>
         </div>
         {canCreate ? (
           <button
@@ -36,23 +37,23 @@ export function ProjectPage({ group, canCreate }: ProjectPageProps) {
             type="button"
             onClick={() => setIsCreateOpen(true)}
           >
-            Tạo đề tài nghiên cứu
+            {t('research.project.createTitle')}
           </button>
         ) : null}
       </div>
 
       {isLoading ? (
-        <p className="mt-5 text-sm text-slate-600">Đang tải danh sách đề tài nghiên cứu...</p>
+        <p className="mt-5 text-sm text-slate-600">{t('common.loading')}</p>
       ) : isError ? (
         <div className="mt-5 rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-          Không thể tải danh sách đề tài nghiên cứu.
+          {t('common.loadError')}
           <button className="ml-3 font-semibold underline" type="button" onClick={() => refetch()}>
-            Tải lại
+            {t('common.retry')}
           </button>
         </div>
       ) : !projects.length ? (
         <div className="mt-5 rounded-md border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
-          Chưa có đề tài nghiên cứu nào.
+          {t('common.empty')}
         </div>
       ) : (
         <div className="mt-5 grid gap-4 lg:grid-cols-2">
@@ -63,28 +64,28 @@ export function ProjectPage({ group, canCreate }: ProjectPageProps) {
                   {project.code ? `${project.code} - ` : ''}{project.title}
                 </h4>
                 <span className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ring-1 ${getStatusClass(project.status)}`}>
-                  {formatProjectStatus(project.status)}
+                  {formatProjectStatus(project.status, locale)}
                 </span>
               </div>
               <p className="mt-3 text-sm text-slate-600">
-                {project.objective || project.description || 'Chưa cập nhật mục tiêu nghiên cứu.'}
+                {project.objective || project.description || t('research.group.noObjective')}
               </p>
               <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
                 <div>
-                  <dt className="font-semibold text-slate-700">Ngày bắt đầu</dt>
-                  <dd className="mt-1 text-slate-600">{formatDate(project.startDate)}</dd>
+                  <dt className="font-semibold text-slate-700">{t('research.project.startDateLabel')}</dt>
+                  <dd className="mt-1 text-slate-600">{formatDate(project.startDate, locale)}</dd>
                 </div>
                 <div>
-                  <dt className="font-semibold text-slate-700">Ngày kết thúc dự kiến</dt>
-                  <dd className="mt-1 text-slate-600">{formatDate(project.expectedEndDate ?? project.endDate)}</dd>
+                  <dt className="font-semibold text-slate-700">{t('research.project.expectedEndDateLabel')}</dt>
+                  <dd className="mt-1 text-slate-600">{formatDate(project.expectedEndDate ?? project.endDate, locale)}</dd>
                 </div>
                 <div>
-                  <dt className="font-semibold text-slate-700">Mức độ ưu tiên</dt>
-                  <dd className="mt-1 text-slate-600">{formatPriority(project.priority)}</dd>
+                  <dt className="font-semibold text-slate-700">{t('research.project.priority')}</dt>
+                  <dd className="mt-1 text-slate-600">{formatPriority(project.priority, locale)}</dd>
                 </div>
                 <div>
-                  <dt className="font-semibold text-slate-700">Người tạo</dt>
-                  <dd className="mt-1 text-slate-600">{project.createdByName ?? 'Chưa cập nhật'}</dd>
+                  <dt className="font-semibold text-slate-700">{t('research.project.createdBy')}</dt>
+                  <dd className="mt-1 text-slate-600">{project.createdByName ?? t('common.notUpdated')}</dd>
                 </div>
               </dl>
             </article>

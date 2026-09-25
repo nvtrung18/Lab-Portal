@@ -1,5 +1,6 @@
 package com.web.labportalbackend.booking.service;
 
+import com.web.labportalbackend.booking.dto.request.StudentSelfCheckinRequest;
 import com.web.labportalbackend.booking.dto.response.BookingResponse;
 import com.web.labportalbackend.booking.dto.response.CheckinQrResponse;
 import com.web.labportalbackend.booking.dto.response.CheckinQrRequestResponse;
@@ -9,6 +10,8 @@ import com.web.labportalbackend.face.enums.FaceFallbackReason;
 import java.util.List;
 
 public interface CheckinService {
+    BookingResponse selfCheckinByCurrentStudent(StudentSelfCheckinRequest request, String clientIp);
+
     CheckinQrResponse requestQrForCurrentStudent(Long bookingId, FaceFallbackReason fallbackReason, String customReason);
 
     CheckinQrResponse getCurrentStudentQrRequest(Long bookingId);

@@ -2,16 +2,16 @@ import { FormEvent, useMemo, useState } from 'react';
 
 import { Button, EmptyState, ErrorState, LoadingState, Modal } from '../../../shared/components';
 import { LAB_MANAGER, STUDENT } from '../../../shared/constants/roles';
-import { VALIDATION_MESSAGES } from '../../../shared/utils';
+import { useI18n } from '../../../shared/i18n';
 import { useEvaluationsByGroup, useResearchGroup, useSubmitEvaluation } from '../hooks';
 import type { ResearchEvaluation } from '../types';
 
 const SCORE_FIELDS = [
-  ['contributionScore', 'Điểm đóng góp nhóm'],
-  ['taskScore', 'Điểm hoàn thành nhiệm vụ'],
-  ['reportScore', 'Điểm chất lượng báo cáo'],
-  ['productScore', 'Điểm chất lượng sản phẩm'],
-  ['attitudeScore', 'Điểm thái độ nghiên cứu'],
+  ['contributionScore', 'research.evaluation.contributionScore'],
+  ['taskScore', 'research.evaluation.taskScore'],
+  ['reportScore', 'research.evaluation.reportScore'],
+  ['productScore', 'research.evaluation.productScore'],
+  ['attitudeScore', 'research.evaluation.attitudeScore'],
 ] as const;
 
 type ScoreField = (typeof SCORE_FIELDS)[number][0];
@@ -46,6 +46,7 @@ const DEFAULT_FORM_STATE: EvaluationFormState = {
 
 export function EvaluationPage({ projectId, groupId, role, currentUserId }: EvaluationPageProps) {
   const isManager = role === LAB_MANAGER;
+  const { t } = useI18n();
   const { data: evaluations = [], isError, isLoading, refetch } = useEvaluationsByGroup(groupId);
   const { data: group, isLoading: isLoadingGroup } = useResearchGroup(groupId);
   const [editingStudent, setEditingStudent] = useState<EvaluationStudent | null>(null);
@@ -96,11 +97,11 @@ export function EvaluationPage({ projectId, groupId, role, currentUserId }: Eval
     }
     const parsedScores = parseScores(formState);
     if (!parsedScores) {
-      setFormError(VALIDATION_MESSAGES.score);
+      setFormError(t('research.evaluation.invalidScore'));
       return;
     }
     if (formState.lecturerComment.trim().length > 2000) {
-      setFormError('Nhận xét tối đa 2000 ký tự.');
+      setFormError(t('research.evaluation.commentMaxLength'));
       return;
     }
 
@@ -119,15 +120,15 @@ export function EvaluationPage({ projectId, groupId, role, currentUserId }: Eval
   if (!isManager) {
     return (
       <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-        <h3 className="text-lg font-semibold text-slate-950">Đánh giá của tôi</h3>
+        <h3 className="text-lg font-semibold text-slate-950">{t('research.evaluation.mineTitle')}</h3>
         {isLoading ? (
-          <LoadingState className="mt-5">Đang tải đánh giá...</LoadingState>
+          <LoadingState className="mt-5">{t('research.evaluation.loading')}</LoadingState>
         ) : isError ? (
           <ErrorState className="mt-5" onRetry={() => refetch()}>
-            Không thể tải đánh giá.
+            {t('research.evaluation.loadFailed')}
           </ErrorState>
         ) : !studentEvaluations.length ? (
-          <EmptyState className="mt-5">Bạn chưa có đánh giá cho đề tài này.</EmptyState>
+          <EmptyState className="mt-5">{t('research.evaluation.emptyMine')}</EmptyState>
         ) : (
           <div className="mt-5 space-y-3">
             {studentEvaluations.map((evaluation) => (
@@ -141,34 +142,31 @@ export function EvaluationPage({ projectId, groupId, role, currentUserId }: Eval
 
   return (
     <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <div>
-        <h3 className="text-lg font-semibold text-slate-950">Đánh giá kết quả nghiên cứu</h3>
-        <p className="mt-1 text-sm text-slate-600">Chấm điểm từng sinh viên trong đề tài theo thang 0 đến 10.</p>
-      </div>
+      <h3 className="text-lg font-semibold text-slate-950">{t('research.evaluation.title')}</h3>
 
       <Modal
         closeDisabled={submitEvaluation.isPending}
         footer={editingStudent ? (
           <>
             <Button disabled={submitEvaluation.isPending} onClick={closeForm} type="button" variant="outline">
-              Hủy
+              {t('common.cancel')}
             </Button>
-            <Button form="evaluation-form" loading={submitEvaluation.isPending} loadingText="Đang lưu..." type="submit">
-              Lưu đánh giá
+            <Button form="evaluation-form" loading={submitEvaluation.isPending} loadingText={t('common.saving')} type="submit">
+              {t('research.evaluation.save')}
             </Button>
           </>
         ) : null}
         isOpen={Boolean(editingStudent)}
         onClose={closeForm}
         size="xl"
-        title={editingStudent ? (evaluationByStudentId.has(editingStudent.userId) ? 'Cập nhật đánh giá' : 'Chấm điểm') : 'Chấm điểm'}
+        title={editingStudent ? (evaluationByStudentId.has(editingStudent.userId) ? t('research.evaluation.update') : t('research.evaluation.grade')) : t('research.evaluation.grade')}
       >
       {editingStudent ? (
         <form id="evaluation-form" onSubmit={handleSubmit}>
           <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <h4 className="font-semibold text-slate-950">
-                {evaluationByStudentId.has(editingStudent.userId) ? 'Cập nhật đánh giá' : 'Chấm điểm'}
+                {evaluationByStudentId.has(editingStudent.userId) ? t('research.evaluation.update') : t('research.evaluation.grade')}
               </h4>
               <p className="mt-1 text-sm text-slate-600">
                 {editingStudent.fullName} · {editingStudent.groupName}
@@ -177,9 +175,9 @@ export function EvaluationPage({ projectId, groupId, role, currentUserId }: Eval
           </div>
 
           <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-            {SCORE_FIELDS.map(([field, label]) => (
+            {SCORE_FIELDS.map(([field, labelKey]) => (
               <label className="block text-sm" key={field}>
-                <span className="mb-1 block font-semibold text-slate-700">{label}</span>
+                <span className="mb-1 block font-semibold text-slate-700">{t(labelKey)}</span>
                 <input
                   className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
                   disabled={submitEvaluation.isPending}
@@ -195,7 +193,7 @@ export function EvaluationPage({ projectId, groupId, role, currentUserId }: Eval
           </div>
 
           <label className="mt-4 block text-sm">
-            <span className="mb-1 block font-semibold text-slate-700">Nhận xét của quản lý</span>
+            <span className="mb-1 block font-semibold text-slate-700">{t('research.evaluation.managerComment')}</span>
             <textarea
               className="min-h-24 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
               disabled={submitEvaluation.isPending}
@@ -216,28 +214,28 @@ export function EvaluationPage({ projectId, groupId, role, currentUserId }: Eval
       </Modal>
 
       {isLoading || isLoadingGroup ? (
-        <LoadingState className="mt-5">Đang tải danh sách đánh giá...</LoadingState>
+        <LoadingState className="mt-5">{t('research.evaluation.loadingList')}</LoadingState>
       ) : isError ? (
         <ErrorState className="mt-5" onRetry={() => refetch()}>
-          Không thể tải danh sách đánh giá.
+          {t('research.evaluation.loadListFailed')}
         </ErrorState>
       ) : !students.length && !evaluations.length ? (
-        <EmptyState className="mt-5">Chưa có đánh giá nào cho đề tài này.</EmptyState>
+        <EmptyState className="mt-5">{t('research.evaluation.emptyList')}</EmptyState>
       ) : (
         <div className="mt-5 overflow-x-auto rounded-md border border-slate-200">
           <table className="min-w-full divide-y divide-slate-200 text-sm">
             <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">
               <tr>
-                <th className="px-3 py-3">Họ tên</th>
-                <th className="px-3 py-3">Nhóm</th>
-                <th className="px-3 py-3">Đóng góp nhóm</th>
-                <th className="px-3 py-3">Nhiệm vụ</th>
-                <th className="px-3 py-3">Báo cáo</th>
-                <th className="px-3 py-3">Sản phẩm</th>
-                <th className="px-3 py-3">Thái độ</th>
-                <th className="px-3 py-3">Tổng</th>
-                <th className="px-3 py-3">Nhận xét</th>
-                <th className="px-3 py-3">Thao tác</th>
+                <th className="px-3 py-3">{t('research.evaluation.name')}</th>
+                <th className="px-3 py-3">{t('research.evaluation.group')}</th>
+                <th className="px-3 py-3">{t('research.evaluation.contributionScore')}</th>
+                <th className="px-3 py-3">{t('research.evaluation.taskScore')}</th>
+                <th className="px-3 py-3">{t('research.evaluation.reportScore')}</th>
+                <th className="px-3 py-3">{t('research.evaluation.productScore')}</th>
+                <th className="px-3 py-3">{t('research.evaluation.attitudeScore')}</th>
+                <th className="px-3 py-3">{t('research.evaluation.total')}</th>
+                <th className="px-3 py-3">{t('research.evaluation.comment')}</th>
+                <th className="px-3 py-3">{t('common.actions')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 bg-white">
@@ -255,12 +253,12 @@ export function EvaluationPage({ projectId, groupId, role, currentUserId }: Eval
                     <ScoreCell strong value={evaluation?.totalScore} />
                     <td className="max-w-xs px-3 py-3 text-slate-600">
                       <span className="block max-h-12 overflow-hidden break-words">
-                        {evaluation?.lecturerComment || 'Chưa có nhận xét'}
+                        {evaluation?.lecturerComment || t('research.evaluation.noComment')}
                       </span>
                     </td>
                     <td className="px-3 py-3">
                       <Button onClick={() => openEvaluationForm(student)} size="sm" variant="outline">
-                        {evaluation ? 'Cập nhật đánh giá' : 'Chấm điểm'}
+                        {evaluation ? t('research.evaluation.update') : t('research.evaluation.grade')}
                       </Button>
                     </td>
                   </tr>
@@ -275,27 +273,28 @@ export function EvaluationPage({ projectId, groupId, role, currentUserId }: Eval
 }
 
 function EvaluationCard({ evaluation }: { evaluation: ResearchEvaluation }) {
+  const { t } = useI18n();
   return (
     <article className="rounded-md border border-slate-200 p-4">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h4 className="font-semibold text-slate-950">{evaluation.studentName ?? 'Đánh giá cá nhân'}</h4>
-          <p className="mt-1 text-sm text-slate-600">{evaluation.groupName ?? 'Nhóm nghiên cứu'}</p>
+          <h4 className="font-semibold text-slate-950">{evaluation.studentName ?? t('research.evaluation.individual')}</h4>
+          <p className="mt-1 text-sm text-slate-600">{evaluation.groupName ?? t('research.evaluation.researchGroup')}</p>
         </div>
         <div className="rounded-md bg-slate-900 px-3 py-2 text-sm font-semibold text-white">
-          Tổng điểm {formatScore(evaluation.totalScore)}
+          {t('research.evaluation.totalScore')}: {formatScore(evaluation.totalScore)}
         </div>
       </div>
       <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2 lg:grid-cols-5">
-        <EvaluationField label="Điểm đóng góp nhóm" value={formatScore(evaluation.contributionScore)} />
-        <EvaluationField label="Điểm hoàn thành nhiệm vụ" value={formatScore(evaluation.taskScore)} />
-        <EvaluationField label="Điểm chất lượng báo cáo" value={formatScore(evaluation.reportScore)} />
-        <EvaluationField label="Điểm chất lượng sản phẩm" value={formatScore(evaluation.productScore)} />
-        <EvaluationField label="Điểm thái độ nghiên cứu" value={formatScore(evaluation.attitudeScore)} />
+        <EvaluationField label={t('research.evaluation.contributionScore')} value={formatScore(evaluation.contributionScore)} />
+        <EvaluationField label={t('research.evaluation.taskScore')} value={formatScore(evaluation.taskScore)} />
+        <EvaluationField label={t('research.evaluation.reportScore')} value={formatScore(evaluation.reportScore)} />
+        <EvaluationField label={t('research.evaluation.productScore')} value={formatScore(evaluation.productScore)} />
+        <EvaluationField label={t('research.evaluation.attitudeScore')} value={formatScore(evaluation.attitudeScore)} />
       </dl>
       <div className="mt-4 rounded-md border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
-        <span className="font-semibold text-slate-900">Nhận xét của quản lý: </span>
-        {evaluation.lecturerComment || 'Chưa có nhận xét.'}
+        <span className="font-semibold text-slate-900">{t('research.evaluation.managerComment')}: </span>
+        {evaluation.lecturerComment || t('research.evaluation.noComment')}
       </div>
     </article>
   );
@@ -311,9 +310,10 @@ function EvaluationField({ label, value }: { label: string; value: string }) {
 }
 
 function ScoreCell({ strong = false, value }: { strong?: boolean; value?: number }) {
+  const { t } = useI18n();
   return (
     <td className={`px-3 py-3 ${strong ? 'font-semibold text-slate-950' : 'text-slate-600'}`}>
-      {value == null ? 'Chưa chấm' : formatScore(value)}
+      {value == null ? t('research.evaluation.notScored') : formatScore(value)}
     </td>
   );
 }
@@ -330,7 +330,6 @@ function parseScores(formState: EvaluationFormState): Record<ScoreField, number>
   return parsed;
 }
 
-// Keep formatScore helper
 function toFormState(evaluation: ResearchEvaluation): EvaluationFormState {
   return {
     contributionScore: String(evaluation.contributionScore),

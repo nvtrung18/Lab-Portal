@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { queryKeys } from '../../../shared/api';
 import { toast } from '../../../shared/components';
+import { translate, translateBackendMessage } from '../../../shared/i18n';
 import { banUser, getAdminUsers, unbanUser, updateUserRoles, getAssignableLabs, patchUserRole, getAssignableManagers } from '../api';
 
 export const ADMIN_USERS_QUERY_KEY = queryKeys.admin.users;
@@ -22,11 +23,11 @@ export function useUpdateUserRoles() {
       patchUserRole(userId, role, labId),
     onSuccess: (data, variables) => {
       if (data?.message) {
-        toast.success(data.message);
+        toast.success(translateBackendMessage(data.message) ?? data.message);
       } else if (variables.role === 'LAB_MANAGER') {
-        toast.success('Đã cấp quyền quản lý PTN thành công.');
+        toast.success(translate('admin.roleAssigned'));
       } else {
-        toast.success('Đã cập nhật vai trò thành công.');
+        toast.success(translate('admin.roleUpdated'));
       }
       void queryClient.invalidateQueries({ queryKey: ADMIN_USERS_QUERY_KEY });
       void queryClient.invalidateQueries({ queryKey: ['adminLabs'] });
@@ -35,7 +36,7 @@ export function useUpdateUserRoles() {
       void queryClient.invalidateQueries({ queryKey: ['adminAuditLogs'] });
     },
     onError: (err: any) => {
-      const errMsg = err?.response?.data?.message || 'Không thể cập nhật vai trò.';
+      const errMsg = translateBackendMessage(err?.response?.data?.message) ?? translate('admin.roleUpdateFailed');
       toast.error(errMsg);
     },
   });
@@ -63,13 +64,13 @@ export function useBanUser() {
   return useMutation({
     mutationFn: banUser,
     onSuccess: () => {
-      toast.success('Đã khóa tài khoản thành công.');
+      toast.success(translate('admin.userBanned'));
       void queryClient.invalidateQueries({ queryKey: ADMIN_USERS_QUERY_KEY });
       void queryClient.invalidateQueries({ queryKey: queryKeys.admin.dashboardStats });
       void queryClient.invalidateQueries({ queryKey: ['adminAuditLogs'] });
     },
     onError: () => {
-      toast.error('Không thể khóa tài khoản.');
+      toast.error(translate('admin.userBanFailed'));
     },
   });
 }
@@ -80,13 +81,13 @@ export function useUnbanUser() {
   return useMutation({
     mutationFn: unbanUser,
     onSuccess: () => {
-      toast.success('Đã mở khóa tài khoản thành công.');
+      toast.success(translate('admin.userUnbanned'));
       void queryClient.invalidateQueries({ queryKey: ADMIN_USERS_QUERY_KEY });
       void queryClient.invalidateQueries({ queryKey: queryKeys.admin.dashboardStats });
       void queryClient.invalidateQueries({ queryKey: ['adminAuditLogs'] });
     },
     onError: () => {
-      toast.error('Không thể mở khóa tài khoản.');
+      toast.error(translate('admin.userUnbanFailed'));
     },
   });
 }

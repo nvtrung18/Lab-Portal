@@ -24,6 +24,7 @@ class AssistantKey(StrEnum):
 RequestInput = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=32_768)]
 ReadinessStatus = Literal["READY", "NOT_READY"]
 ServiceStatus = Literal["READY", "NOT_READY"]
+SupportedLocale = Literal["vi", "en"]
 ModelStatus = Literal["NOT_LOADED", "LOADING", "READY", "ERROR"]
 ArtifactStatus = Literal[
     "APPROVED",
@@ -37,6 +38,7 @@ ArtifactStatus = Literal[
 
 class AssistantRequest(ContractModel):
     assistant_key: AssistantKey
+    locale: SupportedLocale = "vi"
     input: RequestInput
     authorized_context: dict[str, JsonValue] = Field(default_factory=dict)
 
@@ -56,6 +58,7 @@ class ToolCandidate(ContractModel):
 
 
 class ToolPlanningRequest(ContractModel):
+    locale: SupportedLocale = "vi"
     input: RequestInput
     candidates: tuple[ToolCandidate, ...] = Field(min_length=1, max_length=200)
 

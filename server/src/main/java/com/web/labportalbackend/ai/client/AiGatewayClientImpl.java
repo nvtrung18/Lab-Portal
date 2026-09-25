@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.HttpStatusCode;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.ExchangeFunction;
@@ -101,7 +102,10 @@ public final class AiGatewayClientImpl implements AiGatewayClient, AiToolPlannin
                 .uri(path)
                 .contentType(MediaType.APPLICATION_JSON)
                 .header(INTERNAL_TOKEN_HEADER, internalServiceToken)
-                .headers(headers -> addRequestId(headers, request.requestId()))
+                .headers(headers -> {
+                    addRequestId(headers, request.requestId());
+                    headers.set(HttpHeaders.ACCEPT_LANGUAGE, LocaleContextHolder.getLocale().toLanguageTag());
+                })
                 .bodyValue(request.payload())
                 .exchangeToMono(response -> decodeResponse(response, decoder))
                 .timeout(attemptTimeout)
