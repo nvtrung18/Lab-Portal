@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import { Button, EmptyState, ErrorState, LoadingState } from '../../../shared/components';
+import { useI18n } from '../../../shared/i18n';
 import {
   useCreateResearchGroup,
   useResearchEligibleStudents,
@@ -23,6 +24,7 @@ interface ResearchGroupListProps {
 }
 
 export function ResearchGroupList({ project, canCreate }: ResearchGroupListProps) {
+  const { locale, t } = useI18n();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingGroup, setEditingGroup] = useState<ResearchGroup | null>(null);
   const { data: groups = [], isError, isLoading, refetch } = useResearchGroupsByProject(project.id);
@@ -37,25 +39,24 @@ export function ResearchGroupList({ project, canCreate }: ResearchGroupListProps
     <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h3 className="text-lg font-semibold text-slate-950">Nhóm nghiên cứu</h3>
-          <p className="mt-1 text-sm text-slate-600">Danh sách nhóm thuộc đề tài đang chọn.</p>
+          <h3 className="text-lg font-semibold text-slate-950">{t('research.group.listTitle')}</h3>
         </div>
         {canCreate ? (
           <Button onClick={() => setIsCreateOpen(true)}>
-            Tạo nhóm nghiên cứu
+            {t('research.group.createTitle')}
           </Button>
         ) : null}
       </div>
 
       {isLoading ? (
-        <LoadingState className="mt-5">Đang tải danh sách nhóm nghiên cứu...</LoadingState>
+        <LoadingState className="mt-5">{t('common.loading')}</LoadingState>
       ) : isError ? (
         <ErrorState className="mt-5" onRetry={() => refetch()}>
-          Không thể tải danh sách nhóm nghiên cứu.
+          {t('research.group.loadFailed')}
         </ErrorState>
       ) : !groups.length ? (
         <EmptyState className="mt-5">
-          Đề tài này chưa có nhóm nghiên cứu nào.
+          {t('research.group.noProjectGroups')}
         </EmptyState>
       ) : (
         <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
@@ -66,6 +67,8 @@ export function ResearchGroupList({ project, canCreate }: ResearchGroupListProps
               projectId={project.id}
               stats={stats}
               canCreate={canCreate}
+              locale={locale}
+              t={t}
               onEdit={() => setEditingGroup(group)}
             />
           ))}
@@ -110,12 +113,16 @@ function GroupCard({
   projectId,
   stats,
   canCreate,
+  locale,
+  t,
   onEdit,
 }: {
   group: ResearchGroup;
   projectId: number;
   stats?: any;
   canCreate: boolean;
+  locale: 'vi' | 'en';
+  t: ReturnType<typeof useI18n>['t'];
   onEdit: () => void;
 }) {
   const { data: milestones = [] } = useMilestonesByGroup(group.id);
@@ -136,58 +143,58 @@ function GroupCard({
           <div>
             <h4 className="text-base font-medium text-slate-900 line-clamp-1">{group.name}</h4>
             <p className="mt-1 text-xs text-slate-500 line-clamp-2">
-              {group.objective || 'Chưa cập nhật mục tiêu nhóm.'}
+              {group.objective || t('research.group.noObjectiveText')}
             </p>
           </div>
           <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ${getStatusClass(group.status)}`}>
-            {formatGroupStatus(group.status)}
+            {formatGroupStatus(group.status, locale)}
           </span>
         </div>
 
         <div className="mt-4 grid grid-cols-2 gap-3 border-y border-slate-100 py-3 text-xs">
           <div>
-            <span className="block font-medium text-slate-500">Trưởng nhóm</span>
+            <span className="block font-medium text-slate-500">{t('research.group.leader')}</span>
             <span className="mt-0.5 block font-semibold text-slate-850 truncate">
-              {group.leaderName || 'Chưa phân công'}
+              {group.leaderName || t('common.notAssigned')}
             </span>
           </div>
           <div>
-            <span className="block font-medium text-slate-500">Thành viên</span>
+            <span className="block font-medium text-slate-500">{t('research.group.membersLabel')}</span>
             <span className="mt-0.5 block font-semibold text-slate-850">
-              {group.memberCount ?? group.members?.length ?? 0} học viên
+              {group.memberCount ?? group.members?.length ?? 0} {t('research.group.students')}
             </span>
           </div>
           <div>
-            <span className="block font-medium text-slate-500">Mốc công việc</span>
+            <span className="block font-medium text-slate-500">{t('research.group.workMilestones')}</span>
             <span className="mt-0.5 block font-semibold text-slate-850">
-              {milestones.length} mốc
+              {milestones.length} {t('research.milestone.title').toLowerCase()}
             </span>
           </div>
           <div>
-            <span className="block font-medium text-slate-500">Sản phẩm đã nộp</span>
+            <span className="block font-medium text-slate-500">{t('research.group.productsSubmitted')}</span>
             <span className="mt-0.5 block font-semibold text-slate-850">
-              {products.length} sản phẩm
+              {products.length} {t('research.product.title').toLowerCase()}
             </span>
           </div>
           <div>
-            <span className="block font-medium text-slate-500">Báo cáo chờ duyệt</span>
+            <span className="block font-medium text-slate-500">{t('research.group.pendingReports')}</span>
             <span className={`mt-0.5 block font-semibold ${pendingReportsCount > 0 ? 'text-orange-600 font-medium' : 'text-slate-800'}`}>
-              {pendingReportsCount} báo cáo
+              {pendingReportsCount} {t('research.report.submitted').toLowerCase()}
             </span>
           </div>
           <div>
-            <span className="block font-medium text-slate-500">Điểm đánh giá TB</span>
+            <span className="block font-medium text-slate-500">{t('research.group.averageScore')}</span>
             <span className="mt-0.5 block font-semibold text-slate-850">
               {groupStats?.averageEvaluationScore != null
                 ? groupStats.averageEvaluationScore.toFixed(1)
-                : 'Chưa có'}
+                : t('research.group.noScore')}
             </span>
           </div>
         </div>
 
         <div className="mt-3 max-w-full">
           <div className="flex items-center justify-between text-xs">
-            <span className="font-medium text-slate-500">Tiến độ task</span>
+            <span className="font-medium text-slate-500">{t('research.group.taskProgress')}</span>
             <span className="font-medium text-slate-800">{taskCompletionRate}%</span>
           </div>
           <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
@@ -204,11 +211,11 @@ function GroupCard({
           className="flex-1 rounded-lg bg-slate-900 py-2 text-center text-xs font-semibold text-white transition-colors hover:bg-slate-800"
           to={`/app/research/projects/${projectId}/groups/${group.id}`}
         >
-          Xem chi tiết nhóm
+          {t('research.group.viewDetails')}
         </Link>
         {canCreate ? (
           <Button onClick={onEdit} size="sm" variant="outline">
-            Sửa
+            {t('research.group.edit')}
           </Button>
         ) : null}
       </div>

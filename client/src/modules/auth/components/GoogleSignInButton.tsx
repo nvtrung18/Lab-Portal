@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 
+import { useI18n } from '../../../shared/i18n';
+
 interface GoogleCredentialResponse {
   credential: string;
 }
@@ -24,6 +26,7 @@ const SCRIPT_ID = 'google-identity-services';
 const SCRIPT_URL = 'https://accounts.google.com/gsi/client';
 
 export function GoogleSignInButton({ disabled = false, onCredential }: GoogleSignInButtonProps) {
+  const { locale, t } = useI18n();
   const containerRef = useRef<HTMLDivElement>(null);
   const callbackRef = useRef(onCredential);
   const [loadFailed, setLoadFailed] = useState(false);
@@ -46,8 +49,8 @@ export function GoogleSignInButton({ disabled = false, onCredential }: GoogleSig
         theme: 'outline',
         size: 'large',
         text: 'continue_with',
-        shape: 'rectangular',
-        locale: 'vi',
+        shape: 'pill',
+        locale,
         width: Math.min(400, Math.floor(containerRef.current.clientWidth || 400)),
       });
     };
@@ -69,12 +72,12 @@ export function GoogleSignInButton({ disabled = false, onCredential }: GoogleSig
     script.addEventListener('load', render);
     script.addEventListener('error', () => setLoadFailed(true), { once: true });
     return () => script?.removeEventListener('load', render);
-  }, [clientId]);
+  }, [clientId, locale]);
 
   if (!clientId || loadFailed) {
     return (
       <p className="text-center text-xs text-slate-500" role="status">
-        {loadFailed ? 'Không thể tải Google Sign-In.' : 'Google Sign-In chưa được cấu hình.'}
+        {loadFailed ? t('auth.googleLoadFailed') : t('auth.googleNotConfigured')}
       </p>
     );
   }

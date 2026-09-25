@@ -1,7 +1,9 @@
 import { PenaltyItem } from '../components';
 import { useMyPenalties, useSubmitComplaint } from '../hooks';
+import { useI18n } from '../../../shared/i18n';
 
 export function PenaltyPage() {
+  const { t } = useI18n();
   const { data: penalties = [], isLoading, isError, refetch } = useMyPenalties();
   const submitComplaint = useSubmitComplaint();
 
@@ -20,9 +22,9 @@ export function PenaltyPage() {
   if (isError) {
     return (
       <section className="rounded-lg border border-red-200 bg-white p-6 text-sm text-red-700 shadow-sm">
-        Không thể tải danh sách vi phạm.
+        {t('penalty.loadFailed')}
         <button className="ml-3 font-semibold underline" type="button" onClick={() => refetch()}>
-          Tải lại
+          {t('common.retry')}
         </button>
       </section>
     );
@@ -31,15 +33,12 @@ export function PenaltyPage() {
   return (
     <section className="space-y-4">
       <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-        <h1 className="text-xl font-semibold text-slate-950">Vi phạm & khiếu nại</h1>
-        <p className="mt-2 text-sm text-slate-600">
-          Danh sách các vi phạm được ghi nhận trong quá trình sử dụng PTN.
-        </p>
+        <h1 className="text-xl font-semibold text-slate-950 dark:text-white">{t('penalty.title')}</h1>
       </div>
 
       {!penalties.length ? (
         <div className="rounded-lg border border-slate-200 bg-white p-6 text-sm text-slate-600 shadow-sm">
-          Bạn chưa có vi phạm nào được ghi nhận.
+          {t('penalty.empty')}
         </div>
       ) : (
         <div className="grid gap-4 lg:grid-cols-2">

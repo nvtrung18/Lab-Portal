@@ -33,6 +33,9 @@ public class CleaningEntity extends BaseEntity {
     @Builder.Default
     private CleaningStatus status = CleaningStatus.PENDING;
 
+    @Column(name = "rotation_round")
+    private Integer rotationRound;
+
     @Column(name = "started_at")
     private Instant startedAt;
 

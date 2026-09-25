@@ -5,27 +5,30 @@ import type {
   RawProjectDashboardStats,
   RawStudentAttendance,
 } from '../types/dashboard';
+import { getStoredLocale, translate, type Locale } from '../../../shared/i18n';
 
-const MILESTONE_STATUS_LABELS: Record<string, string> = {
-  NOT_STARTED: 'Chưa bắt đầu',
-  PLANNED: 'Đã lên kế hoạch',
-  IN_PROGRESS: 'Đang thực hiện',
-  WAITING_REVIEW: 'Chờ đánh giá',
-  COMPLETED: 'Hoàn thành',
-  OVERDUE: 'Quá hạn',
-  DELAYED: 'Chậm tiến độ',
-  CANCELLED: 'Đã hủy',
+const MILESTONE_STATUS_KEYS: Record<string, string> = {
+  NOT_STARTED: 'research.milestone.notStarted',
+  PLANNED: 'research.milestone.planned',
+  IN_PROGRESS: 'research.milestone.inProgress',
+  WAITING_REVIEW: 'research.milestone.waitingReview',
+  COMPLETED: 'research.milestone.completed',
+  OVERDUE: 'research.milestone.overdue',
+  DELAYED: 'research.milestone.delayed',
+  CANCELLED: 'research.milestone.cancelled',
 };
 
 export function adaptProjectDashboardStats(raw?: RawProjectDashboardStats | null): DashboardStats {
+  const locale = getStoredLocale();
   const overview = raw?.overview ?? {};
   const taskByStatus = raw?.taskByStatus ?? raw?.task_by_status ?? {};
+  const scope = toScope(raw?.scope);
 
   return {
     projectId: toNumber(raw?.projectId ?? raw?.project_id),
     projectTitle: toStringValue(raw?.projectTitle ?? raw?.project_title),
-    scope: toScope(raw?.scope),
-    scopeLabel: toStringValue(raw?.scopeLabel ?? raw?.scope_label) || getDefaultScopeLabel(toScope(raw?.scope)),
+    scope,
+    scopeLabel: getDefaultScopeLabel(scope, locale),
     scopeGroupId: toNullableNumber(raw?.scopeGroupId ?? raw?.scope_group_id),
     cards: {
       memberCount: toNumber(overview.memberCount ?? overview.member_count),
@@ -47,16 +50,16 @@ export function adaptProjectDashboardStats(raw?: RawProjectDashboardStats | null
       done: toNumber(taskByStatus.DONE),
       overdue: toNumber(taskByStatus.OVERDUE),
     },
-    milestoneProgress: toArray(raw?.milestoneProgress ?? raw?.milestone_progress).map(adaptMilestoneProgress),
+    milestoneProgress: toArray(raw?.milestoneProgress ?? raw?.milestone_progress).map((item) => adaptMilestoneProgress(item, locale)),
     groupProgress: toArray(raw?.groupProgress ?? raw?.group_progress).map(adaptGroupProgress),
   };
 }
 
-export function getMilestoneStatusLabel(status?: string | null): string {
+export function getMilestoneStatusLabel(status?: string | null, locale: Locale = getStoredLocale()): string {
   if (!status) {
-    return 'Không xác định';
+    return translate('common.unknown', locale);
   }
-  return MILESTONE_STATUS_LABELS[status] ?? status;
+  return translate(MILESTONE_STATUS_KEYS[status] ?? '', locale, status);
 }
 
 function adaptStudentAttendance(raw: RawStudentAttendance) {
@@ -69,12 +72,12 @@ function adaptStudentAttendance(raw: RawStudentAttendance) {
   };
 }
 
-function adaptMilestoneProgress(raw: RawMilestoneProgress) {
+function adaptMilestoneProgress(raw: RawMilestoneProgress, locale: Locale) {
   return {
     milestoneId: toNumber(raw.milestoneId ?? raw.milestone_id),
     title: toStringValue(raw.title),
     progressPercent: toNumber(raw.progressPercent ?? raw.progress_percent),
-    statusLabel: getMilestoneStatusLabel(raw.status),
+    statusLabel: getMilestoneStatusLabel(raw.status, locale),
   };
 }
 
@@ -127,12 +130,12 @@ function toScope(value: unknown): DashboardStats['scope'] {
   return value === 'GROUP' || value === 'ME' || value === 'PROJECT' ? value : 'PROJECT';
 }
 
-function getDefaultScopeLabel(scope: DashboardStats['scope']) {
+function getDefaultScopeLabel(scope: DashboardStats['scope'], locale: Locale) {
   if (scope === 'GROUP') {
-    return 'Tổng quan nhóm của tôi';
+    return translate('research.dashboard.scopeGroup', locale);
   }
   if (scope === 'ME') {
-    return 'Tổng quan cá nhân';
+    return translate('research.dashboard.scopeMe', locale);
   }
-  return 'Tổng quan đề tài';
+  return translate('research.dashboard.scopeProject', locale);
 }

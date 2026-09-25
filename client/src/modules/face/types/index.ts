@@ -23,6 +23,17 @@ export interface FaceImageRequest {
   sideImages?: Array<Pick<FaceImageRequest, 'imageBase64' | 'contentType'>>;
 }
 
+export interface StudentFaceCheckinPayload {
+  bookingId: number;
+  latitude: number;
+  longitude: number;
+  accuracyMeters: number;
+  imageBase64: string;
+  contentType: 'image/jpeg' | 'image/png';
+  challengeFrames: Array<Pick<FaceImageRequest, 'imageBase64' | 'contentType'>>;
+  challengeToken: string;
+}
+
 export interface FaceChallenge {
   challengeToken: string;
   action: 'TURN_LEFT' | 'TURN_RIGHT' | 'OBSERVE';

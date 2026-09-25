@@ -151,8 +151,19 @@ public interface TimeSlotRepository extends JpaRepository<TimeSlot, Long> {
     @Query("SELECT ts FROM TimeSlot ts WHERE ts.id = :id AND ts.deleted = false AND ts.active = true")
     Optional<TimeSlot> findByIdWithLock(@Param("id") Long id);
 
-    @Query("SELECT ts FROM TimeSlot ts WHERE ts.endTime <= :cutoff AND ts.deleted = false AND ts.active = true")
-    List<TimeSlot> findEndedSlots(@Param("cutoff") Instant cutoff);
+    @Query("""
+            SELECT ts
+            FROM TimeSlot ts
+            WHERE ts.endTime <= :cutoff
+              AND ts.status NOT IN :hiddenStatuses
+              AND ts.deleted = false
+              AND ts.active = true
+              AND NOT EXISTS (SELECT c.id FROM CleaningEntity c WHERE c.slot.id = ts.id)
+            """)
+    List<TimeSlot> findEndedSlotsWithoutCleaning(
+            @Param("cutoff") Instant cutoff,
+            @Param("hiddenStatuses") List<TimeSlotStatus> hiddenStatuses
+    );
 
     @Query("SELECT ts FROM TimeSlot ts WHERE ts.status IN :statuses " +
            "AND ts.endTime <= :cutoff AND ts.deleted = false AND ts.active = true")

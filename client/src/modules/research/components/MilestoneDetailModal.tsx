@@ -1,6 +1,7 @@
 import { useState } from 'react';
 
 import { ErrorState, LoadingState, Modal, Button } from '../../../shared/components';
+import { useI18n } from '../../../shared/i18n';
 import { useMilestone, useResearchGroupMembers, useCreateTask } from '../hooks';
 import type { TaskBoardRole } from '../taskBoardHelpers';
 import { formatDate, formatMilestoneStatus, getStatusClass, isMilestoneOverdue } from '../utils';
@@ -29,6 +30,7 @@ export function MilestoneDetailModal({
   labId,
   onClose,
 }: MilestoneDetailModalProps) {
+  const { locale, t } = useI18n();
   const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false);
   const { data: milestone, isError, isLoading, refetch } = useMilestone(milestoneId);
 
@@ -52,12 +54,12 @@ export function MilestoneDetailModal({
 
   return (
     <>
-      <Modal onClose={onClose} size="full" title="Chi tiết mốc nghiên cứu">
+      <Modal onClose={onClose} size="full" title={t('research.milestone.detailTitle')}>
         {isLoading ? (
-          <LoadingState>Đang tải chi tiết mốc nghiên cứu...</LoadingState>
+          <LoadingState>{t('research.milestone.detailLoading')}</LoadingState>
         ) : isError || !milestone ? (
           <ErrorState onRetry={() => refetch()}>
-            Không thể tải chi tiết mốc nghiên cứu.
+            {t('research.milestone.detailLoadFailed')}
           </ErrorState>
         ) : (
           <div className="space-y-6">
@@ -65,30 +67,30 @@ export function MilestoneDetailModal({
               <div>
                 <h4 className="text-base font-semibold text-slate-950">{milestone.title}</h4>
                 <p className="mt-1 text-sm text-slate-600">
-                  Đề tài nghiên cứu: {milestone.projectTitle ?? `#${milestone.projectId}`}
+                  {t('research.milestone.projectLabel', undefined, { name: milestone.projectTitle ?? `#${milestone.projectId}` })}
                 </p>
               </div>
               <span className={`w-fit shrink-0 rounded-full px-3 py-1 text-xs font-semibold ring-1 ${getStatusClass(displayedStatus)}`}>
-                {formatMilestoneStatus(displayedStatus)}
+                {formatMilestoneStatus(displayedStatus, locale)}
               </span>
             </div>
 
             <dl className="grid gap-4 text-sm sm:grid-cols-2">
-              <Detail label="Mô tả công việc" value={milestone.description ?? 'Chưa cập nhật'} />
-              <Detail label="Người phụ trách" value={milestone.assignedToStudentName ?? 'Chưa phân công'} />
-              <Detail label="Hạn hoàn thành" value={formatDate(milestone.deadline)} />
-              <Detail label="Trạng thái" value={formatMilestoneStatus(displayedStatus)} />
-              <Detail label="Ngày tạo" value={formatDate(milestone.createdAt)} />
-              <Detail label="Ngày cập nhật" value={formatDate(milestone.updatedAt)} />
+              <Detail label={t('research.milestone.description')} value={milestone.description ?? t('common.notUpdated')} />
+              <Detail label={t('research.milestone.assignee')} value={milestone.assignedToStudentName ?? t('common.notAssigned')} />
+              <Detail label={t('research.milestone.dueDate')} value={formatDate(milestone.deadline, locale)} />
+              <Detail label={t('research.milestone.status')} value={formatMilestoneStatus(displayedStatus, locale)} />
+              <Detail label={t('research.group.createdAt')} value={formatDate(milestone.createdAt, locale)} />
+              <Detail label={t('common.updatedAt')} value={formatDate(milestone.updatedAt, locale)} />
             </dl>
 
             <div>
               <div className="flex items-center justify-between text-sm">
-                <span className="font-semibold text-slate-700">Tỷ lệ hoàn thành</span>
+                <span className="font-semibold text-slate-700">{t('research.group.progress')}</span>
                 <span className="font-semibold text-slate-950">{milestone.progressPercent}%</span>
               </div>
               <div
-                aria-label={`Tỷ lệ hoàn thành ${milestone.progressPercent}%`}
+                aria-label={`${t('research.group.progress')} ${milestone.progressPercent}%`}
                 aria-valuemax={100}
                 aria-valuemin={0}
                 aria-valuenow={milestone.progressPercent}
@@ -104,7 +106,7 @@ export function MilestoneDetailModal({
 
             <dl className="grid gap-4 text-sm sm:grid-cols-2">
               <div>
-                <dt className="font-semibold text-slate-700">File/link minh chứng</dt>
+                <dt className="font-semibold text-slate-700">{t('research.milestone.evidence')}</dt>
                 <dd className="mt-1 text-slate-600">
                   {milestone.evidenceUrl ? (
                     <a
@@ -113,21 +115,21 @@ export function MilestoneDetailModal({
                       rel="noreferrer"
                       target="_blank"
                     >
-                      Mở minh chứng
+                      {t('research.milestone.openEvidence')}
                     </a>
                   ) : (
-                    'Chưa cập nhật'
+                    t('common.notUpdated')
                   )}
                 </dd>
               </div>
-              <Detail label="Nhận xét của quản lý PTN" value={milestone.managerComment ?? 'Chưa cập nhật'} />
+              <Detail label={t('research.milestone.managerNote')} value={milestone.managerComment ?? t('common.notUpdated')} />
             </dl>
 
             {showTaskBoard ? (
               <div className="space-y-4 border-t border-slate-200 pt-5">
                 {taskBoardRole === 'LAB_MANAGER' ? (
                   <div className="flex justify-end">
-                    <Button onClick={() => setIsCreateTaskOpen(true)}>Tạo nhiệm vụ</Button>
+                    <Button onClick={() => setIsCreateTaskOpen(true)}>{t('research.milestone.createTask')}</Button>
                   </div>
                 ) : null}
                 <TaskBoard

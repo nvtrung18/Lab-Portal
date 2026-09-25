@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tansta
 
 import { queryKeys } from '../../../shared/api';
 import { toast } from '../../../shared/components';
+import { getStoredLocale, translate, translateBackendMessage } from '../../../shared/i18n';
 import {
   cancelBooking,
   confirmCheckinByToken,
@@ -32,12 +33,13 @@ export function invalidateAttendanceQueries(
   void queryClient.invalidateQueries({ queryKey: ['operationalLogs'] });
 }
 
-function getErrorMessage(error: unknown, fallback: string) {
+function getErrorMessage(error: unknown, fallbackKey: string) {
+  const locale = getStoredLocale();
   if (axios.isAxiosError(error)) {
     const data = error.response?.data as { message?: string; errors?: string[] } | undefined;
-    return data?.message ?? data?.errors?.[0] ?? fallback;
+    return translateBackendMessage(data?.message ?? data?.errors?.[0], locale) ?? translate(fallbackKey, locale);
   }
-  return fallback;
+  return translate(fallbackKey, getStoredLocale());
 }
 
 export function useMyBookings(enabled = true) {
@@ -74,10 +76,10 @@ export function useCreateBooking(labId?: number | null) {
       }
       queryClient.invalidateQueries({ queryKey: MY_BOOKINGS_QUERY_KEY });
       queryClient.invalidateQueries({ queryKey: queryKeys.slots.bookings(slotId) });
-      toast.success('Đã gửi đăng ký sử dụng PTN. Vui lòng chờ quản lý phê duyệt.');
+      toast.success(translate('booking.toast.created'));
     },
     onError: (error) => {
-      toast.error(getErrorMessage(error, 'Không thể đăng ký sử dụng khung giờ này.'));
+      toast.error(getErrorMessage(error, 'booking.toast.createFailed'));
     },
   });
 }
@@ -95,10 +97,10 @@ export function useCancelBooking(labId?: number | null) {
       if (booking.slotId) {
         queryClient.invalidateQueries({ queryKey: queryKeys.slots.bookings(booking.slotId) });
       }
-      toast.success('Đã hủy đăng ký sử dụng khung giờ.');
+      toast.success(translate('booking.toast.cancelled'));
     },
     onError: (error) => {
-      toast.error(getErrorMessage(error, 'Không thể hủy đăng ký.'));
+      toast.error(getErrorMessage(error, 'booking.toast.cancelFailed'));
     },
   });
 }
@@ -115,10 +117,10 @@ export function useReviewBooking(labId?: number | null, slotId?: number | null) 
       if (labId) {
         queryClient.invalidateQueries({ queryKey: queryKeys.slots.byLab(labId) });
       }
-      toast.success('Đã cập nhật trạng thái đăng ký.');
+      toast.success(translate('booking.toast.statusUpdated'));
     },
     onError: (error) => {
-      toast.error(getErrorMessage(error, 'Không thể cập nhật trạng thái đăng ký.'));
+      toast.error(getErrorMessage(error, 'booking.toast.statusUpdateFailed'));
     },
   });
 }
@@ -129,10 +131,10 @@ export function useCreateCheckinQr() {
     mutationFn: ({ bookingId, fallbackReason, customReason }: { bookingId: number; fallbackReason: import('../api').FaceFallbackReason; customReason?: string }) => createCheckinQr(bookingId, fallbackReason, customReason),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['checkinQrHistory'] });
-      toast.success('Đã gửi yêu cầu QR. Bạn có thể đóng trang và chờ thông báo từ quản lý PTN.');
+      toast.success(translate('booking.toast.qrRequested'));
     },
     onError: (error) => {
-      toast.error(getErrorMessage(error, 'Không thể tạo mã QR check-in.'));
+      toast.error(getErrorMessage(error, 'booking.toast.qrCreateFailed'));
     },
   });
 }
@@ -172,7 +174,7 @@ export function useReviewCheckinQrRequest() {
   return useMutation({
     mutationFn: ({ requestId, approved }: { requestId: string; approved: boolean }) => reviewCheckinQrRequest(requestId, approved),
     onSuccess: () => void queryClient.invalidateQueries({ queryKey: ['pendingCheckinQrRequests'] }),
-    onError: (error) => toast.error(getErrorMessage(error, 'Không thể xử lý yêu cầu QR.')),
+    onError: (error) => toast.error(getErrorMessage(error, 'booking.toast.qrReviewFailed')),
   });
 }
 
@@ -182,9 +184,9 @@ export function useManualCheckIn() {
     mutationFn: ({ bookingId, reason }: { bookingId: number; reason: string }) => manualCheckin(bookingId, reason),
     onSuccess: (result) => {
       invalidateAttendanceQueries(queryClient, result.booking);
-      toast.success('Xác nhận có mặt thủ công thành công.');
+      toast.success(translate('booking.toast.manualCheckinSuccess'));
     },
-    onError: (error) => toast.error(getErrorMessage(error, 'Không thể xác nhận có mặt thủ công.')),
+    onError: (error) => toast.error(getErrorMessage(error, 'booking.toast.manualCheckinFailed')),
   });
 }
 
@@ -195,10 +197,10 @@ export function useConfirmCheckIn() {
     mutationFn: (token: string) => confirmCheckinByToken(token),
     onSuccess: (result) => {
       invalidateAttendanceQueries(queryClient, result.booking);
-      toast.success('Xác nhận có mặt thành công.');
+      toast.success(translate('booking.toast.checkinSuccess'));
     },
     onError: (error) => {
-      toast.error(getErrorMessage(error, 'Không thể xác nhận có mặt. Vui lòng thử lại sau.'));
+      toast.error(getErrorMessage(error, 'booking.toast.checkinFailed'));
     },
   });
 }

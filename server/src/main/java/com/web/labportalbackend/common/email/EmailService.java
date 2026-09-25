@@ -12,6 +12,7 @@ public interface EmailService {
     void sendSlotCancelledEmail(String email, BookingEmailData data);
     void sendBookingSessionCompletedEmail(String email, BookingEmailData data);
     void sendBookingCheckedInEmail(String email, BookingEmailData data);
+    void sendCleaningAssignedEmail(String email, BookingEmailData data);
     void sendPenaltyCreatedEmail(String email, BookingEmailData data);
     void sendSlotCancelledEmail(String email, SlotCancelledEmailData data);
 }

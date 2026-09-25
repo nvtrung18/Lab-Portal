@@ -8,23 +8,24 @@ import { GoogleSignInButton } from '../components';
 import { getPrimaryRedirectPath, useAuth } from '../hooks';
 import type { Response } from '../../../shared/types';
 import { Button } from '../../../shared/components';
+import { translate, useI18n } from '../../../shared/i18n';
 import { VALIDATION_MESSAGES } from '../../../shared/utils';
 
 type RegisterStep = 'email' | 'otp' | 'profile';
 
-const steps: Array<{ key: RegisterStep; label: string }> = [
-  { key: 'email', label: 'Email' },
-  { key: 'otp', label: 'Mã xác nhận' },
-  { key: 'profile', label: 'Tài khoản' },
+const steps: Array<{ key: RegisterStep; labelKey: string }> = [
+  { key: 'email', labelKey: 'auth.email' },
+  { key: 'otp', labelKey: 'auth.verificationCode' },
+  { key: 'profile', labelKey: 'auth.account' },
 ];
 
 function getErrorMessage(error: unknown) {
   if (axios.isAxiosError(error)) {
     const response = error.response?.data as Partial<Response<unknown>> | undefined;
-    return response?.message ?? response?.errors?.[0] ?? 'Không thể đăng ký tài khoản.';
+    return response?.message ?? response?.errors?.[0] ?? translate('auth.registerFailed');
   }
 
-  return 'Không thể đăng ký tài khoản. Vui lòng thử lại sau.';
+  return translate('auth.registerFailed');
 }
 
 function isValidEmail(value: string) {
@@ -32,6 +33,7 @@ function isValidEmail(value: string) {
 }
 
 export function RegisterPage() {
+  const { t } = useI18n();
   const navigate = useNavigate();
   const { saveSession } = useAuth();
   const [step, setStep] = useState<RegisterStep>('email');
@@ -84,7 +86,7 @@ export function RegisterPage() {
     setMessage('');
 
     if (!/^\d{6}$/.test(code.trim())) {
-      setError('Vui lòng nhập mã xác nhận gồm 6 số.');
+      setError(t('auth.codeSixDigits'));
       return;
     }
 
@@ -110,7 +112,7 @@ export function RegisterPage() {
     setMessage('');
 
     if (!verificationToken) {
-      setError('Phiên xác thực email đã hết hạn. Vui lòng gửi lại mã xác nhận.');
+      setError(t('auth.emailSessionExpired'));
       setStep('email');
       return;
     }
@@ -123,7 +125,7 @@ export function RegisterPage() {
       return;
     }
     if (password !== confirmPassword) {
-      setError('Mật khẩu nhập lại không khớp.');
+      setError(t('auth.passwordMismatch'));
       return;
     }
 
@@ -161,11 +163,8 @@ export function RegisterPage() {
   };
 
   return (
-    <section className="min-w-0 w-full rounded-lg border border-slate-200 bg-white p-5 shadow-sm sm:p-8">
-      <h1 className="text-2xl font-semibold text-slate-950">Đăng ký tài khoản</h1>
-      <p className="mt-2 break-words text-sm text-slate-600">
-        Tài khoản mới mặc định là STUDENT. Bạn có thể dùng Google hoặc xác thực email.
-      </p>
+    <section className="min-w-0 w-full rounded-lg border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-8">
+      <h1 className="text-2xl font-semibold text-slate-950 dark:text-white">{t('auth.registerTitle')}</h1>
 
       <div className="mt-6">
         <GoogleSignInButton
@@ -175,7 +174,7 @@ export function RegisterPage() {
       </div>
       <div className="my-6 flex items-center gap-3" aria-hidden="true">
         <span className="h-px flex-1 bg-slate-200" />
-        <span className="text-xs font-medium uppercase tracking-wide text-slate-500">hoặc đăng ký bằng email</span>
+        <span className="text-xs font-medium uppercase tracking-wide text-slate-500">{t('auth.orRegisterByEmail')}</span>
         <span className="h-px flex-1 bg-slate-200" />
       </div>
 
@@ -185,11 +184,11 @@ export function RegisterPage() {
             key={item.key}
             className={[
               'flex min-w-0 items-center justify-center break-words text-xs font-medium text-slate-400 sm:text-sm',
-              index === currentStepIndex ? 'font-bold text-slate-950' : '',
+              index === currentStepIndex ? 'font-bold text-slate-950 dark:text-white' : '',
               index < currentStepIndex ? 'text-emerald-700' : '',
             ].join(' ')}
           >
-            {index + 1}. {item.label}
+            {index + 1}. {t(item.labelKey)}
           </div>
         ))}
       </div>
@@ -197,8 +196,8 @@ export function RegisterPage() {
       {step === 'email' ? (
         <form className="space-y-5" onSubmit={handleSendCode}>
           <input
-            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-900"
-            placeholder="Email"
+            className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 outline-none focus:border-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:focus:border-white"
+            placeholder={t('auth.email')}
             type="email"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
@@ -206,37 +205,37 @@ export function RegisterPage() {
           <Button
             className="w-full"
             loading={isSubmitting}
-            loadingText="Đang gửi..."
+            loadingText={t('auth.sending')}
             size="lg"
             type="submit"
           >
-            Gửi mã xác nhận
+            {t('auth.sendVerificationCode')}
           </Button>
         </form>
       ) : null}
 
       {step === 'otp' ? (
         <form className="space-y-5" onSubmit={handleVerifyCode}>
-          <p className="break-words rounded-md bg-slate-50 px-3 py-2 text-sm text-slate-700">
-            Mã xác nhận đã được gửi tới:{' '}
-            <span className="font-semibold text-slate-950">{normalizedEmail}</span>
+          <p className="break-words rounded-md bg-slate-50 px-3 py-2 text-sm text-slate-700 dark:bg-slate-950 dark:text-slate-300">
+            {t('auth.codeSentTo')}{' '}
+            <span className="font-semibold text-slate-950 dark:text-white">{normalizedEmail}</span>
           </p>
           <input
-            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-900"
+            className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 outline-none focus:border-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:focus:border-white"
             inputMode="numeric"
             maxLength={6}
-            placeholder="Mã xác nhận 6 số"
+            placeholder={t('auth.codeSixDigits')}
             value={code}
             onChange={(event) => setCode(event.target.value.replace(/\D/g, ''))}
           />
           <Button
             className="w-full"
             loading={isSubmitting}
-            loadingText="Đang xác thực..."
+            loadingText={t('auth.verifying')}
             size="lg"
             type="submit"
           >
-            Xác thực email
+            {t('auth.verifyEmail')}
           </Button>
           <Button
             className="w-full"
@@ -245,36 +244,36 @@ export function RegisterPage() {
             size="lg"
             variant="outline"
           >
-            Đổi email
+            {t('auth.changeEmail')}
           </Button>
         </form>
       ) : null}
 
       {step === 'profile' ? (
         <form className="space-y-5" onSubmit={handleCompleteRegister}>
-          <p className="break-words rounded-md bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
-            Email đã được xác thực:{' '}
+          <p className="break-words rounded-md bg-emerald-50 px-3 py-2 text-sm text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-200">
+            {t('auth.emailVerified')}{' '}
             <span className="font-semibold text-emerald-900">{normalizedEmail}</span>
           </p>
           <input
             className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-900"
-            placeholder="Họ và tên"
+            placeholder={t('auth.fullName')}
             value={fullName}
             onChange={(event) => setFullName(event.target.value)}
           />
           <div className="relative">
             <input
-              className="w-full rounded-md border border-slate-300 px-3 py-2 pr-16 text-sm outline-none focus:border-slate-900"
-              placeholder="Mật khẩu"
+              className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 pr-16 text-sm text-slate-950 outline-none focus:border-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:focus:border-white"
+              placeholder={t('auth.password')}
               type={showPassword ? 'text' : 'password'}
               value={password}
               onChange={(event) => setPassword(event.target.value)}
             />
             <button
               type="button"
-              className="absolute inset-y-0 right-0 flex items-center px-3 text-slate-600 hover:text-slate-950 disabled:cursor-not-allowed disabled:text-slate-300"
+              className="absolute inset-y-0 right-0 flex items-center px-3 text-slate-600 hover:text-slate-950 disabled:cursor-not-allowed disabled:text-slate-300 dark:text-slate-300 dark:hover:text-white"
               disabled={isSubmitting}
-              aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+              aria-label={showPassword ? t('auth.hidePassword') : t('auth.showPassword')}
               onClick={() => setShowPassword((value) => !value)}
             >
               {showPassword ? (
@@ -286,17 +285,17 @@ export function RegisterPage() {
           </div>
           <div className="relative">
             <input
-              className="w-full rounded-md border border-slate-300 px-3 py-2 pr-16 text-sm outline-none focus:border-slate-900"
-              placeholder="Nhập lại mật khẩu"
+              className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 pr-16 text-sm text-slate-950 outline-none focus:border-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:focus:border-white"
+              placeholder={t('auth.confirmPassword')}
               type={showConfirmPassword ? 'text' : 'password'}
               value={confirmPassword}
               onChange={(event) => setConfirmPassword(event.target.value)}
             />
             <button
               type="button"
-              className="absolute inset-y-0 right-0 flex items-center px-3 text-slate-600 hover:text-slate-950 disabled:cursor-not-allowed disabled:text-slate-300"
+              className="absolute inset-y-0 right-0 flex items-center px-3 text-slate-600 hover:text-slate-950 disabled:cursor-not-allowed disabled:text-slate-300 dark:text-slate-300 dark:hover:text-white"
               disabled={isSubmitting}
-              aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+              aria-label={showConfirmPassword ? t('auth.hidePassword') : t('auth.showPassword')}
               onClick={() => setShowPassword((value) => !value)}
             >
               {showPassword ? (
@@ -309,30 +308,30 @@ export function RegisterPage() {
           <Button
             className="w-full"
             loading={isSubmitting}
-            loadingText="Đang đăng ký..."
+            loadingText={t('auth.registering')}
             size="lg"
             type="submit"
           >
-            Đăng ký
+            {t('auth.register')}
           </Button>
         </form>
       ) : null}
 
       {error ? (
-        <div className="mt-5 break-words rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+        <div className="mt-5 break-words rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-200">
           {error}
         </div>
       ) : null}
       {message ? (
-        <div className="mt-5 break-words rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+        <div className="mt-5 break-words rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-200">
           {message}
         </div>
       ) : null}
 
-      <div className="mt-6 text-center text-sm text-slate-600">
-        Đã có tài khoản?{' '}
-        <Link className="font-semibold text-slate-950 hover:underline" to="/login">
-          Đăng nhập
+      <div className="mt-6 text-center text-sm text-slate-600 dark:text-slate-300">
+        {t('auth.alreadyAccount')}{' '}
+        <Link className="font-semibold text-slate-950 hover:underline dark:text-white" to="/login">
+          {t('auth.signIn')}
         </Link>
       </div>
     </section>

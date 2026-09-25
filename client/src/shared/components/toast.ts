@@ -1,3 +1,5 @@
+import { translate } from '../i18n';
+
 export type ToastVariant = 'success' | 'error' | 'warning' | 'info';
 
 export interface ToastPayload {
@@ -10,12 +12,14 @@ export const TOAST_EVENT = 'lab-portal-toast';
 export const PENDING_TOAST_KEY = 'lab-portal-pending-toast';
 
 export const TOAST_MESSAGES = {
-  success: 'Thao tác thành công.',
-  error: 'Đã xảy ra lỗi. Vui lòng thử lại.',
-  permission: 'Bạn không có quyền thực hiện thao tác này.',
-  network: 'Không thể kết nối tới máy chủ.',
-  sessionExpired: 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.',
-} as const;
+  get success() { return translate('common.success'); },
+  get error() { return translate('common.error'); },
+  get warning() { return translate('common.warning'); },
+  get info() { return translate('common.info'); },
+  get permission() { return translate('common.permissionDenied'); },
+  get network() { return translate('common.networkError'); },
+  get sessionExpired() { return translate('common.sessionExpired'); },
+};
 
 const TOAST_DEDUPE_MS = 2500;
 const toastHistory = new Map<string, number>();
@@ -44,10 +48,10 @@ export const toast = {
   error(message: string = TOAST_MESSAGES.error) {
     notify(message, 'error');
   },
-  warning(message: string = TOAST_MESSAGES.error) {
+  warning(message: string = TOAST_MESSAGES.warning) {
     notify(message, 'warning');
   },
-  info(message: string = TOAST_MESSAGES.success, title?: string) {
+  info(message: string = TOAST_MESSAGES.info, title?: string) {
     notify(message, 'info', title);
   },
 };

@@ -13,6 +13,7 @@ import com.web.labportalbackend.booking.outbox.BookingOutboxService;
 import com.web.labportalbackend.booking.repository.BookingRepository;
 import com.web.labportalbackend.booking.repository.TimeSlotBookingCounts;
 import com.web.labportalbackend.booking.repository.TimeSlotRepository;
+import com.web.labportalbackend.booking.service.CleaningService;
 import com.web.labportalbackend.booking.service.impl.TimeSlotServiceImpl;
 import com.web.labportalbackend.common.enums.BookingStatus;
 import com.web.labportalbackend.common.enums.TimeSlotStatus;
@@ -53,9 +54,10 @@ class TimeSlotServiceImplTest {
         BookingRepository bookingRepository = mock(BookingRepository.class);
         AuditLogService auditLogService = mock(AuditLogService.class);
         NotificationEmitter notificationEmitter = mock(NotificationEmitter.class);
+        CleaningService cleaningService = mock(CleaningService.class);
         BookingOutboxService bookingOutboxService = mock(BookingOutboxService.class);
         TimeSlotServiceImpl service = new TimeSlotServiceImpl(slotRepository, labRepository,
-                membershipRepository, userRepository, bookingRepository, bookingOutboxService,
+                membershipRepository, userRepository, bookingRepository, cleaningService, bookingOutboxService,
                 mock(SystemConfigService.class), auditLogService, notificationEmitter);
 
         User manager = mock(User.class);
@@ -97,6 +99,7 @@ class TimeSlotServiceImplTest {
         assertEquals(TimeSlotStatus.CLOSED, slot.getStatus());
         assertEquals(BookingStatus.COMPLETED, booking.getStatus());
         verify(bookingRepository).saveAll(List.of(booking));
+        verify(cleaningService).createCleaningTask(9L);
         verify(auditLogService).log(manager, AuditAction.COMPLETE_LAB_SESSION, AuditModule.BOOKING,
                 "TIME_SLOT", 9L, "Manager đã kết thúc ca sử dụng lab.");
         verify(notificationEmitter).emit(7L, NotificationEventType.BOOKING_SESSION_COMPLETED,
@@ -114,7 +117,8 @@ class TimeSlotServiceImplTest {
         UserRepository userRepository = mock(UserRepository.class);
         BookingRepository bookingRepository = mock(BookingRepository.class);
         TimeSlotServiceImpl service = new TimeSlotServiceImpl(slotRepository, labRepository,
-                membershipRepository, userRepository, bookingRepository, mock(BookingOutboxService.class),
+                membershipRepository, userRepository, bookingRepository, mock(CleaningService.class),
+                mock(BookingOutboxService.class),
                 mock(SystemConfigService.class), mock(AuditLogService.class), mock(NotificationEmitter.class));
 
         User manager = mock(User.class);
@@ -149,7 +153,8 @@ class TimeSlotServiceImplTest {
         BookingRepository bookingRepository = mock(BookingRepository.class);
         SystemConfigService systemConfigService = mock(SystemConfigService.class);
         TimeSlotServiceImpl service = new TimeSlotServiceImpl(slotRepository, labRepository,
-                membershipRepository, userRepository, bookingRepository, mock(BookingOutboxService.class),
+                membershipRepository, userRepository, bookingRepository, mock(CleaningService.class),
+                mock(BookingOutboxService.class),
                 systemConfigService, mock(AuditLogService.class), mock(NotificationEmitter.class));
 
         User manager = mock(User.class);
@@ -201,7 +206,8 @@ class TimeSlotServiceImplTest {
         UserRepository userRepository = mock(UserRepository.class);
         BookingRepository bookingRepository = mock(BookingRepository.class);
         TimeSlotServiceImpl service = new TimeSlotServiceImpl(slotRepository, labRepository,
-                membershipRepository, userRepository, bookingRepository, mock(BookingOutboxService.class),
+                membershipRepository, userRepository, bookingRepository, mock(CleaningService.class),
+                mock(BookingOutboxService.class),
                 mock(SystemConfigService.class), mock(AuditLogService.class), mock(NotificationEmitter.class));
 
         User manager = mock(User.class);
@@ -246,7 +252,8 @@ class TimeSlotServiceImplTest {
         MembershipRepository membershipRepository = mock(MembershipRepository.class);
         UserRepository userRepository = mock(UserRepository.class);
         TimeSlotServiceImpl service = new TimeSlotServiceImpl(slotRepository, labRepository,
-                membershipRepository, userRepository, mock(BookingRepository.class), mock(BookingOutboxService.class),
+                membershipRepository, userRepository, mock(BookingRepository.class), mock(CleaningService.class),
+                mock(BookingOutboxService.class),
                 mock(SystemConfigService.class), mock(AuditLogService.class), mock(NotificationEmitter.class));
 
         User student = mock(User.class);
@@ -270,7 +277,8 @@ class TimeSlotServiceImplTest {
         MembershipRepository membershipRepository = mock(MembershipRepository.class);
         UserRepository userRepository = mock(UserRepository.class);
         TimeSlotServiceImpl service = new TimeSlotServiceImpl(slotRepository, labRepository,
-                membershipRepository, userRepository, mock(BookingRepository.class), mock(BookingOutboxService.class),
+                membershipRepository, userRepository, mock(BookingRepository.class), mock(CleaningService.class),
+                mock(BookingOutboxService.class),
                 mock(SystemConfigService.class), mock(AuditLogService.class), mock(NotificationEmitter.class));
 
         User manager = mock(User.class);

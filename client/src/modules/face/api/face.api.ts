@@ -1,8 +1,9 @@
 import axios from 'axios';
 
 import { apiClient } from '../../../shared/api';
+import { getStoredLocale, translate } from '../../../shared/i18n';
 import type { Response } from '../../../shared/types';
-import type { FaceChallenge, FaceCheckinCandidate, FaceCheckinResult, FaceConsent, FaceConsentStatus, FaceGuidanceResult, FaceImageRequest, FaceProfile } from '../types';
+import type { FaceChallenge, FaceCheckinCandidate, FaceCheckinResult, FaceConsent, FaceConsentStatus, FaceGuidanceResult, FaceImageRequest, FaceProfile, StudentFaceCheckinPayload } from '../types';
 
 function targetPath(userId: number | null, suffix: string) {
   return userId ? `/api/face/users/${userId}/${suffix}` : `/api/face/${suffix}`;
@@ -93,21 +94,32 @@ export async function startFaceCheckinPassiveSession(): Promise<FaceChallenge> {
   return response.data.data;
 }
 
+export async function startStudentFaceCheckinPassiveSession(): Promise<FaceChallenge> {
+  const response = await apiClient.post<Response<FaceChallenge>>('/api/face/check-in/self/passive-session');
+  return response.data.data;
+}
+
+export async function faceCheckinForStudent(request: StudentFaceCheckinPayload): Promise<FaceCheckinResult> {
+  const response = await apiClient.post<Response<FaceCheckinResult>>('/api/face/check-in/self', request);
+  return response.data.data;
+}
+
 export function readFaceImage(file: File): Promise<Pick<FaceImageRequest, 'imageBase64' | 'contentType'>> {
+  const t = (key: string) => translate(key, getStoredLocale());
   if (file.type !== 'image/jpeg' && file.type !== 'image/png') {
-    return Promise.reject(new Error('Chỉ hỗ trợ ảnh JPEG hoặc PNG.'));
+    return Promise.reject(new Error(t('face.supportedImageTypes')));
   }
   if (file.size > 10 * 1024 * 1024) {
-    return Promise.reject(new Error('Ảnh khuôn mặt không được vượt quá 10 MB.'));
+    return Promise.reject(new Error(t('face.imageTooLarge')));
   }
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onerror = () => reject(new Error('Không thể đọc tệp ảnh.'));
+    reader.onerror = () => reject(new Error(t('face.imageReadFailed')));
     reader.onload = () => {
       const result = String(reader.result ?? '');
       const encoded = result.split(',', 2)[1];
       if (!encoded) {
-        reject(new Error('Dữ liệu ảnh không hợp lệ.'));
+        reject(new Error(t('face.invalidImageData')));
         return;
       }
       resolve({ imageBase64: encoded, contentType: file.type as 'image/jpeg' | 'image/png' });

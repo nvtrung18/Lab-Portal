@@ -3,6 +3,7 @@ import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tansta
 
 import { queryKeys } from '../../../shared/api';
 import { toast } from '../../../shared/components';
+import { getStoredLocale, translate, translateBackendMessage } from '../../../shared/i18n';
 import {
   createGroup,
   createMilestone,
@@ -90,12 +91,14 @@ import type { CreateTaskProposalPayload } from '../api/taskApi';
 import { updateTaskStatusInCache } from '../taskBoardHelpers';
 import { useCurrentUser } from '../../user/hooks';
 
-function getErrorMessage(error: unknown, fallback: string) {
+function getErrorMessage(error: unknown, fallbackKey: string) {
+  const locale = getStoredLocale();
   if (axios.isAxiosError(error)) {
     const data = error.response?.data as { message?: string; errors?: string[] } | undefined;
-    return data?.message ?? data?.errors?.[0] ?? fallback;
+    const message = translateBackendMessage(data?.message ?? data?.errors?.[0], locale);
+    return message ?? translate(fallbackKey, locale);
   }
-  return fallback;
+  return translate(fallbackKey, locale);
 }
 
 function isValidId(value?: number | null) {
@@ -145,7 +148,7 @@ export function useSubmitTaskProposal(projectId?: number | null) {
       await queryClient.invalidateQueries({ queryKey: queryKeys.research.taskProposalsRoot });
       await queryClient.refetchQueries({ queryKey: queryKeys.research.taskProposalsRoot, type: 'active' });
     },
-    onError: (error) => toast.error(getErrorMessage(error, 'Unable to submit the task proposal.')),
+    onError: (error) => toast.error(getErrorMessage(error, 'research.toast.taskProposalSubmitFailed')),
   });
 }
 
@@ -178,7 +181,7 @@ export function useReviewTaskProposal() {
       }
       await Promise.all(invalidations);
     },
-    onError: (error) => toast.error(getErrorMessage(error, 'Unable to review the task proposal.')),
+    onError: (error) => toast.error(getErrorMessage(error, 'research.toast.taskProposalReviewFailed')),
   });
 }
 
@@ -228,10 +231,10 @@ export function useCreateResearchTopic(labId?: number | null) {
     mutationFn: (payload: CreateTopicPayload) => createResearchTopic(payload),
     onSuccess: async (_topic, payload) => {
       await queryClient.invalidateQueries({ queryKey: queryKeys.research.topics(labId ?? payload.labId) });
-      toast.success('Đã tạo chủ đề nghiên cứu thành công.');
+      toast.success(translate('research.toast.topicCreated'));
     },
     onError: (error) => {
-      toast.error(getErrorMessage(error, 'Không thể tạo chủ đề nghiên cứu.'));
+      toast.error(getErrorMessage(error, 'research.toast.topicCreateFailed'));
     },
   });
 }
@@ -259,10 +262,10 @@ export function useCreateGroup(labId?: number | null, topicId?: number | null) {
         }),
         queryClient.invalidateQueries({ queryKey: queryKeys.research.topics(labId ?? payload.labId) }),
       ]);
-      toast.success('Đã tạo nhóm nghiên cứu thành công.');
+      toast.success(translate('research.toast.groupCreated'));
     },
     onError: (error) => {
-      toast.error(getErrorMessage(error, 'Không thể tạo nhóm nghiên cứu.'));
+      toast.error(getErrorMessage(error, 'research.toast.groupCreateFailed'));
     },
   });
 }
@@ -382,10 +385,10 @@ export function useCreateResearchLog(projectId?: number | null) {
         );
       }
       await Promise.all(invalidations);
-      toast.success('Đã tạo nhật ký nghiên cứu.');
+      toast.success(translate('research.toast.logCreated'));
     },
     onError: (error) => {
-      toast.error(getErrorMessage(error, 'Không thể tạo nhật ký nghiên cứu.'));
+      toast.error(getErrorMessage(error, 'research.toast.logCreateFailed'));
     },
   });
 }
@@ -427,10 +430,10 @@ export function useSubmitEvaluation(projectId?: number | null) {
         );
       }
       await Promise.all(invalidations);
-      toast.success('Đã lưu đánh giá kết quả nghiên cứu.');
+      toast.success(translate('research.toast.evaluationSaved'));
     },
     onError: (error) => {
-      toast.error(getErrorMessage(error, 'Không thể lưu đánh giá kết quả nghiên cứu.'));
+      toast.error(getErrorMessage(error, 'research.toast.evaluationSaveFailed'));
     },
   });
 }
@@ -472,10 +475,10 @@ export function useSubmitProduct(projectId?: number | null, onUploadProgress?: (
         );
       }
       await Promise.all(invalidations);
-      toast.success('Đã nộp sản phẩm nghiên cứu.');
+      toast.success(translate('research.toast.productSubmitted'));
     },
     onError: (error) => {
-      toast.error(getErrorMessage(error, 'Không thể nộp sản phẩm nghiên cứu.'));
+      toast.error(getErrorMessage(error, 'research.toast.productSubmitFailed'));
     },
   });
 }
@@ -678,10 +681,10 @@ export function useAddReportComment(reportId: number) {
     mutationFn: (content: string) => addReportComment(reportId, content),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: queryKeys.research.reportComments(reportId) });
-      toast.success('Đã gửi nhận xét báo cáo.');
+      toast.success(translate('research.toast.commentSent'));
     },
     onError: (error) => {
-      toast.error(getErrorMessage(error, 'Không thể gửi nhận xét báo cáo.'));
+      toast.error(getErrorMessage(error, 'research.toast.commentSendFailed'));
     },
   });
 }
@@ -733,14 +736,14 @@ export function useLeaderReviewReport(
       await invalidateReviewedReport(queryClient, reportId, milestoneId, projectId, groupId, taskId);
       toast.success(
         variables.decision === 'ACCEPT'
-          ? 'Đã duyệt báo cáo.'
+          ? translate('research.toast.reportAccepted')
           : variables.decision === 'REQUEST_REVISION'
-            ? 'Đã yêu cầu chỉnh sửa báo cáo.'
-            : 'Đã từ chối báo cáo.',
+            ? translate('research.toast.reportRevisionRequested')
+            : translate('research.toast.reportRejected'),
       );
     },
     onError: (error) => {
-      toast.error(getErrorMessage(error, 'Không thể kiểm tra báo cáo.'));
+      toast.error(getErrorMessage(error, 'research.toast.leaderReviewFailed'));
     },
   });
 }
@@ -765,14 +768,14 @@ export function useManagerReviewReport(
       }
       toast.success(
         variables.decision === 'APPROVE'
-          ? 'Đã duyệt báo cáo.'
+          ? translate('research.toast.reportAccepted')
           : variables.decision === 'REQUEST_REVISION'
-            ? 'Đã yêu cầu chỉnh sửa báo cáo.'
-            : 'Đã từ chối báo cáo.',
+            ? translate('research.toast.reportRevisionRequested')
+            : translate('research.toast.reportRejected'),
       );
     },
     onError: (error) => {
-      toast.error(getErrorMessage(error, 'Không thể duyệt báo cáo.'));
+      toast.error(getErrorMessage(error, 'research.toast.managerReviewFailed'));
     },
   });
 }
@@ -798,13 +801,13 @@ export function useUpdateTaskStatus(milestoneId: number, projectId?: number | nu
       if (context?.previousTasks) {
         queryClient.setQueryData(queryKey, context.previousTasks);
       }
-      toast.error(getErrorMessage(error, 'Không thể cập nhật trạng thái nhiệm vụ. Dữ liệu đã được khôi phục.'));
+      toast.error(getErrorMessage(error, 'research.toast.taskStatusUpdateFailed'));
     },
     onSuccess: (updatedTask) => {
       queryClient.setQueryData<ResearchTask[]>(queryKey, (currentTasks = []) =>
         currentTasks.map((task) => (task.id === updatedTask.id ? updatedTask : task)),
       );
-      toast.success('Đã cập nhật trạng thái nhiệm vụ.');
+      toast.success(translate('research.toast.taskStatusUpdated'));
     },
     onSettled: async () => {
       const invalidations = [queryClient.invalidateQueries({ queryKey })];
@@ -848,10 +851,10 @@ export function useCreateMilestone(projectId?: number | null) {
         );
       }
       await Promise.all(invalidations);
-      toast.success('Đã tạo mốc nghiên cứu thành công.');
+      toast.success(translate('research.toast.milestoneCreated'));
     },
     onError: (error) => {
-      toast.error(getErrorMessage(error, 'Không thể tạo mốc nghiên cứu.'));
+      toast.error(getErrorMessage(error, 'research.toast.milestoneCreateFailed'));
     },
   });
 }
@@ -891,10 +894,10 @@ export function useCreateTask(milestoneId: number, projectId?: number | null, gr
         );
       }
       await Promise.all(invalidations);
-      toast.success('Đã tạo nhiệm vụ thành công.');
+      toast.success(translate('research.toast.taskCreated'));
     },
     onError: (error) => {
-      toast.error(getErrorMessage(error, 'Không thể tạo nhiệm vụ.'));
+      toast.error(getErrorMessage(error, 'research.toast.taskCreateFailed'));
     },
   });
 }
@@ -923,10 +926,10 @@ export function useUpdateMilestone(projectId?: number | null) {
         );
       }
       await Promise.all(invalidations);
-      toast.success('Đã cập nhật mốc nghiên cứu thành công.');
+      toast.success(translate('research.toast.milestoneUpdated'));
     },
     onError: (error) => {
-      toast.error(getErrorMessage(error, 'Không thể cập nhật mốc nghiên cứu.'));
+      toast.error(getErrorMessage(error, 'research.toast.milestoneUpdateFailed'));
     },
   });
 }
@@ -945,10 +948,10 @@ export function useCreateResearchProject(labId?: number | null) {
           queryKey: queryKeys.research.project(project.id),
         }),
       ]);
-      toast.success('Đã tạo đề tài nghiên cứu thành công.');
+      toast.success(translate('research.toast.projectCreated'));
     },
     onError: (error) => {
-      toast.error(getErrorMessage(error, 'Không thể tạo đề tài nghiên cứu.'));
+      toast.error(getErrorMessage(error, 'research.toast.projectCreateFailed'));
     },
   });
 }
@@ -971,10 +974,10 @@ export function useUpdateResearchProject(labId?: number | null) {
           queryKey: queryKeys.research.projectStats(variables.projectId),
         }),
       ]);
-      toast.success('Đã cập nhật đề tài nghiên cứu thành công.');
+      toast.success(translate('research.toast.projectUpdated'));
     },
     onError: (error) => {
-      toast.error(getErrorMessage(error, 'Không thể cập nhật đề tài nghiên cứu.'));
+      toast.error(getErrorMessage(error, 'research.toast.projectUpdateFailed'));
     },
   });
 }
@@ -997,10 +1000,10 @@ export function useCreateResearchGroup(projectId?: number | null, labId?: number
           ? queryClient.invalidateQueries({ queryKey: queryKeys.research.myGroups(labId) })
           : Promise.resolve(),
       ]);
-      toast.success('Đã tạo nhóm nghiên cứu thành công.');
+      toast.success(translate('research.toast.groupCreated'));
     },
     onError: (error) => {
-      toast.error(getErrorMessage(error, 'Không thể tạo nhóm nghiên cứu.'));
+      toast.error(getErrorMessage(error, 'research.toast.groupCreateFailed'));
     },
   });
 }
@@ -1024,10 +1027,10 @@ export function useUpdateResearchGroup(projectId?: number | null, labId?: number
           ? queryClient.invalidateQueries({ queryKey: queryKeys.research.myGroups(labId) })
           : Promise.resolve(),
       ]);
-      toast.success('Đã cập nhật nhóm nghiên cứu thành công.');
+      toast.success(translate('research.toast.groupUpdated'));
     },
     onError: (error) => {
-      toast.error(getErrorMessage(error, 'Không thể cập nhật nhóm nghiên cứu.'));
+      toast.error(getErrorMessage(error, 'research.toast.groupUpdateFailed'));
     },
   });
 }
@@ -1048,10 +1051,10 @@ export function useCreateProject(
           ? queryClient.invalidateQueries({ queryKey: queryKeys.research.topicGroups(labId, topicId) })
           : Promise.resolve(),
       ]);
-      toast.success('Đã tạo đề tài nghiên cứu thành công.');
+      toast.success(translate('research.toast.projectCreated'));
     },
     onError: (error) => {
-      toast.error(getErrorMessage(error, 'Không thể tạo đề tài nghiên cứu.'));
+      toast.error(getErrorMessage(error, 'research.toast.projectCreateFailed'));
     },
   });
 }

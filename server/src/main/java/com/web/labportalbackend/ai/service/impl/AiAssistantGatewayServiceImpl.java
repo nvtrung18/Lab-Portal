@@ -35,6 +35,8 @@ import com.web.labportalbackend.ai.service.AiCapabilityDeniedException;
 import com.web.labportalbackend.ai.service.AiCapabilityRequest;
 import java.util.Objects;
 import java.util.List;
+import java.util.Locale;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -97,6 +99,7 @@ public class AiAssistantGatewayServiceImpl implements AiAssistantGatewayService 
 
             ObjectNode payload = objectMapper.createObjectNode();
             payload.put("assistantKey", profile.key().name());
+            payload.put("locale", supportedLocale());
             payload.put("input", inferenceInput(request, authorized));
             payload.set("authorizedContext",
                     objectMapper.valueToTree(AiPythonAuthorizedContext.from(authorized, retrieval)));
@@ -110,6 +113,12 @@ public class AiAssistantGatewayServiceImpl implements AiAssistantGatewayService 
                 normalizedRequestId, profile, availability, authorized, response));
         return new AiAssistantChatResponse(profile.key().name(), response.answer(),
                 response.promptTokens(), response.completionTokens(), citations(retrieval));
+    }
+
+    private static String supportedLocale() {
+        return Locale.ENGLISH.getLanguage().equals(LocaleContextHolder.getLocale().getLanguage())
+                ? Locale.ENGLISH.getLanguage()
+                : "vi";
     }
 
     private static List<AiRagCitationResponse> citations(AiAuthorizedRetrieval retrieval) {

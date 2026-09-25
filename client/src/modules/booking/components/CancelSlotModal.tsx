@@ -1,6 +1,7 @@
 import { useState } from 'react';
 
 import { Button, Modal } from '../../../shared/components';
+import { useI18n } from '../../../shared/i18n';
 import { useCancelSlot } from '../hooks';
 
 interface CancelSlotModalProps {
@@ -11,6 +12,7 @@ interface CancelSlotModalProps {
 }
 
 export function CancelSlotModal({ labId, slotId, isOpen, onClose }: CancelSlotModalProps) {
+  const { t } = useI18n();
   const [reason, setReason] = useState('');
   const cancelSlot = useCancelSlot(labId, slotId);
 
@@ -32,27 +34,26 @@ export function CancelSlotModal({ labId, slotId, isOpen, onClose }: CancelSlotMo
       footer={(
         <>
           <Button disabled={cancelSlot.isPending} onClick={onClose} variant="outline">
-            Đóng
+            {t('booking.cancelClose')}
           </Button>
           <Button
             loading={cancelSlot.isPending}
-            loadingText="Đang hủy..."
+            loadingText={t('booking.cancellingSlot')}
             onClick={handleSubmit}
             variant="danger"
           >
-            Hủy khung giờ
+            {t('booking.cancelSlot')}
           </Button>
         </>
       )}
       onClose={onClose}
       size="md"
-      subtitle="Nhập lý do hủy để thông báo cho sinh viên."
-      title="Hủy khung giờ sử dụng"
+      title={t('booking.cancelSlotTitle')}
     >
         <div className="space-y-4">
           <div>
             <label className="text-sm font-medium text-slate-700" htmlFor="cancel-reason">
-              Lý do hủy
+              {t('booking.cancelReason')}
             </label>
             <textarea
               id="cancel-reason"
@@ -61,7 +62,6 @@ export function CancelSlotModal({ labId, slotId, isOpen, onClose }: CancelSlotMo
               onChange={(event) => setReason(event.target.value)}
             />
           </div>
-          <p className="text-sm text-slate-600">Sinh viên đã đăng ký sẽ nhận được thông báo qua email.</p>
         </div>
     </Modal>
   );

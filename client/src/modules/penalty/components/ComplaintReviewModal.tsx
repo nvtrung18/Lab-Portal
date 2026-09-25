@@ -1,6 +1,7 @@
 import { useState } from 'react';
 
 import { Button, Modal } from '../../../shared/components';
+import { useI18n } from '../../../shared/i18n';
 import type { Complaint } from '../types';
 
 interface ComplaintReviewModalProps {
@@ -18,6 +19,7 @@ export function ComplaintReviewModal({
   onClose,
   onSubmit,
 }: ComplaintReviewModalProps) {
+  const { t } = useI18n();
   const [note, setNote] = useState('');
 
   if (!complaint || !decision) {
@@ -29,27 +31,27 @@ export function ComplaintReviewModal({
       footer={(
         <>
           <Button disabled={isSubmitting} onClick={onClose} variant="outline">
-            Hủy
+            {t('common.cancel')}
           </Button>
           <Button
             loading={isSubmitting}
-            loadingText="Đang xử lý..."
+            loadingText={t('common.processing')}
             onClick={() => onSubmit(note.trim())}
             variant={decision === 'REJECT' ? 'danger' : 'primary'}
           >
-            Xác nhận
+            {t('common.confirm')}
           </Button>
         </>
       )}
       onClose={onClose}
       size="md"
-      title={decision === 'APPROVE' ? 'Chấp nhận khiếu nại' : 'Từ chối khiếu nại'}
+      title={decision === 'APPROVE' ? t('penalty.complaint.accept') : t('penalty.complaint.reject')}
     >
         <p className="mt-2 text-sm text-slate-600">
-          Sinh viên: {complaint.studentName || complaint.studentEmail || `#${complaint.userId}`}
+          {t('penalty.complaint.student')}: {complaint.studentName || complaint.studentEmail || `#${complaint.userId}`}
         </p>
         <label className="mt-5 block text-sm font-semibold text-slate-800" htmlFor="resolution-note">
-          Ghi chú xử lý
+          {t('penalty.complaint.processingNote')}
         </label>
         <textarea
           id="resolution-note"

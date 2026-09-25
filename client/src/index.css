@@ -2,6 +2,98 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --app-background-color: #E0E0E0;
+  --app-background: linear-gradient(135deg, #E0E0E0 0%, #EFEFEF 50%, #D9D9D9 100%);
+  --app-banner-color: var(--app-button-color);
+  --app-banner-gradient: var(--app-button-gradient);
+  --app-border-color: #B8B8B8;
+  --app-border-strong-color: #929292;
+  --app-active-indicator-color: #5F6368;
+  --app-surface-color: #EFEFEF;
+  --app-surface: linear-gradient(145deg, #EFEFEF 0%, #E0E0E0 52%, #D9D9D9 100%);
+  --app-surface-elevated-color: #EFEFEF;
+  --app-surface-elevated: linear-gradient(145deg, #EFEFEF 0%, #D9D9D9 54%, #BCBCBC 100%);
+  --app-surface-muted: linear-gradient(145deg, #D9D9D9 0%, #BCBCBC 100%);
+  --app-control-gradient: linear-gradient(145deg, #EFEFEF 0%, #E0E0E0 52%, #D9D9D9 100%);
+  --app-control-gradient-hover: linear-gradient(145deg, #D9D9D9 0%, #BCBCBC 52%, #E0E0E0 100%);
+  --app-control-border: var(--app-border-strong-color);
+  --app-control-text: #0F172A;
+  --app-text-primary: #0F172A;
+  --app-text-secondary: #334155;
+  --app-text-muted: #475569;
+  --app-text-placeholder: #64748B;
+  --app-button-color: #E0E0E0;
+  --app-button-gradient: linear-gradient(135deg, #E0E0E0 0%, #EFEFEF 33%, #D9D9D9 66%, #BCBCBC 100%);
+  --app-button-gradient-hover: linear-gradient(135deg, #BCBCBC 0%, #D9D9D9 33%, #EFEFEF 66%, #E0E0E0 100%);
+  --app-button-border: #A8A8A8;
+  --app-button-text: #0F172A;
+  --app-button-shadow: 0 4px 12px rgba(15, 23, 42, 0.18);
+  --app-header-control-color: #E0E0E0;
+  --app-header-control-gradient: var(--app-button-gradient);
+  --app-header-control-gradient-hover: var(--app-button-gradient-hover);
+  --app-header-control-border: #A8A8A8;
+  --app-header-control-text: #0F172A;
+  --app-header-control-muted-text: #334155;
+  --app-header-control-icon-bg: rgba(15, 23, 42, 0.10);
+  --app-button-primary-gradient: var(--app-button-gradient);
+  --app-button-primary-gradient-hover: var(--app-button-gradient-hover);
+  --app-button-secondary-gradient: var(--app-button-gradient);
+  --app-button-secondary-gradient-hover: var(--app-button-gradient-hover);
+  --app-button-danger-gradient: var(--app-button-gradient);
+  --app-button-danger-gradient-hover: var(--app-button-gradient-hover);
+  --app-button-success-gradient: var(--app-button-gradient);
+  --app-button-success-gradient-hover: var(--app-button-gradient-hover);
+  --app-control-min-width: 8rem;
+  --app-control-min-height: 2.75rem;
+  --app-action-width: 11rem;
+  --app-tab-width: 12rem;
+}
+
+html.dark {
+  --app-background-color: #020617;
+  --app-background: linear-gradient(135deg, rgba(58, 181, 176, 0.20) 0%, rgba(61, 153, 190, 0.16) 50%, rgba(86, 49, 122, 0.24) 100%);
+  --app-banner-color: var(--app-button-color);
+  --app-banner-gradient: var(--app-button-gradient);
+  --app-border-color: #294858;
+  --app-border-strong-color: #3D6174;
+  --app-active-indicator-color: #3AB5B0;
+  --app-surface-color: #0B1625;
+  --app-surface: linear-gradient(145deg, rgba(58, 181, 176, 0.12) 0%, rgba(61, 153, 190, 0.10) 52%, rgba(86, 49, 122, 0.18) 100%);
+  --app-surface-elevated-color: #111827;
+  --app-surface-elevated: linear-gradient(145deg, rgba(58, 181, 176, 0.16) 0%, rgba(61, 153, 190, 0.12) 54%, rgba(86, 49, 122, 0.22) 100%);
+  --app-surface-muted: linear-gradient(145deg, rgba(61, 153, 190, 0.14) 0%, rgba(86, 49, 122, 0.22) 100%);
+  --app-control-gradient: linear-gradient(145deg, rgba(58, 181, 176, 0.16) 0%, rgba(61, 153, 190, 0.12) 52%, rgba(86, 49, 122, 0.22) 100%);
+  --app-control-gradient-hover: linear-gradient(145deg, rgba(86, 49, 122, 0.24) 0%, rgba(61, 153, 190, 0.16) 52%, rgba(58, 181, 176, 0.18) 100%);
+  --app-control-border: var(--app-border-strong-color);
+  --app-control-text: #F8FAFC;
+  --app-text-primary: #F8FAFC;
+  --app-text-secondary: #E2E8F0;
+  --app-text-muted: #CBD5E1;
+  --app-text-placeholder: #94A3B8;
+  --app-button-color: #3AB5B0;
+  --app-button-gradient: linear-gradient(135deg, #3AB5B0 0%, #3D99BE 50%, #56317A 100%);
+  --app-button-gradient-hover: linear-gradient(135deg, #56317A 0%, #3D99BE 50%, #3AB5B0 100%);
+  --app-button-border: #2B718C;
+  --app-button-text: #FFFFFF;
+  --app-button-shadow: 0 4px 14px rgba(0, 0, 0, 0.28);
+  --app-header-control-color: #3AB5B0;
+  --app-header-control-gradient: var(--app-button-gradient);
+  --app-header-control-gradient-hover: var(--app-button-gradient-hover);
+  --app-header-control-border: #2B718C;
+  --app-header-control-text: #FFFFFF;
+  --app-header-control-muted-text: #E2E8F0;
+  --app-header-control-icon-bg: rgba(255, 255, 255, 0.14);
+  --app-button-primary-gradient: var(--app-button-gradient);
+  --app-button-primary-gradient-hover: var(--app-button-gradient-hover);
+  --app-button-secondary-gradient: var(--app-button-gradient);
+  --app-button-secondary-gradient-hover: var(--app-button-gradient-hover);
+  --app-button-danger-gradient: var(--app-button-gradient);
+  --app-button-danger-gradient-hover: var(--app-button-gradient-hover);
+  --app-button-success-gradient: var(--app-button-gradient);
+  --app-button-success-gradient-hover: var(--app-button-gradient-hover);
+}
+
 html,
 body,
 #root {
@@ -12,11 +104,930 @@ body,
 body {
   margin: 0;
   overflow-x: hidden;
-  background: #f1f5f9;
-  color: #0f172a;
+  background-color: var(--app-background-color);
+  background-image: var(--app-background);
+  background-attachment: fixed;
+  background-position: center top;
+  background-repeat: no-repeat;
+  background-size: cover;
+  color: var(--app-text-primary);
   font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+}
+
+html.dark body {
+  background-color: var(--app-background-color);
+  background-image: var(--app-background);
+  color: var(--app-text-primary);
+}
+
+.app-shell {
+  min-height: 100svh;
+  background-color: var(--app-background-color);
+  background-image: var(--app-background);
+  background-position: center top;
+  background-repeat: no-repeat;
+  background-size: cover;
+  color: var(--app-text-primary);
+}
+
+.app-surface {
+  background-color: var(--app-surface-color);
+  background-image: var(--app-surface);
+  background-position: center top;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+.app-surface-elevated {
+  background-color: var(--app-surface-elevated-color);
+  background-image: var(--app-surface-elevated);
+  background-position: center top;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+.app-gradient-banner {
+  background-color: var(--app-banner-color);
+  background-image: var(--app-banner-gradient);
+  background-position: center top;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+.app-button,
+.app-control-surface {
+  -webkit-appearance: none;
+  appearance: none;
+  background-position: center top;
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+}
+
+.app-button {
+  border-color: var(--app-control-border);
+  color: var(--app-control-text);
+}
+
+.app-button-primary {
+  background-color: var(--app-button-color);
+  background-image: var(--app-button-primary-gradient) !important;
+  border-color: transparent;
+  color: var(--app-button-text) !important;
+}
+
+.app-button-primary:hover:not(:disabled) {
+  background-image: var(--app-button-primary-gradient-hover) !important;
+}
+
+.app-button-secondary,
+.app-button-outline {
+  background-color: var(--app-surface-elevated-color);
+  background-image: var(--app-button-secondary-gradient) !important;
+  color: var(--app-control-text) !important;
+}
+
+.app-button-secondary:hover:not(:disabled),
+.app-button-outline:hover:not(:disabled) {
+  background-image: var(--app-button-secondary-gradient-hover) !important;
+}
+
+.app-button-ghost {
+  background-color: var(--app-surface-color);
+  background-image: var(--app-control-gradient) !important;
+  color: var(--app-control-text) !important;
+}
+
+.app-button-ghost:hover:not(:disabled) {
+  background-image: var(--app-control-gradient-hover) !important;
+}
+
+.app-button-danger {
+  background-color: var(--app-button-color);
+  background-image: var(--app-button-danger-gradient) !important;
+  border-color: transparent;
+  color: var(--app-button-text) !important;
+}
+
+.app-button-danger:hover:not(:disabled) {
+  background-image: var(--app-button-danger-gradient-hover) !important;
+}
+
+.app-button-success {
+  background-color: var(--app-button-color);
+  background-image: var(--app-button-success-gradient) !important;
+  border-color: transparent;
+  color: var(--app-button-text) !important;
+}
+
+.app-button-success:hover:not(:disabled) {
+  background-image: var(--app-button-success-gradient-hover) !important;
+}
+
+.app-control-surface {
+  background-color: var(--app-surface-elevated-color);
+  background-image: var(--app-control-gradient) !important;
+  border-color: var(--app-control-border);
+  color: var(--app-control-text) !important;
+}
+
+.app-control-surface:hover:not(:disabled) {
+  background-image: var(--app-control-gradient-hover) !important;
+}
+
+.app-icon-badge {
+  background-color: var(--app-surface-elevated-color);
+  background-image: var(--app-control-gradient);
+  border: 1px solid var(--app-border-color);
+  color: var(--app-control-text);
+}
+
+.app-action-card {
+  background-color: var(--app-surface-color);
+  background-image: var(--app-surface-muted);
+  border: 1px solid var(--app-border-color);
+  border-radius: 0.875rem;
+  color: var(--app-text-primary);
+  transition: background-image 180ms ease, border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+}
+
+.app-action-card:hover,
+.app-action-card:focus-visible {
+  background-image: var(--app-control-gradient-hover);
+  border-color: var(--app-border-strong-color);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.12);
+  outline: 2px solid var(--app-active-indicator-color);
+  outline-offset: 2px;
+  transform: translateY(-1px);
+}
+
+.app-action-card:active {
+  transform: translateY(0) scale(0.99);
+}
+
+/* Neutral form controls share the same theme tokens as cards and buttons.
+   This also overrides browser-native white select rendering in dark mode. */
+.app-shell :is(select, textarea, input:not([type="checkbox"]):not([type="radio"]):not([type="file"]))[class*="border-slate-"] {
+  background-color: var(--app-surface-elevated-color) !important;
+  background-image: var(--app-control-gradient) !important;
+  border-color: var(--app-control-border) !important;
+  color: var(--app-control-text) !important;
+  color-scheme: light;
+}
+
+html.dark .app-shell :is(select, textarea, input:not([type="checkbox"]):not([type="radio"]):not([type="file"]))[class*="border-slate-"] {
+  color-scheme: dark;
+}
+
+.app-shell :is(select, textarea, input:not([type="checkbox"]):not([type="radio"]):not([type="file"]))[class*="border-slate-"]::placeholder {
+  color: #64748B;
+  opacity: 1;
+}
+
+html.dark .app-shell :is(select, textarea, input:not([type="checkbox"]):not([type="radio"]):not([type="file"]))[class*="border-slate-"]::placeholder {
+  color: #94A3B8;
+}
+
+.app-shell select[class*="border-slate-"] option {
+  background-color: var(--app-surface-elevated-color);
+  color: var(--app-control-text);
+}
+
+/* Header controls sit on a dark banner in both themes. Use a stronger,
+   shared gradient so they remain visibly interactive instead of blending into
+   the banner or looking like a flat white fallback in light mode. */
+.app-gradient-banner :is(.app-control-surface, .app-button-outline, .app-button-ghost) {
+  background-color: var(--app-header-control-color);
+  background-image: var(--app-header-control-gradient) !important;
+  border-color: var(--app-header-control-border) !important;
+  color: var(--app-header-control-text) !important;
+}
+
+.app-gradient-banner :is(.app-control-surface, .app-button-outline, .app-button-ghost):hover:not(:disabled) {
+  background-image: var(--app-header-control-gradient-hover) !important;
+  color: var(--app-header-control-text) !important;
+}
+
+.app-gradient-banner .app-control-surface :is(.text-slate-400, .text-slate-500, .text-slate-600, .text-slate-700, .text-slate-800, .text-slate-900, .text-slate-950),
+.app-gradient-banner .app-control-surface .dark\:text-slate-100,
+.app-gradient-banner .app-control-surface .dark\:text-slate-200,
+.app-gradient-banner .app-control-surface .dark\:text-slate-300,
+.app-gradient-banner .app-control-surface .dark\:text-slate-400 {
+  color: var(--app-header-control-muted-text) !important;
+}
+
+.app-gradient-banner .app-control-surface .bg-slate-200 {
+  background-color: var(--app-header-control-icon-bg) !important;
+  color: var(--app-header-control-text) !important;
+}
+
+.app-control-surface select {
+  background-color: transparent !important;
+  background-image: none !important;
+  color: inherit;
+}
+
+.app-control-surface option {
+  background-color: var(--app-surface-elevated-color);
+  color: var(--app-control-text);
+}
+
+html:not(.dark) .app-shell header .app-control-surface {
+  color: var(--app-header-control-text) !important;
+}
+
+html.dark .app-shell header .app-control-surface {
+  color: var(--app-header-control-text) !important;
+}
+
+.app-theme-toggle {
+  color: var(--app-button-text) !important;
+  -webkit-text-fill-color: var(--app-button-text);
+}
+
+html.dark .app-shell header button.app-theme-toggle {
+  color: var(--app-button-text) !important;
+  -webkit-text-fill-color: var(--app-button-text);
+}
+
+/* Keep the banner-specific control treatment above the older theme fallbacks
+   below. The higher-specificity selector also prevents native button styles
+   from turning the light-mode header controls back into flat dark/white pills. */
+html:not(.dark) .app-shell header.app-gradient-banner :is(.app-control-surface, .app-button-outline, .app-button-ghost),
+html.dark .app-shell header.app-gradient-banner :is(.app-control-surface, .app-button-outline, .app-button-ghost) {
+  background-color: var(--app-header-control-color) !important;
+  background-image: var(--app-header-control-gradient) !important;
+  border-color: var(--app-header-control-border) !important;
+  color: var(--app-header-control-text) !important;
+}
+
+html:not(.dark) .app-shell header.app-gradient-banner button.app-theme-toggle,
+html.dark .app-shell header.app-gradient-banner button.app-theme-toggle {
+  color: var(--app-button-text) !important;
+  -webkit-text-fill-color: var(--app-button-text);
+}
+
+html:not(.dark) .app-shell header.app-gradient-banner :is(.app-control-surface, .app-button-outline, .app-button-ghost):hover:not(:disabled),
+html.dark .app-shell header.app-gradient-banner :is(.app-control-surface, .app-button-outline, .app-button-ghost):hover:not(:disabled) {
+  background-image: var(--app-header-control-gradient-hover) !important;
+  color: var(--app-header-control-text) !important;
+}
+
+/* Every application button follows the same theme gradient and rounded shape.
+   Existing rounded-full icon controls keep their circular geometry. */
+.app-shell button:not([class~="rounded-full"]) {
+  background-color: var(--app-button-color) !important;
+  background-image: var(--app-button-gradient) !important;
+  border-color: var(--app-button-border) !important;
+  border-radius: 0.75rem;
+  box-shadow: var(--app-button-shadow);
+  color: var(--app-button-text) !important;
+}
+
+.app-shell button:not([class~="rounded-full"]):hover:not(:disabled) {
+  background-image: var(--app-button-gradient-hover) !important;
+}
+
+.app-shell button[class~="rounded-full"] {
+  background-color: var(--app-button-color) !important;
+  background-image: var(--app-button-gradient) !important;
+  border-color: var(--app-button-border) !important;
+  box-shadow: var(--app-button-shadow);
+  color: var(--app-button-text) !important;
+}
+
+.app-shell button[class~="rounded-full"]:hover:not(:disabled) {
+  background-image: var(--app-button-gradient-hover) !important;
+}
+
+/* Admin pages still contain a few legacy dark utility classes. Keep them
+   readable and consistent in light mode until those views are migrated to
+   semantic surface tokens. */
+html:not(.dark) .admin-shell .bg-slate-950:not(.fixed):not(button) {
+  background-color: var(--app-surface-color) !important;
+  background-image: var(--app-surface) !important;
+}
+
+html:not(.dark) .admin-shell .bg-slate-900:not(.fixed):not(button) {
+  background-color: var(--app-surface-elevated-color) !important;
+  background-image: var(--app-surface-elevated) !important;
+}
+
+html:not(.dark) .admin-shell .bg-slate-800:not(.fixed):not(button) {
+  background-color: var(--app-surface-color) !important;
+  background-image: var(--app-surface-muted) !important;
+}
+
+html:not(.dark) .admin-shell [class*="bg-slate-950"]:not(.fixed):not(button) {
+  background-color: var(--app-surface-color) !important;
+  background-image: var(--app-surface) !important;
+}
+
+html:not(.dark) .admin-shell [class*="bg-slate-900"]:not(.fixed):not(button) {
+  background-color: var(--app-surface-elevated-color) !important;
+  background-image: var(--app-surface-elevated) !important;
+}
+
+html:not(.dark) .admin-shell [class*="bg-slate-800"]:not(.fixed):not(button) {
+  background-color: var(--app-surface-color) !important;
+  background-image: var(--app-surface-muted) !important;
+}
+
+html:not(.dark) .admin-shell .border-slate-800 {
+  border-color: var(--app-border-color) !important;
+}
+
+html:not(.dark) .admin-shell .text-slate-300,
+html:not(.dark) .admin-shell .text-slate-400,
+html:not(.dark) .admin-shell .text-slate-100,
+html:not(.dark) .admin-shell .text-slate-200 {
+  color: #475569 !important;
+}
+
+html:not(.dark) .admin-shell button.bg-white.text-slate-950 {
+  color: #0F172A !important;
+}
+
+html:not(.dark) .admin-shell .text-white:not(button) {
+  color: #0F172A !important;
+}
+
+html:not(.dark) .admin-shell button.text-white {
+  color: #FFFFFF !important;
+}
+
+html:not(.dark) .admin-shell option.bg-slate-900 {
+  background-color: var(--app-surface-elevated) !important;
+  color: #0F172A !important;
+}
+
+html:not(.dark) .admin-shell h1.text-white,
+html:not(.dark) .admin-shell h2.text-white,
+html:not(.dark) .admin-shell h3.text-white,
+html:not(.dark) .admin-shell h4.text-white,
+html:not(.dark) .admin-shell input.text-white,
+html:not(.dark) .admin-shell select.text-white,
+html:not(.dark) .admin-shell textarea.text-white {
+  color: #0F172A !important;
+}
+
+html:not(.dark) .admin-shell .app-gradient-banner .text-white:not(button) {
+  color: var(--app-header-control-text) !important;
+}
+
+html:not(.dark) .app-shell .app-gradient-banner .text-white:not(button) {
+  color: var(--app-header-control-text) !important;
+}
+
+html.dark .app-shell .app-gradient-banner .text-white:not(button) {
+  color: var(--app-header-control-text) !important;
+}
+
+/* Improve muted copy that predates the theme tokens. Explicit dark variants
+   remain authoritative; only unpaired utility colors receive the fallback. */
+html:not(.dark) .app-shell .text-slate-400,
+html:not(.dark) .app-shell .text-slate-500 {
+  color: #475569 !important;
+}
+
+html.dark .app-shell .text-slate-400:not([class*="dark:text-"]),
+html.dark .app-shell .text-slate-500:not([class*="dark:text-"]),
+html.dark .app-shell .text-slate-600:not([class*="dark:text-"]) {
+  color: #CBD5E1 !important;
+}
+
+html.dark .app-shell .text-slate-700:not([class*="dark:text-"]) {
+  color: #E2E8F0 !important;
+}
+
+html.dark .app-shell :is(.text-slate-800, .text-slate-900, .text-slate-950, .text-black):not([class*="dark:text-"]) {
+  color: #F8FAFC !important;
+}
+
+/* Neutral borders and rings use one token per theme. Explicit dark variants
+   remain authoritative; only unpaired utilities fall back to these separators. */
+html:not(.dark) .app-shell [class*="border-slate-"],
+html:not(.dark) .app-shell [class*="border-t-slate-"],
+html:not(.dark) .app-shell [class*="border-r-slate-"],
+html:not(.dark) .app-shell [class*="border-b-slate-"],
+html:not(.dark) .app-shell [class*="border-l-slate-"] {
+  border-color: var(--app-border-color) !important;
+}
+
+html:not(.dark) .app-shell [class*="ring-slate-"] {
+  --tw-ring-color: var(--app-border-color) !important;
+}
+
+html:not(.dark) .app-shell [class*="divide-slate-"] > :not([hidden]) ~ :not([hidden]) {
+  border-color: var(--app-border-color) !important;
+}
+
+/* Dark mode keeps legacy borders and rings in the same deep palette. */
+html.dark .app-shell [class*="border-slate-"],
+html.dark .app-shell [class*="border-t-slate-"],
+html.dark .app-shell [class*="border-r-slate-"],
+html.dark .app-shell [class*="border-b-slate-"],
+html.dark .app-shell [class*="border-l-slate-"] {
+  border-color: var(--app-border-color) !important;
+}
+
+html.dark .app-shell [class*="border-white"] {
+  border-color: var(--app-border-color) !important;
+}
+
+html.dark .app-shell [class*="ring-slate-"] {
+  --tw-ring-color: var(--app-border-color) !important;
+}
+
+html.dark .app-shell [class*="divide-slate-"] > :not([hidden]) ~ :not([hidden]) {
+  border-color: var(--app-border-color) !important;
+}
+
+/* A selected tab is an active state, not a neutral separator. Keep its
+   indicator visible after normalizing all slate borders. */
+html:not(.dark) .app-shell [class~="border-b-2"][class*="border-slate-900"],
+html.dark .app-shell [class~="border-b-2"][class*="border-slate-900"] {
+  border-bottom-color: var(--app-active-indicator-color) !important;
+}
+
+/* Keep the banner separator subtle while the rest of the application uses
+   the shared neutral border token. */
+html:not(.dark) .app-shell .app-gradient-banner,
+html.dark .app-shell .app-gradient-banner {
+  border-color: var(--app-header-control-border) !important;
+}
+
+/* Semantic status surfaces also stay dark when an older view only provides a
+   light utility class. The text mappings preserve the status meaning without
+   reintroducing pale panels into dark mode. */
+html.dark .app-shell [class*="bg-slate-50"]:not([class*="dark:bg-"]),
+html.dark .app-shell [class*="bg-slate-100"]:not([class*="dark:bg-"]) {
+  background-color: #111827 !important;
+  background-image: var(--app-surface-muted) !important;
+}
+
+html.dark .app-shell [class*="bg-blue-50"]:not([class*="dark:bg-"]),
+html.dark .app-shell [class*="bg-blue-100"]:not([class*="dark:bg-"]) {
+  background-color: #0B1B3A !important;
+}
+
+html.dark .app-shell [class*="bg-sky-50"]:not([class*="dark:bg-"]) {
+  background-color: #082F49 !important;
+}
+
+html.dark .app-shell [class*="bg-emerald-50"]:not([class*="dark:bg-"]) {
+  background-color: #022C22 !important;
+}
+
+html.dark .app-shell [class*="bg-amber-50"]:not([class*="dark:bg-"]) {
+  background-color: #451A03 !important;
+}
+
+html.dark .app-shell [class*="bg-red-50"]:not([class*="dark:bg-"]) {
+  background-color: #450A0A !important;
+}
+
+html.dark .app-shell [class*="text-blue-700"]:not([class*="dark:text-"]) {
+  color: #93C5FD !important;
+}
+
+html.dark .app-shell [class*="text-sky-700"]:not([class*="dark:text-"]) {
+  color: #7DD3FC !important;
+}
+
+html.dark .app-shell [class*="text-emerald-700"]:not([class*="dark:text-"]) {
+  color: #A7F3D0 !important;
+}
+
+html.dark .app-shell [class*="text-amber-700"]:not([class*="dark:text-"]) {
+  color: #FCD34D !important;
+}
+
+html.dark .app-shell [class*="text-red-700"]:not([class*="dark:text-"]) {
+  color: #FCA5A5 !important;
+}
+
+html.dark .app-shell [class*="border-blue-200"]:not([class*="dark:border-"]),
+html.dark .app-shell [class*="border-sky-200"]:not([class*="dark:border-"]),
+html.dark .app-shell [class*="border-emerald-200"]:not([class*="dark:border-"]),
+html.dark .app-shell [class*="border-amber-200"]:not([class*="dark:border-"]),
+html.dark .app-shell [class*="border-red-200"]:not([class*="dark:border-"]) {
+  border-color: var(--app-border-color) !important;
+}
+
+/* Keep legacy page surfaces aligned with the same theme gradient in every
+   active module. Controls and fixed overlays stay solid so text, borders and
+   interaction states remain easy to read on small screens. */
+.app-shell :is(section, article, aside, main, header, footer, nav, div, form, ul, ol, table, thead, tbody, tfoot, li, a):not(.fixed)[class*="bg-white"],
+.app-shell :is(section, article, aside, main, header, footer, nav, div, form, ul, ol, table, thead, tbody, tfoot, li, a):not(.fixed)[class*="bg-slate-50"],
+.app-shell :is(section, article, aside, main, header, footer, nav, div, form, ul, ol, table, thead, tbody, tfoot, li, a):not(.fixed)[class*="bg-slate-100"],
+.app-shell :is(section, article, aside, main, header, footer, nav, div, form, ul, ol, table, thead, tbody, tfoot, li, a):not(.fixed)[class*="bg-slate-800"],
+.app-shell :is(section, article, aside, main, header, footer, nav, div, form, ul, ol, table, thead, tbody, tfoot, li, a):not(.fixed)[class*="bg-slate-900"],
+.app-shell :is(section, article, aside, main, header, footer, nav, div, form, ul, ol, table, thead, tbody, tfoot, li, a):not(.fixed)[class*="bg-slate-950"] {
+  background-color: var(--app-surface-color) !important;
+  background-image: var(--app-surface) !important;
+  background-position: center top;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+/* Low-intensity status panels keep their semantic text and border colors,
+   while their surfaces follow the same theme gradient as the rest of the UI. */
+.app-shell :is(section, article, aside, main, header, footer, nav, div, form, ul, ol, table, thead, tbody, tfoot, li, a, span, label):not(.fixed):not(button):is(
+  [class*="bg-blue-50"],
+  [class*="bg-sky-50"],
+  [class*="bg-cyan-50"],
+  [class*="bg-emerald-50"],
+  [class*="bg-teal-50"],
+  [class*="bg-indigo-50"],
+  [class*="bg-purple-50"],
+  [class*="bg-pink-50"],
+  [class*="bg-rose-50"],
+  [class*="bg-red-50"],
+  [class*="bg-orange-50"],
+  [class*="bg-amber-50"]
+) {
+  background-color: var(--app-surface-color) !important;
+  background-image: var(--app-surface-muted) !important;
+  background-position: center top;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+@media (max-width: 767px) {
+  body,
+  .app-shell,
+  .app-surface,
+  .app-surface-elevated,
+  .app-gradient-banner {
+    background-attachment: scroll;
+    background-position: center top;
+    background-size: 100% 100%;
+  }
+
+  .app-shell :is(section, article, aside, main, header, footer, nav, div, form, ul, ol, table, thead, tbody, tfoot, li, a):not(.fixed)[class*="bg-white"],
+  .app-shell :is(section, article, aside, main, header, footer, nav, div, form, ul, ol, table, thead, tbody, tfoot, li, a):not(.fixed)[class*="bg-slate-50"],
+  .app-shell :is(section, article, aside, main, header, footer, nav, div, form, ul, ol, table, thead, tbody, tfoot, li, a):not(.fixed)[class*="bg-slate-100"],
+  .app-shell :is(section, article, aside, main, header, footer, nav, div, form, ul, ol, table, thead, tbody, tfoot, li, a):not(.fixed)[class*="bg-slate-800"],
+  .app-shell :is(section, article, aside, main, header, footer, nav, div, form, ul, ol, table, thead, tbody, tfoot, li, a):not(.fixed)[class*="bg-slate-900"],
+  .app-shell :is(section, article, aside, main, header, footer, nav, div, form, ul, ol, table, thead, tbody, tfoot, li, a):not(.fixed)[class*="bg-slate-950"] {
+    background-size: 100% 100%;
+  }
+}
+
+/* Typography follows the surface tokens so every module keeps readable
+   hierarchy after the shared gradients replace local utility backgrounds. */
+html:not(.dark) .app-shell :is(.text-slate-950, .text-slate-900, .text-slate-800, .text-black) {
+  color: var(--app-text-primary) !important;
+}
+
+html:not(.dark) .app-shell :is(.text-slate-700, .text-slate-600) {
+  color: var(--app-text-secondary) !important;
+}
+
+html:not(.dark) .app-shell :is(.text-slate-500, .text-slate-400, .text-slate-300) {
+  color: var(--app-text-muted) !important;
+}
+
+html:not(.dark) .app-shell :is(.text-slate-200, .text-slate-100) {
+  color: var(--app-text-secondary) !important;
+}
+
+html:not(.dark) .app-shell :is(section, article, aside, main, header, footer, nav, div, form, ul, ol, table, thead, tbody, tfoot, li, a, span, label)[class*="bg-white"] .text-white:not(button):not([class*="bg-"]),
+html:not(.dark) .app-shell :is(section, article, aside, main, header, footer, nav, div, form, ul, ol, table, thead, tbody, tfoot, li, a, span, label)[class*="bg-slate-"] .text-white:not(button):not([class*="bg-"]),
+html:not(.dark) .app-shell :is(div, section, article, aside, main, form, li, a, span, label)[class*="bg-slate-"][class~="text-white"]:not(.fixed) {
+  color: var(--app-text-primary) !important;
+}
+
+html.dark .app-shell :is(.text-slate-300, .text-slate-200, .text-slate-100):not([class*="dark:text-"]) {
+  color: var(--app-text-secondary) !important;
+}
+
+html.dark .app-shell :is(.text-slate-50, .text-white):not(button) {
+  color: var(--app-text-primary) !important;
+}
+
+.app-shell :is(input, textarea)::placeholder {
+  color: var(--app-text-placeholder) !important;
+  opacity: 1;
+}
+
+html:not(.dark) .app-gradient-banner :is(.text-slate-500, .text-slate-400, .text-slate-300, .text-slate-200, .text-slate-100) {
+  color: var(--app-header-control-muted-text) !important;
+}
+
+html.dark .app-gradient-banner :is(.text-slate-500, .text-slate-400, .text-slate-300, .text-slate-200, .text-slate-100) {
+  color: var(--app-header-control-muted-text) !important;
+}
+
+.app-shell .app-gradient-banner [class~="text-white"] {
+  color: var(--app-header-control-text) !important;
+}
+
+.app-shell .app-gradient-banner {
+  color: var(--app-header-control-text) !important;
+}
+
+.app-shell .app-gradient-banner [class~="text-white/75"] {
+  color: var(--app-header-control-muted-text) !important;
+}
+
+html:not(.dark) .app-shell .app-gradient-banner .text-blue-200 {
+  color: #1E3A8A !important;
+}
+
+html:not(.dark) .app-shell .app-gradient-banner .text-emerald-200 {
+  color: #047857 !important;
+}
+
+/* Rounded containers and navigation use the same surface language as the
+   buttons. Active menu entries use the accent gradient; inactive entries keep
+   a quieter gradient so the current location remains obvious. */
+.app-shell :is(section, article, aside, main, header, footer, nav, div, form, ul, ol, table, thead, tbody, tfoot, li, a, span, label)[class*="bg-"]:not(.fixed),
+.app-shell .app-surface,
+.app-shell .app-surface-elevated,
+.app-shell .app-control-surface,
+.app-shell .app-gradient-banner {
+  border-radius: 0.875rem;
+}
+
+.app-shell aside.app-surface {
+  border-radius: 0 1rem 1rem 0;
+}
+
+.app-shell header.app-gradient-banner.sticky {
+  border-radius: 0 0 1rem 1rem;
+}
+
+.app-shell header.app-gradient-banner:not(.sticky) {
+  border-radius: 1rem;
+}
+
+.app-shell :is(input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), select, textarea) {
+  border-radius: 0.75rem;
+}
+
+html:not(.dark) .app-shell nav a[class],
+html.dark .app-shell nav a[class] {
+  align-items: center;
+  background-color: var(--app-surface-color) !important;
+  background-image: var(--app-surface-muted) !important;
+  background-position: center top;
+  background-repeat: no-repeat;
+  background-size: cover;
+  border: 1px solid transparent;
+  border-radius: 0.75rem !important;
+  color: var(--app-text-secondary) !important;
+}
+
+html:not(.dark) .app-shell nav a[class]:hover:not([aria-current="page"]),
+html:not(.dark) .app-shell nav a[class]:focus-visible:not([aria-current="page"]),
+html.dark .app-shell nav a[class]:hover:not([aria-current="page"]),
+html.dark .app-shell nav a[class]:focus-visible:not([aria-current="page"]) {
+  background-image: var(--app-control-gradient-hover) !important;
+  border-color: var(--app-border-color) !important;
+  color: var(--app-text-primary) !important;
+}
+
+html:not(.dark) .app-shell nav a[class][aria-current="page"],
+html.dark .app-shell nav a[class][aria-current="page"] {
+  background-color: var(--app-button-color) !important;
+  background-image: var(--app-button-gradient) !important;
+  border-color: var(--app-button-border) !important;
+  border-radius: 0.75rem !important;
+  box-shadow: var(--app-button-shadow);
+  color: var(--app-button-text) !important;
+}
+
+/* Keep bordered layout surfaces consistently rounded. Interactive controls
+   retain their own radius, border and focus-state rules. */
+.app-shell :is(section, article, aside, main, form, dialog, div)[class*="rounded-"][class*="bg-"]:not([class~="rounded-full"]):not(button):not(input):not(select):not(textarea),
+.app-shell :is(section, article, aside, main, form, dialog)[class*="bg-"],
+.app-shell :is(.app-surface, .app-surface-elevated, .app-gradient-banner) {
+  border-radius: 0.875rem;
+}
+
+.app-shell .app-gradient-banner {
+  border-radius: 1rem;
+}
+
+/* Every rounded layout surface gets a visible theme border. Keep the rule on
+   structural surfaces so small status pills and focus outlines do not become
+   visually heavy. */
+html:not(.dark) .app-shell :is(section, article, aside, main, header, footer, nav, form, dialog)[class*="rounded-"]:not([class~="rounded-full"]),
+html:not(.dark) .app-shell div[class*="rounded-"][class*="bg-"]:not([class~="rounded-full"]),
+html:not(.dark) .app-shell :is(.app-surface, .app-surface-elevated, .app-gradient-banner),
+html.dark .app-shell :is(section, article, aside, main, header, footer, nav, form, dialog)[class*="rounded-"]:not([class~="rounded-full"]),
+html.dark .app-shell div[class*="rounded-"][class*="bg-"]:not([class~="rounded-full"]),
+html.dark .app-shell :is(.app-surface, .app-surface-elevated, .app-gradient-banner) {
+  border: 1px solid var(--app-border-color) !important;
+}
+
+/* Navigation links are rounded controls too, so their border remains visible
+   in the resting state and uses the same light/dark separator token. */
+html:not(.dark) .app-shell nav a[class],
+html.dark .app-shell nav a[class] {
+  border-color: var(--app-border-color) !important;
+}
+
+/* A rounded element must also render a real border. This covers buttons,
+   links, form controls and rounded layout/content elements, including ones
+   that previously only had a border color or a ring utility. */
+.app-shell :is(
+  button,
+  a,
+  input,
+  select,
+  textarea,
+  section,
+  article,
+  aside,
+  main,
+  header,
+  footer,
+  nav,
+  form,
+  dialog,
+  div,
+  ul,
+  ol,
+  table,
+  thead,
+  tbody,
+  tfoot,
+  li,
+  span,
+  label
+)[class*="rounded"],
+.app-shell :is(.app-button, .app-control-surface, .app-surface, .app-surface-elevated, .app-gradient-banner),
+.app-shell button {
+  border-width: 1px !important;
+  border-style: solid !important;
+}
+
+/* Table headers receive a radius from the shared surface rules even when the
+   component does not carry a rounded utility class. Keep that radius paired
+   with a complete border as well. */
+.app-shell thead {
+  border-width: 1px !important;
+  border-style: solid !important;
+  border-color: var(--app-border-color) !important;
+}
+
+.app-shell :is(
+  a,
+  section,
+  article,
+  aside,
+  main,
+  header,
+  footer,
+  nav,
+  form,
+  dialog,
+  div,
+  ul,
+  ol,
+  table,
+  thead,
+  tbody,
+  tfoot,
+  li,
+  span,
+  label
+)[class*="rounded"],
+.app-shell :is(.app-surface, .app-surface-elevated, .app-gradient-banner) {
+  border-color: var(--app-border-color) !important;
+}
+
+.app-shell button {
+  border-color: var(--app-button-border) !important;
+}
+
+.app-shell :is(input, select, textarea, .app-control-surface) {
+  border-width: 1px !important;
+  border-style: solid !important;
+  border-color: var(--app-control-border) !important;
+}
+
+/* Keep control geometry stable when translated labels change length. Explicit
+   width/height utilities still opt into their compact or full-width layout. */
+.app-shell button {
+  min-height: var(--app-control-min-height);
+  min-width: var(--app-control-min-width);
+  white-space: nowrap;
+  border-radius: 0.75rem !important;
+}
+
+.app-shell button[class~="rounded-full"] {
+  border-radius: 9999px !important;
+}
+
+.app-shell button:is(
+  [class~="w-5"],
+  [class~="w-6"],
+  [class~="w-8"],
+  [class~="w-9"],
+  [class~="w-10"],
+  [class~="w-11"],
+  [class~="w-12"],
+  [class~="w-full"],
+  [class~="w-fit"]
+) {
+  min-width: 0;
+}
+
+.app-shell button:is(
+  [class~="h-5"][class~="w-5"],
+  [class~="h-6"][class~="w-6"],
+  [class~="h-8"][class~="w-8"],
+  [class~="h-9"][class~="w-9"],
+  [class~="h-10"][class~="w-10"],
+  [class~="h-11"][class~="w-11"],
+  [class~="h-12"][class~="w-12"]
+) {
+  min-height: 0;
+}
+
+.app-shell button:has(> .sr-only) {
+  width: var(--app-control-min-height);
+  min-width: var(--app-control-min-height);
+  padding-inline: 0.5rem;
+}
+
+/* Full-screen backdrop buttons are structural overlays, not visible
+   controls; keep them edge-to-edge instead of applying control geometry. */
+.app-shell button[class~="inset-0"] {
+  min-width: 0;
+  min-height: 0;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none;
+}
+
+/* Small navigation/action links use the same fixed control geometry as
+   buttons, including a real theme border and a locale-safe single line. */
+.app-shell .app-button-link {
+  display: inline-flex;
+  min-height: var(--app-control-min-height);
+  width: min(var(--app-action-width), 100%);
+  max-width: 100%;
+  min-width: min(var(--app-action-width), 100%);
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding-inline: 1rem;
+  border: 1px solid var(--app-button-border) !important;
+  border-radius: 0.75rem !important;
+  background-color: var(--app-button-color) !important;
+  background-image: var(--app-button-gradient) !important;
+  box-shadow: var(--app-button-shadow);
+  color: var(--app-button-text) !important;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.app-shell .app-button-link:hover {
+  background-image: var(--app-button-gradient-hover) !important;
+}
+
+/* Tabs keep the same width within a group so switching locale does not move
+   neighboring choices. The parent tablist already provides horizontal
+   scrolling on narrow screens. */
+.app-shell [role="tablist"] > [role="tab"] {
+  display: inline-flex;
+  min-height: var(--app-control-min-height);
+  width: var(--app-tab-width);
+  min-width: var(--app-tab-width);
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+}
+
+/* Let the parent grid/flex layout own the width of content surfaces. This
+   prevents a longer translated label from expanding a card or column. */
+.app-shell :is(section, article, aside, main, header, footer, nav, form, dialog, div)[class*="rounded"],
+.app-shell :is(.app-surface, .app-surface-elevated, .app-gradient-banner) {
+  min-width: 0;
+}
+
+/* Selectable controls share one bordered group so tabs and other mutually
+   exclusive choices read as a single control on every module. Long tab rows
+   stay usable on narrow screens without stretching the group beyond its
+   container. */
+.app-shell [role="tablist"] {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: nowrap !important;
+  max-width: 100%;
+  overflow-x: auto;
+  padding: 0.25rem !important;
+  background-color: var(--app-surface-color) !important;
+  background-image: var(--app-surface-muted) !important;
+  border: 1px solid var(--app-border-color) !important;
+  border-radius: 0.875rem !important;
 }
 
 *,

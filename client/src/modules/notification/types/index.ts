@@ -16,11 +16,12 @@ export type NotificationEventType =
   | 'BOOKING_SESSION_COMPLETED'
   | 'BOOKING_NO_SHOW'
   | 'BOOKING_CHECKED_IN'
+  | 'CLEANING_TASK_ASSIGNED'
   | 'PENALTY_CREATED'
   | 'QR_CHECKIN_REQUESTED'
   | 'QR_CHECKIN_REVIEWED';
 
-export type NotificationTargetModule = 'TASK' | 'REPORT' | 'PROPOSAL' | 'AI' | 'FACE' | 'BOOKING';
+export type NotificationTargetModule = 'TASK' | 'REPORT' | 'PROPOSAL' | 'AI' | 'FACE' | 'BOOKING' | 'CLEANING';
 
 export type RealtimeEventType = 'CONNECTED' | 'NOTIFICATION_CREATED';
 

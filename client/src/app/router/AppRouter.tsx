@@ -33,6 +33,7 @@ import { AdminLayout, AuthLayout, MainLayout } from '../../layouts';
 import { getStoredRole } from '../../shared/api';
 import { ForbiddenPage, LoadingState, NotFoundPage } from '../../shared/components';
 import { ADMIN, LAB_MANAGER, STUDENT } from '../../shared/constants/roles';
+import { useI18n } from '../../shared/i18n';
 import { ActiveMembershipRoute } from './ActiveMembershipRoute';
 import { ProtectedRoute } from './ProtectedRoute';
 
@@ -48,7 +49,8 @@ const ResearchGroupDetailPage = lazy(() => import('../../modules/research/pages/
   .then((module) => ({ default: module.ResearchGroupDetailPage })));
 
 function DeferredPage({ children }: { children: ReactNode }) {
-  return <Suspense fallback={<LoadingState className="m-4">Đang mở màn hình…</LoadingState>}>{children}</Suspense>;
+  const { t } = useI18n();
+  return <Suspense fallback={<LoadingState className="m-4">{t('common.openingScreen')}</LoadingState>}>{children}</Suspense>;
 }
 
 export function AppRouter() {
@@ -88,7 +90,7 @@ export function AppRouter() {
           <Route path="profile" element={<ProfilePage />} />
           <Route path="notifications" element={<NotificationsPage />} />
           <Route path="assistant" element={<DeferredPage><AssistantPage /></DeferredPage>} />
-          <Route path="face-profile" element={<FaceProfilePage />} />
+          <Route path="face-profile" element={<Navigate to="/app/profile" replace />} />
         </Route>
       </Route>
 

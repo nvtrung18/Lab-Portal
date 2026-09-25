@@ -181,6 +181,8 @@ export interface CreateLabRequest {
   description?: string | null;
   capacity: number;
   location: string;
+  checkinLatitude?: number | null;
+  checkinLongitude?: number | null;
 }
 
 export async function createLab(data: CreateLabRequest): Promise<LabResponse> {

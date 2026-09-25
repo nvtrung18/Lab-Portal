@@ -3,6 +3,7 @@ import { Link, Navigate, useParams } from 'react-router-dom';
 
 import { ErrorState, LoadingState } from '../../../shared/components';
 import { LAB_MANAGER, STUDENT } from '../../../shared/constants/roles';
+import { useI18n } from '../../../shared/i18n';
 import { getManagedLabId } from '../../../shared/utils/membership';
 import { useCurrentUser } from '../../user/hooks';
 import { DashboardPage, ProjectTaskBoard, ResearchGroupList, TaskProposalPanel } from '../components';
@@ -11,15 +12,15 @@ import { formatDate, formatPriority, formatProjectStatus, getStatusClass } from 
 
 type ProjectDetailTab = 'dashboard' | 'tasks' | 'groups' | 'proposals';
 
-const DETAIL_TABS: Array<{ value: ProjectDetailTab; label: string }> = [
-  { value: 'tasks', label: 'Task board' },
-  { value: 'dashboard', label: 'Tổng quan NCKH' },
-  { value: 'groups', label: 'Nhóm nghiên cứu' },
-  { value: 'proposals', label: 'Task proposals' },
-];
-
 export function ResearchProjectDetailPage() {
+  const { locale, t } = useI18n();
   const [activeTab, setActiveTab] = useState<ProjectDetailTab>('dashboard');
+  const detailTabs: Array<{ value: ProjectDetailTab; label: string }> = [
+    { value: 'tasks', label: t('research.tab.taskBoard') },
+    { value: 'dashboard', label: t('research.tab.overview') },
+    { value: 'groups', label: t('research.tab.projectGroups') },
+    { value: 'proposals', label: t('research.tab.proposals') },
+  ];
   const { projectId } = useParams();
   const numericProjectId = Number(projectId);
   const { data: currentUser, isLoading: isLoadingUser } = useCurrentUser();
@@ -76,7 +77,7 @@ export function ResearchProjectDetailPage() {
           className="inline-flex rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100"
           to="/app/research"
         >
-          Quay lại danh sách đề tài
+          {t('common.backToList')}
         </Link>
         <div className="mt-4 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
@@ -85,7 +86,7 @@ export function ResearchProjectDetailPage() {
               {project.title}
             </h2>
             <p className="mt-2 text-sm text-slate-600">
-              {project.objective || project.description || 'Chưa cập nhật mục tiêu nghiên cứu.'}
+              {project.objective || project.description || t('common.notUpdated')}
             </p>
           </div>
           <span className={`w-fit rounded-full px-3 py-1 text-xs font-semibold ring-1 ${getStatusClass(project.status)}`}>
@@ -94,20 +95,20 @@ export function ResearchProjectDetailPage() {
         </div>
         <dl className="mt-5 grid gap-4 text-sm sm:grid-cols-2 lg:grid-cols-4">
           <div>
-            <dt className="font-semibold text-slate-700">Hướng nghiên cứu</dt>
-            <dd className="mt-1 text-slate-600">{project.researchDirection ?? 'Chưa cập nhật'}</dd>
+            <dt className="font-semibold text-slate-700">{t('research.project.researchDirection')}</dt>
+            <dd className="mt-1 text-slate-600">{project.researchDirection ?? t('common.notUpdated')}</dd>
           </div>
           <div>
-            <dt className="font-semibold text-slate-700">Mức độ ưu tiên</dt>
-            <dd className="mt-1 text-slate-600">{formatPriority(project.priority)}</dd>
+            <dt className="font-semibold text-slate-700">{t('research.project.priority')}</dt>
+            <dd className="mt-1 text-slate-600">{formatPriority(project.priority, locale)}</dd>
           </div>
           <div>
-            <dt className="font-semibold text-slate-700">Ngày bắt đầu</dt>
-            <dd className="mt-1 text-slate-600">{formatDate(project.startDate)}</dd>
+            <dt className="font-semibold text-slate-700">{t('research.project.startDate')}</dt>
+            <dd className="mt-1 text-slate-600">{formatDate(project.startDate, locale)}</dd>
           </div>
           <div>
-            <dt className="font-semibold text-slate-700">Ngày kết thúc dự kiến</dt>
-            <dd className="mt-1 text-slate-600">{formatDate(project.expectedEndDate ?? project.endDate)}</dd>
+            <dt className="font-semibold text-slate-700">{t('research.project.expectedEndDate')}</dt>
+            <dd className="mt-1 text-slate-600">{formatDate(project.expectedEndDate ?? project.endDate, locale)}</dd>
           </div>
         </dl>
       </div>
@@ -118,18 +119,15 @@ export function ResearchProjectDetailPage() {
           <div className="min-w-0">
             <div>
               <h4 className="font-semibold text-amber-900">
-                Bạn thuộc nhóm nghiên cứu: <span className="font-medium">{studentGroup.name}</span>
+                {t('research.project.studentGroup')}: <span className="font-medium">{studentGroup.name}</span>
               </h4>
-              <p className="text-xs text-amber-700">
-                Truy cập vào trang chi tiết nhóm của bạn để xem mốc công việc, sản phẩm và nhật ký cá nhân.
-              </p>
             </div>
           </div>
           <Link
             to={`/app/research/projects/${project.id}/groups/${studentGroupId}`}
             className="w-fit shrink-0 rounded-lg bg-amber-600 px-4 py-2 text-center text-sm font-semibold text-white transition-colors hover:bg-amber-700 shadow-sm"
           >
-            Vào chi tiết nhóm của tôi
+            {t('research.project.openGroup')}
           </Link>
         </div>
       )}
@@ -137,13 +135,13 @@ export function ResearchProjectDetailPage() {
       {/* Student Warning If Not In Any Group */}
       {isStudent && !studentGroup && (
         <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-center shadow-sm">
-          <h4 className="font-semibold text-red-900">{studentGroups.length > 1 ? 'Không thể xác định nhóm hiện tại' : 'Bạn chưa được phân vào nhóm nghiên cứu của đề tài này'}</h4>
-          <p className="mt-1 text-sm text-red-700">{studentGroups.length > 1 ? 'Vui lòng chọn nhóm cụ thể trước khi gửi đề xuất.' : 'Vui lòng liên hệ với Lab Manager để được thêm vào nhóm.'}</p>
+          <h4 className="font-semibold text-red-900">{studentGroups.length > 1 ? t('research.project.groupAmbiguous') : t('research.project.groupMissing')}</h4>
+          <p className="mt-1 text-sm text-red-700">{studentGroups.length > 1 ? t('research.project.chooseGroup') : t('research.project.contactManager')}</p>
         </div>
       )}
 
-      <div className="flex gap-1 overflow-x-auto border-b border-slate-200" role="tablist" aria-label="Chi tiết đề tài nghiên cứu">
-        {DETAIL_TABS.map((tab) => (
+      <div className="flex gap-1 overflow-x-auto" role="tablist" aria-label={t('research.title')}>
+        {detailTabs.map((tab) => (
           <button
             className={`whitespace-nowrap border-b-2 px-4 py-3 text-sm font-semibold ${
               activeTab === tab.value ? 'border-slate-900 text-slate-950' : 'border-transparent text-slate-600'

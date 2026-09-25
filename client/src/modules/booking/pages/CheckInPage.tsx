@@ -8,6 +8,7 @@ import { Link } from 'react-router-dom';
 import type { Response } from '../../../shared/types';
 import { queryKeys } from '../../../shared/api';
 import { Button, EmptyState, ErrorState, Modal, ResponsiveTable } from '../../../shared/components';
+import { translateBackendMessage, useI18n } from '../../../shared/i18n';
 import { cameraErrorMessage } from '../../../shared/utils';
 import { useOperationalLogs } from '../../operations/hooks';
 import type { FaceCheckinLog } from '../../operations/types';
@@ -18,15 +19,16 @@ import { useConfirmCheckIn, useManualCheckIn, usePendingCheckinQrRequests, useRe
 
 type CheckinTab = 'QR' | 'FACE' | 'MANUAL';
 
-function getErrorMessage(error: unknown) {
+function getErrorMessage(error: unknown, fallback: string) {
   if (axios.isAxiosError(error)) {
     const response = error.response?.data as Partial<Response<unknown>> | undefined;
-    return response?.message ?? response?.errors?.[0] ?? 'Không thể xác nhận có mặt. Vui lòng thử lại sau.';
+    return translateBackendMessage(response?.message ?? response?.errors?.[0]) ?? fallback;
   }
-  return 'Không thể xác nhận có mặt. Vui lòng thử lại sau.';
+  return translateBackendMessage(error instanceof Error ? error.message : null) ?? fallback;
 }
 
 export function CheckInPage() {
+  const { locale, t } = useI18n();
   const [activeTab, setActiveTab] = useState<CheckinTab>('FACE');
   const [token, setToken] = useState('');
   const [error, setError] = useState('');
@@ -34,7 +36,7 @@ export function CheckInPage() {
   const [isCameraActive, setIsCameraActive] = useState(false);
   const [qrCameraDialogOpen, setQrCameraDialogOpen] = useState(false);
   const [lastSuccess, setLastSuccess] = useState<{
-    method: 'Nhận diện khuôn mặt' | 'QR' | 'Thủ công';
+    method: CheckinTab;
     bookingId: number;
     studentName?: string | null;
     booking?: BookingResponse;
@@ -73,7 +75,7 @@ export function CheckInPage() {
   const confirmToken = (value: string) => {
     const normalizedToken = value.trim();
     if (!normalizedToken) {
-      setError('Vui lòng nhập mã QR hoặc token check-in.');
+      setError(t('checkin.qrTokenRequired'));
       return;
     }
 
@@ -86,7 +88,7 @@ export function CheckInPage() {
         handledTokenRef.current = false;
       },
       onError: (submitError) => {
-        setError(getErrorMessage(submitError));
+        setError(getErrorMessage(submitError, t('common.serverFailure')));
         handledTokenRef.current = false;
       },
     });
@@ -104,7 +106,7 @@ export function CheckInPage() {
     handledTokenRef.current = false;
 
     if (!navigator.mediaDevices?.getUserMedia) {
-      setCameraError('Trình duyệt không cung cấp quyền truy cập camera. Vui lòng kiểm tra HTTPS/localhost hoặc nhập token thủ công.');
+      setCameraError(t('checkin.cameraPermissionHint'));
       return;
     }
 
@@ -116,7 +118,7 @@ export function CheckInPage() {
       scannerSessionRef.current = session;
       const video = videoRef.current;
       if (!video) {
-        setCameraError('Không tìm thấy vùng hiển thị camera. Hãy tải lại trang và thử lại.');
+        setCameraError(t('checkin.cameraNotFound'));
         setIsCameraActive(false);
         return;
       }
@@ -147,7 +149,7 @@ export function CheckInPage() {
       }
       scannerControlsRef.current = controls;
     } catch (cameraError) {
-      setCameraError(`${cameraErrorMessage(cameraError)} Bạn có thể nhập token thủ công.`);
+      setCameraError(`${cameraErrorMessage(cameraError)} ${t('checkin.cameraManualHint')}`);
       stopCamera();
     }
   };
@@ -162,14 +164,14 @@ export function CheckInPage() {
   const handleManualCheckin = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (Number(manualBookingId) <= 0 || !manualReason.trim()) {
-      setManualError('Vui lòng chọn thành viên, ca sử dụng và nhập lý do xác nhận thủ công.');
+      setManualError(t('checkin.manualReasonRequired'));
       return;
     }
     setManualError('');
     manualCheckIn.mutate(
       { bookingId: Number(manualBookingId), reason: manualReason.trim() },
       { onSuccess: (result) => {
-        setLastSuccess({ method: 'Thủ công', bookingId: result.booking.id, booking: result.booking });
+        setLastSuccess({ method: 'MANUAL', bookingId: result.booking.id, booking: result.booking });
         setManualBookingId('');
         setManualReason('');
       } },
@@ -184,58 +186,53 @@ export function CheckInPage() {
     <div className="mx-auto max-w-7xl">
       <section className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800 sm:p-6">
         <div>
-          <p className="text-sm font-semibold text-blue-700 dark:text-blue-300">Trạm điểm danh của quản lý PTN</p>
-          <h1 className="mt-1 text-2xl font-semibold tracking-tight text-slate-950 dark:text-white">Check-in thành viên theo ca</h1>
-          <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600 dark:text-slate-300">
-            Nhận diện khuôn mặt là phương thức chính; có thể quét QR dự phòng hoặc xác nhận thủ công khi cần.
-          </p>
+          <p className="text-sm font-semibold text-blue-700 dark:text-blue-300">{t('layout.managerPortal')}</p>
+          <h1 className="mt-1 text-2xl font-semibold tracking-tight text-slate-950 dark:text-white">{t('checkin.title')}</h1>
         </div>
 
         <div className="mt-5 flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900 dark:border-blue-900 dark:bg-blue-950/40 dark:text-blue-100">
           <Clock3 aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0" />
-          <div><p className="font-semibold">Cửa sổ check-in: trước 5 phút đến sau 10 phút</p><p className="mt-1 text-blue-800 dark:text-blue-200">Chỉ các booking đã được duyệt trong khoảng thời gian này mới xuất hiện để xác nhận.</p></div>
+          <div><p className="font-semibold">{t('manager.checkinWindow')}</p></div>
         </div>
 
-        <div className="mt-6 flex flex-wrap gap-2" role="tablist" aria-label="Phương thức quản lý check-in">
+        <div className="mt-6 flex flex-wrap gap-2" role="tablist" aria-label={t('checkin.managerTabs')}>
           {([
-            { id: 'FACE' as const, label: 'Nhận diện khuôn mặt', icon: ScanFace },
-            { id: 'QR' as const, label: 'Quét QR', icon: QrCode },
-            { id: 'MANUAL' as const, label: 'Thủ công', icon: Keyboard },
+            { id: 'FACE' as const, label: t('checkin.tabFace'), icon: ScanFace },
+            { id: 'QR' as const, label: t('checkin.tabQr'), icon: QrCode },
+            { id: 'MANUAL' as const, label: t('checkin.tabManual'), icon: Keyboard },
           ]).map(({ id, label, icon: Icon }) => <button aria-selected={activeTab === id} className={activeTab === id ? 'flex min-h-11 items-center gap-2 rounded-md bg-slate-900 px-4 text-sm font-semibold text-white shadow-sm dark:bg-white dark:text-slate-950' : 'flex min-h-11 items-center gap-2 rounded-md border border-slate-300 px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800'} key={id} role="tab" type="button" onClick={() => { stopCamera(); setActiveTab(id); }}><Icon aria-hidden="true" className="h-4 w-4" />{label}</button>)}
         </div>
 
         {lastSuccess ? (
           <div className="mt-5 flex items-start gap-3 rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-100" role="status">
             <CheckCircle2 aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0" />
-            <div><p className="font-semibold">Xác nhận có mặt bằng {lastSuccess.method} thành công</p><p className="mt-1">Lượt đặt #{lastSuccess.bookingId}{lastSuccess.studentName ? ` · ${lastSuccess.studentName}` : lastSuccess.booking ? ` · ${lastSuccess.booking.studentName ?? lastSuccess.booking.studentEmail ?? `Người dùng #${lastSuccess.booking.userId}`}` : ''} đã chuyển sang trạng thái “Đã xác nhận có mặt”.</p></div>
+            <div><p className="font-semibold">{t('checkin.successWithMethod', undefined, { method: lastSuccess.method === 'FACE' ? t('checkin.tabFace') : lastSuccess.method === 'QR' ? 'QR' : t('checkin.tabManual') })}</p><p className="mt-1">{t('checkin.successDetail', undefined, { bookingId: String(lastSuccess.bookingId), student: lastSuccess.studentName ?? lastSuccess.booking?.studentName ?? lastSuccess.booking?.studentEmail ?? `${t('common.user')} #${lastSuccess.booking?.userId ?? ''}` })}</p></div>
           </div>
         ) : null}
 
         {activeTab === 'QR' ? <><section className="mt-6 rounded-lg border border-blue-200 bg-blue-50 p-4">
-          <h2 className="font-semibold text-slate-950">Yêu cầu QR đang chờ duyệt</h2>
-          <p className="mt-1 text-sm text-slate-600">Chỉ yêu cầu thuộc PTN bạn quản lý mới xuất hiện tại đây.</p>
-          {qrRequests.isLoading ? <p className="mt-4 text-sm text-slate-500">Đang tải yêu cầu...</p> : qrRequests.isError ? <ErrorState className="mt-4" onRetry={() => void qrRequests.refetch()}>Không thể tải yêu cầu QR.</ErrorState> : !qrRequests.data?.length ? <EmptyState className="mt-4">Không có yêu cầu QR đang chờ.</EmptyState> : (
+          <h2 className="font-semibold text-slate-950">{t('checkin.qrPendingRequests')}</h2>
+          {qrRequests.isLoading ? <p className="mt-4 text-sm text-slate-500">{t('common.loading')}</p> : qrRequests.isError ? <ErrorState className="mt-4" onRetry={() => void qrRequests.refetch()}>{t('checkin.qrLoadFailed')}</ErrorState> : !qrRequests.data?.length ? <EmptyState className="mt-4">{t('checkin.qrEmptyPending')}</EmptyState> : (
             <div className="mt-4 space-y-3">{qrRequests.data.map((request) => (
               <article className="rounded-md border border-blue-200 bg-white p-4" key={request.requestId}>
-                <p className="font-semibold text-slate-900">{request.studentName ?? `Người dùng #${request.studentId}`} · Lượt đặt #{request.bookingId}</p>
-                <p className="mt-1 text-sm text-slate-700">Lý do: {request.reason}</p>
+                <p className="font-semibold text-slate-900">{request.studentName ?? `${t('common.user')} #${request.studentId}`} · {t('checkin.bookingLabel')} #{request.bookingId}</p>
+                <p className="mt-1 text-sm text-slate-700">{t('checkin.reason')}: {request.reason}</p>
                 <div className="mt-3 flex gap-2">
-                  <Button disabled={reviewQrRequest.isPending} onClick={() => reviewQrRequest.mutate({ requestId: request.requestId, approved: true })}>Duyệt và cấp QR</Button>
-                  <Button disabled={reviewQrRequest.isPending} variant="danger" onClick={() => reviewQrRequest.mutate({ requestId: request.requestId, approved: false })}>Từ chối</Button>
+                  <Button disabled={reviewQrRequest.isPending} onClick={() => reviewQrRequest.mutate({ requestId: request.requestId, approved: true })}>{t('checkin.approveAndIssueQr')}</Button>
+                  <Button disabled={reviewQrRequest.isPending} variant="danger" onClick={() => reviewQrRequest.mutate({ requestId: request.requestId, approved: false })}>{t('common.reject')}</Button>
                 </div>
               </article>
             ))}</div>
           )}
         </section><div className="mt-6 rounded-lg border border-slate-200 bg-slate-50 p-4">
-          <p className="text-sm text-slate-600">Camera sẽ mở trong cửa sổ giữa màn hình. Đưa mã QR của sinh viên vào giữa khung để hệ thống tự đọc và xác nhận một lần.</p>
-          <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+          <div className="flex flex-col gap-2 sm:flex-row">
             <button
-              className="rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white disabled:bg-slate-400"
+              className="w-full rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white disabled:bg-slate-400 sm:w-auto"
               disabled={confirmCheckIn.isPending || isCameraActive}
               type="button"
               onClick={startCamera}
             >
-              {isCameraActive ? 'Đang quét QR...' : 'Bật camera quét QR'}
+              {isCameraActive ? t('checkin.scanningQr') : t('checkin.openQrCamera')}
             </button>
           </div>
           {cameraError && !qrCameraDialogOpen ? <p className="mt-3 text-sm font-medium text-amber-700">{cameraError}</p> : null}
@@ -243,12 +240,12 @@ export function CheckInPage() {
 
         <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
           <label className="block text-sm font-semibold text-slate-700" htmlFor="checkin-token">
-            Token check-in dự phòng
+            {t('checkin.fallbackCode')}
           </label>
           <textarea
             id="checkin-token"
             className="min-h-24 w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-slate-200"
-            placeholder="Dán token từ mã QR của sinh viên nếu camera không quét được"
+            placeholder={t('checkin.tokenPlaceholder')}
             value={token}
             onChange={(event) => setToken(event.target.value)}
           />
@@ -264,28 +261,27 @@ export function CheckInPage() {
             disabled={confirmCheckIn.isPending}
             type="submit"
           >
-            {confirmCheckIn.isPending ? 'Đang xác nhận...' : 'Xác nhận'}
+            {confirmCheckIn.isPending ? t('checkin.confirming') : t('common.confirm')}
           </button>
         </form>
         </> : null}
 
         {activeTab === 'FACE' ? <section className="mt-6" role="tabpanel">
-          <div className="flex flex-wrap items-center justify-between gap-3"><div><h2 className="text-lg font-semibold text-slate-950">Nhận diện khuôn mặt theo ca sử dụng</h2><p className="mt-1 text-sm text-slate-600">Quản lý chỉ cần chọn ca sử dụng. Camera sẽ tự nhận diện trong danh sách sinh viên đã đăng ký ca đó và xác nhận có mặt.</p></div><div className="flex gap-2"><Button type="button" variant="outline" onClick={() => void faceLogs.refetch()}>Làm mới</Button><Link className="inline-flex min-h-11 items-center rounded-md border border-slate-300 px-4 text-sm font-semibold text-slate-700" to="/app/operational-logs">Xem toàn bộ nhật ký</Link></div></div>
-          <ManagerFaceCheckinPanel onCompleted={(result) => { if (result.bookingId !== null) setLastSuccess({ method: 'Nhận diện khuôn mặt', bookingId: result.bookingId, studentName: result.studentName }); void faceLogs.refetch(); }} />
-          <h3 className="mt-8 text-base font-semibold text-slate-950">Nhật ký nhận diện gần đây</h3>
-          {faceLogs.isLoading ? <div className="mt-4 h-28 animate-pulse rounded bg-slate-100" /> : faceLogs.isError ? <ErrorState className="mt-4" onRetry={() => void faceLogs.refetch()}>Không thể tải nhật ký nhận diện.</ErrorState> : faceAttempts.length === 0 ? <EmptyState className="mt-4">Chưa có lượt nhận diện nào trong PTN đang quản lý.</EmptyState> : <ResponsiveTable className="mt-4"><table className="w-full min-w-[720px] text-left text-sm"><thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase text-slate-500"><tr><th className="px-4 py-3">Thời gian</th><th className="px-4 py-3">Lượt đặt</th><th className="px-4 py-3">Sinh viên</th><th className="px-4 py-3">Kết quả</th><th className="px-4 py-3">Chi tiết</th></tr></thead><tbody className="divide-y divide-slate-200">{faceAttempts.map((attempt) => <tr key={attempt.id}><td className="whitespace-nowrap px-4 py-3">{new Date(attempt.createdAt).toLocaleString('vi-VN')}</td><td className="px-4 py-3 font-medium">#{attempt.bookingId}</td><td className="px-4 py-3">{attempt.studentName ?? `Người dùng #${attempt.userId}`}</td><td className="px-4 py-3">{attempt.result}</td><td className="px-4 py-3">{attempt.failureReason ?? 'Không có lỗi'}</td></tr>)}</tbody></table></ResponsiveTable>}
+          <div className="flex flex-wrap items-center justify-between gap-3"><h2 className="text-lg font-semibold text-slate-950">{t('face.managerResultTitle')}</h2><div className="flex gap-2"><Button type="button" variant="outline" onClick={() => void faceLogs.refetch()}>{t('common.retry')}</Button><Link className="app-button-link text-sm font-semibold" to="/app/operational-logs">{t('checkin.viewAllLogs')}</Link></div></div>
+          <ManagerFaceCheckinPanel onCompleted={(result) => { if (result.bookingId !== null) setLastSuccess({ method: 'FACE', bookingId: result.bookingId, studentName: result.studentName }); void faceLogs.refetch(); }} />
+          <h3 className="mt-8 text-base font-semibold text-slate-950">{t('checkin.recentFaceLogs')}</h3>
+          {faceLogs.isLoading ? <div className="mt-4 h-28 animate-pulse rounded bg-slate-100" /> : faceLogs.isError ? <ErrorState className="mt-4" onRetry={() => void faceLogs.refetch()}>{t('checkin.logsLoadFailed')}</ErrorState> : faceAttempts.length === 0 ? <EmptyState className="mt-4">{t('checkin.logsEmpty')}</EmptyState> : <ResponsiveTable className="mt-4"><table className="w-full min-w-[720px] text-left text-sm"><thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase text-slate-500"><tr><th className="px-4 py-3">{t('operations.time')}</th><th className="px-4 py-3">{t('operations.bookingId')}</th><th className="px-4 py-3">{t('layout.studentRole')}</th><th className="px-4 py-3">{t('operations.result')}</th><th className="px-4 py-3">{t('operations.safeDetail')}</th></tr></thead><tbody className="divide-y divide-slate-200">{faceAttempts.map((attempt) => <tr key={attempt.id}><td className="whitespace-nowrap px-4 py-3">{new Date(attempt.createdAt).toLocaleString(locale === 'en' ? 'en-US' : 'vi-VN')}</td><td className="px-4 py-3 font-medium">#{attempt.bookingId}</td><td className="px-4 py-3">{attempt.studentName ?? `${t('common.user')} #${attempt.userId}`}</td><td className="px-4 py-3">{attempt.result}</td><td className="px-4 py-3">{attempt.failureReason ?? t('operations.noFailure')}</td></tr>)}</tbody></table></ResponsiveTable>}
         </section> : null}
 
         {activeTab === 'MANUAL' ? <section className="mt-6 rounded-lg border border-amber-200 bg-amber-50 p-6 dark:border-amber-900 dark:bg-amber-950/30" role="tabpanel">
-          <p className="text-sm font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-300">Fallback có kiểm soát</p>
-          <h2 className="mt-1 text-xl font-semibold text-slate-950 dark:text-white">Xác nhận thủ công</h2>
-          <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">Chỉ sử dụng khi Face Check-in và QR không khả dụng. Lý do sẽ được lưu trong audit log.</p>
-          {candidates.isError ? <ErrorState className="mt-5" onRetry={() => void candidates.refetch()}>Không thể tải booking trong cửa sổ check-in.</ErrorState> : null}
+          <p className="text-sm font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-300">{t('checkin.controlledFallback')}</p>
+          <h2 className="mt-1 text-xl font-semibold text-slate-950 dark:text-white">{t('checkin.manualTitle')}</h2>
+          {candidates.isError ? <ErrorState className="mt-5" onRetry={() => void candidates.refetch()}>{t('checkin.bookingWindowLoadFailed')}</ErrorState> : null}
           <form className="mt-5 grid gap-4 sm:grid-cols-2" onSubmit={handleManualCheckin}>
-            <label className="text-sm font-semibold text-slate-700 dark:text-slate-200 sm:col-span-2" htmlFor="manual-booking-id">Thành viên và ca sử dụng<select id="manual-booking-id" className="mt-2 min-h-11 w-full rounded-md border border-slate-300 bg-white px-3 text-base text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:cursor-wait disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:text-white" disabled={candidates.isLoading || candidates.isError} value={manualBookingId} onChange={(event) => setManualBookingId(event.target.value)}><option value="">{candidates.isLoading ? 'Đang tải booking...' : 'Chọn booking trong cửa sổ check-in'}</option>{candidates.data?.map((candidate) => <option key={candidate.bookingId} value={candidate.bookingId}>{candidate.studentName ?? candidate.studentEmail} — {new Date(candidate.startTime).toLocaleString('vi-VN')}</option>)}</select></label>
-            <label className="text-sm font-semibold text-slate-700 dark:text-slate-200 sm:col-span-2" htmlFor="manual-checkin-reason">Lý do xác nhận thủ công<textarea id="manual-checkin-reason" className="mt-2 min-h-24 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-base text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white" maxLength={1000} value={manualReason} onChange={(event) => setManualReason(event.target.value)} /></label>
+            <label className="text-sm font-semibold text-slate-700 dark:text-slate-200 sm:col-span-2" htmlFor="manual-booking-id">{t('checkin.memberAndSession')}<select id="manual-booking-id" className="mt-2 min-h-11 w-full rounded-md border border-slate-300 bg-white px-3 text-base text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:cursor-wait disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:text-white" disabled={candidates.isLoading || candidates.isError} value={manualBookingId} onChange={(event) => setManualBookingId(event.target.value)}><option value="">{candidates.isLoading ? t('common.loading') : t('checkin.chooseBookingWindow')}</option>{candidates.data?.map((candidate) => <option key={candidate.bookingId} value={candidate.bookingId}>{candidate.studentName ?? candidate.studentEmail} — {new Date(candidate.startTime).toLocaleString(locale === 'en' ? 'en-US' : 'vi-VN')}</option>)}</select></label>
+            <label className="text-sm font-semibold text-slate-700 dark:text-slate-200 sm:col-span-2" htmlFor="manual-checkin-reason">{t('checkin.manualReasonLabel')}<textarea id="manual-checkin-reason" className="mt-2 min-h-24 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-base text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white" maxLength={1000} value={manualReason} onChange={(event) => setManualReason(event.target.value)} /></label>
             {manualError ? <p className="text-sm font-medium text-red-700 sm:col-span-2" role="alert">{manualError}</p> : null}
-            <Button className="sm:col-span-2 sm:justify-self-start" loading={manualCheckIn.isPending} loadingText="Đang xác nhận..." type="submit" variant="danger">Xác nhận fallback thủ công</Button>
+            <Button className="sm:col-span-2 sm:justify-self-start" loading={manualCheckIn.isPending} loadingText={t('checkin.confirming')} type="submit" variant="danger">{t('checkin.confirmManual')}</Button>
           </form>
         </section> : null}
       </section>
@@ -298,22 +294,21 @@ export function CheckInPage() {
         isOpen={qrCameraDialogOpen}
         onClose={closeQrCameraDialog}
         size={lastSuccess?.method === 'QR' ? 'lg' : '2xl'}
-        subtitle={lastSuccess?.method === 'QR' ? 'Kết quả đã được ghi nhận vào ca sử dụng.' : 'Đặt mã QR vào chính giữa khung hình.'}
-        title={lastSuccess?.method === 'QR' ? 'Kết quả quét QR' : 'Camera quét QR check-in'}
+        title={lastSuccess?.method === 'QR' ? t('checkin.qrScanResult') : t('checkin.qrCameraTitle')}
       >
         {lastSuccess?.method === 'QR' ? (
           <div className="flex flex-col items-center py-8 text-center" role="status">
             <span className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-emerald-700"><CheckCircle2 aria-hidden="true" className="h-9 w-9" /></span>
-            <h3 className="mt-4 text-xl font-semibold text-slate-950">Check-in thành công</h3>
-            <p className="mt-2 text-sm text-slate-600">Lượt đặt #{lastSuccess.bookingId}{lastSuccess.booking ? ` · ${lastSuccess.booking.studentName ?? lastSuccess.booking.studentEmail ?? `Người dùng #${lastSuccess.booking.userId}`}` : ''} đã được xác nhận có mặt.</p>
-            <Button className="mt-6" type="button" onClick={closeQrCameraDialog}>Hoàn tất</Button>
+            <h3 className="mt-4 text-xl font-semibold text-slate-950">{t('face.managerSuccessTitle')}</h3>
+            <p className="mt-2 text-sm text-slate-600">{t('checkin.successDetail', undefined, { bookingId: String(lastSuccess.bookingId), student: lastSuccess.booking?.studentName ?? lastSuccess.booking?.studentEmail ?? `${t('common.user')} #${lastSuccess.booking?.userId ?? ''}` })}</p>
+            <Button className="mt-6" type="button" onClick={closeQrCameraDialog}>{t('common.confirm')}</Button>
           </div>
         ) : (
           <div className="mx-auto w-full max-w-4xl">
-            <div className="relative mx-auto aspect-video w-full overflow-hidden rounded-md bg-slate-950">
-              <video ref={videoRef} autoPlay className="h-full w-full object-cover" muted playsInline aria-label="Camera quét mã QR check-in" />
-              <div aria-hidden="true" className="pointer-events-none absolute left-1/2 top-1/2 aspect-square w-[58%] -translate-x-1/2 -translate-y-1/2 rounded-lg border-2 border-white shadow-[0_0_0_999px_rgba(15,23,42,0.35)]" />
-              <p className="absolute inset-x-3 bottom-3 rounded bg-slate-950/80 px-3 py-2 text-center text-sm font-semibold text-white" aria-live="polite">{confirmCheckIn.isPending ? 'Đã đọc mã — đang xác nhận check-in...' : isCameraActive ? 'Đang tìm mã QR...' : 'Camera đã dừng'}</p>
+            <div className="relative mx-auto aspect-[3/4] w-full overflow-hidden rounded-md bg-slate-950 sm:aspect-video">
+              <video ref={videoRef} autoPlay className="h-full w-full object-cover" muted playsInline aria-label={t('checkin.qrCameraTitle')} />
+              <div aria-hidden="true" className="pointer-events-none absolute left-1/2 top-1/2 aspect-square w-[68%] -translate-x-1/2 -translate-y-1/2 rounded-lg border-2 border-white shadow-[0_0_0_999px_rgba(15,23,42,0.35)] sm:w-[58%]" />
+              <p className="absolute inset-x-3 bottom-3 rounded bg-slate-950/80 px-3 py-2 text-center text-sm font-semibold text-white" aria-live="polite">{confirmCheckIn.isPending ? t('checkin.qrReadConfirming') : isCameraActive ? t('checkin.searchingQr') : t('checkin.cameraStopped')}</p>
               {cameraError || error ? <p className="absolute inset-x-3 top-3 rounded bg-red-700/90 px-3 py-2 text-center text-sm font-medium text-white" role="alert">{cameraError || error}</p> : null}
             </div>
           </div>

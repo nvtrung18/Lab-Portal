@@ -1,29 +1,49 @@
 import { useQueryClient } from '@tanstack/react-query';
+import {
+  Activity,
+  Bell,
+  BookOpenCheck,
+  Bot,
+  ClipboardList,
+  FlaskConical,
+  LayoutDashboard,
+  LogOut,
+  Menu,
+  ScanFace,
+  Settings2,
+  UsersRound,
+  X,
+  type LucideIcon,
+} from 'lucide-react';
 import { useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 
 import { clearAuthTokens, getStoredUser } from '../shared/api';
-import { Button } from '../shared/components';
+import { Button, LanguageSwitcher, ThemeToggle } from '../shared/components';
+import { useI18n } from '../shared/i18n';
 
 interface NavItem {
-  label: string;
+  labelKey: string;
   path: string;
+  groupKey: string;
+  icon: LucideIcon;
 }
 
 const adminNavItems: NavItem[] = [
-  { label: 'Nhật ký vận hành', path: '/admin/operational-logs' },
-  { label: 'Kho tri thức AI', path: '/admin/knowledge' },
-  { label: 'Hồ sơ khuôn mặt', path: '/admin/face-profile' },
-  { label: 'Trợ lý AI', path: '/admin/assistant' },
-  { label: 'Thông báo', path: '/admin/notifications' },
-  { label: 'Tổng quan', path: '/admin/dashboard' },
-  { label: 'Người dùng', path: '/admin/users' },
-  { label: 'Phòng thí nghiệm', path: '/admin/labs' },
-  { label: 'Cấu hình hệ thống', path: '/admin/system-config' },
-  { label: 'Nhật ký kiểm toán', path: '/admin/audit-logs' },
+  { labelKey: 'nav.adminDashboard', path: '/admin/dashboard', groupKey: 'nav.adminOverviewGroup', icon: LayoutDashboard },
+  { labelKey: 'nav.users', path: '/admin/users', groupKey: 'nav.adminManagementGroup', icon: UsersRound },
+  { labelKey: 'nav.labsAdmin', path: '/admin/labs', groupKey: 'nav.adminManagementGroup', icon: FlaskConical },
+  { labelKey: 'nav.adminOperations', path: '/admin/operational-logs', groupKey: 'nav.adminMonitoringGroup', icon: Activity },
+  { labelKey: 'nav.auditLogs', path: '/admin/audit-logs', groupKey: 'nav.adminMonitoringGroup', icon: ClipboardList },
+  { labelKey: 'nav.systemConfig', path: '/admin/system-config', groupKey: 'nav.adminToolsGroup', icon: Settings2 },
+  { labelKey: 'nav.knowledge', path: '/admin/knowledge', groupKey: 'nav.adminToolsGroup', icon: BookOpenCheck },
+  { labelKey: 'nav.faceProfile', path: '/admin/face-profile', groupKey: 'nav.adminToolsGroup', icon: ScanFace },
+  { labelKey: 'nav.aiAssistant', path: '/admin/assistant', groupKey: 'nav.adminToolsGroup', icon: Bot },
+  { labelKey: 'common.notifications', path: '/admin/notifications', groupKey: 'nav.adminToolsGroup', icon: Bell },
 ];
 
 export function AdminLayout() {
+  const { t } = useI18n();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const user = getStoredUser();
@@ -36,38 +56,39 @@ export function AdminLayout() {
   };
 
   return (
-    <div className="dark min-h-screen overflow-x-hidden bg-slate-950 text-slate-100">
+    <div className="admin-shell app-shell min-h-screen overflow-x-hidden text-slate-900 dark:bg-slate-950 dark:text-slate-100">
       <a
-        className="fixed left-4 top-3 z-toast -translate-y-20 rounded-lg bg-white px-4 py-3 text-sm font-semibold text-slate-950 shadow-lg transition-transform focus:translate-y-0"
+        className="fixed left-4 top-3 z-toast -translate-y-20 rounded-lg bg-slate-950 px-4 py-3 text-sm font-semibold text-white shadow-lg transition-transform focus:translate-y-0 dark:bg-white dark:text-slate-950"
         href="#admin-main-content"
       >
-        Bỏ qua menu
+        {t('common.skipMenu')}
       </a>
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 overflow-y-auto border-r border-slate-800 bg-slate-950 px-4 py-6 lg:block">
+      <aside className="app-surface fixed inset-y-0 left-0 z-30 hidden w-64 overflow-y-auto border-r border-slate-200 px-4 py-6 dark:border-slate-800 dark:bg-slate-950 lg:block">
         <SidebarContent navItems={adminNavItems} onNavigate={() => setIsMobileNavOpen(false)} />
       </aside>
 
       {isMobileNavOpen ? (
-        <div className="fixed inset-0 z-40 lg:hidden">
+        <div className="fixed inset-0 z-40 lg:hidden" id="admin-navigation-drawer">
           <button
-            aria-label="Đóng menu"
+            aria-label={t('common.closeMenu')}
             className="absolute inset-0 bg-black/60"
             type="button"
             onClick={() => setIsMobileNavOpen(false)}
           />
-          <aside className="relative h-full w-72 max-w-[85vw] overflow-y-auto bg-slate-950 px-4 py-5 shadow-xl">
+          <aside className="app-surface relative h-full w-72 max-w-[85vw] overflow-y-auto px-4 py-5 shadow-xl dark:bg-slate-950">
             <div className="mb-5 flex items-center justify-between gap-3">
               <div className="min-w-0">
-                <p className="truncate text-base font-semibold text-white">Cổng quản trị</p>
-                <p className="mt-1 text-xs font-medium text-slate-400">Quản trị viên</p>
+                <p className="truncate text-base font-semibold text-slate-950 dark:text-white">{t('layout.adminPortal')}</p>
+                <p className="mt-1 text-xs font-medium text-slate-500 dark:text-slate-400">{t('layout.adminRole')}</p>
               </div>
               <Button
-                className="border-slate-700 bg-slate-900 text-slate-100 hover:bg-slate-800"
+                aria-label={t('common.closeMenu')}
                 size="sm"
                 variant="outline"
                 onClick={() => setIsMobileNavOpen(false)}
               >
-                Đóng
+                <X aria-hidden="true" className="h-4 w-4" />
+                <span className="sr-only">{t('common.close')}</span>
               </Button>
             </div>
             <SidebarContent navItems={adminNavItems} compact onNavigate={() => setIsMobileNavOpen(false)} />
@@ -76,44 +97,59 @@ export function AdminLayout() {
       ) : null}
 
       <div className="min-w-0 lg:pl-64">
-        <header className="sticky top-0 z-20 border-b border-slate-800 bg-slate-950/95 px-4 py-3 backdrop-blur lg:px-8">
+        <header className="app-gradient-banner sticky top-0 z-20 border-b border-slate-900 dark:border-slate-800 px-4 py-3 backdrop-blur lg:px-8">
           <div className="flex min-w-0 items-center justify-between gap-3">
             <div className="flex min-w-0 items-center gap-3">
               <Button
-                aria-label="Mở menu"
-                className="shrink-0 border-slate-700 bg-slate-900 text-slate-100 hover:bg-slate-800 lg:hidden"
+                aria-label={t('common.openMenu')}
+                aria-controls="admin-navigation-drawer"
+                aria-expanded={isMobileNavOpen}
+                className="shrink-0 lg:hidden"
                 size="sm"
                 variant="outline"
                 onClick={() => setIsMobileNavOpen(true)}
               >
-                Menu
+                <Menu aria-hidden="true" className="h-4 w-4" />
+                <span className="sr-only">{t('common.openMenu')}</span>
               </Button>
               <div className="min-w-0">
-                <p className="text-xs font-medium uppercase text-slate-400">Quản trị viên</p>
-                <h1 className="truncate text-lg font-semibold text-white sm:text-xl">Cổng quản trị</h1>
+                <p className="text-xs font-medium uppercase text-white/75">{t('layout.adminRole')}</p>
+                <h1 className="truncate text-lg font-semibold text-white sm:text-xl">{t('layout.adminPortal')}</h1>
               </div>
             </div>
 
             <div className="flex min-w-0 shrink-0 items-center justify-end gap-2 sm:gap-3">
-              <div className="hidden min-w-0 items-center gap-3 rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-300 sm:flex">
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-700 text-xs font-semibold text-slate-100">
+              <LanguageSwitcher />
+              <ThemeToggle />
+              <div className="app-control-surface hidden min-w-0 items-center gap-3 rounded-md border px-3 py-2 text-sm shadow-sm sm:flex">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-200 text-xs font-semibold text-slate-600 dark:bg-slate-700 dark:text-slate-100">
                   {(user?.fullName || user?.email || 'A').charAt(0).toUpperCase()}
                 </span>
                 <span className="min-w-0">
-                  <span className="block max-w-44 truncate font-medium text-slate-100">
-                    {user?.fullName || user?.email || 'Quản trị viên'}
+                  <span className="block max-w-44 truncate font-medium text-slate-800 dark:text-slate-100">
+                    {user?.fullName || user?.email || t('layout.adminRole')}
                   </span>
-                  <span className="block text-xs text-slate-400">Quản trị viên</span>
+                  <span className="block text-xs text-slate-500 dark:text-slate-400">{t('layout.adminRole')}</span>
                 </span>
               </div>
-              <Button className="bg-white text-slate-950 hover:bg-slate-200" onClick={handleLogout} size="sm">
-                Đăng xuất
+              <Button className="hidden sm:inline-flex" onClick={handleLogout} size="sm" variant="outline">
+                {t('common.logout')}
+              </Button>
+              <Button
+                aria-label={t('common.logout')}
+                className="sm:hidden"
+                onClick={handleLogout}
+                size="sm"
+                variant="outline"
+              >
+                <span className="sr-only">{t('common.logout')}</span>
+                <LogOut aria-hidden="true" className="h-4 w-4" />
               </Button>
             </div>
           </div>
         </header>
 
-        <main className="min-w-0 max-w-full px-4 py-6 lg:px-8" id="admin-main-content" tabIndex={-1}>
+        <main className="mx-auto min-w-0 w-full max-w-[1600px] px-4 py-6 lg:px-8" id="admin-main-content" tabIndex={-1}>
           <Outlet />
         </main>
       </div>
@@ -128,35 +164,50 @@ interface SidebarContentProps {
 }
 
 function SidebarContent({ navItems, compact = false, onNavigate }: SidebarContentProps) {
+  const { t } = useI18n();
+
   return (
     <>
       {!compact ? (
         <>
-          <div className="px-3 text-lg font-semibold tracking-tight text-white">Cổng quản trị</div>
-          <div className="mt-3 rounded-md bg-slate-900 px-3 py-2 text-xs font-medium text-slate-300">
-            Quản trị viên
+          <div className="flex items-center gap-3 px-3">
+            <span className="app-icon-badge flex h-11 w-11 shrink-0 items-center justify-center rounded-xl">
+              <FlaskConical aria-hidden="true" className="h-5 w-5" />
+            </span>
+            <div className="min-w-0">
+              <p className="truncate text-base font-semibold tracking-tight text-slate-950 dark:text-white">{t('common.appTitle')}</p>
+              <p className="truncate text-xs text-slate-600 dark:text-slate-300">{t('layout.adminPortal')}</p>
+            </div>
+          </div>
+          <div className="app-control-surface mt-4 rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200">
+            {t('layout.adminRole')}
           </div>
         </>
       ) : null}
 
-      <nav className={compact ? 'space-y-1' : 'mt-8 space-y-1'}>
-        {navItems.map((item) => (
-          <NavLink
-            key={item.path}
-            to={item.path}
-            className={({ isActive }) =>
-              [
-                  'flex min-h-11 items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-200',
-                isActive
-                  ? 'bg-white text-slate-950'
-                  : 'text-slate-300 hover:bg-slate-800 hover:text-white',
-              ].join(' ')
-            }
-            onClick={onNavigate}
-          >
-            {item.label}
-          </NavLink>
-        ))}
+      <nav aria-label={t('layout.adminPortal')} className={compact ? 'mt-2 space-y-1' : 'mt-7 space-y-1'}>
+        {navItems.map((item, index) => {
+          const Icon = item.icon;
+          const showGroup = index === 0 || item.groupKey !== navItems[index - 1]?.groupKey;
+
+          return (
+            <div className={showGroup && index > 0 ? 'pt-4' : ''} key={item.path}>
+              {showGroup ? (
+                <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">
+                  {t(item.groupKey)}
+                </p>
+              ) : null}
+              <NavLink
+                to={item.path}
+                className="group flex min-h-11 items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500"
+                onClick={onNavigate}
+              >
+                <Icon aria-hidden="true" className="h-[18px] w-[18px] shrink-0" />
+                <span className="min-w-0 truncate">{t(item.labelKey)}</span>
+              </NavLink>
+            </div>
+          );
+        })}
       </nav>
     </>
   );

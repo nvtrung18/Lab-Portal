@@ -1,4 +1,5 @@
 import { EmptyState, ErrorState, LoadingState } from '../../../shared/components';
+import { useI18n } from '../../../shared/i18n';
 import { useReportsByMilestone } from '../hooks';
 import { ReportReadOnlyItem } from './ReportList';
 
@@ -9,23 +10,21 @@ interface ManagerReportsListProps {
 }
 
 export function ManagerReportsList({ milestoneId, currentUserId, labId }: ManagerReportsListProps) {
+  const { t } = useI18n();
   const { data: reports = [], isError, isLoading, refetch } = useReportsByMilestone(milestoneId);
 
   return (
     <section className="rounded-lg border border-slate-200 bg-slate-50 p-5">
-      <h4 className="text-base font-semibold text-slate-950">Báo cáo đã nộp</h4>
-      <p className="mt-1 text-sm text-slate-600">
-        Danh sách báo cáo của mốc nghiên cứu để theo dõi phiên bản và tài liệu đính kèm.
-      </p>
+      <h4 className="text-base font-semibold text-slate-950">{t('research.report.submitted')}</h4>
 
       {isLoading ? (
-        <LoadingState className="mt-5">Đang tải danh sách báo cáo...</LoadingState>
+        <LoadingState className="mt-5">{t('research.report.loading')}</LoadingState>
       ) : isError ? (
         <ErrorState className="mt-5" onRetry={() => refetch()}>
-          Không thể tải danh sách báo cáo.
+          {t('research.report.loadFailed')}
         </ErrorState>
       ) : !reports.length ? (
-        <EmptyState className="mt-5">Mốc nghiên cứu này chưa có báo cáo nào được nộp.</EmptyState>
+        <EmptyState className="mt-5">{t('research.report.emptyMilestone')}</EmptyState>
       ) : (
         <div className="mt-5 space-y-4">
           {reports.map((report) => (

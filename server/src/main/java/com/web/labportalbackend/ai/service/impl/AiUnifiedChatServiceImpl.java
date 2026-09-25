@@ -27,6 +27,8 @@ import com.web.labportalbackend.ai.service.AiToolRegistry;
 import com.web.labportalbackend.ai.service.AiSuggestionPayloadValidationException;
 import com.web.labportalbackend.ai.service.AiUnifiedChatService;
 import java.util.List;
+import java.util.Locale;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -84,6 +86,7 @@ public class AiUnifiedChatServiceImpl implements AiUnifiedChatService {
         }
 
         ObjectNode payload = objectMapper.createObjectNode();
+        payload.put("locale", supportedLocale());
         payload.put("input", input);
         ArrayNode candidateNodes = payload.putArray("candidates");
         candidates.forEach(candidate -> candidateNodes.add(candidate.toPlanningCandidate(objectMapper)));
@@ -189,6 +192,12 @@ public class AiUnifiedChatServiceImpl implements AiUnifiedChatService {
         return new AiUnifiedChatResponse(AiUnifiedChatResponseType.ANSWER, answer.assistantKey(), answer.answer(),
                 Math.addExact(planning.promptTokens(), answer.promptTokens()),
                 Math.addExact(planning.completionTokens(), answer.completionTokens()), answer.citations());
+    }
+
+    private static String supportedLocale() {
+        return Locale.ENGLISH.getLanguage().equals(LocaleContextHolder.getLocale().getLanguage())
+                ? Locale.ENGLISH.getLanguage()
+                : "vi";
     }
 
     private static final class TurnState {

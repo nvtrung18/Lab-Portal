@@ -8,6 +8,7 @@ import com.web.labportalbackend.auth.repository.UserRepository;
 import com.web.labportalbackend.auth.service.AuthService;
 import com.web.labportalbackend.common.enums.LabStatus;
 import com.web.labportalbackend.common.enums.UserStatus;
+import com.web.labportalbackend.lab.dto.request.CreateLabRequest;
 import com.web.labportalbackend.lab.dto.response.LabResponse;
 import com.web.labportalbackend.lab.entity.Laboratory;
 import com.web.labportalbackend.lab.repository.LaboratoryRepository;
@@ -23,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.math.BigDecimal;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -154,6 +156,23 @@ class AdminLabAssignmentIntegrationTest {
             labService.assignManagerPatch(testLab.getId(), finalAnotherManager.getId());
         });
         assertEquals("PTN này đã có quản lý.", ex.getMessage());
+    }
+
+    @Test
+    void createLab_persistsCheckinCoordinatesWhenProvided() {
+        CreateLabRequest request = new CreateLabRequest();
+        request.setLabName("GPS Registration Lab");
+        request.setLocation("Building D");
+        request.setCapacity(20);
+        request.setCheckinLatitude(new BigDecimal("10.762622"));
+        request.setCheckinLongitude(new BigDecimal("106.660172"));
+
+        LabResponse response = labService.createLab(request);
+
+        Laboratory savedLab = laboratoryRepository.findById(response.getId()).orElseThrow();
+        assertEquals(new BigDecimal("10.762622"), savedLab.getCheckinLatitude());
+        assertEquals(new BigDecimal("106.660172"), savedLab.getCheckinLongitude());
+        assertFalse(Boolean.TRUE.equals(savedLab.getCheckinEnabled()));
     }
 
     @Test

@@ -186,7 +186,8 @@ class AiAssistantGatewayServiceImplTest {
         invocationOrder.verify(auditUsageService).recordAssistantRequest(auditEvent.capture());
 
         JsonNode serialized = objectMapper.readTree(objectMapper.writeValueAsBytes(gatewayRequest.getValue().payload()));
-        assertEquals(Set.of("assistantKey", "input", "authorizedContext"), fieldSet(serialized));
+        assertEquals(Set.of("assistantKey", "input", "authorizedContext", "locale"), fieldSet(serialized));
+        assertTrue(Set.of("vi", "en").contains(serialized.path("locale").asText()));
         assertEquals("LAB_ASSISTANT", serialized.path("assistantKey").asText());
         assertEquals("Summarize what I may access.", serialized.path("input").asText());
         JsonNode pythonContext = serialized.path("authorizedContext");
@@ -253,7 +254,8 @@ class AiAssistantGatewayServiceImplTest {
         ArgumentCaptor<AiGatewayRequest> gatewayRequest = ArgumentCaptor.forClass(AiGatewayRequest.class);
         verify(gatewayClient).chat(gatewayRequest.capture());
         JsonNode payload = gatewayRequest.getValue().payload();
-        assertEquals(Set.of("assistantKey", "input", "authorizedContext"), fieldSet(payload));
+        assertEquals(Set.of("assistantKey", "input", "authorizedContext", "locale"), fieldSet(payload));
+        assertTrue(Set.of("vi", "en").contains(payload.path("locale").asText()));
         assertTrue(payload.path("input").asText().contains("requestTimeUtc=2026-01-01T00:00:00Z"));
         assertTrue(payload.path("input").asText().contains("defaultTimezone=Asia/Ho_Chi_Minh"));
         assertTrue(payload.path("input").asText().contains("User request: Create a slot tomorrow"));

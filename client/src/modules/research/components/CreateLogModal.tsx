@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 
 import { Button, Modal } from '../../../shared/components';
+import { useI18n } from '../../../shared/i18n';
 import { VALIDATION_MESSAGES } from '../../../shared/utils';
 import type { UserProfileResponse } from '../../user/api/user.api';
 import { useMilestonesByProject, useTasksByMilestone } from '../hooks';
@@ -31,12 +32,6 @@ const initialForm = {
   nextPlan: '',
   evidenceLink: '',
   visibility: 'GROUP' as ResearchLogVisibility,
-};
-
-const visibilityLabels: Record<ResearchLogVisibility, string> = {
-  PRIVATE: 'Chỉ mình tôi',
-  GROUP: 'Nhóm nghiên cứu',
-  PROJECT: 'Toàn bộ đề tài',
 };
 
 function isValidUrl(value: string) {
@@ -72,6 +67,7 @@ export function CreateLogModal({
   onClose,
   onSubmit,
 }: CreateLogModalProps) {
+  const { t } = useI18n();
   const [form, setForm] = useState(initialForm);
   const [touched, setTouched] = useState(false);
   const { data: milestones = [], isLoading: isLoadingMilestones } = useMilestonesByProject(isOpen ? projectId : null);
@@ -110,10 +106,10 @@ export function CreateLogModal({
   const memberScopeIsValid = !isMember || ownsSelectedMilestone || ownsSelectedTask;
   const workDateError = touched && !form.workDate ? VALIDATION_MESSAGES.required : null;
   const contentError = touched && !trimmedContent ? VALIDATION_MESSAGES.required : null;
-  const durationError = touched && !durationIsValid ? 'Thời gian làm phải lớn hơn hoặc bằng 0.' : null;
-  const evidenceError = touched && !evidenceIsValid ? 'Link minh chứng không hợp lệ.' : null;
+  const durationError = touched && !durationIsValid ? t('research.log.durationError') : null;
+  const evidenceError = touched && !evidenceIsValid ? t('research.log.evidenceError') : null;
   const memberScopeError = touched && !memberScopeIsValid
-    ? 'Thành viên chỉ có thể tạo log cho mốc hoặc nhiệm vụ được phân công.'
+    ? t('research.log.memberScopeError')
     : null;
   const canSubmit = Boolean(form.workDate && trimmedContent && durationIsValid && evidenceIsValid && memberScopeIsValid);
 
@@ -145,20 +141,20 @@ export function CreateLogModal({
         footer={(
           <>
             <Button onClick={onClose} type="button" variant="outline">
-              Hủy
+              {t('common.cancel')}
             </Button>
-            <Button loading={isSubmitting} loadingText="Đang lưu..." type="submit">
-              Lưu nhật ký
+            <Button loading={isSubmitting} loadingText={t('common.saving')} type="submit">
+              {t('common.save')}
             </Button>
           </>
         )}
         onClose={onClose}
         size="xl"
-        title="Tạo nhật ký nghiên cứu"
+        title={t('research.log.createTitle')}
       >
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="block text-sm font-medium text-slate-700">
-            Ngày làm việc
+            {t('research.log.workDate')}
             <input
               className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
               type="date"
@@ -170,7 +166,7 @@ export function CreateLogModal({
           </label>
 
           <label className="block text-sm font-medium text-slate-700">
-            Thời gian làm, phút
+            {t('research.log.duration')}
             <input
               className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
               min={0}
@@ -183,14 +179,14 @@ export function CreateLogModal({
           </label>
 
           <label className="block text-sm font-medium text-slate-700">
-            Mốc nghiên cứu
+            {t('research.log.milestone')}
             <select
               className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
               disabled={isLoadingMilestones}
               value={form.milestoneId}
               onChange={(event) => setForm((current) => ({ ...current, milestoneId: event.target.value, taskId: '' }))}
             >
-              <option value="">Không chọn</option>
+              <option value="">{t('common.notSelected')}</option>
               {milestones.map((milestone) => (
                 <option key={milestone.id} value={milestone.id}>
                   {milestone.title}
@@ -200,14 +196,14 @@ export function CreateLogModal({
           </label>
 
           <label className="block text-sm font-medium text-slate-700">
-            Nhiệm vụ liên quan
+            {t('research.log.relatedTask')}
             <select
               className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
               disabled={!selectedMilestoneId || isLoadingTasks}
               value={form.taskId}
               onChange={(event) => setForm((current) => ({ ...current, taskId: event.target.value }))}
             >
-              <option value="">Không chọn</option>
+              <option value="">{t('common.notSelected')}</option>
               {visibleTasks.map((task) => (
                 <option key={task.id} value={task.id}>
                   {task.title}
@@ -220,7 +216,7 @@ export function CreateLogModal({
 
         <div className="mt-4 space-y-4">
           <label className="block text-sm font-medium text-slate-700">
-            Nội dung đã làm
+            {t('research.log.content')}
             <textarea
               className="mt-1 min-h-24 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
               value={form.content}
@@ -232,7 +228,7 @@ export function CreateLogModal({
 
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="block text-sm font-medium text-slate-700">
-              Kết quả đạt được
+              {t('research.log.result')}
               <textarea
                 className="mt-1 min-h-20 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
                 value={form.result}
@@ -241,7 +237,7 @@ export function CreateLogModal({
             </label>
 
             <label className="block text-sm font-medium text-slate-700">
-              Vấn đề gặp phải
+              {t('research.log.problem')}
               <textarea
                 className="mt-1 min-h-20 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
                 value={form.problem}
@@ -251,7 +247,7 @@ export function CreateLogModal({
           </div>
 
           <label className="block text-sm font-medium text-slate-700">
-            Hướng xử lý tiếp theo
+            {t('research.log.nextPlan')}
             <textarea
               className="mt-1 min-h-20 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
               value={form.nextPlan}
@@ -261,7 +257,7 @@ export function CreateLogModal({
 
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="block text-sm font-medium text-slate-700">
-              File/link minh chứng
+              {t('research.log.evidence')}
               <input
                 className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
                 placeholder="https://..."
@@ -274,7 +270,7 @@ export function CreateLogModal({
             </label>
 
             <label className="block text-sm font-medium text-slate-700">
-              Phạm vi hiển thị
+              {t('research.log.visibility')}
               <select
                 className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
                 value={form.visibility}
@@ -285,7 +281,7 @@ export function CreateLogModal({
               >
                 {visibilityOptions.map((visibility) => (
                   <option key={visibility} value={visibility}>
-                    {visibilityLabels[visibility]}
+                    {t(`research.log.visibility.${visibility.toLowerCase()}`)}
                   </option>
                 ))}
               </select>

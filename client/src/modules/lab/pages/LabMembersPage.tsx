@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
 
 import { Button, ConfirmDialog, EmptyState, ErrorState, LoadingState, Modal, ResponsiveTable } from '../../../shared/components';
-import { getManagedLabId, getManagedLabName } from '../../../shared/utils/membership';
+import { translate, useI18n, type Locale } from '../../../shared/i18n';
+import { getManagedLabId } from '../../../shared/utils/membership';
 import { useCurrentUser } from '../../user/hooks';
 import { useLabMembers, useRemoveLabMember } from '../hooks';
 
@@ -13,22 +14,22 @@ function statusClassName(status: string) {
   return 'bg-slate-100 text-slate-600 ring-slate-200';
 }
 
-function formatDate(value?: string) {
-  return value ? new Intl.DateTimeFormat('vi-VN', { dateStyle: 'short' }).format(new Date(value)) : 'Chưa cập nhật';
+function formatDate(value: string | undefined, locale: Locale) {
+  return value ? new Intl.DateTimeFormat(locale === 'en' ? 'en-US' : 'vi-VN', { dateStyle: 'short' }).format(new Date(value)) : translate('common.notUpdated', locale);
 }
 
-function formatRole(role?: string) {
-  return role === 'LAB_MANAGER' ? 'Quản lý PTN' : role === 'STUDENT' || role === 'MEMBER' ? 'Sinh viên' : 'Thành viên';
+function formatRole(role: string | undefined, locale: Locale) {
+  return role === 'LAB_MANAGER' ? translate('layout.managerRole', locale) : role === 'STUDENT' || role === 'MEMBER' ? translate('layout.studentRole', locale) : translate('lab.member', locale);
 }
 
-function formatStatus(status: string) {
-  return status.toUpperCase() === 'ACTIVE' ? 'Đang hoạt động' : 'Không hoạt động';
+function formatStatus(status: string, locale: Locale) {
+  return status.toUpperCase() === 'ACTIVE' ? translate('lab.status.active', locale) : translate('lab.memberInactive', locale);
 }
 
 export function LabMembersPage() {
+  const { locale, t } = useI18n();
   const { data: currentUser, isLoading: isLoadingUser } = useCurrentUser();
   const managedLabId = getManagedLabId(currentUser);
-  const managedLabName = getManagedLabName(currentUser);
   const { data: members = [], isLoading, isError } = useLabMembers(managedLabId);
   const removeMemberMutation = useRemoveLabMember();
   const [search, setSearch] = useState('');
@@ -73,7 +74,7 @@ export function LabMembersPage() {
   if (!managedLabId) {
     return (
       <section className="rounded-lg border border-amber-200 bg-white p-6 text-sm text-amber-700 shadow-sm">
-        Bạn chưa được phân công quản lý PTN nào.
+        {t('layout.unassignedLab')}
       </section>
     );
   }
@@ -90,43 +91,39 @@ export function LabMembersPage() {
     <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-slate-950">Thành viên PTN</h1>
-          <p className="mt-1 text-sm text-slate-600">
-            Danh sách thành viên thuộc PTN bạn quản lý
-            {managedLabName ? `: ${managedLabName}` : ''}.
-          </p>
+          <h1 className="text-xl font-semibold text-slate-950 dark:text-white">{t('lab.membersTitle')}</h1>
         </div>
         <input
           className="rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
-          placeholder="Tìm theo tên hoặc email"
+          placeholder={t('lab.membersSearch')}
           value={search}
           onChange={(event) => setSearch(event.target.value)}
         />
       </div>
 
       {filteredMembers.length === 0 ? (
-        <EmptyState className="mt-6">Chưa có thành viên đang hoạt động trong PTN này.</EmptyState>
+        <EmptyState className="mt-6">{t('lab.membersEmpty')}</EmptyState>
       ) : (
         <ResponsiveTable className="mt-6">
           <table className="w-full min-w-[680px] divide-y divide-slate-200 text-sm">
             <thead>
               <tr className="text-left text-xs font-semibold uppercase text-slate-500">
-                <th className="px-3 py-3">Họ tên</th>
-                <th className="px-3 py-3">Email</th>
-                <th className="px-3 py-3">Vai trò</th>
-                <th className="px-3 py-3">Trạng thái</th>
-                <th className="px-3 py-3">Ngày tham gia</th>
-                <th className="px-3 py-3 text-right">Thao tác</th>
+                <th className="px-3 py-3">{t('profile.fullName')}</th>
+                <th className="px-3 py-3">{t('common.email')}</th>
+                <th className="px-3 py-3">{t('profile.roles')}</th>
+                <th className="px-3 py-3">{t('slot.statusLabel')}</th>
+                <th className="px-3 py-3">{t('myLab.joinedAt')}</th>
+                <th className="px-3 py-3 text-right">{t('common.actions')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filteredMembers.map((member) => (
                 <tr key={member.id}>
                   <td className="px-3 py-4 font-medium text-slate-950">
-                    {member.fullName || 'Chưa cập nhật'}
+                    {member.fullName || t('common.notUpdated')}
                   </td>
                   <td className="px-3 py-4 text-slate-700">{member.email}</td>
-                  <td className="px-3 py-4 text-slate-700">{formatRole(member.role)}</td>
+                  <td className="px-3 py-4 text-slate-700">{formatRole(member.role, locale)}</td>
                   <td className="px-3 py-4">
                     <span
                       className={[
@@ -134,10 +131,10 @@ export function LabMembersPage() {
                         statusClassName(member.status),
                       ].join(' ')}
                     >
-                      {formatStatus(member.status)}
+                      {formatStatus(member.status, locale)}
                     </span>
                   </td>
-                  <td className="px-3 py-4 text-slate-700">{formatDate(member.joinedAt)}</td>
+                  <td className="px-3 py-4 text-slate-700">{formatDate(member.joinedAt, locale)}</td>
                   <td className="px-3 py-4 text-right">
                     <div className="flex justify-end gap-2">
                     <Button
@@ -145,16 +142,16 @@ export function LabMembersPage() {
                       variant="outline"
                       onClick={() => setSelectedMemberDetail(member)}
                     >
-                      Xem chi tiết
+                      {t('common.viewDetails')}
                     </Button>
                     <Button
                       loading={removeMemberMutation.isPending}
-                      loadingText="Đang gỡ..."
+                      loadingText={t('lab.removingMember')}
                       size="sm"
                       variant="danger"
                       onClick={() => handleRemoveMember(member)}
                     >
-                      Gỡ thành viên
+                      {t('lab.removeMember')}
                     </Button>
                     </div>
                   </td>
@@ -165,13 +162,13 @@ export function LabMembersPage() {
         </ResponsiveTable>
       )}
       <ConfirmDialog
-        confirmLabel="Gỡ thành viên"
+        confirmLabel={t('lab.removeMember')}
         isOpen={memberPendingRemove !== null}
         isPending={removeMemberMutation.isPending}
-        message="Tài khoản vẫn được giữ lại; hệ thống chỉ gỡ tư cách thành viên trong PTN."
+        message={t('lab.removeMemberDescription')}
         onCancel={() => setMemberPendingRemove(null)}
         onConfirm={confirmRemoveMember}
-        title="Gỡ thành viên khỏi PTN?"
+        title={t('lab.removeMemberTitle')}
       />
       <Modal
         centered
@@ -179,11 +176,11 @@ export function LabMembersPage() {
         isOpen={selectedMemberDetail !== null}
         onClose={() => setSelectedMemberDetail(null)}
         size="sm"
-        title="Chi tiết thành viên"
+        title={t('lab.memberDetails')}
       >
         <dl className="space-y-3 text-sm">
-          <div><dt className="text-slate-500">Họ tên</dt><dd className="font-semibold text-slate-950">{selectedMemberDetail?.fullName || 'Chưa cập nhật'}</dd></div>
-          <div><dt className="text-slate-500">Email</dt><dd className="text-slate-800">{selectedMemberDetail?.email}</dd></div>
+          <div><dt className="text-slate-500">{t('profile.fullName')}</dt><dd className="font-semibold text-slate-950 dark:text-slate-100">{selectedMemberDetail?.fullName || t('common.notUpdated')}</dd></div>
+          <div><dt className="text-slate-500">{t('common.email')}</dt><dd className="text-slate-800">{selectedMemberDetail?.email}</dd></div>
         </dl>
       </Modal>
     </section>

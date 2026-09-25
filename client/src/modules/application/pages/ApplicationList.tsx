@@ -2,6 +2,7 @@ import { useState } from 'react';
 
 import { resolveApiAssetUrl } from '../../../shared/api';
 import { ConfirmDialog } from '../../../shared/components';
+import { translate, useI18n, type Locale } from '../../../shared/i18n';
 import { getManagedLabId, getManagedLabName } from '../../../shared/utils/membership';
 import { useCurrentUser } from '../../user/hooks';
 import type { ApplicationStatus } from '../api';
@@ -19,22 +20,27 @@ function statusClassName(status: ApplicationStatus) {
   return 'bg-amber-50 text-amber-700 ring-amber-200';
 }
 
-function formatStatus(status: ApplicationStatus) {
-  return status === 'APPROVED' ? 'Đã duyệt' : status === 'REJECTED' ? 'Đã từ chối' : 'Chờ duyệt';
+function formatStatus(status: ApplicationStatus, locale: Locale) {
+  return status === 'APPROVED'
+    ? translate('application.status.approved', locale)
+    : status === 'REJECTED'
+      ? translate('application.status.rejected', locale)
+      : translate('application.status.pending', locale);
 }
 
-function formatDate(value: string) {
+function formatDate(value: string, locale: Locale) {
   if (!value) {
-    return 'Chưa cập nhật';
+    return translate('common.notUpdated', locale);
   }
 
-  return new Intl.DateTimeFormat('vi-VN', {
+  return new Intl.DateTimeFormat(locale === 'en' ? 'en-US' : 'vi-VN', {
     dateStyle: 'short',
     timeStyle: 'short',
   }).format(new Date(value));
 }
 
 export function ApplicationList() {
+  const { locale, t } = useI18n();
   const { data: currentUser, isLoading: isLoadingUser } = useCurrentUser();
   const managedLabId = getManagedLabId(currentUser);
   const managedLabName = getManagedLabName(currentUser);
@@ -80,7 +86,7 @@ export function ApplicationList() {
   if (!managedLabId) {
     return (
       <section className="rounded-lg border border-amber-200 bg-white p-6 text-sm text-amber-700 shadow-sm">
-        Tài khoản quản lý hiện chưa được phân công PTN.
+        {t('application.unassignedLab')}
       </section>
     );
   }
@@ -88,7 +94,7 @@ export function ApplicationList() {
   if (isError) {
     return (
       <section className="rounded-lg border border-red-200 bg-white p-6 text-sm text-red-700 shadow-sm">
-        Không thể tải danh sách đơn ứng tuyển của PTN đang quản lý.
+        {t('application.loadFailed')}
       </section>
     );
   }
@@ -97,32 +103,29 @@ export function ApplicationList() {
     <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
       <div className="flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl font-semibold text-slate-950">Đơn ứng tuyển</h1>
-          <p className="mt-1 text-sm text-slate-600">
-            Chỉ hiển thị đơn ứng tuyển của {managedLabName ?? `PTN #${managedLabId}`}.
-          </p>
+          <h1 className="text-xl font-semibold text-slate-950 dark:text-white">{t('application.title')}</h1>
         </div>
         <span className="shrink-0 text-sm text-slate-500">
-          {applications.length} đơn
+          {applications.length} {t('application.count')}
         </span>
       </div>
 
       {applications.length === 0 ? (
         <div className="mt-6 rounded-md border border-dashed border-slate-300 p-8 text-center text-sm text-slate-600">
-          Hiện chưa có đơn ứng tuyển nào.
+          {t('application.empty')}
         </div>
       ) : (
         <div className="mt-6 max-w-full overscroll-x-contain overflow-x-auto">
           <table className="w-full min-w-[760px] divide-y divide-slate-200 text-sm">
             <thead>
               <tr className="text-left text-xs font-semibold uppercase text-slate-500">
-                <th className="px-3 py-3">Ứng viên</th>
-                <th className="px-3 py-3">Email</th>
-                <th className="px-3 py-3">PTN</th>
-                <th className="px-3 py-3">CV</th>
-                <th className="px-3 py-3">Trạng thái</th>
-                <th className="px-3 py-3">Ngày tạo</th>
-                <th className="px-3 py-3 text-right">Thao tác</th>
+                <th className="px-3 py-3">{t('application.applicant')}</th>
+                <th className="px-3 py-3">{t('common.email')}</th>
+                <th className="px-3 py-3">{t('lab.label')}</th>
+                <th className="px-3 py-3">{t('application.cv')}</th>
+                <th className="px-3 py-3">{t('application.status')}</th>
+                <th className="px-3 py-3">{t('application.createdAt')}</th>
+                <th className="px-3 py-3 text-right">{t('common.actions')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -135,7 +138,7 @@ export function ApplicationList() {
                   <tr key={application.id}>
                     <td className="px-3 py-4 text-slate-700">
                       <div className="font-medium text-slate-950">
-                        {application.applicantName || `Người dùng #${application.userId}`}
+                        {application.applicantName || `${t('common.user')} #${application.userId}`}
                       </div>
                     </td>
                     <td className="px-3 py-4 text-slate-700">
@@ -154,7 +157,7 @@ export function ApplicationList() {
                               rel="noreferrer"
                               target="_blank"
                             >
-                              Xem CV URL
+                              {t('application.viewCvUrl')}
                             </a>
                           ) : null}
                           {application.cvFileUrl ? (
@@ -163,9 +166,9 @@ export function ApplicationList() {
                               href={resolveApiAssetUrl(application.cvFileUrl)}
                               rel="noreferrer"
                               target="_blank"
-                              title={application.cvFileName ?? 'Tệp CV'}
+                              title={application.cvFileName ?? t('application.cvFile')}
                             >
-                              Tải file CV
+                              {t('application.downloadCv')}
                             </a>
                           ) : null}
                         </div>
@@ -180,11 +183,11 @@ export function ApplicationList() {
                           statusClassName(application.status),
                         ].join(' ')}
                       >
-                        {formatStatus(application.status)}
+                        {formatStatus(application.status, locale)}
                       </span>
                     </td>
                     <td className="px-3 py-4 text-slate-700">
-                      {formatDate(application.createdAt)}
+                      {formatDate(application.createdAt, locale)}
                     </td>
                     <td className="px-3 py-4 text-right">
                       {application.status === 'PENDING' ? (
@@ -195,7 +198,7 @@ export function ApplicationList() {
                             className="rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-emerald-300"
                             onClick={() => handleReview(application.id, 'APPROVED')}
                           >
-                            {isProcessing ? 'Đang xử lý...' : 'Duyệt'}
+                            {isProcessing ? t('common.processing') : t('common.approve')}
                           </button>
                           <button
                             type="button"
@@ -203,11 +206,11 @@ export function ApplicationList() {
                             className="rounded-md bg-red-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-red-300"
                             onClick={() => handleReview(application.id, 'REJECTED')}
                           >
-                            Từ chối
+                            {t('common.reject')}
                           </button>
                         </div>
                       ) : (
-                        <span className="text-xs text-slate-400">Đã xử lý</span>
+                        <span className="text-xs text-slate-400">{t('common.processed')}</span>
                       )}
                     </td>
                   </tr>
@@ -218,15 +221,15 @@ export function ApplicationList() {
         </div>
       )}
       <ConfirmDialog
-        confirmLabel={pendingReview?.status === 'APPROVED' ? 'Duyệt đơn' : 'Từ chối đơn'}
+        confirmLabel={pendingReview?.status === 'APPROVED' ? t('application.approve') : t('application.reject')}
         isOpen={pendingReview !== null}
         isPending={reviewMutation.isPending}
         message={pendingReview?.status === 'APPROVED'
-          ? 'Bạn chắc chắn muốn duyệt đơn này?'
-          : 'Bạn chắc chắn muốn từ chối đơn này?'}
+          ? t('application.confirmApprove')
+          : t('application.confirmReject')}
         onCancel={() => setPendingReview(null)}
         onConfirm={() => { void confirmReview(); }}
-        title={pendingReview?.status === 'APPROVED' ? 'Duyệt đơn ứng tuyển?' : 'Từ chối đơn ứng tuyển?'}
+        title={pendingReview?.status === 'APPROVED' ? t('application.confirmApproveTitle') : t('application.confirmRejectTitle')}
         variant={pendingReview?.status === 'APPROVED' ? 'success' : 'danger'}
       />
     </section>

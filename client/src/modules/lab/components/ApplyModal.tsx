@@ -1,28 +1,20 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
-import { useEffect, useState, type ChangeEvent } from 'react';
+import { useEffect, useMemo, useState, type ChangeEvent } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
 import { Button, Modal } from '../../../shared/components';
 import { queryKeys } from '../../../shared/api';
 import type { Response } from '../../../shared/types';
-import { VALIDATION_MESSAGES } from '../../../shared/utils';
+import { useI18n, translateBackendMessage } from '../../../shared/i18n';
 import { getLabById, type LabResponse } from '../api';
 import { useApplyLab } from '../hooks';
 import { LABS_QUERY_KEY } from '../hooks/useLabs';
 import { isLabActive } from '../utils/labStatus';
 
-const applySchema = z.object({
-  cvUrl: z
-    .string()
-    .trim()
-    .optional()
-    .refine((value) => !value || /^https?:\/\/.+/i.test(value), 'CV URL không hợp lệ'),
-});
-
-type ApplyFormValues = z.infer<typeof applySchema>;
+type ApplyFormValues = { cvUrl?: string };
 
 interface ApplyModalProps {
   labId: number | null;
@@ -31,22 +23,20 @@ interface ApplyModalProps {
   onClose: () => void;
 }
 
-const INACTIVE_LAB_MESSAGE = 'PTN này đã ngừng hoạt động, không thể nộp đơn.';
-const REQUIRED_CV_MESSAGE = VALIDATION_MESSAGES.required;
 const MAX_CV_FILE_SIZE = 10 * 1024 * 1024;
 const ALLOWED_CV_EXTENSIONS = ['pdf', 'doc', 'docx'];
 
-function getErrorMessage(error: unknown) {
+function getErrorMessage(error: unknown, fallback: string) {
   if (axios.isAxiosError(error)) {
     const response = error.response?.data as Partial<Response<unknown>> | undefined;
-    return response?.message ?? 'Không thể nộp đơn. Vui lòng thử lại.';
+    return translateBackendMessage(response?.message, undefined) ?? fallback;
   }
 
   if (error instanceof Error) {
     return error.message;
   }
 
-  return 'Không thể nộp đơn. Vui lòng thử lại.';
+  return fallback;
 }
 
 function formatFileSize(size: number) {
@@ -57,23 +47,31 @@ function formatFileSize(size: number) {
   return `${(size / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-function validateCvFile(file: File) {
+function validateCvFile(file: File, t: ReturnType<typeof useI18n>['t']) {
   const extension = file.name.split('.').pop()?.toLowerCase() ?? '';
 
   if (!ALLOWED_CV_EXTENSIONS.includes(extension)) {
-    return VALIDATION_MESSAGES.fileType;
+    return t('validation.fileType');
   }
 
   if (file.size > MAX_CV_FILE_SIZE) {
-    return VALIDATION_MESSAGES.reportFileSize;
+    return t('validation.reportFileSize');
   }
 
   return null;
 }
 
-export function ApplyModal({ labId, labName, labStatus, onClose }: ApplyModalProps) {
+export function ApplyModal({ labId, labStatus, onClose }: ApplyModalProps) {
+  const { t } = useI18n();
   const queryClient = useQueryClient();
   const applyMutation = useApplyLab();
+  const applySchema = useMemo(() => z.object({
+    cvUrl: z
+      .string()
+      .trim()
+      .optional()
+      .refine((value) => !value || /^https?:\/\/.+/i.test(value), t('lab.apply.invalidCvUrl')),
+  }), [t]);
   const [serverError, setServerError] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
@@ -118,7 +116,7 @@ export function ApplyModal({ labId, labName, labStatus, onClose }: ApplyModalPro
       return;
     }
 
-    const validationError = validateCvFile(file);
+    const validationError = validateCvFile(file, t);
     if (validationError) {
       setSelectedFile(null);
       setFileError(validationError);
@@ -137,12 +135,12 @@ export function ApplyModal({ labId, labName, labStatus, onClose }: ApplyModalPro
       const cvUrl = values.cvUrl?.trim() ?? '';
 
       if (!cvUrl && !selectedFile) {
-        setServerError(REQUIRED_CV_MESSAGE);
+        setServerError(t('validation.required'));
         return;
       }
 
       if (labStatus && !isLabActive({ status: labStatus })) {
-        setServerError(INACTIVE_LAB_MESSAGE);
+        setServerError(t('lab.apply.inactive'));
         void queryClient.invalidateQueries({ queryKey: LABS_QUERY_KEY });
         return;
       }
@@ -154,7 +152,7 @@ export function ApplyModal({ labId, labName, labStatus, onClose }: ApplyModalPro
       });
 
       if (!isLabActive(latestLab)) {
-        setServerError(INACTIVE_LAB_MESSAGE);
+        setServerError(t('lab.apply.inactive'));
         void queryClient.invalidateQueries({ queryKey: LABS_QUERY_KEY });
         return;
       }
@@ -169,7 +167,7 @@ export function ApplyModal({ labId, labName, labStatus, onClose }: ApplyModalPro
       setFileError(null);
       onClose();
     } catch (error) {
-      setServerError(getErrorMessage(error));
+      setServerError(getErrorMessage(error, t('lab.apply.failed')));
     }
   };
 
@@ -179,22 +177,21 @@ export function ApplyModal({ labId, labName, labStatus, onClose }: ApplyModalPro
         footer={(
           <>
             <Button disabled={applyMutation.isPending} onClick={onClose} variant="outline">
-              Hủy
+              {t('common.cancel')}
             </Button>
             <Button
               disabled={!hasCvPayload || Boolean(fileError)}
               loading={applyMutation.isPending}
-              loadingText="Đang nộp..."
+              loadingText={t('lab.apply.submitting')}
               type="submit"
             >
-              Nộp đơn
+              {t('lab.apply.submit')}
             </Button>
           </>
         )}
         onClose={onClose}
         size="md"
-        subtitle={labName ? `Nộp CV ứng tuyển vào ${labName}` : 'Nộp CV ứng tuyển vào PTN'}
-        title="Ứng tuyển vào PTN"
+        title={t('lab.apply.submitTitle')}
       >
         <div className="space-y-5">
           <div>
@@ -202,7 +199,7 @@ export function ApplyModal({ labId, labName, labStatus, onClose }: ApplyModalPro
               className="block text-sm font-medium text-slate-700"
               htmlFor="cvUrl"
             >
-              CV URL
+              {t('lab.apply.cvUrl')}
             </label>
             <input
               id="cvUrl"
@@ -221,7 +218,7 @@ export function ApplyModal({ labId, labName, labStatus, onClose }: ApplyModalPro
               className="block text-sm font-medium text-slate-700"
               htmlFor="cvFile"
             >
-              Tệp CV
+              {t('lab.apply.cvFile')}
             </label>
             <input
               key={fileInputKey}
@@ -232,9 +229,6 @@ export function ApplyModal({ labId, labName, labStatus, onClose }: ApplyModalPro
               disabled={applyMutation.isPending}
               onChange={handleFileChange}
             />
-            <p className="mt-2 text-xs text-slate-500">
-              Hỗ trợ PDF, DOC, DOCX. Tối đa 10MB.
-            </p>
             {selectedFile ? (
               <div className="mt-2 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
                 <span className="font-medium text-slate-950">{selectedFile.name}</span>

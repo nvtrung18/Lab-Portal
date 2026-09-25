@@ -111,6 +111,32 @@ export interface LabDashboardStats {
   activeResearchProjects: number;
 }
 
+export interface LabAllowedNetwork {
+  id: number;
+  network: string;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface LabCheckinPolicy {
+  labId: number;
+  latitude: number | null;
+  longitude: number | null;
+  radiusMeters: number | null;
+  maxAccuracyMeters: number | null;
+  enabled: boolean;
+  allowedNetworks: LabAllowedNetwork[];
+}
+
+export interface LabCheckinPolicyPayload {
+  latitude: number;
+  longitude: number;
+  radiusMeters: number;
+  maxAccuracyMeters: number;
+  enabled: boolean;
+}
+
 export async function getLabDashboardStats(labId: number): Promise<LabDashboardStats> {
   const response = await apiClient.get<Response<LabDashboardStats>>(
     `/api/labs/${labId}/dashboard/stats`,
@@ -118,3 +144,42 @@ export async function getLabDashboardStats(labId: number): Promise<LabDashboardS
   return response.data.data;
 }
 
+export async function getLabCheckinPolicy(labId: number): Promise<LabCheckinPolicy> {
+  const response = await apiClient.get<Response<LabCheckinPolicy>>(
+    `/api/labs/${labId}/checkin-policy`,
+  );
+  return response.data.data;
+}
+
+export async function updateLabCheckinPolicy(
+  labId: number,
+  payload: LabCheckinPolicyPayload,
+): Promise<LabCheckinPolicy> {
+  const response = await apiClient.put<Response<LabCheckinPolicy>>(
+    `/api/labs/${labId}/checkin-policy`,
+    payload,
+  );
+  return response.data.data;
+}
+
+export async function addLabAllowedNetwork(
+  labId: number,
+  network: string,
+): Promise<LabAllowedNetwork> {
+  const response = await apiClient.post<Response<LabAllowedNetwork>>(
+    `/api/labs/${labId}/checkin-policy/networks`,
+    { network },
+  );
+  return response.data.data;
+}
+
+export async function registerCurrentLabNetwork(labId: number): Promise<LabAllowedNetwork> {
+  const response = await apiClient.post<Response<LabAllowedNetwork>>(
+    `/api/labs/${labId}/checkin-policy/networks/current`,
+  );
+  return response.data.data;
+}
+
+export async function disableLabAllowedNetwork(labId: number, networkId: number): Promise<void> {
+  await apiClient.delete(`/api/labs/${labId}/checkin-policy/networks/${networkId}`);
+}

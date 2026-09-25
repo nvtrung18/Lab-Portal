@@ -8,6 +8,7 @@ export const queryKeys = {
     detail: (labId: number) => ['lab', labId] as const,
     members: (labId: number) => ['labMembers', labId] as const,
     dashboardStats: (labId: number) => ['labDashboardStats', labId] as const,
+    checkinPolicy: (labId: number) => ['labCheckinPolicy', labId] as const,
   },
   applications: {
     all: ['applications'] as const,

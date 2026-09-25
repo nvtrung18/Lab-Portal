@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import axios from 'axios';
 import { Button, EmptyState, ErrorState, LoadingState, toast } from '../../../shared/components';
+import { useI18n } from '../../../shared/i18n';
 import { downloadReportFile } from '../api';
 import { useGroupReports, useMyGroupReports, useMyResearchTasks } from '../hooks';
 import type { ResearchReport } from '../types';
@@ -29,13 +30,12 @@ export function GroupReportsTab({
   labId,
   scope,
 }: GroupReportsTabProps) {
+  const { locale, t } = useI18n();
   const isLeader = role === 'GROUP_LEADER';
   const isMember = role === 'STUDENT_MEMBER';
 
-  // Toggle state for leaders: 'me' (Báo cáo của tôi) or 'group' (Báo cáo toàn nhóm)
   const [subTab, setSubTab] = useState<'me' | 'group'>(scope ?? (isMember ? 'me' : 'group'));
 
-  // Load My Reports (always queried if needed, enabled conditionally)
   const {
     data: myReports = [],
     isError: isMyError,
@@ -44,7 +44,6 @@ export function GroupReportsTab({
     refetch: refetchMy,
   } = useMyGroupReports(subTab === 'me' ? groupId : null);
 
-  // Load Group Reports (always queried if needed, enabled conditionally)
   const {
     data: allReports = [],
     isError: isAllError,
@@ -53,7 +52,6 @@ export function GroupReportsTab({
     refetch: refetchAll,
   } = useGroupReports(subTab === 'group' ? groupId : null);
 
-  // Load My Tasks if we are in "Báo cáo của tôi" to check for empty states
   const {
     data: myTasks = [],
     isLoading: isLoadingTasks,
@@ -65,7 +63,6 @@ export function GroupReportsTab({
   const error = subTab === 'me' ? myError : allError;
   const refetch = subTab === 'me' ? refetchMy : refetchAll;
 
-  // States for actions
   const [downloadingId, setDownloadingId] = useState<number | null>(null);
 
   const [historyModalConfig, setHistoryModalConfig] = useState<{
@@ -86,7 +83,6 @@ export function GroupReportsTab({
     report: ResearchReport;
   } | null>(null);
 
-  // Filter and keep only the latest report version per task per student
   const latestReports = useMemo(() => {
     const map = new Map<string, ResearchReport>();
     reports.forEach((r) => {
@@ -113,7 +109,7 @@ export function GroupReportsTab({
       link.click();
       URL.revokeObjectURL(fileUrl);
     } catch {
-      toast.error('Không thể tải tài liệu báo cáo. Vui lòng thử lại.');
+      toast.error(t('common.serverFailure'));
     } finally {
       setDownloadingId(null);
     }
@@ -121,17 +117,13 @@ export function GroupReportsTab({
 
   function getSubmitterLabel(report: ResearchReport) {
     if (report.submittedById === currentUserId) {
-      return 'Báo cáo của tôi';
+      return t('research.reports.mine');
     }
-    return formatReportSubmitterName(report);
+    return formatReportSubmitterName(report, locale);
   }
 
-  // Resolve custom titles/subtitles
-  const displayTitle = subTab === 'me' ? 'Báo cáo của tôi' : 'Báo cáo toàn nhóm';
-  const displaySubtitle =
-    subTab === 'me'
-      ? 'Bạn chỉ có thể xem các báo cáo do mình đã nộp trong nhóm này.'
-      : 'Xem và quản lý các báo cáo tiến độ đã nộp của các thành viên trong nhóm nghiên cứu.';
+  // Resolve the active report tab title.
+  const displayTitle = subTab === 'me' ? t('research.reports.mine') : t('research.reports.group');
 
   // Resolve custom error messages
   let customErrorMsg = '';
@@ -140,53 +132,51 @@ export function GroupReportsTab({
       const status = error.response?.status;
       if (subTab === 'me') {
         if (status === 403) {
-          customErrorMsg = 'Bạn không có quyền xem báo cáo trong nhóm này.';
+          customErrorMsg = t('research.reports.forbiddenMine');
         } else if (status === 404) {
-          customErrorMsg = 'Không tìm thấy nhóm nghiên cứu.';
+          customErrorMsg = t('research.reports.notFound');
         } else {
-          customErrorMsg = 'Không thể tải danh sách báo cáo cá nhân.';
+          customErrorMsg = t('research.reports.loadMineFailed');
         }
       } else {
         if (status === 403) {
-          customErrorMsg = 'Bạn không có quyền xem báo cáo toàn nhóm.';
+          customErrorMsg = t('research.reports.forbiddenGroup');
         } else if (status === 404) {
-          customErrorMsg = 'Không tìm thấy nhóm nghiên cứu.';
+          customErrorMsg = t('research.reports.notFound');
         } else {
-          customErrorMsg = 'Không thể tải danh sách báo cáo toàn nhóm.';
+          customErrorMsg = t('research.reports.loadGroupFailed');
         }
       }
     } else {
       customErrorMsg =
         subTab === 'me'
-          ? 'Không thể tải danh sách báo cáo cá nhân.'
-          : 'Không thể tải danh sách báo cáo toàn nhóm.';
+          ? t('research.reports.loadMineFailed')
+          : t('research.reports.loadGroupFailed');
     }
   }
 
   customErrorMsg = getApiErrorMessage(error, {
     fallback:
       subTab === 'me'
-        ? 'Không thể tải danh sách báo cáo cá nhân.'
-        : 'Không thể tải danh sách báo cáo toàn nhóm.',
+        ? t('research.reports.loadMineFailed')
+        : t('research.reports.loadGroupFailed'),
     forbidden:
       subTab === 'me'
-        ? 'Bạn không có quyền xem báo cáo trong nhóm này.'
-        : 'Bạn không có quyền xem báo cáo toàn nhóm.',
+        ? t('research.reports.forbiddenMine')
+        : t('research.reports.forbiddenGroup'),
   });
 
   // Resolve custom empty states
   const emptyMsg =
     subTab === 'me'
-      ? 'Bạn chưa nộp báo cáo nào trong nhóm này.'
-      : 'Nhóm chưa có báo cáo nào được nộp.';
+      ? t('research.reports.emptyMine')
+      : t('research.reports.emptyGroup');
 
   return (
     <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm space-y-5">
-      {/* Header Info */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-4">
         <div>
           <h3 className="text-lg font-medium text-slate-950">{displayTitle}</h3>
-          <p className="mt-1 text-sm text-slate-600">{displaySubtitle}</p>
         </div>
 
         {/* Sub-tabs for Leader to switch views */}
@@ -200,7 +190,7 @@ export function GroupReportsTab({
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              Báo cáo của tôi
+              {t('research.reports.mine')}
             </button>
             <button
               onClick={() => setSubTab('group')}
@@ -210,14 +200,14 @@ export function GroupReportsTab({
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              Báo cáo toàn nhóm
+              {t('research.reports.group')}
             </button>
           </div>
         )}
       </div>
 
       {isLoading ? (
-        <LoadingState className="py-8">Đang tải báo cáo...</LoadingState>
+        <LoadingState className="py-8">{t('research.report.loadingList')}</LoadingState>
       ) : isError ? (
         <ErrorState onRetry={refetch} className="py-8">
           {customErrorMsg}
@@ -225,11 +215,11 @@ export function GroupReportsTab({
       ) : latestReports.length === 0 ? (
         subTab === 'me' ? (
           myTasks.length === 0 ? (
-            <EmptyState className="py-12">Bạn chưa có nhiệm vụ nào để nộp báo cáo.</EmptyState>
+            <EmptyState className="py-12">{t('research.report.noTasksToSubmit')}</EmptyState>
           ) : (
             <div className="space-y-4">
               <p className="text-sm text-slate-600 font-semibold">
-                Bạn chưa nộp báo cáo nào. Dưới đây là danh sách nhiệm vụ của bạn:
+                {t('research.report.noSubmittedWithTasks')}
               </p>
               <div className="space-y-3">
                 {myTasks.map((task) => (
@@ -238,13 +228,13 @@ export function GroupReportsTab({
                       <div className="min-w-0 flex-1">
                         {task.milestoneTitle && (
                           <p className="text-xs text-slate-500 mb-1">
-                            Mốc: <span className="font-semibold text-slate-700">{task.milestoneTitle}</span>
+                            {t('research.task.milestonePrefix')}: <span className="font-semibold text-slate-700">{task.milestoneTitle}</span>
                           </p>
                         )}
                         <h4 className="font-semibold text-slate-950">{task.title}</h4>
-                        <p className="mt-1 text-sm text-slate-600">{task.description || 'Chưa cập nhật mô tả nhiệm vụ.'}</p>
+                        {task.description ? <p className="mt-1 text-sm text-slate-600">{task.description}</p> : null}
                         <p className="mt-2 text-xs text-slate-500">
-                          Hạn hoàn thành: {formatDate(task.deadline)} · Trạng thái: {task.statusLabel}
+                          {t('research.task.deadline')}: {formatDate(task.deadline, locale)} · {t('research.task.status')}: {task.statusLabel}
                         </p>
                       </div>
                       <div className="shrink-0">
@@ -262,7 +252,7 @@ export function GroupReportsTab({
                           }
                           size="sm"
                         >
-                          Nộp báo cáo
+                          {t('research.report.submit')}
                         </Button>
                       </div>
                     </div>
@@ -288,7 +278,7 @@ export function GroupReportsTab({
                 <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-50 pb-3">
                   <div className="min-w-0">
                     <h4 className="text-base font-medium text-slate-900 leading-snug truncate" title={report.taskTitle || report.title}>
-                      {report.taskTitle || 'Nhiệm vụ chung'}
+                      {report.taskTitle || t('research.report.commonTask')}
                     </h4>
                   </div>
                   
@@ -300,33 +290,33 @@ export function GroupReportsTab({
                 {/* Submitter & File Details */}
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5 text-sm bg-slate-50/50 rounded-lg p-3 border border-slate-100/50">
                   <div className="min-w-0">
-                    <span className="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Người nộp</span>
+                    <span className="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider">{t('research.report.uploader')}</span>
                     <span className="block mt-0.5 font-medium text-slate-800 truncate" title={getSubmitterLabel(report)}>
                       {getSubmitterLabel(report)}
                     </span>
                   </div>
                   <div className="min-w-0">
-                    <span className="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Mốc</span>
+                    <span className="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider">{t('research.report.milestone')}</span>
                     <span className="block mt-0.5 font-medium text-slate-800 truncate" title={report.milestoneTitle || 'N/A'}>
-                      {report.milestoneTitle || 'Nhiệm vụ chung'}
+                      {report.milestoneTitle || t('research.report.commonTask')}
                     </span>
                   </div>
                   <div>
-                    <span className="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Báo cáo mới nhất</span>
+                    <span className="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider">{t('research.report.latest')}</span>
                     <span className="block mt-0.5 font-medium text-blue-700">v{report.version}</span>
                   </div>
                   <div>
-                    <span className="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Ngày nộp</span>
-                    <span className="block mt-0.5 text-slate-700 font-medium">{formatDate(report.createdAt)}</span>
+                    <span className="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider">{t('research.report.submittedAt')}</span>
+                    <span className="block mt-0.5 text-slate-700 font-medium">{formatDate(report.createdAt, locale)}</span>
                   </div>
                   <div className="min-w-0">
-                    <span className="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Tên file</span>
+                    <span className="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider">{t('research.product.fileName')}</span>
                     <button
                       onClick={() => handleDownload(report)}
                       className="block mt-0.5 text-blue-600 hover:text-blue-800 font-semibold underline truncate text-left w-full"
-                      title={report.fileName || 'Chưa đính kèm file'}
+                      title={report.fileName || t('research.report.noAttachment')}
                     >
-                      {report.fileName || 'Chưa đính kèm file'}
+                      {report.fileName || t('research.report.noAttachment')}
                     </button>
                   </div>
                 </div>
@@ -341,11 +331,11 @@ export function GroupReportsTab({
                         setHistoryModalConfig({
                           isOpen: true,
                           taskId: report.taskId!,
-                          taskTitle: report.taskTitle || 'Báo cáo',
+                          taskTitle: report.taskTitle || t('research.report.title'),
                         })
                       }
                     >
-                      Xem lịch sử báo cáo
+                      {t('research.report.history')}
                     </Button>
                     <Button
                       size="sm"
@@ -354,12 +344,12 @@ export function GroupReportsTab({
                         setCommentsModalConfig({
                           isOpen: true,
                           reportId: report.id,
-                          taskTitle: report.taskTitle || 'Báo cáo',
+                          taskTitle: report.taskTitle || t('research.report.title'),
                           version: report.version,
                         })
                       }
                     >
-                      Xem góp ý ({report.commentCount ?? 0})
+                      {t('research.report.viewCommentsCount', undefined, { count: report.commentCount ?? 0 })}
                     </Button>
 
                     {/* Submit / Resubmit Report Button — only when status allows */}
@@ -368,7 +358,7 @@ export function GroupReportsTab({
                         size="sm"
                         onClick={() => setUploadModalConfig({ isOpen: true, report })}
                       >
-                        Nộp lại báo cáo
+                        {t('research.report.resubmit')}
                       </Button>
                     )}
                   </div>
@@ -384,7 +374,7 @@ export function GroupReportsTab({
                         />
                         {Number(report.submittedById) === Number(currentUserId) && report.status === 'SUBMITTED' && (
                           <span className="text-xs italic text-slate-500 bg-slate-100 px-2.5 py-1.5 rounded-md border border-slate-200">
-                            Báo cáo của bạn sẽ được quản lý PTN duyệt trực tiếp.
+                            {t('research.report.managerDirectReview')}
                           </span>
                         )}
                       </>
@@ -450,12 +440,10 @@ export function GroupReportsTab({
           tasks={[
             {
               id: uploadModalConfig.report.taskId!,
-              title: uploadModalConfig.report.taskTitle || 'Nhiệm vụ',
+              title: uploadModalConfig.report.taskTitle || t('research.report.commonTask'),
             } as any,
           ]}
-          title={`Nộp báo cáo cho nhiệm vụ: ${
-            uploadModalConfig.report.taskTitle || 'Nhiệm vụ'
-          }`}
+          title={t('research.report.submitForTask', undefined, { task: uploadModalConfig.report.taskTitle || t('research.report.commonTask') })}
         />
       )}
     </section>

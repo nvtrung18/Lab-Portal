@@ -1,7 +1,8 @@
 import { CalendarClock, History, QrCode } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { ConfirmDialog, EmptyState, ErrorState, LoadingState } from '../../../shared/components';
+import { translate, useI18n, type Locale } from '../../../shared/i18n';
 import { CheckinButton, CheckinQrModal } from '../components';
 import type { CheckinQrHistoryResponse } from '../api';
 import { useCancelBooking, useMyBookings, useMyCheckinQrHistory } from '../hooks';
@@ -18,15 +19,15 @@ const TERMINAL_STATUSES = new Set([
   'COMPLETED',
 ]);
 
-function formatDateTime(value?: string) {
+function formatDateTime(value: string | undefined, locale: Locale) {
   if (!value) {
-    return 'Chưa cập nhật';
+    return translate('common.notUpdated', locale);
   }
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) {
-    return 'Chưa cập nhật';
+    return translate('common.notUpdated', locale);
   }
-  return new Intl.DateTimeFormat('vi-VN', {
+  return new Intl.DateTimeFormat(locale === 'en' ? 'en-US' : 'vi-VN', {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
@@ -36,14 +37,19 @@ function formatDateTime(value?: string) {
 }
 
 export function MyBookingsPage() {
+  const { locale, t } = useI18n();
   const { data: bookings = [], isLoading, isError, refetch } = useMyBookings();
   const qrHistoryQuery = useMyCheckinQrHistory();
   const cancelBooking = useCancelBooking();
   const [view, setView] = useState<BookingView>('UPCOMING');
   const [selectedQr, setSelectedQr] = useState<CheckinQrHistoryResponse | null>(null);
   const [bookingPendingCancel, setBookingPendingCancel] = useState<number | null>(null);
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
   const { upcomingBookings, bookingHistory } = useMemo(() => {
-    const now = Date.now();
     const upcoming = bookings
       .filter((booking) => !TERMINAL_STATUSES.has(booking.status) && new Date(booking.endTime).getTime() >= now)
       .sort((first, second) => new Date(first.startTime).getTime() - new Date(second.startTime).getTime());
@@ -51,7 +57,7 @@ export function MyBookingsPage() {
       .filter((booking) => TERMINAL_STATUSES.has(booking.status) || new Date(booking.endTime).getTime() < now)
       .sort((first, second) => new Date(second.startTime).getTime() - new Date(first.startTime).getTime());
     return { upcomingBookings: upcoming, bookingHistory: history };
-  }, [bookings]);
+  }, [bookings, now]);
   const visibleBookings = view === 'UPCOMING' ? upcomingBookings : bookingHistory;
   const qrHistory = qrHistoryQuery.data ?? [];
   const qrByBookingId = useMemo(
@@ -78,22 +84,19 @@ export function MyBookingsPage() {
   return (
     <section className="mx-auto max-w-7xl space-y-5">
       <div className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800 sm:p-6">
-        <h1 className="text-xl font-semibold tracking-tight text-slate-950 dark:text-white">Ca sử dụng của tôi</h1>
-        <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600 dark:text-slate-300">
-          Theo dõi trạng thái đăng ký và thời gian sử dụng. Khi đến PTN, quản lý sẽ xác nhận có mặt bằng nhận diện khuôn mặt hoặc QR.
-        </p>
-        <div className="mt-5 flex gap-2 border-b border-slate-200 dark:border-slate-800" role="tablist" aria-label="Phân loại ca sử dụng">
-          <BookingTab active={view === 'UPCOMING'} count={upcomingBookings.length} icon={CalendarClock} label="Sắp tới" onClick={() => setView('UPCOMING')} />
-          <BookingTab active={view === 'HISTORY'} count={bookingHistory.length} icon={History} label="Lịch sử" onClick={() => setView('HISTORY')} />
-          <BookingTab active={view === 'QR_HISTORY'} count={qrHistory.length} icon={QrCode} label="Lịch sử QR" onClick={() => setView('QR_HISTORY')} />
+        <h1 className="text-xl font-semibold tracking-tight text-slate-950 dark:text-white">{t('bookings.title')}</h1>
+        <div className="mt-5 flex gap-2" role="tablist" aria-label={t('bookings.viewTabs')}>
+          <BookingTab active={view === 'UPCOMING'} count={upcomingBookings.length} icon={CalendarClock} label={t('bookings.upcoming')} onClick={() => setView('UPCOMING')} />
+          <BookingTab active={view === 'HISTORY'} count={bookingHistory.length} icon={History} label={t('bookings.history')} onClick={() => setView('HISTORY')} />
+          <BookingTab active={view === 'QR_HISTORY'} count={qrHistory.length} icon={QrCode} label={t('bookings.qrHistory')} onClick={() => setView('QR_HISTORY')} />
         </div>
       </div>
 
       {view === 'QR_HISTORY' ? (
         qrHistoryQuery.isLoading ? <LoadingState /> : qrHistoryQuery.isError ? (
-          <ErrorState onRetry={() => void qrHistoryQuery.refetch()}>Không thể tải lịch sử QR.</ErrorState>
+          <ErrorState onRetry={() => void qrHistoryQuery.refetch()}>{t('bookings.qrLoadFailed')}</ErrorState>
         ) : !qrHistory.length ? (
-          <EmptyState>Không có yêu cầu QR nào còn trong thời hạn ca sử dụng.</EmptyState>
+          <EmptyState>{t('bookings.qrEmpty')}</EmptyState>
         ) : (
           <div className={`grid gap-4 ${qrHistory.length > 1 ? 'xl:grid-cols-2' : ''}`}>
             {qrHistory.map((item) => {
@@ -102,17 +105,17 @@ export function MyBookingsPage() {
                 <article key={item.requestId} className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800">
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <h3 className="font-semibold text-slate-950 dark:text-white">{booking?.labName ?? `Ca #${item.bookingId}`}</h3>
-                      <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">Lý do: {item.reason}</p>
+                      <h3 className="font-semibold text-slate-950 dark:text-white">{booking?.labName ?? `${t('bookings.session')} #${item.bookingId}`}</h3>
+                      <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{t('bookings.reason')}: {item.reason}</p>
                     </div>
                     <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-200">
-                      {item.status === 'APPROVED' ? 'Đã cấp QR' : item.status === 'REJECTED' ? 'Đã từ chối' : item.status === 'USED' ? 'Đã sử dụng' : 'Đang chờ'}
+                      {item.status === 'APPROVED' ? t('bookings.qrApproved') : item.status === 'REJECTED' ? t('bookings.qrRejected') : item.status === 'USED' ? t('bookings.qrUsed') : t('bookings.qrPending')}
                     </span>
                   </div>
-                  <p className="mt-4 text-xs text-slate-500">Có hiệu lực đến cuối ca: {formatDateTime(item.expiresAt)}</p>
+                  <p className="mt-4 text-xs text-slate-500">{t('bookings.validUntil')}: {formatDateTime(item.expiresAt, locale)}</p>
                   {item.status === 'APPROVED' && item.token && booking ? (
                     <button className="mt-4 min-h-11 w-full rounded-md bg-blue-700 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-800" type="button" onClick={() => setSelectedQr(item)}>
-                      Xem mã QR
+                      {t('bookings.viewQr')}
                     </button>
                   ) : null}
                 </article>
@@ -123,8 +126,8 @@ export function MyBookingsPage() {
       ) : !visibleBookings.length ? (
         <EmptyState>
           {view === 'UPCOMING'
-            ? 'Bạn chưa có ca sử dụng nào sắp tới.'
-            : 'Bạn chưa có lịch sử sử dụng PTN.'}
+            ? t('bookings.noUpcoming')
+            : t('bookings.noHistory')}
         </EmptyState>
       ) : (
         <div className={`grid gap-4 ${visibleBookings.length > 1 ? 'xl:grid-cols-2' : ''}`}>
@@ -134,9 +137,9 @@ export function MyBookingsPage() {
               <article key={booking.id} className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div>
-                    <h3 className="text-base font-semibold text-slate-950 dark:text-white">{booking.labName ?? 'PTN'}</h3>
+                    <h3 className="text-base font-semibold text-slate-950 dark:text-white">{booking.labName ?? t('lab.shortName')}</h3>
                     <p className="mt-1 text-sm tabular-nums text-slate-600 dark:text-slate-300">
-                      {formatDateTime(booking.startTime)} - {formatDateTime(booking.endTime)}
+                      {formatDateTime(booking.startTime, locale)} - {formatDateTime(booking.endTime, locale)}
                     </p>
                   </div>
                   <span className="w-fit rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-200">
@@ -145,7 +148,7 @@ export function MyBookingsPage() {
                 </div>
 
                 {booking.purpose ? (
-                  <p className="mt-4 text-sm text-slate-600 dark:text-slate-300">Mục đích: {booking.purpose}</p>
+                   <p className="mt-4 text-sm text-slate-600 dark:text-slate-300">{t('bookings.purpose')}: {booking.purpose}</p>
                 ) : null}
 
                 <div className={`mt-5 border-t border-slate-200 pt-4 dark:border-slate-800 ${canCancel ? 'grid gap-3 lg:grid-cols-[minmax(0,1fr)_14rem] lg:items-end' : ''}`}>
@@ -157,7 +160,7 @@ export function MyBookingsPage() {
                       type="button"
                       onClick={() => setBookingPendingCancel(booking.id)}
                     >
-                      Hủy đăng ký
+                       {t('bookings.cancel')}
                     </button>
                   ) : null}
                 </div>
@@ -179,16 +182,16 @@ export function MyBookingsPage() {
         ) : null;
       })() : null}
       <ConfirmDialog
-        confirmLabel="Hủy đăng ký"
+         confirmLabel={t('bookings.cancel')}
         isOpen={bookingPendingCancel !== null}
         isPending={cancelBooking.isPending}
-        message="Bạn có chắc muốn hủy đăng ký sử dụng khung giờ này không?"
+         message={t('bookings.confirmCancel')}
         onCancel={() => setBookingPendingCancel(null)}
         onConfirm={() => {
           if (bookingPendingCancel === null) return;
           cancelBooking.mutate(bookingPendingCancel, { onSuccess: () => setBookingPendingCancel(null) });
         }}
-        title="Hủy đăng ký sử dụng?"
+         title={t('bookings.confirmCancelTitle')}
       />
     </section>
   );

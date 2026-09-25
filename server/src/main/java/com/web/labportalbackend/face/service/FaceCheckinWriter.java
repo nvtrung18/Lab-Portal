@@ -84,6 +84,15 @@ public class FaceCheckinWriter {
                 NotificationTargetModule.FACE, bookingId, null);
     }
 
+    @Transactional
+    public Instant recordStudentSuccess(Booking booking, User student,
+                                        Double confidenceScore, Double livenessScore) {
+        Instant checkedInAt = Instant.now();
+        checkinLogRepository.save(log(booking, FaceCheckinResult.SUCCESS, confidenceScore,
+                livenessScore, null, student));
+        return checkedInAt;
+    }
+
     private Booking ownedBooking(Long actorId, Long bookingId) {
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new EntityNotFoundException("Booking not found"));
