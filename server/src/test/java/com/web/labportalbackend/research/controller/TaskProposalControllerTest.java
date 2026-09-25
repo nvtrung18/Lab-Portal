@@ -1,6 +1,7 @@
 package com.web.labportalbackend.research.controller;
 
 import com.web.labportalbackend.auth.security.JwtAuthenticationFilter;
+import com.web.labportalbackend.common.config.LocaleConfig;
 import com.web.labportalbackend.common.exception.ResourceNotFoundException;
 import com.web.labportalbackend.research.dto.response.TaskProposalResponse;
 import com.web.labportalbackend.research.dto.response.TaskProposalReviewResponse;
@@ -49,13 +50,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(
+        properties = "app.i18n.default-locale=en",
         controllers = TaskProposalController.class,
         excludeFilters = @ComponentScan.Filter(
                 type = FilterType.ASSIGNABLE_TYPE,
                 classes = JwtAuthenticationFilter.class
         )
 )
-@Import(TaskProposalControllerTest.MethodSecurityTestConfig.class)
+@Import({TaskProposalControllerTest.MethodSecurityTestConfig.class, LocaleConfig.class})
 class TaskProposalControllerTest {
 
     @Test

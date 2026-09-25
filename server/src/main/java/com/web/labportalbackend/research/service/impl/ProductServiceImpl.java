@@ -293,7 +293,10 @@ public class ProductServiceImpl implements ProductService {
             ProductType productType
     ) {
         validateProductFile(file, productType);
-        String originalFileName = Paths.get(file.getOriginalFilename() == null ? "product" : file.getOriginalFilename())
+        String suppliedFileName = file.getOriginalFilename();
+        String originalFileName = Paths.get(suppliedFileName == null
+                        ? "product"
+                        : suppliedFileName.replace('\\', '/'))
                 .getFileName()
                 .toString();
         String extension = getExtension(originalFileName);

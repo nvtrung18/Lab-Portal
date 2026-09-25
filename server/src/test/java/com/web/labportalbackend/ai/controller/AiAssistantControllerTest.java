@@ -26,6 +26,7 @@ import com.web.labportalbackend.ai.service.AiAssistantAvailabilityFailure;
 import com.web.labportalbackend.ai.service.AiAssistantGatewayService;
 import com.web.labportalbackend.ai.service.AiCapabilityDeniedException;
 import com.web.labportalbackend.auth.security.JwtAuthenticationFilter;
+import com.web.labportalbackend.common.config.LocaleConfig;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -45,13 +46,14 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(
+        properties = "app.i18n.default-locale=en",
         controllers = AiAssistantController.class,
         excludeFilters = @ComponentScan.Filter(
                 type = FilterType.ASSIGNABLE_TYPE,
                 classes = JwtAuthenticationFilter.class
         )
 )
-@Import(AiAssistantControllerTest.MethodSecurityTestConfig.class)
+@Import({AiAssistantControllerTest.MethodSecurityTestConfig.class, LocaleConfig.class})
 class AiAssistantControllerTest {
 
     @Autowired
@@ -166,7 +168,7 @@ class AiAssistantControllerTest {
                         .content("{\"input\":\"Hello\",\"capability\":\"RESEARCH_GROUP_SUMMARY\",\"resourceId\":30}"))
                 .andExpect(status().isServiceUnavailable())
                 .andExpect(jsonPath("$.code").value(503))
-                .andExpect(jsonPath("$.message").value("AI assistant is temporarily unavailable"))
+                .andExpect(jsonPath("$.message").value("The AI assistant is temporarily unavailable."))
                 .andExpect(content().string(not(containsString("AI_MODEL_NOT_READY"))))
                 .andExpect(content().string(not(containsString("X-Internal-Service-Token"))))
                 .andExpect(content().string(not(containsString("ai-service"))));
@@ -187,7 +189,7 @@ class AiAssistantControllerTest {
                         .content("{\"input\":\"Hello\",\"capability\":\"RESEARCH_GROUP_SUMMARY\",\"resourceId\":30}"))
                 .andExpect(status().isTooManyRequests())
                 .andExpect(jsonPath("$.code").value(429))
-                .andExpect(jsonPath("$.message").value("AI assistant quota exceeded"))
+                .andExpect(jsonPath("$.message").value("The AI assistant usage quota has been exceeded."))
                 .andExpect(content().string(not(containsString("QUOTA_EXCEEDED"))))
                 .andExpect(content().string(not(containsString("temporarily unavailable"))));
     }
@@ -208,7 +210,7 @@ class AiAssistantControllerTest {
                         .content("{\"input\":\"Hello\",\"capability\":\"LAB_POLICY_READ\",\"resourceId\":10}"))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.code").value(403))
-                .andExpect(jsonPath("$.message").value("AI assistant is not available for this request"))
+                .andExpect(jsonPath("$.message").value("The AI assistant is not available for this request."))
                 .andExpect(content().string(not(containsString("CONFIGURATION_UNAVAILABLE"))))
                 .andExpect(content().string(not(containsString("database"))));
     }
@@ -227,7 +229,7 @@ class AiAssistantControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"input\":\"Hello\",\"capability\":\"RESEARCH_GROUP_SUMMARY\",\"resourceId\":30}"))
                 .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.message").value("AI assistant is not available for this request"))
+                .andExpect(jsonPath("$.message").value("The AI assistant is not available for this request."))
                 .andExpect(content().string(not(containsString("NOT_GROUP_MEMBER"))));
     }
 
@@ -245,7 +247,7 @@ class AiAssistantControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"input\":\"Hello\",\"capability\":\"LAB_POLICY_READ\",\"resourceId\":10}"))
                 .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.message").value("AI assistant is not available for this request"))
+                .andExpect(jsonPath("$.message").value("The AI assistant is not available for this request."))
                 .andExpect(content().string(not(containsString("context is unavailable"))));
     }
 
