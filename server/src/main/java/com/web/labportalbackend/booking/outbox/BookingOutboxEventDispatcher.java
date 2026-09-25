@@ -38,6 +38,7 @@ public class BookingOutboxEventDispatcher {
             case SLOT_CANCELLED -> emailService.sendSlotCancelledEmail(payload.recipientEmail(), data);
             case SESSION_COMPLETED -> emailService.sendBookingSessionCompletedEmail(payload.recipientEmail(), data);
             case CHECKED_IN -> emailService.sendBookingCheckedInEmail(payload.recipientEmail(), data);
+            case CLEANING_ASSIGNED -> emailService.sendCleaningAssignedEmail(payload.recipientEmail(), data);
             case PENALTY_CREATED -> emailService.sendPenaltyCreatedEmail(payload.recipientEmail(), data);
         }
     }

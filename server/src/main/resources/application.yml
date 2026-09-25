@@ -42,6 +42,10 @@ spring:
     default-property-inclusion: non_null
     serialization:
       write-dates-as-timestamps: false
+  messages:
+    basename: messages/messages
+    encoding: UTF-8
+    fallback-to-system-locale: false
 
 server:
   port: ${PORT:8080}
@@ -86,8 +90,12 @@ booking:
     cleanup-cron: "${BOOKING_OUTBOX_CLEANUP_CRON:0 30 2 * * *}"
 
 app:
+  i18n:
+    default-locale: ${APP_DEFAULT_LOCALE:vi}
   ai:
     default-time-zone: ${AI_DEFAULT_TIME_ZONE:Asia/Ho_Chi_Minh}
+  network:
+    trusted-proxy-cidrs: ${TRUSTED_PROXY_CIDRS:}
   async:
     side-effects:
       core-pool-size: ${SIDE_EFFECT_CORE_POOL_SIZE:2}

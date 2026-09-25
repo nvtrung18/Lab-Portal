@@ -1,7 +1,7 @@
 import { useId, useState } from 'react';
 
 import { Button } from '../../../shared/components';
-import { VALIDATION_MESSAGES } from '../../../shared/utils';
+import { useI18n } from '../../../shared/i18n';
 
 interface CommentInputProps {
   isSubmitting: boolean;
@@ -9,6 +9,7 @@ interface CommentInputProps {
 }
 
 export function CommentInput({ isSubmitting, onSubmit }: CommentInputProps) {
+  const { t } = useI18n();
   const [content, setContent] = useState('');
   const [error, setError] = useState<string | null>(null);
   const contentId = useId();
@@ -16,7 +17,7 @@ export function CommentInput({ isSubmitting, onSubmit }: CommentInputProps) {
   function handleSubmit() {
     const value = content.trim();
     if (!value) {
-      setError(VALIDATION_MESSAGES.comment);
+      setError(t('validation.comment'));
       return;
     }
     onSubmit(value, () => {
@@ -28,13 +29,13 @@ export function CommentInput({ isSubmitting, onSubmit }: CommentInputProps) {
   return (
     <div className="mt-3 space-y-2">
       <label className="block text-sm font-semibold text-slate-700" htmlFor={contentId}>
-        Nhập nội dung trao đổi
+        {t('research.comment.inputLabel')}
       </label>
       <textarea
         className="min-h-20 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
         id={contentId}
         maxLength={5000}
-        placeholder="Nhập nội dung trao đổi..."
+        placeholder={t('research.comment.inputPlaceholder')}
         value={content}
         onChange={(event) => {
           setContent(event.target.value);
@@ -43,7 +44,7 @@ export function CommentInput({ isSubmitting, onSubmit }: CommentInputProps) {
       />
       {error ? <p className="text-xs font-medium text-red-700">{error}</p> : null}
       <Button disabled={isSubmitting} loading={isSubmitting} onClick={handleSubmit} size="sm">
-        Gửi góp ý
+        {t('research.comment.submit')}
       </Button>
     </div>
   );

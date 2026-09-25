@@ -1,18 +1,10 @@
+import { useI18n } from '../../../shared/i18n';
 import type { ResearchReportStatus } from '../types';
 
 interface ReportStatusBadgeProps {
   status?: ResearchReportStatus | null;
   submittedByGroupRole?: string | null;
 }
-
-const STATUS_LABELS: Record<ResearchReportStatus, string> = {
-  SUBMITTED: 'Chờ trưởng nhóm kiểm tra',
-  LEADER_REVIEWED: 'Chờ quản lý duyệt',
-  NEEDS_REVISION: 'Cần nộp lại',
-  LEADER_REJECTED: 'Trưởng nhóm đã từ chối',
-  APPROVED: 'Đã được duyệt',
-  MANAGER_REJECTED: 'Quản lý đã từ chối',
-};
 
 const STATUS_CLASSES: Record<ResearchReportStatus, string> = {
   SUBMITTED: 'bg-blue-50 text-blue-700 ring-blue-200',
@@ -24,19 +16,20 @@ const STATUS_CLASSES: Record<ResearchReportStatus, string> = {
 };
 
 export function ReportStatusBadge({ status, submittedByGroupRole }: ReportStatusBadgeProps) {
+  const { t } = useI18n();
   if (!status) {
     return (
       <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600 ring-1 ring-slate-200">
-        Chưa nộp báo cáo
+        {t('research.report.notSubmitted')}
       </span>
     );
   }
 
-  let label = STATUS_LABELS[status];
+  let label = getStatusLabel(status, t);
   let cssClass = STATUS_CLASSES[status];
 
   if (status === 'SUBMITTED' && submittedByGroupRole === 'LEADER') {
-    label = 'Chờ quản lý duyệt';
+    label = t('research.report.status.leaderReviewed');
     cssClass = 'bg-amber-50 text-amber-700 ring-amber-200';
   }
 
@@ -45,4 +38,16 @@ export function ReportStatusBadge({ status, submittedByGroupRole }: ReportStatus
       {label}
     </span>
   );
+}
+
+function getStatusLabel(status: ResearchReportStatus, t: ReturnType<typeof useI18n>['t']) {
+  const key = {
+    SUBMITTED: 'submitted',
+    LEADER_REVIEWED: 'leaderReviewed',
+    NEEDS_REVISION: 'needsRevision',
+    LEADER_REJECTED: 'leaderRejected',
+    APPROVED: 'approved',
+    MANAGER_REJECTED: 'managerRejected',
+  }[status];
+  return t(`research.report.status.${key}`);
 }

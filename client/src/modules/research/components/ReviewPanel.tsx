@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { queryKeys } from '../../../shared/api';
 import { Button, EmptyState, ErrorState, LoadingState, toast } from '../../../shared/components';
+import { useI18n } from '../../../shared/i18n';
 import { VALIDATION_MESSAGES } from '../../../shared/utils';
 import { addReportComment, getReportComments } from '../api';
 import type { ResearchReportComment } from '../types';
@@ -18,6 +19,7 @@ interface ReviewPanelProps {
 type SubmitStatus = 'idle' | 'success' | 'error';
 
 export function ReviewPanel({ reportId, canComment, currentUserId }: ReviewPanelProps) {
+  const { t } = useI18n();
   const [content, setContent] = useState('');
   const [submitStatus, setSubmitStatus] = useState<SubmitStatus>('idle');
   const [validationError, setValidationError] = useState<string | null>(null);
@@ -58,7 +60,7 @@ export function ReviewPanel({ reportId, canComment, currentUserId }: ReviewPanel
     },
     onError: () => {
       setSubmitStatus('error');
-      toast.error('Không thể gửi góp ý. Vui lòng thử lại.');
+      toast.error(t('research.report.commentSendFailed'));
     },
   });
 
@@ -82,7 +84,7 @@ export function ReviewPanel({ reportId, canComment, currentUserId }: ReviewPanel
 
   function submitComment() {
     if (!trimmedContent) {
-      setValidationError(VALIDATION_MESSAGES.comment);
+      setValidationError(t('validation.comment'));
       return;
     }
     if (!canSubmit) {
@@ -99,20 +101,20 @@ export function ReviewPanel({ reportId, canComment, currentUserId }: ReviewPanel
   }
 
   return (
-    <section className="mt-4 border-t border-slate-200 pt-4" aria-label="Cửa sổ góp ý">
+    <section className="mt-4 border-t border-slate-200 pt-4" aria-label={t('research.report.discussionTitle')}>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h6 className="text-sm font-semibold text-slate-900">Cửa sổ góp ý</h6>
-        <span className="text-xs font-medium text-slate-500">{comments.length} góp ý</span>
+        <h6 className="text-sm font-semibold text-slate-900">{t('research.report.discussionTitle')}</h6>
+        <span className="text-xs font-medium text-slate-500">{comments.length} {t('research.report.commentsCount')}</span>
       </div>
 
       {isLoading ? (
-        <LoadingState className="mt-3">Đang tải góp ý...</LoadingState>
+        <LoadingState className="mt-3">{t('research.report.commentsLoading')}</LoadingState>
       ) : isError ? (
         <ErrorState className="mt-3" onRetry={() => refetch()}>
-          Không thể tải góp ý.
+          {t('research.report.commentsLoadFailed')}
         </ErrorState>
       ) : !comments.length ? (
-        <EmptyState className="mt-3">Chưa có góp ý nào cho báo cáo này.</EmptyState>
+        <EmptyState className="mt-3">{t('research.report.noCommentsForReport')}</EmptyState>
       ) : (
         <div className="mt-3 max-h-80 space-y-3 overflow-y-auto pr-1">
           {comments.map((comment) => (
@@ -125,13 +127,13 @@ export function ReviewPanel({ reportId, canComment, currentUserId }: ReviewPanel
       {canComment ? (
         <form className="mt-4 space-y-2" onSubmit={handleSubmit}>
           <label className="sr-only" htmlFor={contentId}>
-            Nhập nội dung góp ý hoặc phản hồi
+            {t('research.report.commentInput')}
           </label>
           <textarea
             className="min-h-24 w-full resize-y rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
             id={contentId}
             maxLength={2000}
-            placeholder="Nhập nội dung góp ý hoặc phản hồi..."
+            placeholder={t('research.report.commentPlaceholder')}
             value={content}
             onChange={(event) => {
               setContent(event.target.value);
@@ -146,16 +148,16 @@ export function ReviewPanel({ reportId, canComment, currentUserId }: ReviewPanel
             <div className="space-y-1">
               <p className="text-xs text-slate-500">{trimmedContent.length}/2000</p>
               {validationError ? <p className="text-xs font-medium text-red-700">{validationError}</p> : null}
-              {addComment.isPending ? <p className="text-xs font-medium text-slate-600">Đang gửi góp ý...</p> : null}
+              {addComment.isPending ? <p className="text-xs font-medium text-slate-600">{t('research.report.sendingComment')}</p> : null}
               {submitStatus === 'success' ? (
-                <p className="text-xs font-medium text-emerald-700">Đã gửi góp ý.</p>
+                <p className="text-xs font-medium text-emerald-700">{t('research.report.commentSent')}</p>
               ) : null}
               {submitStatus === 'error' ? (
-                <p className="text-xs font-medium text-red-700">Không thể gửi góp ý. Vui lòng thử lại.</p>
+                <p className="text-xs font-medium text-red-700">{t('research.report.commentSendFailed')}</p>
               ) : null}
             </div>
-            <Button disabled={!canSubmit} loading={addComment.isPending} loadingText="Đang gửi..." size="sm" type="submit">
-              Gửi góp ý
+            <Button disabled={!canSubmit} loading={addComment.isPending} loadingText={t('common.processing')} size="sm" type="submit">
+              {t('research.report.sendComment')}
             </Button>
           </div>
         </form>

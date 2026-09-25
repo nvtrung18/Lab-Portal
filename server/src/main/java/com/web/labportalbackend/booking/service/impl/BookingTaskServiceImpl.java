@@ -15,6 +15,7 @@ import com.web.labportalbackend.booking.service.BookingTaskService;
 import com.web.labportalbackend.booking.service.CleaningService;
 import com.web.labportalbackend.booking.service.PenaltyService;
 import com.web.labportalbackend.common.enums.BookingStatus;
+import com.web.labportalbackend.common.enums.CleaningStatus;
 import com.web.labportalbackend.common.enums.PenaltyStatus;
 import com.web.labportalbackend.common.enums.PenaltyType;
 import com.web.labportalbackend.common.enums.TimeSlotStatus;
@@ -38,6 +39,8 @@ import java.util.List;
 public class BookingTaskServiceImpl implements BookingTaskService {
 
     private static final String NO_SHOW_REASON = "Vắng mặt không thông báo";
+    private static final List<TimeSlotStatus> HIDDEN_SLOT_STATUSES =
+            List.of(TimeSlotStatus.CANCELLED, TimeSlotStatus.INACTIVE, TimeSlotStatus.ARCHIVED);
 
     private final BookingRepository bookingRepository;
     private final PenaltyRepository penaltyRepository;
@@ -110,18 +113,20 @@ public class BookingTaskServiceImpl implements BookingTaskService {
     @Scheduled(cron = "${booking.task.cron:0 * * * * *}")
     public int createCleaningTasksForEndedSlots() {
         Instant cutoff = Instant.now();
-        List<TimeSlot> endedSlots = timeSlotRepository.findEndedSlots(cutoff);
-        int created = 0;
+        List<TimeSlot> newEndedSlots = timeSlotRepository.findEndedSlotsWithoutCleaning(
+                cutoff, HIDDEN_SLOT_STATUSES);
+        newEndedSlots.forEach(slot -> cleaningService.createCleaningTask(slot.getId()));
 
-        for (TimeSlot slot : endedSlots) {
-            if (!cleaningRepository.existsBySlotId(slot.getId())) {
-                cleaningService.createCleaningTask(slot.getId());
-                created++;
-            }
-        }
+        List<Long> pendingSlotIds = cleaningRepository.findPendingUnassignedEndedSlotIds(
+                cutoff, HIDDEN_SLOT_STATUSES, CleaningStatus.PENDING);
+        pendingSlotIds.forEach(cleaningService::createCleaningTask);
+        int created = newEndedSlots.size();
 
         if (created > 0) {
-            log.info("Created {} cleaning task(s) for ended slots", created);
+            log.info("Created {} cleaning task(s) for ended slots and retried {} pending assignment(s)",
+                    created, pendingSlotIds.size());
+        } else if (!pendingSlotIds.isEmpty()) {
+            log.info("Retried {} pending cleaning assignment(s)", pendingSlotIds.size());
         }
         return created;
     }

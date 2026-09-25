@@ -3,14 +3,16 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { queryKeys } from '../../../shared/api';
 import { toast } from '../../../shared/components';
+import { getStoredLocale, translate, translateBackendMessage } from '../../../shared/i18n';
 import { getManagerComplaints, reviewComplaint, type ReviewComplaintPayload } from '../api';
 
-function getErrorMessage(error: unknown, fallback: string) {
+function getErrorMessage(error: unknown, fallbackKey: string) {
+  const locale = getStoredLocale();
   if (axios.isAxiosError(error)) {
     const data = error.response?.data as { message?: string; errors?: string[] } | undefined;
-    return data?.message ?? data?.errors?.[0] ?? fallback;
+    return translateBackendMessage(data?.message ?? data?.errors?.[0], locale) ?? translate(fallbackKey, locale);
   }
-  return fallback;
+  return translate(fallbackKey, getStoredLocale());
 }
 
 export function useManagerComplaints(labId?: number | null) {
@@ -34,10 +36,10 @@ export function useReviewComplaint(labId?: number | null) {
         queryClient.invalidateQueries({ queryKey: queryKeys.penalties.managerComplaints(labId) });
       }
       queryClient.invalidateQueries({ queryKey: queryKeys.penalties.mine });
-      toast.success('Đã xử lý khiếu nại thành công.');
+      toast.success(translate('penalty.toast.complaintReviewed'));
     },
     onError: (error) => {
-      toast.error(getErrorMessage(error, 'Không thể xử lý khiếu nại.'));
+      toast.error(getErrorMessage(error, 'penalty.toast.complaintReviewFailed'));
     },
   });
 }

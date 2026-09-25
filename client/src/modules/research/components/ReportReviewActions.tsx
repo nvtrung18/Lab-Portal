@@ -1,6 +1,7 @@
 import { useState } from 'react';
 
 import { Button } from '../../../shared/components';
+import { useI18n } from '../../../shared/i18n';
 import { useLeaderReviewReport } from '../hooks';
 import type { TaskBoardRole } from '../taskBoardHelpers';
 import type { LeaderReportDecision, ResearchReport } from '../types';
@@ -22,6 +23,7 @@ export function ReportReviewActions({
   projectId,
   groupId,
 }: ReportReviewActionsProps) {
+  const { t } = useI18n();
   const [decision, setDecision] = useState<LeaderReportDecision | null>(null);
   const leaderReview = useLeaderReviewReport(report.id, milestoneId, projectId, groupId, report.taskId);
   const isLeaderAction = role === 'GROUP_LEADER' && report.status === 'SUBMITTED';
@@ -32,16 +34,16 @@ export function ReportReviewActions({
 
   return (
     <section className="mt-4 rounded-md border border-amber-200 bg-amber-50/50 p-4">
-      <h6 className="text-sm font-semibold text-slate-900">Kiểm tra báo cáo của thành viên</h6>
+      <h6 className="text-sm font-semibold text-slate-900">{t('research.report.reviewTitle')}</h6>
       <div className="mt-3 flex flex-wrap gap-2">
         <Button onClick={() => setDecision('ACCEPT')} size="sm">
-          Duyệt báo cáo
+          {t('research.report.reviewApprove')}
         </Button>
         <Button onClick={() => setDecision('REQUEST_REVISION')} size="sm" variant="outline">
-          Yêu cầu chỉnh sửa
+          {t('research.report.reviewRequestRevision')}
         </Button>
         <Button onClick={() => setDecision('REJECT')} size="sm" variant="danger">
-          Từ chối
+          {t('research.report.reviewReject')}
         </Button>
       </div>
       <LeaderReviewModal

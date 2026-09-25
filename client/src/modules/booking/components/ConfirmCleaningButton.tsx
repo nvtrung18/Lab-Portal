@@ -1,6 +1,7 @@
 import { useState } from 'react';
 
 import { Button, Modal } from '../../../shared/components';
+import { useI18n } from '../../../shared/i18n';
 import { useCompleteCleaningTask } from '../hooks';
 
 interface ConfirmCleaningButtonProps {
@@ -9,13 +10,14 @@ interface ConfirmCleaningButtonProps {
 }
 
 export function ConfirmCleaningButton({ taskId, status }: ConfirmCleaningButtonProps) {
+  const { t } = useI18n();
   const [isOpen, setIsOpen] = useState(false);
   const completeTask = useCompleteCleaningTask();
 
   if (status === 'DONE' || status === 'COMPLETED') {
     return (
       <span className="inline-flex rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-200">
-        Đã hoàn thành
+        {t('cleaning.done')}
       </span>
     );
   }
@@ -23,7 +25,7 @@ export function ConfirmCleaningButton({ taskId, status }: ConfirmCleaningButtonP
   if (status === 'CANCELLED') {
     return (
       <span className="inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600 ring-1 ring-slate-200">
-        Đã hủy
+        {t('booking.status.cancelled')}
       </span>
     );
   }
@@ -35,35 +37,35 @@ export function ConfirmCleaningButton({ taskId, status }: ConfirmCleaningButtonP
   return (
     <>
       <Button size="sm" onClick={() => setIsOpen(true)}>
-        Xác nhận hoàn thành
+        {t('cleaning.confirmComplete')}
       </Button>
       <Modal
         closeDisabled={completeTask.isPending}
         footer={(
           <>
             <Button disabled={completeTask.isPending} onClick={() => setIsOpen(false)} variant="outline">
-              Hủy
+              {t('common.cancel')}
             </Button>
             <Button
               loading={completeTask.isPending}
-              loadingText="Đang xác nhận..."
+              loadingText={t('cleaning.confirming')}
               onClick={() => {
                 completeTask.mutate(taskId, {
                   onSuccess: () => setIsOpen(false),
                 });
               }}
             >
-              Xác nhận
+              {t('common.confirm')}
             </Button>
           </>
         )}
         isOpen={isOpen}
         onClose={() => setIsOpen(false)}
         size="sm"
-        title="Xác nhận vệ sinh PTN"
+        title={t('cleaning.confirmTitle')}
       >
         <p className="text-sm text-slate-600">
-          Bạn có chắc muốn xác nhận đã hoàn thành nhiệm vụ vệ sinh này không?
+          {t('cleaning.confirmMessage')}
         </p>
       </Modal>
     </>

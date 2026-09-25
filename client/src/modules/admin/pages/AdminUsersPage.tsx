@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react';
 import { getStoredUser } from '../../../shared/api';
 import { Button, EmptyState, ErrorState, LoadingState, Modal } from '../../../shared/components';
 import { LAB_MANAGER, STUDENT } from '../../../shared/constants/roles';
+import { useI18n, type Locale } from '../../../shared/i18n';
 import { useAdminLabs, useAdminUsers, useBanUser, useUnbanUser, useUpdateUserRoles, useAssignableLabs } from '../hooks';
 import type { LabResponse } from '../../lab/api';
 import type { AssignableLab } from '../api';
@@ -10,23 +11,27 @@ import type { AssignableLab } from '../api';
 const roleOptions = ['', STUDENT, LAB_MANAGER];
 const statusOptions = ['', 'ACTIVE', 'BANNED', 'DISABLED'];
 
-function formatDate(value?: string) {
-  return value ? new Intl.DateTimeFormat('vi-VN').format(new Date(value)) : 'Chưa cập nhật';
+function formatDate(value: string | undefined, locale: Locale, t: (key: string, fallback?: string) => string) {
+  return value
+    ? new Intl.DateTimeFormat(locale === 'en' ? 'en-US' : 'vi-VN').format(new Date(value))
+    : t('common.notUpdated');
 }
 
 function isBanned(status: string) {
   return ['BANNED', 'DISABLED', 'SUSPENDED', 'INACTIVE'].includes(status.toUpperCase());
 }
 
-function formatRole(role: string) {
-  return role === LAB_MANAGER ? 'Quản lý PTN' : role === STUDENT ? 'Sinh viên' : role;
+function formatRole(role: string, t: (key: string, fallback?: string) => string) {
+  return role === LAB_MANAGER ? t('layout.managerRole')
+    : role === STUDENT ? t('layout.studentRole')
+      : role;
 }
 
-function formatStatus(status: string) {
+function formatStatus(status: string, t: (key: string, fallback?: string) => string) {
   const upper = status.toUpperCase();
-  if (upper === 'ACTIVE') return 'Đang hoạt động';
-  if (upper === 'DISABLED') return 'Bị vô hiệu hóa';
-  if (isBanned(status)) return 'Đã khóa';
+  if (upper === 'ACTIVE') return t('adminUsers.active');
+  if (upper === 'DISABLED') return t('adminUsers.disabled');
+  if (isBanned(status)) return t('adminUsers.banned');
   return status;
 }
 
@@ -44,6 +49,7 @@ type ConfirmAction =
   | { type: 'changeRole'; userId: number; userName: string; newRole: string };
 
 export function AdminUsersPage() {
+  const { locale, t } = useI18n();
   const { data: users = [], isLoading, isError, refetch } = useAdminUsers();
   const { data: labs = [] } = useAdminLabs();
   const updateRolesMutation = useUpdateUserRoles();
@@ -166,42 +172,6 @@ export function AdminUsersPage() {
   const isMutating =
     updateRolesMutation.isPending || banMutation.isPending || unbanMutation.isPending;
 
-  const getConfirmModalContent = () => {
-    if (!confirmAction) return { title: '', message: '', danger: false };
-    switch (confirmAction.type) {
-      case 'ban':
-        return {
-          title: 'Xác nhận khóa tài khoản',
-          message: `Bạn có chắc muốn khóa tài khoản "${confirmAction.userName}"? Người dùng sẽ không thể đăng nhập sau khi bị khóa.`,
-          danger: true,
-        };
-      case 'unban':
-        return {
-          title: 'Xác nhận mở khóa tài khoản',
-          message: `Bạn có chắc muốn mở khóa tài khoản "${confirmAction.userName}"?`,
-          danger: false,
-        };
-      case 'changeRole':
-        const managesLab = managedLabByUserId.get(confirmAction.userId);
-        if (confirmAction.newRole === STUDENT && managesLab) {
-          return {
-            title: 'Xác nhận chuyển về sinh viên',
-            message: `Người dùng này đang quản lý PTN ${managesLab}. Nếu chuyển về sinh viên, PTN này sẽ tạm thời chưa có quản lý.`,
-            danger: true,
-            confirmText: 'Xác nhận chuyển vai trò',
-          };
-        }
-        const warningSuffix = (confirmAction.newRole !== LAB_MANAGER && managesLab)
-          ? `\n\nLưu ý: Người dùng này đang quản lý PTN "${managesLab}". Khi đổi vai trò về ${formatRole(confirmAction.newRole)}, hệ thống sẽ tự động gỡ gán quyền quản lý khỏi PTN này.`
-          : '';
-        return {
-          title: 'Xác nhận đổi vai trò',
-          message: `Bạn có chắc muốn đổi vai trò của "${confirmAction.userName}" thành ${formatRole(confirmAction.newRole)}?${warningSuffix}`,
-          danger: confirmAction.newRole !== LAB_MANAGER && !!managesLab,
-        };
-    }
-  };
-
   if (isLoading) {
     return (
       <section className="rounded-lg border border-slate-800 bg-slate-900 p-6 shadow-sm">
@@ -218,21 +188,18 @@ export function AdminUsersPage() {
     );
   }
 
-  const confirmContent = getConfirmModalContent();
+  const confirmContent = getLocalizedConfirmModalContent(confirmAction, managedLabByUserId, t);
 
   return (
     <section className="rounded-lg border border-slate-800 bg-slate-900 p-6 shadow-sm">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <h2 className="text-xl font-semibold text-white">Người dùng</h2>
-          <p className="mt-1 text-sm text-slate-400">
-            Quản lý sinh viên, quản lý PTN và trạng thái tài khoản.
-          </p>
+          <h2 className="text-xl font-semibold text-white">{t('adminUsers.title')}</h2>
         </div>
         <div className="grid gap-3 sm:grid-cols-4">
           <input
             className="rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none placeholder:text-slate-500 focus:border-white"
-            placeholder="Tìm theo tên hoặc email"
+            placeholder={t('adminUsers.searchPlaceholder')}
             value={search}
             onChange={(event) => setSearch(event.target.value)}
           />
@@ -243,7 +210,7 @@ export function AdminUsersPage() {
           >
             {roleOptions.map((role) => (
               <option key={role || 'all'} value={role} className="bg-slate-900 text-slate-100">
-                {role ? formatRole(role) : 'Tất cả vai trò'}
+                {role ? formatRole(role, t) : t('adminUsers.allRoles')}
               </option>
             ))}
           </select>
@@ -254,7 +221,7 @@ export function AdminUsersPage() {
           >
             {statusOptions.map((status) => (
               <option key={status || 'all'} value={status} className="bg-slate-900 text-slate-100">
-                {status ? formatStatus(status) : 'Tất cả trạng thái'}
+                {status ? formatStatus(status, t) : t('adminUsers.allStatuses')}
               </option>
             ))}
           </select>
@@ -263,8 +230,8 @@ export function AdminUsersPage() {
             value={unassignedFilter}
             onChange={(event) => setUnassignedFilter(event.target.value)}
           >
-            <option value="" className="bg-slate-900 text-slate-100">Tất cả gán PTN</option>
-            <option value="UNASSIGNED" className="bg-slate-900 text-slate-100">Chưa gán PTN</option>
+            <option value="" className="bg-slate-900 text-slate-100">{t('adminUsers.allAssignments')}</option>
+            <option value="UNASSIGNED" className="bg-slate-900 text-slate-100">{t('adminUsers.unassigned')}</option>
           </select>
         </div>
       </div>
@@ -276,20 +243,20 @@ export function AdminUsersPage() {
           <table className="w-full min-w-[800px] divide-y divide-slate-800 text-sm">
             <thead>
               <tr className="text-left text-xs font-semibold uppercase text-slate-400">
-                <th className="px-3 py-3">Họ tên</th>
-                <th className="px-3 py-3">Email</th>
-                <th className="px-3 py-3">Vai trò</th>
-                <th className="px-3 py-3">Trạng thái</th>
-                <th className="px-3 py-3">PTN quản lý</th>
-                <th className="px-3 py-3">Ngày tạo</th>
-                <th className="px-3 py-3 text-right">Thao tác</th>
+                <th className="px-3 py-3">{t('adminUsers.tableName')}</th>
+                <th className="px-3 py-3">{t('adminUsers.tableEmail')}</th>
+                <th className="px-3 py-3">{t('adminUsers.tableRole')}</th>
+                <th className="px-3 py-3">{t('adminUsers.tableStatus')}</th>
+                <th className="px-3 py-3">{t('adminUsers.tableLab')}</th>
+                <th className="px-3 py-3">{t('adminUsers.tableCreated')}</th>
+                <th className="px-3 py-3 text-right">{t('adminUsers.tableActions')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800">
               {filteredUsers.map((user) => {
                 const disabled = isMutating;
                 const isSelf = currentUser?.id === user.id;
-                const userDisplayName = user.fullName || user.username || 'Chưa cập nhật';
+                const userDisplayName = user.fullName || user.username || t('common.notUpdated');
 
                 return (
                   <tr key={user.id} className="transition-colors hover:bg-slate-950/30">
@@ -308,14 +275,14 @@ export function AdminUsersPage() {
                       >
                         {[STUDENT, LAB_MANAGER].map((role) => (
                           <option key={role} value={role} className="bg-slate-900 text-slate-100">
-                            {formatRole(role)}
+                            {formatRole(role, t)}
                           </option>
                         ))}
                       </select>
                     </td>
                     <td className="px-3 py-4">
                       <span className={`rounded-full px-2 py-1 text-xs font-semibold ${statusBadgeClass(user.status)}`}>
-                        {formatStatus(user.status)}
+                        {formatStatus(user.status, t)}
                       </span>
                     </td>
                     <td className="px-3 py-4 text-slate-300">
@@ -324,14 +291,14 @@ export function AdminUsersPage() {
                           user.managedLabName ?? managedLabByUserId.get(user.id)
                         ) : (
                           <span className="inline-flex items-center rounded-full bg-amber-950 px-2 py-0.5 text-xs font-medium text-amber-300 ring-1 ring-inset ring-amber-800">
-                            Chưa gán PTN
+                            {t('adminUsers.unassigned')}
                           </span>
                         )
                       ) : (
                         '-'
                       )}
                     </td>
-                    <td className="px-3 py-4 text-slate-300">{formatDate(user.createdAt)}</td>
+                    <td className="px-3 py-4 text-slate-300">{formatDate(user.createdAt, locale, t)}</td>
                     <td className="px-3 py-4">
                       <div className="flex justify-end gap-2">
                         <Button
@@ -340,7 +307,7 @@ export function AdminUsersPage() {
                           disabled={disabled}
                           onClick={() => handleChangeRole(user.id, userDisplayName, user.roles)}
                         >
-                          Đổi vai trò
+                          {t('adminUsers.changeRole')}
                         </Button>
                         {isBanned(user.status) ? (
                           <Button
@@ -349,17 +316,17 @@ export function AdminUsersPage() {
                             disabled={disabled}
                             onClick={() => handleUnbanUser(user.id, userDisplayName)}
                           >
-                            Mở khóa
+                            {t('adminUsers.unlock')}
                           </Button>
                         ) : (
                           <Button
                             size="sm"
                             variant="danger"
                             disabled={disabled || isSelf}
-                            title={isSelf ? 'Không thể tự khóa tài khoản của mình' : undefined}
+                            title={isSelf ? t('adminUsers.selfLockDenied') : undefined}
                             onClick={() => handleBanUser(user.id, userDisplayName, user.roles)}
                           >
-                            Khóa tài khoản
+                            {t('adminUsers.lock')}
                           </Button>
                         )}
                       </div>
@@ -398,6 +365,52 @@ export function AdminUsersPage() {
   );
 }
 
+function getLocalizedConfirmModalContent(
+  confirmAction: ConfirmAction | null,
+  managedLabByUserId: Map<number, string>,
+  t: ReturnType<typeof useI18n>['t'],
+) {
+  if (!confirmAction) return { title: '', message: '', danger: false };
+
+  const fill = (key: string, params: Record<string, string>) =>
+    t(key).replace(/\{(\w+)\}/g, (_, name: string) => params[name] ?? `{${name}}`);
+
+  switch (confirmAction.type) {
+    case 'ban':
+      return {
+        title: t('adminUsers.confirmLockTitle'),
+        message: fill('adminUsers.confirmLockMessage', { user: confirmAction.userName }),
+        danger: true,
+      };
+    case 'unban':
+      return {
+        title: t('adminUsers.confirmUnlockTitle'),
+        message: fill('adminUsers.confirmUnlockMessage', { user: confirmAction.userName }),
+        danger: false,
+      };
+    case 'changeRole': {
+      const managesLab = managedLabByUserId.get(confirmAction.userId);
+      if (confirmAction.newRole === STUDENT && managesLab) {
+        return {
+          title: t('adminUsers.confirmStudentTitle'),
+          message: fill('adminUsers.confirmStudentMessage', { lab: managesLab }),
+          danger: true,
+          confirmText: t('adminUsers.confirmRole'),
+        };
+      }
+      const roleLabel = formatRole(confirmAction.newRole, t);
+      const warningSuffix = confirmAction.newRole !== LAB_MANAGER && managesLab
+        ? `\n\n${fill('adminUsers.confirmRoleWarning', { lab: managesLab, role: roleLabel })}`
+        : '';
+      return {
+        title: t('adminUsers.confirmRoleTitle'),
+        message: `${fill('adminUsers.confirmRoleMessage', { user: confirmAction.userName, role: roleLabel })}${warningSuffix}`,
+        danger: confirmAction.newRole !== LAB_MANAGER && !!managesLab,
+      };
+    }
+  }
+}
+
 interface ConfirmModalProps {
   danger: boolean;
   isLoading: boolean;
@@ -409,6 +422,8 @@ interface ConfirmModalProps {
 }
 
 function ConfirmModal({ danger, isLoading, message, title, confirmText, onClose, onConfirm }: ConfirmModalProps) {
+  const { t } = useI18n();
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-slate-950/70 p-2 sm:p-4">
       <div className="w-full max-w-md rounded-lg border border-slate-800 bg-slate-900 p-6 shadow-xl">
@@ -421,17 +436,17 @@ function ConfirmModal({ danger, isLoading, message, title, confirmText, onClose,
             disabled={isLoading}
             onClick={onClose}
           >
-            Hủy
+            {t('common.cancel')}
           </Button>
           <Button
             size="sm"
             variant={danger ? 'danger' : 'primary'}
             disabled={isLoading}
             loading={isLoading}
-            loadingText="Đang xử lý..."
+            loadingText={t('common.loading')}
             onClick={onConfirm}
           >
-            {confirmText || 'Xác nhận'}
+            {confirmText || t('common.confirm')}
           </Button>
         </div>
       </div>
@@ -456,6 +471,7 @@ function RoleAssignmentModal({
   onClose,
   onConfirm,
 }: RoleAssignmentModalProps) {
+  const { t } = useI18n();
   const { data: assignableLabs = [], isLoading: isLoadingLabs } = useAssignableLabs();
   const [selectedLabId, setSelectedLabId] = useState<string>('');
 
@@ -469,36 +485,33 @@ function RoleAssignmentModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-slate-950/70 p-2 sm:p-4">
       <div className="w-full max-w-lg rounded-lg border border-slate-800 bg-slate-900 p-6 shadow-xl">
-        <h3 className="text-lg font-semibold text-white">Cấp quyền quản lý PTN</h3>
+        <h3 className="text-lg font-semibold text-white">{t('adminUsers.assignManager')}</h3>
         
         <div className="mt-4 space-y-2 text-sm text-slate-300">
           <div>
-            <span className="text-slate-400">Người dùng:</span>{' '}
+            <span className="text-slate-400">{t('adminUsers.user')}</span>{' '}
             <strong className="text-slate-100">{userName}</strong> ({userEmail})
           </div>
           <div>
-            <span className="text-slate-400">Vai trò mới:</span>{' '}
+            <span className="text-slate-400">{t('adminUsers.newRole')}</span>{' '}
             <span className="inline-flex items-center rounded-md bg-amber-950 px-2.5 py-0.5 text-xs font-medium text-amber-300 ring-1 ring-inset ring-amber-800">
-              Quản lý PTN
+              {t('layout.managerRole')}
             </span>
           </div>
         </div>
 
         <div className="mt-6">
           <label className="block text-sm font-medium text-slate-300" htmlFor="assignLabSelect">
-            Chọn Phòng Thí Nghiệm quản lý
+            {t('adminUsers.chooseLab')}
           </label>
           
           {isLoadingLabs ? (
             <div className="mt-2 py-4 text-center text-sm text-slate-400">
-              Đang tải danh sách PTN...
+              {t('adminUsers.loadingLabs')}
             </div>
           ) : assignableLabs.length === 0 ? (
             <div className="mt-2 rounded-md border border-dashed border-slate-700 bg-slate-950/50 p-4 text-center">
-              <p className="text-sm text-slate-400 font-medium">Không có PTN nào có thể gán quản lý.</p>
-              <p className="mt-1.5 text-xs text-slate-500">
-                Vui lòng tạo PTN mới hoặc bỏ gán manager khỏi PTN hiện có.
-              </p>
+              <p className="text-sm text-slate-400 font-medium">{t('adminUsers.noAssignableLabs')}</p>
             </div>
           ) : (
             <select
@@ -508,7 +521,7 @@ function RoleAssignmentModal({
               disabled={isLoading}
               onChange={(e) => setSelectedLabId(e.target.value)}
             >
-              <option value="">-- Chọn PTN --</option>
+              <option value="">{t('adminUsers.chooseLabOption')}</option>
               {assignableLabs.map((lab) => (
                 <option key={lab.id} value={lab.id}>
                   {lab.name} {lab.department ? `(${lab.department})` : ''}
@@ -518,10 +531,6 @@ function RoleAssignmentModal({
           )}
         </div>
 
-        <p className="mt-4 text-xs text-slate-400">
-          * User này sẽ có quyền quản lý PTN được chọn.
-        </p>
-
         <div className="mt-6 flex justify-end gap-3">
           <Button
             size="sm"
@@ -529,17 +538,17 @@ function RoleAssignmentModal({
             disabled={isLoading}
             onClick={onClose}
           >
-            Hủy
+            {t('common.cancel')}
           </Button>
           <Button
             size="sm"
             variant="primary"
             disabled={isConfirmDisabled}
             loading={isLoading}
-            loadingText="Đang cấp quyền..."
+            loadingText={t('adminUsers.assignLoading')}
             onClick={handleConfirm}
           >
-            Xác nhận cấp quyền
+            {t('adminUsers.assignConfirm')}
           </Button>
         </div>
       </div>

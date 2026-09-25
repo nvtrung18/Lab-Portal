@@ -6,16 +6,22 @@ import {
   getMembershipLabId,
   getMembershipLabName,
 } from '../../../shared/utils/membership';
+import { useI18n, type Locale, translate } from '../../../shared/i18n';
 import { useLab } from '../../lab/hooks';
 import { useCurrentUser } from '../hooks';
 
 const ACTIVE_LAB_STORAGE_KEY = 'student.activeLabId';
 
-function formatMembershipRole(role?: string | null) {
-  return role === 'LEADER' ? 'Trưởng nhóm' : role === 'LAB_MANAGER' ? 'Quản lý PTN' : 'Sinh viên';
+function formatMembershipRole(role: string | undefined | null, locale: Locale) {
+  return role === 'LEADER'
+    ? translate('research.role.leader', locale)
+    : role === 'LAB_MANAGER'
+      ? translate('layout.managerRole', locale)
+      : translate('layout.studentRole', locale);
 }
 
 export function OtherPage() {
+  const { locale, t } = useI18n();
   const { data: currentUser, isLoading } = useCurrentUser();
   const activeMemberships = useMemo(
     () => getActiveMemberships(currentUser),
@@ -67,7 +73,7 @@ export function OtherPage() {
   if (!activeMemberships.length) {
     return (
       <section className="rounded-lg border border-slate-200 bg-white p-6 text-sm text-slate-600 shadow-sm">
-        Bạn chưa có tư cách thành viên đang hoạt động để xem khu vực nội bộ của PTN.
+        {t('myLab.noMembership')}
       </section>
     );
   }
@@ -75,19 +81,13 @@ export function OtherPage() {
   return (
     <section className="space-y-6">
       <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-        <h1 className="text-xl font-semibold text-slate-950">PTN của tôi</h1>
-        <p className="mt-2 text-sm text-slate-600">
-          Khu vực dành cho các phòng thí nghiệm bạn đang là thành viên hoạt động.
-        </p>
+        <h1 className="text-xl font-semibold text-slate-950 dark:text-white">{t('myLab.title')}</h1>
       </div>
 
       <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h3 className="text-sm font-semibold text-slate-950">PTN đang chọn</h3>
-            <p className="mt-1 text-sm text-slate-600">
-              Chỉ hiển thị dữ liệu của PTN mà bạn đã tham gia.
-            </p>
+            <h3 className="text-sm font-semibold text-slate-950 dark:text-white">{t('myLab.selectedLab')}</h3>
           </div>
 
           {activeMemberships.length > 1 ? (
@@ -107,38 +107,38 @@ export function OtherPage() {
             </select>
           ) : (
             <span className="rounded-md bg-slate-100 px-3 py-2 text-sm font-medium text-slate-700">
-              {activeMembership ? getMembershipLabName(activeMembership) : 'Chưa chọn PTN'}
+              {activeMembership ? getMembershipLabName(activeMembership) : t('myLab.notSelected')}
             </span>
           )}
         </div>
       </div>
 
       <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-        <h3 className="text-sm font-semibold text-slate-950">Thông tin PTN</h3>
+        <h3 className="text-sm font-semibold text-slate-950 dark:text-white">{t('myLab.info')}</h3>
         <dl className="mt-4 grid gap-4 sm:grid-cols-2">
           <div>
-            <dt className="text-sm text-slate-500">Tên PTN</dt>
-            <dd className="mt-1 text-sm font-medium text-slate-950">
+            <dt className="text-sm text-slate-500">{t('myLab.name')}</dt>
+            <dd className="mt-1 text-sm font-medium text-slate-950 dark:text-slate-100">
               {activeLab?.labName ??
-                (activeMembership ? getMembershipLabName(activeMembership) : 'Chưa cập nhật')}
+                (activeMembership ? getMembershipLabName(activeMembership) : t('common.notUpdated'))}
             </dd>
           </div>
           <div>
-            <dt className="text-sm text-slate-500">Người quản lý</dt>
-            <dd className="mt-1 text-sm font-medium text-slate-950">
-              {activeLab?.manager?.fullName || activeLab?.manager?.email || 'Chưa cập nhật'}
+            <dt className="text-sm text-slate-500">{t('lab.manager')}</dt>
+            <dd className="mt-1 text-sm font-medium text-slate-950 dark:text-slate-100">
+              {activeLab?.manager?.fullName || activeLab?.manager?.email || t('common.notUpdated')}
             </dd>
           </div>
           <div>
-            <dt className="text-sm text-slate-500">Vai trò thành viên</dt>
-            <dd className="mt-1 text-sm font-medium text-slate-950">
-              {formatMembershipRole(activeMembership?.role)}
+            <dt className="text-sm text-slate-500">{t('myLab.memberRole')}</dt>
+            <dd className="mt-1 text-sm font-medium text-slate-950 dark:text-slate-100">
+              {formatMembershipRole(activeMembership?.role, locale)}
             </dd>
           </div>
           <div>
-            <dt className="text-sm text-slate-500">Ngày tham gia</dt>
-            <dd className="mt-1 text-sm font-medium text-slate-950">
-              {activeMembership?.joinedAt ?? activeMembership?.createdAt ?? 'Chưa cập nhật'}
+            <dt className="text-sm text-slate-500">{t('myLab.joinedAt')}</dt>
+            <dd className="mt-1 text-sm font-medium text-slate-950 dark:text-slate-100">
+              {activeMembership?.joinedAt ?? activeMembership?.createdAt ?? t('common.notUpdated')}
             </dd>
           </div>
         </dl>
@@ -146,10 +146,7 @@ export function OtherPage() {
 
       <div>
         <div className="mb-4">
-          <h3 className="text-lg font-semibold text-slate-950">Khung giờ sử dụng</h3>
-          <p className="mt-1 text-sm text-slate-600">
-            Danh sách khung giờ sử dụng của PTN đang chọn.
-          </p>
+          <h3 className="text-lg font-semibold text-slate-950 dark:text-white">{t('myLab.slots')}</h3>
         </div>
         <SlotList labId={activeLabId} mode="student" readonly />
       </div>

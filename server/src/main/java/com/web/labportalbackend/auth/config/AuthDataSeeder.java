@@ -5,18 +5,20 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * One-time data seeder that runs on application startup.
+ * One-time data seeder that runs on non-production profiles.
  * <p>
  * Ensures the default admin user has a correctly encoded password,
  * since Flyway migrations use raw SQL and cannot invoke BCrypt directly.
  */
 @Slf4j
 @Component
+@Profile("!prod")
 @RequiredArgsConstructor
 public class AuthDataSeeder implements ApplicationRunner {
 

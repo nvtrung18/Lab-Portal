@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 
 import { queryKeys } from '../../../shared/api';
 import { toast } from '../../../shared/components';
+import { getStoredLocale, translate } from '../../../shared/i18n';
 import { streamRealtimeEvents } from '../api';
 import type { RealtimeEvent } from '../types';
 
@@ -22,7 +23,16 @@ export function useRealtimeEvents(enabled: boolean) {
 
       void queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all });
       if (event.title && event.message) {
-        toast.info(event.message, event.title);
+        if (event.notificationEventType === 'CLEANING_TASK_ASSIGNED') {
+          toast.info(translate('notifications.cleaningAssignedMessage', getStoredLocale()),
+            translate('notifications.cleaningAssignedTitle', getStoredLocale()));
+        } else {
+          toast.info(event.message, event.title);
+        }
+      }
+
+      if (event.notificationEventType === 'CLEANING_TASK_ASSIGNED') {
+        void queryClient.invalidateQueries({ queryKey: queryKeys.cleaning.mine });
       }
 
       if (

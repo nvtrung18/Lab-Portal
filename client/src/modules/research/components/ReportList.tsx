@@ -1,6 +1,7 @@
 import { useState } from 'react';
 
 import { Button, EmptyState, ErrorState, LoadingState, toast } from '../../../shared/components';
+import { useI18n } from '../../../shared/i18n';
 import { downloadReportFile } from '../api';
 import { useReportsByTask } from '../hooks';
 import type { ResearchReport } from '../types';
@@ -17,20 +18,21 @@ interface ReportListProps {
 }
 
 export function ReportList({ taskId, currentUserId }: ReportListProps) {
+  const { t } = useI18n();
   const { data: reports = [], isError, isLoading, refetch } = useReportsByTask(taskId);
   const orderedReports = sortReportsNewestFirst(reports);
 
   return (
     <section className="mt-4 border-t border-slate-100 pt-4">
-      <h5 className="text-sm font-semibold text-slate-800">Lịch sử nộp báo cáo</h5>
+      <h5 className="text-sm font-semibold text-slate-800">{t('research.report.history')}</h5>
       {isLoading ? (
-        <LoadingState className="mt-3">Đang tải danh sách báo cáo...</LoadingState>
+        <LoadingState className="mt-3">{t('research.report.loadingList')}</LoadingState>
       ) : isError ? (
         <ErrorState className="mt-3" onRetry={() => refetch()}>
-          Không thể tải danh sách báo cáo.
+          {t('research.report.loadFailed')}
         </ErrorState>
       ) : !orderedReports.length ? (
-        <EmptyState className="mt-3">Chưa có báo cáo nào được nộp.</EmptyState>
+        <EmptyState className="mt-3">{t('research.report.empty')}</EmptyState>
       ) : (
         <div className="mt-3 space-y-3">
           {orderedReports.map((report, index) => (
@@ -66,6 +68,7 @@ export function ReportReadOnlyItem({
   report: ResearchReport;
   role?: TaskBoardRole;
 }) {
+  const { locale, t } = useI18n();
   const [isDownloading, setIsDownloading] = useState(false);
   const [isReviewOpen, setIsReviewOpen] = useState(false);
 
@@ -80,7 +83,7 @@ export function ReportReadOnlyItem({
       link.click();
       URL.revokeObjectURL(fileUrl);
     } catch {
-      toast.error('Không thể tải tài liệu báo cáo. Vui lòng thử lại.');
+      toast.error(t('research.report.downloadFailed'));
     } finally {
       setIsDownloading(false);
     }
@@ -94,7 +97,7 @@ export function ReportReadOnlyItem({
             <span className="text-sm font-semibold text-slate-950">v{report.version}</span>
             {isLatest ? (
               <span className="rounded-full bg-slate-900 px-2 py-0.5 text-xs font-semibold text-white">
-                Bản mới nhất
+                {t('research.report.latestVersion')}
               </span>
             ) : null}
           </div>
@@ -106,27 +109,27 @@ export function ReportReadOnlyItem({
       <ReportStatusNotice status={report.status} />
 
       <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
-        <ReportField label="Người nộp" value={getSubmitterLabel(report)} />
-        <ReportField label="Ngày nộp" value={formatDate(report.createdAt)} />
-        {report.milestoneTitle ? <ReportField label="Mốc nghiên cứu" value={report.milestoneTitle} /> : null}
-        {report.taskTitle ? <ReportField label="Nhiệm vụ" value={report.taskTitle} /> : null}
-        <ReportField label="Tên file" value={report.fileName || 'Chưa cập nhật'} />
-        <ReportField label="Dung lượng" value={formatFileSize(report.fileSize)} />
+        <ReportField label={t('research.report.uploader')} value={getSubmitterLabel(report, locale)} />
+        <ReportField label={t('research.report.submittedAt')} value={formatDate(report.createdAt, locale)} />
+        {report.milestoneTitle ? <ReportField label={t('research.report.milestone')} value={report.milestoneTitle} /> : null}
+        {report.taskTitle ? <ReportField label={t('research.report.task')} value={report.taskTitle} /> : null}
+        <ReportField label={t('research.product.fileName')} value={report.fileName || t('common.notUpdated')} />
+        <ReportField label={t('research.product.fileSize')} value={formatFileSize(report.fileSize, t('common.notUpdated'))} />
       </dl>
 
       <div className="mt-4 flex flex-wrap gap-3 text-sm">
         <Button
           loading={isDownloading}
-          loadingText="Đang tải..."
+          loadingText={t('common.loading')}
           size="sm"
           variant="outline"
           onClick={handleDownload}
         >
-          Tải tài liệu
+          {t('research.report.openDocument')}
         </Button>
         {canComment ? (
           <Button onClick={() => setIsReviewOpen((current) => !current)} size="sm" variant="outline">
-            {isReviewOpen ? 'Ẩn góp ý' : getReviewButtonLabel(report.commentCount)}
+            {isReviewOpen ? t('research.report.hideComments') : getReviewButtonLabel(report.commentCount, t)}
           </Button>
         ) : null}
         {role === 'GROUP_LEADER' && isLatest ? (
@@ -139,7 +142,7 @@ export function ReportReadOnlyItem({
             rel="noreferrer"
             target="_blank"
           >
-            Link minh chứng
+            {t('research.report.evidenceLink')}
           </a>
         ) : null}
       </div>
@@ -153,25 +156,26 @@ export function ReportReadOnlyItem({
   );
 }
 
-function getReviewButtonLabel(commentCount?: number | null) {
+function getReviewButtonLabel(commentCount: number | null | undefined, t: ReturnType<typeof useI18n>['t']) {
   if (commentCount == null) {
-    return 'Xem góp ý';
+    return t('research.report.viewComments');
   }
-  return `Xem góp ý (${commentCount})`;
+  return t('research.report.viewCommentsCount', undefined, { count: commentCount });
 }
 
 function ReportStatusNotice({ status }: { status: ResearchReport['status'] }) {
+  const { t } = useI18n();
   if (status === 'NEEDS_REVISION') {
     return (
       <p className="mt-3 rounded-md border border-orange-200 bg-orange-50 px-3 py-2 text-sm font-semibold text-orange-800">
-        Báo cáo cần chỉnh sửa
+        {t('research.report.needsRevision')}
       </p>
     );
   }
   if (status === 'APPROVED') {
     return (
       <p className="mt-3 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-800">
-        Báo cáo đã được duyệt
+        {t('research.report.approvedNotice')}
       </p>
     );
   }
@@ -187,13 +191,13 @@ function ReportField({ label, value }: { label: string; value: string }) {
   );
 }
 
-function getSubmitterLabel(report: ResearchReport) {
-  return formatReportSubmitterName(report);
+function getSubmitterLabel(report: ResearchReport, locale: 'vi' | 'en') {
+  return formatReportSubmitterName(report, locale);
 }
 
-function formatFileSize(size?: number | null) {
+function formatFileSize(size: number | null | undefined, fallback: string) {
   if (size == null) {
-    return 'Chưa cập nhật';
+    return fallback;
   }
   if (size < 1024) {
     return `${size} B`;

@@ -12,13 +12,7 @@ import {
 } from '../../booking/utils';
 import { formatDateTime } from '../../penalty/utils';
 import { useCurrentUser } from '../../user/hooks';
-
-const FILTERS = [
-  { value: 'ALL', label: 'Tất cả' },
-  { value: 'PENDING', label: 'Chưa phân công' },
-  { value: 'ASSIGNED', label: 'Đã phân công' },
-  { value: 'DONE', label: 'Đã hoàn thành' },
-];
+import { useI18n } from '../../../shared/i18n';
 
 function isDoneStatus(status: string) {
   return status === 'DONE' || status === 'COMPLETED';
@@ -33,6 +27,13 @@ function canCancel(task: CleaningTask) {
 }
 
 export function CleaningPage() {
+  const { t } = useI18n();
+  const filters = [
+    { value: 'ALL', label: t('common.all') },
+    { value: 'PENDING', label: t('cleaning.pending') },
+    { value: 'ASSIGNED', label: t('cleaning.assigned') },
+    { value: 'DONE', label: t('cleaning.done') },
+  ];
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [assignTask, setAssignTask] = useState<CleaningTask | null>(null);
   const { data: currentUser, isLoading: isLoadingUser } = useCurrentUser();
@@ -68,7 +69,7 @@ export function CleaningPage() {
   if (!managedLabId) {
     return (
       <section className="rounded-lg border border-amber-200 bg-white p-6 text-sm text-amber-700 shadow-sm">
-        Bạn chưa được phân công quản lý PTN nào.
+        {t('layout.unassignedLab')}
       </section>
     );
   }
@@ -76,17 +77,14 @@ export function CleaningPage() {
   return (
     <section className="space-y-6">
       <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-        <h1 className="text-xl font-semibold text-slate-950">Phân công vệ sinh PTN</h1>
-        <p className="mt-2 text-sm text-slate-600">
-          Quản lý và phân công nhiệm vụ vệ sinh cho các ca sử dụng PTN.
-        </p>
+        <h1 className="text-xl font-semibold text-slate-950 dark:text-white">{t('cleaning.title')}</h1>
         <p className="mt-3 text-sm font-medium text-slate-800">
-          PTN: {managedLabName ?? `#${managedLabId}`}
+          {t('lab.label')}: {managedLabName ?? `#${managedLabId}`}
         </p>
       </div>
 
       <div className="flex max-w-full gap-2 overscroll-x-contain overflow-x-auto pb-1">
-        {FILTERS.map((filter) => (
+        {filters.map((filter) => (
           <Button
             key={filter.value}
             size="sm"
@@ -100,11 +98,11 @@ export function CleaningPage() {
 
       {isError ? (
         <ErrorState onRetry={() => refetch()}>
-          Không thể tải danh sách nhiệm vụ vệ sinh.
+          {t('cleaning.loadFailed')}
         </ErrorState>
       ) : !filteredTasks.length ? (
         <EmptyState>
-          Hiện chưa có ca sử dụng nào cần phân công vệ sinh.
+          {t('cleaning.empty')}
         </EmptyState>
       ) : (
         <div className="grid gap-4 lg:grid-cols-2">
@@ -115,7 +113,7 @@ export function CleaningPage() {
             >
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div>
-                  <h3 className="text-base font-semibold text-slate-950">{task.labName ?? 'PTN'}</h3>
+                  <h3 className="text-base font-semibold text-slate-950 dark:text-white">{task.labName ?? t('lab.shortName')}</h3>
                   <p className="mt-1 text-sm text-slate-600">
                     {formatDateTime(task.startTime)} - {formatDateTime(task.endTime)}
                   </p>
@@ -129,13 +127,13 @@ export function CleaningPage() {
 
               <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
                 <div>
-                  <dt className="font-semibold text-slate-700">Số sinh viên tham gia</dt>
+                  <dt className="font-semibold text-slate-700">{t('cleaning.participants')}</dt>
                   <dd className="mt-1 text-slate-600">{task.participantCount ?? 0}</dd>
                 </div>
                 <div>
-                  <dt className="font-semibold text-slate-700">Sinh viên được phân công</dt>
+                  <dt className="font-semibold text-slate-700">{t('cleaning.assignedStudent')}</dt>
                   <dd className="mt-1 text-slate-600">
-                    {task.staffName || task.staffEmail || 'Chưa phân công'}
+                    {task.staffName || task.staffEmail || t('lab.notAssigned')}
                   </dd>
                 </div>
               </dl>
@@ -143,14 +141,14 @@ export function CleaningPage() {
               <div className="mt-5 flex flex-wrap gap-2">
                 {canAssign(task) ? (
                   <Button onClick={() => setAssignTask(task)} size="sm">
-                    Phân công vệ sinh
+                    {t('cleaning.assign')}
                   </Button>
                 ) : null}
                 {canCancel(task) ? (
                   <Button
                     disabled={cancelTask.isPending}
                     loading={cancelTask.isPending}
-                    loadingText="Đang hủy..."
+                    loadingText={t('cleaning.cancelling')}
                     size="sm"
                     variant="danger"
                     onClick={() => {
@@ -159,7 +157,7 @@ export function CleaningPage() {
                       }
                     }}
                   >
-                    Hủy nhiệm vụ
+                    {t('cleaning.cancel')}
                   </Button>
                 ) : null}
               </div>

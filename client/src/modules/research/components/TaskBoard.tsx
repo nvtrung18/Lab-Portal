@@ -2,11 +2,11 @@ import { useCallback, useMemo, useState } from 'react';
 import type { DragEvent } from 'react';
 
 import { Button, EmptyState, ErrorState, toast } from '../../../shared/components';
+import { useI18n } from '../../../shared/i18n';
 import { useReportsByMilestone, useTasksByMilestone, useUpdateTaskStatus, useCreateTask, useResearchGroupMembers } from '../hooks';
 import {
   canDragTask,
   canMoveTask,
-  formatTaskColumn,
   getTaskDragDisabledReason,
   groupTasksByColumn,
   TASK_COLUMNS,
@@ -29,6 +29,7 @@ interface TaskBoardProps {
 }
 
 export function TaskBoard({ milestoneId, readonly = true, role, currentUserId, projectId, groupId, labId }: TaskBoardProps) {
+  const { locale, t } = useI18n();
   const [draggedTask, setDraggedTask] = useState<{ taskId: number; sourceStatus: ResearchTaskStatus } | null>(null);
   const [dropColumn, setDropColumn] = useState<TaskColumn | null>(null);
   const [reportTask, setReportTask] = useState<ResearchTask | null>(null);
@@ -66,10 +67,10 @@ export function TaskBoard({ milestoneId, readonly = true, role, currentUserId, p
   }, [reports]);
   const canInteract = !readonly && Boolean(role);
   const boardTitle = memberView
-    ? 'Nhiệm vụ của tôi'
+    ? t('research.task.boardMine')
     : role === 'GROUP_LEADER'
-      ? 'Bảng tiến độ nhóm'
-      : 'Nhiệm vụ nghiên cứu';
+      ? t('research.task.boardGroup')
+      : t('research.task.boardTitle');
 
   const handleDragStart = useCallback((event: DragEvent<HTMLElement>, task: ResearchTask) => {
     event.dataTransfer.effectAllowed = 'move';
@@ -110,8 +111,8 @@ export function TaskBoard({ milestoneId, readonly = true, role, currentUserId, p
     })) {
       toast.error(
         role === 'STUDENT_MEMBER'
-          ? 'Bạn không có quyền chuyển nhiệm vụ sang trạng thái này.'
-          : 'Không thể chuyển nhiệm vụ sang trạng thái này.',
+          ? t('research.task.boardForbiddenMove')
+          : t('research.task.boardMoveFailed'),
       );
       return;
     }
@@ -125,25 +126,20 @@ export function TaskBoard({ milestoneId, readonly = true, role, currentUserId, p
   }, []);
 
   return (
-    <section className="min-w-0 border-t border-slate-200 pt-5" aria-label="Nhiệm vụ nghiên cứu">
+    <section className="min-w-0 border-t border-slate-200 pt-5" aria-label={t('research.task.boardLabel')}>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
         <div className="min-w-0">
           <h4 className="text-base font-semibold text-slate-950">
             {boardTitle}
           </h4>
-          <p className="mt-1 text-sm text-slate-600">
-            {memberView
-              ? 'Chỉ hiển thị nhiệm vụ được giao cho bạn trong mốc nghiên cứu này.'
-              : 'Theo dõi tiến độ nhiệm vụ trong mốc nghiên cứu này.'}
-          </p>
         </div>
         {!canInteract ? (
           <span className="shrink-0 rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
-            Chỉ xem
+            {t('research.task.readOnly')}
           </span>
         ) : (
           <span className="shrink-0 rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
-            Kéo thả để cập nhật
+            {t('research.task.dragToUpdate')}
           </span>
         )}
       </div>
@@ -156,19 +152,19 @@ export function TaskBoard({ milestoneId, readonly = true, role, currentUserId, p
         </div>
       ) : isError ? (
         <ErrorState className="mt-4" onRetry={() => refetch()}>
-          Không thể tải danh sách nhiệm vụ nghiên cứu.
+          {t('research.task.boardLoadFailed')}
         </ErrorState>
       ) : !tasks.length ? (
         <EmptyState className="mt-4">
           <div className="flex flex-col items-center justify-center text-center py-6 gap-3">
             <p className="text-slate-600 font-medium">
               {memberView
-                ? 'Bạn chưa được giao nhiệm vụ nào trong nhóm này.'
-                : 'Nhóm chưa có nhiệm vụ nào.'}
+                ? t('research.task.noAssigned')
+                : t('research.task.noGroupTasks')}
             </p>
             {role === 'LAB_MANAGER' && (
               <Button onClick={() => setIsCreateTaskOpen(true)} size="sm">
-                Tạo nhiệm vụ
+                {t('research.task.createTitle')}
               </Button>
             )}
           </div>
@@ -192,7 +188,7 @@ export function TaskBoard({ milestoneId, readonly = true, role, currentUserId, p
                 >
                   <div className="mb-3 flex items-center justify-between gap-2">
                     <span className={`rounded-full px-2 py-1 text-xs font-semibold ring-1 ${getStatusClass(column)}`}>
-                      {formatTaskColumn(column)}
+                      {t(`research.task.status.${column === 'TODO' ? 'todo' : column === 'DOING' ? 'doing' : column === 'WAITING_REVIEW' ? 'waitingReview' : column === 'NEEDS_REVISION' ? 'needsRevision' : 'done'}`)}
                     </span>
                     <span className="rounded-full bg-white px-2 py-1 text-xs font-semibold text-slate-600">
                       {columnTasks.length}
@@ -205,14 +201,14 @@ export function TaskBoard({ milestoneId, readonly = true, role, currentUserId, p
                         task={task}
                         draggable={canInteract && !updateStatus.isPending && canDragTask(task, role, currentUserId)}
                         dragDisabledReason={canInteract
-                          ? getTaskDragDisabledReason(task, role, currentUserId)
+                          ? getTaskDragDisabledReason(task, role, currentUserId, locale)
                           : undefined}
                         isUpdating={updateStatus.isPending && updateStatus.variables?.taskId === task.id}
                         reportActionLabel={memberView && task.assignedToStudentId === currentUserId
                           ? (() => {
                               const latestStatus = latestReportByTaskId.get(task.id)?.status;
-                              if (latestStatus === 'NEEDS_REVISION' || latestStatus === 'LEADER_REJECTED' || latestStatus === 'MANAGER_REJECTED') return 'Nộp lại báo cáo';
-                              if (!latestStatus && task.status === 'DOING') return 'Nộp báo cáo';
+                              if (latestStatus === 'NEEDS_REVISION' || latestStatus === 'LEADER_REJECTED' || latestStatus === 'MANAGER_REJECTED') return t('research.report.resubmit');
+                              if (!latestStatus && task.status === 'DOING') return t('research.report.submit');
                               return null;
                             })()
                           : null}
@@ -228,7 +224,7 @@ export function TaskBoard({ milestoneId, readonly = true, role, currentUserId, p
                     ))}
                     {!columnTasks.length && canInteract ? (
                       <p className="rounded-md border border-dashed border-slate-200 px-2 py-6 text-center text-xs text-slate-400">
-                        Thả nhiệm vụ vào đây
+                        {t('research.task.dropHere')}
                       </p>
                     ) : null}
                   </div>
@@ -248,8 +244,8 @@ export function TaskBoard({ milestoneId, readonly = true, role, currentUserId, p
           title={(() => {
             const latestStatus = latestReportByTaskId.get(reportTask.id)?.status;
             return latestStatus === 'NEEDS_REVISION' || latestStatus === 'LEADER_REJECTED' || latestStatus === 'MANAGER_REJECTED'
-              ? 'Nộp lại báo cáo tiến độ'
-              : 'Nộp báo cáo tiến độ';
+              ? t('research.report.resubmit')
+              : t('research.report.submit');
           })()}
           onClose={() => setReportTask(null)}
         />

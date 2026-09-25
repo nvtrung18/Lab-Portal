@@ -13,6 +13,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.web.labportalbackend.auth.security.JwtAuthenticationFilter;
+import com.web.labportalbackend.common.config.LocaleConfig;
+import com.web.labportalbackend.common.network.ClientIpResolver;
 import com.web.labportalbackend.face.dto.response.FaceConsentResponse;
 import com.web.labportalbackend.face.dto.response.FaceCheckinResponse;
 import com.web.labportalbackend.face.dto.response.FaceGuidanceResponse;
@@ -31,6 +33,7 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.FilterType;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -42,12 +45,13 @@ import org.springframework.test.web.servlet.MockMvc;
                 classes = JwtAuthenticationFilter.class
         )
 )
-@Import(FaceProfileControllerTest.MethodSecurityTestConfig.class)
+@Import({FaceProfileControllerTest.MethodSecurityTestConfig.class, LocaleConfig.class})
 class FaceProfileControllerTest {
 
     @Autowired MockMvc mockMvc;
     @MockitoBean FaceProfileService faceProfileService;
     @MockitoBean FaceCheckinService faceCheckinService;
+    @MockitoBean ClientIpResolver clientIpResolver;
 
     @Test
     void adminCanListFaceProfileMetadata() throws Exception {
@@ -112,6 +116,85 @@ class FaceProfileControllerTest {
                 .andExpect(jsonPath("$.data.studentName").value("Trung Nguyễn"))
                 .andExpect(jsonPath("$.data.checkedIn").value(true))
                 .andExpect(jsonPath("$.data.result").value("MATCH"));
+    }
+
+    @Test
+    void studentCanSubmitFaceGpsAndNetworkSelfCheckinContract() throws Exception {
+        when(clientIpResolver.resolve(org.mockito.ArgumentMatchers.any()))
+                .thenReturn("203.0.113.42");
+        when(faceCheckinService.checkInForCurrentStudent(
+                org.mockito.ArgumentMatchers.any(), eq("203.0.113.42")))
+                .thenReturn(new FaceCheckinResponse(11L, 7L, "Trung Nguyá»…n", true, "MATCH", 0.91, 0.88,
+                        null, Instant.parse("2026-08-31T00:00:00Z")));
+
+        mockMvc.perform(post("/api/face/check-in/self").contextPath("/api")
+                        .with(csrf()).with(user("student").roles("STUDENT"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"bookingId":11,"latitude":10.7627,"longitude":106.660172,"accuracyMeters":25,
+                                 "imageBase64":"aW1hZ2U=","contentType":"image/jpeg",
+                                 "challengeToken":"signed-challenge","challengeFrames":[
+                                   {"imageBase64":"aW1hZ2U=","contentType":"image/jpeg"},
+                                   {"imageBase64":"aW1hZ2U=","contentType":"image/jpeg"},
+                                   {"imageBase64":"aW1hZ2U=","contentType":"image/jpeg"},
+                                   {"imageBase64":"aW1hZ2U=","contentType":"image/jpeg"}]}
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.bookingId").value(11))
+                .andExpect(jsonPath("$.data.checkedIn").value(true))
+                .andExpect(jsonPath("$.data.result").value("MATCH"));
+    }
+
+    @Test
+    void studentSelfCheckinReturnsExactNetworkFailureMessage() throws Exception {
+        when(clientIpResolver.resolve(org.mockito.ArgumentMatchers.any()))
+                .thenReturn("203.0.113.42");
+        when(faceCheckinService.checkInForCurrentStudent(
+                org.mockito.ArgumentMatchers.any(), eq("203.0.113.42")))
+                .thenThrow(new AccessDeniedException("Sai IP/mạng: mạng hiện tại không được phép check-in tại PTN này."));
+
+        mockMvc.perform(post("/api/face/check-in/self").contextPath("/api")
+                        .with(csrf()).with(user("student").roles("STUDENT"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"bookingId":11,"latitude":10.7627,"longitude":106.660172,"accuracyMeters":25,
+                                 "imageBase64":"aW1hZ2U=","contentType":"image/jpeg",
+                                 "challengeToken":"signed-challenge","challengeFrames":[
+                                   {"imageBase64":"aW1hZ2U=","contentType":"image/jpeg"},
+                                   {"imageBase64":"aW1hZ2U=","contentType":"image/jpeg"},
+                                   {"imageBase64":"aW1hZ2U=","contentType":"image/jpeg"},
+                                   {"imageBase64":"aW1hZ2U=","contentType":"image/jpeg"}]}
+                                """))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.message")
+                        .value("Sai IP/mạng: mạng hiện tại không được phép check-in tại PTN này."));
+    }
+
+    @Test
+    void studentSelfCheckinReturnsFaceFailureInsteadOfSuccessMessage() throws Exception {
+        when(clientIpResolver.resolve(org.mockito.ArgumentMatchers.any()))
+                .thenReturn("203.0.113.42");
+        when(faceCheckinService.checkInForCurrentStudent(
+                org.mockito.ArgumentMatchers.any(), eq("203.0.113.42")))
+                .thenReturn(new FaceCheckinResponse(null, null, null, false, "NO_MATCH", 0.41, 0.88,
+                        "NO_MATCH", null));
+
+        mockMvc.perform(post("/api/face/check-in/self").contextPath("/api")
+                        .with(csrf()).with(user("student").roles("STUDENT"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"bookingId":11,"latitude":10.7627,"longitude":106.660172,"accuracyMeters":25,
+                                 "imageBase64":"aW1hZ2U=","contentType":"image/jpeg",
+                                 "challengeToken":"signed-challenge","challengeFrames":[
+                                   {"imageBase64":"aW1hZ2U=","contentType":"image/jpeg"},
+                                   {"imageBase64":"aW1hZ2U=","contentType":"image/jpeg"},
+                                   {"imageBase64":"aW1hZ2U=","contentType":"image/jpeg"},
+                                   {"imageBase64":"aW1hZ2U=","contentType":"image/jpeg"}]}
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("Sai FaceID: NO_MATCH"))
+                .andExpect(jsonPath("$.data.checkedIn").value(false))
+                .andExpect(jsonPath("$.data.failureReason").value("NO_MATCH"));
     }
 
     @Test

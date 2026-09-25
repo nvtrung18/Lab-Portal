@@ -2,6 +2,7 @@ import axios from 'axios';
 import type { AxiosError, InternalAxiosRequestConfig } from 'axios';
 
 import { PENDING_TOAST_KEY, toast, TOAST_MESSAGES } from '../components/toast';
+import { getStoredLocale, translate, translateBackendMessage } from '../i18n';
 import { queryClient } from './queryClient';
 
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '';
@@ -235,6 +236,8 @@ function showToastOnce(
 apiClient.interceptors.request.use((config) => {
   const token = getAuthToken();
 
+  config.headers['Accept-Language'] = getStoredLocale();
+
   if (token && !isPublicAuthEndpoint(config)) {
     config.headers.Authorization = `Bearer ${token}`;
   } else {
@@ -262,31 +265,32 @@ function getApiErrorMessage(error: AxiosError | unknown) {
   }
 
   if (typeof data.message === 'string' && data.message.trim()) {
-    return data.message;
+    return translateBackendMessage(data.message) ?? data.message;
   }
 
   if (typeof data.error === 'string' && data.error.trim()) {
-    return data.error;
+    return translateBackendMessage(data.error) ?? data.error;
   }
 
   if (typeof data.error === 'object' && typeof data.error.message === 'string' && data.error.message.trim()) {
-    return data.error.message;
+    return translateBackendMessage(data.error.message) ?? data.error.message;
   }
 
   if (Array.isArray(data.errors)) {
-    return data.errors.find(Boolean) ?? null;
+    const firstError = data.errors.find(Boolean);
+    return translateBackendMessage(firstError) ?? firstError ?? null;
   }
 
   if (data.errors && typeof data.errors === 'object') {
     for (const value of Object.values(data.errors)) {
       if (typeof value === 'string' && value.trim()) {
-        return value;
+        return translateBackendMessage(value) ?? value;
       }
 
       if (Array.isArray(value)) {
         const firstError = value.find(Boolean);
         if (firstError) {
-          return firstError;
+          return translateBackendMessage(firstError) ?? firstError;
         }
       }
     }
@@ -344,21 +348,26 @@ apiClient.interceptors.response.use(
     }
 
     if (status === 400) {
-      showToastOnce('error', getApiErrorMessage(error) ?? 'Dữ liệu yêu cầu không hợp lệ.');
+      showToastOnce('error', getApiErrorMessage(error) ?? translate('common.invalidRequest'));
     } else if (status === 401 && !isPublicAuthEndpoint(error.config)) {
       handleUnauthorized();
     } else if (status === 401) {
-      showToastOnce('error', getApiErrorMessage(error) ?? 'Thông tin đăng nhập không hợp lệ.', 'auth:public:401');
+      showToastOnce('error', getApiErrorMessage(error) ?? translate('common.invalidRequest'), 'auth:public:401');
     } else if (status === 403) {
       if (isMutation) {
-        showToastOnce('error', TOAST_MESSAGES.permission, 'permission:mutation');
+        const apiMessage = getApiErrorMessage(error);
+        showToastOnce(
+          'error',
+          apiMessage ?? TOAST_MESSAGES.permission,
+          apiMessage ? `permission:${apiMessage}` : 'permission:mutation',
+        );
       }
     } else if (status === 404) {
       if (isMutation) {
-        showToastOnce('error', 'Không tìm thấy dữ liệu.', 'not-found:mutation');
+        showToastOnce('error', translate('common.notFound'), 'not-found:mutation');
       }
     } else if (status !== undefined && status >= 500) {
-      showToastOnce('error', 'Hệ thống đang gặp sự cố. Vui lòng thử lại sau.', `server:${status}`);
+      showToastOnce('error', translate('common.serverFailure'), `server:${status}`);
     }
 
     return Promise.reject(error);

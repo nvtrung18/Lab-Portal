@@ -1,3 +1,4 @@
+import { useI18n } from '../../../shared/i18n';
 import type { ResearchReportComment } from '../types';
 
 interface ReportCommentItemProps {
@@ -5,17 +6,18 @@ interface ReportCommentItemProps {
 }
 
 export function ReportCommentItem({ comment }: ReportCommentItemProps) {
+  const { locale, t } = useI18n();
   const roleLabel = comment.authorRole === 'LAB_MANAGER'
-    ? 'Quản lý PTN'
+    ? t('research.role.manager')
     : comment.groupRole === 'LEADER'
-      ? 'Trưởng nhóm'
-      : 'Thành viên';
+      ? t('research.role.leader')
+      : t('research.role.member');
 
   return (
     <article className="rounded-md bg-slate-50 p-3 text-sm text-slate-700">
       <header className="flex flex-wrap items-start justify-between gap-2">
         <div>
-          <p className="font-semibold text-slate-900">{comment.authorName || comment.authorEmail || 'Người dùng'}</p>
+          <p className="font-semibold text-slate-900">{comment.authorName || comment.authorEmail || t('common.unknownUser')}</p>
           {comment.authorName && comment.authorEmail ? (
             <p className="text-xs text-slate-500">{comment.authorEmail}</p>
           ) : null}
@@ -25,7 +27,7 @@ export function ReportCommentItem({ comment }: ReportCommentItemProps) {
             {roleLabel}
           </span>
           <time className="text-xs text-slate-500" dateTime={comment.createdAt}>
-            {formatCommentTime(comment.createdAt)}
+            {formatCommentTime(comment.createdAt, locale)}
           </time>
         </div>
       </header>
@@ -34,8 +36,8 @@ export function ReportCommentItem({ comment }: ReportCommentItemProps) {
   );
 }
 
-function formatCommentTime(value: string) {
-  return new Intl.DateTimeFormat('vi-VN', {
+function formatCommentTime(value: string, locale: 'vi' | 'en') {
+  return new Intl.DateTimeFormat(locale === 'en' ? 'en-US' : 'vi-VN', {
     dateStyle: 'short',
     timeStyle: 'short',
   }).format(new Date(value));

@@ -59,6 +59,9 @@ public class LabServiceImpl implements LabService {
     @Override
     @Transactional
     public LabResponse createLab(CreateLabRequest request) {
+        if ((request.getCheckinLatitude() == null) != (request.getCheckinLongitude() == null)) {
+            throw new IllegalArgumentException("Check-in latitude and longitude must be provided together");
+        }
         if (laboratoryRepository.existsByLabName(request.getLabName())) {
             throw new IllegalArgumentException("Laboratory name is already in use: " + request.getLabName());
         }
@@ -341,4 +344,3 @@ public class LabServiceImpl implements LabService {
                 .build();
     }
 }
-

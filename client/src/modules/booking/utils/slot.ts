@@ -1,17 +1,22 @@
 import type { RawSlotResponse } from '../api';
 import type { LabSlot } from '../types';
+import { getStoredLocale, translate, type Locale } from '../../../shared/i18n';
 
-const STATUS_LABELS: Record<string, string> = {
-  AVAILABLE: 'Còn chỗ',
-  FULL: 'Hết chỗ',
-  CLOSED: 'Đã đóng',
-  INACTIVE: 'Tạm ngừng',
-  MAINTENANCE: 'Bảo trì',
-  IN_PROGRESS: 'Đang sử dụng',
-  EXPIRED: 'Đã qua',
-  CANCELLED: 'Đã hủy',
-  ARCHIVED: 'Đã lưu trữ',
+const STATUS_KEYS: Record<string, string> = {
+  AVAILABLE: 'slot.status.available',
+  FULL: 'slot.status.full',
+  CLOSED: 'slot.status.closed',
+  INACTIVE: 'slot.status.inactive',
+  MAINTENANCE: 'slot.status.maintenance',
+  IN_PROGRESS: 'slot.status.inProgress',
+  EXPIRED: 'slot.status.expired',
+  CANCELLED: 'slot.status.cancelled',
+  ARCHIVED: 'slot.status.archived',
 };
+
+export function getSlotStatusLabel(status: string, locale: Locale = getStoredLocale()) {
+  return translate(STATUS_KEYS[status] ?? '', locale, status);
+}
 
 const HIDDEN_SLOT_STATUSES = ['CANCELLED', 'INACTIVE', 'ARCHIVED'];
 
@@ -96,7 +101,7 @@ export function normalizeSlot(slot: RawSlotResponse): LabSlot {
     hasBookedCount,
     remainingCapacity,
     status,
-    statusLabel: STATUS_LABELS[status] ?? status,
+    statusLabel: getSlotStatusLabel(status),
   };
 }
 

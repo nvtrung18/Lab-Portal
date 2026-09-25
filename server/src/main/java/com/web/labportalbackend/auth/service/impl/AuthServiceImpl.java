@@ -220,6 +220,7 @@ public class AuthServiceImpl implements AuthService {
         String username = jwtProvider.getUsernameFromToken(refreshToken);
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new BadCredentialsException("User not found"));
+        ensureLoginAllowed(user);
         return buildAuthResponse(user);
     }
 

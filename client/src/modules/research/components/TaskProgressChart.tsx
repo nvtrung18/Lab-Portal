@@ -1,33 +1,26 @@
 import { memo, useMemo } from 'react';
 
+import { useI18n } from '../../../shared/i18n';
 import type { DashboardStats } from '../types';
 
 interface TaskProgressChartProps {
   taskProgress: DashboardStats['taskProgress'];
 }
 
-const TASK_STATUS_ITEMS = [
-  { key: 'todo', label: 'Cần làm' },
-  { key: 'doing', label: 'Đang thực hiện' },
-  { key: 'waitingReview', label: 'Chờ duyệt' },
-  { key: 'needsRevision', label: 'Cần chỉnh sửa' },
-  { key: 'done', label: 'Hoàn thành' },
-  { key: 'overdue', label: 'Quá hạn' },
-] as const;
-
 export const TaskProgressChart = memo(function TaskProgressChart({ taskProgress }: TaskProgressChartProps) {
+  const { t } = useI18n();
   const items = useMemo(
-    () =>
-      TASK_STATUS_ITEMS.map((item) => ({
-        ...item,
-        value: safeNumber(taskProgress[item.key]),
+    () => (['todo', 'doing', 'waitingReview', 'needsRevision', 'done', 'overdue'] as const).map((key) => ({
+        key,
+        label: t(`research.task.status.${key}`),
+        value: safeNumber(taskProgress[key]),
       })),
-    [taskProgress],
+    [taskProgress, t],
   );
   const total = useMemo(() => items.reduce((sum, item) => sum + item.value, 0), [items]);
 
   if (total === 0) {
-    return <p className="mt-4 text-sm text-slate-600">Chưa có dữ liệu nhiệm vụ.</p>;
+    return <p className="mt-4 text-sm text-slate-600">{t('common.empty')}</p>;
   }
 
   return (

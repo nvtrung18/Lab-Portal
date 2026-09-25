@@ -1,6 +1,7 @@
 package com.web.labportalbackend.research.controller;
 
 import com.web.labportalbackend.auth.security.JwtAuthenticationFilter;
+import com.web.labportalbackend.common.config.LocaleConfig;
 import com.web.labportalbackend.common.exception.ResourceNotFoundException;
 import com.web.labportalbackend.research.dto.response.TaskProposalResponse;
 import com.web.labportalbackend.research.dto.response.TaskProposalReviewResponse;
@@ -23,6 +24,7 @@ import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.FilterType;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -49,13 +51,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(
+        properties = "app.i18n.default-locale=en",
         controllers = TaskProposalController.class,
         excludeFilters = @ComponentScan.Filter(
                 type = FilterType.ASSIGNABLE_TYPE,
                 classes = JwtAuthenticationFilter.class
         )
 )
-@Import(TaskProposalControllerTest.MethodSecurityTestConfig.class)
+@Import({TaskProposalControllerTest.MethodSecurityTestConfig.class, LocaleConfig.class})
 class TaskProposalControllerTest {
 
     @Test
@@ -193,7 +196,9 @@ class TaskProposalControllerTest {
         when(taskProposalService.submit(any()))
                 .thenThrow(new TaskProposalNotificationException(internalCause));
 
-        mockMvc.perform(request(VALID_BODY).with(user("student").roles("STUDENT")))
+        mockMvc.perform(request(VALID_BODY)
+                        .header(HttpHeaders.ACCEPT_LANGUAGE, "en")
+                        .with(user("student").roles("STUDENT")))
                 .andExpect(status().isInternalServerError())
                 .andExpect(jsonPath("$.code").value(500))
                 .andExpect(jsonPath("$.message")

@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 
 import { ConfirmDialog } from '../../../shared/components';
+import { useI18n } from '../../../shared/i18n';
 import type { BookingResponse } from '../api';
 import { useCancelBooking, useCreateBooking, useMyBookings } from '../hooks';
 import { useLabSlots } from '../hooks';
@@ -37,6 +38,7 @@ export function SlotList({
   onCancelSlot,
   view = 'active',
 }: SlotListProps) {
+  const { t } = useI18n();
   const navigate = useNavigate();
   const { data: slots = [], isError, isLoading, isFetching, refetch } = useLabSlots(labId, view);
   const visibleSlots = view === 'history' ? slots : slots.filter(isUsableSlot);
@@ -48,7 +50,7 @@ export function SlotList({
   if (!labId) {
     return (
       <div className="rounded-lg border border-slate-200 bg-white p-6 text-sm text-slate-600 shadow-sm">
-        Chưa chọn phòng thí nghiệm để xem khung giờ sử dụng.
+        {t('slot.noLabSelected')}
       </div>
     );
   }
@@ -76,13 +78,13 @@ export function SlotList({
   if (isError) {
     return (
       <div className="rounded-lg border border-red-200 bg-white p-6 text-sm text-red-700 shadow-sm">
-        <p>Không thể tải danh sách khung giờ sử dụng.</p>
+        <p>{t('slot.loadFailed')}</p>
         <button
           type="button"
           className="mt-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-100"
           onClick={() => refetch()}
         >
-          Tải lại
+          {t('common.retry')}
         </button>
       </div>
     );
@@ -92,8 +94,8 @@ export function SlotList({
     return (
       <div className="rounded-lg border border-slate-200 bg-white p-6 text-sm text-slate-600 shadow-sm">
         {view === 'history'
-          ? 'Chưa có lịch sử ca sử dụng.'
-          : 'Hiện chưa có khung giờ sử dụng nào còn hiệu lực.'}
+          ? t('slot.noHistory')
+          : t('slot.noActiveSlots')}
       </div>
     );
   }
@@ -102,7 +104,7 @@ export function SlotList({
     <div className="space-y-3">
       {isFetching ? (
         <p className="text-xs font-medium text-slate-500">
-          Đang cập nhật khung giờ sử dụng...
+          {t('slot.updating')}
         </p>
       ) : null}
       <div className={mode === 'manager' ? 'grid gap-4 lg:grid-cols-2' : 'grid gap-4 md:grid-cols-2 xl:grid-cols-3'}>
@@ -123,16 +125,16 @@ export function SlotList({
         ))}
       </div>
       <ConfirmDialog
-        confirmLabel="Hủy đăng ký"
+        confirmLabel={t('bookings.cancel')}
         isOpen={bookingPendingCancel !== null}
         isPending={cancelBooking.isPending}
-        message="Bạn có chắc muốn hủy đăng ký sử dụng khung giờ này không?"
+        message={t('bookings.confirmCancel')}
         onCancel={() => setBookingPendingCancel(null)}
         onConfirm={() => {
           if (bookingPendingCancel === null) return;
           cancelBooking.mutate(bookingPendingCancel, { onSuccess: () => setBookingPendingCancel(null) });
         }}
-        title="Hủy đăng ký sử dụng?"
+        title={t('bookings.confirmCancelTitle')}
       />
     </div>
   );

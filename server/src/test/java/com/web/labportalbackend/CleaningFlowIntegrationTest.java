@@ -6,6 +6,7 @@ import com.web.labportalbackend.auth.repository.UserRepository;
 import com.web.labportalbackend.booking.dto.response.CleaningResponse;
 import com.web.labportalbackend.booking.entity.CleaningEntity;
 import com.web.labportalbackend.booking.entity.TimeSlot;
+import com.web.labportalbackend.booking.outbox.BookingOutboxService;
 import com.web.labportalbackend.booking.repository.BookingRepository;
 import com.web.labportalbackend.booking.repository.CleaningRepository;
 import com.web.labportalbackend.booking.repository.TimeSlotRepository;
@@ -14,6 +15,8 @@ import com.web.labportalbackend.common.enums.BookingStatus;
 import com.web.labportalbackend.common.enums.CleaningStatus;
 import com.web.labportalbackend.lab.entity.Laboratory;
 import com.web.labportalbackend.lab.repository.LaboratoryRepository;
+import com.web.labportalbackend.lab.repository.MembershipRepository;
+import com.web.labportalbackend.notification.service.NotificationEmitter;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -36,12 +39,18 @@ class CleaningFlowIntegrationTest {
         UserRepository userRepository = mock(UserRepository.class);
         LaboratoryRepository laboratoryRepository = mock(LaboratoryRepository.class);
         BookingRepository bookingRepository = mock(BookingRepository.class);
+        MembershipRepository membershipRepository = mock(MembershipRepository.class);
+        NotificationEmitter notificationEmitter = mock(NotificationEmitter.class);
+        BookingOutboxService bookingOutboxService = mock(BookingOutboxService.class);
         CleaningServiceImpl cleaningService = new CleaningServiceImpl(
                 cleaningRepository,
                 timeSlotRepository,
                 userRepository,
                 laboratoryRepository,
-                bookingRepository
+                bookingRepository,
+                membershipRepository,
+                notificationEmitter,
+                bookingOutboxService
         );
 
         Map<Long, CleaningEntity> cleanings = new HashMap<>();
@@ -49,6 +58,7 @@ class CleaningFlowIntegrationTest {
         slot.setId(7L);
         Laboratory lab = new Laboratory();
         lab.setId(2L);
+        lab.setCleaningRotationRound(1);
         slot.setLab(lab);
         User manager = new User();
         manager.setId(9L);
@@ -71,6 +81,7 @@ class CleaningFlowIntegrationTest {
         when(userRepository.findByUsername("manager")).thenReturn(Optional.of(manager));
         when(userRepository.findByUsername("staff")).thenReturn(Optional.of(staff));
         when(laboratoryRepository.findFirstByManagerIdAndDeletedFalse(9L)).thenReturn(Optional.of(lab));
+        when(laboratoryRepository.findByIdForCleaningRotation(2L)).thenReturn(Optional.of(lab));
         when(bookingRepository.existsBySlotIdAndUserIdAndStatusIn(any(Long.class), any(Long.class), any()))
                 .thenReturn(true);
         when(bookingRepository.countActiveByTimeSlotIdAndStatusIn(any(Long.class), any()))
@@ -100,6 +111,7 @@ class CleaningFlowIntegrationTest {
         assertEquals(CleaningStatus.ASSIGNED, assigned.getStatus());
         assertEquals(3L, assigned.getStaffId());
         assertNotNull(assigned.getStartedAt());
+        assertEquals(1, cleanings.get(created.getId()).getRotationRound());
 
         SecurityContextHolder.getContext().setAuthentication(
                 new UsernamePasswordAuthenticationToken("staff", null)
@@ -107,6 +119,7 @@ class CleaningFlowIntegrationTest {
         CleaningResponse completed = cleaningService.confirmCompleted(created.getId());
         assertEquals(CleaningStatus.DONE, completed.getStatus());
         assertNotNull(completed.getCompletedAt());
+        assertEquals(1, cleanings.get(created.getId()).getRotationRound());
         SecurityContextHolder.clearContext();
     }
 }

@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { Modal } from '../../../shared/components';
+import { useI18n } from '../../../shared/i18n';
 import { useReportsByTask } from '../hooks';
 import { sortReportsNewestFirst } from './ReportList';
 import { ReportVersionItem } from './ReportVersionItem';
@@ -28,6 +29,7 @@ export function ReportHistoryModal({
   groupId,
   defaultOpenLatestReview = false,
 }: ReportHistoryModalProps) {
+  const { t } = useI18n();
   const { data: reports = [], isLoading, isError, refetch } = useReportsByTask(taskId);
 
   // Security check: regular member can only see their own reports
@@ -45,20 +47,20 @@ export function ReportHistoryModal({
       isOpen={isOpen}
       onClose={onClose}
       size="xl"
-      title={`Lịch sử báo cáo: ${taskTitle}`}
+      title={t('research.report.historyTitle', undefined, { task: taskTitle })}
     >
       <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
         {isLoading ? (
-          <p className="text-sm text-slate-500 py-4 text-center">Đang tải lịch sử báo cáo...</p>
+          <p className="text-sm text-slate-500 py-4 text-center">{t('research.report.historyLoading')}</p>
         ) : isError ? (
           <div className="text-center py-4">
-            <p className="text-sm text-red-500">Không thể tải lịch sử báo cáo.</p>
+            <p className="text-sm text-red-500">{t('research.report.historyLoadFailed')}</p>
             <button onClick={() => refetch()} className="mt-2 text-xs font-semibold text-blue-600 underline" type="button">
-              Tải lại
+              {t('common.retry')}
             </button>
           </div>
         ) : filteredReports.length === 0 ? (
-          <p className="text-sm text-slate-500 py-8 text-center">Chưa có báo cáo nào được nộp.</p>
+          <p className="text-sm text-slate-500 py-8 text-center">{t('research.report.historyEmpty')}</p>
         ) : (
           orderedReports.map((report, index) => (
             <ReportVersionItem
@@ -77,4 +79,3 @@ export function ReportHistoryModal({
     </Modal>
   );
 }
-

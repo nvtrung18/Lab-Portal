@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { queryKeys } from '../../../shared/api';
 import { toast } from '../../../shared/components';
+import { getStoredLocale, translate, translateBackendMessage } from '../../../shared/i18n';
 import {
   assignCleaningTasks,
   cancelCleaningTask,
@@ -16,12 +17,13 @@ import { isUsableSlot } from '../utils';
 
 export const MY_CLEANING_TASKS_QUERY_KEY = queryKeys.cleaning.mine;
 
-function getErrorMessage(error: unknown, fallback: string) {
+function getErrorMessage(error: unknown, fallbackKey: string) {
+  const locale = getStoredLocale();
   if (axios.isAxiosError(error)) {
     const data = error.response?.data as { message?: string; errors?: string[] } | undefined;
-    return data?.message ?? data?.errors?.[0] ?? fallback;
+    return translateBackendMessage(data?.message ?? data?.errors?.[0], locale) ?? translate(fallbackKey, locale);
   }
-  return fallback;
+  return translate(fallbackKey, getStoredLocale());
 }
 
 export function useLabCleaningTasks(labId?: number | null) {
@@ -69,10 +71,10 @@ export function useAssignCleaningTask(labId?: number | null) {
       }
       queryClient.invalidateQueries({ queryKey: queryKeys.cleaning.eligible(payload.slotId) });
       queryClient.invalidateQueries({ queryKey: MY_CLEANING_TASKS_QUERY_KEY });
-      toast.success('Đã phân công vệ sinh thành công.');
+      toast.success(translate('cleaning.toast.assigned'));
     },
     onError: (error) => {
-      toast.error(getErrorMessage(error, 'Không thể phân công vệ sinh.'));
+      toast.error(getErrorMessage(error, 'cleaning.toast.assignFailed'));
     },
   });
 }
@@ -88,10 +90,10 @@ export function useCompleteCleaningTask(labId?: number | null) {
       if (effectiveLabId) {
         queryClient.invalidateQueries({ queryKey: queryKeys.cleaning.overview(effectiveLabId) });
       }
-      toast.success('Đã xác nhận hoàn thành nhiệm vụ vệ sinh.');
+      toast.success(translate('cleaning.toast.completed'));
     },
     onError: (error) => {
-      toast.error(getErrorMessage(error, 'Không thể xác nhận nhiệm vụ vệ sinh.'));
+      toast.error(getErrorMessage(error, 'cleaning.toast.completeFailed'));
     },
   });
 }
@@ -106,10 +108,10 @@ export function useCancelCleaningTask(labId?: number | null) {
         queryClient.invalidateQueries({ queryKey: queryKeys.cleaning.overview(labId) });
       }
       queryClient.invalidateQueries({ queryKey: MY_CLEANING_TASKS_QUERY_KEY });
-      toast.success('Đã hủy nhiệm vụ vệ sinh.');
+      toast.success(translate('cleaning.toast.cancelled'));
     },
     onError: (error) => {
-      toast.error(getErrorMessage(error, 'Không thể hủy nhiệm vụ vệ sinh.'));
+      toast.error(getErrorMessage(error, 'cleaning.toast.cancelFailed'));
     },
   });
 }

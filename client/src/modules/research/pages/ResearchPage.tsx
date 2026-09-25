@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 
 import { LAB_MANAGER, STUDENT } from '../../../shared/constants/roles';
+import { useI18n } from '../../../shared/i18n';
 import {
   getActiveMemberships,
   getManagedLabId,
@@ -13,6 +14,7 @@ import { MyResearchGroups, ResearchProjectList } from '../components';
 import { useCurrentUser } from '../../user/hooks';
 
 export function ResearchPage() {
+  const { t } = useI18n();
   const { data: currentUser, isLoading } = useCurrentUser();
   const roles = currentUser?.roles.map((role) => role.replace(/^ROLE_/, '')) ?? [];
   const isManager = roles.includes(LAB_MANAGER);
@@ -41,7 +43,7 @@ export function ResearchPage() {
   if (!managedLabId) {
     return (
       <section className="rounded-lg border border-amber-200 bg-white p-6 text-sm text-amber-700 shadow-sm">
-        Bạn chưa được phân công quản lý phòng thí nghiệm nào.
+        {t('layout.unassignedLab')}
       </section>
     );
   }
@@ -51,10 +53,7 @@ export function ResearchPage() {
       <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
-            <h2 className="text-xl font-semibold text-slate-950">Nghiên cứu khoa học</h2>
-            <p className="mt-2 text-sm text-slate-600">
-              Quản lý đề tài nghiên cứu trong PTN.
-            </p>
+            <h2 className="text-xl font-semibold text-slate-950">{t('research.title')}</h2>
           </div>
           <div className="rounded-md bg-slate-100 px-3 py-2 text-sm font-medium text-slate-700">
             {managedLabName ?? `PTN #${managedLabId}`}
@@ -73,6 +72,7 @@ interface StudentResearchViewProps {
 }
 
 function StudentResearchView({ currentUserId, activeMemberships }: StudentResearchViewProps) {
+  const { t } = useI18n();
   const [tab, setTab] = useState<'projects' | 'groups'>('projects');
   const [selectedLabId, setSelectedLabId] = useState<number | null>(
     activeMemberships[0] ? getMembershipLabId(activeMemberships[0]) : null,
@@ -91,15 +91,12 @@ function StudentResearchView({ currentUserId, activeMemberships }: StudentResear
   return (
     <section className="space-y-6">
       <header className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="text-xl font-semibold text-slate-950">Nghiên cứu khoa học</h2>
-        <p className="mt-2 text-sm text-slate-600">
-          Theo dõi đề tài và nhóm nghiên cứu trong các PTN bạn tham gia.
-        </p>
+        <h2 className="text-xl font-semibold text-slate-950">{t('research.title')}</h2>
       </header>
 
       <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
         <label className="block max-w-sm text-sm font-semibold text-slate-700">
-          PTN đang chọn
+          {t('research.selectedLab')}
           <select
             className="mt-2 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-normal text-slate-900"
             value={selectedLabId}
@@ -115,10 +112,9 @@ function StudentResearchView({ currentUserId, activeMemberships }: StudentResear
             })}
           </select>
         </label>
-        <p className="mt-3 text-sm text-slate-600">Chỉ hiển thị dữ liệu NCKH của PTN bạn đang chọn.</p>
       </section>
 
-      <div className="flex gap-1 border-b border-slate-200" role="tablist" aria-label="Nghiên cứu khoa học">
+      <div className="flex gap-1" role="tablist" aria-label={t('research.title')}>
         <button
           className={`border-b-2 px-4 py-3 text-sm font-semibold ${
             tab === 'projects' ? 'border-slate-900 text-slate-950' : 'border-transparent text-slate-600'
@@ -128,7 +124,7 @@ function StudentResearchView({ currentUserId, activeMemberships }: StudentResear
           aria-selected={tab === 'projects'}
           onClick={() => setTab('projects')}
         >
-          NCKH trong PTN
+          {t('research.tab.projects')}
         </button>
         <button
           className={`border-b-2 px-4 py-3 text-sm font-semibold ${
@@ -139,7 +135,7 @@ function StudentResearchView({ currentUserId, activeMemberships }: StudentResear
           aria-selected={tab === 'groups'}
           onClick={() => setTab('groups')}
         >
-          Nhóm của tôi
+          {t('research.tab.groups')}
         </button>
       </div>
 

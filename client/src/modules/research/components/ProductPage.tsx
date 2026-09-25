@@ -3,33 +3,16 @@ import { FormEvent, useMemo, useState } from 'react';
 import { resolveApiAssetUrl } from '../../../shared/api';
 import { Button, EmptyState, ErrorState, LoadingState } from '../../../shared/components';
 import { LAB_MANAGER, STUDENT } from '../../../shared/constants/roles';
+import { useI18n } from '../../../shared/i18n';
 import { useProductsByProject, useProductsByGroup, useResearchGroupsByProject, useSubmitProduct } from '../hooks';
 import type { ResearchProduct, ResearchProductStatus, ResearchProductType } from '../types';
 import { formatDate } from '../utils';
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024;
 
-const PRODUCT_TYPE_OPTIONS: Array<{ value: ResearchProductType; label: string }> = [
-  { value: 'FINAL_REPORT', label: 'Báo cáo tổng kết' },
-  { value: 'SLIDE', label: 'Slide thuyết trình' },
-  { value: 'SOURCE_CODE', label: 'Source code' },
-  { value: 'DATASET', label: 'Bộ dữ liệu' },
-  { value: 'DEMO_VIDEO', label: 'Video demo' },
-  { value: 'PAPER', label: 'Bài báo' },
-  { value: 'SOFTWARE_DEMO', label: 'Demo phần mềm' },
-  { value: 'OTHER', label: 'Khác' },
+const PRODUCT_TYPE_VALUES: ResearchProductType[] = [
+  'FINAL_REPORT', 'SLIDE', 'SOURCE_CODE', 'DATASET', 'DEMO_VIDEO', 'PAPER', 'SOFTWARE_DEMO', 'OTHER',
 ];
-
-const PRODUCT_TYPE_LABELS = Object.fromEntries(
-  PRODUCT_TYPE_OPTIONS.map((option) => [option.value, option.label]),
-) as Record<ResearchProductType, string>;
-
-const STATUS_LABELS: Record<ResearchProductStatus, string> = {
-  SUBMITTED: 'Đã nộp',
-  ACCEPTED: 'Đã chấp nhận',
-  NEEDS_REVISION: 'Cần chỉnh sửa',
-  REJECTED: 'Không đạt',
-};
 
 interface ProductPageProps {
   projectId: number;
@@ -42,6 +25,7 @@ interface ProductPageProps {
 type UploadScope = 'group' | 'personal';
 
 export function ProductPage({ projectId, groupId, role, groupRole, currentUserId }: ProductPageProps) {
+  const { t } = useI18n();
   const [uploadScope, setUploadScope] = useState<UploadScope | null>(null);
   const [productType, setProductType] = useState<ResearchProductType>('FINAL_REPORT');
   const [title, setTitle] = useState('');
@@ -76,7 +60,7 @@ export function ProductPage({ projectId, groupId, role, groupRole, currentUserId
   const canUploadGroup = role === STUDENT && resolvedGroupRole === 'LEADER' && hasGroupContext;
   const canUploadPersonal = role === STUDENT && resolvedGroupRole === 'MEMBER' && hasGroupContext;
   const canUpload = canUploadGroup || canUploadPersonal;
-  const submitLabel = uploadScope === 'group' ? 'Nộp sản phẩm nhóm' : 'Nộp sản phẩm cá nhân';
+  const submitLabel = uploadScope === 'group' ? t('research.product.groupSubmit') : t('research.product.personalSubmit');
 
   function openUpload(scope: UploadScope) {
     setUploadScope(scope);
@@ -103,7 +87,7 @@ export function ProductPage({ projectId, groupId, role, groupRole, currentUserId
     }
     if (selectedFile.size > MAX_FILE_SIZE) {
       setFile(null);
-      setFormError('Dung lượng file không được vượt quá 50MB.');
+      setFormError(t('research.product.error.fileSize'));
       return;
     }
     setFile(selectedFile);
@@ -115,19 +99,19 @@ export function ProductPage({ projectId, groupId, role, groupRole, currentUserId
     const normalizedLink = externalLink.trim();
 
     if (!normalizedTitle) {
-      setFormError('Tiêu đề sản phẩm là bắt buộc.');
+      setFormError(t('research.product.error.titleRequired'));
       return;
     }
     if (!productType) {
-      setFormError('Loại sản phẩm là bắt buộc.');
+      setFormError(t('research.product.error.typeRequired'));
       return;
     }
     if (!file && !normalizedLink) {
-      setFormError('Cần tải file hoặc nhập link minh chứng.');
+      setFormError(t('research.product.error.sourceRequired'));
       return;
     }
     if (file && file.size > MAX_FILE_SIZE) {
-      setFormError('Dung lượng file không được vượt quá 50MB.');
+      setFormError(t('research.product.error.fileSize'));
       return;
     }
 
@@ -149,17 +133,16 @@ export function ProductPage({ projectId, groupId, role, groupRole, currentUserId
     <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h3 className="text-lg font-semibold text-slate-950">Sản phẩm nghiên cứu</h3>
-          <p className="mt-1 text-sm text-slate-600">Danh sách sản phẩm đã nộp theo đề tài.</p>
+          <h3 className="text-lg font-semibold text-slate-950">{t('research.product.title')}</h3>
         </div>
         {canUpload ? (
           <div className="flex flex-wrap gap-2">
             {canUploadGroup ? (
-              <Button onClick={() => openUpload('group')}>Nộp sản phẩm nhóm</Button>
+              <Button onClick={() => openUpload('group')}>{t('research.product.groupSubmit')}</Button>
             ) : null}
             {canUploadPersonal ? (
               <Button onClick={() => openUpload('personal')} variant={canUploadGroup ? 'outline' : 'primary'}>
-                Nộp sản phẩm cá nhân
+                {t('research.product.personalSubmit')}
               </Button>
             ) : null}
           </div>
@@ -171,31 +154,28 @@ export function ProductPage({ projectId, groupId, role, groupRole, currentUserId
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <h4 className="font-semibold text-slate-950">{submitLabel}</h4>
-              <p className="mt-1 text-sm text-slate-600">
-                {uploadScope === 'group' ? 'Sản phẩm sẽ được gắn với nhóm nghiên cứu.' : 'Sản phẩm sẽ được ghi nhận cho cá nhân bạn.'}
-              </p>
             </div>
             <Button disabled={submitProduct.isPending} onClick={resetForm} size="sm" type="button" variant="ghost">
-              Đóng
+              {t('common.close')}
             </Button>
           </div>
 
           <div className="mt-4 grid gap-4 lg:grid-cols-2">
             <label className="block text-sm">
-              <span className="mb-1 block font-semibold text-slate-700">Loại sản phẩm</span>
+              <span className="mb-1 block font-semibold text-slate-700">{t('research.product.type')}</span>
               <select
                 className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm"
                 disabled={submitProduct.isPending}
                 value={productType}
                 onChange={(event) => setProductType(event.target.value as ResearchProductType)}
               >
-                {PRODUCT_TYPE_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>{option.label}</option>
+                {PRODUCT_TYPE_VALUES.map((value) => (
+                  <option key={value} value={value}>{getProductTypeLabel(value, t)}</option>
                 ))}
               </select>
             </label>
             <label className="block text-sm">
-              <span className="mb-1 block font-semibold text-slate-700">Tiêu đề sản phẩm</span>
+              <span className="mb-1 block font-semibold text-slate-700">{t('research.product.titleLabel')}</span>
               <input
                 className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
                 disabled={submitProduct.isPending}
@@ -205,7 +185,7 @@ export function ProductPage({ projectId, groupId, role, groupRole, currentUserId
               />
             </label>
             <label className="block text-sm lg:col-span-2">
-              <span className="mb-1 block font-semibold text-slate-700">Mô tả</span>
+              <span className="mb-1 block font-semibold text-slate-700">{t('research.product.description')}</span>
               <textarea
                 className="min-h-24 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
                 disabled={submitProduct.isPending}
@@ -214,7 +194,7 @@ export function ProductPage({ projectId, groupId, role, groupRole, currentUserId
               />
             </label>
             <label className="block text-sm">
-              <span className="mb-1 block font-semibold text-slate-700">Link minh chứng / repository / demo</span>
+              <span className="mb-1 block font-semibold text-slate-700">{t('research.product.evidence')}</span>
               <input
                 className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
                 disabled={submitProduct.isPending}
@@ -224,7 +204,7 @@ export function ProductPage({ projectId, groupId, role, groupRole, currentUserId
               />
             </label>
             <label className="block text-sm">
-              <span className="mb-1 block font-semibold text-slate-700">File sản phẩm</span>
+              <span className="mb-1 block font-semibold text-slate-700">{t('research.product.file')}</span>
               <input
                 className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm"
                 disabled={submitProduct.isPending}
@@ -237,7 +217,7 @@ export function ProductPage({ projectId, groupId, role, groupRole, currentUserId
           {file ? (
             <div className="mt-4 rounded-md border border-slate-200 bg-white p-3 text-sm">
               <p className="font-semibold text-slate-800">{file.name}</p>
-              <p className="mt-1 text-slate-600">{file.type || 'Không rõ loại file'} · {formatFileSize(file.size)}</p>
+              <p className="mt-1 text-slate-600">{file.type || t('research.product.unknownFileType')} · {formatFileSize(file.size, t('research.product.noFile'))}</p>
             </div>
           ) : null}
 
@@ -253,24 +233,24 @@ export function ProductPage({ projectId, groupId, role, groupRole, currentUserId
           {formError ? <p className="mt-3 text-sm font-semibold text-red-700">{formError}</p> : null}
 
           <div className="mt-4 flex flex-wrap gap-2">
-            <Button loading={submitProduct.isPending} loadingText="Đang nộp..." type="submit">
+            <Button loading={submitProduct.isPending} loadingText={t('research.product.submitting')} type="submit">
               {submitLabel}
             </Button>
             <Button disabled={submitProduct.isPending} onClick={resetForm} type="button" variant="outline">
-              Hủy
+              {t('common.cancel')}
             </Button>
           </div>
         </form>
       ) : null}
 
       {isLoading ? (
-        <LoadingState className="mt-5">Đang tải danh sách sản phẩm...</LoadingState>
+        <LoadingState className="mt-5">{t('research.product.loading')}</LoadingState>
       ) : isError ? (
         <ErrorState className="mt-5" onRetry={() => refetch()}>
-          Không thể tải danh sách sản phẩm.
+          {t('research.product.loadFailed')}
         </ErrorState>
       ) : !products.length ? (
-        <EmptyState className="mt-5">Chưa có sản phẩm nghiên cứu nào được nộp.</EmptyState>
+        <EmptyState className="mt-5">{t('research.product.empty')}</EmptyState>
       ) : (
         <div className="mt-5 space-y-3">
           {products.map((product) => (
@@ -283,6 +263,7 @@ export function ProductPage({ projectId, groupId, role, groupRole, currentUserId
 }
 
 function ProductItem({ product }: { product: ResearchProduct }) {
+  const { locale, t } = useI18n();
   return (
     <article className="rounded-md border border-slate-200 p-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -290,22 +271,22 @@ function ProductItem({ product }: { product: ResearchProduct }) {
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-sm font-semibold text-slate-950">v{product.version}</span>
             <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">
-              {PRODUCT_TYPE_LABELS[product.productType] ?? product.productType}
+              {getProductTypeLabel(product.productType, t)}
             </span>
           </div>
           <h4 className="mt-1 break-words font-semibold text-slate-950">{product.title}</h4>
           {product.description ? <p className="mt-2 text-sm text-slate-600">{product.description}</p> : null}
         </div>
         <span className={`w-fit rounded-full px-3 py-1 text-xs font-semibold ring-1 ${getStatusClass(product.status)}`}>
-          {STATUS_LABELS[product.status] ?? product.status}
+          {getProductStatusLabel(product.status, t)}
         </span>
       </div>
 
       <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2 lg:grid-cols-4">
-        <ProductField label="Người nộp" value={getSubmitterLabel(product)} />
-        <ProductField label="Ngày nộp" value={formatDate(product.submittedAt ?? product.createdAt)} />
-        <ProductField label="Tên file" value={product.fileName || 'Không có file'} />
-        <ProductField label="Dung lượng" value={formatFileSize(product.fileSize)} />
+        <ProductField label={t('research.product.uploader')} value={getSubmitterLabel(product)} />
+        <ProductField label={t('research.product.submittedAt')} value={formatDate(product.submittedAt ?? product.createdAt, locale)} />
+        <ProductField label={t('research.product.fileName')} value={product.fileName || t('research.product.noFile')} />
+        <ProductField label={t('research.product.fileSize')} value={formatFileSize(product.fileSize, t('research.product.noFile'))} />
       </dl>
 
       <div className="mt-4 flex flex-wrap gap-3 text-sm">
@@ -316,7 +297,7 @@ function ProductItem({ product }: { product: ResearchProduct }) {
             rel="noreferrer"
             target="_blank"
           >
-            Tải/xem file
+            {t('research.product.download')}
           </a>
         ) : null}
         {product.externalLink ? (
@@ -326,7 +307,7 @@ function ProductItem({ product }: { product: ResearchProduct }) {
             rel="noreferrer"
             target="_blank"
           >
-            Link minh chứng
+            {t('research.product.evidenceLink')}
           </a>
         ) : null}
         {product.fileType ? <span className="text-slate-600">{product.fileType}</span> : null}
@@ -351,9 +332,9 @@ function getSubmitterLabel(product: ResearchProduct) {
   return product.submittedByName ?? product.submittedByEmail ?? `#${product.submittedById ?? 'N/A'}`;
 }
 
-function formatFileSize(size?: number | null) {
+function formatFileSize(size: number | null | undefined, noFileLabel: string) {
   if (size == null) {
-    return 'Không có file';
+    return noFileLabel;
   }
   if (size < 1024) {
     return `${size} B`;
@@ -362,6 +343,30 @@ function formatFileSize(size?: number | null) {
     return `${(size / 1024).toFixed(1)} KB`;
   }
   return `${(size / (1024 * 1024)).toFixed(2)} MB`;
+}
+
+function getProductTypeLabel(type: ResearchProductType, t: ReturnType<typeof useI18n>['t']) {
+  const key = {
+    FINAL_REPORT: 'finalReport',
+    SLIDE: 'slide',
+    SOURCE_CODE: 'sourceCode',
+    DATASET: 'dataset',
+    DEMO_VIDEO: 'demoVideo',
+    PAPER: 'paper',
+    SOFTWARE_DEMO: 'softwareDemo',
+    OTHER: 'other',
+  }[type];
+  return t(`research.product.type.${key}`);
+}
+
+function getProductStatusLabel(status: ResearchProductStatus, t: ReturnType<typeof useI18n>['t']) {
+  const key = {
+    SUBMITTED: 'submitted',
+    ACCEPTED: 'accepted',
+    NEEDS_REVISION: 'needsRevision',
+    REJECTED: 'rejected',
+  }[status];
+  return t(`research.product.status.${key}`);
 }
 
 function getStatusClass(status: ResearchProductStatus) {

@@ -5,7 +5,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { queryKeys } from '../../../shared/api';
 import { Button, toast } from '../../../shared/components';
-import { VALIDATION_MESSAGES } from '../../../shared/utils';
+import { useI18n } from '../../../shared/i18n';
 import { submitReport, replaceReport } from '../api';
 import type { ResearchReport, SubmitReportPayload, ReplaceReportPayload } from '../types';
 
@@ -47,6 +47,7 @@ export function ReportUpload({
   initialValues,
   onSuccess,
 }: ReportUploadProps) {
+  const { t } = useI18n();
   const queryClient = useQueryClient();
   const [form, setForm] = useState(() => {
     if (mode === 'replace' && initialValues) {
@@ -83,7 +84,7 @@ export function ReportUpload({
     onSuccess: async (report) => {
       setUploadPercent(100);
       const isReplace = mode === 'replace';
-      const successText = isReplace ? 'Đã cập nhật báo cáo.' : mode === 'resubmit' ? 'Đã nộp lại báo cáo.' : 'Đã nộp báo cáo.';
+      const successText = isReplace ? t('research.report.updated') : mode === 'resubmit' ? t('research.report.resubmitted') : t('research.report.submittedSuccess');
       setFeedback({ kind: 'success', text: successText });
       const invalidations = [
         queryClient.invalidateQueries({ queryKey: queryKeys.research.taskReports(taskId) }),
@@ -107,7 +108,7 @@ export function ReportUpload({
       onSuccess?.(report);
     },
     onError: (error) => {
-      const message = getErrorMessage(error);
+      const message = getErrorMessage(error, t);
       setFeedback({ kind: 'error', text: message });
       toast.error(message);
     },
@@ -115,7 +116,7 @@ export function ReportUpload({
 
   function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
     const selectedFile = event.target.files?.[0] ?? null;
-    const validationError = selectedFile ? validateFile(selectedFile) : null;
+    const validationError = selectedFile ? validateFile(selectedFile, t) : null;
     setFileError(validationError);
     setFile(validationError ? null : selectedFile);
     setFeedback(null);
@@ -128,7 +129,7 @@ export function ReportUpload({
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (mode !== 'replace' && !file) {
-      setFileError(VALIDATION_MESSAGES.required);
+      setFileError(t('validation.required'));
       return;
     }
     if (mode === 'replace') {
@@ -163,14 +164,14 @@ export function ReportUpload({
 
   return (
     <form className="space-y-4" onSubmit={handleSubmit}>
-      <TextInput label="Tiêu đề báo cáo" required value={form.title} onChange={(value) => setForm((current) => ({ ...current, title: value }))} />
-      <TextArea label="Công việc đã làm" required value={form.contentDone} onChange={(value) => setForm((current) => ({ ...current, contentDone: value }))} />
-      <TextArea label="Kết quả đạt được" required value={form.result} onChange={(value) => setForm((current) => ({ ...current, result: value }))} />
-      <TextArea label="Khó khăn gặp phải" required value={form.difficulty} onChange={(value) => setForm((current) => ({ ...current, difficulty: value }))} />
-      <TextArea label="Kế hoạch tiếp theo" required value={form.nextPlan} onChange={(value) => setForm((current) => ({ ...current, nextPlan: value }))} />
-      <TextArea label="Tự đánh giá" required value={form.selfAssessment} onChange={(value) => setForm((current) => ({ ...current, selfAssessment: value }))} />
-      <TextInput label="Link minh chứng" type="url" value={form.evidenceLink} onChange={(value) => setForm((current) => ({ ...current, evidenceLink: value }))} />
-      <Field label="Tài liệu báo cáo">
+      <TextInput label={t('research.report.title')} required value={form.title} onChange={(value) => setForm((current) => ({ ...current, title: value }))} />
+      <TextArea label={t('research.report.workDone')} required value={form.contentDone} onChange={(value) => setForm((current) => ({ ...current, contentDone: value }))} />
+      <TextArea label={t('research.report.result')} required value={form.result} onChange={(value) => setForm((current) => ({ ...current, result: value }))} />
+      <TextArea label={t('research.report.difficulty')} required value={form.difficulty} onChange={(value) => setForm((current) => ({ ...current, difficulty: value }))} />
+      <TextArea label={t('research.report.nextPlan')} required value={form.nextPlan} onChange={(value) => setForm((current) => ({ ...current, nextPlan: value }))} />
+      <TextArea label={t('research.report.selfAssessment')} required value={form.selfAssessment} onChange={(value) => setForm((current) => ({ ...current, selfAssessment: value }))} />
+      <TextInput label={t('research.report.evidenceLink')} type="url" value={form.evidenceLink} onChange={(value) => setForm((current) => ({ ...current, evidenceLink: value }))} />
+      <Field label={t('research.report.attachment')}>
         <input
           accept=".pdf,.doc,.docx"
           className="block w-full text-sm text-slate-700"
@@ -179,14 +180,13 @@ export function ReportUpload({
           type="file"
           onChange={handleFileChange}
         />
-        <p className="mt-1 text-xs text-slate-500">Chỉ hỗ trợ PDF, DOC hoặc DOCX, tối đa 10MB.</p>
       </Field>
       {fileError ? <p className="rounded-md bg-red-50 p-3 text-sm font-medium text-red-700">{fileError}</p> : null}
       {file ? <FilePreview file={file} /> : null}
       {upload.isPending || uploadPercent > 0 ? (
-        <div aria-label="Tiến trình tải báo cáo" className="space-y-1">
+        <div aria-label={t('research.report.uploadProgress')} className="space-y-1">
           <div className="flex justify-between text-xs font-medium text-slate-600">
-            <span>{upload.isPending ? 'Đang tải lên...' : 'Đã tải lên'}</span>
+            <span>{upload.isPending ? t('research.report.uploading') : t('research.report.uploaded')}</span>
             <span>{uploadPercent}%</span>
           </div>
           <div className="h-2 overflow-hidden rounded-full bg-slate-100">
@@ -200,8 +200,8 @@ export function ReportUpload({
         </p>
       ) : null}
       <div className="flex justify-end">
-        <Button loading={upload.isPending} loadingText="Đang tải lên..." type="submit">
-          {mode === 'replace' ? 'Cập nhật báo cáo' : mode === 'resubmit' ? 'Nộp lại báo cáo' : 'Nộp báo cáo'}
+        <Button loading={upload.isPending} loadingText={t('research.report.uploading')} type="submit">
+          {mode === 'replace' ? t('research.report.update') : mode === 'resubmit' ? t('research.report.resubmit') : t('research.report.submit')}
         </Button>
       </div>
     </form>
@@ -225,13 +225,13 @@ function FilePreview({ file }: { file: File }) {
   );
 }
 
-function validateFile(file: File) {
+function validateFile(file: File, t: ReturnType<typeof useI18n>['t']) {
   const extension = getExtension(file.name);
   if (!ALLOWED_EXTENSIONS.has(extension) || (file.type && !ALLOWED_MIME_TYPES.has(file.type))) {
-    return VALIDATION_MESSAGES.fileType;
+    return t('validation.fileType');
   }
   if (file.size > MAX_FILE_SIZE) {
-    return VALIDATION_MESSAGES.reportFileSize;
+    return t('validation.reportFileSize');
   }
   return null;
 }
@@ -250,15 +250,15 @@ function formatFileSize(bytes: number) {
   return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
 }
 
-function getErrorMessage(error: unknown) {
+function getErrorMessage(error: unknown, t: ReturnType<typeof useI18n>['t']) {
   if (axios.isAxiosError(error)) {
     if (error.response?.status === 403) {
-      return 'Bạn không có quyền nộp báo cáo cho nhiệm vụ này.';
+      return t('research.report.uploadForbidden');
     }
     const data = error.response?.data as { message?: string; errors?: string[] } | undefined;
-    return data?.message ?? data?.errors?.[0] ?? 'Không thể tải lên báo cáo. Vui lòng thử lại.';
+    return data?.message ?? data?.errors?.[0] ?? t('research.report.uploadFailed');
   }
-  return 'Không thể tải lên báo cáo. Vui lòng thử lại.';
+  return t('research.report.uploadFailed');
 }
 
 function Field({ children, label }: { children: ReactNode; label: string }) {

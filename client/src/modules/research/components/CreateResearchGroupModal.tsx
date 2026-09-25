@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 
 import { Button, Modal } from '../../../shared/components';
+import { useI18n } from '../../../shared/i18n';
 import { VALIDATION_MESSAGES } from '../../../shared/utils';
 import type { CreateResearchGroupPayload, ResearchEligibleStudent, ResearchProject } from '../types';
 import { GroupMemberSelector } from './GroupMemberSelector';
@@ -32,6 +33,7 @@ export function CreateResearchGroupModal({
   onClose,
   onSubmit,
 }: CreateResearchGroupModalProps) {
+  const { t } = useI18n();
   const [form, setForm] = useState(initialForm);
   const [touched, setTouched] = useState(false);
 
@@ -75,26 +77,25 @@ export function CreateResearchGroupModal({
         footer={(
           <>
             <Button onClick={onClose} variant="outline">
-              Hủy
+              {t('common.cancel')}
             </Button>
             <Button
               disabled={isLoadingStudents}
               loading={isSubmitting}
-              loadingText="Đang tạo..."
+              loadingText={t('common.creating')}
               type="submit"
             >
-              Tạo nhóm nghiên cứu
+              {t('research.group.createTitle')}
             </Button>
           </>
         )}
         onClose={onClose}
         size="lg"
-        subtitle={<>Đề tài: {project.title}</>}
-        title="Tạo nhóm nghiên cứu"
+        title={t('research.group.createTitle')}
       >
         <div className="space-y-4">
           <label className="block text-sm font-medium text-slate-700">
-            Tên nhóm
+            {t('research.group.nameLabel')}
             <input
               className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
               value={form.name}
@@ -107,7 +108,7 @@ export function CreateResearchGroupModal({
           </label>
 
           <label className="block text-sm font-medium text-slate-700">
-            Mục tiêu nhóm
+            {t('research.group.objectiveLabel')}
             <textarea
               className="mt-1 min-h-20 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
               value={form.objective}
@@ -116,7 +117,7 @@ export function CreateResearchGroupModal({
           </label>
 
           <label className="block text-sm font-medium text-slate-700">
-            Kế hoạch thực hiện
+            {t('research.group.planLabel')}
             <textarea
               className="mt-1 min-h-20 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
               value={form.plan}

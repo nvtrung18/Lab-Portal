@@ -3,7 +3,6 @@ import type { ReactNode } from 'react';
 interface AdminStatCardProps {
   title: string;
   value: ReactNode;
-  description?: string;
   suffix?: string;
   loading?: boolean;
 }
@@ -24,22 +23,21 @@ function isRenderableValue(value: ReactNode) {
   return true;
 }
 
-export function AdminStatCard({ title, value, description, suffix, loading = false }: AdminStatCardProps) {
+export function AdminStatCard({ title, value, suffix, loading = false }: AdminStatCardProps) {
   const displayValue = isRenderableValue(value) ? value : 0;
   const shouldShowSuffix = !loading && suffix && isRenderableValue(value);
 
   return (
-    <article className="min-h-32 rounded-lg border border-slate-800 bg-slate-950/60 p-4 shadow-sm">
-      <p className="text-sm font-medium text-slate-400">{title}</p>
+    <article className="app-surface-elevated flex min-h-32 min-w-0 flex-col rounded-xl p-4">
+      <p className="min-h-10 text-sm font-medium leading-5 text-slate-600 dark:text-slate-300">{title}</p>
       {loading ? (
-        <div className="mt-4 h-9 w-28 animate-pulse rounded-md bg-slate-800" />
+        <div className="mt-3 h-9 w-28 animate-pulse rounded-lg bg-slate-200 dark:bg-slate-700" />
       ) : (
-        <div className="mt-3 flex min-w-0 items-baseline gap-2">
-          <span className="break-words text-3xl font-semibold tracking-normal text-white">{displayValue}</span>
-          {shouldShowSuffix ? <span className="text-sm font-medium text-slate-400">{suffix}</span> : null}
+        <div className="mt-auto flex min-w-0 items-baseline gap-2 pt-3">
+          <span className="break-words text-3xl font-bold tabular-nums tracking-tight text-slate-950 dark:text-white">{displayValue}</span>
+          {shouldShowSuffix ? <span className="text-sm font-medium text-slate-600 dark:text-slate-300">{suffix}</span> : null}
         </div>
       )}
-      {description ? <p className="mt-3 text-xs leading-5 text-slate-500">{description}</p> : null}
     </article>
   );
 }

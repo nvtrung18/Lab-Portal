@@ -4,6 +4,7 @@ import axios from 'axios';
 
 import { EmptyState, ErrorState, LoadingState } from '../../../shared/components';
 import { LAB_MANAGER, STUDENT } from '../../../shared/constants/roles';
+import { useI18n } from '../../../shared/i18n';
 import { getManagedLabId } from '../../../shared/utils/membership';
 import { useCurrentUser } from '../../user/hooks';
 import {
@@ -28,7 +29,7 @@ import {
   useProjectDashboardStats,
 } from '../hooks';
 import type { TaskBoardRole } from '../taskBoardHelpers';
-import { formatDate, getApiErrorMessage } from '../utils';
+import { formatDate, formatProjectStatus, getApiErrorMessage } from '../utils';
 
 type GroupDetailTab =
   | 'overview'
@@ -41,27 +42,27 @@ type GroupDetailTab =
   | 'evaluations'
   | 'logs';
 
-const GROUP_DETAIL_MANAGER_TABS: Array<{ value: GroupDetailTab; label: string }> = [
-  { value: 'overview', label: 'Tổng quan nhóm' },
-  { value: 'members', label: 'Thành viên nhóm' },
-  { value: 'project', label: 'Đề tài' },
-  { value: 'milestones', label: 'Mốc nghiên cứu' },
-  { value: 'tasks', label: 'Nhiệm vụ' },
-  { value: 'reports', label: 'Báo cáo nhóm' },
-  { value: 'products', label: 'Sản phẩm nhóm' },
-  { value: 'evaluations', label: 'Đánh giá' },
-  { value: 'logs', label: 'Nhật ký nghiên cứu' },
+const GROUP_DETAIL_MANAGER_TABS: Array<{ value: GroupDetailTab; labelKey: string }> = [
+  { value: 'overview', labelKey: 'research.groupTab.overview' },
+  { value: 'members', labelKey: 'research.groupTab.members' },
+  { value: 'project', labelKey: 'research.groupTab.project' },
+  { value: 'milestones', labelKey: 'research.groupTab.milestones' },
+  { value: 'tasks', labelKey: 'research.groupTab.tasks' },
+  { value: 'reports', labelKey: 'research.groupTab.reports' },
+  { value: 'products', labelKey: 'research.groupTab.products' },
+  { value: 'evaluations', labelKey: 'research.groupTab.evaluations' },
+  { value: 'logs', labelKey: 'research.groupTab.logs' },
 ];
 
-const GROUP_DETAIL_STUDENT_TABS = (isLeader: boolean): Array<{ value: GroupDetailTab; label: string }> => [
-  { value: 'overview', label: 'Thông tin nhóm' },
-  { value: 'members', label: 'Thành viên nhóm' },
-  { value: 'project', label: 'Đề tài' },
-  { value: 'milestones', label: 'Mốc nghiên cứu' },
-  { value: 'tasks', label: 'Nhiệm vụ' },
-  { value: 'reports', label: 'Báo cáo nhóm' },
-  { value: 'products', label: 'Sản phẩm nhóm' },
-  ...(isLeader ? [{ value: 'logs', label: 'Nhật ký nhóm' } as const] : []),
+const GROUP_DETAIL_STUDENT_TABS = (isLeader: boolean): Array<{ value: GroupDetailTab; labelKey: string }> => [
+  { value: 'overview', labelKey: 'research.groupTab.info' },
+  { value: 'members', labelKey: 'research.groupTab.members' },
+  { value: 'project', labelKey: 'research.groupTab.project' },
+  { value: 'milestones', labelKey: 'research.groupTab.milestones' },
+  { value: 'tasks', labelKey: 'research.groupTab.tasks' },
+  { value: 'reports', labelKey: 'research.groupTab.reports' },
+  { value: 'products', labelKey: 'research.groupTab.products' },
+  ...(isLeader ? [{ value: 'logs', labelKey: 'research.groupTab.studentLogs' } as const] : []),
 ];
 
 const GROUP_DETAIL_TAB_KEYS = GROUP_DETAIL_MANAGER_TABS.map((tab) => tab.value);
@@ -71,6 +72,7 @@ function isGroupDetailTab(value: string | null): value is GroupDetailTab {
 }
 
 export function ResearchGroupDetailPage() {
+  const { locale, t } = useI18n();
   const [searchParams, setSearchParams] = useSearchParams();
   const { projectId, groupId } = useParams();
   const numericProjectId = Number(projectId);
@@ -121,7 +123,7 @@ export function ResearchGroupDetailPage() {
   if (isLoadingUser || isLoadingProject || isLoadingGroup || isLoadingGroups) {
     return (
       <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-        <LoadingState>Đang tải thông tin nhóm nghiên cứu...</LoadingState>
+        <LoadingState>{t('common.loading')}</LoadingState>
       </section>
     );
   }
@@ -131,20 +133,20 @@ export function ResearchGroupDetailPage() {
   }
 
   if (isProjectError || isGroupError || !project || !group) {
-    let errorMessage = 'Không thể tải thông tin nhóm nghiên cứu.';
+    let errorMessage = t('common.loadError');
     if (isGroupError && axios.isAxiosError(groupError)) {
       const status = groupError.response?.status;
       if (status === 403) {
-        errorMessage = 'Bạn không có quyền truy cập nhóm nghiên cứu này.';
+        errorMessage = t('research.forbidden');
       } else if (status === 404) {
-        errorMessage = 'Không tìm thấy nhóm nghiên cứu.';
+        errorMessage = t('common.notFound');
       }
     } else if (isProjectError && axios.isAxiosError(projectError)) {
       const status = projectError.response?.status;
       if (status === 403) {
-        errorMessage = 'Bạn không có quyền truy cập đề tài này.';
+        errorMessage = t('research.forbidden');
       } else if (status === 404) {
-        errorMessage = 'Không tìm thấy đề tài nghiên cứu.';
+        errorMessage = t('common.notFound');
       }
     }
 
@@ -189,17 +191,17 @@ export function ResearchGroupDetailPage() {
               className="inline-flex rounded-md border border-slate-200 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition duration-150"
               to="/app/research"
             >
-              Quay lại danh sách nhóm
+              {t('common.backToList')}
             </Link>
           ) : (
             <Link
               className="inline-flex rounded-md border border-slate-200 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition duration-150"
               to={`/app/research/projects/${project.id}`}
             >
-              Quay lại đề tài
+              {t('common.back')}
             </Link>
           )}
-          <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Đề tài: {project.title}</span>
+          <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('research.groupTab.project')}: {project.title}</span>
         </div>
 
         <div className="mt-4 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -207,60 +209,60 @@ export function ResearchGroupDetailPage() {
             <div className="flex items-center gap-2.5">
               <h2 className="text-2xl font-medium text-slate-950">{group.name}</h2>
               <span className="rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-700 ring-1 ring-blue-100">
-                Nhóm nghiên cứu
+                {t('research.groupTab.info')}
               </span>
             </div>
             <p className="mt-2 text-sm text-slate-600 leading-relaxed max-w-4xl">
-              {group.objective || 'Chưa cập nhật mục tiêu của nhóm nghiên cứu.'}
+              {group.objective || t('common.notUpdated')}
             </p>
           </div>
         </div>
 
         <dl className="mt-5 grid gap-4 text-sm sm:grid-cols-2 lg:grid-cols-5 border-t border-slate-100 pt-5">
           <div className="min-w-0 flex-1">
-            <dt className="font-semibold text-slate-500 text-xs uppercase tracking-wider">Đề tài nghiên cứu</dt>
+            <dt className="font-semibold text-slate-500 text-xs uppercase tracking-wider">{t('research.groupTab.project')}</dt>
             <dd className="mt-1 text-slate-800 font-medium truncate leading-snug" title={project.title}>
               {project.title}
             </dd>
           </div>
           <div>
-            <dt className="font-semibold text-slate-500 text-xs uppercase tracking-wider">Trưởng nhóm</dt>
-            <dd className="mt-1 text-slate-800 font-medium">{group.leaderName || 'Chưa phân công'}</dd>
+            <dt className="font-semibold text-slate-500 text-xs uppercase tracking-wider">{t('research.role.leader')}</dt>
+            <dd className="mt-1 text-slate-800 font-medium">{group.leaderName || t('common.notUpdated')}</dd>
           </div>
           {isStudent ? (
             <div>
-              <dt className="font-semibold text-slate-500 text-xs uppercase tracking-wider">Vai trò của tôi</dt>
+              <dt className="font-semibold text-slate-500 text-xs uppercase tracking-wider">{t('research.role.member')}</dt>
               <dd className="mt-1">
                 <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ${
                   isLeader ? 'bg-blue-50 text-blue-700 ring-blue-100' : 'bg-slate-50 text-slate-700 ring-slate-100'
                 }`}>
-                  {isLeader ? 'Trưởng nhóm' : 'Thành viên'}
+                  {isLeader ? t('research.role.leader') : t('research.role.member')}
                 </span>
               </dd>
             </div>
           ) : (
             <div>
-              <dt className="font-semibold text-slate-500 text-xs uppercase tracking-wider">Thành viên</dt>
-              <dd className="mt-1 text-slate-800 font-medium">{group.members?.length ?? 0} học viên</dd>
+              <dt className="font-semibold text-slate-500 text-xs uppercase tracking-wider">{t('research.groupTab.members')}</dt>
+              <dd className="mt-1 text-slate-800 font-medium">{group.members?.length ?? 0}</dd>
             </div>
           )}
           <div>
-            <dt className="font-semibold text-slate-500 text-xs uppercase tracking-wider">Trạng thái nhóm</dt>
+            <dt className="font-semibold text-slate-500 text-xs uppercase tracking-wider">{t('slot.statusLabel')}</dt>
             <dd className="mt-1">
               <span className="inline-flex rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700 ring-1 ring-emerald-100">
-                Hoạt động
+                {t('research.group.active')}
               </span>
             </dd>
           </div>
           <div>
-            <dt className="font-semibold text-slate-500 text-xs uppercase tracking-wider">Ngày tạo nhóm</dt>
-            <dd className="mt-1 text-slate-800 font-medium">{formatDate(group.createdAt)}</dd>
+            <dt className="font-semibold text-slate-500 text-xs uppercase tracking-wider">{t('common.submittedAt')}</dt>
+            <dd className="mt-1 text-slate-800 font-medium">{formatDate(group.createdAt, locale)}</dd>
           </div>
         </dl>
       </div>
 
       {/* Tabs list */}
-      <div className="flex gap-1 overflow-x-auto border-b border-slate-200" role="tablist" aria-label="Quản lý chi tiết nhóm nghiên cứu">
+      <div className="flex gap-1 overflow-x-auto" role="tablist" aria-label={t('research.groupTab.info')}>
         {tabs.map((tab) => (
           <button
             className={`whitespace-nowrap border-b-2 px-4 py-3 text-sm font-semibold transition-all ${
@@ -274,7 +276,7 @@ export function ResearchGroupDetailPage() {
             aria-selected={activeTab === tab.value}
             onClick={() => handleTabChange(tab.value)}
           >
-            {tab.label}
+            {t(tab.labelKey)}
           </button>
         ))}
       </div>
@@ -316,7 +318,7 @@ export function ResearchGroupDetailPage() {
             canCreate={isManager}
             groupId={group.id}
             groupRole={isManager ? null : 'MEMBER'}
-            emptyMessage="Nhóm chưa có mốc nghiên cứu nào."
+            emptyMessage={t('research.group.noMilestones')}
           />
         )
       ) : null}
@@ -409,6 +411,7 @@ function GroupOverviewTab({
   isLeader: boolean;
   stats?: any;
 }) {
+  const { locale, t } = useI18n();
   const canViewGroupManagement = isManager || isLeader;
   const { data: groupMilestones = [] } = useMilestonesByGroup(canViewGroupManagement ? group.id : null);
   const { data: myMilestones = [] } = useMyMilestonesByGroup(!canViewGroupManagement && isStudent ? group.id : null);
@@ -428,60 +431,56 @@ function GroupOverviewTab({
       {/* Aggregate Cards Grid */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatItem
-          title="Mốc hoàn thành"
+          title={t('research.milestone.completed')}
           value={`${completedMilestones}/${milestones.length}`}
-          desc="Các cột mốc nghiên cứu chính"
         />
         <StatItem
-          title="Tiến độ Task"
+          title={t('research.group.progress')}
           value={`${taskCompletionRate}%`}
-          desc="Phần trăm nhiệm vụ đã hoàn thành"
         />
         <StatItem
-          title="Báo cáo đã nộp"
+          title={t('research.groupTab.reports')}
           value={reports.length}
-          desc="Tổng số báo cáo tiến độ"
         />
         <StatItem
-          title="Sản phẩm nghiên cứu"
+          title={t('research.groupTab.products')}
           value={products.length}
-          desc="Các sản phẩm khoa học đã lưu"
         />
       </div>
 
       {isStudent && (
         <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm space-y-4">
-          <h3 className="text-base font-medium text-slate-900 border-b border-slate-100 pb-3">Chi tiết thông tin nhóm</h3>
+          <h3 className="text-base font-medium text-slate-900 border-b border-slate-100 pb-3">{t('research.groupTab.info')}</h3>
           <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 text-sm">
             <div className="bg-slate-50/50 rounded-lg p-3.5 border border-slate-100 space-y-0.5">
-              <dt className="font-semibold text-slate-500 text-xs uppercase tracking-wider">Tên nhóm</dt>
+              <dt className="font-semibold text-slate-500 text-xs uppercase tracking-wider">{t('research.group.name')}</dt>
               <dd className="font-medium text-slate-900 text-base">{group.name}</dd>
             </div>
             <div className="bg-slate-50/50 rounded-lg p-3.5 border border-slate-100 space-y-0.5">
-              <dt className="font-semibold text-slate-500 text-xs uppercase tracking-wider">Trưởng nhóm</dt>
-              <dd className="font-medium text-slate-800">{group.leaderName || 'Chưa phân công'}</dd>
+              <dt className="font-semibold text-slate-500 text-xs uppercase tracking-wider">{t('research.group.leader')}</dt>
+              <dd className="font-medium text-slate-800">{group.leaderName || t('lab.notAssigned')}</dd>
             </div>
             <div className="bg-slate-50/50 rounded-lg p-3.5 border border-slate-100 space-y-0.5">
-              <dt className="font-semibold text-slate-500 text-xs uppercase tracking-wider">Vai trò của tôi</dt>
+              <dt className="font-semibold text-slate-500 text-xs uppercase tracking-wider">{t('research.group.myRole')}</dt>
               <dd className="font-medium text-slate-800">
                 <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ${
                   isLeader ? 'bg-blue-50 text-blue-700 ring-blue-100' : 'bg-slate-50 text-slate-700 ring-slate-100'
                 }`}>
-                  {isLeader ? 'Trưởng nhóm' : 'Thành viên'}
+                  {isLeader ? t('research.role.leader') : t('research.role.member')}
                 </span>
               </dd>
             </div>
             <div className="bg-slate-50/50 rounded-lg p-3.5 border border-slate-100 space-y-0.5">
-              <dt className="font-semibold text-slate-500 text-xs uppercase tracking-wider">Trạng thái nhóm</dt>
+              <dt className="font-semibold text-slate-500 text-xs uppercase tracking-wider">{t('research.group.status')}</dt>
               <dd>
                 <span className="inline-flex rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700 ring-1 ring-emerald-100">
-                  Hoạt động
+                  {t('research.group.active')}
                 </span>
               </dd>
             </div>
             <div className="bg-slate-50/50 rounded-lg p-3.5 border border-slate-100 space-y-0.5">
-              <dt className="font-semibold text-slate-500 text-xs uppercase tracking-wider">Ngày tạo nhóm</dt>
-              <dd className="font-medium text-slate-800">{formatDate(group.createdAt)}</dd>
+              <dt className="font-semibold text-slate-500 text-xs uppercase tracking-wider">{t('research.group.createdAt')}</dt>
+              <dd className="font-medium text-slate-800">{formatDate(group.createdAt, locale)}</dd>
             </div>
           </dl>
         </div>
@@ -491,22 +490,22 @@ function GroupOverviewTab({
         {/* Plan / Descriptions Card */}
         <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm lg:col-span-2 space-y-4">
           <div>
-            <h3 className="text-base font-medium text-slate-900">Kế hoạch nghiên cứu của nhóm</h3>
+            <h3 className="text-base font-medium text-slate-900">{t('research.group.plan')}</h3>
             <p className="mt-2 text-sm text-slate-600 leading-relaxed whitespace-pre-line">
-              {group.plan || 'Chưa có kế hoạch nghiên cứu chi tiết.'}
+              {group.plan || t('research.group.noPlan')}
             </p>
           </div>
           <div className="border-t border-slate-100 pt-4">
-            <h3 className="text-base font-medium text-slate-900">Mô tả chi tiết nhóm</h3>
+            <h3 className="text-base font-medium text-slate-900">{t('research.group.description')}</h3>
             <p className="mt-2 text-sm text-slate-600 leading-relaxed">
-              {group.description || 'Chưa cập nhật mô tả nhóm.'}
+              {group.description || t('research.group.noDescription')}
             </p>
           </div>
         </div>
 
         {/* Members List Card */}
         <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-          <h3 className="text-base font-medium text-slate-900">Thành viên nhóm ({group.members?.length ?? 0})</h3>
+          <h3 className="text-base font-medium text-slate-900">{t('research.group.membersCount', undefined, { count: group.members?.length ?? 0 })}</h3>
           <div className="mt-4 divide-y divide-slate-100">
             {group.members?.map((member: any) => (
               <div key={member.id} className="py-3 flex items-center justify-between gap-3 text-sm">
@@ -519,12 +518,12 @@ function GroupOverviewTab({
                     ? 'bg-blue-50 text-blue-700 ring-blue-100'
                     : 'bg-slate-50 text-slate-700 ring-slate-100'
                 }`}>
-                  {member.role === 'LEADER' ? 'Trưởng nhóm' : 'Thành viên'}
+                  {member.role === 'LEADER' ? t('research.role.leader') : t('research.role.member')}
                 </span>
               </div>
             ))}
             {!group.members?.length && (
-              <p className="py-3 text-sm text-slate-500 text-center">Chưa có thành viên nào.</p>
+              <p className="py-3 text-sm text-slate-500 text-center">{t('research.group.noMembers')}</p>
             )}
           </div>
         </div>
@@ -535,31 +534,29 @@ function GroupOverviewTab({
 
 // 2. Group Members Tab Subcomponent
 function GroupMembersTab({ group, isLeader }: { group: any; isLeader: boolean }) {
+  const { locale, t } = useI18n();
   return (
     <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm space-y-6">
       <div>
-        <h3 className="text-lg font-medium text-slate-950">Thành viên nhóm</h3>
-        <p className="mt-1 text-sm text-slate-600">
-          Danh sách thành viên chính thức tham gia nhóm nghiên cứu.
-        </p>
+        <h3 className="text-lg font-medium text-slate-950">{t('research.groupTab.members')}</h3>
       </div>
 
       <div className="overflow-x-auto">
         <table className="w-full text-left text-sm border-collapse">
           <thead>
             <tr className="border-b border-slate-200 bg-slate-50 text-xs font-semibold uppercase tracking-wider text-slate-500">
-              <th className="px-6 py-3 font-semibold">Họ tên</th>
-              <th className="px-6 py-3 font-semibold">Email</th>
-              <th className="px-6 py-3 font-semibold">Vai trò trong nhóm</th>
-              <th className="px-6 py-3 font-semibold">Trạng thái</th>
-              <th className="px-6 py-3 font-semibold">Ngày tham gia</th>
+              <th className="px-6 py-3 font-semibold">{t('research.group.fullName')}</th>
+              <th className="px-6 py-3 font-semibold">{t('common.email')}</th>
+              <th className="px-6 py-3 font-semibold">{t('research.group.role')}</th>
+              <th className="px-6 py-3 font-semibold">{t('research.group.statusLabel')}</th>
+              <th className="px-6 py-3 font-semibold">{t('research.group.joinedAt')}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
             {group.members?.map((member: any) => (
               <tr key={member.id} className="hover:bg-slate-50/55 transition duration-150">
                 <td className="px-6 py-4 font-semibold text-slate-900">
-                  {member.fullName || 'Chưa cập nhật'}
+                  {member.fullName || t('common.notUpdated')}
                 </td>
                 <td className="px-6 py-4 text-slate-600">{member.email}</td>
                 <td className="px-6 py-4">
@@ -568,23 +565,23 @@ function GroupMembersTab({ group, isLeader }: { group: any; isLeader: boolean })
                       ? 'bg-blue-50 text-blue-700 ring-blue-100'
                       : 'bg-slate-50 text-slate-700 ring-slate-100'
                   }`}>
-                    {member.role === 'LEADER' ? 'Trưởng nhóm' : 'Thành viên'}
+                    {member.role === 'LEADER' ? t('research.role.leader') : t('research.role.member')}
                   </span>
                 </td>
                 <td className="px-6 py-4">
                   <span className="inline-flex text-emerald-700 font-semibold">
-                    Hoạt động
+                    {t('research.group.active')}
                   </span>
                 </td>
                 <td className="px-6 py-4 text-slate-500">
-                  {formatDate(member.joinedAt || group.createdAt)}
+                  {formatDate(member.joinedAt || group.createdAt, locale)}
                 </td>
               </tr>
             ))}
             {!group.members?.length && (
               <tr>
                 <td colSpan={5} className="px-6 py-8 text-center text-slate-500">
-                  Chưa có thành viên nào trong nhóm.
+                  {t('research.group.noMembersInGroup')}
                 </td>
               </tr>
             )}
@@ -597,18 +594,7 @@ function GroupMembersTab({ group, isLeader }: { group: any; isLeader: boolean })
 
 // 3. Group Project Tab Subcomponent
 function GroupProjectTab({ project }: { project: any }) {
-  function formatProjectStatus(status?: string) {
-    switch (status) {
-      case 'DRAFT': return 'Bản nháp';
-      case 'PLANNED': return 'Đang lên kế hoạch';
-      case 'ONGOING': return 'Đang thực hiện';
-      case 'WAITING_REVIEW': return 'Chờ duyệt';
-      case 'COMPLETED': return 'Hoàn thành';
-      case 'ARCHIVED': return 'Lưu trữ';
-      case 'CANCELLED': return 'Đã hủy';
-      default: return 'Chưa cập nhật';
-    }
-  }
+  const { locale, t } = useI18n();
 
   function getProjectStatusClass(status?: string) {
     switch (status) {
@@ -630,64 +616,61 @@ function GroupProjectTab({ project }: { project: any }) {
     <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
         <div>
-          <h3 className="text-lg font-medium text-slate-950">Thông tin đề tài nghiên cứu</h3>
-          <p className="mt-1 text-sm text-slate-600">
-            Chi tiết đề tài khoa học nhóm đang thực hiện. Thông tin này ở chế độ chỉ đọc.
-          </p>
+          <h3 className="text-lg font-medium text-slate-950">{t('research.group.projectInfo')}</h3>
         </div>
         <span className={`inline-flex shrink-0 rounded-full px-3 py-1 text-xs font-medium uppercase ring-1 ${getProjectStatusClass(project.status)}`}>
-          {formatProjectStatus(project.status)}
+          {formatProjectStatus(project.status, locale)}
         </span>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         <div className="rounded-lg border border-slate-100 bg-slate-50/50 p-4 space-y-1">
-          <span className="block text-xs font-semibold text-slate-500 uppercase tracking-wider">Tên đề tài</span>
+          <span className="block text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('research.group.projectName')}</span>
           <span className="block font-medium text-slate-900 text-sm leading-snug">{project.title}</span>
         </div>
         <div className="rounded-lg border border-slate-100 bg-slate-50/50 p-4 space-y-1">
-          <span className="block text-xs font-semibold text-slate-500 uppercase tracking-wider">Chủ đề nghiên cứu</span>
-          <span className="block font-semibold text-slate-800 text-sm">{project.researchDirection || 'Chưa cập nhật'}</span>
+          <span className="block text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('research.group.topic')}</span>
+          <span className="block font-semibold text-slate-800 text-sm">{project.researchDirection || t('common.notUpdated')}</span>
         </div>
         <div className="rounded-lg border border-slate-100 bg-slate-50/50 p-4 space-y-1">
-          <span className="block text-xs font-semibold text-slate-500 uppercase tracking-wider">Mã đề tài / Quản lý</span>
+          <span className="block text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('research.group.codeManager')}</span>
           <span className="block font-semibold text-slate-800 text-sm">
-            {project.code || 'N/A'} — {project.managerName || 'Chưa phân công'}
+            {project.code || 'N/A'} — {project.managerName || t('lab.notAssigned')}
           </span>
         </div>
         <div className="rounded-lg border border-slate-100 bg-slate-50/50 p-4 space-y-1">
-          <span className="block text-xs font-semibold text-slate-500 uppercase tracking-wider">Ngày bắt đầu</span>
-          <span className="block font-semibold text-slate-800 text-sm">{formatDate(project.startDate) || 'Chưa cập nhật'}</span>
+          <span className="block text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('research.project.startDate')}</span>
+          <span className="block font-semibold text-slate-800 text-sm">{formatDate(project.startDate, locale)}</span>
         </div>
         <div className="rounded-lg border border-slate-100 bg-slate-50/50 p-4 space-y-1 col-span-1 md:col-span-2">
-          <span className="block text-xs font-semibold text-slate-500 uppercase tracking-wider font-semibold">Ngày kết thúc dự kiến</span>
-          <span className="block font-semibold text-slate-800 text-sm">{formatDate(project.expectedEndDate) || 'Chưa cập nhật'}</span>
+          <span className="block text-xs font-semibold text-slate-500 uppercase tracking-wider font-semibold">{t('research.project.expectedEndDate')}</span>
+          <span className="block font-semibold text-slate-800 text-sm">{formatDate(project.expectedEndDate, locale)}</span>
         </div>
       </div>
 
       <div className="border-t border-slate-100 pt-5 space-y-5">
         <div>
-          <h4 className="text-sm font-medium text-slate-900 uppercase tracking-wider">Mô tả chi tiết</h4>
+          <h4 className="text-sm font-medium text-slate-900 uppercase tracking-wider">{t('research.group.details')}</h4>
           <p className="mt-2 text-sm text-slate-600 leading-relaxed whitespace-pre-line">
-            {project.description || 'Chưa có mô tả chi tiết cho đề tài.'}
+            {project.description || t('research.group.noProjectDescription')}
           </p>
         </div>
         <div>
-          <h4 className="text-sm font-medium text-slate-900 uppercase tracking-wider">Mục tiêu đề tài</h4>
+          <h4 className="text-sm font-medium text-slate-900 uppercase tracking-wider">{t('research.group.objective')}</h4>
           <p className="mt-2 text-sm text-slate-600 leading-relaxed whitespace-pre-line">
-            {project.objective || 'Chưa có thông tin mục tiêu đề tài.'}
+            {project.objective || t('research.group.noProjectObjective')}
           </p>
         </div>
         <div>
-          <h4 className="text-sm font-medium text-slate-900 uppercase tracking-wider">Sản phẩm kỳ vọng</h4>
+          <h4 className="text-sm font-medium text-slate-900 uppercase tracking-wider">{t('research.group.requiredProducts')}</h4>
           <p className="mt-2 text-sm text-slate-600 leading-relaxed whitespace-pre-line bg-blue-50/30 rounded-lg p-4 border border-blue-100/50">
-            {project.requiredProducts || 'Chưa có thông tin sản phẩm kỳ vọng.'}
+            {project.requiredProducts || t('research.group.noRequiredProducts')}
           </p>
         </div>
         <div>
-          <h4 className="text-sm font-medium text-slate-900 uppercase tracking-wider">Tiêu chí đánh giá</h4>
+          <h4 className="text-sm font-medium text-slate-900 uppercase tracking-wider">{t('research.group.evaluationCriteria')}</h4>
           <p className="mt-2 text-sm text-slate-600 leading-relaxed whitespace-pre-line bg-emerald-50/20 rounded-lg p-4 border border-emerald-100/30">
-            {project.evaluationCriteria || 'Chưa có thông tin tiêu chí đánh giá.'}
+            {project.evaluationCriteria || t('research.group.noEvaluationCriteria')}
           </p>
         </div>
       </div>
@@ -696,39 +679,37 @@ function GroupProjectTab({ project }: { project: any }) {
 }
 
 function GroupTaskList({ groupId }: { groupId: number }) {
+  const { locale, t } = useI18n();
   const { data: tasks = [], error, isLoading, isError, refetch } = useGroupTasks(groupId);
   const errorMessage = getApiErrorMessage(error, {
-    fallback: 'Không thể tải danh sách nhiệm vụ.',
-    forbidden: 'Bạn không có quyền xem nhiệm vụ của nhóm này.',
+    fallback: t('common.loadError'),
+    forbidden: t('research.forbidden'),
   });
 
   return (
     <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
       <div>
-        <h3 className="text-lg font-semibold text-slate-950">Bảng tiến độ nhóm</h3>
-        <p className="mt-1 text-sm text-slate-600">
-          Danh sách nhiệm vụ của nhóm nghiên cứu theo endpoint group-scoped.
-        </p>
+        <h3 className="text-lg font-semibold text-slate-950">{t('research.group.taskBoard')}</h3>
       </div>
 
       {isLoading ? (
-        <LoadingState className="mt-5">Đang tải danh sách nhiệm vụ...</LoadingState>
+        <LoadingState className="mt-5">{t('research.group.tasksLoading')}</LoadingState>
       ) : isError ? (
         <ErrorState className="mt-5" onRetry={() => refetch()}>
           {errorMessage}
         </ErrorState>
       ) : !tasks.length ? (
-        <EmptyState className="mt-5">Nhóm chưa có nhiệm vụ nào.</EmptyState>
+        <EmptyState className="mt-5">{t('research.group.noTasks')}</EmptyState>
       ) : (
         <div className="mt-5 overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead>
               <tr className="border-b border-slate-200 bg-slate-50 text-xs font-semibold uppercase tracking-wider text-slate-500">
-                <th className="px-4 py-3 font-semibold">Nhiệm vụ</th>
-                <th className="px-4 py-3 font-semibold">Người phụ trách</th>
-                <th className="px-4 py-3 font-semibold">Hạn hoàn thành</th>
-                <th className="px-4 py-3 font-semibold">Tiến độ</th>
-                <th className="px-4 py-3 font-semibold">Trạng thái</th>
+                <th className="px-4 py-3 font-semibold">{t('research.group.task')}</th>
+                <th className="px-4 py-3 font-semibold">{t('research.group.assignee')}</th>
+                <th className="px-4 py-3 font-semibold">{t('research.group.deadline')}</th>
+                <th className="px-4 py-3 font-semibold">{t('research.group.progress')}</th>
+                <th className="px-4 py-3 font-semibold">{t('research.group.statusLabel')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -741,9 +722,9 @@ function GroupTaskList({ groupId }: { groupId: number }) {
                     ) : null}
                   </td>
                   <td className="px-4 py-3 text-slate-700">
-                    {task.assigneeName || task.assigneeEmail || 'Chưa phân công'}
+                    {task.assigneeName || task.assigneeEmail || t('lab.notAssigned')}
                   </td>
-                  <td className="px-4 py-3 text-slate-600">{formatDate(task.deadline)}</td>
+                  <td className="px-4 py-3 text-slate-600">{formatDate(task.deadline, locale)}</td>
                   <td className="px-4 py-3">
                     <div className="min-w-32">
                       <div className="flex items-center justify-between text-xs font-semibold text-slate-600">
@@ -788,6 +769,7 @@ function GroupTasksTab({
   currentUserId,
   labId,
 }: GroupTasksTabProps) {
+  const { t } = useI18n();
   const { data: milestones = [], isLoading, isError, error, refetch } = useMilestonesByGroup(groupId);
   const [selectedMilestoneId, setSelectedMilestoneId] = useState<number | null>(null);
 
@@ -798,12 +780,12 @@ function GroupTasksTab({
   }, [milestones, selectedMilestoneId]);
 
   const errorMessage = getApiErrorMessage(error, {
-    fallback: 'Không thể tải danh sách mốc nghiên cứu.',
-    forbidden: 'Bạn không có quyền xem thông tin nhiệm vụ của nhóm này.',
+    fallback: t('common.loadError'),
+    forbidden: t('research.forbidden'),
   });
 
   if (isLoading) {
-    return <LoadingState className="py-8">Đang tải thông tin nhiệm vụ...</LoadingState>;
+    return <LoadingState className="py-8">{t('common.loading')}</LoadingState>;
   }
 
   if (isError) {
@@ -817,7 +799,7 @@ function GroupTasksTab({
   if (milestones.length === 0) {
     return (
       <EmptyState className="py-12">
-        Nhóm chưa có mốc nghiên cứu nào. Vui lòng tạo mốc nghiên cứu trước để quản lý nhiệm vụ.
+        {t('research.group.noMilestonesInstruction')}
       </EmptyState>
     );
   }
@@ -829,8 +811,7 @@ function GroupTasksTab({
       {/* Milestone Selector */}
       <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h3 className="text-base font-medium text-slate-900">Nhiệm vụ theo mốc nghiên cứu</h3>
-          <p className="mt-1 text-sm text-slate-600">Chọn mốc nghiên cứu để xem và quản lý danh sách nhiệm vụ.</p>
+          <h3 className="text-base font-medium text-slate-900">{t('research.group.tasksByMilestone')}</h3>
         </div>
         <div className="w-full sm:w-72">
           <select
@@ -852,7 +833,7 @@ function GroupTasksTab({
         <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm space-y-4">
           <div className="border-b border-slate-100 pb-4">
             <h4 className="text-base font-medium text-slate-900">{selectedMilestone.title}</h4>
-            <p className="mt-1 text-sm text-slate-600">{selectedMilestone.description || 'Chưa có mô tả cho mốc này.'}</p>
+            {selectedMilestone.description ? <p className="mt-1 text-sm text-slate-600">{selectedMilestone.description}</p> : null}
           </div>
           <TaskBoard
             projectId={projectId}
@@ -885,6 +866,7 @@ function LeaderTasksWrapper({
   taskBoardRole,
   labId,
 }: LeaderTasksWrapperProps) {
+  const { t } = useI18n();
   const [subTab, setSubTab] = useState<'me' | 'group'>('me');
 
   return (
@@ -899,7 +881,7 @@ function LeaderTasksWrapper({
               : 'text-slate-600 hover:text-slate-900'
           }`}
         >
-          Nhiệm vụ của tôi
+          {t('research.group.myTasks')}
         </button>
         <button
           onClick={() => setSubTab('group')}
@@ -909,7 +891,7 @@ function LeaderTasksWrapper({
               : 'text-slate-600 hover:text-slate-900'
           }`}
         >
-          Bảng tiến độ nhóm
+          {t('research.group.groupProgress')}
         </button>
       </div>
 
@@ -945,6 +927,7 @@ function LeaderMilestonesWrapper({
   labId,
   groupId,
 }: LeaderMilestonesWrapperProps) {
+  const { t } = useI18n();
   const [subTab, setSubTab] = useState<'me' | 'group'>('me');
 
   return (
@@ -959,7 +942,7 @@ function LeaderMilestonesWrapper({
               : 'text-slate-600 hover:text-slate-900'
           }`}
         >
-          Mốc của tôi
+          {t('research.group.myMilestones')}
         </button>
         <button
           onClick={() => setSubTab('group')}
@@ -969,7 +952,7 @@ function LeaderMilestonesWrapper({
               : 'text-slate-600 hover:text-slate-900'
           }`}
         >
-          Mốc của nhóm
+          {t('research.group.groupMilestones')}
         </button>
       </div>
 
@@ -981,7 +964,7 @@ function LeaderMilestonesWrapper({
           canCreate={false}
           groupId={groupId}
           groupRole="MEMBER"
-          emptyMessage="Bạn chưa được giao mốc nghiên cứu nào trong nhóm này."
+          emptyMessage={t('research.group.myMilestonesEmpty')}
         />
       ) : (
         <MilestoneList
@@ -991,7 +974,7 @@ function LeaderMilestonesWrapper({
           canCreate={false}
           groupId={groupId}
           groupRole="LEADER"
-          emptyMessage="Nhóm chưa có mốc nghiên cứu nào."
+          emptyMessage={t('research.group.noMilestones')}
         />
       )}
     </div>
@@ -1002,11 +985,9 @@ function LeaderMilestonesWrapper({
 function StatItem({
   title,
   value,
-  desc,
 }: {
   title: string;
   value: string | number;
-  desc: string;
 }) {
   return (
     <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
@@ -1016,9 +997,6 @@ function StatItem({
         </span>
         <span className="block mt-1 text-2xl font-medium text-slate-900 leading-none">
           {value}
-        </span>
-        <span className="block mt-1 text-xs text-slate-500 truncate">
-          {desc}
         </span>
       </div>
     </div>

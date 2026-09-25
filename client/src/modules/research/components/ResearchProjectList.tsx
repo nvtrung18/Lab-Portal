@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import { Button, EmptyState, ErrorState, LoadingState } from '../../../shared/components';
+import { useI18n } from '../../../shared/i18n';
 import {
   useCreateResearchProject,
   useResearchProjectsByLab,
@@ -19,6 +20,7 @@ interface ResearchProjectListProps {
 }
 
 export function ResearchProjectList({ labId, canCreate, mode = 'manager' }: ResearchProjectListProps) {
+  const { locale, t } = useI18n();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<ResearchProject | null>(null);
   const managerProjects = useResearchProjectsByLab(mode === 'manager' ? labId : null);
@@ -32,29 +34,24 @@ export function ResearchProjectList({ labId, canCreate, mode = 'manager' }: Rese
     <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h3 className="text-lg font-semibold text-slate-950">Đề tài nghiên cứu</h3>
-          <p className="mt-1 text-sm text-slate-600">
-            {mode === 'student'
-              ? 'Danh sách đề tài nghiên cứu thuộc PTN bạn đang tham gia.'
-              : 'Danh sách đề tài nghiên cứu thuộc PTN đang quản lý.'}
-          </p>
+          <h3 className="text-lg font-semibold text-slate-950">{t('research.project.listTitle')}</h3>
         </div>
         {canCreate ? (
           <Button onClick={() => setIsCreateOpen(true)}>
-            Tạo đề tài nghiên cứu
+            {t('research.project.createTitle')}
           </Button>
         ) : null}
       </div>
 
       {isLoading ? (
-        <LoadingState className="mt-5">Đang tải danh sách đề tài nghiên cứu...</LoadingState>
+        <LoadingState className="mt-5">{t('research.project.listLoading')}</LoadingState>
       ) : isError ? (
         <ErrorState className="mt-5" onRetry={() => refetch()}>
-          Không thể tải danh sách đề tài nghiên cứu.
+          {t('research.project.listLoadFailed')}
         </ErrorState>
       ) : !projects.length ? (
         <EmptyState className="mt-5">
-          {mode === 'student' ? 'PTN này chưa có đề tài nghiên cứu nào.' : 'Chưa có đề tài nghiên cứu nào.'}
+          {mode === 'student' ? t('research.project.studentEmpty') : t('research.project.empty')}
         </EmptyState>
       ) : (
         <div className="mt-5 grid gap-4 lg:grid-cols-2">
@@ -66,31 +63,31 @@ export function ResearchProjectList({ labId, canCreate, mode = 'manager' }: Rese
                   {project.title}
                 </h4>
                 <span className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ring-1 ${getStatusClass(project.status)}`}>
-                  {formatProjectStatus(project.status)}
+                  {formatProjectStatus(project.status, locale)}
                 </span>
               </div>
               <p className="mt-2 text-sm font-medium text-slate-700">
-                {project.researchDirection ?? 'Chưa cập nhật hướng nghiên cứu'}
+                {project.researchDirection ?? t('research.project.noDirection')}
               </p>
               <p className="mt-3 text-sm text-slate-600">
-                {project.objective || project.description || 'Chưa cập nhật mục tiêu nghiên cứu.'}
+                {project.objective || project.description || t('research.group.noObjective')}
               </p>
               <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
                 <div>
-                  <dt className="font-semibold text-slate-700">Ngày bắt đầu</dt>
-                  <dd className="mt-1 text-slate-600">{formatDate(project.startDate)}</dd>
+                  <dt className="font-semibold text-slate-700">{t('research.project.startDateLabel')}</dt>
+                  <dd className="mt-1 text-slate-600">{formatDate(project.startDate, locale)}</dd>
                 </div>
                 <div>
-                  <dt className="font-semibold text-slate-700">Ngày kết thúc dự kiến</dt>
-                  <dd className="mt-1 text-slate-600">{formatDate(project.expectedEndDate ?? project.endDate)}</dd>
+                  <dt className="font-semibold text-slate-700">{t('research.project.expectedEndDateLabel')}</dt>
+                  <dd className="mt-1 text-slate-600">{formatDate(project.expectedEndDate ?? project.endDate, locale)}</dd>
                 </div>
                 <div>
-                  <dt className="font-semibold text-slate-700">Mức độ ưu tiên</dt>
-                  <dd className="mt-1 text-slate-600">{formatPriority(project.priority)}</dd>
+                  <dt className="font-semibold text-slate-700">{t('research.project.priority')}</dt>
+                  <dd className="mt-1 text-slate-600">{formatPriority(project.priority, locale)}</dd>
                 </div>
                 <div>
-                  <dt className="font-semibold text-slate-700">Quản lý hướng dẫn</dt>
-                  <dd className="mt-1 text-slate-600">{project.managerName ?? 'Chưa cập nhật'}</dd>
+                  <dt className="font-semibold text-slate-700">{t('research.project.manager')}</dt>
+                  <dd className="mt-1 text-slate-600">{project.managerName ?? t('common.notUpdated')}</dd>
                 </div>
               </dl>
               {mode === 'manager' ? (
@@ -99,10 +96,10 @@ export function ResearchProjectList({ labId, canCreate, mode = 'manager' }: Rese
                     className="inline-flex rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100"
                     to={`/app/research/projects/${project.id}`}
                   >
-                    Xem chi tiết
+                    {t('common.viewDetails')}
                   </Link>
                   <Button onClick={() => setEditingProject(project)} size="sm" variant="outline">
-                    Sửa đề tài
+                    {t('research.project.edit')}
                   </Button>
                 </div>
               ) : null}

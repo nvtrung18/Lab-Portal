@@ -36,3 +36,7 @@ face:
     base-url: http://face-service.test.invalid
     internal-service-token: test-face-internal-service-token
   embedding-encryption-key: MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=
+
+app:
+  ai:
+    default-time-zone: Asia/Ho_Chi_Minh

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 
 import { Button, EmptyState, Modal } from '../../../shared/components';
+import { useI18n } from '../../../shared/i18n';
 import type { ResearchTask, ResearchReport } from '../types';
 import { ReportUpload } from './ReportUpload';
 
@@ -23,12 +24,13 @@ export function ReportUploadModal({
   projectId,
   groupId,
   tasks,
-  title = 'Nộp báo cáo tiến độ',
+  title,
   mode = 'create',
   reportId,
   initialValues,
   onClose,
 }: ReportUploadModalProps) {
+  const { t } = useI18n();
   const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null);
 
   useEffect(() => {
@@ -43,18 +45,18 @@ export function ReportUploadModal({
 
   return (
     <Modal
-      footer={<Button onClick={onClose} variant="outline">Đóng</Button>}
+      footer={<Button onClick={onClose} variant="outline">{t('common.close')}</Button>}
       onClose={onClose}
       size="lg"
-      title={title}
+      title={title ?? t('research.report.uploadTitle')}
     >
       {!tasks.length || !selectedTaskId ? (
-        <EmptyState>Bạn chưa có nhiệm vụ được giao để nộp báo cáo.</EmptyState>
+        <EmptyState>{t('research.report.noAssignedTask')}</EmptyState>
       ) : (
         <div className="space-y-4">
           {tasks.length > 1 ? (
             <label className="block text-sm">
-              <span className="mb-1 block font-semibold text-slate-700">Nhiệm vụ báo cáo</span>
+              <span className="mb-1 block font-semibold text-slate-700">{t('research.report.taskToReport')}</span>
               <select
                 className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
                 value={selectedTaskId}

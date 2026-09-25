@@ -1,37 +1,37 @@
-export function formatPenaltyType(type?: string | null) {
-  const labels: Record<string, string> = {
-    NO_SHOW: 'Vắng không phép',
-    LATE_CHECKIN: 'Check-in muộn',
-    CLEANING_FAILED: 'Vệ sinh không đạt',
-    LATE_CANCEL: 'Hủy đăng ký muộn',
-    CLEANING_NOT_DONE: 'Chưa hoàn thành vệ sinh',
-    RULE_VIOLATION: 'Vi phạm nội quy PTN',
-    OTHER: 'Khác',
-  };
+import { getStoredLocale, translate, type Locale } from '../../../shared/i18n';
 
-  return labels[type ?? ''] ?? 'Khác';
+const PENALTY_TYPE_KEYS: Record<string, string> = {
+  NO_SHOW: 'penalty.type.noShow',
+  LATE_CHECKIN: 'penalty.type.lateCheckin',
+  CLEANING_FAILED: 'penalty.type.cleaningFailed',
+  LATE_CANCEL: 'penalty.type.lateCancel',
+  CLEANING_NOT_DONE: 'penalty.type.cleaningNotDone',
+  RULE_VIOLATION: 'penalty.type.ruleViolation',
+  OTHER: 'penalty.type.other',
+};
+
+export function formatPenaltyType(type?: string | null, locale: Locale = getStoredLocale()) {
+  return translate(PENALTY_TYPE_KEYS[type ?? ''] ?? 'penalty.type.other', locale);
 }
 
-export function formatPenaltyStatus(status?: string | null) {
-  const labels: Record<string, string> = {
-    ACTIVE: 'Đang hiệu lực',
-    RESOLVED: 'Đã xử lý',
-    CANCELLED: 'Đã hủy',
-    PAID: 'Đã xử lý',
-  };
-
-  return labels[status ?? ''] ?? 'Chưa cập nhật';
+export function formatPenaltyStatus(status?: string | null, locale: Locale = getStoredLocale()) {
+  const key = {
+    ACTIVE: 'penalty.status.active',
+    RESOLVED: 'penalty.status.resolved',
+    CANCELLED: 'penalty.status.cancelled',
+    PAID: 'penalty.status.resolved',
+  }[status ?? ''];
+  return translate(key ?? 'common.notUpdated', locale);
 }
 
-export function formatComplaintStatus(status?: string | null) {
-  const labels: Record<string, string> = {
-    PENDING: 'Chờ xử lý',
-    APPROVED: 'Đã chấp nhận',
-    REJECTED: 'Không chấp nhận',
-    RESOLVED: 'Đã xử lý',
-  };
-
-  return labels[status ?? ''] ?? 'Chưa cập nhật';
+export function formatComplaintStatus(status?: string | null, locale: Locale = getStoredLocale()) {
+  const key = {
+    PENDING: 'penalty.complaint.pending',
+    APPROVED: 'penalty.complaint.approved',
+    REJECTED: 'penalty.complaint.rejected',
+    RESOLVED: 'penalty.complaint.resolved',
+  }[status ?? ''];
+  return translate(key ?? 'common.notUpdated', locale);
 }
 
 export function getPenaltyStatusClass(status?: string | null) {
@@ -54,17 +54,17 @@ export function getComplaintStatusClass(status?: string | null) {
   return 'bg-emerald-50 text-emerald-700 ring-emerald-200';
 }
 
-export function formatDateTime(value?: string | null) {
+export function formatDateTime(value?: string | null, locale: Locale = getStoredLocale()) {
   if (!value) {
-    return 'Chưa cập nhật';
+    return translate('common.notUpdated', locale);
   }
 
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) {
-    return 'Chưa cập nhật';
+    return translate('common.notUpdated', locale);
   }
 
-  return new Intl.DateTimeFormat('vi-VN', {
+  return new Intl.DateTimeFormat(locale === 'en' ? 'en-US' : 'vi-VN', {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',

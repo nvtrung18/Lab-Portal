@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 
 import { EmptyState, ErrorState } from '../../../shared/components';
+import { useI18n } from '../../../shared/i18n';
 import { useSystemConfig, useUpdateSystemConfig } from '../hooks';
 import type { SystemConfig } from '../api';
 
@@ -42,6 +43,10 @@ const defaultConfig: SystemConfig = {
   operational: { maxPageSize: 100, includeFailureReasonCodes: true },
 };
 
+function localizeConfigLabel(t: ReturnType<typeof useI18n>['t'], value: string) {
+  return t(value);
+}
+
 function parseTypes(value: string) {
   return Array.from(
     new Set(
@@ -57,53 +62,54 @@ function formatTypes(value: string[]) {
   return value.join(', ');
 }
 
-function validateConfig(config: SystemConfig) {
+function validateConfig(config: SystemConfig, t: ReturnType<typeof useI18n>['t']) {
   const errors: string[] = [];
 
   if (config.account.maxLoginAttempts < 1) {
-    errors.push('Số lần đăng nhập sai tối đa phải lớn hơn hoặc bằng 1.');
+    errors.push(t('adminConfig.validation.maxLoginAttempts'));
   }
   if (config.booking.checkinWindowMinutes <= 0) {
-    errors.push('Thời gian check-in đầu ca phải lớn hơn 0 phút.');
+    errors.push(t('adminConfig.validation.checkinWindow'));
   }
   if (config.booking.cancelBeforeMinutes < 0) {
-    errors.push('Thời gian cho phép hủy booking phải lớn hơn hoặc bằng 0 phút.');
+    errors.push(t('adminConfig.validation.cancelBefore'));
   }
   if (config.upload.reportMaxSizeMb <= 0) {
-    errors.push('Dung lượng tối đa báo cáo phải lớn hơn 0 MB.');
+    errors.push(t('adminConfig.validation.reportSize'));
   }
   if (config.upload.productMaxSizeMb <= 0) {
-    errors.push('Dung lượng tối đa sản phẩm phải lớn hơn 0 MB.');
+    errors.push(t('adminConfig.validation.productSize'));
   }
   if (config.upload.reportAllowedTypes.length === 0) {
-    errors.push('Định dạng báo cáo được phép không được rỗng.');
+    errors.push(t('adminConfig.validation.reportTypes'));
   }
   if (config.upload.productAllowedTypes.length === 0) {
-    errors.push('Định dạng sản phẩm được phép không được rỗng.');
+    errors.push(t('adminConfig.validation.productTypes'));
   }
   if (config.research.evaluationMaxScore <= 0) {
-    errors.push('Thang điểm đánh giá tối đa phải lớn hơn 0.');
+    errors.push(t('adminConfig.validation.score'));
   }
   if (config.ai.maxRequestsPerDay < 1 || config.ai.maxContextTokens < 1) {
-    errors.push('Giới hạn yêu cầu và context AI phải lớn hơn 0.');
+    errors.push(t('adminConfig.validation.aiLimits'));
   }
   if (config.face.confidenceThreshold < 0 || config.face.confidenceThreshold > 1 || config.face.livenessThreshold < 0 || config.face.livenessThreshold > 1) {
-    errors.push('Ngưỡng nhận diện và liveness phải nằm trong khoảng 0 đến 1.');
+    errors.push(t('adminConfig.validation.faceThresholds'));
   }
   if (config.qrFallback.tokenTtlSeconds < 1 || config.qrFallback.tokenTtlSeconds > 86400) {
-    errors.push('Thời hạn QR fallback phải nằm trong khoảng 1 đến 86400 giây.');
+    errors.push(t('adminConfig.validation.qrTtl'));
   }
   if (config.notification.maxPageSize < 1 || config.notification.maxPageSize > 100 || config.operational.maxPageSize < 1 || config.operational.maxPageSize > 100) {
-    errors.push('Kích thước trang thông báo và nhật ký phải nằm trong khoảng 1 đến 100.');
+    errors.push(t('adminConfig.validation.pageSize'));
   }
   if (Object.values(config.retention).some((days) => days < 1 || days > 3650)) {
-    errors.push('Thời gian lưu dữ liệu phải nằm trong khoảng 1 đến 3650 ngày.');
+    errors.push(t('adminConfig.validation.retention'));
   }
 
   return errors;
 }
 
 export function SystemConfigPage() {
+  const { t } = useI18n();
   const { data, isError, isLoading, refetch } = useSystemConfig();
   const updateMutation = useUpdateSystemConfig();
   const [form, setForm] = useState<SystemConfig>(defaultConfig);
@@ -163,7 +169,7 @@ export function SystemConfigPage() {
   };
 
   const handleSubmit = async () => {
-    const nextErrors = validateConfig(normalizedForm);
+    const nextErrors = validateConfig(normalizedForm, t);
     setErrors(nextErrors);
 
     if (nextErrors.length > 0) {
@@ -180,7 +186,7 @@ export function SystemConfigPage() {
     return (
       <section className="rounded-lg border border-slate-800 bg-slate-900 p-6 shadow-sm">
         <PageHeader />
-        <p className="mt-6 text-sm text-slate-300">Đang tải cấu hình hệ thống...</p>
+        <p className="mt-6 text-sm text-slate-300">{t('adminConfig.loading')}</p>
       </section>
     );
   }
@@ -193,7 +199,7 @@ export function SystemConfigPage() {
           className="mt-6 border-red-900/70 bg-red-950/40 text-red-200"
           onRetry={() => void refetch()}
         >
-          Không thể tải cấu hình hệ thống.
+          {t('adminConfig.loadError')}
         </ErrorState>
       </section>
     );
@@ -204,7 +210,7 @@ export function SystemConfigPage() {
       <section className="rounded-lg border border-slate-800 bg-slate-900 p-6 shadow-sm">
         <PageHeader />
         <EmptyState className="mt-6 border-slate-700 bg-slate-800 text-slate-300">
-          Chưa có dữ liệu cấu hình hệ thống.
+          {t('adminConfig.empty')}
         </EmptyState>
       </section>
     );
@@ -220,13 +226,13 @@ export function SystemConfigPage() {
           disabled={updateMutation.isPending}
           onClick={() => void handleSubmit()}
         >
-          {updateMutation.isPending ? 'Đang lưu...' : 'Lưu cấu hình'}
+          {updateMutation.isPending ? t('adminConfig.saving') : t('adminConfig.save')}
         </button>
       </div>
 
       {errors.length > 0 ? (
         <div className="mt-6 rounded-md border border-red-900/70 bg-red-950/40 p-4 text-sm text-red-200">
-          <p className="font-semibold">Vui lòng kiểm tra lại cấu hình.</p>
+          <p className="font-semibold">{t('adminConfig.validationTitle')}</p>
           <ul className="mt-2 list-disc space-y-1 pl-5">
             {errors.map((error) => (
               <li key={error}>{error}</li>
@@ -236,152 +242,152 @@ export function SystemConfigPage() {
       ) : null}
 
       <div className="mt-8 space-y-6">
-        <ConfigSection title="Chính sách tài khoản">
+        <ConfigSection title="adminConfig.accountPolicy">
           <ToggleField
             checked={form.account.requireEmailVerification}
-            label="Bắt buộc xác thực email khi đăng ký"
+            label="adminConfig.requireEmailVerification"
             onChange={(value) => updateBoolean('account', 'requireEmailVerification', value)}
           />
           <SelectField
-            label="Role mặc định khi đăng ký"
+            label="adminConfig.defaultRegisterRole"
             value={form.account.defaultRegisterRole}
-            options={[{ label: 'Sinh viên', value: 'STUDENT' }]}
+            options={[{ label: 'adminConfig.student', value: 'STUDENT' }]}
             onChange={() => undefined}
           />
           <NumberField
-            label="Số lần đăng nhập sai tối đa"
+            label="adminConfig.maxLoginAttempts"
             min={1}
             value={form.account.maxLoginAttempts}
             onChange={(value) => updateNumber('account', 'maxLoginAttempts', value)}
           />
         </ConfigSection>
 
-        <ConfigSection title="Chính sách PTN">
+        <ConfigSection title="adminConfig.labPolicy">
           <ToggleField
             checked={form.lab.oneManagerOneLab}
-            label="Mỗi manager chỉ quản lý 1 PTN"
+            label="adminConfig.oneManagerOneLab"
             onChange={(value) => updateBoolean('lab', 'oneManagerOneLab', value)}
           />
           <ToggleField
             checked={form.lab.hideInactiveLabsFromStudent}
-            label="Ẩn PTN tạm ngừng khỏi danh sách sinh viên"
+            label="adminConfig.hideInactiveLabs"
             onChange={(value) => updateBoolean('lab', 'hideInactiveLabsFromStudent', value)}
           />
           <ToggleField
             checked={form.lab.disableApplyForInactiveLab}
-            label="Không cho ứng tuyển vào PTN tạm ngừng"
+            label="adminConfig.disableApplyInactiveLab"
             onChange={(value) => updateBoolean('lab', 'disableApplyForInactiveLab', value)}
           />
           <ToggleField
             checked={form.lab.disableBookingForInactiveLab}
-            label="Không cho booking vào PTN tạm ngừng"
+            label="adminConfig.disableBookingInactiveLab"
             onChange={(value) => updateBoolean('lab', 'disableBookingForInactiveLab', value)}
           />
         </ConfigSection>
 
-        <ConfigSection title="Chính sách booking/check-in">
+        <ConfigSection title="adminConfig.bookingPolicy">
           <NumberField
-            label="Thời gian check-in đầu ca, phút"
+            label="adminConfig.checkinWindow"
             min={1}
             value={form.booking.checkinWindowMinutes}
             onChange={(value) => updateNumber('booking', 'checkinWindowMinutes', value)}
           />
           <NumberField
-            label="Cho phép hủy booking trước, phút"
+            label="adminConfig.cancelBefore"
             min={0}
             value={form.booking.cancelBeforeMinutes}
             onChange={(value) => updateNumber('booking', 'cancelBeforeMinutes', value)}
           />
           <ToggleField
             checked={form.booking.hidePastSlots}
-            label="Chỉ hiển thị ca hiện tại/tương lai"
+            label="adminConfig.hidePastSlots"
             onChange={(value) => updateBoolean('booking', 'hidePastSlots', value)}
           />
           <ToggleField
             checked={form.booking.hideCancelledSlots}
-            label="Ẩn ca đã hủy khỏi danh sách chính"
+            label="adminConfig.hideCancelledSlots"
             onChange={(value) => updateBoolean('booking', 'hideCancelledSlots', value)}
           />
         </ConfigSection>
 
-        <ConfigSection title="Chính sách upload">
+        <ConfigSection title="adminConfig.uploadPolicy">
           <NumberField
-            label="Dung lượng tối đa báo cáo, MB"
+            label="adminConfig.reportMaxSize"
             min={1}
             value={form.upload.reportMaxSizeMb}
             onChange={(value) => updateNumber('upload', 'reportMaxSizeMb', value)}
           />
           <NumberField
-            label="Dung lượng tối đa sản phẩm, MB"
+            label="adminConfig.productMaxSize"
             min={1}
             value={form.upload.productMaxSizeMb}
             onChange={(value) => updateNumber('upload', 'productMaxSizeMb', value)}
           />
           <TextField
-            label="Định dạng báo cáo được phép"
+            label="adminConfig.reportTypes"
             value={reportTypes}
             onChange={setReportTypes}
           />
           <TextField
-            label="Định dạng sản phẩm được phép"
+            label="adminConfig.productTypes"
             value={productTypes}
             onChange={setProductTypes}
           />
         </ConfigSection>
 
-        <ConfigSection title="Chính sách NCKH">
+        <ConfigSection title="adminConfig.researchPolicy">
           <NumberField
-            label="Thang điểm đánh giá tối đa"
+            label="adminConfig.evaluationMaxScore"
             min={1}
             value={form.research.evaluationMaxScore}
             onChange={(value) => updateNumber('research', 'evaluationMaxScore', value)}
           />
           <ToggleField
             checked={form.research.requireApprovedReportBeforeTaskDone}
-            label="Bắt buộc báo cáo được duyệt trước khi hoàn thành task"
+            label="adminConfig.requireApprovedReport"
             onChange={(value) => updateBoolean('research', 'requireApprovedReportBeforeTaskDone', value)}
           />
           <ToggleField
             checked={form.research.requireLeaderReviewBeforeManagerReview}
-            label="Bắt buộc trưởng nhóm kiểm tra trước manager"
+            label="adminConfig.requireLeaderReview"
             onChange={(value) => updateBoolean('research', 'requireLeaderReviewBeforeManagerReview', value)}
           />
           <ToggleField
             checked={form.research.allowMemberPersonalProductUpload}
-            label="Cho phép thành viên upload sản phẩm cá nhân"
+            label="adminConfig.allowPersonalProduct"
             onChange={(value) => updateBoolean('research', 'allowMemberPersonalProductUpload', value)}
           />
         </ConfigSection>
 
-        <ConfigSection title="Trợ lý AI">
-          <ToggleField checked={form.ai.enabled} label="Bật các tính năng trợ lý AI" onChange={(value) => updateBoolean('ai', 'enabled', value)} />
-          <NumberField label="Số yêu cầu tối đa mỗi người dùng/ngày" min={1} value={form.ai.maxRequestsPerDay} onChange={(value) => updateNumber('ai', 'maxRequestsPerDay', value)} />
-          <NumberField label="Ngân sách context tối đa, token" min={1} value={form.ai.maxContextTokens} onChange={(value) => updateNumber('ai', 'maxContextTokens', value)} />
+        <ConfigSection title="adminConfig.aiPolicy">
+          <ToggleField checked={form.ai.enabled} label="adminConfig.aiEnabled" onChange={(value) => updateBoolean('ai', 'enabled', value)} />
+          <NumberField label="adminConfig.aiRequests" min={1} value={form.ai.maxRequestsPerDay} onChange={(value) => updateNumber('ai', 'maxRequestsPerDay', value)} />
+          <NumberField label="adminConfig.aiContext" min={1} value={form.ai.maxContextTokens} onChange={(value) => updateNumber('ai', 'maxContextTokens', value)} />
         </ConfigSection>
 
-        <ConfigSection title="Nhận diện khuôn mặt">
-          <ToggleField checked={form.face.enabled} label="Bật check-in bằng khuôn mặt" onChange={(value) => updateBoolean('face', 'enabled', value)} />
-          <NumberField label="Ngưỡng khớp khuôn mặt" min={0} max={1} step={0.01} value={form.face.confidenceThreshold} onChange={(value) => updateNumber('face', 'confidenceThreshold', value)} />
-          <NumberField label="Ngưỡng liveness" min={0} max={1} step={0.01} value={form.face.livenessThreshold} onChange={(value) => updateNumber('face', 'livenessThreshold', value)} />
+        <ConfigSection title="adminConfig.facePolicy">
+          <ToggleField checked={form.face.enabled} label="adminConfig.faceEnabled" onChange={(value) => updateBoolean('face', 'enabled', value)} />
+          <NumberField label="adminConfig.faceConfidence" min={0} max={1} step={0.01} value={form.face.confidenceThreshold} onChange={(value) => updateNumber('face', 'confidenceThreshold', value)} />
+          <NumberField label="adminConfig.faceLiveness" min={0} max={1} step={0.01} value={form.face.livenessThreshold} onChange={(value) => updateNumber('face', 'livenessThreshold', value)} />
         </ConfigSection>
 
-        <ConfigSection title="QR fallback và thông báo">
-          <ToggleField checked={form.qrFallback.enabled} label="Cho phép QR fallback" onChange={(value) => updateBoolean('qrFallback', 'enabled', value)} />
-          <NumberField label="Thời hạn QR token, giây" min={1} max={86400} value={form.qrFallback.tokenTtlSeconds} onChange={(value) => updateNumber('qrFallback', 'tokenTtlSeconds', value)} />
-          <ToggleField checked={form.notification.enabled} label="Bật thông báo trong ứng dụng" onChange={(value) => updateBoolean('notification', 'enabled', value)} />
-          <NumberField label="Số thông báo tối đa mỗi trang" min={1} max={100} value={form.notification.maxPageSize} onChange={(value) => updateNumber('notification', 'maxPageSize', value)} />
+        <ConfigSection title="adminConfig.qrPolicy">
+          <ToggleField checked={form.qrFallback.enabled} label="adminConfig.qrEnabled" onChange={(value) => updateBoolean('qrFallback', 'enabled', value)} />
+          <NumberField label="adminConfig.qrTtl" min={1} max={86400} value={form.qrFallback.tokenTtlSeconds} onChange={(value) => updateNumber('qrFallback', 'tokenTtlSeconds', value)} />
+          <ToggleField checked={form.notification.enabled} label="adminConfig.notificationsEnabled" onChange={(value) => updateBoolean('notification', 'enabled', value)} />
+          <NumberField label="adminConfig.notificationPageSize" min={1} max={100} value={form.notification.maxPageSize} onChange={(value) => updateNumber('notification', 'maxPageSize', value)} />
         </ConfigSection>
 
-        <ConfigSection title="Thời gian lưu dữ liệu">
-          <NumberField label="Thông báo, ngày" min={1} max={3650} value={form.retention.notificationDays} onChange={(value) => updateNumber('retention', 'notificationDays', value)} />
-          <NumberField label="AI usage logs, ngày" min={1} max={3650} value={form.retention.aiUsageLogDays} onChange={(value) => updateNumber('retention', 'aiUsageLogDays', value)} />
-          <NumberField label="Face check-in logs, ngày" min={1} max={3650} value={form.retention.faceCheckinLogDays} onChange={(value) => updateNumber('retention', 'faceCheckinLogDays', value)} />
-          <NumberField label="Security audit logs, ngày" min={1} max={3650} value={form.retention.auditLogDays} onChange={(value) => updateNumber('retention', 'auditLogDays', value)} />
+        <ConfigSection title="adminConfig.retentionPolicy">
+          <NumberField label="adminConfig.retentionNotifications" min={1} max={3650} value={form.retention.notificationDays} onChange={(value) => updateNumber('retention', 'notificationDays', value)} />
+          <NumberField label="adminConfig.retentionAiLogs" min={1} max={3650} value={form.retention.aiUsageLogDays} onChange={(value) => updateNumber('retention', 'aiUsageLogDays', value)} />
+          <NumberField label="adminConfig.retentionFaceLogs" min={1} max={3650} value={form.retention.faceCheckinLogDays} onChange={(value) => updateNumber('retention', 'faceCheckinLogDays', value)} />
+          <NumberField label="adminConfig.retentionAuditLogs" min={1} max={3650} value={form.retention.auditLogDays} onChange={(value) => updateNumber('retention', 'auditLogDays', value)} />
         </ConfigSection>
 
-        <ConfigSection title="Nhật ký vận hành">
-          <NumberField label="Số bản ghi tối đa mỗi trang" min={1} max={100} value={form.operational.maxPageSize} onChange={(value) => updateNumber('operational', 'maxPageSize', value)} />
-          <ToggleField checked={form.operational.includeFailureReasonCodes} label="Hiển thị mã lý do lỗi đã giới hạn" onChange={(value) => updateBoolean('operational', 'includeFailureReasonCodes', value)} />
+        <ConfigSection title="adminConfig.operationalPolicy">
+          <NumberField label="adminConfig.operationalPageSize" min={1} max={100} value={form.operational.maxPageSize} onChange={(value) => updateNumber('operational', 'maxPageSize', value)} />
+          <ToggleField checked={form.operational.includeFailureReasonCodes} label="adminConfig.failureReasonCodes" onChange={(value) => updateBoolean('operational', 'includeFailureReasonCodes', value)} />
         </ConfigSection>
       </div>
     </section>
@@ -389,18 +395,21 @@ export function SystemConfigPage() {
 }
 
 function PageHeader() {
+  const { t } = useI18n();
+
   return (
     <header>
-      <h2 className="text-xl font-semibold text-white">Cấu hình hệ thống</h2>
-      <p className="mt-2 text-sm text-slate-300">Quản lý chính sách áp dụng cho toàn bộ hệ thống.</p>
+      <h2 className="text-xl font-semibold text-white">{t('adminConfig.title')}</h2>
     </header>
   );
 }
 
 function ConfigSection({ children, title }: { children: ReactNode; title: string }) {
+  const { t } = useI18n();
+
   return (
     <section className="rounded-lg border border-slate-800 bg-slate-950/50 p-4">
-      <h3 className="text-base font-semibold text-white">{title}</h3>
+      <h3 className="text-base font-semibold text-white">{localizeConfigLabel(t, title)}</h3>
       <div className="mt-4 grid gap-4 lg:grid-cols-2">{children}</div>
     </section>
   );
@@ -415,9 +424,11 @@ function ToggleField({
   label: string;
   onChange: (value: boolean) => void;
 }) {
+  const { t } = useI18n();
+
   return (
     <label className="flex min-h-12 items-center justify-between gap-4 rounded-md border border-slate-800 bg-slate-900 px-3 py-2">
-      <span className="text-sm font-medium text-slate-200">{label}</span>
+      <span className="text-sm font-medium text-slate-200">{localizeConfigLabel(t, label)}</span>
       <input
         checked={checked}
         className="h-5 w-5 accent-white"
@@ -443,9 +454,11 @@ function NumberField({
   step?: number;
   value: number;
 }) {
+  const { t } = useI18n();
+
   return (
     <label className="space-y-2">
-      <span className="text-sm font-medium text-slate-300">{label}</span>
+      <span className="text-sm font-medium text-slate-300">{localizeConfigLabel(t, label)}</span>
       <input
         className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none focus:border-white"
         min={min}
@@ -468,9 +481,11 @@ function TextField({
   onChange: (value: string) => void;
   value: string;
 }) {
+  const { t } = useI18n();
+
   return (
     <label className="space-y-2">
-      <span className="text-sm font-medium text-slate-300">{label}</span>
+      <span className="text-sm font-medium text-slate-300">{localizeConfigLabel(t, label)}</span>
       <input
         className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none placeholder:text-slate-500 focus:border-white"
         placeholder="pdf, doc, docx"
@@ -492,9 +507,11 @@ function SelectField({
   options: Array<{ label: string; value: string }>;
   value: string;
 }) {
+  const { t } = useI18n();
+
   return (
     <label className="space-y-2">
-      <span className="text-sm font-medium text-slate-300">{label}</span>
+      <span className="text-sm font-medium text-slate-300">{localizeConfigLabel(t, label)}</span>
       <select
         className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none focus:border-white"
         value={value}
@@ -502,7 +519,7 @@ function SelectField({
       >
         {options.map((option) => (
           <option key={option.value} value={option.value}>
-            {option.label}
+            {localizeConfigLabel(t, option.label)}
           </option>
         ))}
       </select>

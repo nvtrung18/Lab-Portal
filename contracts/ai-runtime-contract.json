@@ -43,7 +43,7 @@
   },
   "assistantRequest": {
     "requiredFields": ["assistantKey", "input"],
-    "optionalFields": ["authorizedContext"],
+    "optionalFields": ["authorizedContext", "locale"],
     "forbiddenAuthorityFields": [
       "userJwt",
       "actorRole",
@@ -55,6 +55,7 @@
     ],
     "example": {
       "assistantKey": "LAB_ASSISTANT",
+      "locale": "vi",
       "input": "Summarize the authorized lab context.",
       "authorizedContext": {
         "resources": [
@@ -66,6 +67,7 @@
   "toolPlanningRequest": {
     "requiredFields": ["input", "candidates"],
     "example": {
+      "locale": "vi",
       "input": "Show authorized slot 17.",
       "candidates": [
         {

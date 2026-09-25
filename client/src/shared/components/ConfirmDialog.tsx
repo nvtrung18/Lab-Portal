@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 
+import { useI18n } from '../i18n';
 import { Button } from './Button';
 import { Modal } from './Modal';
 
@@ -16,8 +17,8 @@ interface ConfirmDialogProps {
 }
 
 export function ConfirmDialog({
-  cancelLabel = 'Không',
-  confirmLabel = 'Xác nhận',
+  cancelLabel,
+  confirmLabel,
   isOpen,
   isPending = false,
   message,
@@ -26,6 +27,8 @@ export function ConfirmDialog({
   title,
   variant = 'danger',
 }: ConfirmDialogProps) {
+  const { t } = useI18n();
+
   return (
     <Modal
       centered
@@ -34,10 +37,10 @@ export function ConfirmDialog({
       footer={(
         <>
           <Button disabled={isPending} onClick={onCancel} variant="secondary">
-            {cancelLabel}
+            {cancelLabel ?? t('common.cancel')}
           </Button>
           <Button loading={isPending} onClick={onConfirm} variant={variant}>
-            {confirmLabel}
+            {confirmLabel ?? t('common.confirm')}
           </Button>
         </>
       )}

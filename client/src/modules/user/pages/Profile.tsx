@@ -5,26 +5,29 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
 import { Button, toast } from '../../../shared/components';
+import { translate, useI18n, type Locale } from '../../../shared/i18n';
 import type { Response } from '../../../shared/types';
-import { VALIDATION_MESSAGES } from '../../../shared/utils';
 import type { UserMembershipResponse } from '../api';
 import { useCurrentUser, useUpdateProfile } from '../hooks';
+import { FaceProfilePage } from '../../face/pages';
 
-const profileSchema = z.object({
-  fullName: z.string().trim().min(1, VALIDATION_MESSAGES.required).max(100, 'Họ tên tối đa 100 ký tự'),
-  phone: z
-    .string()
-    .trim()
-    .regex(/^[+]?[0-9]{10,15}$/, 'Số điện thoại phải có 10-15 chữ số, có thể bắt đầu bằng +')
-    .or(z.literal('')),
-  avatarUrl: z
-    .string()
-    .trim()
-    .url('Avatar URL không hợp lệ')
-    .or(z.literal('')),
-});
+function createProfileSchema(locale: Locale) {
+  return z.object({
+    fullName: z.string().trim().min(1, translate('validation.required', locale)).max(100, translate('validation.fullNameMax', locale)),
+    phone: z
+      .string()
+      .trim()
+      .regex(/^[+]?[0-9]{10,15}$/, translate('validation.phone', locale))
+      .or(z.literal('')),
+    avatarUrl: z
+      .string()
+      .trim()
+      .url(translate('validation.avatarUrl', locale))
+      .or(z.literal('')),
+  });
+}
 
-type ProfileFormValues = z.infer<typeof profileSchema>;
+type ProfileFormValues = z.infer<ReturnType<typeof createProfileSchema>>;
 
 function getApiErrorMessage(error: unknown, fallback: string) {
   if (axios.isAxiosError(error)) {
@@ -39,23 +42,28 @@ function getApiErrorMessage(error: unknown, fallback: string) {
   return fallback;
 }
 
-function getLabName(membership: UserMembershipResponse) {
-  return membership.labName ?? membership.lab?.name ?? membership.lab?.labName ?? `PTN #${membership.labId ?? membership.lab?.id ?? membership.id ?? ''}`;
+function getLabName(membership: UserMembershipResponse, locale: Locale) {
+  return membership.labName ?? membership.lab?.name ?? membership.lab?.labName ?? `${translate('lab.shortName', locale)} #${membership.labId ?? membership.lab?.id ?? membership.id ?? ''}`;
 }
 
-function formatRole(role: string) {
+function formatRole(role: string, locale: Locale) {
   const normalizedRole = role.replace(/^ROLE_/, '');
-  return normalizedRole === 'LAB_MANAGER' ? 'Quản lý PTN' : normalizedRole === 'STUDENT' ? 'Sinh viên' : normalizedRole;
+  return normalizedRole === 'LAB_MANAGER'
+    ? translate('layout.managerRole', locale)
+    : normalizedRole === 'STUDENT'
+      ? translate('layout.studentRole', locale)
+      : normalizedRole;
 }
 
 export function ProfilePage() {
+  const { locale, t } = useI18n();
   const { data: profile, isLoading, isError, error } = useCurrentUser();
   const updateProfileMutation = useUpdateProfile();
   const [isEditing, setIsEditing] = useState(false);
   const [formMessage, setFormMessage] = useState<string | null>(null);
 
   const canEditAvatarUrl = profile ? Object.prototype.hasOwnProperty.call(profile, 'avatarUrl') : false;
-  const displayName = profile?.fullName || profile?.username || profile?.email || 'Người dùng';
+  const displayName = profile?.fullName || profile?.username || profile?.email || t('common.user');
   const activeMemberships = useMemo(
     () => profile?.memberships?.filter((membership) => membership.status?.toUpperCase() === 'ACTIVE') ?? [],
     [profile?.memberships],
@@ -65,20 +73,21 @@ export function ProfilePage() {
   const managedLabId = managedLab?.id ?? profile?.managedLabId ?? null;
   const managedLabEntries = useMemo(
     () => [
-      ...(managedLabName ? [{ key: `managed-${managedLabId ?? managedLabName}`, name: managedLabName, status: 'Đang quản lý' }] : []),
+      ...(managedLabName ? [{ key: `managed-${managedLabId ?? managedLabName}`, name: managedLabName, status: t('profile.managing') }] : []),
       ...activeMemberships
         .filter((membership) => {
           const membershipId = membership.labId ?? membership.lab?.id ?? membership.id;
-          return !(managedLabId && membershipId === managedLabId) && getLabName(membership) !== managedLabName;
+          return !(managedLabId && membershipId === managedLabId) && getLabName(membership, locale) !== managedLabName;
         })
         .map((membership, index) => ({
           key: `${membership.labId ?? membership.lab?.id ?? membership.id ?? index}-${membership.status}`,
-          name: getLabName(membership),
-          status: 'Đang hoạt động',
+          name: getLabName(membership, locale),
+          status: t('profile.active'),
         })),
     ],
-    [activeMemberships, managedLabId, managedLabName],
+    [activeMemberships, locale, managedLabId, managedLabName, t],
   );
+  const profileSchema = useMemo(() => createProfileSchema(locale), [locale]);
 
   const {
     register,
@@ -116,10 +125,10 @@ export function ProfilePage() {
         ...(canEditAvatarUrl ? { avatarUrl: values.avatarUrl.trim() || null } : {}),
       });
       setIsEditing(false);
-      setFormMessage('Cập nhật hồ sơ thành công.');
-      toast.success('Cập nhật hồ sơ thành công.');
+      setFormMessage(t('profile.updateSuccess'));
+      toast.success(t('profile.updateSuccess'));
     } catch (mutationError) {
-      const message = getApiErrorMessage(mutationError, 'Không thể cập nhật hồ sơ.');
+      const message = getApiErrorMessage(mutationError, t('profile.updateFailed'));
       setFormMessage(message);
       toast.error(message);
     }
@@ -142,14 +151,17 @@ export function ProfilePage() {
   if (isError || !profile) {
     return (
       <section className="rounded-lg border border-red-200 bg-white p-6 text-sm text-red-700 shadow-sm">
-        Không thể tải hồ sơ. {getApiErrorMessage(error, '')}
+        {t('profile.loadFailed')} {getApiErrorMessage(error, '')}
       </section>
     );
   }
 
+  const isStudent = profile.roles.some((role) => role.replace(/^ROLE_/, '') === 'STUDENT');
+
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-      <div className="flex flex-col gap-4 border-b border-slate-200 pb-6 sm:flex-row sm:items-center sm:justify-between">
+    <div className="mx-auto max-w-7xl space-y-6">
+      <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <div className="flex flex-col gap-4 border-b border-slate-200 pb-6 sm:flex-row sm:items-center sm:justify-between dark:border-slate-800">
         <div className="flex items-center gap-4">
           {profile.avatarUrl ? (
             <img
@@ -163,9 +175,9 @@ export function ProfilePage() {
             </div>
           )}
           <div>
-          <h1 className="text-xl font-semibold text-slate-950">{displayName}</h1>
-            <p className="mt-1 text-sm text-slate-600">{profile.email}</p>
-            <p className="mt-1 text-xs font-medium uppercase text-slate-500">{profile.roles.map(formatRole).join(', ')}</p>
+            <h1 className="text-xl font-semibold text-slate-950 dark:text-white">{displayName}</h1>
+            <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{profile.email}</p>
+            <p className="mt-1 text-xs font-medium uppercase text-slate-500">{profile.roles.map((role) => formatRole(role, locale)).join(', ')}</p>
           </div>
         </div>
 
@@ -176,7 +188,7 @@ export function ProfilePage() {
               setIsEditing(true);
             }}
           >
-            Chỉnh sửa
+            {t('profile.edit')}
           </Button>
         ) : null}
       </div>
@@ -187,7 +199,7 @@ export function ProfilePage() {
             'mt-5 rounded-md border px-3 py-2 text-sm',
             updateProfileMutation.isError
               ? 'border-red-200 bg-red-50 text-red-700'
-              : 'border-emerald-200 bg-emerald-50 text-emerald-700',
+              : 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-200',
           ].join(' ')}
         >
           {formMessage}
@@ -198,33 +210,33 @@ export function ProfilePage() {
         <div className="mt-6 space-y-8">
           <dl className="grid gap-5 sm:grid-cols-2">
             <div>
-              <dt className="text-sm font-medium text-slate-500">Họ tên</dt>
-              <dd className="mt-1 text-sm text-slate-950">{profile.fullName}</dd>
+              <dt className="text-sm font-medium text-slate-500">{t('profile.fullName')}</dt>
+              <dd className="mt-1 text-sm text-slate-950 dark:text-slate-100">{profile.fullName}</dd>
             </div>
             <div>
-              <dt className="text-sm font-medium text-slate-500">Email</dt>
-              <dd className="mt-1 text-sm text-slate-950">{profile.email}</dd>
+              <dt className="text-sm font-medium text-slate-500">{t('common.email')}</dt>
+              <dd className="mt-1 text-sm text-slate-950 dark:text-slate-100">{profile.email}</dd>
             </div>
             <div>
-              <dt className="text-sm font-medium text-slate-500">Số điện thoại</dt>
-              <dd className="mt-1 text-sm text-slate-950">{profile.phone || 'Chưa cập nhật'}</dd>
+              <dt className="text-sm font-medium text-slate-500">{t('profile.phone')}</dt>
+              <dd className="mt-1 text-sm text-slate-950 dark:text-slate-100">{profile.phone || t('common.notUpdated')}</dd>
             </div>
             <div>
-              <dt className="text-sm font-medium text-slate-500">Vai trò</dt>
-              <dd className="mt-1 text-sm text-slate-950">{profile.roles.map(formatRole).join(', ')}</dd>
+              <dt className="text-sm font-medium text-slate-500">{t('profile.roles')}</dt>
+              <dd className="mt-1 text-sm text-slate-950 dark:text-slate-100">{profile.roles.map((role) => formatRole(role, locale)).join(', ')}</dd>
             </div>
           </dl>
 
           <div>
-            <h3 className="text-sm font-semibold text-slate-950">Thông tin PTN</h3>
+            <h3 className="text-sm font-semibold text-slate-950 dark:text-white">{t('profile.labInfo')}</h3>
             {managedLabEntries.length ? (
-              <ul className="mt-3 divide-y divide-slate-200 rounded-md border border-slate-200">
+              <ul className="mt-3 divide-y divide-slate-200 rounded-md border border-slate-200 dark:divide-slate-800 dark:border-slate-800">
                 {managedLabEntries.map((lab) => (
                   <li
                     className="flex items-center justify-between gap-3 px-4 py-3 text-sm"
                     key={lab.key}
                   >
-                    <span className="font-medium text-slate-950">{lab.name}</span>
+                    <span className="font-medium text-slate-950 dark:text-slate-100">{lab.name}</span>
                     <span className="rounded-full bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-700">
                       {lab.status}
                     </span>
@@ -232,19 +244,19 @@ export function ProfilePage() {
                 ))}
               </ul>
             ) : (
-              <p className="mt-2 text-sm text-slate-600">Chưa tham gia PTN nào</p>
+              <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">{t('profile.noLabs')}</p>
             )}
           </div>
         </div>
       ) : (
         <form className="mt-6 max-w-xl space-y-5" onSubmit={handleSubmit(onSubmit)}>
           <div>
-            <label className="block text-sm font-medium text-slate-700" htmlFor="fullName">
-              Họ tên
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-200" htmlFor="fullName">
+              {t('profile.fullName')}
             </label>
             <input
               id="fullName"
-              className="mt-2 block w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-950 shadow-sm outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
+              className="mt-2 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 shadow-sm outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10 dark:border-slate-700 dark:bg-slate-950 dark:text-white"
               disabled={updateProfileMutation.isPending}
               {...register('fullName')}
             />
@@ -252,12 +264,12 @@ export function ProfilePage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700" htmlFor="phone">
-              Số điện thoại
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-200" htmlFor="phone">
+              {t('profile.phone')}
             </label>
             <input
               id="phone"
-              className="mt-2 block w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-950 shadow-sm outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
+              className="mt-2 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 shadow-sm outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10 dark:border-slate-700 dark:bg-slate-950 dark:text-white"
               disabled={updateProfileMutation.isPending}
               placeholder="+84901234567"
               {...register('phone')}
@@ -267,12 +279,12 @@ export function ProfilePage() {
 
           {canEditAvatarUrl ? (
             <div>
-              <label className="block text-sm font-medium text-slate-700" htmlFor="avatarUrl">
-                Avatar URL
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-200" htmlFor="avatarUrl">
+                {t('profile.avatarUrl')}
               </label>
               <input
                 id="avatarUrl"
-                className="mt-2 block w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-950 shadow-sm outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
+                className="mt-2 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 shadow-sm outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10 dark:border-slate-700 dark:bg-slate-950 dark:text-white"
                 disabled={updateProfileMutation.isPending}
                 placeholder="https://example.com/avatar.jpg"
                 {...register('avatarUrl')}
@@ -285,10 +297,10 @@ export function ProfilePage() {
             <Button
               disabled={updateProfileMutation.isPending || !isDirty}
               loading={updateProfileMutation.isPending}
-              loadingText="Đang lưu..."
+              loadingText={t('profile.saving')}
               type="submit"
             >
-              Lưu
+              {t('common.save')}
             </Button>
             <Button
               disabled={updateProfileMutation.isPending}
@@ -303,11 +315,13 @@ export function ProfilePage() {
                 setIsEditing(false);
               }}
             >
-              Hủy
+              {t('common.cancel')}
             </Button>
           </div>
         </form>
       )}
-    </section>
+      </section>
+      {isStudent ? <FaceProfilePage embedded /> : null}
+    </div>
   );
 }
