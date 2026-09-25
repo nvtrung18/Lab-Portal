@@ -3,8 +3,10 @@
 .idea
 .vscode
 .artifacts
+.local-certs
 .cache
 tmp
+backups
 datasets
 runtime-artifacts
 runtime-artifacts.zip

@@ -1,0 +1,42 @@
+name: Production CI/CD
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: lab-portal-production
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    name: Run CI quality gates
+    uses: ./.github/workflows/ci.yml
+
+  deploy:
+    name: Deploy to Windows production PC
+    needs: verify
+    if: github.ref == 'refs/heads/main'
+    runs-on:
+      - self-hosted
+      - Windows
+      - X64
+      - lab-portal-production
+    environment: production
+    timeout-minutes: 120
+    steps:
+      - name: Check out main
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Confirm Docker Desktop engine is reachable
+        shell: powershell
+        run: docker version
+
+      - name: Build, deploy, and wait for healthy services
+        shell: powershell
+        run: .\scripts\deploy-production.ps1 -Build -EnvFile 'D:\Lab-Portal\.env.production'

@@ -4,6 +4,8 @@ services:
   mysql:
     image: mysql:8.0
     restart: unless-stopped
+    logging:
+      driver: local
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?MYSQL_ROOT_PASSWORD is required}
       MYSQL_DATABASE: ${DB_NAME:?DB_NAME is required}
@@ -25,6 +27,8 @@ services:
   redis:
     image: redis:7-alpine
     restart: unless-stopped
+    logging:
+      driver: local
     environment:
       REDIS_PASSWORD: ${REDIS_PASSWORD:?REDIS_PASSWORD is required}
     command: ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD:?REDIS_PASSWORD is required}"]
@@ -41,6 +45,8 @@ services:
       context: .
       dockerfile: docker/ai-service/Dockerfile
     restart: unless-stopped
+    logging:
+      driver: local
     environment:
       AI_ENVIRONMENT: production
       AI_INTERNAL_SERVICE_TOKEN: ${AI_INTERNAL_SERVICE_TOKEN:?AI_INTERNAL_SERVICE_TOKEN is required}
@@ -65,6 +71,8 @@ services:
       context: .
       dockerfile: docker/face-service/Dockerfile
     restart: unless-stopped
+    logging:
+      driver: local
     environment:
       FACE_ENVIRONMENT: production
       FACE_INTERNAL_SERVICE_TOKEN: ${FACE_INTERNAL_SERVICE_TOKEN:?FACE_INTERNAL_SERVICE_TOKEN is required}
@@ -87,6 +95,8 @@ services:
       context: .
       dockerfile: docker/backend/Dockerfile
     restart: unless-stopped
+    logging:
+      driver: local
     environment:
       SPRING_PROFILES_ACTIVE: prod
       PORT: 8080
@@ -102,6 +112,9 @@ services:
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
       JWT_EXPIRATION: ${JWT_EXPIRATION:-86400000}
       JWT_REFRESH_EXPIRATION: ${JWT_REFRESH_EXPIRATION:-604800000}
+      BOOTSTRAP_ADMIN_USERNAME: ${BOOTSTRAP_ADMIN_USERNAME:?BOOTSTRAP_ADMIN_USERNAME is required}
+      BOOTSTRAP_ADMIN_EMAIL: ${BOOTSTRAP_ADMIN_EMAIL:-}
+      BOOTSTRAP_ADMIN_PASSWORD: ${BOOTSTRAP_ADMIN_PASSWORD:-}
       MAIL_HOST: ${MAIL_HOST:?MAIL_HOST is required}
       MAIL_PORT: ${MAIL_PORT:-587}
       MAIL_USERNAME: ${MAIL_USERNAME:?MAIL_USERNAME is required}
@@ -120,6 +133,7 @@ services:
       FACE_SERVICE_BASE_URL: http://face-service:8091
       FACE_INTERNAL_SERVICE_TOKEN: ${FACE_INTERNAL_SERVICE_TOKEN:?FACE_INTERNAL_SERVICE_TOKEN is required}
       FACE_EMBEDDING_ENCRYPTION_KEY: ${FACE_EMBEDDING_ENCRYPTION_KEY:?FACE_EMBEDDING_ENCRYPTION_KEY is required}
+      APP_DEFAULT_LOCALE: ${APP_DEFAULT_LOCALE:-vi}
       DEV_SEED_ENABLED: "false"
     volumes:
       - lab_portal_backend_storage:/app/storage
@@ -148,7 +162,11 @@ services:
       dockerfile: docker/caddy/Dockerfile
       args:
         VITE_API_BASE_URL: https://${API_DOMAIN:?API_DOMAIN is required}
+        VITE_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+        VITE_DEFAULT_LOCALE: ${APP_DEFAULT_LOCALE:-vi}
     restart: unless-stopped
+    logging:
+      driver: local
     environment:
       APP_DOMAIN: ${APP_DOMAIN:?APP_DOMAIN is required}
       API_DOMAIN: ${API_DOMAIN:?API_DOMAIN is required}
