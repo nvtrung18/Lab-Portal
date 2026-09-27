@@ -40,32 +40,6 @@ services:
       timeout: 5s
       retries: 20
 
-  ai-service:
-    build:
-      context: .
-      dockerfile: docker/ai-service/Dockerfile
-    restart: unless-stopped
-    logging:
-      driver: local
-    environment:
-      AI_ENVIRONMENT: production
-      AI_INTERNAL_SERVICE_TOKEN: ${AI_INTERNAL_SERVICE_TOKEN:?AI_INTERNAL_SERVICE_TOKEN is required}
-      AI_MODEL_ARTIFACTS_PATH: ${AI_MODEL_ARTIFACTS_PATH:-config/model-artifacts.runtime-t4.json}
-      AI_MODEL_ARTIFACT_ROOT: /runtime-artifacts
-      AI_RUNTIME_LOAD_ENABLED: ${AI_RUNTIME_LOAD_ENABLED:-true}
-      AI_RUNTIME_DEVICE: ${AI_RUNTIME_DEVICE:-cpu}
-      AI_REQUEST_TIMEOUT_SECONDS: ${AI_REQUEST_TIMEOUT_SECONDS:-240}
-    volumes:
-      - ${AI_MODEL_ARTIFACT_ROOT_HOST:?AI_MODEL_ARTIFACT_ROOT_HOST is required}:/runtime-artifacts:ro
-    expose:
-      - "8090"
-    healthcheck:
-      test: ["CMD-SHELL", "python -c \"import os,urllib.request; urllib.request.urlopen(urllib.request.Request('http://localhost:8090/ready', headers={'X-Internal-Service-Token': os.environ['AI_INTERNAL_SERVICE_TOKEN']}), timeout=10)\""]
-      interval: 30s
-      timeout: 15s
-      retries: 20
-      start_period: 10m
-
   face-service:
     build:
       context: .
@@ -127,7 +101,7 @@ services:
       CV_STORAGE_PATH: /app/uploads/cv
       REPORT_STORAGE_PATH: /app/storage/reports
       PRODUCT_STORAGE_PATH: /app/storage/products
-      AI_GATEWAY_BASE_URL: http://ai-service:8090
+      AI_GATEWAY_BASE_URL: ${AI_GATEWAY_BASE_URL:-http://ai-service:8090}
       AI_INTERNAL_SERVICE_TOKEN: ${AI_INTERNAL_SERVICE_TOKEN:?AI_INTERNAL_SERVICE_TOKEN is required}
       AI_GATEWAY_ATTEMPT_TIMEOUT: ${AI_GATEWAY_ATTEMPT_TIMEOUT:-240s}
       FACE_SERVICE_BASE_URL: http://face-service:8091
@@ -144,8 +118,6 @@ services:
       mysql:
         condition: service_healthy
       redis:
-        condition: service_healthy
-      ai-service:
         condition: service_healthy
       face-service:
         condition: service_healthy
