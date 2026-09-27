@@ -14,14 +14,15 @@ Mã nguồn đã tách dữ liệu phát triển khỏi profile `prod`, nhưng c
 
 ```
 Trình duyệt -> Caddy :80/:443 -> frontend và Spring API
-                                  -> MySQL, Redis, AI service, Face service
+                                  -> MySQL, Redis, Face service
+                                           -> AI trên AWS (khi cấu hình)
 ```
 
-Chỉ Caddy publish port lên Windows. MySQL, Redis, backend, AI và Face chỉ nằm trên mạng nội bộ của Compose. Các service dùng `restart: unless-stopped`, health checks, named volumes cho dữ liệu và Docker `local` log driver để giới hạn dung lượng log.
+Chỉ Caddy publish port lên Windows. MySQL, Redis, backend và Face nằm trên mạng nội bộ của Compose. Production không build hoặc chạy AI trên PC; backend chỉ gọi AI trên AWS sau khi cấu hình endpoint. Các service local dùng `restart: unless-stopped`, health checks, named volumes cho dữ liệu và Docker `local` log driver để giới hạn dung lượng log.
 
 ## 1. Chuẩn bị máy
 
-1. Dùng Ethernet có dây, SSD đủ chỗ cho Docker images, MySQL, uploads và model artifacts. Nếu cần tiếp tục chạy khi mất điện ngắn, dùng UPS; bật tùy chọn khôi phục nguồn sau mất điện trong BIOS/UEFI nếu máy hỗ trợ.
+1. Dùng Ethernet có dây, SSD đủ chỗ cho Docker images, MySQL và uploads. Nếu cần tiếp tục chạy khi mất điện ngắn, dùng UPS; bật tùy chọn khôi phục nguồn sau mất điện trong BIOS/UEFI nếu máy hỗ trợ.
 2. Cài WSL2 và Docker Desktop; chọn Linux containers/WSL2 backend. Sau khi cài, kiểm tra:
 
    ```powershell
@@ -36,13 +37,13 @@ Chỉ Caddy publish port lên Windows. MySQL, Redis, backend, AI và Face chỉ 
 
 ## 2. Lấy source vào thư mục ổn định
 
-Ví dụ dùng `D:\Lab-Portal`. Nếu chọn đường dẫn khác, cập nhật `AI_MODEL_ARTIFACT_ROOT_HOST` ở bước 4 cho khớp.
+Ví dụ dùng `D:\Lab-Portal`. Nếu chọn đường dẫn khác, cập nhật đường dẫn `.env.production` trong workflow production cho khớp.
 
 ```powershell
 git clone https://github.com/nvtrung18/Lab-Portal.git D:\Lab-Portal
 Set-Location D:\Lab-Portal
-git switch dev
-git pull --ff-only origin dev
+git switch main
+git pull --ff-only origin main
 git rev-parse HEAD
 ```
 
@@ -110,18 +111,13 @@ Sinh giá trị mới cho từng trường, không dùng chung một secret. Đ�
 
 Điền SMTP thật để gửi OTP/email. Nếu dùng Google Sign-In, cấu hình `GOOGLE_CLIENT_ID` bằng client ID đã khai báo đúng origins cho `APP_DOMAIN`; giá trị này được đóng gói vào frontend nên không phải secret. Không đặt mật khẩu hoặc token vào biến `VITE_*`.
 
-Kiểm tra `AI_MODEL_ARTIFACT_ROOT_HOST` trỏ đến thư mục artifacts trên chính PC, ví dụ `D:/Lab-Portal/runtime-artifacts`. Thư mục phải có đủ file khớp manifest và SHA-256; đừng dùng bundle chưa được xác minh.
+Để `AI_GATEWAY_BASE_URL` trống khi chưa có endpoint AWS. Backend vẫn khởi động; yêu cầu AI sẽ trả 503. Giữ `AI_INTERNAL_SERVICE_TOKEN` vì backend cần giá trị này ngay cả khi AI chưa hoạt động.
 
-## 5. Kiểm tra AI artifacts
+## 5. Kết nối AI trên AWS khi sẵn sàng
 
-Sau khi image AI đã được build, xác minh đúng thư mục mount trước khi chạy toàn bộ stack:
+Production Compose không chứa `ai-service`, nên lệnh deploy không build AI hoặc yêu cầu model artifacts trên PC. Khi AI trên AWS sẵn sàng, đặt `AI_GATEWAY_BASE_URL` trong `.env.production` thành URL mà container backend truy cập được và bảo đảm `AI_INTERNAL_SERVICE_TOKEN` khớp với phía AWS. Kiểm tra kết nối, TLS và các API AI trước khi coi tính năng này đã hoạt động.
 
-```powershell
-docker compose --env-file .env.production -f docker-compose.prod.yml build ai-service
-docker compose --env-file .env.production -f docker-compose.prod.yml run --rm --no-deps --entrypoint python ai-service /app/scripts/prepare_runtime_artifacts.py --manifest /app/config/model-artifacts.runtime-t4.json verify --artifact-root /runtime-artifacts
-```
-
-Lệnh verify phải báo đã xác minh đủ immutable artifact files. Nếu thiếu file/checksum sai, dừng tại đây. Cấu hình mặc định chạy AI trên CPU; tốc độ thực tế phụ thuộc cấu hình PC, chưa thể kết luận nếu chưa biết CPU/RAM/GPU.
+Tài liệu `AI_SERVICE_AWS_TEST.md` hiện dùng SSM tunnel tạm thời cho kiểm thử; địa chỉ `localhost` trong tài liệu đó không phải endpoint AWS mà container backend trên PC có thể dùng trực tiếp.
 
 ## 6. Kiểm tra cấu hình Compose
 
@@ -131,7 +127,7 @@ docker compose --env-file .env.production -f docker-compose.prod.yml config --qu
 
 Lệnh này chỉ kiểm tra cú pháp và thay biến môi trường; nó không kiểm tra credentials, DNS, certificate, model load hoặc luồng đăng nhập.
 
-Chỉ khởi động stack khi `.env.production` đã có thông tin bootstrap admin riêng, AI artifacts đã được xác minh, và đã có bản sao lưu nếu đang cập nhật một database hiện hữu. Sau khi chạy, kiểm tra kết quả migration và tài khoản thực tế trước khi mở truy cập:
+Chỉ khởi động stack khi `.env.production` đã có thông tin bootstrap admin riêng và đã có bản sao lưu nếu đang cập nhật một database hiện hữu. Sau khi chạy, kiểm tra kết quả migration và tài khoản thực tế trước khi mở truy cập:
 
 ```powershell
 .\scripts\deploy-production.ps1 -Build
@@ -175,8 +171,8 @@ Trước mỗi lần cập nhật, xác nhận backup gần nhất hoàn chỉnh
 
 ```powershell
 git fetch origin
-git switch dev
-git pull --ff-only origin dev
+git switch main
+git pull --ff-only origin main
 git rev-parse HEAD
 docker compose --env-file .env.production -f docker-compose.prod.yml config --quiet
 .\scripts\deploy-production.ps1 -Build
