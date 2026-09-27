@@ -29,7 +29,8 @@ import {
   useProjectDashboardStats,
 } from '../hooks';
 import type { TaskBoardRole } from '../taskBoardHelpers';
-import { formatDate, formatProjectStatus, getApiErrorMessage } from '../utils';
+import { formatDate, formatGroupStatus, formatProjectStatus, getApiErrorMessage } from '../utils';
+import { formatTaskStatus } from '../taskBoardHelpers';
 
 type GroupDetailTab =
   | 'overview'
@@ -62,6 +63,7 @@ const GROUP_DETAIL_STUDENT_TABS = (isLeader: boolean): Array<{ value: GroupDetai
   { value: 'tasks', labelKey: 'research.groupTab.tasks' },
   { value: 'reports', labelKey: 'research.groupTab.reports' },
   { value: 'products', labelKey: 'research.groupTab.products' },
+  { value: 'evaluations', labelKey: 'research.groupTab.evaluations' },
   ...(isLeader ? [{ value: 'logs', labelKey: 'research.groupTab.studentLogs' } as const] : []),
 ];
 
@@ -163,6 +165,10 @@ export function ResearchGroupDetailPage() {
     return <Navigate to="/403" replace />;
   }
 
+  if (group.projectId !== project.id && project.groupId !== group.id) {
+    return <Navigate to="/app/research" replace />;
+  }
+
   // Security & Role check: currentUser must belong to the group
   const canViewGroupManagement = isManager || isLeader;
   const canViewMyWork = isLeader || isMember;
@@ -249,8 +255,8 @@ export function ResearchGroupDetailPage() {
           <div>
             <dt className="font-semibold text-slate-500 text-xs uppercase tracking-wider">{t('slot.statusLabel')}</dt>
             <dd className="mt-1">
-              <span className="inline-flex rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700 ring-1 ring-emerald-100">
-                {t('research.group.active')}
+              <span className="inline-flex rounded-full bg-slate-50 px-2.5 py-0.5 text-xs font-medium text-slate-700 ring-1 ring-slate-100">
+                {formatGroupStatus(group.status, locale)}
               </span>
             </dd>
           </div>
@@ -371,7 +377,7 @@ export function ResearchGroupDetailPage() {
         />
       ) : null}
 
-      {activeTab === 'evaluations' && isManager ? (
+      {activeTab === 'evaluations' && (isManager || canViewMyWork) ? (
         <EvaluationPage
           key={`evaluation-${group.id}`}
           currentUserId={currentUser?.id}
@@ -473,8 +479,8 @@ function GroupOverviewTab({
             <div className="bg-slate-50/50 rounded-lg p-3.5 border border-slate-100 space-y-0.5">
               <dt className="font-semibold text-slate-500 text-xs uppercase tracking-wider">{t('research.group.status')}</dt>
               <dd>
-                <span className="inline-flex rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700 ring-1 ring-emerald-100">
-                  {t('research.group.active')}
+                <span className="inline-flex rounded-full bg-slate-50 px-2.5 py-0.5 text-xs font-medium text-slate-700 ring-1 ring-slate-100">
+                  {formatGroupStatus(group.status, locale)}
                 </span>
               </dd>
             </div>
@@ -548,7 +554,6 @@ function GroupMembersTab({ group, isLeader }: { group: any; isLeader: boolean })
               <th className="px-6 py-3 font-semibold">{t('research.group.fullName')}</th>
               <th className="px-6 py-3 font-semibold">{t('common.email')}</th>
               <th className="px-6 py-3 font-semibold">{t('research.group.role')}</th>
-              <th className="px-6 py-3 font-semibold">{t('research.group.statusLabel')}</th>
               <th className="px-6 py-3 font-semibold">{t('research.group.joinedAt')}</th>
             </tr>
           </thead>
@@ -568,11 +573,6 @@ function GroupMembersTab({ group, isLeader }: { group: any; isLeader: boolean })
                     {member.role === 'LEADER' ? t('research.role.leader') : t('research.role.member')}
                   </span>
                 </td>
-                <td className="px-6 py-4">
-                  <span className="inline-flex text-emerald-700 font-semibold">
-                    {t('research.group.active')}
-                  </span>
-                </td>
                 <td className="px-6 py-4 text-slate-500">
                   {formatDate(member.joinedAt || group.createdAt, locale)}
                 </td>
@@ -580,7 +580,7 @@ function GroupMembersTab({ group, isLeader }: { group: any; isLeader: boolean })
             ))}
             {!group.members?.length && (
               <tr>
-                <td colSpan={5} className="px-6 py-8 text-center text-slate-500">
+                <td colSpan={4} className="px-6 py-8 text-center text-slate-500">
                   {t('research.group.noMembersInGroup')}
                 </td>
               </tr>
@@ -740,7 +740,7 @@ function GroupTaskList({ groupId }: { groupId: number }) {
                   </td>
                   <td className="px-4 py-3">
                     <span className="inline-flex rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-700">
-                      {task.statusLabel}
+                      {formatTaskStatus(task.status, locale)}
                     </span>
                   </td>
                 </tr>

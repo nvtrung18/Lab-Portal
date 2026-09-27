@@ -1,12 +1,12 @@
 import { FormEvent, useMemo, useState } from 'react';
 
-import { resolveApiAssetUrl } from '../../../shared/api';
-import { Button, EmptyState, ErrorState, LoadingState } from '../../../shared/components';
+import { Button, EmptyState, ErrorState, LoadingState, toast } from '../../../shared/components';
 import { LAB_MANAGER, STUDENT } from '../../../shared/constants/roles';
 import { useI18n } from '../../../shared/i18n';
 import { useProductsByProject, useProductsByGroup, useResearchGroupsByProject, useSubmitProduct } from '../hooks';
 import type { ResearchProduct, ResearchProductStatus, ResearchProductType } from '../types';
 import { formatDate } from '../utils';
+import { downloadProductFile } from '../api';
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024;
 
@@ -35,13 +35,16 @@ export function ProductPage({ projectId, groupId, role, groupRole, currentUserId
   const [formError, setFormError] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
 
-  const { data: projectProducts = [], isError: isProjectError, isLoading: isProjectLoading, refetch: refetchProject } = useProductsByProject(!groupId ? projectId : null);
+  const { data: projectProducts = [], isError: isProjectError, isLoading: isProjectLoading, refetch: refetchProject } = useProductsByProject(projectId);
   const { data: groupProducts = [], isError: isGroupError, isLoading: isGroupLoading, refetch: refetchGroup } = useProductsByGroup(groupId);
 
-  const products = groupId ? groupProducts : projectProducts;
-  const isError = groupId ? isGroupError : isProjectError;
-  const isLoading = groupId ? isGroupLoading : isProjectLoading;
-  const refetch = groupId ? refetchGroup : refetchProject;
+  const personalProducts = groupId && role === STUDENT
+    ? projectProducts.filter((product) => product.groupId == null && product.submittedById === currentUserId)
+    : [];
+  const products = groupId ? [...groupProducts, ...personalProducts] : projectProducts;
+  const isError = isProjectError || (Boolean(groupId) && isGroupError);
+  const isLoading = isProjectLoading || (Boolean(groupId) && isGroupLoading);
+  const refetch = () => { void refetchProject(); if (groupId) void refetchGroup(); };
   const shouldLoadGroups = role === STUDENT;
   const { data: groups = [] } = useResearchGroupsByProject(shouldLoadGroups ? projectId : null);
   const submitProduct = useSubmitProduct(projectId, setUploadProgress);
@@ -264,6 +267,24 @@ export function ProductPage({ projectId, groupId, role, groupRole, currentUserId
 
 function ProductItem({ product }: { product: ResearchProduct }) {
   const { locale, t } = useI18n();
+  const [downloading, setDownloading] = useState(false);
+
+  async function handleDownload() {
+    setDownloading(true);
+    try {
+      const file = await downloadProductFile(product.id);
+      const fileUrl = URL.createObjectURL(file);
+      const link = document.createElement('a');
+      link.href = fileUrl;
+      link.download = product.fileName || `product-${product.id}`;
+      link.click();
+      URL.revokeObjectURL(fileUrl);
+    } catch {
+      toast.error(t('common.serverFailure'));
+    } finally {
+      setDownloading(false);
+    }
+  }
   return (
     <article className="rounded-md border border-slate-200 p-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -291,14 +312,14 @@ function ProductItem({ product }: { product: ResearchProduct }) {
 
       <div className="mt-4 flex flex-wrap gap-3 text-sm">
         {product.fileUrl ? (
-          <a
-            className="font-semibold text-blue-700 underline"
-            href={resolveApiAssetUrl(product.fileUrl)}
-            rel="noreferrer"
-            target="_blank"
+          <button
+            className="w-fit font-semibold text-blue-700 underline"
+            disabled={downloading}
+            onClick={handleDownload}
+            type="button"
           >
             {t('research.product.download')}
-          </a>
+          </button>
         ) : null}
         {product.externalLink ? (
           <a

@@ -12,6 +12,7 @@ import com.web.labportalbackend.lab.entity.Laboratory;
 import com.web.labportalbackend.lab.repository.LaboratoryRepository;
 import com.web.labportalbackend.research.dto.request.SubmitProductRequest;
 import com.web.labportalbackend.research.dto.response.ProductResponse;
+import com.web.labportalbackend.research.dto.response.ProductFileDownload;
 import com.web.labportalbackend.research.entity.GroupEntity;
 import com.web.labportalbackend.research.entity.ProductEntity;
 import com.web.labportalbackend.research.entity.ProjectEntity;
@@ -29,6 +30,7 @@ import com.web.labportalbackend.research.service.ProductService;
 import com.web.labportalbackend.research.service.ResearchLogService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -44,9 +46,12 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.Locale;
 import java.util.Set;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -134,7 +139,7 @@ public class ProductServiceImpl implements ProductService {
                 saved.getId(),
                 displayName(currentUser) + " đã nộp sản phẩm nghiên cứu " + saved.getTitle() + "."
         );
-        return ProductMapper.toResponse(saved);
+        return ProductMapper.toResponse(saved, currentUser);
     }
 
     @Override
@@ -143,19 +148,15 @@ public class ProductServiceImpl implements ProductService {
         ProjectEntity project = findProject(projectId);
         User currentUser = getCurrentUser();
         if (canManagerViewProjectProducts(project, currentUser)) {
-            return productRepository.findByProjectIdAndDeletedFalseAndActiveTrueOrderByCreatedAtDescVersionDesc(projectId)
-                    .stream()
-                    .map(ProductMapper::toResponse)
-                    .toList();
+            return toResponses(productRepository.findByProjectIdAndDeletedFalseAndActiveTrueOrderByCreatedAtDescVersionDesc(projectId));
         }
         assertStudentCanViewProjectProducts(project, currentUser);
         List<Long> allowedGroupIds = groupMemberRepository
                 .findActiveGroupIdsByProjectIdAndUserId(project.getId(), currentUser.getId());
-        return productRepository.findByProjectIdAndDeletedFalseAndActiveTrueOrderByCreatedAtDescVersionDesc(projectId)
+        return toResponses(productRepository.findByProjectIdAndDeletedFalseAndActiveTrueOrderByCreatedAtDescVersionDesc(projectId)
                 .stream()
                 .filter(product -> canStudentViewProduct(product, currentUser.getId(), allowedGroupIds))
-                .map(ProductMapper::toResponse)
-                .toList();
+                .toList());
     }
 
     @Override
@@ -170,10 +171,7 @@ public class ProductServiceImpl implements ProductService {
         User currentUser = getCurrentUser();
         if (currentUser.hasRole("LAB_MANAGER")) {
             canManagerViewProjectProducts(project, currentUser);
-            return productRepository.findByGroupIdAndDeletedFalseAndActiveTrueOrderByCreatedAtDescVersionDesc(groupId)
-                    .stream()
-                    .map(ProductMapper::toResponse)
-                    .toList();
+            return toResponses(productRepository.findByGroupIdAndDeletedFalseAndActiveTrueOrderByCreatedAtDescVersionDesc(groupId));
         }
 
         if (!currentUser.hasRole("STUDENT")) {
@@ -182,10 +180,38 @@ public class ProductServiceImpl implements ProductService {
         groupMemberRepository.findActiveRoleByGroupIdAndUserId(groupId, currentUser.getId())
                 .orElseThrow(() -> new AccessDeniedException("Cannot access products for this group"));
 
-        return productRepository.findByGroupIdAndDeletedFalseAndActiveTrueOrderByCreatedAtDescVersionDesc(groupId)
-                .stream()
-                .map(ProductMapper::toResponse)
-                .toList();
+        return toResponses(productRepository.findByGroupIdAndDeletedFalseAndActiveTrueOrderByCreatedAtDescVersionDesc(groupId));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ProductFileDownload downloadProductFile(Long productId) {
+        ProductEntity product = productRepository.findById(productId)
+                .filter(item -> Boolean.TRUE.equals(item.getActive()) && !Boolean.TRUE.equals(item.getDeleted()))
+                .orElseThrow(() -> new ResourceNotFoundException("Product", productId));
+        boolean visible = getByProject(product.getProjectId()).stream()
+                .anyMatch(item -> item.getId().equals(productId));
+        if (!visible) {
+            throw new AccessDeniedException("Cannot access this product");
+        }
+        String url = product.getFileUrl();
+        String prefix = "/storage/products/";
+        if (url == null || !url.startsWith(prefix) || product.getFileName() == null) {
+            throw new ResourceNotFoundException("Product file", productId);
+        }
+        Path baseDirectory = getProductStorageDirectory();
+        Path filePath = baseDirectory.resolve(url.substring(prefix.length())).normalize();
+        if (!filePath.startsWith(baseDirectory) || !Files.isRegularFile(filePath)) {
+            throw new ResourceNotFoundException("Product file", productId);
+        }
+        try {
+            if (!filePath.toRealPath().startsWith(baseDirectory.toRealPath())) {
+                throw new ResourceNotFoundException("Product file", productId);
+            }
+        } catch (IOException ex) {
+            throw new ResourceNotFoundException("Product file", productId);
+        }
+        return new ProductFileDownload(new FileSystemResource(filePath), product.getFileName());
     }
 
     private void validateSubmitRequest(SubmitProductRequest request, MultipartFile file) {
@@ -204,6 +230,15 @@ public class ProductServiceImpl implements ProductService {
         if (StringUtils.hasText(request.getExternalLink())) {
             normalizeExternalLink(request.getExternalLink());
         }
+    }
+
+    private List<ProductResponse> toResponses(List<ProductEntity> products) {
+        Map<Long, User> submitters = userRepository.findAllById(products.stream()
+                        .map(ProductEntity::getSubmittedById).distinct().toList()).stream()
+                .collect(Collectors.toMap(User::getId, Function.identity()));
+        return products.stream()
+                .map(product -> ProductMapper.toResponse(product, submitters.get(product.getSubmittedById())))
+                .toList();
     }
 
     private Long resolveAndAuthorizeUploadGroupId(ProjectEntity project, Long requestedGroupId, User currentUser) {
@@ -300,7 +335,7 @@ public class ProductServiceImpl implements ProductService {
                 .getFileName()
                 .toString();
         String extension = getExtension(originalFileName);
-        String storedFileName = version + "." + extension;
+        String storedFileName = UUID.randomUUID() + "." + extension;
         Path baseDirectory = getProductStorageDirectory();
         Path productDirectory = groupId == null
                 ? baseDirectory.resolve(String.valueOf(projectId)).normalize()

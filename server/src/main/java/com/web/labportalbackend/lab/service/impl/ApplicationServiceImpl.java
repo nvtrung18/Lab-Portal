@@ -109,9 +109,9 @@ public class ApplicationServiceImpl implements ApplicationService {
                         Membership created = new Membership();
                         created.setUser(app.getUser());
                         created.setLaboratory(app.getLaboratory());
-                        created.setRole("MEMBER");
                         return created;
                     });
+            membership.setRole("MEMBER");
             membership.setActive(true);
             membershipRepository.save(membership);
             log.info("Membership activated: userId={}, labId={}", app.getUser().getId(), app.getLaboratory().getId());

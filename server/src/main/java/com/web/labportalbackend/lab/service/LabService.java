@@ -3,7 +3,9 @@ package com.web.labportalbackend.lab.service;
 import com.web.labportalbackend.lab.dto.response.LabResponse;
 import com.web.labportalbackend.lab.dto.response.AssignableLabResponse;
 import com.web.labportalbackend.lab.dto.response.LabDashboardStatsResponse;
+import com.web.labportalbackend.lab.dto.response.LabMemberResponse;
 import com.web.labportalbackend.lab.dto.request.CreateLabRequest;
+import com.web.labportalbackend.lab.enums.LabMemberRole;
 import com.web.labportalbackend.common.enums.LabStatus;
 import java.util.List;
 
@@ -19,5 +21,5 @@ public interface LabService {
     List<AssignableLabResponse> getAssignableLabs(String keyword, Boolean includeInactive);
     LabResponse assignManagerPatch(Long labId, Long managerUserId);
     LabDashboardStatsResponse getLabDashboardStats(Long labId);
+    LabMemberResponse updateLabMemberRole(Long labId, Long userId, LabMemberRole role);
 }
-

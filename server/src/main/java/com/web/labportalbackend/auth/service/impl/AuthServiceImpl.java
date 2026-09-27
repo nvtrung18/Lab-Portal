@@ -52,6 +52,7 @@ public class AuthServiceImpl implements AuthService {
     private static final String PASSWORD_RESET_OTP_PREFIX = "password-reset:otp:";
     private static final String PASSWORD_RESET_VERIFIED_PREFIX = "password-reset:verified:";
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
+    private static final Set<String> ADMIN_ASSIGNABLE_ROLES = Set.of("STUDENT", "LAB_MANAGER");
 
     private final AuthenticationManager authenticationManager;
     private final UserRepository userRepository;
@@ -263,14 +264,21 @@ public class AuthServiceImpl implements AuthService {
             throw new IllegalArgumentException("Không thể quản lý tài khoản ADMIN.");
         }
         Set<String> roles = request.getRoles();
-        if (roles == null || roles.isEmpty()) {
-            throw new IllegalArgumentException("Roles are required");
+        if (roles == null || roles.size() != 1) {
+            throw new IllegalArgumentException("Exactly one account role is required");
+        }
+        if (roles.stream().anyMatch(role -> role == null || role.isBlank())) {
+            throw new IllegalArgumentException("Account role is required");
         }
         Set<String> normalizedRoles = roles.stream()
                 .map(role -> role.replace("ROLE_", "").toUpperCase())
                 .collect(Collectors.toSet());
         if (normalizedRoles.contains("ADMIN")) {
             throw new IllegalArgumentException("Không thể phân quyền ADMIN tại màn quản lý Users.");
+        }
+
+        if (!ADMIN_ASSIGNABLE_ROLES.containsAll(normalizedRoles)) {
+            throw new IllegalArgumentException("Admin may assign only STUDENT or LAB_MANAGER");
         }
 
         boolean willBeManager = normalizedRoles.contains("LAB_MANAGER");
@@ -374,6 +382,10 @@ public class AuthServiceImpl implements AuthService {
         // 3. Không cho tạo thêm ADMIN qua API này.
         if (newRoleName.equals("ADMIN")) {
             throw new IllegalArgumentException("Không thể phân quyền ADMIN qua API này.");
+        }
+
+        if (!ADMIN_ASSIGNABLE_ROLES.contains(newRoleName)) {
+            throw new IllegalArgumentException("Admin may assign only STUDENT or LAB_MANAGER");
         }
 
         // Validate roles

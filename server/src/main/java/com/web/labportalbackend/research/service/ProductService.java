@@ -2,6 +2,7 @@ package com.web.labportalbackend.research.service;
 
 import com.web.labportalbackend.research.dto.request.SubmitProductRequest;
 import com.web.labportalbackend.research.dto.response.ProductResponse;
+import com.web.labportalbackend.research.dto.response.ProductFileDownload;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -12,4 +13,6 @@ public interface ProductService {
     List<ProductResponse> getByProject(Long projectId);
 
     List<ProductResponse> getByGroup(Long groupId);
+
+    ProductFileDownload downloadProductFile(Long productId);
 }

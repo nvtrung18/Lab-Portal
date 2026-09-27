@@ -11,10 +11,10 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * One-time data seeder that runs on non-production profiles.
+ * Upgrades legacy plaintext seed passwords on non-production profiles.
  * <p>
- * Ensures the default admin user has a correctly encoded password,
- * since Flyway migrations use raw SQL and cannot invoke BCrypt directly.
+ * Current migrations already store BCrypt hashes. Existing or user-changed
+ * encoded passwords must remain untouched when the application restarts.
  */
 @Slf4j
 @Component
@@ -38,10 +38,10 @@ public class AuthDataSeeder implements ApplicationRunner {
     public void run(ApplicationArguments args) {
         for (SeedPassword seedPassword : DEFAULT_PASSWORDS) {
             userRepository.findByUsername(seedPassword.username()).ifPresent(user -> {
-                if (!passwordEncoder.matches(seedPassword.rawPassword(), user.getPassword())) {
+                if (seedPassword.rawPassword().equals(user.getPassword())) {
                     user.setPassword(passwordEncoder.encode(seedPassword.rawPassword()));
                     userRepository.save(user);
-                    log.info("Default password re-encoded with BCrypt on startup for user: {}", seedPassword.username());
+                    log.info("Legacy plaintext seed password encoded on startup for user: {}", seedPassword.username());
                 }
             });
         }
