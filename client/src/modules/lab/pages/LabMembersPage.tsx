@@ -4,7 +4,14 @@ import { Button, ConfirmDialog, EmptyState, ErrorState, LoadingState, Modal, Res
 import { translate, useI18n, type Locale } from '../../../shared/i18n';
 import { getManagedLabId } from '../../../shared/utils/membership';
 import { useCurrentUser } from '../../user/hooks';
-import { useLabMembers, useRemoveLabMember } from '../hooks';
+import type { LabMemberRole } from '../api';
+import { useLabMembers, useRemoveLabMember, useUpdateLabMemberRole } from '../hooks';
+
+const memberRoles: LabMemberRole[] = ['MEMBER', 'DEPUTY', 'SECRETARY'];
+
+function isLabMemberRole(role: string): role is LabMemberRole {
+  return role === 'MEMBER' || role === 'DEPUTY' || role === 'SECRETARY';
+}
 
 function statusClassName(status: string) {
   if (status.toUpperCase() === 'ACTIVE') {
@@ -19,7 +26,12 @@ function formatDate(value: string | undefined, locale: Locale) {
 }
 
 function formatRole(role: string | undefined, locale: Locale) {
-  return role === 'LAB_MANAGER' ? translate('layout.managerRole', locale) : role === 'STUDENT' || role === 'MEMBER' ? translate('layout.studentRole', locale) : translate('lab.member', locale);
+  if (role === 'MEMBER') return translate('lab.role.member', locale);
+  if (role === 'DEPUTY') return translate('lab.role.deputy', locale);
+  if (role === 'SECRETARY') return translate('lab.role.secretary', locale);
+  if (role === 'LAB_MANAGER') return translate('layout.managerRole', locale);
+  if (role === 'STUDENT') return translate('layout.studentRole', locale);
+  return role || translate('common.notUpdated', locale);
 }
 
 function formatStatus(status: string, locale: Locale) {
@@ -32,7 +44,9 @@ export function LabMembersPage() {
   const managedLabId = getManagedLabId(currentUser);
   const { data: members = [], isLoading, isError } = useLabMembers(managedLabId);
   const removeMemberMutation = useRemoveLabMember();
+  const updateRoleMutation = useUpdateLabMemberRole();
   const [search, setSearch] = useState('');
+  const [roleDrafts, setRoleDrafts] = useState<Record<number, LabMemberRole>>({});
   const [memberPendingRemove, setMemberPendingRemove] = useState<(typeof members)[number] | null>(null);
   const [selectedMemberDetail, setSelectedMemberDetail] = useState<(typeof members)[number] | null>(null);
 
@@ -49,6 +63,19 @@ export function LabMembersPage() {
       { labId: managedLabId, userId: memberPendingRemove.userId },
       { onSuccess: () => setMemberPendingRemove(null) },
     );
+  };
+
+  const saveMemberRole = (userId: number, currentRole: string) => {
+    const role = roleDrafts[userId];
+    if (!managedLabId || !role || role === currentRole) return;
+
+    updateRoleMutation.mutate({ labId: managedLabId, userId, role }, {
+      onSuccess: () => setRoleDrafts((drafts) => {
+        const next = { ...drafts };
+        delete next[userId];
+        return next;
+      }),
+    });
   };
 
   const filteredMembers = useMemo(() => {
@@ -105,25 +132,61 @@ export function LabMembersPage() {
         <EmptyState className="mt-6">{t('lab.membersEmpty')}</EmptyState>
       ) : (
         <ResponsiveTable className="mt-6">
-          <table className="w-full min-w-[680px] divide-y divide-slate-200 text-sm">
+          <table className="w-full min-w-[840px] divide-y divide-slate-200 text-sm">
             <thead>
               <tr className="text-left text-xs font-semibold uppercase text-slate-500">
                 <th className="px-3 py-3">{t('profile.fullName')}</th>
                 <th className="px-3 py-3">{t('common.email')}</th>
-                <th className="px-3 py-3">{t('profile.roles')}</th>
+                <th className="px-3 py-3">{t('lab.changeMemberRole')}</th>
                 <th className="px-3 py-3">{t('slot.statusLabel')}</th>
                 <th className="px-3 py-3">{t('myLab.joinedAt')}</th>
                 <th className="px-3 py-3 text-right">{t('common.actions')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {filteredMembers.map((member) => (
-                <tr key={member.id}>
+              {filteredMembers.map((member) => {
+                const roleDraft = roleDrafts[member.userId] ?? (isLabMemberRole(member.role) ? member.role : '');
+                return <tr key={member.id}>
                   <td className="px-3 py-4 font-medium text-slate-950">
                     {member.fullName || t('common.notUpdated')}
                   </td>
                   <td className="px-3 py-4 text-slate-700">{member.email}</td>
-                  <td className="px-3 py-4 text-slate-700">{formatRole(member.role, locale)}</td>
+                  <td className="px-3 py-4 text-slate-700">
+                    {member.canReceiveLabRole ? (
+                      <div className="flex flex-wrap items-center gap-2">
+                        <select
+                          aria-label={`${t('lab.changeMemberRole')}: ${member.fullName || member.email}`}
+                          className="min-w-32 rounded-md border border-slate-300 bg-white px-2 py-1.5 text-sm text-slate-950 focus:border-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900/10"
+                          disabled={updateRoleMutation.isPending}
+                          value={roleDraft}
+                          onChange={(event) => {
+                            const nextRole = event.target.value;
+                            if (isLabMemberRole(nextRole)) {
+                              setRoleDrafts((drafts) => ({ ...drafts, [member.userId]: nextRole }));
+                            }
+                          }}
+                        >
+                          {!isLabMemberRole(member.role) ? (
+                            <option value="" disabled>{formatRole(member.role, locale)}</option>
+                          ) : null}
+                          {memberRoles.map((role) => (
+                            <option key={role} value={role}>{formatRole(role, locale)}</option>
+                          ))}
+                        </select>
+                        <Button
+                          aria-label={`${t('common.save')}: ${member.fullName || member.email}`}
+                          disabled={updateRoleMutation.isPending || !roleDraft || roleDraft === member.role}
+                          loading={updateRoleMutation.isPending && updateRoleMutation.variables?.userId === member.userId}
+                          loadingText={t('common.saving')}
+                          size="sm"
+                          variant="outline"
+                          onClick={() => saveMemberRole(member.userId, member.role)}
+                        >
+                          {t('common.save')}
+                        </Button>
+                      </div>
+                    ) : formatRole(member.role, locale)}
+                  </td>
                   <td className="px-3 py-4">
                     <span
                       className={[
@@ -145,6 +208,7 @@ export function LabMembersPage() {
                       {t('common.viewDetails')}
                     </Button>
                     <Button
+                      disabled={updateRoleMutation.isPending}
                       loading={removeMemberMutation.isPending}
                       loadingText={t('lab.removingMember')}
                       size="sm"
@@ -155,8 +219,8 @@ export function LabMembersPage() {
                     </Button>
                     </div>
                   </td>
-                </tr>
-              ))}
+                </tr>;
+              })}
             </tbody>
           </table>
         </ResponsiveTable>

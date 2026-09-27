@@ -7,15 +7,22 @@ import com.web.labportalbackend.admin.audit.enums.AuditModule;
 import com.web.labportalbackend.admin.audit.service.AuditLogService;
 import com.web.labportalbackend.lab.dto.request.CreateLabRequest;
 import com.web.labportalbackend.lab.dto.response.LabResponse;
+import com.web.labportalbackend.lab.dto.response.LabMemberResponse;
 import com.web.labportalbackend.lab.dto.response.AssignableLabResponse;
 import com.web.labportalbackend.lab.entity.Laboratory;
 import com.web.labportalbackend.lab.mapper.LabMapper;
+import com.web.labportalbackend.lab.entity.Membership;
+import com.web.labportalbackend.lab.enums.LabMemberRole;
 import com.web.labportalbackend.lab.repository.LaboratoryRepository;
 import com.web.labportalbackend.lab.service.LabService;
 import com.web.labportalbackend.common.enums.LabStatus;
+import com.web.labportalbackend.common.enums.UserStatus;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.Query;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -55,6 +62,52 @@ public class LabServiceImpl implements LabService {
     private final ComplaintRepository complaintRepository;
     private final ProjectRepository projectRepository;
     private final EntityManager entityManager;
+
+    @Override
+    @Transactional
+    public LabMemberResponse updateLabMemberRole(Long labId, Long userId, LabMemberRole role) {
+        if (role == null) {
+            throw new IllegalArgumentException("Laboratory member role is required");
+        }
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new AccessDeniedException("Authentication is required");
+        }
+        User manager = userRepository.findByUsername(authentication.getName())
+                .orElseThrow(() -> new AccessDeniedException("Current user not found"));
+        if (!manager.hasRole("LAB_MANAGER") || manager.hasRole("ADMIN")
+                || laboratoryRepository.findManagedByIdForStatusAuthorization(labId, manager.getId()).isEmpty()) {
+            throw new AccessDeniedException("Only the assigned manager can change roles in this laboratory");
+        }
+        if (manager.getId().equals(userId)) {
+            throw new AccessDeniedException("Lab manager cannot change their own laboratory role");
+        }
+
+        Membership membership = membershipRepository.findByUserIdAndLaboratoryIdAndDeletedFalse(userId, labId)
+                .orElseThrow(() -> new EntityNotFoundException("Active laboratory membership not found"));
+        if (!Boolean.TRUE.equals(membership.getActive())) {
+            throw new IllegalArgumentException("Laboratory membership is not active");
+        }
+        User member = membership.getUser();
+        if (!member.hasRole("STUDENT") || member.hasRole("ADMIN") || member.hasRole("LAB_MANAGER")
+                || !Boolean.TRUE.equals(member.getActive()) || Boolean.TRUE.equals(member.getDeleted())
+                || member.getStatus() != UserStatus.ACTIVE) {
+            throw new AccessDeniedException("Only active student members can receive a laboratory role");
+        }
+
+        String oldRole = membership.getRole();
+        membership.setRole(role.name());
+        Membership saved = membershipRepository.save(membership);
+        auditLogService.logCurrentUser(
+                AuditAction.CHANGE_LAB_MEMBER_ROLE,
+                AuditModule.LAB,
+                "MEMBERSHIP",
+                saved.getId(),
+                "Manager changed laboratory member role from " + oldRole + " to " + role
+                        + " (labId=" + labId + ", userId=" + userId + ")."
+        );
+        return LabMapper.toMemberResponse(saved);
+    }
 
     @Override
     @Transactional

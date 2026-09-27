@@ -25,8 +25,7 @@ export function LeaderReviewModal({ isOpen, isSubmitting, decision, onClose, onS
     }
   }, [isOpen, decision]);
 
-  const isCommentRequired = localDecision === 'REQUEST_REVISION' || localDecision === 'REJECT';
-  const isSubmitDisabled = isCommentRequired && !trimmedNote;
+  const isSubmitDisabled = !trimmedNote;
 
   function handleSubmit() {
     if (isSubmitDisabled) {
@@ -101,6 +100,7 @@ export function LeaderReviewModal({ isOpen, isSubmitting, decision, onClose, onS
             className="mt-2 min-h-32 w-full resize-y rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
             id="leader-review-note"
             maxLength={5000}
+            required
             placeholder={getDecisionMessage(localDecision, t)}
             value={note}
             onChange={(event) => setNote(event.target.value)}

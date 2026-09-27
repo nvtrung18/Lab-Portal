@@ -920,6 +920,10 @@ html.dark .app-shell nav a[class] {
   border-radius: 0.75rem !important;
 }
 
+.app-shell button.app-button {
+  white-space: normal;
+}
+
 .app-shell button[class~="rounded-full"] {
   border-radius: 9999px !important;
 }

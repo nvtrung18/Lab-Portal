@@ -98,8 +98,8 @@ export function AdminLayout() {
 
       <div className="min-w-0 lg:pl-64">
         <header className="app-gradient-banner sticky top-0 z-20 border-b border-slate-900 dark:border-slate-800 px-4 py-3 backdrop-blur lg:px-8">
-          <div className="flex min-w-0 items-center justify-between gap-3">
-            <div className="flex min-w-0 items-center gap-3">
+          <div className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)] items-center gap-x-3 gap-y-2 lg:flex lg:justify-between lg:gap-3">
+            <div className="contents lg:flex lg:min-w-0 lg:items-center lg:gap-3">
               <Button
                 aria-label={t('common.openMenu')}
                 aria-controls="admin-navigation-drawer"
@@ -112,13 +112,13 @@ export function AdminLayout() {
                 <Menu aria-hidden="true" className="h-4 w-4" />
                 <span className="sr-only">{t('common.openMenu')}</span>
               </Button>
-              <div className="min-w-0">
+              <div className="col-span-2 row-start-2 min-w-0 lg:col-auto lg:row-auto">
                 <p className="text-xs font-medium uppercase text-white/75">{t('layout.adminRole')}</p>
                 <h1 className="truncate text-lg font-semibold text-white sm:text-xl">{t('layout.adminPortal')}</h1>
               </div>
             </div>
 
-            <div className="flex min-w-0 shrink-0 items-center justify-end gap-2 sm:gap-3">
+            <div className="col-start-2 row-start-1 flex min-w-0 shrink-0 items-center justify-end gap-2 sm:gap-3 lg:col-auto lg:row-auto">
               <LanguageSwitcher />
               <ThemeToggle />
               <div className="app-control-surface hidden min-w-0 items-center gap-3 rounded-md border px-3 py-2 text-sm shadow-sm sm:flex">

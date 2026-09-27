@@ -151,4 +151,19 @@ class AuthServiceRoleChangeIntegrationTest {
             authService.patchUserRole(testUser.getId(), request);
         });
     }
+
+    @Test
+    void adminCannotAssignLaboratoryAppointmentsAsAccountRoles() {
+        for (String role : new String[] {"DEPUTY", "SECRETARY"}) {
+            UpdateUserRoleRequest request = new UpdateUserRoleRequest();
+            request.setRole(role);
+
+            assertThrows(IllegalArgumentException.class,
+                    () -> authService.patchUserRole(testUser.getId(), request));
+        }
+
+        User unchanged = userRepository.findById(testUser.getId()).orElseThrow();
+        assertTrue(unchanged.hasRole("STUDENT"));
+        assertFalse(unchanged.hasRole("LAB_MANAGER"));
+    }
 }

@@ -4,6 +4,7 @@ import { Button, EmptyState, ErrorState, LoadingState, toast } from '../../../sh
 import { useI18n } from '../../../shared/i18n';
 import { downloadReportFile } from '../api';
 import { useGroupReports, useMyGroupReports, useMyResearchTasks } from '../hooks';
+import { formatTaskStatus } from '../taskBoardHelpers';
 import type { ResearchReport } from '../types';
 import { formatDate, getApiErrorMessage, formatReportSubmitterName } from '../utils';
 import { ReportStatusBadge } from './ReportStatusBadge';
@@ -234,7 +235,7 @@ export function GroupReportsTab({
                         <h4 className="font-semibold text-slate-950">{task.title}</h4>
                         {task.description ? <p className="mt-1 text-sm text-slate-600">{task.description}</p> : null}
                         <p className="mt-2 text-xs text-slate-500">
-                          {t('research.task.deadline')}: {formatDate(task.deadline, locale)} · {t('research.task.status')}: {task.statusLabel}
+                          {t('research.task.deadline')}: {formatDate(task.deadline, locale)} · {t('research.task.status')}: {formatTaskStatus(task.status, locale)}
                         </p>
                       </div>
                       <div className="shrink-0">
