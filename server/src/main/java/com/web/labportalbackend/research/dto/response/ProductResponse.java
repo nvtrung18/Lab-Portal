@@ -28,6 +28,12 @@ public class ProductResponse {
     @Schema(description = "Submitter user ID", example = "5")
     private Long submittedById;
 
+    @Schema(description = "Display name of the submitting user")
+    private String submittedByName;
+
+    @Schema(description = "Email address of the submitting user")
+    private String submittedByEmail;
+
     @JsonProperty("product_type")
     @Schema(description = "Product type", example = "SOURCE_CODE")
     private ProductType productType;
@@ -42,19 +48,23 @@ public class ProductResponse {
     private String name;
 
     @JsonProperty("file_url")
-    @Schema(description = "Stored product file URL", example = "/storage/products/10/groups/3/1.zip")
+    @Schema(description = "Stored product file URL; absent for link-only submissions")
     private String fileUrl;
 
     @JsonProperty("file_name")
+    @Schema(description = "Original name of the uploaded product file; absent for link-only submissions")
     private String fileName;
 
     @JsonProperty("file_type")
+    @Schema(description = "Content type reported for the uploaded product file; absent for link-only submissions")
     private String fileType;
 
     @JsonProperty("file_size")
+    @Schema(description = "Uploaded product file size in bytes; absent for link-only submissions")
     private Long fileSize;
 
     @JsonProperty("external_link")
+    @Schema(description = "External product link, when the submission provides one")
     private String externalLink;
 
     @Schema(description = "Submission version", example = "1")
@@ -64,6 +74,7 @@ public class ProductResponse {
     private ProductStatus status;
 
     @JsonProperty("submitted_at")
+    @Schema(description = "Time the product was submitted")
     private Instant submittedAt;
 
     @JsonProperty("created_at")

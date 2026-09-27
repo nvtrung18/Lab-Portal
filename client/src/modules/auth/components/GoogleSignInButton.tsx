@@ -37,9 +37,10 @@ export function GoogleSignInButton({ disabled = false, onCredential }: GoogleSig
   useEffect(() => {
     if (!clientId) return;
 
+    containerRef.current?.replaceChildren();
+
     const render = () => {
       if (!containerRef.current || !window.google) return;
-      containerRef.current.replaceChildren();
       window.google.accounts.id.initialize({
         client_id: clientId,
         callback: (response) => callbackRef.current(response.credential),
@@ -55,39 +56,58 @@ export function GoogleSignInButton({ disabled = false, onCredential }: GoogleSig
       });
     };
 
-    if (window.google) {
+    const onLoad = () => {
+      setLoadFailed(false);
+      render();
+    };
+    const onError = () => setLoadFailed(true);
+    const scriptUrl = `${SCRIPT_URL}?hl=${locale}`;
+    let script = document.getElementById(SCRIPT_ID) as HTMLScriptElement | null;
+    if (script?.src !== scriptUrl) {
+      script?.remove();
+      const newScript = document.createElement('script');
+      newScript.id = SCRIPT_ID;
+      newScript.src = scriptUrl;
+      newScript.async = true;
+      newScript.defer = true;
+      newScript.dataset.gsiLoaded = 'false';
+      newScript.addEventListener('load', () => {
+        newScript.dataset.gsiLoaded = 'true';
+      }, { once: true });
+      newScript.addEventListener('error', () => newScript.remove(), { once: true });
+      script = newScript;
+    } else if (script.dataset.gsiLoaded !== 'false' && window.google) {
+      setLoadFailed(false);
       render();
       return;
     }
-
-    let script = document.getElementById(SCRIPT_ID) as HTMLScriptElement | null;
-    if (!script) {
-      script = document.createElement('script');
-      script.id = SCRIPT_ID;
-      script.src = SCRIPT_URL;
-      script.async = true;
-      script.defer = true;
-      document.head.appendChild(script);
-    }
-    script.addEventListener('load', render);
-    script.addEventListener('error', () => setLoadFailed(true), { once: true });
-    return () => script?.removeEventListener('load', render);
+    script.addEventListener('load', onLoad);
+    script.addEventListener('error', onError);
+    if (!script.isConnected) document.head.appendChild(script);
+    return () => {
+      script.removeEventListener('load', onLoad);
+      script.removeEventListener('error', onError);
+    };
   }, [clientId, locale]);
 
-  if (!clientId || loadFailed) {
+  if (!clientId) {
     return (
       <p className="text-center text-xs text-slate-500" role="status">
-        {loadFailed ? t('auth.googleLoadFailed') : t('auth.googleNotConfigured')}
+        {t('auth.googleNotConfigured')}
       </p>
     );
   }
 
   return (
-    <div className="flex w-full justify-center">
+    <div className="w-full">
+      {loadFailed ? (
+        <p className="text-center text-xs text-slate-500" role="status">{t('auth.googleLoadFailed')}</p>
+      ) : null}
       <div
         aria-busy={disabled}
         className={[
-          'w-full max-w-[400px] text-center [&>div]:mx-auto',
+          'mx-auto w-full max-w-[400px] text-center [&>div]:mx-auto',
+          loadFailed ? 'hidden' : '',
           disabled ? 'pointer-events-none opacity-60' : '',
         ].join(' ')}
         ref={containerRef}

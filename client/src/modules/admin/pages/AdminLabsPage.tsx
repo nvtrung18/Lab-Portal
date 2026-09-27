@@ -764,7 +764,7 @@ export function AdminLabsPage() {
                           variant="outline"
                           onClick={() => setPolicyLab(lab)}
                         >
-                          Self-check-in
+                          {t('adminLabs.selfCheckin')}
                         </Button>
                         {!lab.manager && (
                           <Button

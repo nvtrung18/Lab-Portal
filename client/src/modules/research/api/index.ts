@@ -395,12 +395,19 @@ export async function managerReviewReport(
   reportId: number,
   decision: ManagerReportDecision,
   comment: string,
-): Promise<ResearchReport> {
-  const response = await apiClient.patch<Response<ResearchReport>>(`/api/reports/${reportId}/manager-review`, {
+): Promise<{ id: number; status: string; version: number }> {
+  const response = await apiClient.patch<{ message: string; report: { id: number; status: string; version: number } }>(`/api/reports/${reportId}/manager-review`, {
     decision,
     comment,
   });
-  return unwrapObject<ResearchReport>(response.data);
+  return response.data.report;
+}
+
+export async function downloadProductFile(productId: number): Promise<Blob> {
+  const response = await apiClient.get<Blob>(`/api/products/${productId}/file`, {
+    responseType: 'blob',
+  });
+  return response.data;
 }
 
 export async function createMilestone(payload: CreateMilestonePayload): Promise<ResearchMilestone> {

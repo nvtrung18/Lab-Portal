@@ -109,10 +109,9 @@ services:
       FACE_INTERNAL_SERVICE_TOKEN: ${FACE_INTERNAL_SERVICE_TOKEN:-local-face-internal-token}
       FACE_EMBEDDING_ENCRYPTION_KEY: ${FACE_EMBEDDING_ENCRYPTION_KEY:-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=}
       APP_CORS_ALLOWED_ORIGINS: http://localhost:5173,http://localhost:5174,http://localhost:5175
-      # Local Docker starts with the complete development dataset. Override
-      # with DEV_SEED_ENABLED=false when preserving an existing database is
-      # required.
-      DEV_SEED_ENABLED: ${DEV_SEED_ENABLED:-true}
+      # The legacy development seeder rolls back and recreates its dataset.
+      # Enable it explicitly only when intentionally rebuilding demo data.
+      DEV_SEED_ENABLED: ${DEV_SEED_ENABLED:-false}
     volumes:
       - ./server:/app
       - lab_portal_backend_m2:/root/.m2

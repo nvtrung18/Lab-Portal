@@ -13,11 +13,13 @@ import { useCurrentUser } from '../hooks';
 const ACTIVE_LAB_STORAGE_KEY = 'student.activeLabId';
 
 function formatMembershipRole(role: string | undefined | null, locale: Locale) {
-  return role === 'LEADER'
-    ? translate('research.role.leader', locale)
-    : role === 'LAB_MANAGER'
-      ? translate('layout.managerRole', locale)
-      : translate('layout.studentRole', locale);
+  if (role === 'LEADER') return translate('research.role.leader', locale);
+  if (role === 'LAB_MANAGER') return translate('layout.managerRole', locale);
+  if (role === 'DEPUTY') return translate('lab.role.deputy', locale);
+  if (role === 'SECRETARY') return translate('lab.role.secretary', locale);
+  if (role === 'MEMBER') return translate('lab.role.member', locale);
+  if (role === 'STUDENT') return translate('layout.studentRole', locale);
+  return role || translate('common.notUpdated', locale);
 }
 
 export function OtherPage() {

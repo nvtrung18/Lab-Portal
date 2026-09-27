@@ -17,8 +17,7 @@ export function ManagerReviewModal({ decision, isSubmitting, onClose, onSubmit }
   const trimmedComment = comment.trim();
   const isOpen = decision != null;
 
-  const isCommentRequired = decision === 'REQUEST_REVISION' || decision === 'REJECT';
-  const isSubmitDisabled = isCommentRequired && !trimmedComment;
+  const isSubmitDisabled = !trimmedComment;
 
   function handleSubmit() {
     if (!decision || isSubmitDisabled) {
@@ -60,6 +59,7 @@ export function ManagerReviewModal({ decision, isSubmitting, onClose, onSubmit }
             className="mt-2 min-h-32 w-full resize-y rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
             id="manager-review-comment"
             maxLength={5000}
+            required
             placeholder={getDecisionMessage(decision, t)}
             value={comment}
             onChange={(event) => setComment(event.target.value)}

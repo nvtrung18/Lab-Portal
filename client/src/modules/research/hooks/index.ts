@@ -812,7 +812,11 @@ export function useUpdateTaskStatus(milestoneId: number, projectId?: number | nu
     onSettled: async () => {
       const invalidations = [queryClient.invalidateQueries({ queryKey })];
       if (projectId) {
-        invalidations.push(queryClient.invalidateQueries({ queryKey: queryKeys.research.projectStats(projectId) }));
+        invalidations.push(
+          queryClient.invalidateQueries({ queryKey: queryKeys.research.projectStats(projectId) }),
+          queryClient.invalidateQueries({ queryKey: queryKeys.research.projectTaskBoard(projectId) }),
+          queryClient.invalidateQueries({ queryKey: ['projectTaskBacklog', projectId] }),
+        );
       }
       await Promise.all(invalidations);
     },
@@ -890,7 +894,9 @@ export function useCreateTask(milestoneId: number, projectId?: number | null, gr
         invalidations.push(
           queryClient.invalidateQueries({
             queryKey: queryKeys.research.projectStats(projectId),
-          })
+          }),
+          queryClient.invalidateQueries({ queryKey: queryKeys.research.projectTaskBoard(projectId) }),
+          queryClient.invalidateQueries({ queryKey: ['projectTaskBacklog', projectId] }),
         );
       }
       await Promise.all(invalidations);

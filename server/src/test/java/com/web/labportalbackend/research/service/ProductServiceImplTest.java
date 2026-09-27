@@ -157,8 +157,9 @@ class ProductServiceImplTest {
         assertEquals("Source code demo nhận diện khuôn mặt", response.getTitle());
         assertEquals(2, response.getVersion());
         assertEquals(ProductStatus.SUBMITTED, response.getStatus());
-        assertEquals("/storage/products/10/2.zip", response.getFileUrl());
-        assertTrue(Files.exists(tempDir.resolve("10").resolve("2.zip")));
+        assertTrue(response.getFileUrl().matches("/storage/products/10/[0-9a-f-]{36}\\.zip"));
+        Path storedFile = tempDir.resolve(response.getFileUrl().substring("/storage/products/".length()));
+        assertEquals("artifact", Files.readString(storedFile));
 
         ArgumentCaptor<ProductEntity> captor = ArgumentCaptor.forClass(ProductEntity.class);
         verify(productRepository).save(captor.capture());
@@ -201,5 +202,43 @@ class ProductServiceImplTest {
 
         assertThrows(AccessDeniedException.class, () -> productService.submitProduct(request, null));
         verify(productRepository, never()).save(any(ProductEntity.class));
+    }
+
+    @Test
+    void downloadProductFile_requiresProductVisibilityAndServesStoredBytes() throws Exception {
+        ReflectionTestUtils.setField(productService, "productStoragePath", tempDir.toString());
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken("student", null, List.of())
+        );
+        User student = new User();
+        student.setId(5L);
+        student.setUsername("student");
+        student.addRole(new Role("STUDENT", "Student"));
+        ProjectEntity project = ProjectEntity.builder().title("Project").build();
+        project.setId(10L);
+        ProductEntity product = ProductEntity.builder()
+                .projectId(10L).submittedById(5L).productType(ProductType.SOURCE_CODE)
+                .title("Source").fileName("source.zip")
+                .fileUrl("/storage/products/10/fixture.zip")
+                .version(1).status(ProductStatus.SUBMITTED).build();
+        product.setId(100L);
+        product.setActive(true);
+        product.setDeleted(false);
+        Files.createDirectories(tempDir.resolve("10"));
+        Files.writeString(tempDir.resolve("10/fixture.zip"), "fixture");
+
+        when(productRepository.findById(100L)).thenReturn(Optional.of(product));
+        when(projectRepository.findByIdAndDeletedFalseAndActiveTrue(10L)).thenReturn(Optional.of(project));
+        when(userRepository.findByUsername("student")).thenReturn(Optional.of(student));
+        when(groupMemberRepository.existsActiveMemberByProjectIdAndUserId(10L, 5L)).thenReturn(true);
+        when(productRepository.findByProjectIdAndDeletedFalseAndActiveTrueOrderByCreatedAtDescVersionDesc(10L))
+                .thenReturn(List.of(product));
+        when(userRepository.findAllById(List.of(5L))).thenReturn(List.of(student));
+
+        assertEquals("fixture", new String(productService.downloadProductFile(100L)
+                .resource().getInputStream().readAllBytes()));
+
+        product.setSubmittedById(6L);
+        assertThrows(AccessDeniedException.class, () -> productService.downloadProductFile(100L));
     }
 }

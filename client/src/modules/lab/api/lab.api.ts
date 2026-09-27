@@ -32,9 +32,12 @@ export interface LabMemberResponse {
   labId: number;
   labName: string;
   role: string;
+  canReceiveLabRole: boolean;
   status: string;
   joinedAt?: string;
 }
+
+export type LabMemberRole = 'MEMBER' | 'DEPUTY' | 'SECRETARY';
 
 export async function getLabs(): Promise<LabResponse[]> {
   const response = await apiClient.get<Response<LabResponse[]>>('/api/labs');
@@ -59,6 +62,18 @@ export async function removeLabMember(
 ): Promise<LabMemberResponse> {
   const response = await apiClient.patch<Response<LabMemberResponse>>(
     `/api/labs/${labId}/members/${userId}/remove`,
+  );
+  return response.data.data;
+}
+
+export async function updateLabMemberRole(
+  labId: number,
+  userId: number,
+  role: LabMemberRole,
+): Promise<LabMemberResponse> {
+  const response = await apiClient.patch<Response<LabMemberResponse>>(
+    `/api/labs/${labId}/members/${userId}/role`,
+    { role },
   );
   return response.data.data;
 }

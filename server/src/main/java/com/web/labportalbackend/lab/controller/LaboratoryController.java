@@ -6,6 +6,7 @@ import com.web.labportalbackend.common.dto.Response;
 import com.web.labportalbackend.lab.dto.request.ApplyRequestDTO;
 import com.web.labportalbackend.lab.dto.request.CreateLabRequest;
 import com.web.labportalbackend.lab.dto.request.UpdateLabStatusRequest;
+import com.web.labportalbackend.lab.dto.request.UpdateLabMemberRoleRequest;
 import com.web.labportalbackend.lab.dto.response.ApplicationResponseDTO;
 import com.web.labportalbackend.lab.dto.response.LabMemberResponse;
 import com.web.labportalbackend.lab.dto.response.LabResponse;
@@ -13,6 +14,7 @@ import com.web.labportalbackend.lab.dto.response.LabDashboardStatsResponse;
 import com.web.labportalbackend.lab.entity.Membership;
 
 import com.web.labportalbackend.lab.entity.Laboratory;
+import com.web.labportalbackend.lab.mapper.LabMapper;
 import com.web.labportalbackend.lab.repository.LaboratoryRepository;
 import com.web.labportalbackend.lab.repository.MembershipRepository;
 import com.web.labportalbackend.lab.service.ApplicationService;
@@ -103,7 +105,7 @@ public class LaboratoryController {
         assertCanViewLabMembers(id, authentication);
         List<LabMemberResponse> members = membershipRepository.findByLaboratoryIdAndDeletedFalse(id).stream()
                 .filter(membership -> Boolean.TRUE.equals(membership.getActive()))
-                .map(this::toLabMemberResponse)
+                .map(LabMapper::toMemberResponse)
                 .toList();
         return ResponseEntity.ok(Response.ok("Laboratory members retrieved successfully", members));
     }
@@ -119,7 +121,7 @@ public class LaboratoryController {
         List<LabMemberResponse> students = membershipRepository.findByLaboratoryIdAndDeletedFalse(id).stream()
                 .filter(membership -> Boolean.TRUE.equals(membership.getActive()))
                 .filter(membership -> membership.getUser().hasRole("STUDENT"))
-                .map(this::toLabMemberResponse)
+                .map(LabMapper::toMemberResponse)
                 .toList();
         return ResponseEntity.ok(Response.ok("Research eligible students retrieved successfully", students));
     }
@@ -149,9 +151,22 @@ public class LaboratoryController {
             throw new IllegalArgumentException("Membership is not active");
         }
 
+        membership.setRole("MEMBER");
         membership.setActive(false);
         Membership updated = membershipRepository.save(membership);
-        return ResponseEntity.ok(Response.ok("Member removed from laboratory successfully", toLabMemberResponse(updated)));
+        return ResponseEntity.ok(Response.ok("Member removed from laboratory successfully", LabMapper.toMemberResponse(updated)));
+    }
+
+    @PatchMapping("/{id}/members/{userId}/role")
+    @Operation(summary = "Change a student member's role in the managed laboratory")
+    @SecurityRequirement(name = "Bearer Authentication")
+    @PreAuthorize("hasRole('LAB_MANAGER')")
+    public ResponseEntity<Response<LabMemberResponse>> updateLabMemberRole(
+            @PathVariable Long id,
+            @PathVariable Long userId,
+            @Valid @RequestBody UpdateLabMemberRoleRequest request) {
+        return ResponseEntity.ok(Response.ok("Laboratory member role updated successfully",
+                labService.updateLabMemberRole(id, userId, request.role())));
     }
 
     @PostMapping(value = "/{id}/apply", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -235,17 +250,4 @@ public class LaboratoryController {
                 .orElseThrow(() -> new AccessDeniedException("Lab manager is not assigned to any lab"));
     }
 
-    private LabMemberResponse toLabMemberResponse(Membership membership) {
-        return LabMemberResponse.builder()
-                .id(membership.getId())
-                .userId(membership.getUser().getId())
-                .fullName(membership.getUser().getFullName())
-                .email(membership.getUser().getEmail())
-                .labId(membership.getLaboratory().getId())
-                .labName(membership.getLaboratory().getLabName())
-                .role(membership.getRole())
-                .status(Boolean.TRUE.equals(membership.getActive()) ? "ACTIVE" : "INACTIVE")
-                .joinedAt(membership.getCreatedAt())
-                .build();
-    }
 }

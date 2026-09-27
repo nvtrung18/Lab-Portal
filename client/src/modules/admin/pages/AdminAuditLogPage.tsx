@@ -10,6 +10,7 @@ type Translator = (key: string, fallback?: string) => string;
 
 const actionLabelKeys: Record<string, string> = {
   CHANGE_USER_ROLE: 'audit.action.changeUserRole',
+  CHANGE_LAB_MEMBER_ROLE: 'audit.action.changeLabMemberRole',
   BAN_USER: 'audit.action.banUser',
   UNBAN_USER: 'audit.action.unbanUser',
   CREATE_LAB: 'audit.action.createLab',
@@ -46,6 +47,7 @@ const moduleLabelKeys: Record<string, string> = {
 
 const targetLabelKeys: Record<string, string> = {
   USER: 'audit.target.user',
+  MEMBERSHIP: 'audit.target.membership',
   LAB: 'audit.target.lab',
   SYSTEM_CONFIG: 'audit.target.systemConfig',
   SLOT: 'audit.target.slot',

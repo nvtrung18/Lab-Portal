@@ -29,8 +29,13 @@ public class LabMemberResponse {
     @Schema(description = "Laboratory name", example = "AI Research Lab")
     private String labName;
 
-    @Schema(description = "Role inside laboratory", example = "MEMBER")
+    @Schema(description = "Stored role inside this laboratory; new assignments use MEMBER, DEPUTY, or SECRETARY",
+            example = "MEMBER")
     private String role;
+
+    @Schema(description = "Whether this member is eligible for laboratory role assignment; caller permission is checked separately",
+            requiredMode = Schema.RequiredMode.REQUIRED)
+    private boolean canReceiveLabRole;
 
     @Schema(description = "Membership status", example = "ACTIVE")
     private String status;

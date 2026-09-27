@@ -90,19 +90,19 @@ export function ResearchProjectList({ labId, canCreate, mode = 'manager' }: Rese
                   <dd className="mt-1 text-slate-600">{project.managerName ?? t('common.notUpdated')}</dd>
                 </div>
               </dl>
-              {mode === 'manager' ? (
-                <div className="mt-4 flex flex-wrap gap-2">
-                  <Link
-                    className="inline-flex rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100"
-                    to={`/app/research/projects/${project.id}`}
-                  >
-                    {t('common.viewDetails')}
-                  </Link>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <Link
+                  className="inline-flex rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100"
+                  to={`/app/research/projects/${project.id}`}
+                >
+                  {t('common.viewDetails')}
+                </Link>
+                {mode === 'manager' ? (
                   <Button onClick={() => setEditingProject(project)} size="sm" variant="outline">
                     {t('research.project.edit')}
                   </Button>
-                </div>
-              ) : null}
+                ) : null}
+              </div>
             </article>
           ))}
         </div>
