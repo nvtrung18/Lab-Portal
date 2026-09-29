@@ -3,42 +3,52 @@
 @tailwind utilities;
 
 :root {
-  --app-background-color: #DCDDDF;
-  --app-background: linear-gradient(135deg, #C4C5C7 0%, #DCDDDF 50%, #EBEBEB 100%);
-  --app-banner-color: var(--app-button-color);
-  --app-banner-gradient: var(--app-button-gradient);
-  --app-border-color: #C4C5C7;
-  --app-border-strong-color: #C4C5C7;
-  --app-active-indicator-color: #4B4C4F;
+  --bg-main: #F1F5F9;
+  --bg-surface: #FFFFFF;
+  --bg-surface-hover: #F8FAFC;
+  --text-main: #1E293B;
+  --text-muted: #64748B;
+  --text-disabled: #94A3B8;
+  --border-light: #E2E8F0;
+  --gradient-primary: linear-gradient(135deg, #E2E8F0 0%, #CBD5E1 100%);
+  --accent-blue-muted: #3B82F6;
+
+  --app-background-color: var(--bg-main);
+  --app-background: none;
+  --app-banner-color: var(--bg-surface);
+  --app-banner-gradient: none;
+  --app-border-color: var(--border-light);
+  --app-border-strong-color: #CBD5E1;
+  --app-active-indicator-color: var(--accent-blue-muted);
   --app-focus-indicator-color: var(--app-active-indicator-color);
-  --app-surface-color: #DCDDDF;
-  --app-surface: linear-gradient(145deg, #EBEBEB 0%, #DCDDDF 52%, #C4C5C7 100%);
-  --app-surface-elevated-color: #EBEBEB;
-  --app-surface-elevated: linear-gradient(145deg, #EBEBEB 0%, #DCDDDF 54%, #C4C5C7 100%);
-  --app-surface-muted: linear-gradient(145deg, #DCDDDF 0%, #C4C5C7 100%);
-  --app-control-gradient: linear-gradient(145deg, #EBEBEB 0%, #DCDDDF 52%, #C4C5C7 100%);
-  --app-control-gradient-hover: linear-gradient(145deg, #C4C5C7 0%, #DCDDDF 52%, #EBEBEB 100%);
-  --app-control-border: var(--app-border-strong-color);
-  --app-control-text: #171719;
-  --app-text-primary: #171719;
-  --app-text-secondary: #333336;
-  --app-text-muted: #444548;
-  --app-text-placeholder: #4B4C4F;
-  --app-button-color: #DCDDDF;
-  --app-button-gradient: linear-gradient(135deg, #C4C5C7 0%, #DCDDDF 50%, #EBEBEB 100%);
-  --app-button-gradient-hover: linear-gradient(135deg, #EBEBEB 0%, #DCDDDF 50%, #C4C5C7 100%);
-  --app-button-border: #C4C5C7;
-  --app-button-text: #171719;
-  --app-button-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
-  --app-header-control-color: #DCDDDF;
-  --app-header-control-gradient: var(--app-button-gradient);
+  --app-surface-color: var(--bg-surface);
+  --app-surface: none;
+  --app-surface-elevated-color: var(--bg-surface);
+  --app-surface-elevated: none;
+  --app-surface-muted: none;
+  --app-control-gradient: none;
+  --app-control-gradient-hover: linear-gradient(var(--bg-surface-hover), var(--bg-surface-hover));
+  --app-control-border: var(--text-muted);
+  --app-control-text: var(--text-main);
+  --app-text-primary: var(--text-main);
+  --app-text-secondary: var(--text-muted);
+  --app-text-muted: var(--text-muted);
+  --app-text-placeholder: var(--text-disabled);
+  --app-button-color: #E2E8F0;
+  --app-button-gradient: var(--gradient-primary);
+  --app-button-gradient-hover: linear-gradient(135deg, #CBD5E1 0%, #E2E8F0 100%);
+  --app-button-border: #CBD5E1;
+  --app-button-text: var(--text-main);
+  --app-button-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+  --app-header-control-color: var(--bg-surface);
+  --app-header-control-gradient: var(--gradient-primary);
   --app-header-control-gradient-hover: var(--app-button-gradient-hover);
-  --app-header-control-border: #C4C5C7;
-  --app-header-control-text: #171719;
-  --app-header-control-muted-text: #333336;
-  --app-header-control-icon-bg: rgba(0, 0, 0, 0.10);
-  --app-button-primary-gradient: var(--app-button-gradient);
-  --app-button-primary-gradient-hover: var(--app-button-gradient-hover);
+  --app-header-control-border: var(--border-light);
+  --app-header-control-text: var(--text-main);
+  --app-header-control-muted-text: #475569;
+  --app-header-control-icon-bg: var(--border-light);
+  --app-button-primary-gradient: none;
+  --app-button-primary-gradient-hover: none;
   --app-button-secondary-gradient: var(--app-button-gradient);
   --app-button-secondary-gradient-hover: var(--app-button-gradient-hover);
   --app-button-danger-gradient: var(--app-button-gradient);
@@ -282,7 +292,7 @@ html.dark .app-shell :is(select, textarea, input:not([type="checkbox"]):not([typ
 }
 
 .app-shell :is(select, textarea, input:not([type="checkbox"]):not([type="radio"]):not([type="file"]))[class*="border-slate-"]::placeholder {
-  color: #64748B;
+  color: var(--app-text-placeholder);
   opacity: 1;
 }
 
@@ -459,7 +469,7 @@ html:not(.dark) .admin-shell button.text-white {
 }
 
 html:not(.dark) .admin-shell option.bg-slate-900 {
-  background-color: var(--app-surface-elevated) !important;
+  background-color: var(--app-surface-elevated-color) !important;
   color: #0F172A !important;
 }
 
@@ -489,7 +499,7 @@ html.dark .app-shell .app-gradient-banner .text-white:not(button) {
    remain authoritative; only unpaired utility colors receive the fallback. */
 html:not(.dark) .app-shell .text-slate-400,
 html:not(.dark) .app-shell .text-slate-500 {
-  color: #475569 !important;
+  color: var(--app-text-muted) !important;
 }
 
 html.dark .app-shell .text-slate-400:not([class*="dark:text-"]),
@@ -626,15 +636,14 @@ html.dark .app-shell [class*="border-red-200"]:not([class*="dark:border-"]) {
   border-color: var(--app-border-color) !important;
 }
 
-/* Keep legacy page surfaces aligned with the same theme gradient in every
-   active module. Controls and fixed overlays stay solid so text, borders and
-   interaction states remain easy to read on small screens. */
-.app-shell :is(section, article, aside, main, header, footer, nav, div, form, ul, ol, table, thead, tbody, tfoot, li, a):not(.fixed)[class*="bg-white"],
-.app-shell :is(section, article, aside, main, header, footer, nav, div, form, ul, ol, table, thead, tbody, tfoot, li, a):not(.fixed)[class*="bg-slate-50"],
-.app-shell :is(section, article, aside, main, header, footer, nav, div, form, ul, ol, table, thead, tbody, tfoot, li, a):not(.fixed)[class*="bg-slate-100"],
-.app-shell :is(section, article, aside, main, header, footer, nav, div, form, ul, ol, table, thead, tbody, tfoot, li, a):not(.fixed)[class*="bg-slate-800"],
-.app-shell :is(section, article, aside, main, header, footer, nav, div, form, ul, ol, table, thead, tbody, tfoot, li, a):not(.fixed)[class*="bg-slate-900"],
-.app-shell :is(section, article, aside, main, header, footer, nav, div, form, ul, ol, table, thead, tbody, tfoot, li, a):not(.fixed)[class*="bg-slate-950"] {
+/* Dark mode gives legacy light utility surfaces the shared dark treatment.
+   Light mode keeps their native white and pale slate fills. */
+html.dark .app-shell :is(section, article, aside, main, header, footer, nav, div, form, ul, ol, table, thead, tbody, tfoot, li, a):not(.fixed)[class*="bg-white"],
+html.dark .app-shell :is(section, article, aside, main, header, footer, nav, div, form, ul, ol, table, thead, tbody, tfoot, li, a):not(.fixed)[class*="bg-slate-50"],
+html.dark .app-shell :is(section, article, aside, main, header, footer, nav, div, form, ul, ol, table, thead, tbody, tfoot, li, a):not(.fixed)[class*="bg-slate-100"],
+html.dark .app-shell :is(section, article, aside, main, header, footer, nav, div, form, ul, ol, table, thead, tbody, tfoot, li, a):not(.fixed)[class*="bg-slate-800"],
+html.dark .app-shell :is(section, article, aside, main, header, footer, nav, div, form, ul, ol, table, thead, tbody, tfoot, li, a):not(.fixed)[class*="bg-slate-900"],
+html.dark .app-shell :is(section, article, aside, main, header, footer, nav, div, form, ul, ol, table, thead, tbody, tfoot, li, a):not(.fixed)[class*="bg-slate-950"] {
   background-color: var(--app-surface-color) !important;
   background-image: var(--app-surface) !important;
   background-position: center top;
@@ -642,9 +651,9 @@ html.dark .app-shell [class*="border-red-200"]:not([class*="dark:border-"]) {
   background-size: cover;
 }
 
-/* Low-intensity status panels keep their semantic text and border colors,
-   while their surfaces follow the same theme gradient as the rest of the UI. */
-.app-shell :is(section, article, aside, main, header, footer, nav, div, form, ul, ol, table, thead, tbody, tfoot, li, a, span, label):not(.fixed):not(button):is(
+/* Dark mode normalizes legacy status panels. Light mode keeps their semantic
+   fills so warnings and outcomes remain distinguishable. */
+html.dark .app-shell :is(section, article, aside, main, header, footer, nav, div, form, ul, ol, table, thead, tbody, tfoot, li, a, span, label):not(.fixed):not(button):is(
   [class*="bg-blue-50"],
   [class*="bg-sky-50"],
   [class*="bg-cyan-50"],
@@ -704,9 +713,7 @@ html:not(.dark) .app-shell :is(.text-slate-200, .text-slate-100) {
   color: var(--app-text-secondary) !important;
 }
 
-html:not(.dark) .app-shell :is(section, article, aside, main, header, footer, nav, div, form, ul, ol, table, thead, tbody, tfoot, li, a, span, label)[class*="bg-white"] .text-white:not(button):not([class*="bg-"]),
-html:not(.dark) .app-shell :is(section, article, aside, main, header, footer, nav, div, form, ul, ol, table, thead, tbody, tfoot, li, a, span, label)[class*="bg-slate-"] .text-white:not(button):not([class*="bg-"]),
-html:not(.dark) .app-shell :is(div, section, article, aside, main, form, li, a, span, label)[class*="bg-slate-"][class~="text-white"]:not(.fixed) {
+html:not(.dark) .app-shell :is(section, article, aside, main, header, footer, nav, div, form, ul, ol, table, thead, tbody, tfoot, li, a, span, label):is([class~="bg-white"], [class~="bg-slate-50"], [class~="bg-slate-100"]) .text-white:not(button):not([class*="bg-"]) {
   color: var(--app-text-primary) !important;
 }
 
@@ -1102,6 +1109,113 @@ html.dark .app-shell nav a[class] {
   }
 }
 
+/* Light mode keeps the navigation rail on the page background while content
+   surfaces and the top bar remain white. */
+html:not(.dark) .app-shell aside.app-sidebar.app-surface {
+  background-color: var(--bg-main) !important;
+  background-image: none !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08) !important;
+}
+
+html:not(.dark) .app-shell aside.app-sidebar :is(.text-slate-400, .text-slate-500) {
+  color: #475569 !important;
+}
+
+/* The shared button rule above supplies the neutral secondary treatment.
+   Explicit actions retain their own meaning in the light theme. */
+html:not(.dark) .app-shell button:is(
+  .app-button-primary,
+  [class~="bg-slate-800"],
+  [class~="bg-slate-900"],
+  [class~="bg-slate-950"],
+  [class~="bg-blue-600"],
+  [class~="bg-blue-700"],
+  [class~="bg-indigo-600"],
+  [class~="bg-indigo-700"]
+) {
+  background-color: #0F172A !important;
+  background-image: none !important;
+  border-color: #0F172A !important;
+  color: #FFFFFF !important;
+}
+
+html:not(.dark) .app-shell button:is(
+  .app-button-primary,
+  [class~="bg-slate-800"],
+  [class~="bg-slate-900"],
+  [class~="bg-slate-950"],
+  [class~="bg-blue-600"],
+  [class~="bg-blue-700"],
+  [class~="bg-indigo-600"],
+  [class~="bg-indigo-700"]
+):hover:not(:disabled) {
+  background-color: var(--text-main) !important;
+  background-image: none !important;
+}
+
+html:not(.dark) .app-shell button:is(.app-button-danger, [class~="bg-red-600"], [class~="bg-red-700"]) {
+  background-color: #B91C1C !important;
+  background-image: none !important;
+  border-color: #B91C1C !important;
+  color: #FFFFFF !important;
+}
+
+html:not(.dark) .app-shell button:is(.app-button-danger, [class~="bg-red-600"], [class~="bg-red-700"]):hover:not(:disabled) {
+  background-color: #991B1B !important;
+  background-image: none !important;
+}
+
+html:not(.dark) .app-shell button:is(.app-button-success, [class~="bg-emerald-600"], [class~="bg-emerald-700"], [class~="bg-green-600"]) {
+  background-color: #047857 !important;
+  background-image: none !important;
+  border-color: #047857 !important;
+  color: #FFFFFF !important;
+}
+
+html:not(.dark) .app-shell button:is(.app-button-success, [class~="bg-emerald-600"], [class~="bg-emerald-700"], [class~="bg-green-600"]):hover:not(:disabled) {
+  background-color: #065F46 !important;
+  background-image: none !important;
+}
+
+html:not(.dark) .app-shell button:disabled:not(.app-button)[class*="disabled:bg-"] {
+  background-color: #CBD5E1 !important;
+  background-image: none !important;
+  border-color: #CBD5E1 !important;
+  color: #475569 !important;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+html:not(.dark) .app-shell button[class~="bg-amber-50"] {
+  background-color: #FFFBEB !important;
+  background-image: none !important;
+  border-color: #FCD34D !important;
+  color: #92400E !important;
+}
+
+html:not(.dark) .app-shell button[class~="bg-amber-50"]:hover:not(:disabled) {
+  background-color: #FEF3C7 !important;
+  background-image: none !important;
+}
+
+html:not(.dark) .app-shell button[class~="bg-amber-600"] {
+  background-color: #B45309 !important;
+  background-image: none !important;
+  border-color: #B45309 !important;
+  color: #FFFFFF !important;
+}
+
+html:not(.dark) .app-shell button[class~="bg-amber-600"]:hover:not(:disabled) {
+  background-color: #92400E !important;
+  background-image: none !important;
+}
+
+html:not(.dark) .app-shell button[class~="inset-0"],
+html:not(.dark) .app-shell button[class~="inset-0"]:hover:not(:disabled) {
+  background-color: rgba(15, 23, 42, 0.45) !important;
+  background-image: none !important;
+}
+
 *,
 *::before,
 *::after {
@@ -1113,8 +1227,8 @@ html {
 }
 
 html:not(.dark) ::selection {
-  background: #c4c5c7;
-  color: #171719;
+  background: #CBD5E1;
+  color: var(--text-main);
 }
 
 html.dark ::selection {
