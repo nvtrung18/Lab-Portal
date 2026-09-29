@@ -31,7 +31,7 @@ export function ResearchProjectList({ labId, canCreate, mode = 'manager' }: Rese
   const updateProject = useUpdateResearchProject(labId);
 
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+    <section className="min-w-0 rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h3 className="text-lg font-semibold text-slate-950">{t('research.project.listTitle')}</h3>
@@ -56,9 +56,9 @@ export function ResearchProjectList({ labId, canCreate, mode = 'manager' }: Rese
       ) : (
         <div className="mt-5 grid gap-4 lg:grid-cols-2">
           {projects.map((project) => (
-            <article key={project.id} className="rounded-md border border-slate-200 p-4">
-              <div className="flex items-start justify-between gap-3">
-                <h4 className="text-base font-semibold text-slate-950">
+            <article key={project.id} className="min-w-0 rounded-md border border-slate-200 p-4">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <h4 className="min-w-0 break-words text-base font-semibold text-slate-950">
                   {project.code ? `${project.code} - ` : ''}
                   {project.title}
                 </h4>
@@ -66,10 +66,10 @@ export function ResearchProjectList({ labId, canCreate, mode = 'manager' }: Rese
                   {formatProjectStatus(project.status, locale)}
                 </span>
               </div>
-              <p className="mt-2 text-sm font-medium text-slate-700">
+              <p className="mt-2 break-words text-sm font-medium text-slate-700">
                 {project.researchDirection ?? t('research.project.noDirection')}
               </p>
-              <p className="mt-3 text-sm text-slate-600">
+              <p className="mt-3 break-words text-sm text-slate-600">
                 {project.objective || project.description || t('research.group.noObjective')}
               </p>
               <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
@@ -92,7 +92,7 @@ export function ResearchProjectList({ labId, canCreate, mode = 'manager' }: Rese
               </dl>
               <div className="mt-4 flex flex-wrap gap-2">
                 <Link
-                  className="inline-flex rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100"
+                  className="inline-flex min-h-11 items-center rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100"
                   to={`/app/research/projects/${project.id}`}
                 >
                   {t('common.viewDetails')}

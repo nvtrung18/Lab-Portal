@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
 import { Button, toast } from '../../../shared/components';
-import { translate, useI18n, type Locale } from '../../../shared/i18n';
+import { translate, translateBackendMessage, useI18n, type Locale } from '../../../shared/i18n';
 import type { Response } from '../../../shared/types';
 import type { UserMembershipResponse } from '../api';
 import { useCurrentUser, useUpdateProfile } from '../hooks';
@@ -32,7 +32,7 @@ type ProfileFormValues = z.infer<ReturnType<typeof createProfileSchema>>;
 function getApiErrorMessage(error: unknown, fallback: string) {
   if (axios.isAxiosError(error)) {
     const response = error.response?.data as Partial<Response<unknown>> | undefined;
-    return response?.message ?? fallback;
+    return translateBackendMessage(response?.message) ?? fallback;
   }
 
   if (error instanceof Error) {
@@ -52,7 +52,9 @@ function formatRole(role: string, locale: Locale) {
     ? translate('layout.managerRole', locale)
     : normalizedRole === 'STUDENT'
       ? translate('layout.studentRole', locale)
-      : normalizedRole;
+      : normalizedRole === 'ADMIN'
+        ? translate('layout.adminRole', locale)
+        : normalizedRole;
 }
 
 export function ProfilePage() {
@@ -162,7 +164,7 @@ export function ProfilePage() {
     <div className="mx-auto max-w-7xl space-y-6">
       <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
       <div className="flex flex-col gap-4 border-b border-slate-200 pb-6 sm:flex-row sm:items-center sm:justify-between dark:border-slate-800">
-        <div className="flex items-center gap-4">
+        <div className="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-1">
           {profile.avatarUrl ? (
             <img
               alt={displayName}
@@ -174,11 +176,12 @@ export function ProfilePage() {
               {displayName.charAt(0).toUpperCase()}
             </div>
           )}
-          <div>
-            <h1 className="text-xl font-semibold text-slate-950 dark:text-white">{displayName}</h1>
-            <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{profile.email}</p>
+          <div className="min-w-0">
+            <h1 className="break-words text-xl font-semibold text-slate-950 dark:text-white">{displayName}</h1>
+            <p className="mt-1 hidden break-all text-sm text-slate-600 dark:text-slate-300 sm:block">{profile.email}</p>
             <p className="mt-1 text-xs font-medium uppercase text-slate-500">{profile.roles.map((role) => formatRole(role, locale)).join(', ')}</p>
           </div>
+          <p className="w-full break-all text-sm text-slate-600 dark:text-slate-300 sm:hidden">{profile.email}</p>
         </div>
 
         {!isEditing ? (
@@ -215,7 +218,7 @@ export function ProfilePage() {
             </div>
             <div>
               <dt className="text-sm font-medium text-slate-500">{t('common.email')}</dt>
-              <dd className="mt-1 text-sm text-slate-950 dark:text-slate-100">{profile.email}</dd>
+              <dd className="mt-1 break-all text-sm text-slate-950 dark:text-slate-100">{profile.email}</dd>
             </div>
             <div>
               <dt className="text-sm font-medium text-slate-500">{t('profile.phone')}</dt>
@@ -233,10 +236,10 @@ export function ProfilePage() {
               <ul className="mt-3 divide-y divide-slate-200 rounded-md border border-slate-200 dark:divide-slate-800 dark:border-slate-800">
                 {managedLabEntries.map((lab) => (
                   <li
-                    className="flex items-center justify-between gap-3 px-4 py-3 text-sm"
+                    className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 text-sm"
                     key={lab.key}
                   >
-                    <span className="font-medium text-slate-950 dark:text-slate-100">{lab.name}</span>
+                    <span className="min-w-0 break-words font-medium text-slate-950 dark:text-slate-100">{lab.name}</span>
                     <span className="rounded-full bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-700">
                       {lab.status}
                     </span>
@@ -293,7 +296,7 @@ export function ProfilePage() {
             </div>
           ) : null}
 
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-3">
             <Button
               disabled={updateProfileMutation.isPending || !isDirty}
               loading={updateProfileMutation.isPending}

@@ -109,7 +109,7 @@ function LogItemComponent({ log }: LogItemProps) {
             <dd className="mt-1 text-sm">
               {log.evidenceLink ? (
                 <a
-                  className="break-all font-medium text-blue-700 underline underline-offset-2"
+                  className="inline-flex min-h-11 max-w-full items-center break-all font-medium text-blue-700 underline underline-offset-2"
                   href={log.evidenceLink}
                   target="_blank"
                   rel="noopener noreferrer"

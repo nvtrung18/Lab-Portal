@@ -20,15 +20,17 @@ declare global {
 interface GoogleSignInButtonProps {
   disabled?: boolean;
   onCredential: (credential: string) => void;
+  text?: 'signin_with' | 'signup_with';
 }
 
 const SCRIPT_ID = 'google-identity-services';
 const SCRIPT_URL = 'https://accounts.google.com/gsi/client';
 
-export function GoogleSignInButton({ disabled = false, onCredential }: GoogleSignInButtonProps) {
+export function GoogleSignInButton({ disabled = false, onCredential, text = 'signin_with' }: GoogleSignInButtonProps) {
   const { locale, t } = useI18n();
   const containerRef = useRef<HTMLDivElement>(null);
   const callbackRef = useRef(onCredential);
+  const renderedWidthRef = useRef(0);
   const [loadFailed, setLoadFailed] = useState(false);
   const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID?.trim();
 
@@ -38,9 +40,14 @@ export function GoogleSignInButton({ disabled = false, onCredential }: GoogleSig
     if (!clientId) return;
 
     containerRef.current?.replaceChildren();
+    renderedWidthRef.current = 0;
 
     const render = () => {
       if (!containerRef.current || !window.google) return;
+      const width = Math.min(400, Math.floor(containerRef.current.clientWidth || 400));
+      if (renderedWidthRef.current === width && containerRef.current.childElementCount > 0) return;
+      containerRef.current.replaceChildren();
+      renderedWidthRef.current = width;
       window.google.accounts.id.initialize({
         client_id: clientId,
         callback: (response) => callbackRef.current(response.credential),
@@ -49,12 +56,15 @@ export function GoogleSignInButton({ disabled = false, onCredential }: GoogleSig
         type: 'standard',
         theme: 'outline',
         size: 'large',
-        text: 'continue_with',
+        text,
         shape: 'pill',
         locale,
-        width: Math.min(400, Math.floor(containerRef.current.clientWidth || 400)),
+        width,
       });
     };
+
+    const resizeObserver = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(render);
+    if (containerRef.current) resizeObserver?.observe(containerRef.current);
 
     const onLoad = () => {
       setLoadFailed(false);
@@ -79,16 +89,17 @@ export function GoogleSignInButton({ disabled = false, onCredential }: GoogleSig
     } else if (script.dataset.gsiLoaded !== 'false' && window.google) {
       setLoadFailed(false);
       render();
-      return;
+      return () => resizeObserver?.disconnect();
     }
     script.addEventListener('load', onLoad);
     script.addEventListener('error', onError);
     if (!script.isConnected) document.head.appendChild(script);
     return () => {
+      resizeObserver?.disconnect();
       script.removeEventListener('load', onLoad);
       script.removeEventListener('error', onError);
     };
-  }, [clientId, locale]);
+  }, [clientId, locale, text]);
 
   if (!clientId) {
     return (

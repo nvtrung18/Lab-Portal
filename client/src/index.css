@@ -3,39 +3,40 @@
 @tailwind utilities;
 
 :root {
-  --app-background-color: #E0E0E0;
-  --app-background: linear-gradient(135deg, #E0E0E0 0%, #EFEFEF 50%, #D9D9D9 100%);
+  --app-background-color: #DCDDDF;
+  --app-background: linear-gradient(135deg, #C4C5C7 0%, #DCDDDF 50%, #EBEBEB 100%);
   --app-banner-color: var(--app-button-color);
   --app-banner-gradient: var(--app-button-gradient);
-  --app-border-color: #B8B8B8;
-  --app-border-strong-color: #929292;
-  --app-active-indicator-color: #5F6368;
-  --app-surface-color: #EFEFEF;
-  --app-surface: linear-gradient(145deg, #EFEFEF 0%, #E0E0E0 52%, #D9D9D9 100%);
-  --app-surface-elevated-color: #EFEFEF;
-  --app-surface-elevated: linear-gradient(145deg, #EFEFEF 0%, #D9D9D9 54%, #BCBCBC 100%);
-  --app-surface-muted: linear-gradient(145deg, #D9D9D9 0%, #BCBCBC 100%);
-  --app-control-gradient: linear-gradient(145deg, #EFEFEF 0%, #E0E0E0 52%, #D9D9D9 100%);
-  --app-control-gradient-hover: linear-gradient(145deg, #D9D9D9 0%, #BCBCBC 52%, #E0E0E0 100%);
+  --app-border-color: #C4C5C7;
+  --app-border-strong-color: #C4C5C7;
+  --app-active-indicator-color: #4B4C4F;
+  --app-focus-indicator-color: var(--app-active-indicator-color);
+  --app-surface-color: #DCDDDF;
+  --app-surface: linear-gradient(145deg, #EBEBEB 0%, #DCDDDF 52%, #C4C5C7 100%);
+  --app-surface-elevated-color: #EBEBEB;
+  --app-surface-elevated: linear-gradient(145deg, #EBEBEB 0%, #DCDDDF 54%, #C4C5C7 100%);
+  --app-surface-muted: linear-gradient(145deg, #DCDDDF 0%, #C4C5C7 100%);
+  --app-control-gradient: linear-gradient(145deg, #EBEBEB 0%, #DCDDDF 52%, #C4C5C7 100%);
+  --app-control-gradient-hover: linear-gradient(145deg, #C4C5C7 0%, #DCDDDF 52%, #EBEBEB 100%);
   --app-control-border: var(--app-border-strong-color);
-  --app-control-text: #0F172A;
-  --app-text-primary: #0F172A;
-  --app-text-secondary: #334155;
-  --app-text-muted: #475569;
-  --app-text-placeholder: #64748B;
-  --app-button-color: #E0E0E0;
-  --app-button-gradient: linear-gradient(135deg, #E0E0E0 0%, #EFEFEF 33%, #D9D9D9 66%, #BCBCBC 100%);
-  --app-button-gradient-hover: linear-gradient(135deg, #BCBCBC 0%, #D9D9D9 33%, #EFEFEF 66%, #E0E0E0 100%);
-  --app-button-border: #A8A8A8;
-  --app-button-text: #0F172A;
-  --app-button-shadow: 0 4px 12px rgba(15, 23, 42, 0.18);
-  --app-header-control-color: #E0E0E0;
+  --app-control-text: #171719;
+  --app-text-primary: #171719;
+  --app-text-secondary: #333336;
+  --app-text-muted: #444548;
+  --app-text-placeholder: #4B4C4F;
+  --app-button-color: #DCDDDF;
+  --app-button-gradient: linear-gradient(135deg, #C4C5C7 0%, #DCDDDF 50%, #EBEBEB 100%);
+  --app-button-gradient-hover: linear-gradient(135deg, #EBEBEB 0%, #DCDDDF 50%, #C4C5C7 100%);
+  --app-button-border: #C4C5C7;
+  --app-button-text: #171719;
+  --app-button-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+  --app-header-control-color: #DCDDDF;
   --app-header-control-gradient: var(--app-button-gradient);
   --app-header-control-gradient-hover: var(--app-button-gradient-hover);
-  --app-header-control-border: #A8A8A8;
-  --app-header-control-text: #0F172A;
-  --app-header-control-muted-text: #334155;
-  --app-header-control-icon-bg: rgba(15, 23, 42, 0.10);
+  --app-header-control-border: #C4C5C7;
+  --app-header-control-text: #171719;
+  --app-header-control-muted-text: #333336;
+  --app-header-control-icon-bg: rgba(0, 0, 0, 0.10);
   --app-button-primary-gradient: var(--app-button-gradient);
   --app-button-primary-gradient-hover: var(--app-button-gradient-hover);
   --app-button-secondary-gradient: var(--app-button-gradient);
@@ -519,6 +520,15 @@ html:not(.dark) .app-shell [class*="ring-slate-"] {
   --tw-ring-color: var(--app-border-color) !important;
 }
 
+html:not(.dark) .app-shell [class*="focus:ring-"],
+html:not(.dark) .app-shell [class*="focus-visible:ring-"] {
+  --tw-ring-color: var(--app-focus-indicator-color) !important;
+}
+
+html:not(.dark) .app-shell [class*="ring-offset-"] {
+  --tw-ring-offset-color: var(--app-surface-elevated-color) !important;
+}
+
 html:not(.dark) .app-shell [class*="divide-slate-"] > :not([hidden]) ~ :not([hidden]) {
   border-color: var(--app-border-color) !important;
 }
@@ -734,11 +744,11 @@ html.dark .app-gradient-banner :is(.text-slate-500, .text-slate-400, .text-slate
 }
 
 html:not(.dark) .app-shell .app-gradient-banner .text-blue-200 {
-  color: #1E3A8A !important;
+  color: var(--app-header-control-muted-text) !important;
 }
 
 html:not(.dark) .app-shell .app-gradient-banner .text-emerald-200 {
-  color: #047857 !important;
+  color: var(--app-header-control-muted-text) !important;
 }
 
 /* Rounded containers and navigation use the same surface language as the
@@ -924,6 +934,12 @@ html.dark .app-shell nav a[class] {
   white-space: normal;
 }
 
+.app-shell button.app-modal-close {
+  flex-shrink: 0;
+  white-space: nowrap;
+  overflow-wrap: normal;
+}
+
 .app-shell button[class~="rounded-full"] {
   border-radius: 9999px !important;
 }
@@ -1034,6 +1050,58 @@ html.dark .app-shell nav a[class] {
   border-radius: 0.875rem !important;
 }
 
+/* Research detail pages have enough tabs that every destination should be
+   visible without guessing that the tab strip scrolls. */
+.app-shell [role="tablist"].research-detail-tabs {
+  display: grid;
+  width: 100%;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: stretch;
+  overflow: visible;
+}
+
+.app-shell [role="tablist"].research-detail-tabs > [role="tab"] {
+  width: auto;
+  min-width: 0;
+  padding-inline: 0.5rem;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-align: center;
+}
+
+@media (min-width: 640px) {
+  .app-shell [role="tablist"].research-detail-tabs {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .app-shell [role="tablist"].research-project-tabs {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1280px) {
+  .app-shell [role="tablist"].research-detail-tabs:not(.research-project-tabs) {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 639px) {
+  .app-shell button {
+    min-width: var(--app-control-min-height);
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .app-shell [role="tablist"] > [role="tab"] {
+    white-space: nowrap;
+  }
+
+  .app-shell :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
+    min-height: var(--app-control-min-height);
+    font-size: 1rem;
+  }
+}
+
 *,
 *::before,
 *::after {
@@ -1044,7 +1112,12 @@ html {
   scroll-behavior: smooth;
 }
 
-::selection {
+html:not(.dark) ::selection {
+  background: #c4c5c7;
+  color: #171719;
+}
+
+html.dark ::selection {
   background: #cbd5e1;
   color: #0f172a;
 }

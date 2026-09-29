@@ -80,16 +80,16 @@ export function GroupMemberSelector({
         <p className="text-sm font-medium text-slate-700">{t('research.group.memberListLabel')}</p>
         <div className="mt-2 max-h-56 space-y-2 overflow-y-auto rounded-md border border-slate-200 p-3">
           {students.map((student) => (
-            <label key={student.userId} className="flex items-start gap-3 rounded-md px-2 py-2 hover:bg-slate-50">
+            <label key={student.userId} className="flex min-h-11 items-center gap-3 rounded-md px-2 py-2 hover:bg-slate-50">
               <input
-                className="mt-1"
+                className="shrink-0"
                 type="checkbox"
                 checked={selectedIds.has(student.userId)}
                 onChange={() => toggleMember(student.userId)}
               />
               <span className="min-w-0">
-                <span className="block text-sm font-medium text-slate-900">{getStudentLabel(student)}</span>
-                <span className="block truncate text-xs text-slate-500">{student.email}</span>
+                <span className="block break-words text-sm font-medium text-slate-900">{getStudentLabel(student)}</span>
+                <span className="block break-all text-xs text-slate-500">{student.email}</span>
               </span>
             </label>
           ))}

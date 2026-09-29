@@ -1,12 +1,10 @@
 import { useMemo, useState } from 'react';
 
 import { getStoredUser } from '../../../shared/api';
-import { Button, EmptyState, ErrorState, LoadingState, Modal } from '../../../shared/components';
+import { Button, EmptyState, ErrorState, LoadingState } from '../../../shared/components';
 import { LAB_MANAGER, STUDENT } from '../../../shared/constants/roles';
 import { useI18n, type Locale } from '../../../shared/i18n';
 import { useAdminLabs, useAdminUsers, useBanUser, useUnbanUser, useUpdateUserRoles, useAssignableLabs } from '../hooks';
-import type { LabResponse } from '../../lab/api';
-import type { AssignableLab } from '../api';
 
 const roleOptions = ['', STUDENT, LAB_MANAGER];
 const statusOptions = ['', 'ACTIVE', 'BANNED', 'DISABLED'];
@@ -191,20 +189,22 @@ export function AdminUsersPage() {
   const confirmContent = getLocalizedConfirmModalContent(confirmAction, managedLabByUserId, t);
 
   return (
-    <section className="rounded-lg border border-slate-800 bg-slate-900 p-6 shadow-sm">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+    <section className="min-w-0 rounded-lg border border-slate-800 bg-slate-900 p-4 shadow-sm sm:p-6">
+      <div className="flex flex-col gap-4 2xl:flex-row 2xl:items-center 2xl:justify-between">
         <div>
           <h2 className="text-xl font-semibold text-white">{t('adminUsers.title')}</h2>
         </div>
-        <div className="grid gap-3 sm:grid-cols-4">
+        <div className="grid min-w-0 gap-3 sm:grid-cols-2 2xl:w-full 2xl:max-w-4xl 2xl:grid-cols-4">
           <input
-            className="rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none placeholder:text-slate-500 focus:border-white"
+            aria-label={t('adminUsers.searchPlaceholder')}
+            className="min-h-11 min-w-0 rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-base text-white outline-none placeholder:text-slate-500 focus:border-white sm:text-sm"
             placeholder={t('adminUsers.searchPlaceholder')}
             value={search}
             onChange={(event) => setSearch(event.target.value)}
           />
           <select
-            className="rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none focus:border-white"
+            aria-label={t('adminUsers.tableRole')}
+            className="min-h-11 min-w-0 rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-base text-white outline-none focus:border-white sm:text-sm"
             value={roleFilter}
             onChange={(event) => setRoleFilter(event.target.value)}
           >
@@ -215,7 +215,8 @@ export function AdminUsersPage() {
             ))}
           </select>
           <select
-            className="rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none focus:border-white"
+            aria-label={t('adminUsers.tableStatus')}
+            className="min-h-11 min-w-0 rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-base text-white outline-none focus:border-white sm:text-sm"
             value={statusFilter}
             onChange={(event) => setStatusFilter(event.target.value)}
           >
@@ -226,7 +227,8 @@ export function AdminUsersPage() {
             ))}
           </select>
           <select
-            className="rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none focus:border-white"
+            aria-label={t('adminUsers.tableLab')}
+            className="min-h-11 min-w-0 rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-base text-white outline-none focus:border-white sm:text-sm"
             value={unassignedFilter}
             onChange={(event) => setUnassignedFilter(event.target.value)}
           >
@@ -239,7 +241,65 @@ export function AdminUsersPage() {
       {filteredUsers.length === 0 ? (
         <EmptyState className="mt-6 border-slate-700 bg-slate-800 text-slate-300" />
       ) : (
-        <div className="mt-6 max-w-full overscroll-x-contain overflow-x-auto">
+        <>
+        <div className="mt-6 space-y-3 md:hidden">
+          {filteredUsers.map((user) => {
+            const disabled = isMutating;
+            const isSelf = currentUser?.id === user.id;
+            const userDisplayName = user.fullName || user.username || t('common.notUpdated');
+            const managedLab = user.managedLabName ?? managedLabByUserId.get(user.id);
+
+            return (
+              <article className="min-w-0 rounded-lg border border-slate-700 bg-slate-950/30 p-4" key={user.id}>
+                <h3 className="break-words font-semibold text-slate-100">{userDisplayName}</h3>
+                <p className="mt-1 break-all text-sm text-slate-300">{user.email}</p>
+                <dl className="mt-4 grid gap-x-3 gap-y-3 text-sm sm:grid-cols-2">
+                  <div className="min-w-0">
+                    <dt className="text-slate-400">{t('adminUsers.tableRole')}</dt>
+                    <dd className="mt-1">
+                      <select
+                        aria-label={`${t('adminUsers.changeRole')}: ${userDisplayName}`}
+                        className="min-h-11 w-full min-w-0 rounded-md border border-slate-700 bg-slate-950 px-2 text-base text-white outline-none focus:border-white"
+                        disabled={disabled}
+                        value={roleDrafts[user.id] ?? user.roles[0] ?? STUDENT}
+                        onChange={(event) => setRoleDrafts((drafts) => ({ ...drafts, [user.id]: event.target.value }))}
+                      >
+                        {[STUDENT, LAB_MANAGER].map((role) => <option key={role} value={role}>{formatRole(role, t)}</option>)}
+                      </select>
+                    </dd>
+                  </div>
+                  <div className="min-w-0">
+                    <dt className="text-slate-400">{t('adminUsers.tableStatus')}</dt>
+                    <dd className="mt-1 break-words font-semibold text-slate-100">{formatStatus(user.status, t)}</dd>
+                  </div>
+                  <div className="min-w-0 sm:col-span-2">
+                    <dt className="text-slate-400">{t('adminUsers.tableLab')}</dt>
+                    <dd className="mt-1 break-words text-slate-100">{user.roles.includes(LAB_MANAGER) ? managedLab || t('adminUsers.unassigned') : '—'}</dd>
+                  </div>
+                  <div className="min-w-0 sm:col-span-2">
+                    <dt className="text-slate-400">{t('adminUsers.tableCreated')}</dt>
+                    <dd className="mt-1 text-slate-100">{formatDate(user.createdAt, locale, t)}</dd>
+                  </div>
+                </dl>
+                <div className="mt-4 grid gap-2 sm:grid-cols-2">
+                  <Button className="w-full" size="sm" variant="outline" disabled={disabled} onClick={() => handleChangeRole(user.id, userDisplayName, user.roles)}>
+                    {t('adminUsers.changeRole')}
+                  </Button>
+                  {isBanned(user.status) ? (
+                    <Button className="w-full" size="sm" variant="success" disabled={disabled} onClick={() => handleUnbanUser(user.id, userDisplayName)}>
+                      {t('adminUsers.unlock')}
+                    </Button>
+                  ) : (
+                    <Button className="w-full" size="sm" variant="danger" disabled={disabled || isSelf} title={isSelf ? t('adminUsers.selfLockDenied') : undefined} onClick={() => handleBanUser(user.id, userDisplayName, user.roles)}>
+                      {t('adminUsers.lock')}
+                    </Button>
+                  )}
+                </div>
+              </article>
+            );
+          })}
+        </div>
+        <div aria-label={t('adminUsers.title')} className="mt-6 hidden max-w-full overscroll-x-contain overflow-x-auto md:block" role="region" tabIndex={0}>
           <table className="w-full min-w-[800px] divide-y divide-slate-800 text-sm">
             <thead>
               <tr className="text-left text-xs font-semibold uppercase text-slate-400">
@@ -266,7 +326,8 @@ export function AdminUsersPage() {
                     <td className="px-3 py-4 text-slate-300">{user.email}</td>
                     <td className="px-3 py-4">
                       <select
-                        className="rounded-md border border-slate-700 bg-slate-950 px-2 py-1 text-xs text-white outline-none focus:border-white"
+                        aria-label={`${t('adminUsers.changeRole')}: ${userDisplayName}`}
+                        className="min-h-11 rounded-md border border-slate-700 bg-slate-950 px-2 py-1 text-sm text-white outline-none focus:border-white"
                         value={roleDrafts[user.id] ?? user.roles[0] ?? STUDENT}
                         disabled={disabled}
                         onChange={(event) =>
@@ -337,6 +398,7 @@ export function AdminUsersPage() {
             </tbody>
           </table>
         </div>
+        </>
       )}
 
       {confirmAction ? (
@@ -353,7 +415,6 @@ export function AdminUsersPage() {
 
       {assignState ? (
         <RoleAssignmentModal
-          userId={assignState.userId}
           userName={assignState.userName}
           userEmail={assignState.userEmail}
           isLoading={isMutating}
@@ -426,10 +487,10 @@ function ConfirmModal({ danger, isLoading, message, title, confirmText, onClose,
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-slate-950/70 p-2 sm:p-4">
-      <div className="w-full max-w-md rounded-lg border border-slate-800 bg-slate-900 p-6 shadow-xl">
+      <div className="max-h-[calc(100dvh-1rem)] w-full max-w-md overflow-y-auto rounded-lg border border-slate-800 bg-slate-900 p-4 shadow-xl sm:p-6">
         <h3 className="text-lg font-semibold text-white">{title}</h3>
         <p className="mt-3 text-sm text-slate-300 whitespace-pre-line">{message}</p>
-        <div className="mt-6 flex justify-end gap-3">
+        <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
           <Button
             size="sm"
             variant="outline"
@@ -455,7 +516,6 @@ function ConfirmModal({ danger, isLoading, message, title, confirmText, onClose,
 }
 
 interface RoleAssignmentModalProps {
-  userId: number;
   userName: string;
   userEmail: string;
   isLoading: boolean;
@@ -464,7 +524,6 @@ interface RoleAssignmentModalProps {
 }
 
 function RoleAssignmentModal({
-  userId,
   userName,
   userEmail,
   isLoading,
@@ -484,10 +543,10 @@ function RoleAssignmentModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-slate-950/70 p-2 sm:p-4">
-      <div className="w-full max-w-lg rounded-lg border border-slate-800 bg-slate-900 p-6 shadow-xl">
+      <div className="max-h-[calc(100dvh-1rem)] w-full max-w-lg overflow-y-auto rounded-lg border border-slate-800 bg-slate-900 p-4 shadow-xl sm:p-6">
         <h3 className="text-lg font-semibold text-white">{t('adminUsers.assignManager')}</h3>
         
-        <div className="mt-4 space-y-2 text-sm text-slate-300">
+        <div className="mt-4 min-w-0 space-y-2 break-words text-sm text-slate-300">
           <div>
             <span className="text-slate-400">{t('adminUsers.user')}</span>{' '}
             <strong className="text-slate-100">{userName}</strong> ({userEmail})
@@ -516,7 +575,7 @@ function RoleAssignmentModal({
           ) : (
             <select
               id="assignLabSelect"
-              className="mt-2 w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none focus:border-white"
+              className="mt-2 min-h-11 w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-base text-white outline-none focus:border-white sm:text-sm"
               value={selectedLabId}
               disabled={isLoading}
               onChange={(e) => setSelectedLabId(e.target.value)}
@@ -531,7 +590,7 @@ function RoleAssignmentModal({
           )}
         </div>
 
-        <div className="mt-6 flex justify-end gap-3">
+        <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
           <Button
             size="sm"
             variant="outline"

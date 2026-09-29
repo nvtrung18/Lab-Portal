@@ -26,8 +26,8 @@ export const AttendanceChart = memo(function AttendanceChart({ byStudent }: Atte
   }
 
   return (
-    <div className="mt-4 overflow-x-auto">
-      <table className="min-w-full divide-y divide-slate-200 text-sm dark:divide-slate-800">
+    <div className="mt-4 max-w-full overflow-x-auto overscroll-x-contain">
+      <table className="w-full min-w-[32rem] divide-y divide-slate-200 text-sm dark:divide-slate-800">
         <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:bg-slate-950 dark:text-slate-400">
           <tr>
             <th className="px-3 py-3">{t('research.attendance.student')}</th>
@@ -38,7 +38,7 @@ export const AttendanceChart = memo(function AttendanceChart({ byStudent }: Atte
         <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
           {visibleStudents.map((student) => (
             <tr key={student.studentId || student.studentName}>
-              <td className="px-3 py-3 font-medium text-slate-800 dark:text-slate-100">{student.studentName || t('common.notUpdated')}</td>
+              <td className="break-words px-3 py-3 font-medium text-slate-800 dark:text-slate-100">{student.studentName || t('common.notUpdated')}</td>
               <td className="px-3 py-3 text-slate-600 dark:text-slate-300">
                 <div className="flex min-w-40 items-center gap-3">
                   <div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">

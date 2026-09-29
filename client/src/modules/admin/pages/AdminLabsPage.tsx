@@ -7,7 +7,6 @@ import { getCurrentCoordinates } from '../../../shared/utils';
 import type { LabResponse } from '../../lab/api';
 import { LabCheckinPolicyCard } from '../../lab/components';
 import { isLabActive, isLabInactive } from '../../lab/utils/labStatus';
-import type { AdminUser } from '../api';
 import {
   useAdminLabs,
   useAdminUsers,
@@ -104,6 +103,7 @@ function AssignManagerModal({ lab, onClose }: AssignManagerModalProps) {
             <p className="mt-1 text-sm text-slate-400">{lab.labName}</p>
           </div>
           <Button
+            className="app-modal-close"
             size="sm"
             variant="outline"
             disabled={assignMutation.isPending}
@@ -124,7 +124,7 @@ function AssignManagerModal({ lab, onClose }: AssignManagerModalProps) {
           ) : (
             <select
               id="managerId"
-              className="mt-2 w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none focus:border-white"
+              className="mt-2 min-h-11 w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-base text-white outline-none focus:border-white sm:text-sm"
               value={managerId}
               disabled={assignMutation.isPending}
               onChange={(event) => setManagerId(event.target.value)}
@@ -278,6 +278,7 @@ function AddLabModal({ open, onClose }: AddLabModalProps) {
             <h3 className="text-lg font-semibold text-white">{t('adminLabs.addTitle')}</h3>
           </div>
           <Button
+            className="app-modal-close"
             size="sm"
             variant="outline"
             disabled={createMutation.isPending}
@@ -291,7 +292,7 @@ function AddLabModal({ open, onClose }: AddLabModalProps) {
           <label className="space-y-2">
             <span className="text-sm font-medium text-slate-300">{t('adminLabs.labName')}</span>
             <input
-              className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none focus:border-white"
+              className="min-h-11 w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-base text-white outline-none focus:border-white sm:text-sm"
               value={form.labName}
               onChange={(event) => updateField('labName', event.target.value)}
             />
@@ -299,7 +300,7 @@ function AddLabModal({ open, onClose }: AddLabModalProps) {
           <label className="space-y-2">
             <span className="text-sm font-medium text-slate-300">{t('adminLabs.department')}</span>
             <input
-              className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none focus:border-white"
+              className="min-h-11 w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-base text-white outline-none focus:border-white sm:text-sm"
               value={form.department}
               onChange={(event) => updateField('department', event.target.value)}
             />
@@ -307,7 +308,7 @@ function AddLabModal({ open, onClose }: AddLabModalProps) {
           <label className="space-y-2">
             <span className="text-sm font-medium text-slate-300">{t('adminLabs.capacity')}</span>
             <input
-              className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none focus:border-white"
+              className="min-h-11 w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-base text-white outline-none focus:border-white sm:text-sm"
               min={1}
               type="number"
               value={form.capacity}
@@ -317,7 +318,7 @@ function AddLabModal({ open, onClose }: AddLabModalProps) {
           <label className="space-y-2">
             <span className="text-sm font-medium text-slate-300">{t('adminLabs.location')}</span>
             <input
-              className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none focus:border-white"
+              className="min-h-11 w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-base text-white outline-none focus:border-white sm:text-sm"
               value={form.location}
               onChange={(event) => updateField('location', event.target.value)}
             />
@@ -330,7 +331,7 @@ function AddLabModal({ open, onClose }: AddLabModalProps) {
               <label className="space-y-1">
                 <span className="text-xs font-medium text-slate-400">{t('adminLabs.latitude')}</span>
                 <input
-                  className="w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-white outline-none focus:border-white"
+                  className="min-h-11 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-base text-white outline-none focus:border-white sm:text-sm"
                   inputMode="decimal"
                   readOnly
                   value={form.checkinLatitude}
@@ -339,7 +340,7 @@ function AddLabModal({ open, onClose }: AddLabModalProps) {
               <label className="space-y-1">
                 <span className="text-xs font-medium text-slate-400">{t('adminLabs.longitude')}</span>
                 <input
-                  className="w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-white outline-none focus:border-white"
+                  className="min-h-11 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-base text-white outline-none focus:border-white sm:text-sm"
                   inputMode="decimal"
                   readOnly
                   value={form.checkinLongitude}
@@ -361,7 +362,7 @@ function AddLabModal({ open, onClose }: AddLabModalProps) {
           <label className="space-y-2 sm:col-span-2">
             <span className="text-sm font-medium text-slate-300">{t('adminLabs.description')}</span>
             <textarea
-              className="min-h-24 w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none focus:border-white"
+              className="min-h-24 w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-base text-white outline-none focus:border-white sm:text-sm"
               value={form.description}
               onChange={(event) => updateField('description', event.target.value)}
             />
@@ -374,7 +375,7 @@ function AddLabModal({ open, onClose }: AddLabModalProps) {
               </div>
             ) : (
               <select
-                className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none focus:border-white"
+                className="min-h-11 w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-base text-white outline-none focus:border-white sm:text-sm"
                 value={form.managerId}
                 onChange={(event) => updateField('managerId', event.target.value)}
               >
@@ -446,6 +447,7 @@ function LabDetailModal({ lab, onClose }: LabDetailModalProps) {
             <p className="mt-1 text-sm text-slate-400">{lab.labName}</p>
           </div>
           <Button
+            className="app-modal-close"
             size="sm"
             variant="outline"
             onClick={onClose}
@@ -501,7 +503,7 @@ function LabCheckinPolicyModal({ lab, onClose }: LabCheckinPolicyModalProps) {
           <div>
             <h3 className="text-lg font-semibold text-white">{t('adminLabs.checkinPolicyTitle')}</h3>
           </div>
-          <Button size="sm" variant="outline" onClick={onClose}>{t('common.close')}</Button>
+          <Button className="app-modal-close" size="sm" variant="outline" onClick={onClose}>{t('common.close')}</Button>
         </div>
         <LabCheckinPolicyCard labId={lab.id} />
       </div>
@@ -527,16 +529,16 @@ function ConfirmStatusModal({ lab, action, isLoading, onClose, onConfirm }: Conf
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-slate-950/70 p-2 sm:p-4">
-      <div className="w-full max-w-md rounded-lg border border-slate-800 bg-slate-900 p-6 shadow-xl">
+      <div className="max-h-[calc(100dvh-1rem)] w-full max-w-md overflow-y-auto rounded-lg border border-slate-800 bg-slate-900 p-4 shadow-xl sm:p-6">
         <h3 className="text-lg font-semibold text-white">
           {isDeactivate ? t('adminLabs.confirmDeactivateTitle') : t('adminLabs.confirmRestoreTitle')}
         </h3>
-        <p className="mt-3 text-sm text-slate-300">
+        <p className="mt-3 break-words text-sm text-slate-300">
           {isDeactivate
             ? t('adminLabs.confirmDeactivateMessage', undefined, { lab: lab.labName })
             : t('adminLabs.confirmRestoreMessage', undefined, { lab: lab.labName })}
         </p>
-        <div className="mt-6 flex justify-end gap-3">
+        <div className="mt-6 flex flex-col-reverse justify-end gap-3 sm:flex-row">
           <Button
             size="sm"
             variant="outline"
@@ -663,20 +665,22 @@ export function AdminLabsPage() {
       ) : null}
 
       {/* Main content */}
-      <div className="rounded-lg border border-slate-800 bg-slate-900 p-6 shadow-sm">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="min-w-0 rounded-lg border border-slate-800 bg-slate-900 p-4 shadow-sm sm:p-6">
+        <div className="flex flex-col gap-4 2xl:flex-row 2xl:items-center 2xl:justify-between">
           <div>
             <h2 className="text-xl font-semibold text-white">{t('adminLabs.title')}</h2>
           </div>
-          <div className="flex gap-3">
+          <div className="grid min-w-0 gap-3 sm:grid-cols-2 2xl:w-full 2xl:max-w-4xl 2xl:grid-cols-4">
             <input
-              className="rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none placeholder:text-slate-500 focus:border-white"
+              aria-label={t('adminLabs.searchPlaceholder')}
+              className="min-h-11 min-w-0 rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-base text-white outline-none placeholder:text-slate-500 focus:border-white sm:text-sm"
               placeholder={t('adminLabs.searchPlaceholder')}
               value={search}
               onChange={(event) => setSearch(event.target.value)}
             />
             <select
-              className="rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none focus:border-white"
+              aria-label={t('adminLabs.tableStatus')}
+              className="min-h-11 min-w-0 rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-base text-white outline-none focus:border-white sm:text-sm"
               value={statusFilter}
               onChange={(event) => setStatusFilter(event.target.value)}
             >
@@ -691,7 +695,8 @@ export function AdminLabsPage() {
               ))}
             </select>
             <select
-              className="rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none focus:border-white"
+              aria-label={t('adminLabs.tableManager')}
+              className="min-h-11 min-w-0 rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-base text-white outline-none focus:border-white sm:text-sm"
               value={managerFilter}
               onChange={(event) => setManagerFilter(event.target.value)}
             >
@@ -699,6 +704,7 @@ export function AdminLabsPage() {
               <option value="NO_MANAGER" className="bg-slate-900 text-slate-100">{t('adminLabs.noManager')}</option>
             </select>
             <Button
+              className="w-full"
               size="sm"
               variant="primary"
               onClick={() => setIsAddModalOpen(true)}
@@ -711,7 +717,33 @@ export function AdminLabsPage() {
         {filteredLabs.length === 0 ? (
           <EmptyState className="mt-6 border-slate-700 bg-slate-800 text-slate-300" />
         ) : (
-          <div className="mt-6 max-w-full overscroll-x-contain overflow-x-auto">
+          <>
+          <div className="mt-6 space-y-3 md:hidden">
+            {filteredLabs.map((lab) => (
+              <article className="min-w-0 rounded-lg border border-slate-700 bg-slate-950/30 p-4" key={lab.id}>
+                <div className="flex min-w-0 flex-wrap items-start justify-between gap-2">
+                  <h3 className="min-w-0 break-words font-semibold text-slate-100">{lab.labName}</h3>
+                  <span className={`rounded-full px-2 py-1 text-xs font-semibold ring-1 ${statusClassName(lab.status)}`}>
+                    {formatLabStatus(lab.status, t)}
+                  </span>
+                </div>
+                <dl className="mt-4 grid grid-cols-2 gap-x-3 gap-y-3 text-sm">
+                  <div className="col-span-2 min-w-0"><dt className="text-slate-400">{t('adminLabs.tableDepartment')}</dt><dd className="mt-1 break-words text-slate-100">{lab.department || t('adminLabs.noUpdated')}</dd></div>
+                  <div className="col-span-2 min-w-0"><dt className="text-slate-400">{t('adminLabs.tableManager')}</dt><dd className="mt-1 break-words text-slate-100">{lab.manager ? lab.manager.fullName || lab.manager.email : t('adminLabs.noManager')}</dd></div>
+                  <div className="min-w-0"><dt className="text-slate-400">{t('adminLabs.tableCapacity')}</dt><dd className="mt-1 text-slate-100">{lab.capacity ?? t('adminLabs.noUpdated')}</dd></div>
+                  <div className="min-w-0"><dt className="text-slate-400">{t('adminLabs.tableLocation')}</dt><dd className="mt-1 break-words text-slate-100">{lab.location || t('adminLabs.noUpdated')}</dd></div>
+                </dl>
+                <div className="mt-4 grid gap-2 sm:grid-cols-2">
+                  <Button className="w-full" size="sm" variant="outline" onClick={() => setDetailLab(lab)}>{t('adminLabs.details')}</Button>
+                  <Button className="w-full" size="sm" variant="outline" onClick={() => setPolicyLab(lab)}>{t('adminLabs.selfCheckin')}</Button>
+                  {!lab.manager ? <Button className="w-full" size="sm" variant="primary" onClick={() => setSelectedLab(lab)}>{t('adminLabs.assign')}</Button> : null}
+                  {isLabInactive(lab) ? <Button className="w-full" size="sm" variant="success" disabled={updateStatusMutation.isPending} onClick={() => handleRestore(lab)}>{t('adminLabs.restore')}</Button> : null}
+                  {isLabActive(lab) || lab.status === 'MAINTENANCE' ? <Button className="w-full" size="sm" variant="danger" disabled={updateStatusMutation.isPending} onClick={() => handleDeactivate(lab)}>{t('adminLabs.deactivate')}</Button> : null}
+                </div>
+              </article>
+            ))}
+          </div>
+          <div aria-label={t('adminLabs.title')} className="mt-6 hidden max-w-full overscroll-x-contain overflow-x-auto md:block" role="region" tabIndex={0}>
             <table className="w-full min-w-[760px] divide-y divide-slate-800 text-sm">
               <thead>
                 <tr className="text-left text-xs font-semibold uppercase text-slate-400">
@@ -802,6 +834,7 @@ export function AdminLabsPage() {
               </tbody>
             </table>
           </div>
+          </>
         )}
       </div>
 

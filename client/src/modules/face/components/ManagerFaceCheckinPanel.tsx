@@ -262,7 +262,7 @@ export function ManagerFaceCheckinPanel({ onCompleted }: { onCompleted: (result:
       <div className="max-w-3xl">
         <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200" htmlFor="face-slot">
           {t('face.slot')}
-          <select id="face-slot" className="mt-2 min-h-11 w-full rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:text-white" disabled={cameraActive} value={slotId} onChange={(event) => setSlotId(event.target.value)}>
+          <select id="face-slot" className="mt-2 min-h-11 w-full rounded-md border border-slate-300 bg-white px-3 text-base text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:text-white" disabled={cameraActive} value={slotId} onChange={(event) => setSlotId(event.target.value)}>
             <option value="">{t('face.chooseSlotOption')}</option>
             {slots.map((slot) => <option key={slot.id} value={slot.id}>{slot.labName} — {new Date(slot.startTime).toLocaleString(locale === 'en' ? 'en-US' : 'vi-VN')}–{new Date(slot.endTime).toLocaleTimeString(locale === 'en' ? 'en-US' : 'vi-VN')}</option>)}
           </select>

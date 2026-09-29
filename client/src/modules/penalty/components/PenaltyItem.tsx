@@ -34,7 +34,7 @@ export function PenaltyItem({ penalty, isSubmitting, onSubmitComplaint }: Penalt
   return (
     <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div>
+        <div className="min-w-0">
           <h3 className="text-base font-semibold text-slate-950">
             {penalty.labName ?? t('lab.label')}
           </h3>
@@ -43,14 +43,14 @@ export function PenaltyItem({ penalty, isSubmitting, onSubmitComplaint }: Penalt
           </p>
         </div>
         <Badge className={getPenaltyStatusClass(penalty.status)}>
-          {formatPenaltyStatus(penalty.status)}
+          {formatPenaltyStatus(penalty.status, locale)}
         </Badge>
       </div>
 
       <dl className="mt-5 grid gap-3 text-sm sm:grid-cols-2">
         <div>
           <dt className="font-semibold text-slate-700">{t('penalty.typeLabel')}</dt>
-          <dd className="mt-1 text-slate-600">{formatPenaltyType(penalty.type)}</dd>
+          <dd className="mt-1 text-slate-600">{formatPenaltyType(penalty.type, locale)}</dd>
         </div>
         <div>
           <dt className="font-semibold text-slate-700">{t('penalty.points')}</dt>
@@ -72,11 +72,11 @@ export function PenaltyItem({ penalty, isSubmitting, onSubmitComplaint }: Penalt
           </div>
           {complaint ? (
             <Badge className={getComplaintStatusClass(complaint.status)}>
-              {formatComplaintStatus(complaint.status)}
+              {formatComplaintStatus(complaint.status, locale)}
             </Badge>
           ) : (
             <button
-              className="w-fit rounded-md bg-slate-900 px-3 py-2 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-60"
+              className="min-h-11 w-full rounded-md bg-slate-900 px-3 py-2 text-sm font-semibold text-white transition hover:bg-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
               disabled={penalty.status !== 'ACTIVE'}
               type="button"
               onClick={() => setIsFormOpen(true)}

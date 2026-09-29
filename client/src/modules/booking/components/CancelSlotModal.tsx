@@ -57,7 +57,7 @@ export function CancelSlotModal({ labId, slotId, isOpen, onClose }: CancelSlotMo
             </label>
             <textarea
               id="cancel-reason"
-              className="mt-1 min-h-28 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
+              className="mt-1 min-h-28 w-full rounded-md border border-slate-300 px-3 py-2 text-base outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
               value={reason}
               onChange={(event) => setReason(event.target.value)}
             />

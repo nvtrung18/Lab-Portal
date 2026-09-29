@@ -49,14 +49,14 @@ export function ResearchPage() {
   }
 
   return (
-    <section className="space-y-6">
-      <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+    <section className="min-w-0 space-y-6">
+      <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div>
+          <div className="min-w-0">
             <h2 className="text-xl font-semibold text-slate-950">{t('research.title')}</h2>
           </div>
-          <div className="rounded-md bg-slate-100 px-3 py-2 text-sm font-medium text-slate-700">
-            {managedLabName ?? `PTN #${managedLabId}`}
+          <div className="max-w-full break-words rounded-md bg-slate-100 px-3 py-2 text-sm font-medium text-slate-700">
+            {managedLabName ?? t('research.labNumber', undefined, { id: managedLabId })}
           </div>
         </div>
       </div>
@@ -89,12 +89,12 @@ function StudentResearchView({ currentUserId, activeMemberships }: StudentResear
   }
 
   return (
-    <section className="space-y-6">
-      <header className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+    <section className="min-w-0 space-y-6">
+      <header className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
         <h2 className="text-xl font-semibold text-slate-950">{t('research.title')}</h2>
       </header>
 
-      <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+      <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
         <label className="block max-w-sm text-sm font-semibold text-slate-700">
           {t('research.selectedLab')}
           <select
@@ -114,9 +114,9 @@ function StudentResearchView({ currentUserId, activeMemberships }: StudentResear
         </label>
       </section>
 
-      <div className="flex gap-1" role="tablist" aria-label={t('research.title')}>
+      <div className="flex max-w-full gap-1 overflow-x-auto overscroll-x-contain" role="tablist" aria-label={t('research.title')}>
         <button
-          className={`border-b-2 px-4 py-3 text-sm font-semibold ${
+          className={`shrink-0 whitespace-nowrap border-b-2 px-4 py-3 text-sm font-semibold ${
             tab === 'projects' ? 'border-slate-900 text-slate-950' : 'border-transparent text-slate-600'
           }`}
           type="button"
@@ -127,7 +127,7 @@ function StudentResearchView({ currentUserId, activeMemberships }: StudentResear
           {t('research.tab.projects')}
         </button>
         <button
-          className={`border-b-2 px-4 py-3 text-sm font-semibold ${
+          className={`shrink-0 whitespace-nowrap border-b-2 px-4 py-3 text-sm font-semibold ${
             tab === 'groups' ? 'border-slate-900 text-slate-950' : 'border-transparent text-slate-600'
           }`}
           type="button"

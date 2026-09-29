@@ -91,7 +91,7 @@ export function CheckinButton({ booking, qrHistory }: CheckinButtonProps) {
       <div className="space-y-3">
         {studentFaceCheckinPanel}
         <button
-          className="w-full rounded-md bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-800"
+          className="min-h-11 w-full rounded-md bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500"
           type="button"
           onClick={() => setIsQrOpen(true)}
         >
@@ -132,7 +132,7 @@ export function CheckinButton({ booking, qrHistory }: CheckinButtonProps) {
             {t('checkin.qrReason')}
             <select
               id={`fallback-reason-${booking.id}`}
-              className="mt-1.5 min-h-11 w-full rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-slate-700 dark:bg-slate-950 dark:text-white"
+              className="mt-1.5 min-h-11 w-full rounded-md border border-slate-300 bg-white px-3 text-base text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-slate-700 dark:bg-slate-950 dark:text-white"
               value={fallbackReason}
               onChange={(event) => setFallbackReason(event.target.value as FaceFallbackReason | '')}
             >
@@ -146,7 +146,7 @@ export function CheckinButton({ booking, qrHistory }: CheckinButtonProps) {
           {fallbackReason === 'OTHER' ? (
             <textarea
               aria-label={t('checkin.reasonOther')}
-              className="mt-2 min-h-20 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-slate-700 dark:bg-slate-950 dark:text-white"
+              className="mt-2 min-h-20 w-full rounded-md border border-slate-300 px-3 py-2 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-slate-700 dark:bg-slate-950 dark:text-white"
               maxLength={1000}
               placeholder={t('checkin.reasonPlaceholder')}
               value={customReason}

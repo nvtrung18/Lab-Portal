@@ -91,19 +91,19 @@ export function SlotCard({
 
   return (
     <article className="min-w-0 rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
-      <div className="flex items-start justify-between gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <p className="text-sm font-medium text-slate-500">{formatDate(slot.startTime, locale)}</p>
-          <h3 className="mt-1 whitespace-nowrap text-base font-semibold text-slate-950 sm:text-lg">
+          <h3 className="mt-1 text-base font-semibold text-slate-950 sm:text-lg">
             {formatTime(slot.startTime, locale)} - {formatTime(slot.endTime, locale)}
           </h3>
           {showLabName && slot.labName ? (
-            <p className="mt-1 truncate text-sm text-slate-600">{slot.labName}</p>
+            <p className="mt-1 break-words text-sm text-slate-600">{slot.labName}</p>
           ) : null}
         </div>
         <span
           className={[
-            'inline-flex shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ring-1',
+            'inline-flex w-fit shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ring-1',
             badgeClass,
           ].join(' ')}
         >
@@ -145,12 +145,12 @@ export function SlotCard({
           {userBooking ? (
             <div className="flex flex-col gap-3">
               <span className="text-sm font-semibold text-slate-800">
-                {getBookingStatusLabel(userBooking.status)}
+                {getBookingStatusLabel(userBooking.status, locale)}
               </span>
               {canCancelBooking ? (
                 <button
                   type="button"
-                  className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="min-h-11 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 disabled:cursor-not-allowed disabled:opacity-60"
                   disabled={isMutating}
                   onClick={() => onCancelBooking?.(userBooking)}
                 >
@@ -161,7 +161,7 @@ export function SlotCard({
           ) : (
             <button
               type="button"
-              className="w-full rounded-md bg-slate-900 px-3 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400"
+              className="min-h-11 w-full rounded-md bg-slate-900 px-3 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 disabled:cursor-not-allowed disabled:bg-slate-400"
               disabled={!canRegister || isMutating}
               onClick={() => onRegister?.(slot)}
             >
@@ -175,7 +175,7 @@ export function SlotCard({
         <div className="mt-5 flex flex-col gap-2 border-t border-slate-200 pt-4 sm:flex-row">
           <button
             type="button"
-            className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+            className="min-h-11 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500"
             onClick={() => onViewDetail?.(slot)}
           >
             {t('common.viewDetails')}
@@ -183,7 +183,7 @@ export function SlotCard({
           {canCancelSlot ? (
             <button
               type="button"
-              className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-100"
+              className="min-h-11 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
               onClick={() => onCancelSlot?.(slot)}
             >
               {t('slot.cancel')}

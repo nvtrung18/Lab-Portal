@@ -87,19 +87,8 @@ export function TaskBoard({ milestoneId, readonly = true, role, currentUserId, p
     setDropColumn(column);
   }
 
-  function handleDrop(event: DragEvent<HTMLElement>, column: TaskColumn) {
-    event.preventDefault();
-    if (!canInteract || updateStatus.isPending) {
-      return;
-    }
-
-    const taskId = draggedTask?.taskId ?? Number(event.dataTransfer.getData('text/plain'));
-    const task = tasks.find((item) => item.id === taskId);
-    const sourceStatus = draggedTask?.sourceStatus ?? task?.status;
-    setDraggedTask(null);
-    setDropColumn(null);
-
-    if (!task || !sourceStatus || sourceStatus === column) {
+  function moveTask(task: ResearchTask, sourceStatus: ResearchTaskStatus, column: TaskColumn) {
+    if (!canInteract || updateStatus.isPending || sourceStatus === column) {
       return;
     }
     if (!canMoveTask({
@@ -118,6 +107,19 @@ export function TaskBoard({ milestoneId, readonly = true, role, currentUserId, p
     }
 
     updateStatus.mutate({ taskId: task.id, status: column });
+  }
+
+  function handleDrop(event: DragEvent<HTMLElement>, column: TaskColumn) {
+    event.preventDefault();
+    const taskId = draggedTask?.taskId ?? Number(event.dataTransfer.getData('text/plain'));
+    const task = tasks.find((item) => item.id === taskId);
+    const sourceStatus = draggedTask?.sourceStatus ?? task?.status;
+    setDraggedTask(null);
+    setDropColumn(null);
+
+    if (task && sourceStatus) {
+      moveTask(task, sourceStatus, column);
+    }
   }
 
   const handleDragEnd = useCallback(() => {
@@ -139,7 +141,7 @@ export function TaskBoard({ milestoneId, readonly = true, role, currentUserId, p
           </span>
         ) : (
           <span className="shrink-0 rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
-            {t('research.task.dragToUpdate')}
+            {t('research.task.changeStatusHint')}
           </span>
         )}
       </div>
@@ -204,6 +206,17 @@ export function TaskBoard({ milestoneId, readonly = true, role, currentUserId, p
                           ? getTaskDragDisabledReason(task, role, currentUserId, locale)
                           : undefined}
                         isUpdating={updateStatus.isPending && updateStatus.variables?.taskId === task.id}
+                        isStatusChangeDisabled={updateStatus.isPending}
+                        statusTargets={canInteract
+                          ? TASK_COLUMNS.filter((target) => canMoveTask({
+                              role,
+                              currentUserId,
+                              task,
+                              fromStatus: task.status,
+                              toStatus: target,
+                            }))
+                          : []}
+                        onStatusChange={(target) => moveTask(task, task.status, target)}
                         reportActionLabel={memberView && task.assignedToStudentId === currentUserId
                           ? (() => {
                               const latestStatus = latestReportByTaskId.get(task.id)?.status;

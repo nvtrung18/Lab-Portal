@@ -25,7 +25,7 @@ export function MyCleaningTasks() {
         <p>{t('cleaning.loadFailed')}</p>
         <button
           type="button"
-          className="mt-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-100"
+          className="mt-4 min-h-11 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
           onClick={() => refetch()}
         >
           {t('common.retry')}

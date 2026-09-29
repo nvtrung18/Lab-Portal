@@ -115,13 +115,14 @@ export function LabMembersPage() {
   }
 
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+    <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-xl font-semibold text-slate-950 dark:text-white">{t('lab.membersTitle')}</h1>
         </div>
         <input
-          className="rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
+          aria-label={t('lab.membersSearch')}
+          className="min-h-11 w-full rounded-md border border-slate-300 px-3 py-2 text-base text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10 sm:w-72"
           placeholder={t('lab.membersSearch')}
           value={search}
           onChange={(event) => setSearch(event.target.value)}
@@ -131,7 +132,50 @@ export function LabMembersPage() {
       {filteredMembers.length === 0 ? (
         <EmptyState className="mt-6">{t('lab.membersEmpty')}</EmptyState>
       ) : (
-        <ResponsiveTable className="mt-6">
+        <>
+        <div className="mt-6 space-y-3 md:hidden">
+          {filteredMembers.map((member) => {
+            const roleDraft = roleDrafts[member.userId] ?? (isLabMemberRole(member.role) ? member.role : '');
+            return (
+              <article className="min-w-0 rounded-lg border border-slate-200 p-4" key={member.id}>
+                <h2 className="break-words font-semibold text-slate-950">{member.fullName || t('common.notUpdated')}</h2>
+                <p className="mt-1 break-all text-sm text-slate-600">{member.email}</p>
+                <dl className="mt-4 space-y-3 text-sm">
+                  <div>
+                    <dt className="text-slate-500">{t('lab.changeMemberRole')}</dt>
+                    <dd className="mt-1">
+                      {member.canReceiveLabRole ? (
+                        <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
+                          <select
+                            aria-label={`${t('lab.changeMemberRole')}: ${member.fullName || member.email}`}
+                            className="min-h-11 w-full min-w-0 rounded-md border border-slate-300 bg-white px-2 text-base text-slate-950 focus:border-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900/10"
+                            disabled={updateRoleMutation.isPending}
+                            value={roleDraft}
+                            onChange={(event) => {
+                              const nextRole = event.target.value;
+                              if (isLabMemberRole(nextRole)) setRoleDrafts((drafts) => ({ ...drafts, [member.userId]: nextRole }));
+                            }}
+                          >
+                            {!isLabMemberRole(member.role) ? <option value="" disabled>{formatRole(member.role, locale)}</option> : null}
+                            {memberRoles.map((role) => <option key={role} value={role}>{formatRole(role, locale)}</option>)}
+                          </select>
+                          <Button className="w-full" disabled={updateRoleMutation.isPending || !roleDraft || roleDraft === member.role} loading={updateRoleMutation.isPending && updateRoleMutation.variables?.userId === member.userId} loadingText={t('common.saving')} size="sm" variant="outline" onClick={() => saveMemberRole(member.userId, member.role)}>{t('common.save')}</Button>
+                        </div>
+                      ) : <span className="text-slate-900">{formatRole(member.role, locale)}</span>}
+                    </dd>
+                  </div>
+                  <div><dt className="text-slate-500">{t('slot.statusLabel')}</dt><dd className="mt-1"><span className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ring-1 ${statusClassName(member.status)}`}>{formatStatus(member.status, locale)}</span></dd></div>
+                  <div><dt className="text-slate-500">{t('myLab.joinedAt')}</dt><dd className="mt-1 text-slate-900">{formatDate(member.joinedAt, locale)}</dd></div>
+                </dl>
+                <div className="mt-4 grid gap-2 sm:grid-cols-2">
+                  <Button className="w-full" size="sm" variant="outline" onClick={() => setSelectedMemberDetail(member)}>{t('common.viewDetails')}</Button>
+                  <Button className="w-full" disabled={updateRoleMutation.isPending} loading={removeMemberMutation.isPending} loadingText={t('lab.removingMember')} size="sm" variant="danger" onClick={() => handleRemoveMember(member)}>{t('lab.removeMember')}</Button>
+                </div>
+              </article>
+            );
+          })}
+        </div>
+        <ResponsiveTable className="mt-6 hidden md:block">
           <table className="w-full min-w-[840px] divide-y divide-slate-200 text-sm">
             <thead>
               <tr className="text-left text-xs font-semibold uppercase text-slate-500">
@@ -150,13 +194,13 @@ export function LabMembersPage() {
                   <td className="px-3 py-4 font-medium text-slate-950">
                     {member.fullName || t('common.notUpdated')}
                   </td>
-                  <td className="px-3 py-4 text-slate-700">{member.email}</td>
+                  <td className="break-all px-3 py-4 text-slate-700">{member.email}</td>
                   <td className="px-3 py-4 text-slate-700">
                     {member.canReceiveLabRole ? (
                       <div className="flex flex-wrap items-center gap-2">
                         <select
                           aria-label={`${t('lab.changeMemberRole')}: ${member.fullName || member.email}`}
-                          className="min-w-32 rounded-md border border-slate-300 bg-white px-2 py-1.5 text-sm text-slate-950 focus:border-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900/10"
+                          className="min-h-11 min-w-32 rounded-md border border-slate-300 bg-white px-2 text-base text-slate-950 focus:border-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900/10"
                           disabled={updateRoleMutation.isPending}
                           value={roleDraft}
                           onChange={(event) => {
@@ -224,6 +268,7 @@ export function LabMembersPage() {
             </tbody>
           </table>
         </ResponsiveTable>
+        </>
       )}
       <ConfirmDialog
         confirmLabel={t('lab.removeMember')}
@@ -244,7 +289,7 @@ export function LabMembersPage() {
       >
         <dl className="space-y-3 text-sm">
           <div><dt className="text-slate-500">{t('profile.fullName')}</dt><dd className="font-semibold text-slate-950 dark:text-slate-100">{selectedMemberDetail?.fullName || t('common.notUpdated')}</dd></div>
-          <div><dt className="text-slate-500">{t('common.email')}</dt><dd className="text-slate-800">{selectedMemberDetail?.email}</dd></div>
+          <div><dt className="text-slate-500">{t('common.email')}</dt><dd className="break-all text-slate-800">{selectedMemberDetail?.email}</dd></div>
         </dl>
       </Modal>
     </section>

@@ -36,7 +36,7 @@ export function ResearchGroupList({ project, canCreate }: ResearchGroupListProps
   const updateGroup = useUpdateResearchGroup(project.id, project.labId);
 
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+    <section className="min-w-0 rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h3 className="text-lg font-semibold text-slate-950">{t('research.group.listTitle')}</h3>
@@ -59,7 +59,7 @@ export function ResearchGroupList({ project, canCreate }: ResearchGroupListProps
           {t('research.group.noProjectGroups')}
         </EmptyState>
       ) : (
-        <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-5 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
           {groups.map((group) => (
             <GroupCard
               key={group.id}
@@ -137,11 +137,11 @@ function GroupCard({
   ).length;
 
   return (
-    <article className="flex flex-col justify-between rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition-all hover:border-blue-500 hover:shadow-md">
+    <article className="flex min-w-0 flex-col justify-between rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-all hover:border-blue-500 hover:shadow-md sm:p-5">
       <div>
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <h4 className="text-base font-medium text-slate-900 line-clamp-1">{group.name}</h4>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <h4 className="break-words text-base font-medium text-slate-900 line-clamp-2">{group.name}</h4>
             <p className="mt-1 text-xs text-slate-500 line-clamp-2">
               {group.objective || t('research.group.noObjectiveText')}
             </p>
@@ -151,10 +151,10 @@ function GroupCard({
           </span>
         </div>
 
-        <div className="mt-4 grid grid-cols-2 gap-3 border-y border-slate-100 py-3 text-xs">
+        <div className="mt-4 grid grid-cols-1 gap-3 border-y border-slate-100 py-3 text-xs min-[380px]:grid-cols-2">
           <div>
             <span className="block font-medium text-slate-500">{t('research.group.leader')}</span>
-            <span className="mt-0.5 block font-semibold text-slate-850 truncate">
+            <span className="mt-0.5 block break-words font-semibold text-slate-850">
               {group.leaderName || t('common.notAssigned')}
             </span>
           </div>
@@ -206,9 +206,9 @@ function GroupCard({
         </div>
       </div>
 
-      <div className="mt-5 flex gap-2 pt-2">
+      <div className="mt-5 flex flex-wrap gap-2 pt-2">
         <Link
-          className="flex-1 rounded-lg bg-slate-900 py-2 text-center text-xs font-semibold text-white transition-colors hover:bg-slate-800"
+          className="inline-flex min-h-11 min-w-0 flex-1 items-center justify-center rounded-lg bg-slate-900 px-3 py-2 text-center text-sm font-semibold text-white transition-colors hover:bg-slate-800"
           to={`/app/research/projects/${projectId}/groups/${group.id}`}
         >
           {t('research.group.viewDetails')}

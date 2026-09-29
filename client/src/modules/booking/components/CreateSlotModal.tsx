@@ -56,7 +56,7 @@ function Time24HourSelect({
 }) {
   const { t } = useI18n();
   const [hour = '', minute = ''] = value.split(':', 2);
-  const selectClassName = 'min-h-11 w-full rounded-md border border-slate-300 bg-white px-3 text-sm outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10';
+  const selectClassName = 'min-h-11 min-w-0 w-full rounded-md border border-slate-300 bg-white px-3 text-base outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10';
 
   return (
     <fieldset>

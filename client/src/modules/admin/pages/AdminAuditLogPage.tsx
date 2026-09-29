@@ -187,13 +187,13 @@ export function AdminAuditLogPage() {
       {/* Filter controls */}
       <form
         onSubmit={handleSearch}
-        className="grid gap-4 rounded-lg border border-slate-800 bg-slate-900 p-4 shadow-sm sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5"
+        className="grid min-w-0 gap-4 rounded-lg border border-slate-800 bg-slate-900 p-4 shadow-sm sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5"
       >
         <div className="flex flex-col gap-1">
           <label htmlFor="filter-keyword" className="text-xs font-medium text-slate-400">{t('audit.filter.keyword')}</label>
           <input
             id="filter-keyword"
-            className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-1.5 text-sm text-white outline-none placeholder:text-slate-500 focus:border-white"
+            className="min-h-11 w-full min-w-0 rounded-md border border-slate-700 bg-slate-950 px-3 py-1.5 text-base text-white outline-none placeholder:text-slate-500 focus:border-white sm:text-sm"
             placeholder={t('audit.filter.keywordPlaceholder')}
             value={keywordInput}
             onChange={(e) => setKeywordInput(e.target.value)}
@@ -204,7 +204,7 @@ export function AdminAuditLogPage() {
           <label htmlFor="filter-module" className="text-xs font-medium text-slate-400">{t('audit.filter.module')}</label>
           <select
             id="filter-module"
-            className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-1.5 text-sm text-white outline-none focus:border-white"
+            className="min-h-11 w-full min-w-0 rounded-md border border-slate-700 bg-slate-950 px-3 py-1.5 text-base text-white outline-none focus:border-white sm:text-sm"
             value={moduleInput}
             onChange={(e) => setModuleInput(e.target.value)}
           >
@@ -221,7 +221,7 @@ export function AdminAuditLogPage() {
           <label htmlFor="filter-action" className="text-xs font-medium text-slate-400">{t('audit.filter.action')}</label>
           <select
             id="filter-action"
-            className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-1.5 text-sm text-white outline-none focus:border-white"
+            className="min-h-11 w-full min-w-0 rounded-md border border-slate-700 bg-slate-950 px-3 py-1.5 text-base text-white outline-none focus:border-white sm:text-sm"
             value={actionInput}
             onChange={(e) => setActionInput(e.target.value)}
           >
@@ -239,7 +239,7 @@ export function AdminAuditLogPage() {
           <input
             id="filter-from-date"
             type="date"
-            className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-1.5 text-sm text-white outline-none focus:border-white"
+            className="min-h-11 w-full min-w-0 rounded-md border border-slate-700 bg-slate-950 px-3 py-1.5 text-base text-white outline-none focus:border-white sm:text-sm"
             value={fromDateInput}
             onChange={(e) => setFromDateInput(e.target.value)}
           />
@@ -250,13 +250,13 @@ export function AdminAuditLogPage() {
           <input
             id="filter-to-date"
             type="date"
-            className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-1.5 text-sm text-white outline-none focus:border-white"
+            className="min-h-11 w-full min-w-0 rounded-md border border-slate-700 bg-slate-950 px-3 py-1.5 text-base text-white outline-none focus:border-white sm:text-sm"
             value={toDateInput}
             onChange={(e) => setToDateInput(e.target.value)}
           />
         </div>
 
-        <div className="sm:col-span-2 md:col-span-3 lg:col-span-5 flex justify-end gap-2 pt-2 border-t border-slate-800">
+        <div className="flex flex-col-reverse gap-2 border-t border-slate-800 pt-2 sm:col-span-2 sm:flex-row sm:justify-end xl:col-span-3 2xl:col-span-5">
           <Button
             type="button"
             className="border-slate-700 bg-transparent text-slate-200 hover:bg-slate-800"
@@ -295,8 +295,28 @@ export function AdminAuditLogPage() {
         </div>
       ) : (
         <div className="rounded-lg border border-slate-800 bg-slate-900 shadow-sm overflow-hidden">
-          {/* Responsive Table */}
-          <div className="max-w-full overscroll-x-contain overflow-x-auto">
+          <div className="divide-y divide-slate-800 md:hidden">
+            {data.items.map((log) => (
+              <article className="min-w-0 space-y-3 p-4" key={log.id}>
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <h3 className="min-w-0 flex-1 break-words font-semibold text-slate-100">
+                    {t(actionLabelKeys[log.action] ?? '', log.action)}
+                  </h3>
+                  <span className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${getModuleBadgeColor(log.module)}`}>
+                    {t(moduleLabelKeys[log.module] ?? '', log.module)}
+                  </span>
+                </div>
+                <p className="text-sm text-slate-300">{formatLocalizedDateTime(log.createdAt, locale, t)}</p>
+                <dl className="grid grid-cols-2 gap-x-3 gap-y-3 text-sm">
+                  <div className="min-w-0"><dt className="text-slate-400">{t('audit.table.actor')}</dt><dd className="mt-1 break-words text-slate-100">{log.actorName || `ID: ${log.actorId}`}</dd></div>
+                  <div className="min-w-0"><dt className="text-slate-400">{t('audit.table.role')}</dt><dd className="mt-1 break-words text-slate-100">{formatRoleLocalized(log.actorRole, t)}</dd></div>
+                  <div className="col-span-2 min-w-0"><dt className="text-slate-400">{t('audit.table.target')}</dt><dd className="mt-1 break-words text-slate-100">{formatTargetLocalized(log.targetType, log.targetId, t)}</dd></div>
+                  <div className="col-span-2 min-w-0"><dt className="text-slate-400">{t('audit.table.description')}</dt><dd className="mt-1 break-words text-slate-100">{log.description || '—'}</dd></div>
+                </dl>
+              </article>
+            ))}
+          </div>
+          <div aria-label={t('audit.title')} className="hidden max-w-full overscroll-x-contain overflow-x-auto md:block" role="region" tabIndex={0}>
             <table className="w-full min-w-[950px] divide-y divide-slate-800 text-sm text-left">
               <thead>
                 <tr className="text-xs font-semibold uppercase text-slate-400 bg-slate-950/50">
@@ -342,8 +362,8 @@ export function AdminAuditLogPage() {
           </div>
 
           {/* Pagination Controls */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-slate-800 bg-slate-950/25 px-4 py-3.5 text-sm text-slate-400">
-            <div>
+          <div className="flex flex-col items-center justify-between gap-4 border-t border-slate-800 bg-slate-950/25 px-4 py-3.5 text-sm text-slate-400 lg:flex-row">
+            <div className="text-center lg:text-left">
               {t('audit.pagination.showing')} <span className="font-semibold text-slate-200">{page * data.size + 1}</span> {t('audit.pagination.to')}{' '}
               <span className="font-semibold text-slate-200">
                 {Math.min((page + 1) * data.size, data.totalElements)}
@@ -351,7 +371,7 @@ export function AdminAuditLogPage() {
                 {t('audit.pagination.of')} <span className="font-semibold text-slate-200">{data.totalElements}</span> {t('audit.pagination.entries')}
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex max-w-full flex-wrap items-center justify-center gap-2">
               <Button
                 className="border-slate-700 bg-transparent text-slate-300 hover:bg-slate-800 disabled:opacity-40 disabled:hover:bg-transparent"
                 size="sm"
@@ -361,7 +381,7 @@ export function AdminAuditLogPage() {
               >
                 {t('audit.previous')}
               </Button>
-              <div className="flex items-center gap-1.5">
+              <div className="flex flex-wrap items-center justify-center gap-1.5">
                 {Array.from({ length: data.totalPages }).map((_, index) => {
                   // Only display max 5 page buttons around current page
                   if (
@@ -372,7 +392,8 @@ export function AdminAuditLogPage() {
                     return (
                       <button
                         key={index}
-                        className={`h-8 w-8 rounded-md text-xs font-semibold transition ${
+                        aria-current={page === index ? 'page' : undefined}
+                        className={`h-11 w-11 rounded-md text-sm font-semibold transition ${
                           page === index
                             ? 'bg-white text-slate-950'
                             : 'text-slate-400 hover:bg-slate-800 hover:text-white'

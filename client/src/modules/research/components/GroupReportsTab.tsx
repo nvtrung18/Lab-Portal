@@ -106,7 +106,7 @@ export function GroupReportsTab({
       const fileUrl = URL.createObjectURL(file);
       const link = document.createElement('a');
       link.href = fileUrl;
-      link.download = report.fileName || `bao-cao-v${report.version}`;
+      link.download = report.fileName || t('research.report.defaultFileName', undefined, { version: report.version });
       link.click();
       URL.revokeObjectURL(fileUrl);
     } catch {
@@ -174,7 +174,7 @@ export function GroupReportsTab({
       : t('research.reports.emptyGroup');
 
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm space-y-5">
+    <section className="min-w-0 space-y-5 rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-4">
         <div>
           <h3 className="text-lg font-medium text-slate-950">{displayTitle}</h3>
@@ -182,10 +182,10 @@ export function GroupReportsTab({
 
         {/* Sub-tabs for Leader to switch views */}
         {isLeader && !scope && (
-          <div className="flex shrink-0 gap-1.5 rounded-md bg-slate-100 p-1">
+          <div className="flex max-w-full gap-1.5 overflow-x-auto rounded-md bg-slate-100 p-1 overscroll-x-contain">
             <button
               onClick={() => setSubTab('me')}
-              className={`rounded-md px-3 py-1.5 text-xs font-semibold transition ${
+              className={`shrink-0 whitespace-nowrap rounded-md px-3 py-1.5 text-xs font-semibold transition ${
                 subTab === 'me'
                   ? 'bg-white text-blue-700 shadow-sm font-medium'
                   : 'text-slate-600 hover:text-slate-900'
@@ -195,7 +195,7 @@ export function GroupReportsTab({
             </button>
             <button
               onClick={() => setSubTab('group')}
-              className={`rounded-md px-3 py-1.5 text-xs font-semibold transition ${
+              className={`shrink-0 whitespace-nowrap rounded-md px-3 py-1.5 text-xs font-semibold transition ${
                 subTab === 'group'
                   ? 'bg-white text-blue-700 shadow-sm font-medium'
                   : 'text-slate-600 hover:text-slate-900'
@@ -273,12 +273,12 @@ export function GroupReportsTab({
             return (
               <article
                 key={report.id}
-                className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm hover:border-slate-300 transition duration-200 space-y-4"
+                className="min-w-0 space-y-4 rounded-lg border border-slate-200 bg-white p-4 shadow-sm transition duration-200 hover:border-slate-300 sm:p-5"
               >
                 {/* Task Title & Report Status */}
                 <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-50 pb-3">
                   <div className="min-w-0">
-                    <h4 className="text-base font-medium text-slate-900 leading-snug truncate" title={report.taskTitle || report.title}>
+                    <h4 className="break-words text-base font-medium text-slate-900 leading-snug" title={report.taskTitle || report.title}>
                       {report.taskTitle || t('research.report.commonTask')}
                     </h4>
                   </div>
@@ -289,22 +289,22 @@ export function GroupReportsTab({
                 </div>
 
                 {/* Submitter & File Details */}
-                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5 text-sm bg-slate-50/50 rounded-lg p-3 border border-slate-100/50">
+                <div className="grid gap-3 rounded-lg border border-slate-100/50 bg-slate-50/50 p-3 text-sm sm:grid-cols-2 xl:grid-cols-5">
                   <div className="min-w-0">
                     <span className="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider">{t('research.report.uploader')}</span>
-                    <span className="block mt-0.5 font-medium text-slate-800 truncate" title={getSubmitterLabel(report)}>
+                    <span className="mt-0.5 block break-words font-medium text-slate-800" title={getSubmitterLabel(report)}>
                       {getSubmitterLabel(report)}
                     </span>
                   </div>
                   <div className="min-w-0">
                     <span className="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider">{t('research.report.milestone')}</span>
-                    <span className="block mt-0.5 font-medium text-slate-800 truncate" title={report.milestoneTitle || 'N/A'}>
+                    <span className="mt-0.5 block break-words font-medium text-slate-800" title={report.milestoneTitle || t('common.notUpdated')}>
                       {report.milestoneTitle || t('research.report.commonTask')}
                     </span>
                   </div>
                   <div>
                     <span className="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider">{t('research.report.latest')}</span>
-                    <span className="block mt-0.5 font-medium text-blue-700">v{report.version}</span>
+                    <span className="block mt-0.5 font-medium text-blue-700">{t('research.report.version', undefined, { version: report.version })}</span>
                   </div>
                   <div>
                     <span className="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider">{t('research.report.submittedAt')}</span>
@@ -314,7 +314,7 @@ export function GroupReportsTab({
                     <span className="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider">{t('research.product.fileName')}</span>
                     <button
                       onClick={() => handleDownload(report)}
-                      className="block mt-0.5 text-blue-600 hover:text-blue-800 font-semibold underline truncate text-left w-full"
+                      className="mt-0.5 block w-full break-all text-left font-semibold text-blue-600 underline hover:text-blue-800"
                       title={report.fileName || t('research.report.noAttachment')}
                     >
                       {report.fileName || t('research.report.noAttachment')}
@@ -364,7 +364,7 @@ export function GroupReportsTab({
                     )}
                   </div>
 
-                  <div className="flex items-center gap-3">
+                  <div className="flex flex-wrap items-center gap-3">
                     {/* Leader inline check button - visible only on all group reports view */}
                     {role === 'GROUP_LEADER' && subTab === 'group' && (
                       <>
