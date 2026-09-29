@@ -1,19 +1,22 @@
 import { memo, useMemo, useState } from 'react';
 import type { DragEvent } from 'react';
 
-import type { ResearchTask, ResearchTaskStatus } from '../types';
+import type { ResearchTask, ResearchTaskStatus, TaskColumn } from '../types';
 import { getStatusClass, formatDate } from '../utils';
 import { Button } from '../../../shared/components';
 import { useI18n } from '../../../shared/i18n';
 import { useReportsByTask } from '../hooks';
 import { ReportHistoryModal } from './ReportHistoryModal';
 import { LatestReportSummary } from './LatestReportSummary';
-import type { TaskBoardRole } from '../taskBoardHelpers';
+import { formatTaskColumn, type TaskBoardRole } from '../taskBoardHelpers';
 
 interface TaskCardProps {
   task: ResearchTask;
   draggable?: boolean;
   isUpdating?: boolean;
+  isStatusChangeDisabled?: boolean;
+  statusTargets?: TaskColumn[];
+  onStatusChange?: (status: TaskColumn) => void;
   dragDisabledReason?: string;
   reportActionLabel?: string | null;
   onReportAction?: (task: ResearchTask) => void;
@@ -30,6 +33,9 @@ export const TaskCard = memo(function TaskCard({
   task,
   draggable = false,
   isUpdating = false,
+  isStatusChangeDisabled = false,
+  statusTargets = [],
+  onStatusChange,
   dragDisabledReason,
   reportActionLabel,
   onReportAction,
@@ -101,6 +107,23 @@ export const TaskCard = memo(function TaskCard({
       <span className={`mt-3 inline-flex rounded-full px-2 py-1 text-[11px] font-semibold ring-1 ${getStatusClass(task.status)}`}>
         {getTaskStatusLabel(task.status, t)}
       </span>
+
+      {statusTargets.length > 0 ? (
+        <label className="mt-3 block text-xs font-semibold text-slate-700">
+          {t('research.task.changeStatus')}
+          <select
+            className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-normal text-slate-900"
+            disabled={isStatusChangeDisabled}
+            value=""
+            onChange={(event) => onStatusChange?.(event.target.value as TaskColumn)}
+          >
+            <option value="" disabled>{t('research.task.changeStatus')}</option>
+            {statusTargets.map((status) => (
+              <option key={status} value={status}>{formatTaskColumn(status, locale)}</option>
+            ))}
+          </select>
+        </label>
+      ) : null}
       
       <div className="mt-3 rounded-md bg-slate-50 p-2.5 text-xs space-y-2">
         <LatestReportSummary reports={reports} />

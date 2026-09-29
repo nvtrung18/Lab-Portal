@@ -170,12 +170,12 @@ export function StudentDashboardPage() {
                       <CalendarClock aria-hidden="true" className="h-5 w-5" />
                     </span>
                     <div className="min-w-0">
-                      <p className="truncate font-semibold text-slate-950 dark:text-white">{booking.labName ?? `PTN #${booking.labId}`}</p>
+                      <p className="break-words font-semibold text-slate-950 dark:text-white">{booking.labName ?? `${t('lab.shortName')} #${booking.labId}`}</p>
                       <p className="mt-1 text-sm tabular-nums text-slate-600 dark:text-slate-300">{formatDateTime(booking.startTime, locale)} – {formatDateTime(booking.endTime, locale)}</p>
                     </div>
                   </div>
                   <span className={`w-fit shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ${statusClassName(booking.status)}`}>
-                    {getBookingStatusLabel(booking.status)}
+                    {getBookingStatusLabel(booking.status, locale)}
                   </span>
                 </li>
               ))}

@@ -22,6 +22,14 @@ function formatMembershipRole(role: string | undefined | null, locale: Locale) {
   return role || translate('common.notUpdated', locale);
 }
 
+function formatJoinedAt(value: string | undefined | null, locale: Locale, fallback: string) {
+  if (!value) return fallback;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime())
+    ? value
+    : new Intl.DateTimeFormat(locale === 'en' ? 'en-US' : 'vi-VN', { dateStyle: 'medium' }).format(date);
+}
+
 export function OtherPage() {
   const { locale, t } = useI18n();
   const { data: currentUser, isLoading } = useCurrentUser();
@@ -65,7 +73,7 @@ export function OtherPage() {
 
   if (isLoading) {
     return (
-      <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+      <section className="app-surface-elevated rounded-lg border border-slate-200 p-4 shadow-sm sm:p-6" aria-label={t('common.loading')}>
         <div className="h-6 w-32 animate-pulse rounded bg-slate-200" />
         <div className="mt-6 h-24 animate-pulse rounded bg-slate-100" />
       </section>
@@ -74,7 +82,7 @@ export function OtherPage() {
 
   if (!activeMemberships.length) {
     return (
-      <section className="rounded-lg border border-slate-200 bg-white p-6 text-sm text-slate-600 shadow-sm">
+      <section className="app-surface-elevated rounded-lg border border-slate-200 p-4 text-sm text-slate-600 shadow-sm dark:text-slate-300 sm:p-6">
         {t('myLab.noMembership')}
       </section>
     );
@@ -82,19 +90,20 @@ export function OtherPage() {
 
   return (
     <section className="space-y-6">
-      <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="app-surface-elevated rounded-lg border border-slate-200 p-4 shadow-sm sm:p-6">
         <h1 className="text-xl font-semibold text-slate-950 dark:text-white">{t('myLab.title')}</h1>
       </div>
 
-      <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="app-surface-elevated rounded-lg border border-slate-200 p-4 shadow-sm sm:p-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h3 className="text-sm font-semibold text-slate-950 dark:text-white">{t('myLab.selectedLab')}</h3>
+            <h2 className="text-sm font-semibold text-slate-950 dark:text-white">{t('myLab.selectedLab')}</h2>
           </div>
 
           {activeMemberships.length > 1 ? (
             <select
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-950 outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10 sm:w-72"
+              aria-label={t('myLab.selectedLab')}
+              className="w-full min-w-0 rounded-md border border-slate-300 bg-white px-3 py-2 text-base text-slate-950 outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10 dark:border-slate-700 dark:bg-slate-950 dark:text-white sm:w-72"
               value={activeLabId ?? ''}
               onChange={(event) => setActiveLabId(Number(event.target.value))}
             >
@@ -108,26 +117,26 @@ export function OtherPage() {
               })}
             </select>
           ) : (
-            <span className="rounded-md bg-slate-100 px-3 py-2 text-sm font-medium text-slate-700">
+            <span className="min-w-0 break-words rounded-md bg-slate-100 px-3 py-2 text-sm font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-200">
               {activeMembership ? getMembershipLabName(activeMembership) : t('myLab.notSelected')}
             </span>
           )}
         </div>
       </div>
 
-      <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-        <h3 className="text-sm font-semibold text-slate-950 dark:text-white">{t('myLab.info')}</h3>
+      <div className="app-surface-elevated rounded-lg border border-slate-200 p-4 shadow-sm sm:p-5">
+        <h2 className="text-sm font-semibold text-slate-950 dark:text-white">{t('myLab.info')}</h2>
         <dl className="mt-4 grid gap-4 sm:grid-cols-2">
           <div>
             <dt className="text-sm text-slate-500">{t('myLab.name')}</dt>
-            <dd className="mt-1 text-sm font-medium text-slate-950 dark:text-slate-100">
+            <dd className="mt-1 break-words text-sm font-medium text-slate-950 dark:text-slate-100">
               {activeLab?.labName ??
                 (activeMembership ? getMembershipLabName(activeMembership) : t('common.notUpdated'))}
             </dd>
           </div>
           <div>
             <dt className="text-sm text-slate-500">{t('lab.manager')}</dt>
-            <dd className="mt-1 text-sm font-medium text-slate-950 dark:text-slate-100">
+            <dd className="mt-1 break-words text-sm font-medium text-slate-950 dark:text-slate-100">
               {activeLab?.manager?.fullName || activeLab?.manager?.email || t('common.notUpdated')}
             </dd>
           </div>
@@ -140,7 +149,7 @@ export function OtherPage() {
           <div>
             <dt className="text-sm text-slate-500">{t('myLab.joinedAt')}</dt>
             <dd className="mt-1 text-sm font-medium text-slate-950 dark:text-slate-100">
-              {activeMembership?.joinedAt ?? activeMembership?.createdAt ?? t('common.notUpdated')}
+              {formatJoinedAt(activeMembership?.joinedAt ?? activeMembership?.createdAt, locale, t('common.notUpdated'))}
             </dd>
           </div>
         </dl>
@@ -148,7 +157,7 @@ export function OtherPage() {
 
       <div>
         <div className="mb-4">
-          <h3 className="text-lg font-semibold text-slate-950 dark:text-white">{t('myLab.slots')}</h3>
+          <h2 className="text-lg font-semibold text-slate-950 dark:text-white">{t('myLab.slots')}</h2>
         </div>
         <SlotList labId={activeLabId} mode="student" readonly />
       </div>

@@ -32,13 +32,13 @@ export function MyResearchGroups({ labId, currentUserId }: MyResearchGroupsProps
   }
 
   return (
-    <section className="space-y-6">
-      <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+    <section className="min-w-0 space-y-6">
+      <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
         <h2 className="text-xl font-medium text-slate-950">{t('research.group.myGroupsTitle')}</h2>
       </div>
 
       {isLoading ? (
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
           {[1, 2, 3].map((n) => (
             <div key={n} className="h-56 animate-pulse rounded-lg border border-slate-200 bg-white" />
           ))}
@@ -52,7 +52,7 @@ export function MyResearchGroups({ labId, currentUserId }: MyResearchGroupsProps
           {t('research.group.noMyGroups')}
         </EmptyState>
       ) : (
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
           {groups.map((group) => {
             const myRole = group.myRole ?? group.members?.find((member) => member.userId === currentUserId)?.role ?? null;
             const isLeader = myRole === 'LEADER';
@@ -60,11 +60,11 @@ export function MyResearchGroups({ labId, currentUserId }: MyResearchGroupsProps
             return (
               <article
                 key={group.id}
-                className="flex flex-col justify-between rounded-lg border border-slate-200 bg-white p-5 shadow-sm hover:shadow-md transition duration-200"
+                className="flex min-w-0 flex-col justify-between rounded-lg border border-slate-200 bg-white p-4 shadow-sm hover:shadow-md transition duration-200 sm:p-5"
               >
                 <div className="space-y-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <h3 className="font-medium text-slate-950 text-base leading-snug line-clamp-1" title={group.name}>
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <h3 className="min-w-0 flex-1 break-words font-medium text-slate-950 text-base leading-snug line-clamp-2" title={group.name}>
                       {group.name}
                     </h3>
                     <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ring-1 ${getStatusClass(group.status)}`}>
@@ -76,12 +76,12 @@ export function MyResearchGroups({ labId, currentUserId }: MyResearchGroupsProps
                     <span className="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
                       {t('research.group.projectLabelShort')}
                     </span>
-                    <p className="text-sm font-medium text-slate-800 line-clamp-2 leading-relaxed h-10">
+                    <p className="min-w-0 break-words text-sm font-medium text-slate-800 line-clamp-2 leading-relaxed">
                       {getProjectName(group)}
                     </p>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4 border-t border-slate-100 pt-4 text-xs">
+                  <div className="grid grid-cols-1 gap-4 border-t border-slate-100 pt-4 text-xs min-[380px]:grid-cols-2">
                     <div>
                       <span className="block font-semibold text-slate-500">{t('research.group.myRoleLabel')}</span>
                       <span className={`inline-flex mt-1 rounded-full px-2 py-0.5 font-medium ${
@@ -92,7 +92,7 @@ export function MyResearchGroups({ labId, currentUserId }: MyResearchGroupsProps
                     </div>
                     <div>
                       <span className="block font-semibold text-slate-500">{t('research.group.leader')}</span>
-                      <span className="block mt-1 text-slate-800 font-medium truncate" title={group.leaderName || t('common.notAssigned')}>
+                      <span className="block mt-1 break-words text-slate-800 font-medium" title={group.leaderName || t('common.notAssigned')}>
                         {group.leaderName || t('common.notAssigned')}
                       </span>
                     </div>
@@ -104,7 +104,7 @@ export function MyResearchGroups({ labId, currentUserId }: MyResearchGroupsProps
                     </div>
                     <div>
                       <span className="block font-semibold text-slate-500">{t('research.group.topicRecruiting')}</span>
-                      <span className="block mt-1 text-slate-800 font-medium truncate" title={group.topicName || t('common.notUpdated')}>
+                      <span className="block mt-1 break-words text-slate-800 font-medium" title={group.topicName || t('common.notUpdated')}>
                         {group.topicName || t('common.notUpdated')}
                       </span>
                     </div>

@@ -76,6 +76,8 @@ export function Modal({
       dialogRef.current?.querySelector<HTMLElement>(focusableSelector)?.focus();
     });
     const handleKeyDown = (event: KeyboardEvent) => {
+      const dialogs = document.querySelectorAll<HTMLElement>('[role="dialog"][aria-modal="true"]');
+      if (dialogs[dialogs.length - 1] !== dialogRef.current) return;
       if (event.key === 'Escape' && closeOnEscapeRef.current && !closeDisabledRef.current) {
         onCloseRef.current();
         return;
@@ -128,7 +130,7 @@ export function Modal({
             </h3>
             {subtitle ? <div className="mt-1 text-sm text-slate-600 dark:text-slate-300">{subtitle}</div> : null}
           </div>
-          <Button aria-label={resolvedCloseLabel} disabled={closeDisabled} onClick={onClose} size="sm" variant="ghost">
+          <Button aria-label={resolvedCloseLabel} className="h-11 w-11 min-w-11 shrink-0 p-0" disabled={closeDisabled} onClick={onClose} size="sm" variant="ghost">
             <X aria-hidden="true" className="h-5 w-5" />
             <span className="sr-only">{resolvedCloseLabel}</span>
           </Button>

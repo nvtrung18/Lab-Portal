@@ -83,7 +83,7 @@ export function AssignCleaningModal({ labId, task, isOpen, onClose }: AssignClea
             cleaners.map((cleaner) => (
               <label
                 key={cleaner.userId}
-                className="flex cursor-pointer items-start gap-3 rounded-md border border-slate-200 p-3 transition hover:bg-slate-50"
+                className="flex min-h-11 cursor-pointer items-start gap-3 rounded-md border border-slate-200 p-3 transition hover:bg-slate-50"
               >
                 <input
                   className="mt-1 h-4 w-4"
@@ -91,11 +91,11 @@ export function AssignCleaningModal({ labId, task, isOpen, onClose }: AssignClea
                   checked={selectedIds.includes(cleaner.userId)}
                   onChange={() => toggleCleaner(cleaner.userId)}
                 />
-                <span>
-                  <span className="block text-sm font-semibold text-slate-900">
+                <span className="min-w-0">
+                  <span className="block break-words text-sm font-semibold text-slate-900">
                     {cleaner.fullName || cleaner.email}
                   </span>
-                  <span className="block text-sm text-slate-600">{cleaner.email}</span>
+                  <span className="block break-all text-sm text-slate-600">{cleaner.email}</span>
                   <span className="mt-1 block text-xs font-medium text-slate-500">
                     {t('booking.registration')}: {getBookingStatusLabel(cleaner.bookingStatus, locale)}
                     {cleaner.checkedIn ? ` - ${t('booking.studentCheckedIn')}` : ''}

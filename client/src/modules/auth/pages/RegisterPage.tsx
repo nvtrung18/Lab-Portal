@@ -163,13 +163,15 @@ export function RegisterPage() {
   };
 
   return (
-    <section className="min-w-0 w-full rounded-lg border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-8">
+    <section className="app-surface-elevated min-w-0 w-full rounded-xl p-5 sm:p-8">
       <h1 className="text-2xl font-semibold text-slate-950 dark:text-white">{t('auth.registerTitle')}</h1>
+      <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">{t('auth.registerDescription')}</p>
 
       <div className="mt-6">
         <GoogleSignInButton
           disabled={isSubmitting || isGoogleSubmitting}
           onCredential={handleGoogleCredential}
+          text="signup_with"
         />
       </div>
       <div className="my-6 flex items-center gap-3" aria-hidden="true">
@@ -195,8 +197,11 @@ export function RegisterPage() {
 
       {step === 'email' ? (
         <form className="space-y-5" onSubmit={handleSendCode}>
+          <label className="block text-sm font-medium text-slate-700 dark:text-slate-200" htmlFor="register-email">{t('auth.email')}</label>
           <input
-            className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 outline-none focus:border-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:focus:border-white"
+            autoComplete="email"
+            className="w-full min-h-12 rounded-md border border-slate-300 bg-white px-3 py-2 text-base text-slate-950 outline-none focus:border-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:focus:border-white"
+            id="register-email"
             placeholder={t('auth.email')}
             type="email"
             value={email}
@@ -220,8 +225,11 @@ export function RegisterPage() {
             {t('auth.codeSentTo')}{' '}
             <span className="font-semibold text-slate-950 dark:text-white">{normalizedEmail}</span>
           </p>
+          <label className="block text-sm font-medium text-slate-700 dark:text-slate-200" htmlFor="register-code">{t('auth.verificationCode')}</label>
           <input
-            className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 outline-none focus:border-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:focus:border-white"
+            autoComplete="one-time-code"
+            className="w-full min-h-12 rounded-md border border-slate-300 bg-white px-3 py-2 text-base text-slate-950 outline-none focus:border-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:focus:border-white"
+            id="register-code"
             inputMode="numeric"
             maxLength={6}
             placeholder={t('auth.codeSixDigits')}
@@ -255,15 +263,21 @@ export function RegisterPage() {
             {t('auth.emailVerified')}{' '}
             <span className="font-semibold text-emerald-900">{normalizedEmail}</span>
           </p>
+          <label className="block text-sm font-medium text-slate-700 dark:text-slate-200" htmlFor="register-name">{t('auth.fullName')}</label>
           <input
-            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-900"
+            autoComplete="name"
+            className="w-full min-h-12 rounded-md border border-slate-300 bg-white px-3 py-2 text-base text-slate-950 outline-none focus:border-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:focus:border-white"
+            id="register-name"
             placeholder={t('auth.fullName')}
             value={fullName}
             onChange={(event) => setFullName(event.target.value)}
           />
+          <label className="block text-sm font-medium text-slate-700 dark:text-slate-200" htmlFor="register-password">{t('auth.password')}</label>
           <div className="relative">
             <input
-              className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 pr-16 text-sm text-slate-950 outline-none focus:border-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:focus:border-white"
+              autoComplete="new-password"
+              className="w-full min-h-12 rounded-md border border-slate-300 bg-white px-3 py-2 pr-14 text-base text-slate-950 outline-none focus:border-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:focus:border-white"
+              id="register-password"
               placeholder={t('auth.password')}
               type={showPassword ? 'text' : 'password'}
               value={password}
@@ -271,7 +285,7 @@ export function RegisterPage() {
             />
             <button
               type="button"
-              className="absolute inset-y-0 right-0 flex items-center px-3 text-slate-600 hover:text-slate-950 disabled:cursor-not-allowed disabled:text-slate-300 dark:text-slate-300 dark:hover:text-white"
+              className="absolute right-1 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-lg text-slate-600 hover:text-slate-950 disabled:cursor-not-allowed disabled:text-slate-300 dark:text-slate-300 dark:hover:text-white"
               disabled={isSubmitting}
               aria-label={showPassword ? t('auth.hidePassword') : t('auth.showPassword')}
               onClick={() => setShowPassword((value) => !value)}
@@ -283,9 +297,12 @@ export function RegisterPage() {
               )}
             </button>
           </div>
+          <label className="block text-sm font-medium text-slate-700 dark:text-slate-200" htmlFor="register-confirm-password">{t('auth.confirmPassword')}</label>
           <div className="relative">
             <input
-              className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 pr-16 text-sm text-slate-950 outline-none focus:border-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:focus:border-white"
+              autoComplete="new-password"
+              className="w-full min-h-12 rounded-md border border-slate-300 bg-white px-3 py-2 pr-14 text-base text-slate-950 outline-none focus:border-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:focus:border-white"
+              id="register-confirm-password"
               placeholder={t('auth.confirmPassword')}
               type={showConfirmPassword ? 'text' : 'password'}
               value={confirmPassword}
@@ -293,12 +310,12 @@ export function RegisterPage() {
             />
             <button
               type="button"
-              className="absolute inset-y-0 right-0 flex items-center px-3 text-slate-600 hover:text-slate-950 disabled:cursor-not-allowed disabled:text-slate-300 dark:text-slate-300 dark:hover:text-white"
+              className="absolute right-1 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-lg text-slate-600 hover:text-slate-950 disabled:cursor-not-allowed disabled:text-slate-300 dark:text-slate-300 dark:hover:text-white"
               disabled={isSubmitting}
               aria-label={showConfirmPassword ? t('auth.hidePassword') : t('auth.showPassword')}
-              onClick={() => setShowPassword((value) => !value)}
+              onClick={() => setShowConfirmPassword((value) => !value)}
             >
-              {showPassword ? (
+              {showConfirmPassword ? (
                 <EyeOff size={18} />
               ) : (
                 <Eye size={18} />
@@ -318,12 +335,12 @@ export function RegisterPage() {
       ) : null}
 
       {error ? (
-        <div className="mt-5 break-words rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-200">
+        <div className="mt-5 break-words rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-200" role="alert">
           {error}
         </div>
       ) : null}
       {message ? (
-        <div className="mt-5 break-words rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-200">
+        <div className="mt-5 break-words rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-200" role="status">
           {message}
         </div>
       ) : null}

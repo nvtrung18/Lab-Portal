@@ -116,7 +116,7 @@ export function PenaltyCreateModal({
             <div>
               <dt className="text-slate-500">{t('penalty.student')}</dt>
               <dd className="mt-1 font-semibold text-slate-950">{booking.studentName ?? t('common.notUpdated')}</dd>
-              <dd className="text-slate-600">{booking.studentEmail ?? t('common.notUpdated')}</dd>
+              <dd className="break-all text-slate-600">{booking.studentEmail ?? t('common.notUpdated')}</dd>
             </div>
             <div>
               <dt className="text-slate-500">{t('penalty.lab')}</dt>
@@ -133,7 +133,7 @@ export function PenaltyCreateModal({
           <label className="block text-sm font-medium text-slate-700">
             {t('penalty.typeLabel')}
             <select
-              className="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-slate-500 focus:outline-none"
+              className="mt-2 min-h-11 w-full rounded-md border border-slate-300 px-3 py-2 text-base text-slate-900 shadow-sm focus:border-slate-500 focus:outline-none"
               value={type}
               onChange={(event) => setType(event.target.value)}
               disabled={isSubmitting}
@@ -149,7 +149,7 @@ export function PenaltyCreateModal({
           <label className="block text-sm font-medium text-slate-700">
             {t('penalty.points')}
             <input
-              className="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-slate-500 focus:outline-none"
+              className="mt-2 min-h-11 w-full rounded-md border border-slate-300 px-3 py-2 text-base text-slate-900 shadow-sm focus:border-slate-500 focus:outline-none"
               min={0}
               type="number"
               value={point}
@@ -161,7 +161,7 @@ export function PenaltyCreateModal({
           <label className="block text-sm font-medium text-slate-700">
             {t('penalty.reasonLabel')}
             <textarea
-              className="mt-2 min-h-32 w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-slate-500 focus:outline-none"
+              className="mt-2 min-h-32 w-full rounded-md border border-slate-300 px-3 py-2 text-base text-slate-900 shadow-sm focus:border-slate-500 focus:outline-none"
               maxLength={1000}
               placeholder={t('penalty.reasonPlaceholder')}
               value={reason}

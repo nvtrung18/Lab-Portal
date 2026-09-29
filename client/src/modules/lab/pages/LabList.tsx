@@ -168,8 +168,8 @@ export function LabList() {
                 className="flex h-full flex-col rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200 transition-shadow hover:shadow-md dark:bg-slate-900 dark:ring-slate-800"
               >
                 <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <h3 className="text-base font-semibold text-slate-950 dark:text-white">
+                  <div className="min-w-0">
+                    <h3 className="break-words text-base font-semibold text-slate-950 dark:text-white">
                       {lab.labName}
                     </h3>
                     <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
@@ -191,7 +191,7 @@ export function LabList() {
                 <dl className="mt-4 grid flex-1 grid-cols-2 gap-3 text-sm">
                   <div>
                     <dt className="text-slate-500">{t('lab.manager')}</dt>
-                    <dd className="font-medium text-slate-950 dark:text-white">
+                    <dd className="break-words font-medium text-slate-950 dark:text-white">
                       {lab.manager?.fullName || lab.manager?.email || t('lab.notAssigned')}
                     </dd>
                   </div>
@@ -203,7 +203,7 @@ export function LabList() {
                   </div>
                   <div className="col-span-2">
                     <dt className="text-slate-500">{t('lab.location')}</dt>
-                    <dd className="font-medium text-slate-950 dark:text-white">
+                    <dd className="break-words font-medium text-slate-950 dark:text-white">
                       {lab.location || t('common.notUpdated')}
                     </dd>
                   </div>

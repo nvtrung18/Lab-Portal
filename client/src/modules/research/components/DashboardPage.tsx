@@ -6,6 +6,7 @@ import { useI18n } from '../../../shared/i18n';
 import type { UserProfileResponse } from '../../user/api/user.api';
 import { useProjectDashboardStats, useResearchLogs, useProductsByProject } from '../hooks';
 import type { DashboardStats, ResearchProductStatus, ResearchProductType } from '../types';
+import { getMilestoneStatusLabel } from '../adapters/dashboardAdapter';
 import { StatCard } from './StatCard';
 import { TaskProgressChart } from './TaskProgressChart';
 import { getStatusClass } from '../utils';
@@ -119,7 +120,7 @@ export function DashboardPage({ projectId, role, groupRole }: DashboardPageProps
       </div>
 
       <div className="grid gap-5">
-        <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+        <section className="min-w-0 rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
           <h3 className="text-base font-semibold text-slate-950">{t('research.dashboard.taskProgress')}</h3>
           <TaskProgressChart taskProgress={taskChartData} />
         </section>
@@ -134,9 +135,9 @@ export function DashboardPage({ projectId, role, groupRole }: DashboardPageProps
             <div className="mt-4 space-y-4">
               {visibleMilestones.map((milestone) => (
                 <div key={milestone.milestoneId || milestone.title}>
-                  <div className="flex items-center justify-between gap-3 text-sm">
-                    <span className="font-medium text-slate-800">{milestone.title || t('research.dashboard.unnamedMilestone')}</span>
-                    <span className="shrink-0 text-slate-500">{milestone.statusLabel}</span>
+                  <div className="flex flex-wrap items-center justify-between gap-3 text-sm">
+                    <span className="min-w-0 break-words font-medium text-slate-800">{milestone.title || t('research.dashboard.unnamedMilestone')}</span>
+                    <span className="text-slate-500">{getMilestoneStatusLabel(milestone.status, locale)}</span>
                   </div>
                   <ProgressBar value={milestone.progressPercent} className="mt-2" />
                 </div>
@@ -158,7 +159,7 @@ export function DashboardPage({ projectId, role, groupRole }: DashboardPageProps
                 {visibleGroups.map((group) => (
                   <div key={group.groupId || group.groupName} className="rounded-md border border-slate-200 p-4">
                     <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-                      <h4 className="font-semibold text-slate-950">{group.groupName || t('research.dashboard.unnamedGroup')}</h4>
+                      <h4 className="break-words font-semibold text-slate-950">{group.groupName || t('research.dashboard.unnamedGroup')}</h4>
                       <span className="text-sm text-slate-500">{t('research.dashboard.memberCount', undefined, { count: group.memberCount })}</span>
                     </div>
                     <ProgressBar value={group.taskCompletionRate} className="mt-3" />
@@ -189,13 +190,13 @@ export function DashboardPage({ projectId, role, groupRole }: DashboardPageProps
                 <div key={log.id} className="relative pl-5 border-l-2 border-slate-100 pb-2 last:pb-0">
                   <span className="absolute -left-1.5 top-1.5 h-3 w-3 rounded-full border-2 border-white bg-slate-900" />
                   <div className="text-sm">
-                    <div className="flex items-center justify-between gap-3">
-                      <span className="font-semibold text-slate-800">{log.authorName || t('research.role.member')}</span>
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <span className="min-w-0 break-words font-semibold text-slate-800">{log.authorName || t('research.role.member')}</span>
                       <span className="text-xs text-slate-500">
                         {log.workDate ? new Intl.DateTimeFormat(locale === 'en' ? 'en-US' : 'vi-VN').format(new Date(log.workDate)) : ''}
                       </span>
                     </div>
-                    <p className="mt-1 text-slate-600 line-clamp-2">{log.content}</p>
+                    <p className="mt-1 break-words text-slate-600 line-clamp-2">{log.content}</p>
                     {log.taskTitle && (
                       <span className="mt-1.5 inline-block rounded bg-slate-100 px-2 py-0.5 text-xs text-slate-600">
                         {t('research.dashboard.taskPrefix', undefined, { name: log.taskTitle })}
@@ -215,9 +216,9 @@ export function DashboardPage({ projectId, role, groupRole }: DashboardPageProps
           ) : (
             <div className="mt-4 space-y-4">
               {recentProducts.map((product) => (
-                <div key={product.id} className="flex items-start justify-between gap-4 rounded-md border border-slate-100 p-3 hover:bg-slate-50">
+                <div key={product.id} className="flex flex-wrap items-start justify-between gap-4 rounded-md border border-slate-100 p-3 hover:bg-slate-50">
                   <div className="min-w-0">
-                    <h4 className="truncate text-sm font-semibold text-slate-800">{product.title}</h4>
+                    <h4 className="break-words text-sm font-semibold text-slate-800">{product.title}</h4>
                     <div className="mt-1 flex flex-wrap gap-2 text-xs text-slate-500">
                       <span>{t('research.dashboard.submittedBy', undefined, { name: product.submittedByName || t('common.notUpdated') })}</span>
                       <span>•</span>

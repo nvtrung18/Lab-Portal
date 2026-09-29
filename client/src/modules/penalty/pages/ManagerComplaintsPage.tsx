@@ -87,7 +87,8 @@ export function ManagerComplaintsPage() {
           ))}
         </div>
         <input
-          className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10 lg:w-80"
+          aria-label={t('penalty.searchComplaints')}
+          className="min-h-11 w-full rounded-md border border-slate-300 px-3 py-2 text-base outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10 lg:w-80"
           placeholder={t('penalty.searchComplaints')}
           value={search}
           onChange={(event) => setSearch(event.target.value)}

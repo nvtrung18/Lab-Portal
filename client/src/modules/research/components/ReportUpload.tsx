@@ -1,4 +1,3 @@
-import axios from 'axios';
 import { useState } from 'react';
 import type { ChangeEvent, FormEvent, ReactNode } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -8,6 +7,7 @@ import { Button, toast } from '../../../shared/components';
 import { useI18n } from '../../../shared/i18n';
 import { submitReport, replaceReport } from '../api';
 import type { ResearchReport, SubmitReportPayload, ReplaceReportPayload } from '../types';
+import { getApiErrorMessage } from '../utils';
 
 interface ReportUploadProps {
   taskId: number;
@@ -108,7 +108,10 @@ export function ReportUpload({
       onSuccess?.(report);
     },
     onError: (error) => {
-      const message = getErrorMessage(error, t);
+      const message = getApiErrorMessage(error, {
+        fallback: t('research.report.uploadFailed'),
+        forbidden: t('research.report.uploadForbidden'),
+      });
       setFeedback({ kind: 'error', text: message });
       toast.error(message);
     },
@@ -163,7 +166,7 @@ export function ReportUpload({
   }
 
   return (
-    <form className="space-y-4" onSubmit={handleSubmit}>
+    <form className="min-w-0 space-y-4" onSubmit={handleSubmit}>
       <TextInput label={t('research.report.title')} required value={form.title} onChange={(value) => setForm((current) => ({ ...current, title: value }))} />
       <TextArea label={t('research.report.workDone')} required value={form.contentDone} onChange={(value) => setForm((current) => ({ ...current, contentDone: value }))} />
       <TextArea label={t('research.report.result')} required value={form.result} onChange={(value) => setForm((current) => ({ ...current, result: value }))} />
@@ -174,7 +177,7 @@ export function ReportUpload({
       <Field label={t('research.report.attachment')}>
         <input
           accept=".pdf,.doc,.docx"
-          className="block w-full text-sm text-slate-700"
+          className="block min-w-0 max-w-full text-sm text-slate-700"
           disabled={upload.isPending}
           required={mode !== 'replace'}
           type="file"
@@ -199,7 +202,7 @@ export function ReportUpload({
           {feedback.text}
         </p>
       ) : null}
-      <div className="flex justify-end">
+      <div className="flex flex-wrap justify-end">
         <Button loading={upload.isPending} loadingText={t('research.report.uploading')} type="submit">
           {mode === 'replace' ? t('research.report.update') : mode === 'resubmit' ? t('research.report.resubmit') : t('research.report.submit')}
         </Button>
@@ -212,12 +215,12 @@ function FilePreview({ file }: { file: File }) {
   const extension = getExtension(file.name).toUpperCase();
   return (
     <div className="rounded-md border border-slate-200 bg-slate-50 p-3 text-sm">
-      <div className="flex items-center gap-3">
+      <div className="flex min-w-0 items-center gap-3">
         <span className="rounded bg-white px-2 py-1 text-xs font-medium text-slate-700 ring-1 ring-slate-200">
           {extension}
         </span>
         <div className="min-w-0">
-          <p className="truncate font-medium text-slate-800">{file.name}</p>
+          <p className="break-all font-medium text-slate-800">{file.name}</p>
           <p className="text-xs text-slate-500">{file.type || extension} · {formatFileSize(file.size)}</p>
         </div>
       </div>
@@ -248,17 +251,6 @@ function formatFileSize(bytes: number) {
     return `${(bytes / 1024).toFixed(1)} KB`;
   }
   return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
-}
-
-function getErrorMessage(error: unknown, t: ReturnType<typeof useI18n>['t']) {
-  if (axios.isAxiosError(error)) {
-    if (error.response?.status === 403) {
-      return t('research.report.uploadForbidden');
-    }
-    const data = error.response?.data as { message?: string; errors?: string[] } | undefined;
-    return data?.message ?? data?.errors?.[0] ?? t('research.report.uploadFailed');
-  }
-  return t('research.report.uploadFailed');
 }
 
 function Field({ children, label }: { children: ReactNode; label: string }) {

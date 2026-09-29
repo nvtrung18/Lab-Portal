@@ -32,12 +32,12 @@ function NotificationRow({ item, onRead }: { item: NotificationItem; onRead: (id
       </span>
       <div className="min-w-0 flex-1">
         <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
-          <h2 className="text-sm font-semibold text-slate-950 dark:text-white">{title}</h2>
+          <h2 className="break-words text-sm font-semibold text-slate-950 dark:text-white">{title}</h2>
           <time className="shrink-0 text-xs text-slate-500 dark:text-slate-400" dateTime={item.createdAt}>
             {formatDateTime(item.createdAt, locale)}
           </time>
         </div>
-        <p className="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-300">{message}</p>
+        <p className="mt-1 break-words text-sm leading-6 text-slate-600 dark:text-slate-300">{message}</p>
         {!item.read ? (
           <button
             className="mt-2 min-h-11 rounded-md px-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 dark:text-slate-200 dark:hover:bg-slate-800"
@@ -103,9 +103,9 @@ export function NotificationsPage() {
         )}
 
         {data && data.totalPages > 1 ? (
-          <nav aria-label={t('notifications.pagination')} className="flex items-center justify-between border-t border-slate-200 px-4 py-3 dark:border-slate-800">
+          <nav aria-label={t('notifications.pagination')} className="flex flex-col gap-3 border-t border-slate-200 px-4 py-3 dark:border-slate-800 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-sm text-slate-500 dark:text-slate-400">{t('common.page')} {data.page + 1}/{data.totalPages}</p>
-            <div className="flex gap-2">
+            <div className="grid grid-cols-2 gap-2 sm:flex">
               <Button aria-label={t('notifications.previous')} disabled={page === 0} size="sm" variant="outline" onClick={() => setPage((value) => value - 1)}>
                 <ChevronLeft aria-hidden="true" className="h-4 w-4" /> {t('common.previous')}
               </Button>
