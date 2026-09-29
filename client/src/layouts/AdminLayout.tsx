@@ -77,7 +77,7 @@ export function AdminLayout() {
       >
         {t('common.skipMenu')}
       </a>
-      <aside className="app-surface fixed inset-y-0 left-0 z-30 hidden w-64 overflow-y-auto border-r border-slate-200 px-4 py-6 dark:border-slate-800 dark:bg-slate-950 lg:block">
+      <aside className="app-sidebar app-surface fixed inset-y-0 left-0 z-30 hidden w-64 overflow-y-auto border-r border-slate-200 px-4 py-6 dark:border-slate-800 dark:bg-slate-950 lg:block">
         <SidebarContent navItems={adminNavItems} onNavigate={() => setIsMobileNavOpen(false)} />
       </aside>
 
@@ -89,7 +89,7 @@ export function AdminLayout() {
             type="button"
             onClick={() => setIsMobileNavOpen(false)}
           />
-          <aside aria-label={t('layout.adminPortal')} className="app-surface relative h-full w-72 max-w-[85vw] overflow-y-auto px-4 py-5 shadow-xl dark:bg-slate-950">
+          <aside aria-label={t('layout.adminPortal')} className="app-sidebar app-surface relative h-full w-72 max-w-[85vw] overflow-y-auto px-4 py-5 shadow-xl dark:bg-slate-950">
             <div className="mb-5 flex items-center justify-between gap-3">
               <div className="min-w-0">
                 <p className="truncate text-base font-semibold text-slate-950 dark:text-white">{t('layout.adminPortal')}</p>

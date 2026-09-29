@@ -219,7 +219,7 @@ export function MainLayout() {
           <aside
             id="main-navigation-drawer"
             className={[
-            'app-surface relative h-full w-72 max-w-[85vw] overflow-y-auto px-4 py-5 shadow-xl transition-transform duration-200 ease-out dark:bg-slate-900',
+            'app-sidebar app-surface relative h-full w-72 max-w-[85vw] overflow-y-auto px-4 py-5 shadow-xl transition-transform duration-200 ease-out dark:bg-slate-900',
               isNavOpen ? 'translate-x-0' : '-translate-x-full',
             ].join(' ')}
           >
@@ -252,7 +252,7 @@ export function MainLayout() {
           </aside>
       </div>
 
-      <aside className="app-surface fixed inset-y-0 left-0 z-30 hidden w-64 overflow-y-auto border-r border-slate-200 px-4 py-6 dark:border-slate-800 dark:bg-slate-900 lg:block">
+      <aside className="app-sidebar app-surface fixed inset-y-0 left-0 z-30 hidden w-64 overflow-y-auto border-r border-slate-200 px-4 py-6 dark:border-slate-800 dark:bg-slate-900 lg:block">
         <SidebarContent
           navItems={navItems}
           portalTitle={portalTitle}
