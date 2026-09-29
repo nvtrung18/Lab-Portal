@@ -60,7 +60,7 @@ export function LabCheckinPolicyCard({ labId }: LabCheckinPolicyCardProps) {
     } finally {
       setIsLocating(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     if (!policy) return;
@@ -177,7 +177,7 @@ export function LabCheckinPolicyCard({ labId }: LabCheckinPolicyCardProps) {
           <label className="sr-only" htmlFor={`allowed-network-${labId}`}>{t('adminLabs.allowedNetworkInput')}</label>
           <input
             id={`allowed-network-${labId}`}
-            className="min-h-11 min-w-0 flex-1 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-slate-700 dark:bg-slate-950 dark:text-white"
+            className="min-h-11 min-w-0 flex-1 rounded-md border border-slate-300 bg-white px-3 text-base text-slate-900 placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-slate-700 dark:bg-slate-950 dark:text-white"
             placeholder={t('adminLabs.networkPlaceholder')}
             value={network}
             onChange={(event) => setNetwork(event.target.value)}
@@ -193,8 +193,8 @@ export function LabCheckinPolicyCard({ labId }: LabCheckinPolicyCardProps) {
           <ul className="mt-4 divide-y divide-slate-200 rounded-lg border border-slate-200 dark:divide-slate-800 dark:border-slate-800">
             {policy.allowedNetworks.map((entry) => (
               <li className="flex flex-wrap items-center justify-between gap-3 px-3 py-3" key={entry.id}>
-                <span className="font-mono text-sm text-slate-800 dark:text-slate-200">{entry.network}</span>
-                <button className="inline-flex min-h-9 items-center gap-1.5 rounded-md px-2.5 text-xs font-semibold text-red-700 hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 disabled:cursor-not-allowed disabled:opacity-50 dark:text-red-300 dark:hover:bg-red-950/40" disabled={disableNetwork.isPending} type="button" onClick={() => disableNetwork.mutate(entry.id)}>
+                <span className="min-w-0 break-all font-mono text-sm text-slate-800 dark:text-slate-200">{entry.network}</span>
+                <button className="inline-flex min-h-11 items-center gap-1.5 rounded-md px-2.5 text-sm font-semibold text-red-700 hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 disabled:cursor-not-allowed disabled:opacity-50 dark:text-red-300 dark:hover:bg-red-950/40" disabled={disableNetwork.isPending} type="button" onClick={() => disableNetwork.mutate(entry.id)}>
                   <Trash2 aria-hidden="true" className="h-3.5 w-3.5" />
                   {t('adminLabs.disableNetwork')}
                 </button>
@@ -222,7 +222,7 @@ function PolicyField({ label, value, min, max, step, onChange, readOnly = false 
     <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">
       {label}
       <input
-        className={`mt-1.5 min-h-11 w-full rounded-md border border-slate-300 px-3 text-sm text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-slate-700 dark:text-white ${readOnly ? 'bg-slate-100 dark:bg-slate-800' : 'bg-white dark:bg-slate-950'}`}
+        className={`mt-1.5 min-h-11 w-full rounded-md border border-slate-300 px-3 text-base text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-slate-700 dark:text-white ${readOnly ? 'bg-slate-100 dark:bg-slate-800' : 'bg-white dark:bg-slate-950'}`}
         inputMode="decimal"
         max={max}
         min={min}

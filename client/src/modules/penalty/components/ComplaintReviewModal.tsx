@@ -55,7 +55,7 @@ export function ComplaintReviewModal({
         </label>
         <textarea
           id="resolution-note"
-          className="mt-2 min-h-28 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
+          className="mt-2 min-h-28 w-full rounded-md border border-slate-300 px-3 py-2 text-base outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
           maxLength={1000}
           value={note}
           onChange={(event) => setNote(event.target.value)}

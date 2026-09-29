@@ -15,7 +15,7 @@ import {
   X,
   type LucideIcon,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 
 import { clearAuthTokens, getStoredUser } from '../shared/api';
@@ -49,6 +49,20 @@ export function AdminLayout() {
   const user = getStoredUser();
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
 
+  useEffect(() => {
+    if (!isMobileNavOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const onEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setIsMobileNavOpen(false);
+    };
+    document.addEventListener('keydown', onEscape);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener('keydown', onEscape);
+    };
+  }, [isMobileNavOpen]);
+
   const handleLogout = () => {
     clearAuthTokens();
     queryClient.clear();
@@ -75,7 +89,7 @@ export function AdminLayout() {
             type="button"
             onClick={() => setIsMobileNavOpen(false)}
           />
-          <aside className="app-surface relative h-full w-72 max-w-[85vw] overflow-y-auto px-4 py-5 shadow-xl dark:bg-slate-950">
+          <aside aria-label={t('layout.adminPortal')} className="app-surface relative h-full w-72 max-w-[85vw] overflow-y-auto px-4 py-5 shadow-xl dark:bg-slate-950">
             <div className="mb-5 flex items-center justify-between gap-3">
               <div className="min-w-0">
                 <p className="truncate text-base font-semibold text-slate-950 dark:text-white">{t('layout.adminPortal')}</p>
@@ -199,11 +213,16 @@ function SidebarContent({ navItems, compact = false, onNavigate }: SidebarConten
               ) : null}
               <NavLink
                 to={item.path}
-                className="group flex min-h-11 items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500"
+                className={({ isActive }) => [
+                  'group flex min-h-11 items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500',
+                  isActive
+                    ? 'app-control-surface text-slate-950 dark:text-white'
+                    : 'text-slate-600 hover:bg-slate-900/5 dark:text-slate-300 dark:hover:bg-slate-800',
+                ].join(' ')}
                 onClick={onNavigate}
               >
                 <Icon aria-hidden="true" className="h-[18px] w-[18px] shrink-0" />
-                <span className="min-w-0 truncate">{t(item.labelKey)}</span>
+                <span className="min-w-0 break-words">{t(item.labelKey)}</span>
               </NavLink>
             </div>
           );

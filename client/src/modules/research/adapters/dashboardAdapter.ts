@@ -50,7 +50,7 @@ export function adaptProjectDashboardStats(raw?: RawProjectDashboardStats | null
       done: toNumber(taskByStatus.DONE),
       overdue: toNumber(taskByStatus.OVERDUE),
     },
-    milestoneProgress: toArray(raw?.milestoneProgress ?? raw?.milestone_progress).map((item) => adaptMilestoneProgress(item, locale)),
+    milestoneProgress: toArray(raw?.milestoneProgress ?? raw?.milestone_progress).map(adaptMilestoneProgress),
     groupProgress: toArray(raw?.groupProgress ?? raw?.group_progress).map(adaptGroupProgress),
   };
 }
@@ -72,12 +72,12 @@ function adaptStudentAttendance(raw: RawStudentAttendance) {
   };
 }
 
-function adaptMilestoneProgress(raw: RawMilestoneProgress, locale: Locale) {
+function adaptMilestoneProgress(raw: RawMilestoneProgress) {
   return {
     milestoneId: toNumber(raw.milestoneId ?? raw.milestone_id),
     title: toStringValue(raw.title),
     progressPercent: toNumber(raw.progressPercent ?? raw.progress_percent),
-    statusLabel: getMilestoneStatusLabel(raw.status, locale),
+    status: raw.status ?? null,
   };
 }
 

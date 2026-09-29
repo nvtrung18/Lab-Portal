@@ -133,7 +133,7 @@ export function ProductPage({ projectId, groupId, role, groupRole, currentUserId
   }
 
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+    <section className="min-w-0 rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h3 className="text-lg font-semibold text-slate-950">{t('research.product.title')}</h3>
@@ -153,7 +153,7 @@ export function ProductPage({ projectId, groupId, role, groupRole, currentUserId
       </div>
 
       {uploadScope ? (
-        <form className="mt-5 rounded-md border border-slate-200 bg-slate-50 p-4" onSubmit={handleSubmit}>
+        <form className="mt-5 min-w-0 rounded-md border border-slate-200 bg-slate-50 p-4" onSubmit={handleSubmit}>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <h4 className="font-semibold text-slate-950">{submitLabel}</h4>
@@ -219,7 +219,7 @@ export function ProductPage({ projectId, groupId, role, groupRole, currentUserId
 
           {file ? (
             <div className="mt-4 rounded-md border border-slate-200 bg-white p-3 text-sm">
-              <p className="font-semibold text-slate-800">{file.name}</p>
+              <p className="break-all font-semibold text-slate-800">{file.name}</p>
               <p className="mt-1 text-slate-600">{file.type || t('research.product.unknownFileType')} · {formatFileSize(file.size, t('research.product.noFile'))}</p>
             </div>
           ) : null}
@@ -276,7 +276,7 @@ function ProductItem({ product }: { product: ResearchProduct }) {
       const fileUrl = URL.createObjectURL(file);
       const link = document.createElement('a');
       link.href = fileUrl;
-      link.download = product.fileName || `product-${product.id}`;
+      link.download = product.fileName || t('research.product.defaultFileName', undefined, { id: product.id });
       link.click();
       URL.revokeObjectURL(fileUrl);
     } catch {
@@ -290,7 +290,7 @@ function ProductItem({ product }: { product: ResearchProduct }) {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-sm font-semibold text-slate-950">v{product.version}</span>
+            <span className="text-sm font-semibold text-slate-950">{t('research.product.version', undefined, { version: product.version })}</span>
             <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">
               {getProductTypeLabel(product.productType, t)}
             </span>
@@ -304,7 +304,7 @@ function ProductItem({ product }: { product: ResearchProduct }) {
       </div>
 
       <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2 lg:grid-cols-4">
-        <ProductField label={t('research.product.uploader')} value={getSubmitterLabel(product)} />
+        <ProductField label={t('research.product.uploader')} value={getSubmitterLabel(product, t('common.unknown'))} />
         <ProductField label={t('research.product.submittedAt')} value={formatDate(product.submittedAt ?? product.createdAt, locale)} />
         <ProductField label={t('research.product.fileName')} value={product.fileName || t('research.product.noFile')} />
         <ProductField label={t('research.product.fileSize')} value={formatFileSize(product.fileSize, t('research.product.noFile'))} />
@@ -313,7 +313,7 @@ function ProductItem({ product }: { product: ResearchProduct }) {
       <div className="mt-4 flex flex-wrap gap-3 text-sm">
         {product.fileUrl ? (
           <button
-            className="w-fit font-semibold text-blue-700 underline"
+            className="inline-flex min-h-11 items-center font-semibold text-blue-700 underline"
             disabled={downloading}
             onClick={handleDownload}
             type="button"
@@ -323,7 +323,7 @@ function ProductItem({ product }: { product: ResearchProduct }) {
         ) : null}
         {product.externalLink ? (
           <a
-            className="font-semibold text-blue-700 underline"
+            className="inline-flex min-h-11 items-center font-semibold text-blue-700 underline"
             href={product.externalLink}
             rel="noreferrer"
             target="_blank"
@@ -346,11 +346,11 @@ function ProductField({ label, value }: { label: string; value: string }) {
   );
 }
 
-function getSubmitterLabel(product: ResearchProduct) {
+function getSubmitterLabel(product: ResearchProduct, unknownLabel: string) {
   if (product.submittedByName && product.submittedByEmail) {
     return `${product.submittedByName} (${product.submittedByEmail})`;
   }
-  return product.submittedByName ?? product.submittedByEmail ?? `#${product.submittedById ?? 'N/A'}`;
+  return product.submittedByName ?? product.submittedByEmail ?? (product.submittedById == null ? unknownLabel : `#${product.submittedById}`);
 }
 
 function formatFileSize(size: number | null | undefined, noFileLabel: string) {

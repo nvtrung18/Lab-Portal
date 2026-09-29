@@ -16,8 +16,33 @@ import { ManagerFaceCheckinPanel } from '../../face/components/ManagerFaceChecki
 import { getFaceCheckinCandidates } from '../../face/api';
 import type { BookingResponse } from '../api';
 import { useConfirmCheckIn, useManualCheckIn, usePendingCheckinQrRequests, useReviewCheckinQrRequest } from '../hooks';
+import { getCheckinQrReasonLabel } from '../utils';
 
 type CheckinTab = 'QR' | 'FACE' | 'MANUAL';
+
+const faceResultKeys: Record<string, string> = {
+  SUCCESS: 'common.success',
+  FAILED: 'operations.failed',
+  DENIED: 'operations.denied',
+};
+
+const faceFailureKeys: Record<string, string> = {
+  NO_MATCH: 'operations.noMatch',
+  NO_FACE: 'operations.noFace',
+  MULTIPLE_FACES: 'operations.multipleFaces',
+  LOW_QUALITY: 'operations.lowQuality',
+  SPOOF_DETECTED: 'operations.spoofDetected',
+  CHALLENGE_MISSING: 'face.challengeMissing',
+  CHALLENGE_INVALID: 'face.challengeInvalid',
+  CHALLENGE_FACE_INVALID: 'face.observationInvalid',
+  CHALLENGE_START_NOT_FRONTAL: 'face.notFrontal',
+  CHALLENGE_TURN_NOT_DETECTED: 'face.challengeInvalid',
+  OBSERVATION_TOO_SHORT: 'face.observationTooShort',
+  OBSERVATION_FACE_INVALID: 'face.observationInvalid',
+  OBSERVATION_NOT_FRONTAL: 'face.notFrontal',
+  OBSERVATION_NOT_LIVE: 'face.notLive',
+  SERVICE_ERROR: 'operations.serviceError',
+};
 
 function getErrorMessage(error: unknown, fallback: string) {
   if (axios.isAxiosError(error)) {
@@ -195,12 +220,12 @@ export function CheckInPage() {
           <div><p className="font-semibold">{t('manager.checkinWindow')}</p></div>
         </div>
 
-        <div className="mt-6 flex flex-wrap gap-2" role="tablist" aria-label={t('checkin.managerTabs')}>
+        <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:flex-wrap" role="tablist" aria-label={t('checkin.managerTabs')}>
           {([
             { id: 'FACE' as const, label: t('checkin.tabFace'), icon: ScanFace },
             { id: 'QR' as const, label: t('checkin.tabQr'), icon: QrCode },
             { id: 'MANUAL' as const, label: t('checkin.tabManual'), icon: Keyboard },
-          ]).map(({ id, label, icon: Icon }) => <button aria-selected={activeTab === id} className={activeTab === id ? 'flex min-h-11 items-center gap-2 rounded-md bg-slate-900 px-4 text-sm font-semibold text-white shadow-sm dark:bg-white dark:text-slate-950' : 'flex min-h-11 items-center gap-2 rounded-md border border-slate-300 px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800'} key={id} role="tab" type="button" onClick={() => { stopCamera(); setActiveTab(id); }}><Icon aria-hidden="true" className="h-4 w-4" />{label}</button>)}
+          ]).map(({ id, label, icon: Icon }) => <button aria-selected={activeTab === id} className={activeTab === id ? 'flex min-h-11 w-full items-center justify-center gap-2 rounded-md bg-slate-900 px-4 text-sm font-semibold text-white shadow-sm dark:bg-white dark:text-slate-950 sm:w-auto' : 'flex min-h-11 w-full items-center justify-center gap-2 rounded-md border border-slate-300 px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800 sm:w-auto'} key={id} role="tab" type="button" onClick={() => { stopCamera(); setActiveTab(id); }}><Icon aria-hidden="true" className="h-4 w-4" />{label}</button>)}
         </div>
 
         {lastSuccess ? (
@@ -216,8 +241,8 @@ export function CheckInPage() {
             <div className="mt-4 space-y-3">{qrRequests.data.map((request) => (
               <article className="rounded-md border border-blue-200 bg-white p-4" key={request.requestId}>
                 <p className="font-semibold text-slate-900">{request.studentName ?? `${t('common.user')} #${request.studentId}`} · {t('checkin.bookingLabel')} #{request.bookingId}</p>
-                <p className="mt-1 text-sm text-slate-700">{t('checkin.reason')}: {request.reason}</p>
-                <div className="mt-3 flex gap-2">
+                <p className="mt-1 break-words text-sm text-slate-700">{t('checkin.reason')}: {getCheckinQrReasonLabel(request.fallbackReason, request.reason, locale)}</p>
+                <div className="mt-3 flex flex-wrap gap-2">
                   <Button disabled={reviewQrRequest.isPending} onClick={() => reviewQrRequest.mutate({ requestId: request.requestId, approved: true })}>{t('checkin.approveAndIssueQr')}</Button>
                   <Button disabled={reviewQrRequest.isPending} variant="danger" onClick={() => reviewQrRequest.mutate({ requestId: request.requestId, approved: false })}>{t('common.reject')}</Button>
                 </div>
@@ -227,7 +252,7 @@ export function CheckInPage() {
         </section><div className="mt-6 rounded-lg border border-slate-200 bg-slate-50 p-4">
           <div className="flex flex-col gap-2 sm:flex-row">
             <button
-              className="w-full rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white disabled:bg-slate-400 sm:w-auto"
+              className="min-h-11 w-full rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 disabled:bg-slate-400 sm:w-auto"
               disabled={confirmCheckIn.isPending || isCameraActive}
               type="button"
               onClick={startCamera}
@@ -244,7 +269,7 @@ export function CheckInPage() {
           </label>
           <textarea
             id="checkin-token"
-            className="min-h-24 w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-slate-200"
+            className="min-h-24 w-full rounded-md border border-slate-300 px-3 py-2 text-base text-slate-900 outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-slate-200"
             placeholder={t('checkin.tokenPlaceholder')}
             value={token}
             onChange={(event) => setToken(event.target.value)}
@@ -257,7 +282,7 @@ export function CheckInPage() {
           ) : null}
 
           <button
-            className="w-full rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400 sm:w-auto"
+            className="min-h-11 w-full rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 disabled:cursor-not-allowed disabled:bg-slate-400 sm:w-auto"
             disabled={confirmCheckIn.isPending}
             type="submit"
           >
@@ -267,10 +292,26 @@ export function CheckInPage() {
         </> : null}
 
         {activeTab === 'FACE' ? <section className="mt-6" role="tabpanel">
-          <div className="flex flex-wrap items-center justify-between gap-3"><h2 className="text-lg font-semibold text-slate-950">{t('face.managerResultTitle')}</h2><div className="flex gap-2"><Button type="button" variant="outline" onClick={() => void faceLogs.refetch()}>{t('common.retry')}</Button><Link className="app-button-link text-sm font-semibold" to="/app/operational-logs">{t('checkin.viewAllLogs')}</Link></div></div>
+          <div className="flex flex-wrap items-center justify-between gap-3"><h2 className="text-lg font-semibold text-slate-950">{t('face.managerResultTitle')}</h2><div className="flex flex-wrap gap-2"><Button type="button" variant="outline" onClick={() => void faceLogs.refetch()}>{t('common.retry')}</Button><Link className="app-button-link text-sm font-semibold" to="/app/operational-logs">{t('checkin.viewAllLogs')}</Link></div></div>
           <ManagerFaceCheckinPanel onCompleted={(result) => { if (result.bookingId !== null) setLastSuccess({ method: 'FACE', bookingId: result.bookingId, studentName: result.studentName }); void faceLogs.refetch(); }} />
           <h3 className="mt-8 text-base font-semibold text-slate-950">{t('checkin.recentFaceLogs')}</h3>
-          {faceLogs.isLoading ? <div className="mt-4 h-28 animate-pulse rounded bg-slate-100" /> : faceLogs.isError ? <ErrorState className="mt-4" onRetry={() => void faceLogs.refetch()}>{t('checkin.logsLoadFailed')}</ErrorState> : faceAttempts.length === 0 ? <EmptyState className="mt-4">{t('checkin.logsEmpty')}</EmptyState> : <ResponsiveTable className="mt-4"><table className="w-full min-w-[720px] text-left text-sm"><thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase text-slate-500"><tr><th className="px-4 py-3">{t('operations.time')}</th><th className="px-4 py-3">{t('operations.bookingId')}</th><th className="px-4 py-3">{t('layout.studentRole')}</th><th className="px-4 py-3">{t('operations.result')}</th><th className="px-4 py-3">{t('operations.safeDetail')}</th></tr></thead><tbody className="divide-y divide-slate-200">{faceAttempts.map((attempt) => <tr key={attempt.id}><td className="whitespace-nowrap px-4 py-3">{new Date(attempt.createdAt).toLocaleString(locale === 'en' ? 'en-US' : 'vi-VN')}</td><td className="px-4 py-3 font-medium">#{attempt.bookingId}</td><td className="px-4 py-3">{attempt.studentName ?? `${t('common.user')} #${attempt.userId}`}</td><td className="px-4 py-3">{attempt.result}</td><td className="px-4 py-3">{attempt.failureReason ?? t('operations.noFailure')}</td></tr>)}</tbody></table></ResponsiveTable>}
+          {faceLogs.isLoading ? <div className="mt-4 h-28 animate-pulse rounded bg-slate-100" /> : faceLogs.isError ? <ErrorState className="mt-4" onRetry={() => void faceLogs.refetch()}>{t('checkin.logsLoadFailed')}</ErrorState> : faceAttempts.length === 0 ? <EmptyState className="mt-4">{t('checkin.logsEmpty')}</EmptyState> : (
+            <>
+              <div className="mt-4 space-y-3 md:hidden">
+                {faceAttempts.map((attempt) => (
+                  <article className="min-w-0 rounded-lg border border-slate-200 p-4 text-sm" key={attempt.id}>
+                    <p className="break-words font-semibold text-slate-950">#{attempt.bookingId} · {attempt.studentName ?? `${t('common.user')} #${attempt.userId}`}</p>
+                    <dl className="mt-3 space-y-2">
+                      <div><dt className="text-slate-500">{t('operations.time')}</dt><dd className="mt-1 text-slate-800">{new Date(attempt.createdAt).toLocaleString(locale === 'en' ? 'en-US' : 'vi-VN')}</dd></div>
+                      <div><dt className="text-slate-500">{t('operations.result')}</dt><dd className="mt-1 text-slate-800">{t(faceResultKeys[attempt.result] ?? '', attempt.result)}</dd></div>
+                      <div><dt className="text-slate-500">{t('operations.safeDetail')}</dt><dd className="mt-1 break-words text-slate-800">{attempt.failureReason ? t(faceFailureKeys[attempt.failureReason] ?? '', attempt.failureReason) : t('operations.noFailure')}</dd></div>
+                    </dl>
+                  </article>
+                ))}
+              </div>
+              <ResponsiveTable className="mt-4 hidden md:block"><table className="w-full min-w-[720px] text-left text-sm"><thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase text-slate-500"><tr><th className="px-4 py-3">{t('operations.time')}</th><th className="px-4 py-3">{t('operations.bookingId')}</th><th className="px-4 py-3">{t('layout.studentRole')}</th><th className="px-4 py-3">{t('operations.result')}</th><th className="px-4 py-3">{t('operations.safeDetail')}</th></tr></thead><tbody className="divide-y divide-slate-200">{faceAttempts.map((attempt) => <tr key={attempt.id}><td className="whitespace-nowrap px-4 py-3">{new Date(attempt.createdAt).toLocaleString(locale === 'en' ? 'en-US' : 'vi-VN')}</td><td className="px-4 py-3 font-medium">#{attempt.bookingId}</td><td className="px-4 py-3">{attempt.studentName ?? `${t('common.user')} #${attempt.userId}`}</td><td className="px-4 py-3">{t(faceResultKeys[attempt.result] ?? '', attempt.result)}</td><td className="px-4 py-3">{attempt.failureReason ? t(faceFailureKeys[attempt.failureReason] ?? '', attempt.failureReason) : t('operations.noFailure')}</td></tr>)}</tbody></table></ResponsiveTable>
+            </>
+          )}
         </section> : null}
 
         {activeTab === 'MANUAL' ? <section className="mt-6 rounded-lg border border-amber-200 bg-amber-50 p-6 dark:border-amber-900 dark:bg-amber-950/30" role="tabpanel">

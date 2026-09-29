@@ -119,7 +119,7 @@ export function EvaluationPage({ projectId, groupId, role, currentUserId }: Eval
 
   if (!isManager) {
     return (
-      <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+      <section className="min-w-0 rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
         <h3 className="text-lg font-semibold text-slate-950">{t('research.evaluation.mineTitle')}</h3>
         {isLoading ? (
           <LoadingState className="mt-5">{t('research.evaluation.loading')}</LoadingState>
@@ -141,7 +141,7 @@ export function EvaluationPage({ projectId, groupId, role, currentUserId }: Eval
   }
 
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+    <section className="min-w-0 rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
       <h3 className="text-lg font-semibold text-slate-950">{t('research.evaluation.title')}</h3>
 
       <Modal
@@ -222,8 +222,40 @@ export function EvaluationPage({ projectId, groupId, role, currentUserId }: Eval
       ) : !students.length && !evaluations.length ? (
         <EmptyState className="mt-5">{t('research.evaluation.emptyList')}</EmptyState>
       ) : (
-        <div className="mt-5 overflow-x-auto rounded-md border border-slate-200">
-          <table className="min-w-full divide-y divide-slate-200 text-sm">
+        <>
+          <div className="mt-5 grid gap-3 sm:grid-cols-2 min-[1440px]:hidden">
+            {students.map((student) => {
+              const evaluation = evaluationByStudentId.get(student.userId);
+              return (
+                <article className="min-w-0 rounded-md border border-slate-200 bg-white p-4" key={`${student.groupId}-${student.userId}`}>
+                  <h4 className="break-words font-semibold text-slate-950">{student.fullName}</h4>
+                  <p className="mt-1 break-words text-sm text-slate-600">{student.groupName}</p>
+                  <dl className="mt-4 grid grid-cols-2 gap-3 text-sm">
+                    {SCORE_FIELDS.map(([field, labelKey]) => (
+                      <EvaluationField
+                        key={field}
+                        label={t(labelKey)}
+                        value={evaluation?.[field] == null ? t('research.evaluation.notScored') : formatScore(evaluation[field])}
+                      />
+                    ))}
+                    <EvaluationField
+                      label={t('research.evaluation.total')}
+                      value={evaluation?.totalScore == null ? t('research.evaluation.notScored') : formatScore(evaluation.totalScore)}
+                    />
+                  </dl>
+                  <p className="mt-4 break-words text-sm text-slate-600">
+                    <span className="font-semibold text-slate-900">{t('research.evaluation.comment')}: </span>
+                    {evaluation?.lecturerComment || t('research.evaluation.noComment')}
+                  </p>
+                  <Button className="mt-4 w-full" onClick={() => openEvaluationForm(student)} size="sm" variant="outline">
+                    {evaluation ? t('research.evaluation.update') : t('research.evaluation.grade')}
+                  </Button>
+                </article>
+              );
+            })}
+          </div>
+          <div className="mt-5 hidden max-w-full overflow-x-auto overscroll-x-contain rounded-md border border-slate-200 min-[1440px]:block">
+          <table className="w-full min-w-[66rem] divide-y divide-slate-200 text-sm">
             <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">
               <tr>
                 <th className="px-3 py-3">{t('research.evaluation.name')}</th>
@@ -266,7 +298,8 @@ export function EvaluationPage({ projectId, groupId, role, currentUserId }: Eval
               })}
             </tbody>
           </table>
-        </div>
+          </div>
+        </>
       )}
     </section>
   );

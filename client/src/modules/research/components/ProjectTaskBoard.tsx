@@ -11,7 +11,7 @@ import {
 } from '../adapters/projectTaskBoardAdapter';
 import { useProjectTaskBacklog, useProjectTaskBoard } from '../hooks';
 import type { TaskResponse } from '../types';
-import { formatDate } from '../utils';
+import { formatDate, getApiErrorMessage } from '../utils';
 
 const BACKLOG_PAGE_SIZE = 20;
 
@@ -41,7 +41,7 @@ export function ProjectTaskBoard({ projectId }: { projectId: number }) {
   }, [backlogQuery.data]);
 
   return (
-    <section className="space-y-6" aria-labelledby="project-task-board-title">
+    <section className="min-w-0 space-y-6" aria-labelledby="project-task-board-title">
       <div>
         <h2 id="project-task-board-title" className="text-xl font-semibold text-slate-950">{t('research.taskBoard.title')}</h2>
       </div>
@@ -56,9 +56,9 @@ function BoardPanel({ columns, error, isFetching, isLoading, onRetry }: { column
   if (isLoading) return <BoardSkeleton />;
   if (error) return <QueryError error={error} onRetry={onRetry} />;
   if (!columns.length) return <EmptyState>{t('research.taskBoard.noColumns')}</EmptyState>;
-  return <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm" aria-labelledby="board-columns-title">
+  return <section className="min-w-0 rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:p-5" aria-labelledby="board-columns-title">
     <div className="flex items-center justify-between gap-3"><h3 id="board-columns-title" className="text-base font-semibold text-slate-950">{t('research.taskBoard.byStatus')}</h3>{isFetching ? <span className="text-xs text-slate-500" role="status">{t('research.taskBoard.refreshing')}</span> : null}</div>
-    <div className="mt-4 grid auto-cols-[minmax(17rem,1fr)] grid-flow-col gap-4 overflow-x-auto pb-2 lg:grid-flow-row lg:grid-cols-2 xl:grid-cols-3">
+    <div className="mt-4 grid max-w-full auto-cols-[minmax(17rem,1fr)] grid-flow-col gap-4 overflow-x-auto overscroll-x-contain pb-2 lg:grid-flow-row lg:grid-cols-2 xl:grid-cols-3">
       {columns.map((column) => <section key={column.status} className="min-w-0 rounded-md border border-slate-200 bg-slate-50 p-4" aria-labelledby={`task-column-${column.status}`}>
         <div className="flex items-center justify-between gap-3"><h4 id={`task-column-${column.status}`} className="font-semibold text-slate-900">{formatProjectTaskStatus(column.status, locale)}</h4><span className={`rounded-full px-2 py-1 text-xs font-semibold ring-1 ${column.badgeClassName}`}>{column.tasks.length}</span></div>
         {!column.tasks.length ? <p className="mt-4 text-sm text-slate-600">{t('research.taskBoard.noTasksColumn')}</p> : null}
@@ -75,10 +75,10 @@ function BacklogPanel({ data, error, isFetching, isLoading, onNext, onPrevious, 
   if (!data) return null;
   const isFirstPage = data.page <= 0;
   const isLastPage = data.totalPages === 0 || data.page >= data.totalPages - 1;
-  return <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm" aria-labelledby="task-backlog-title">
+  return <section className="min-w-0 rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:p-5" aria-labelledby="task-backlog-title">
     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><div><h3 id="task-backlog-title" className="text-base font-semibold text-slate-950">{t('research.taskBoard.backlog')}</h3><p className="mt-1 text-sm text-slate-600">{t('research.taskBoard.tasksInScope', undefined, { count: data.totalElements })}</p></div>{isFetching ? <span className="text-xs text-slate-500" role="status">{t('research.taskBoard.refreshing')}</span> : null}</div>
     {!data.tasks.length ? <EmptyState className="mt-4">{t('research.taskBoard.backlogEmpty')}</EmptyState> : <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{data.tasks.map((task) => <ProjectTaskCard key={task.id} task={task} />)}</div>}
-    <nav className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-4" aria-label={t('research.taskBoard.backlog')}><p className="text-sm text-slate-600">{t('research.taskBoard.pageOf', undefined, { page: data.totalPages ? data.page + 1 : 0, total: data.totalPages })}</p><div className="flex gap-2"><button type="button" className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 disabled:cursor-not-allowed disabled:opacity-50" disabled={isFirstPage || isFetching} onClick={onPrevious}>{t('research.taskBoard.previous')}</button><button type="button" className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 disabled:cursor-not-allowed disabled:opacity-50" disabled={isLastPage || isFetching} onClick={onNext}>{t('research.taskBoard.next')}</button></div></nav>
+    <nav className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-4" aria-label={t('research.taskBoard.backlog')}><p className="text-sm text-slate-600">{t('research.taskBoard.pageOf', undefined, { page: data.totalPages ? data.page + 1 : 0, total: data.totalPages })}</p><div className="flex flex-wrap gap-2"><button type="button" className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 disabled:cursor-not-allowed disabled:opacity-50" disabled={isFirstPage || isFetching} onClick={onPrevious}>{t('research.taskBoard.previous')}</button><button type="button" className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 disabled:cursor-not-allowed disabled:opacity-50" disabled={isLastPage || isFetching} onClick={onNext}>{t('research.taskBoard.next')}</button></div></nav>
   </section>;
 }
 
@@ -92,8 +92,8 @@ function QueryError({ error, onRetry }: { error: unknown; onRetry: () => void })
   const { t } = useI18n();
   const status = axios.isAxiosError(error) ? error.response?.status : undefined;
   const isAccessError = status === 403 || status === 404;
-  const errorMessage = error instanceof Error ? error.message : undefined;
-  return <ErrorState onRetry={isAccessError ? undefined : onRetry}>{isAccessError ? t('research.taskBoard.accessUnavailable') : errorMessage ?? t('research.taskBoard.loadFailed')}</ErrorState>;
+  const errorMessage = getApiErrorMessage(error, { fallback: t('research.taskBoard.loadFailed') });
+  return <ErrorState onRetry={isAccessError ? undefined : onRetry}>{isAccessError ? t('research.taskBoard.accessUnavailable') : errorMessage}</ErrorState>;
 }
 
 function BoardSkeleton() {

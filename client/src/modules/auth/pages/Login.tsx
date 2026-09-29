@@ -14,19 +14,12 @@ import { USER_ME_QUERY_KEY } from '../../user/hooks';
 import type { Response } from '../../../shared/types';
 import { Button } from '../../../shared/components';
 import { translate, useI18n } from '../../../shared/i18n';
-import { VALIDATION_MESSAGES } from '../../../shared/utils';
 
 
-const loginSchema = z.object({
-  email: z
-    .string()
-    .trim()
-    .min(1, VALIDATION_MESSAGES.required)
-    .email(VALIDATION_MESSAGES.email),
-  password: z.string().min(1, VALIDATION_MESSAGES.required),
-});
-
-type LoginFormValues = z.infer<typeof loginSchema>;
+interface LoginFormValues {
+  email: string;
+  password: string;
+}
 
 function getErrorMessage(error: unknown) {
   if (axios.isAxiosError(error)) {
@@ -63,6 +56,10 @@ export function getSafeReturnPath(returnUrl: string | null, fallback: string) {
 
 export function LoginPage() {
   const { t } = useI18n();
+  const loginSchema = z.object({
+    email: z.string().trim().min(1, t('validation.required')).email(t('validation.email')),
+    password: z.string().min(1, t('validation.required')),
+  });
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const queryClient = useQueryClient();
@@ -124,8 +121,9 @@ export function LoginPage() {
           <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-950 dark:text-white">{t('auth.loginTitle')}</h1>
         </div>
       </div>
+      <p className="mb-6 text-sm text-slate-600 dark:text-slate-300">{t('auth.loginDescription')}</p>
 
-      <form className="mt-8 space-y-5" onSubmit={handleSubmit(onSubmit)}>
+      <form className="space-y-5" onSubmit={handleSubmit(onSubmit)}>
         <div>
           <label
             className="block text-sm font-medium text-slate-700 dark:text-slate-200"
@@ -138,12 +136,12 @@ export function LoginPage() {
             type="email"
             autoComplete="email"
             className="mt-2 block min-h-12 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-base text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10 dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:focus:border-white"
-            placeholder="admin@labportal.com"
+            placeholder={t('auth.email')}
             disabled={isSubmitting}
             {...register('email')}
           />
           {errors.email ? (
-            <p className="mt-2 text-sm text-red-600">{errors.email.message}</p>
+            <p className="mt-2 text-sm text-red-600" role="alert">{errors.email.message}</p>
           ) : null}
         </div>
 
@@ -184,14 +182,14 @@ export function LoginPage() {
             </button>
           </div>
           {errors.password ? (
-            <p className="mt-2 text-sm text-red-600">
+            <p className="mt-2 text-sm text-red-600" role="alert">
               {errors.password.message}
             </p>
           ) : null}
         </div>
 
         {serverError ? (
-          <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-200">
+          <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-200" role="alert">
             {serverError}
           </div>
         ) : null}

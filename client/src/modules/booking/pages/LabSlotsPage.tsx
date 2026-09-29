@@ -55,7 +55,7 @@ export function LabSlotsPage() {
         </div>
       </div>
 
-      <div className="inline-flex w-full gap-1 rounded-lg border border-slate-200 bg-white p-1 shadow-sm sm:w-auto" role="tablist" aria-label={t('slots.tabs')}>
+      <div className="flex w-full flex-col gap-1 rounded-lg border border-slate-200 bg-white p-1 shadow-sm sm:inline-flex sm:w-auto sm:flex-row" role="tablist" aria-label={t('slots.tabs')}>
         <button
           type="button"
           role="tab"

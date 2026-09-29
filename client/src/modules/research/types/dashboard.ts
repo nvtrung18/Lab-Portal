@@ -28,7 +28,7 @@ export type DashboardStats = {
     milestoneId: number;
     title: string;
     progressPercent: number;
-    statusLabel: string;
+    status: string | null;
   }>;
   groupProgress: Array<{
     groupId: number;

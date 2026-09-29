@@ -29,6 +29,7 @@ import {
   useProjectDashboardStats,
 } from '../hooks';
 import type { TaskBoardRole } from '../taskBoardHelpers';
+import type { ResearchGroup } from '../types';
 import { formatDate, formatGroupStatus, formatProjectStatus, getApiErrorMessage } from '../utils';
 import { formatTaskStatus } from '../taskBoardHelpers';
 
@@ -188,37 +189,37 @@ export function ResearchGroupDetailPage() {
     : undefined;
 
   return (
-    <section className="space-y-6">
+    <section className="min-w-0 space-y-6">
       {/* Premium Header */}
-      <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
         <div className="flex flex-wrap items-center justify-between gap-4">
           {isStudent ? (
             <Link
-              className="inline-flex rounded-md border border-slate-200 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition duration-150"
+              className="inline-flex min-h-11 items-center rounded-md border border-slate-200 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition duration-150"
               to="/app/research"
             >
               {t('common.backToList')}
             </Link>
           ) : (
             <Link
-              className="inline-flex rounded-md border border-slate-200 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition duration-150"
+              className="inline-flex min-h-11 items-center rounded-md border border-slate-200 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition duration-150"
               to={`/app/research/projects/${project.id}`}
             >
               {t('common.back')}
             </Link>
           )}
-          <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('research.groupTab.project')}: {project.title}</span>
+          <span className="min-w-0 break-words text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('research.groupTab.project')}: {project.title}</span>
         </div>
 
         <div className="mt-4 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div>
-            <div className="flex items-center gap-2.5">
-              <h2 className="text-2xl font-medium text-slate-950">{group.name}</h2>
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2.5">
+              <h2 className="min-w-0 break-words text-2xl font-medium text-slate-950">{group.name}</h2>
               <span className="rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-700 ring-1 ring-blue-100">
                 {t('research.groupTab.info')}
               </span>
             </div>
-            <p className="mt-2 text-sm text-slate-600 leading-relaxed max-w-4xl">
+            <p className="mt-2 max-w-4xl break-words text-sm leading-relaxed text-slate-600">
               {group.objective || t('common.notUpdated')}
             </p>
           </div>
@@ -268,10 +269,10 @@ export function ResearchGroupDetailPage() {
       </div>
 
       {/* Tabs list */}
-      <div className="flex gap-1 overflow-x-auto" role="tablist" aria-label={t('research.groupTab.info')}>
+      <div className="research-detail-tabs gap-1" role="tablist" aria-label={t('research.groupTab.info')}>
         {tabs.map((tab) => (
           <button
-            className={`whitespace-nowrap border-b-2 px-4 py-3 text-sm font-semibold transition-all ${
+            className={`shrink-0 whitespace-nowrap border-b-2 px-4 py-3 text-sm font-semibold transition-all ${
               activeTab === tab.value
                 ? 'border-blue-600 text-blue-600 font-medium'
                 : 'border-transparent text-slate-600 hover:text-slate-900'
@@ -455,12 +456,12 @@ function GroupOverviewTab({
       </div>
 
       {isStudent && (
-        <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm space-y-4">
+        <div className="min-w-0 space-y-4 rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
           <h3 className="text-base font-medium text-slate-900 border-b border-slate-100 pb-3">{t('research.groupTab.info')}</h3>
           <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 text-sm">
             <div className="bg-slate-50/50 rounded-lg p-3.5 border border-slate-100 space-y-0.5">
               <dt className="font-semibold text-slate-500 text-xs uppercase tracking-wider">{t('research.group.name')}</dt>
-              <dd className="font-medium text-slate-900 text-base">{group.name}</dd>
+              <dd className="break-words font-medium text-slate-900 text-base">{group.name}</dd>
             </div>
             <div className="bg-slate-50/50 rounded-lg p-3.5 border border-slate-100 space-y-0.5">
               <dt className="font-semibold text-slate-500 text-xs uppercase tracking-wider">{t('research.group.leader')}</dt>
@@ -497,13 +498,13 @@ function GroupOverviewTab({
         <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm lg:col-span-2 space-y-4">
           <div>
             <h3 className="text-base font-medium text-slate-900">{t('research.group.plan')}</h3>
-            <p className="mt-2 text-sm text-slate-600 leading-relaxed whitespace-pre-line">
+            <p className="mt-2 break-words text-sm text-slate-600 leading-relaxed whitespace-pre-line">
               {group.plan || t('research.group.noPlan')}
             </p>
           </div>
           <div className="border-t border-slate-100 pt-4">
             <h3 className="text-base font-medium text-slate-900">{t('research.group.description')}</h3>
-            <p className="mt-2 text-sm text-slate-600 leading-relaxed">
+            <p className="mt-2 break-words text-sm text-slate-600 leading-relaxed">
               {group.description || t('research.group.noDescription')}
             </p>
           </div>
@@ -514,10 +515,10 @@ function GroupOverviewTab({
           <h3 className="text-base font-medium text-slate-900">{t('research.group.membersCount', undefined, { count: group.members?.length ?? 0 })}</h3>
           <div className="mt-4 divide-y divide-slate-100">
             {group.members?.map((member: any) => (
-              <div key={member.id} className="py-3 flex items-center justify-between gap-3 text-sm">
-                <div>
-                  <span className="block font-semibold text-slate-900">{member.fullName || member.email}</span>
-                  <span className="block text-xs text-slate-500">{member.email}</span>
+              <div key={member.id} className="flex flex-col items-start gap-2 py-3 text-sm sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0">
+                  <span className="block break-words font-semibold text-slate-900">{member.fullName || member.email}</span>
+                  <span className="block break-all text-xs text-slate-500">{member.email}</span>
                 </div>
                 <span className={`rounded-full px-2 py-0.5 text-xs font-medium ring-1 ${
                   member.role === 'LEADER'
@@ -539,16 +540,30 @@ function GroupOverviewTab({
 }
 
 // 2. Group Members Tab Subcomponent
-function GroupMembersTab({ group, isLeader }: { group: any; isLeader: boolean }) {
+function GroupMembersTab({ group, isLeader }: { group: ResearchGroup; isLeader: boolean }) {
   const { locale, t } = useI18n();
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm space-y-6">
+    <div className="min-w-0 space-y-6 rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
       <div>
         <h3 className="text-lg font-medium text-slate-950">{t('research.groupTab.members')}</h3>
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full text-left text-sm border-collapse">
+      <div className="space-y-3 md:hidden">
+        {group.members?.map((member) => (
+          <article className="min-w-0 rounded-lg border border-slate-200 p-4 text-sm" key={member.id}>
+            <h4 className="break-words font-semibold text-slate-900">{member.fullName || t('common.notUpdated')}</h4>
+            <p className="mt-1 break-all text-slate-600">{member.email}</p>
+            <dl className="mt-3 space-y-2">
+              <div><dt className="text-slate-500">{t('research.group.role')}</dt><dd className="mt-1 text-slate-900">{member.role === 'LEADER' ? t('research.role.leader') : t('research.role.member')}</dd></div>
+              <div><dt className="text-slate-500">{t('research.group.joinedAt')}</dt><dd className="mt-1 text-slate-900">{formatDate(member.joinedAt || group.createdAt, locale)}</dd></div>
+            </dl>
+          </article>
+        ))}
+        {!group.members?.length ? <EmptyState>{t('research.group.noMembersInGroup')}</EmptyState> : null}
+      </div>
+
+      <div className="hidden max-w-full overflow-x-auto overscroll-x-contain md:block">
+        <table className="w-full min-w-[40rem] text-left text-sm border-collapse">
           <thead>
             <tr className="border-b border-slate-200 bg-slate-50 text-xs font-semibold uppercase tracking-wider text-slate-500">
               <th className="px-6 py-3 font-semibold">{t('research.group.fullName')}</th>
@@ -558,12 +573,12 @@ function GroupMembersTab({ group, isLeader }: { group: any; isLeader: boolean })
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {group.members?.map((member: any) => (
+            {group.members?.map((member) => (
               <tr key={member.id} className="hover:bg-slate-50/55 transition duration-150">
                 <td className="px-6 py-4 font-semibold text-slate-900">
                   {member.fullName || t('common.notUpdated')}
                 </td>
-                <td className="px-6 py-4 text-slate-600">{member.email}</td>
+                <td className="break-all px-6 py-4 text-slate-600">{member.email}</td>
                 <td className="px-6 py-4">
                   <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ${
                     member.role === 'LEADER'
@@ -613,7 +628,7 @@ function GroupProjectTab({ project }: { project: any }) {
   }
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm space-y-6">
+    <div className="min-w-0 space-y-6 rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
         <div>
           <h3 className="text-lg font-medium text-slate-950">{t('research.group.projectInfo')}</h3>
@@ -626,7 +641,7 @@ function GroupProjectTab({ project }: { project: any }) {
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         <div className="rounded-lg border border-slate-100 bg-slate-50/50 p-4 space-y-1">
           <span className="block text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('research.group.projectName')}</span>
-          <span className="block font-medium text-slate-900 text-sm leading-snug">{project.title}</span>
+          <span className="block break-words font-medium text-slate-900 text-sm leading-snug">{project.title}</span>
         </div>
         <div className="rounded-lg border border-slate-100 bg-slate-50/50 p-4 space-y-1">
           <span className="block text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('research.group.topic')}</span>
@@ -635,7 +650,7 @@ function GroupProjectTab({ project }: { project: any }) {
         <div className="rounded-lg border border-slate-100 bg-slate-50/50 p-4 space-y-1">
           <span className="block text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('research.group.codeManager')}</span>
           <span className="block font-semibold text-slate-800 text-sm">
-            {project.code || 'N/A'} — {project.managerName || t('lab.notAssigned')}
+            {project.code || t('common.notUpdated')} — {project.managerName || t('lab.notAssigned')}
           </span>
         </div>
         <div className="rounded-lg border border-slate-100 bg-slate-50/50 p-4 space-y-1">
@@ -651,25 +666,25 @@ function GroupProjectTab({ project }: { project: any }) {
       <div className="border-t border-slate-100 pt-5 space-y-5">
         <div>
           <h4 className="text-sm font-medium text-slate-900 uppercase tracking-wider">{t('research.group.details')}</h4>
-          <p className="mt-2 text-sm text-slate-600 leading-relaxed whitespace-pre-line">
+          <p className="mt-2 break-words text-sm text-slate-600 leading-relaxed whitespace-pre-line">
             {project.description || t('research.group.noProjectDescription')}
           </p>
         </div>
         <div>
           <h4 className="text-sm font-medium text-slate-900 uppercase tracking-wider">{t('research.group.objective')}</h4>
-          <p className="mt-2 text-sm text-slate-600 leading-relaxed whitespace-pre-line">
+          <p className="mt-2 break-words text-sm text-slate-600 leading-relaxed whitespace-pre-line">
             {project.objective || t('research.group.noProjectObjective')}
           </p>
         </div>
         <div>
           <h4 className="text-sm font-medium text-slate-900 uppercase tracking-wider">{t('research.group.requiredProducts')}</h4>
-          <p className="mt-2 text-sm text-slate-600 leading-relaxed whitespace-pre-line bg-blue-50/30 rounded-lg p-4 border border-blue-100/50">
+          <p className="mt-2 break-words text-sm text-slate-600 leading-relaxed whitespace-pre-line bg-blue-50/30 rounded-lg p-4 border border-blue-100/50">
             {project.requiredProducts || t('research.group.noRequiredProducts')}
           </p>
         </div>
         <div>
           <h4 className="text-sm font-medium text-slate-900 uppercase tracking-wider">{t('research.group.evaluationCriteria')}</h4>
-          <p className="mt-2 text-sm text-slate-600 leading-relaxed whitespace-pre-line bg-emerald-50/20 rounded-lg p-4 border border-emerald-100/30">
+          <p className="mt-2 break-words text-sm text-slate-600 leading-relaxed whitespace-pre-line bg-emerald-50/20 rounded-lg p-4 border border-emerald-100/30">
             {project.evaluationCriteria || t('research.group.noEvaluationCriteria')}
           </p>
         </div>
@@ -687,7 +702,7 @@ function GroupTaskList({ groupId }: { groupId: number }) {
   });
 
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+    <section className="min-w-0 rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
       <div>
         <h3 className="text-lg font-semibold text-slate-950">{t('research.group.taskBoard')}</h3>
       </div>
@@ -701,8 +716,8 @@ function GroupTaskList({ groupId }: { groupId: number }) {
       ) : !tasks.length ? (
         <EmptyState className="mt-5">{t('research.group.noTasks')}</EmptyState>
       ) : (
-        <div className="mt-5 overflow-x-auto">
-          <table className="w-full text-left text-sm">
+        <div className="mt-5 max-w-full overflow-x-auto overscroll-x-contain">
+          <table className="w-full min-w-[42rem] text-left text-sm">
             <thead>
               <tr className="border-b border-slate-200 bg-slate-50 text-xs font-semibold uppercase tracking-wider text-slate-500">
                 <th className="px-4 py-3 font-semibold">{t('research.group.task')}</th>
@@ -809,12 +824,14 @@ function GroupTasksTab({
   return (
     <div className="space-y-6">
       {/* Milestone Selector */}
-      <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex min-w-0 flex-col justify-between gap-4 rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:p-5">
         <div>
           <h3 className="text-base font-medium text-slate-900">{t('research.group.tasksByMilestone')}</h3>
         </div>
-        <div className="w-full sm:w-72">
+        <div className="min-w-0 w-full sm:w-72">
+          <label className="sr-only" htmlFor="research-milestone-select">{t('research.group.tasksByMilestone')}</label>
           <select
+            id="research-milestone-select"
             value={selectedMilestoneId || ''}
             onChange={(e) => setSelectedMilestoneId(Number(e.target.value))}
             className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-800 focus:border-blue-500 focus:outline-none"
@@ -830,10 +847,10 @@ function GroupTasksTab({
 
       {/* Task Board */}
       {selectedMilestoneId && (
-        <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm space-y-4">
+        <div className="min-w-0 space-y-4 rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
           <div className="border-b border-slate-100 pb-4">
-            <h4 className="text-base font-medium text-slate-900">{selectedMilestone.title}</h4>
-            {selectedMilestone.description ? <p className="mt-1 text-sm text-slate-600">{selectedMilestone.description}</p> : null}
+            <h4 className="break-words text-base font-medium text-slate-900">{selectedMilestone.title}</h4>
+            {selectedMilestone.description ? <p className="mt-1 break-words text-sm text-slate-600">{selectedMilestone.description}</p> : null}
           </div>
           <TaskBoard
             projectId={projectId}
@@ -872,10 +889,10 @@ function LeaderTasksWrapper({
   return (
     <div className="space-y-6">
       {/* Sub-tab selection */}
-      <div className="flex gap-1.5 rounded-md bg-slate-100 p-1 w-fit">
+      <div className="flex max-w-full gap-1.5 overflow-x-auto rounded-md bg-slate-100 p-1 overscroll-x-contain sm:w-fit">
         <button
           onClick={() => setSubTab('me')}
-          className={`rounded-md px-4 py-1.5 text-xs font-semibold transition ${
+          className={`shrink-0 whitespace-nowrap rounded-md px-4 py-1.5 text-xs font-semibold transition ${
             subTab === 'me'
               ? 'bg-white text-blue-700 shadow-sm font-medium'
               : 'text-slate-600 hover:text-slate-900'
@@ -885,7 +902,7 @@ function LeaderTasksWrapper({
         </button>
         <button
           onClick={() => setSubTab('group')}
-          className={`rounded-md px-4 py-1.5 text-xs font-semibold transition ${
+          className={`shrink-0 whitespace-nowrap rounded-md px-4 py-1.5 text-xs font-semibold transition ${
             subTab === 'group'
               ? 'bg-white text-blue-700 shadow-sm font-medium'
               : 'text-slate-600 hover:text-slate-900'
@@ -933,10 +950,10 @@ function LeaderMilestonesWrapper({
   return (
     <div className="space-y-6">
       {/* Sub-tab selection */}
-      <div className="flex gap-1.5 rounded-md bg-slate-100 p-1 w-fit">
+      <div className="flex max-w-full gap-1.5 overflow-x-auto rounded-md bg-slate-100 p-1 overscroll-x-contain sm:w-fit">
         <button
           onClick={() => setSubTab('me')}
-          className={`rounded-md px-4 py-1.5 text-xs font-semibold transition ${
+          className={`shrink-0 whitespace-nowrap rounded-md px-4 py-1.5 text-xs font-semibold transition ${
             subTab === 'me'
               ? 'bg-white text-blue-700 shadow-sm font-medium'
               : 'text-slate-600 hover:text-slate-900'
@@ -946,7 +963,7 @@ function LeaderMilestonesWrapper({
         </button>
         <button
           onClick={() => setSubTab('group')}
-          className={`rounded-md px-4 py-1.5 text-xs font-semibold transition ${
+          className={`shrink-0 whitespace-nowrap rounded-md px-4 py-1.5 text-xs font-semibold transition ${
             subTab === 'group'
               ? 'bg-white text-blue-700 shadow-sm font-medium'
               : 'text-slate-600 hover:text-slate-900'

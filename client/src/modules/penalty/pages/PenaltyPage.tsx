@@ -23,7 +23,7 @@ export function PenaltyPage() {
     return (
       <section className="rounded-lg border border-red-200 bg-white p-6 text-sm text-red-700 shadow-sm">
         {t('penalty.loadFailed')}
-        <button className="ml-3 font-semibold underline" type="button" onClick={() => refetch()}>
+        <button className="ml-3 min-h-11 font-semibold underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500" type="button" onClick={() => refetch()}>
           {t('common.retry')}
         </button>
       </section>

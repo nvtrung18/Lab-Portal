@@ -1,4 +1,17 @@
 import { getStoredLocale, translate, type Locale } from '../../../shared/i18n';
+import type { FaceFallbackReason } from '../api';
+
+const QR_REASON_KEYS: Record<Exclude<FaceFallbackReason, 'OTHER'>, string> = {
+  FACE_DISABLED: 'checkin.reasonFaceDisabled',
+  FACE_SERVICE_UNAVAILABLE: 'checkin.reasonFaceUnavailable',
+  FACE_PROFILE_UNAVAILABLE: 'checkin.reasonProfileUnavailable',
+};
+
+export function getCheckinQrReasonLabel(fallbackReason: FaceFallbackReason, reason: string, locale: Locale) {
+  if (fallbackReason === 'OTHER') return reason;
+  const key = QR_REASON_KEYS[fallbackReason];
+  return key ? translate(key, locale, reason) : reason;
+}
 
 const BOOKING_STATUS_KEYS: Record<string, string> = {
   PENDING_APPROVAL: 'booking.status.pendingApproval',

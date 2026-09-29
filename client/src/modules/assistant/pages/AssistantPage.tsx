@@ -89,7 +89,7 @@ function AssistantAnswer({ response, actionError, actionPending, locale, t, onRe
         </span>
         {response.assistantKey ? <span className="text-slate-500 dark:text-slate-400">{assistantDisplayName(response.assistantKey, t)}</span> : null}
       </div>
-      <p className="whitespace-pre-wrap text-sm leading-7 text-slate-700 dark:text-slate-200">{response.answer}</p>
+      <p className="whitespace-pre-wrap break-words text-sm leading-7 text-slate-700 dark:text-slate-200">{response.answer}</p>
       {response.actionPreview ? (
         <div className="mt-4 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950 shadow-sm dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-100">
           <p className="flex items-center gap-2 font-semibold"><CalendarClock aria-hidden="true" className="h-4 w-4" /> {t('assistant.previewSlot')}</p>
@@ -122,7 +122,7 @@ function AssistantAnswer({ response, actionError, actionPending, locale, t, onRe
           <ul className="mt-3 grid gap-2 sm:grid-cols-2">
             {response.citations.map((citation) => (
               <li className="rounded-md border border-slate-200 bg-white p-3 text-xs text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300" key={`${citation.documentId}-${citation.chunkIndex}`}>
-                <p className="font-semibold text-slate-900 dark:text-white">{citation.sourceType} · {citation.resourceId}</p>
+                <p className="break-all font-semibold text-slate-900 dark:text-white">{citation.sourceType} · {citation.resourceId}</p>
                 <p className="mt-1">{t('assistant.versionChunk', undefined, { version: citation.version, chunk: citation.chunkIndex + 1 })}{citation.pageNumber ? t('assistant.page', undefined, { page: citation.pageNumber }) : ''}</p>
               </li>
             ))}
@@ -287,7 +287,7 @@ export function AssistantPage() {
         <h1 className="mt-1 text-2xl font-semibold text-slate-950 dark:text-white">{t('assistant.title')}</h1>
       </header>
 
-      <div className="grid min-h-[680px] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900 md:grid-cols-[260px_minmax(0,1fr)]">
+      <div className="grid min-h-[560px] min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900 md:min-h-[680px] md:grid-cols-[260px_minmax(0,1fr)]">
         <aside className="border-b border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-950 md:border-b-0 md:border-r">
           <Button disabled={chatMutation.isPending || actionMutation.isPending || deleteConversationMutation.isPending} className="w-full" onClick={startNewConversation} type="button" variant="outline">
             <Plus aria-hidden="true" className="h-4 w-4" /> {t('assistant.newConversation')}
@@ -310,7 +310,7 @@ export function AssistantPage() {
                   type="button"
                 >
                   <MessageSquare aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0" />
-                  <span className="line-clamp-2">{item.title}</span>
+                  <span className="line-clamp-2 min-w-0 break-words">{item.title}</span>
                 </button>
                 <span className="ml-auto flex shrink-0 gap-1">
                   <button
@@ -354,12 +354,12 @@ export function AssistantPage() {
             </div>
           ) : turns.map((turn) => (
             <article className="space-y-3" key={turn.id}>
-              <div className="ml-auto max-w-[85%] rounded-2xl rounded-br-md bg-slate-900 px-4 py-3 text-white dark:bg-slate-100 dark:text-slate-950">
+              <div className="ml-auto max-w-[92%] break-words rounded-2xl rounded-br-md bg-slate-900 px-4 py-3 text-white dark:bg-slate-100 dark:text-slate-950 sm:max-w-[85%]">
                 <div className="mb-1 flex items-center gap-2 text-xs font-semibold opacity-70"><UserRound aria-hidden="true" className="h-3.5 w-3.5" /> {t('assistant.you')}</div>
                 <p className="whitespace-pre-wrap text-sm leading-6">{turn.question}</p>
               </div>
-              <div className="mr-auto flex max-w-[94%] gap-3 rounded-2xl rounded-bl-md border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-950">
-                <div className="mt-0.5 h-fit rounded-full bg-white p-2 shadow-sm dark:bg-slate-900"><Bot aria-hidden="true" className="h-4 w-4" /></div>
+              <div className="mr-auto flex max-w-full min-w-0 gap-3 rounded-2xl rounded-bl-md border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-950 sm:max-w-[94%] sm:p-4">
+                <div className="mt-0.5 hidden h-fit rounded-full bg-white p-2 shadow-sm dark:bg-slate-900 sm:block"><Bot aria-hidden="true" className="h-4 w-4" /></div>
                 {turn.response ? <AssistantAnswer
                   actionError={turn.actionError}
                   actionPending={actionMutation.isPending || chatMutation.isPending}

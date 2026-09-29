@@ -217,12 +217,12 @@ export function SystemConfigPage() {
   }
 
   return (
-    <section className="rounded-lg border border-slate-800 bg-slate-900 p-6 shadow-sm">
+    <section className="min-w-0 rounded-lg border border-slate-800 bg-slate-900 p-4 shadow-sm sm:p-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <PageHeader />
         <button
           type="button"
-          className="rounded-md bg-white px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-slate-200 disabled:cursor-not-allowed disabled:bg-slate-600"
+          className="min-h-11 w-full rounded-md bg-white px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-slate-200 disabled:cursor-not-allowed disabled:bg-slate-600 sm:w-auto"
           disabled={updateMutation.isPending}
           onClick={() => void handleSubmit()}
         >
@@ -408,9 +408,9 @@ function ConfigSection({ children, title }: { children: ReactNode; title: string
   const { t } = useI18n();
 
   return (
-    <section className="rounded-lg border border-slate-800 bg-slate-950/50 p-4">
+    <section className="min-w-0 rounded-lg border border-slate-800 bg-slate-950/50 p-4">
       <h3 className="text-base font-semibold text-white">{localizeConfigLabel(t, title)}</h3>
-      <div className="mt-4 grid gap-4 lg:grid-cols-2">{children}</div>
+      <div className="mt-4 grid min-w-0 gap-4 xl:grid-cols-2">{children}</div>
     </section>
   );
 }
@@ -427,7 +427,7 @@ function ToggleField({
   const { t } = useI18n();
 
   return (
-    <label className="flex min-h-12 items-center justify-between gap-4 rounded-md border border-slate-800 bg-slate-900 px-3 py-2">
+    <label className="flex min-h-12 min-w-0 items-center justify-between gap-4 rounded-md border border-slate-800 bg-slate-900 px-3 py-2">
       <span className="text-sm font-medium text-slate-200">{localizeConfigLabel(t, label)}</span>
       <input
         checked={checked}
@@ -460,7 +460,7 @@ function NumberField({
     <label className="space-y-2">
       <span className="text-sm font-medium text-slate-300">{localizeConfigLabel(t, label)}</span>
       <input
-        className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none focus:border-white"
+        className="min-h-11 w-full min-w-0 rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-base text-white outline-none focus:border-white sm:text-sm"
         min={min}
         max={max}
         step={step}
@@ -487,8 +487,7 @@ function TextField({
     <label className="space-y-2">
       <span className="text-sm font-medium text-slate-300">{localizeConfigLabel(t, label)}</span>
       <input
-        className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none placeholder:text-slate-500 focus:border-white"
-        placeholder="pdf, doc, docx"
+        className="min-h-11 w-full min-w-0 rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-base text-white outline-none focus:border-white sm:text-sm"
         value={value}
         onChange={(event) => onChange(event.target.value)}
       />
@@ -513,7 +512,7 @@ function SelectField({
     <label className="space-y-2">
       <span className="text-sm font-medium text-slate-300">{localizeConfigLabel(t, label)}</span>
       <select
-        className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none focus:border-white"
+        className="min-h-11 w-full min-w-0 rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-base text-white outline-none focus:border-white sm:text-sm"
         value={value}
         onChange={(event) => onChange(event.target.value)}
       >

@@ -71,26 +71,26 @@ export function ResearchProjectDetailPage() {
   });
 
   return (
-    <section className="space-y-6">
-      <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+    <section className="min-w-0 space-y-6">
+      <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
         <Link
-          className="inline-flex rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100"
+          className="inline-flex min-h-11 items-center rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100"
           to="/app/research"
         >
           {t('common.backToList')}
         </Link>
         <div className="mt-4 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div>
-            <h2 className="text-xl font-semibold text-slate-950">
+          <div className="min-w-0">
+            <h2 className="break-words text-xl font-semibold text-slate-950">
               {project.code ? `${project.code} - ` : ''}
               {project.title}
             </h2>
-            <p className="mt-2 text-sm text-slate-600">
+            <p className="mt-2 break-words text-sm text-slate-600">
               {project.objective || project.description || t('common.notUpdated')}
             </p>
           </div>
           <span className={`w-fit rounded-full px-3 py-1 text-xs font-semibold ring-1 ${getStatusClass(project.status)}`}>
-            {formatProjectStatus(project.status)}
+            {formatProjectStatus(project.status, locale)}
           </span>
         </div>
         <dl className="mt-5 grid gap-4 text-sm sm:grid-cols-2 lg:grid-cols-4">
@@ -125,7 +125,7 @@ export function ResearchProjectDetailPage() {
           </div>
           <Link
             to={`/app/research/projects/${project.id}/groups/${studentGroupId}`}
-            className="w-fit shrink-0 rounded-lg bg-amber-600 px-4 py-2 text-center text-sm font-semibold text-white transition-colors hover:bg-amber-700 shadow-sm"
+            className="inline-flex min-h-11 max-w-full items-center justify-center rounded-lg bg-amber-600 px-4 py-2 text-center text-sm font-semibold text-white shadow-sm transition-colors hover:bg-amber-700"
           >
             {t('research.project.openGroup')}
           </Link>
@@ -140,10 +140,10 @@ export function ResearchProjectDetailPage() {
         </div>
       )}
 
-      <div className="flex gap-1 overflow-x-auto" role="tablist" aria-label={t('research.title')}>
+      <div className="research-detail-tabs research-project-tabs gap-1" role="tablist" aria-label={t('research.title')}>
         {detailTabs.map((tab) => (
           <button
-            className={`whitespace-nowrap border-b-2 px-4 py-3 text-sm font-semibold ${
+            className={`shrink-0 whitespace-nowrap border-b-2 px-4 py-3 text-sm font-semibold ${
               activeTab === tab.value ? 'border-slate-900 text-slate-950' : 'border-transparent text-slate-600'
             }`}
             key={tab.value}
