@@ -230,7 +230,7 @@ export function EvaluationPage({ projectId, groupId, role, currentUserId }: Eval
                 <article className="min-w-0 rounded-md border border-slate-200 bg-white p-4" key={`${student.groupId}-${student.userId}`}>
                   <h4 className="break-words font-semibold text-slate-950">{student.fullName}</h4>
                   <p className="mt-1 break-words text-sm text-slate-600">{student.groupName}</p>
-                  <dl className="mt-4 grid grid-cols-2 gap-3 text-sm">
+                  <dl className="mt-4 grid grid-cols-1 min-[380px]:grid-cols-2 gap-3 text-sm">
                     {SCORE_FIELDS.map(([field, labelKey]) => (
                       <EvaluationField
                         key={field}

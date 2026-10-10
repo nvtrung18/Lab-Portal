@@ -140,7 +140,12 @@ public class ApplicationController {
     public ResponseEntity<Response<Page<ApplicationResponseDTO>>> getApplicationsByUserId(
             @PathVariable Long userId,
             @PageableDefault(size = 20, page = 0, sort = "createdAt", direction = Sort.Direction.DESC)
-            Pageable pageable) {
+            Pageable pageable,
+            Authentication authentication) {
+        User currentUser = getCurrentUser(authentication);
+        if (!currentUser.hasRole("ADMIN") && !currentUser.getId().equals(userId)) {
+            throw new AccessDeniedException("Cannot access another user's applications");
+        }
         Page<ApplicationResponseDTO> applications = applicationService.getApplicationsByUserId(userId, pageable);
         return ResponseEntity.ok(Response.ok("Applications retrieved successfully", applications));
     }

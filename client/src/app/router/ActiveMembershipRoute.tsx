@@ -1,49 +1,31 @@
 import { Navigate, Outlet } from 'react-router-dom';
 
-import { getStoredUser } from '../../shared/api';
 import { hasActiveMembership } from '../../shared/utils/membership';
 import { useCurrentUser } from '../../modules/user/hooks';
 import { LAB_MANAGER } from '../../shared/constants/roles';
 import { useI18n } from '../../shared/i18n';
+import { LoadingState } from '../../shared/components';
 
 interface ActiveMembershipRouteProps {
   allowLabManager?: boolean;
 }
 
 export function ActiveMembershipRoute({ allowLabManager = false }: ActiveMembershipRouteProps) {
-  const storedUser = getStoredUser();
   const { t } = useI18n();
-  const { data: currentUser, isLoading } = useCurrentUser();
-  const user = currentUser
-    ? {
-        id: currentUser.id,
-        fullName: currentUser.fullName,
-        email: currentUser.email,
-        roles: currentUser.roles.map((role) => role.replace(/^ROLE_/, '')),
-        memberships: currentUser.memberships?.map((membership) => ({
-          labId: membership.labId ?? membership.lab?.id ?? membership.id ?? 0,
-          labName: membership.labName ?? membership.lab?.name ?? membership.lab?.labName ?? 'Lab',
-          role: membership.role,
-          status: membership.status,
-          joinedAt: membership.joinedAt ?? membership.createdAt,
-        })),
-      }
-    : storedUser;
+  const { data: user, isLoading, isFetching, isError, isFetchedAfterMount } = useCurrentUser({ staleTime: 0 });
+
+  if (isLoading || (!isFetchedAfterMount && isFetching)) {
+    return <LoadingState className="m-4">{t('membership.checking')}</LoadingState>;
+  }
+
+  if (isError || !user) return <Navigate to="/vi" replace />;
 
   if (allowLabManager && user?.roles.map((role) => role.replace(/^ROLE_/, '')).includes(LAB_MANAGER)) {
     return <Outlet />;
   }
 
-  if (isLoading && !storedUser) {
-    return (
-      <section className="rounded-lg border border-slate-200 bg-white p-6 text-sm text-slate-600 shadow-sm">
-        {t('membership.checking')}
-      </section>
-    );
-  }
-
   if (!hasActiveMembership(user)) {
-    return <Navigate to="/app/labs" replace />;
+    return <Navigate to="/vi" replace />;
   }
 
   return <Outlet />;

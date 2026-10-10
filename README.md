@@ -133,17 +133,13 @@ Hệ thống được thiết kế theo kiến trúc **Client-Server**, backend 
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│                         CLIENT LAYER                                │
-│  ┌──────────────────┐ ┌──────────────────┐ ┌──────────────────┐     │
-│  │  Admin Portal    │ │ Manager Portal   │ │  User Portal     │     │
-│  │  React + TS      │ │ React + TS       │ │  React + TS      │     │
-│  │  Port: 5173      │ │ Port: 5174       │ │  Port: 5175      │     │
-│  │  (dark theme)    │ │                  │ │                  │     │
-│  └────────┬─────────┘ └────────┬─────────┘ └────────┬─────────┘     │
-│           │                    │                    │               │
-└───────────┼────────────────────┼────────────────────┼───────────────┘
-            │         REST API (JSON, JWT Bearer)     │
-            ▼                    ▼                    ▼
+│               CLIENT LAYER: React + TypeScript (:5173)              │
+│             Website (/vi, /en) -> Login (/login)                     │
+│             Admin (/admin) | Manager / Student (/app)               │
+│             Student: membership ACTIVE required                     │
+└──────────────────────────────┬──────────────────────────────────────┘
+                               │ REST API (JSON, JWT Bearer)
+                               ▼
 ┌─────────────────────────────────────────────────────────────────────┐
 │                    SERVER LAYER (Modular Monolith)                  │
 │  ┌───────────────────────────────────────────────────────────────┐  │
@@ -744,11 +740,11 @@ Lab-Portal/
 
 | Role | Tên Hiển Thị | Giao Diện | Mô Tả |
 |------|-------------|-----------|-------|
-| `ADMIN` | Quản trị viên | Admin Portal (:5173, dark theme) | Quản lý toàn hệ thống |
-| `LAB_MANAGER` | Quản lý PTN | Manager Portal (:5174) | Vận hành 1 PTN được gán |
-| `STUDENT` | Sinh viên | User Portal (:5175) | Sử dụng PTN, tham gia NCKH |
-| `LEADER` | Trưởng nhóm NC | User Portal (:5175) | Group role — duyệt báo cáo cấp 1 |
-| `MEMBER` | Thành viên nhóm | User Portal (:5175) | Group role — thực hiện task |
+| `ADMIN` | Quản trị viên | Admin Portal (:5173/admin) | Quản lý toàn hệ thống |
+| `LAB_MANAGER` | Quản lý PTN | Manager Portal (:5173/app) | Vận hành 1 PTN được gán |
+| `STUDENT` | Sinh viên | User Portal (:5173/app) | Sử dụng PTN, tham gia NCKH |
+| `LEADER` | Trưởng nhóm NC | User Portal (:5173/app) | Group role — duyệt báo cáo cấp 1 |
+| `MEMBER` | Thành viên nhóm | User Portal (:5173/app) | Group role — thực hiện task |
 
 > Một SV có thể là **Leader** ở nhóm A, **Member** ở nhóm B — group role không phải system role.
 
@@ -851,9 +847,7 @@ Kết quả mong đợi:
 NAME                           STATUS
 lab_portal_mysql               running (0.0.0.0:3306->3306)
 lab-portal-redis               running (0.0.0.0:6379->6379)
-lab_portal_frontend_admin      running (0.0.0.0:5173->5173)
-lab_portal_frontend_manager    running (0.0.0.0:5174->5174)
-lab_portal_frontend_user       running (0.0.0.0:5175->5175)
+lab_portal_frontend            running (0.0.0.0:5173->5173)
 ```
 
 ### Bước 4: Chạy Backend
@@ -885,13 +879,11 @@ cd client
 # Cài đặt dependencies
 npm install
 
-# Chạy theo từng portal:
-npm run dev:admin    # Admin Portal   tại port 5173
-npm run dev:manager  # Manager Portal tại port 5174
-npm run dev:user     # User Portal    tại port 5175
+# Chạy một FE cho website, Admin, Manager và User
+npm run dev          # Port 5173; chỉ cần một terminal
 
-# Hoặc chạy mặc định
-npm run dev          # Port 5173
+# Các script dev:admin / dev:manager / dev:user là alias của cùng lệnh trên.
+
 ```
 
 > ⚠️ Nếu đã chạy frontend qua Docker Compose ở Bước 3, **không cần** chạy thủ công.
@@ -900,9 +892,11 @@ npm run dev          # Port 5173
 
 | Ứng Dụng | URL | Mô Tả |
 |-----------|-----|--------|
-| **Admin Portal** | `http://localhost:5173` | Giao diện quản trị viên (dark theme) |
-| **Manager Portal** | `http://localhost:5174` | Giao diện quản lý PTN |
-| **User Portal** | `http://localhost:5175` | Giao diện sinh viên |
+| **Website giới thiệu** | `http://localhost:5173/vi` | Trang đầu khi vào hệ thống |
+| **Đăng nhập** | `http://localhost:5173/login` | Đăng nhập và chuyển theo quyền truy cập |
+| **Admin Portal** | `http://localhost:5173/admin` | Giao diện quản trị viên |
+| **Manager Portal** | `http://localhost:5173/app` | Giao diện quản lý PTN |
+| **User Portal** | `http://localhost:5173/app` | Giao diện sinh viên |
 | **Backend API** | `http://localhost:8080/api` | REST API |
 | **Swagger UI** | `http://localhost:8080/swagger-ui.html` | Tài liệu API tương tác |
 

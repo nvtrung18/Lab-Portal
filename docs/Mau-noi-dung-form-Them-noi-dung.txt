@@ -1,0 +1,177 @@
+MẪU ĐIỀN FORM “THÊM NỘI DUNG” — GIỚI THIỆU LAB
+
+Toàn bộ nội dung dưới đây là mẫu giả lập để thử giao diện, không phải thông tin đã xác nhận của lab.
+Chỉ sao chép giá trị của từng trường. Không sao chép tên trường hoặc các dòng hướng dẫn vào editor.
+
+============================================================
+1. TIÊU ĐỀ NỘI DUNG
+============================================================
+
+Tiếng Việt:
+[MẪU] Giới thiệu phòng nghiên cứu
+
+English:
+[DEMO] About Our Research Lab
+
+============================================================
+2. CÁCH TRÌNH BÀY
+============================================================
+
+Chọn: Văn bản
+
+Sau khi xem trước, có thể thử “Ảnh và nội dung hai cột” hoặc “Khối nổi bật” với cùng nội dung.
+
+============================================================
+3. DÒNG NHẤN
+============================================================
+
+Tiếng Việt:
+KẾT NỐI TRI THỨC — PHÁT TRIỂN NGHIÊN CỨU
+
+English:
+CONNECTING KNOWLEDGE — ADVANCING RESEARCH
+
+============================================================
+4. ĐOẠN GIỚI THIỆU
+============================================================
+
+Tiếng Việt:
+Phòng nghiên cứu mẫu định hướng xây dựng môi trường học thuật dành cho giảng viên, nghiên cứu viên và sinh viên cùng phát triển ý tưởng. Các hoạt động được tổ chức theo nhóm nghiên cứu và đề tài, hướng tới kết nối kiến thức nền tảng với những vấn đề thực tiễn trong trí tuệ nhân tạo, dữ liệu cảm biến và hệ thống kết nối.
+
+English:
+This fictional research lab aims to provide an academic environment where faculty, researchers and students develop ideas together. Activities are organized around research groups and projects, connecting foundational knowledge with practical questions in artificial intelligence, sensor data and connected systems.
+
+============================================================
+5. NỘI DUNG CHÍNH — TIẾNG VIỆT
+============================================================
+
+Chọn nút “Tiếng Việt”, rồi sao chép từ “Không gian...” đến hết câu “...trong lab.” bên dưới.
+
+Không gian học tập và nghiên cứu cộng tác
+
+[NỘI DUNG MẪU] Phòng nghiên cứu được mô tả trong tài liệu này là một môi trường học thuật giả lập, nơi các thành viên có thể trao đổi chuyên môn, xây dựng đề tài và chia sẻ quá trình thực hiện nghiên cứu. Nội dung được dùng để kiểm tra cách trình bày trên website giới thiệu của hệ thống.
+
+Định hướng của lab là tạo điều kiện để mỗi thành viên phát triển năng lực nghiên cứu thông qua những câu hỏi cụ thể, kế hoạch rõ ràng và quá trình thực nghiệm được ghi nhận. Sinh viên có thể bắt đầu từ việc đọc tài liệu, tìm hiểu phương pháp và tham gia các công việc phù hợp với kinh nghiệm của mình.
+
+Các hướng nghiên cứu minh họa
+
+• Trí tuệ nhân tạo và phân tích dữ liệu: tìm hiểu phương pháp học máy, xử lý dữ liệu và đánh giá mô hình trong những bối cảnh thực nghiệm được xác định rõ.
+• Dữ liệu cảm biến và quan sát môi trường: nghiên cứu cách thu thập, tổ chức và phân tích dữ liệu để mô tả những thay đổi của môi trường.
+• Mạng và hệ thống kết nối: khảo sát cách các thiết bị trao đổi thông tin, phối hợp hoạt động và hỗ trợ các ứng dụng nghiên cứu.
+
+Các hướng trên chỉ là ví dụ. Khi sử dụng nội dung chính thức, admin thay thế bằng thông tin của những nhóm nghiên cứu thực tế đã được chọn để hiển thị.
+
+Một đề tài được triển khai như thế nào?
+
+1. Xác định vấn đề: nhóm trao đổi để làm rõ câu hỏi nghiên cứu, phạm vi và những thông tin cần thu thập.
+2. Xây dựng kế hoạch: phân chia công việc, xác định các mốc thực hiện và thống nhất cách ghi nhận tiến độ.
+3. Thực hiện nghiên cứu: đọc tài liệu, chuẩn bị dữ liệu, tiến hành thực nghiệm và lưu lại kết quả theo từng giai đoạn.
+4. Trao đổi và cải tiến: thảo luận trong nhóm, nhận góp ý và điều chỉnh phương pháp khi có thông tin mới.
+5. Tổng kết: trình bày kết quả, mô tả giới hạn và đề xuất những bước tiếp theo của đề tài.
+
+Hoạt động học thuật
+
+Các hoạt động minh họa có thể bao gồm seminar chuyên đề, trao đổi tài liệu, báo cáo tiến độ và thảo luận về phương pháp nghiên cứu. Nội dung công khai trên website do admin lựa chọn và cập nhật; thông tin quản lý chi tiết được truy cập theo quyền của từng tài khoản trong hệ thống.
+
+Tinh thần nghiên cứu
+
+“Một ý tưởng có thể bắt đầu từ câu hỏi nhỏ; quá trình nghiên cứu cần được mô tả rõ để các thành viên cùng hiểu và tiếp tục phát triển.”
+
+Đây là câu trích dẫn mẫu, không gán cho một giảng viên hoặc nhà nghiên cứu cụ thể.
+
+Tìm hiểu và tham gia
+
+Bạn có thể xem các hướng nghiên cứu, hồ sơ thành viên và thông tin công bố trên website. Nếu muốn tham gia lab, hãy đăng nhập hoặc đăng ký tài khoản, nộp hồ sơ theo quy trình hiện có và chờ xét duyệt. Tạo tài khoản không đồng nghĩa với việc đã được chấp nhận vào lab; quyền truy cập chức năng nội bộ được cấp theo trạng thái phê duyệt và vai trò trong lab.
+
+============================================================
+6. NỘI DUNG CHÍNH — ENGLISH
+============================================================
+
+Chọn nút “English”, rồi sao chép từ “A Space...” đến hết câu “...within the lab.” bên dưới.
+
+A Space for Learning and Collaborative Research
+
+[DEMO CONTENT] The research lab described here is a fictional academic environment where members exchange knowledge, develop projects and share their research process. This content is intended to exercise the presentation of the system's public website.
+
+The lab aims to help members develop research skills through specific questions, clear plans and documented experiments. Students can begin by reviewing literature, learning methods and contributing to tasks appropriate to their experience.
+
+Illustrative Research Directions
+
+• Artificial intelligence and data analysis: explore machine learning, data processing and model evaluation within clearly defined experimental settings.
+• Sensor data and environmental observation: investigate how data can be collected, organized and analyzed to describe environmental changes.
+• Networks and connected systems: study how devices exchange information, coordinate their operations and support research applications.
+
+These directions are examples only. For the official website, the administrator should replace them with information about the actual research groups selected for public display.
+
+How Is a Research Project Organized?
+
+1. Define the problem: discuss the research question, scope and information that needs to be collected.
+2. Develop a plan: assign tasks, identify milestones and agree on how progress will be recorded.
+3. Conduct the research: review literature, prepare data, perform experiments and document findings at each stage.
+4. Discuss and improve: share progress, receive feedback and revise methods when new information becomes available.
+5. Summarize the work: present findings, describe limitations and propose the project's next steps.
+
+Academic Activities
+
+Illustrative activities may include seminars, literature discussions, progress presentations and conversations about research methods. Public website content is selected and updated by the administrator. Detailed management information is available according to each account's permissions within the system.
+
+Research Values
+
+“An idea can begin with a small question; the research process should be described clearly so that others can understand it and continue the work.”
+
+This is a sample quotation and is not attributed to a particular faculty member or researcher.
+
+Learn More and Join
+
+You can explore research directions, member profiles and publication information on the website. To apply to the lab, sign in or register, submit the required application through the existing process and wait for review. Creating an account does not mean that an applicant has been accepted. Access to internal functions depends on approval status and role within the lab.
+
+============================================================
+7. ẢNH MINH HỌA
+============================================================
+
+URL mẫu khi FE chạy ở localhost:5173:
+http://localhost:5173/lab-website/images/team.jpg
+
+Hoặc chọn tải ảnh từ file có sẵn:
+D:\CV\Lab-Portal\client\public\lab-website\images\team.jpg
+
+Nếu FE chạy ở địa chỉ khác, thay phần http://localhost:5173 bằng địa chỉ FE đang dùng.
+Ảnh lấy từ bộ tài nguyên mẫu của dự án, không phải ảnh xác nhận của lab.
+
+============================================================
+8. NHÃN NÚT LIÊN KẾT
+============================================================
+
+Tiếng Việt:
+Khám phá hướng nghiên cứu
+
+English:
+Explore Research Directions
+
+============================================================
+9. ĐƯỜNG DẪN LIÊN KẾT
+============================================================
+
+/vi/research
+
+Form hiện có một trường URL dùng chung. Có thể dùng /en/research khi muốn thử nút dẫn sang trang tiếng Anh.
+
+============================================================
+10. CHO PHÉP HIỂN THỊ TRÊN CÁC TAB ĐÃ CHỌN
+============================================================
+
+Bật checkbox này.
+Sau khi áp dụng vào bản nháp, chọn khối nội dung này trong danh sách nội dung của tab Giới thiệu hoặc tab muốn thử, rồi lưu bản nháp.
+Dùng Xem trước để kiểm tra trước khi xuất bản.
+
+============================================================
+GỢI Ý ĐỊNH DẠNG TRONG EDITOR
+============================================================
+
+Đây là văn bản thuần để dễ sao chép. Sau khi dán, dùng thanh công cụ của editor:
+• Áp dụng H2 cho dòng đầu tiên của mỗi ngôn ngữ.
+• Áp dụng H3 cho các tiêu đề nhỏ: các hướng nghiên cứu, quy trình đề tài, hoạt động học thuật, tinh thần nghiên cứu, tìm hiểu và tham gia.
+• Áp dụng danh sách gạch đầu dòng cho ba hướng nghiên cứu.
+• Áp dụng danh sách đánh số cho năm bước triển khai đề tài; bỏ số đã gõ nếu editor tự đánh số.
+• Áp dụng trích dẫn cho câu nằm trong dấu ngoặc kép.
+• Chọn một số cụm từ để thử in đậm, nghiêng hoặc gạch chân.

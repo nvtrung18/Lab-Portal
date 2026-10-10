@@ -1,0 +1,1944 @@
+{
+  "content": {
+    "profile": {
+      "name": "Nexus Research Lab",
+      "shortName": "NEXUS",
+      "email": "hello@nexus.example",
+      "coordinates": "21°01′ N   105°51′ E",
+      "locationLabel": "HANOI, VIETNAM",
+      "showDemoNotice": true,
+      "summary": {
+        "en": "A bilingual academic laboratory frontend exploring AI, Earth observation, wireless networks and open research. All content is explicitly fictional demonstration data.",
+        "vi": ""
+      }
+    },
+    "data": {
+      "research": [
+        {
+          "id": "geospatial-ai",
+          "title": {
+            "en": "Geospatial Intelligence",
+            "vi": "Trí tuệ không gian địa lý"
+          },
+          "description": {
+            "en": "Turning Earth observation into actionable insights for a more resilient world.",
+            "vi": "Biến dữ liệu quan sát Trái Đất thành hiểu biết thiết thực cho một thế giới bền vững."
+          },
+          "image": "/images/earth.jpg",
+          "icon": "earth",
+          "topics": [
+            {
+              "en": "Remote sensing & computer vision",
+              "vi": "Viễn thám & thị giác máy tính"
+            },
+            {
+              "en": "Environmental change detection",
+              "vi": "Phát hiện biến đổi môi trường"
+            },
+            {
+              "en": "Responsible geospatial AI",
+              "vi": "AI không gian địa lý có trách nhiệm"
+            }
+          ],
+          "visible": true
+        },
+        {
+          "id": "intelligent-systems",
+          "title": {
+            "en": "Intelligent Systems",
+            "vi": "Hệ thống thông minh"
+          },
+          "description": {
+            "en": "Building efficient, trustworthy AI that learns, adapts, and works in the real world.",
+            "vi": "Xây dựng AI hiệu quả, đáng tin cậy, có khả năng học và thích nghi trong thực tế."
+          },
+          "image": "/images/chip.jpg",
+          "icon": "cpu",
+          "topics": [
+            {
+              "en": "Edge AI & efficient learning",
+              "vi": "AI biên & học hiệu quả"
+            },
+            {
+              "en": "Multimodal machine learning",
+              "vi": "Học máy đa phương thức"
+            },
+            {
+              "en": "Explainable AI",
+              "vi": "AI có khả năng giải thích"
+            }
+          ],
+          "visible": true
+        },
+        {
+          "id": "wireless-iot",
+          "title": {
+            "en": "Wireless & IoT",
+            "vi": "Không dây & IoT"
+          },
+          "description": {
+            "en": "Connecting people, devices, and environments through next-generation networks.",
+            "vi": "Kết nối con người, thiết bị và môi trường qua các mạng thế hệ mới."
+          },
+          "image": "/images/city.jpg",
+          "icon": "radio",
+          "topics": [
+            {
+              "en": "Low-power sensor networks",
+              "vi": "Mạng cảm biến tiết kiệm năng lượng"
+            },
+            {
+              "en": "Adaptive wireless communication",
+              "vi": "Truyền thông không dây thích nghi"
+            },
+            {
+              "en": "Connected environments",
+              "vi": "Môi trường kết nối"
+            }
+          ],
+          "visible": true
+        },
+        {
+          "id": "data-science",
+          "title": {
+            "en": "Data & Sustainable Cities",
+            "vi": "Dữ liệu & đô thị bền vững"
+          },
+          "description": {
+            "en": "Understanding complex urban systems with open data and human-centered research.",
+            "vi": "Hiểu các hệ thống đô thị phức tạp bằng dữ liệu mở và nghiên cứu lấy con người làm trung tâm."
+          },
+          "image": "/images/campus.jpg",
+          "icon": "network",
+          "topics": [
+            {
+              "en": "Urban data platforms",
+              "vi": "Nền tảng dữ liệu đô thị"
+            },
+            {
+              "en": "Spatiotemporal analysis",
+              "vi": "Phân tích không gian và thời gian"
+            },
+            {
+              "en": "Participatory sensing",
+              "vi": "Cảm biến cộng đồng"
+            }
+          ],
+          "visible": true
+        }
+      ],
+      "members": [
+        {
+          "id": "minh-nguyen",
+          "title": {
+            "en": "Dr. Minh Nguyen",
+            "vi": "TS. Nguyễn Minh"
+          },
+          "description": {
+            "en": "A fictional principal investigator studying responsible machine learning and environmental sensing. This profile demonstrates the member page layout.",
+            "vi": "Trưởng nhóm giả định nghiên cứu học máy có trách nhiệm và cảm biến môi trường. Hồ sơ này minh họa bố cục trang thành viên."
+          },
+          "role": "Faculty",
+          "initials": "MN",
+          "area": "geospatial-ai",
+          "email": "minh@nexus.example",
+          "color": "#e1e8eb",
+          "visible": true
+        },
+        {
+          "id": "linh-tran",
+          "title": {
+            "en": "Dr. Linh Tran",
+            "vi": "TS. Trần Linh"
+          },
+          "description": {
+            "en": "A fictional researcher exploring efficient inference and interpretable AI for resource-constrained devices.",
+            "vi": "Nhà nghiên cứu giả định về suy luận hiệu quả và AI có thể giải thích trên thiết bị hạn chế tài nguyên."
+          },
+          "role": "Researcher",
+          "initials": "LT",
+          "area": "intelligent-systems",
+          "email": "linh@nexus.example",
+          "color": "#e8e6df",
+          "visible": true
+        },
+        {
+          "id": "anh-le",
+          "title": {
+            "en": "Anh Le",
+            "vi": "Lê Anh"
+          },
+          "description": {
+            "en": "A fictional PhD student investigating sensor fusion and robust Earth observation models.",
+            "vi": "Nghiên cứu sinh giả định nghiên cứu hợp nhất cảm biến và mô hình quan sát Trái Đất."
+          },
+          "role": "PhD student",
+          "initials": "AL",
+          "area": "geospatial-ai",
+          "email": "anh@nexus.example",
+          "color": "#e0e8e1",
+          "visible": true
+        },
+        {
+          "id": "huy-pham",
+          "title": {
+            "en": "Huy Pham",
+            "vi": "Phạm Huy"
+          },
+          "description": {
+            "en": "A fictional MSc student prototyping low-power networks for environmental monitoring.",
+            "vi": "Học viên cao học giả định xây dựng mạng tiết kiệm năng lượng phục vụ giám sát môi trường."
+          },
+          "role": "MSc student",
+          "initials": "HP",
+          "area": "wireless-iot",
+          "email": "huy@nexus.example",
+          "color": "#e8e0dd",
+          "visible": true
+        },
+        {
+          "id": "mai-vo",
+          "title": {
+            "en": "Mai Vo",
+            "vi": "Võ Mai"
+          },
+          "description": {
+            "en": "A fictional undergraduate exploring open urban datasets and accessible visualization.",
+            "vi": "Sinh viên đại học giả định tìm hiểu dữ liệu đô thị mở và trực quan hóa dễ tiếp cận."
+          },
+          "role": "Undergraduate",
+          "initials": "MV",
+          "area": "data-science",
+          "email": "mai@nexus.example",
+          "color": "#e3e0eb",
+          "visible": true
+        },
+        {
+          "id": "nam-do",
+          "title": {
+            "en": "Nam Do",
+            "vi": "Đỗ Nam"
+          },
+          "description": {
+            "en": "A fictional alumnus whose example research focused on reproducible machine learning workflows.",
+            "vi": "Cựu thành viên giả định với hướng nghiên cứu minh họa về quy trình học máy có thể tái lập."
+          },
+          "role": "Alumni",
+          "initials": "ND",
+          "area": "intelligent-systems",
+          "email": "nam@nexus.example",
+          "color": "#dee8ec",
+          "visible": true
+        }
+      ],
+      "publications": [
+        {
+          "id": "earth-foundation",
+          "title": {
+            "en": "Toward generalizable foundation models for Earth observation",
+            "vi": "Hướng tới mô hình nền tảng có khả năng khái quát cho quan sát Trái Đất"
+          },
+          "description": {
+            "en": "An illustrative study design for evaluating cross-region transfer in satellite imagery. No paper has been published; this record is sample content.",
+            "vi": "Thiết kế nghiên cứu minh họa đánh giá chuyển giao giữa các vùng trên ảnh vệ tinh. Chưa có bài báo được công bố; đây là dữ liệu mẫu."
+          },
+          "year": 2026,
+          "type": "Preprint",
+          "authors": [
+            "minh-nguyen",
+            "anh-le"
+          ],
+          "area": "geospatial-ai",
+          "venue": {
+            "en": "Illustrative research preprint",
+            "vi": "Bản thảo nghiên cứu minh họa"
+          },
+          "project": "earthsense",
+          "resources": [
+            "PDF",
+            "Code"
+          ],
+          "visible": true
+        },
+        {
+          "id": "edge-learning",
+          "title": {
+            "en": "Energy-aware learning at the edge: a sensor network perspective",
+            "vi": "Học có nhận thức năng lượng tại biên: góc nhìn mạng cảm biến"
+          },
+          "description": {
+            "en": "A sample manuscript exploring the trade-offs between model accuracy and power budgets on connected devices.",
+            "vi": "Bản thảo mẫu tìm hiểu sự đánh đổi giữa độ chính xác mô hình và năng lượng của thiết bị kết nối."
+          },
+          "year": 2026,
+          "type": "Conference",
+          "authors": [
+            "linh-tran",
+            "huy-pham"
+          ],
+          "area": "wireless-iot",
+          "venue": {
+            "en": "Example Connected Systems Symposium · demo record",
+            "vi": "Hội thảo Hệ thống Kết nối minh họa · dữ liệu mẫu"
+          },
+          "project": "connected-campus",
+          "resources": [
+            "DOI",
+            "PDF",
+            "Code"
+          ],
+          "visible": true
+        },
+        {
+          "id": "urban-mapping",
+          "title": {
+            "en": "Mapping urban change with multimodal satellite data",
+            "vi": "Lập bản đồ biến đổi đô thị bằng dữ liệu vệ tinh đa phương thức"
+          },
+          "description": {
+            "en": "A fictional publication demonstrating how a research output could be connected to a project and its contributors.",
+            "vi": "Bài báo giả định minh họa cách liên kết kết quả nghiên cứu với dự án và thành viên."
+          },
+          "year": 2025,
+          "type": "Journal",
+          "authors": [
+            "minh-nguyen",
+            "mai-vo"
+          ],
+          "area": "data-science",
+          "venue": {
+            "en": "Example Journal of Urban Informatics · demo record",
+            "vi": "Tạp chí Tin học Đô thị minh họa · dữ liệu mẫu"
+          },
+          "project": "urban-observatory",
+          "resources": [
+            "DOI",
+            "PDF"
+          ],
+          "visible": true
+        },
+        {
+          "id": "trustworthy-ai",
+          "title": {
+            "en": "Interpretable representations for environmental sensing",
+            "vi": "Biểu diễn có thể giải thích cho cảm biến môi trường"
+          },
+          "description": {
+            "en": "A sample research proposal investigating transparent feature representations for field measurements.",
+            "vi": "Đề xuất nghiên cứu mẫu về biểu diễn đặc trưng minh bạch cho dữ liệu đo đạc thực địa."
+          },
+          "year": 2025,
+          "type": "Preprint",
+          "authors": [
+            "linh-tran",
+            "nam-do"
+          ],
+          "area": "intelligent-systems",
+          "venue": {
+            "en": "Illustrative research preprint",
+            "vi": "Bản thảo nghiên cứu minh họa"
+          },
+          "project": "earthsense",
+          "resources": [
+            "PDF",
+            "Code"
+          ],
+          "visible": true
+        },
+        {
+          "id": "adaptive-networks",
+          "title": {
+            "en": "Adaptive scheduling in low-power wireless networks",
+            "vi": "Lập lịch thích nghi trong mạng không dây tiết kiệm năng lượng"
+          },
+          "description": {
+            "en": "A demonstration publication record on scheduling for duty-cycled sensor networks.",
+            "vi": "Bản ghi bài báo minh họa về lập lịch cho mạng cảm biến hoạt động theo chu kỳ."
+          },
+          "year": 2024,
+          "type": "Conference",
+          "authors": [
+            "huy-pham",
+            "linh-tran"
+          ],
+          "area": "wireless-iot",
+          "venue": {
+            "en": "Example Network Research Workshop · demo record",
+            "vi": "Hội thảo Nghiên cứu Mạng minh họa · dữ liệu mẫu"
+          },
+          "project": "connected-campus",
+          "resources": [
+            "PDF"
+          ],
+          "visible": true
+        }
+      ],
+      "projects": [
+        {
+          "id": "earthsense",
+          "title": {
+            "en": "EarthSense",
+            "vi": "EarthSense"
+          },
+          "description": {
+            "en": "An open research concept for monitoring environmental change through satellite imagery and machine learning.",
+            "vi": "Ý tưởng nghiên cứu mở giám sát biến đổi môi trường qua ảnh vệ tinh và học máy."
+          },
+          "area": "geospatial-ai",
+          "category": {
+            "en": "Earth observation",
+            "vi": "Quan sát Trái Đất"
+          },
+          "status": "Ongoing",
+          "period": "2025–2027",
+          "image": "/images/earth.jpg",
+          "lead": "minh-nguyen",
+          "objectives": [
+            {
+              "en": "Design reproducible satellite data pipelines",
+              "vi": "Thiết kế quy trình dữ liệu vệ tinh có thể tái lập"
+            },
+            {
+              "en": "Evaluate model robustness across regions",
+              "vi": "Đánh giá tính vững của mô hình giữa các vùng"
+            },
+            {
+              "en": "Prototype accessible environmental dashboards",
+              "vi": "Xây dựng bảng thông tin môi trường dễ tiếp cận"
+            }
+          ],
+          "visible": true
+        },
+        {
+          "id": "connected-campus",
+          "title": {
+            "en": "Connected Campus",
+            "vi": "Khuôn viên kết nối"
+          },
+          "description": {
+            "en": "Exploring low-power IoT infrastructure for healthier, more responsive learning environments.",
+            "vi": "Khám phá hạ tầng IoT tiết kiệm năng lượng cho môi trường học tập lành mạnh và linh hoạt."
+          },
+          "area": "wireless-iot",
+          "category": {
+            "en": "Internet of Things",
+            "vi": "Internet vạn vật"
+          },
+          "status": "Ongoing",
+          "period": "2026–2028",
+          "image": "/images/chip.jpg",
+          "lead": "linh-tran",
+          "objectives": [
+            {
+              "en": "Prototype an indoor sensing network",
+              "vi": "Xây dựng mạng cảm biến trong nhà"
+            },
+            {
+              "en": "Compare edge inference strategies",
+              "vi": "So sánh chiến lược suy luận tại biên"
+            },
+            {
+              "en": "Document privacy-conscious data practices",
+              "vi": "Tài liệu hóa thực hành dữ liệu bảo vệ riêng tư"
+            }
+          ],
+          "visible": true
+        },
+        {
+          "id": "urban-observatory",
+          "title": {
+            "en": "Urban Observatory",
+            "vi": "Đài quan sát đô thị"
+          },
+          "description": {
+            "en": "A demonstration platform connecting open urban data with accessible spatial analysis.",
+            "vi": "Nền tảng minh họa kết nối dữ liệu đô thị mở với phân tích không gian dễ tiếp cận."
+          },
+          "area": "data-science",
+          "category": {
+            "en": "Sustainable cities",
+            "vi": "Đô thị bền vững"
+          },
+          "status": "Completed",
+          "period": "2024–2025",
+          "image": "/images/city.jpg",
+          "lead": "minh-nguyen",
+          "objectives": [
+            {
+              "en": "Build an example urban data catalog",
+              "vi": "Xây dựng danh mục dữ liệu đô thị mẫu"
+            },
+            {
+              "en": "Explore neighborhood-level patterns",
+              "vi": "Khám phá mẫu hình ở cấp khu dân cư"
+            },
+            {
+              "en": "Create reusable visualization components",
+              "vi": "Tạo thành phần trực quan hóa có thể tái sử dụng"
+            }
+          ],
+          "visible": true
+        }
+      ],
+      "news": [
+        {
+          "id": "research-open-day",
+          "title": {
+            "en": "Inside the lab: our research open day",
+            "vi": "Khám phá phòng lab: ngày hội nghiên cứu"
+          },
+          "description": {
+            "en": "A sample event bringing together curious students and research ideas.",
+            "vi": "Sự kiện mẫu kết nối sinh viên ham học hỏi với các ý tưởng nghiên cứu."
+          },
+          "category": "Event",
+          "date": "2026-10-23",
+          "image": "/images/team.jpg",
+          "location": {
+            "en": "Demo seminar room · Hanoi",
+            "vi": "Phòng hội thảo minh họa · Hà Nội"
+          },
+          "body": [
+            {
+              "en": "This fictional open day illustrates how the lab could share its work with prospective students. The program includes project demonstrations, informal conversations, and an introduction to research methods.",
+              "vi": "Ngày hội giả định này minh họa cách phòng lab chia sẻ công việc với sinh viên. Chương trình gồm trình diễn dự án, trò chuyện và giới thiệu phương pháp nghiên cứu."
+            },
+            {
+              "en": "This is a sample event, not a real scheduled gathering. Use the Join Us page to try the demonstration inquiry form.",
+              "vi": "Đây là sự kiện mẫu, không phải lịch tổ chức thực tế. Truy cập trang Tham gia để thử biểu mẫu liên hệ minh họa."
+            }
+          ],
+          "visible": true
+        },
+        {
+          "id": "responsible-ai-seminar",
+          "title": {
+            "en": "Seminar: building AI we can understand",
+            "vi": "Hội thảo: xây dựng AI có thể hiểu được"
+          },
+          "description": {
+            "en": "An illustrative seminar on interpretability and responsible research.",
+            "vi": "Hội thảo minh họa về khả năng giải thích và nghiên cứu có trách nhiệm."
+          },
+          "category": "Seminar",
+          "date": "2026-10-16",
+          "image": "/images/chip.jpg",
+          "location": {
+            "en": "Demo seminar room · Online",
+            "vi": "Phòng hội thảo minh họa · Trực tuyến"
+          },
+          "body": [
+            {
+              "en": "Our example seminar explores transparent evaluation, interpretable models, and the limits of benchmark-driven development.",
+              "vi": "Hội thảo mẫu tìm hiểu đánh giá minh bạch, mô hình có thể giải thích và giới hạn của phát triển dựa trên bộ chuẩn."
+            },
+            {
+              "en": "Speaker identities, registration and the event date are demonstration content only.",
+              "vi": "Thông tin diễn giả, đăng ký và ngày tổ chức chỉ là nội dung minh họa."
+            }
+          ],
+          "visible": true
+        },
+        {
+          "id": "earthsense-update",
+          "title": {
+            "en": "EarthSense: a new perspective on our planet",
+            "vi": "EarthSense: góc nhìn mới về hành tinh"
+          },
+          "description": {
+            "en": "A look at the questions behind our example Earth observation project.",
+            "vi": "Tìm hiểu các câu hỏi của dự án quan sát Trái Đất minh họa."
+          },
+          "category": "News",
+          "date": "2026-09-28",
+          "image": "/images/earth.jpg",
+          "location": {
+            "en": "Nexus Research Lab · demo",
+            "vi": "Nexus Research Lab · minh họa"
+          },
+          "body": [
+            {
+              "en": "The EarthSense concept asks how reusable machine learning methods might improve environmental analysis across different regions.",
+              "vi": "Ý tưởng EarthSense đặt câu hỏi về phương pháp học máy tái sử dụng để cải thiện phân tích môi trường tại nhiều vùng."
+            },
+            {
+              "en": "No research results or funded partnerships are claimed. This editorial is placeholder content for the website prototype.",
+              "vi": "Không có tuyên bố về kết quả nghiên cứu hay quan hệ tài trợ. Đây là nội dung mẫu cho nguyên mẫu website."
+            }
+          ],
+          "visible": true
+        },
+        {
+          "id": "student-showcase",
+          "title": {
+            "en": "Student research showcase: ideas in progress",
+            "vi": "Triển lãm nghiên cứu sinh viên: ý tưởng đang phát triển"
+          },
+          "description": {
+            "en": "An example student showcase celebrating careful questions and thoughtful prototypes.",
+            "vi": "Triển lãm sinh viên mẫu ghi nhận những câu hỏi kỹ lưỡng và nguyên mẫu sáng tạo."
+          },
+          "category": "Achievement",
+          "date": "2026-09-12",
+          "image": "/images/campus.jpg",
+          "location": {
+            "en": "Demo campus gallery",
+            "vi": "Không gian triển lãm minh họa"
+          },
+          "body": [
+            {
+              "en": "This demonstration showcase highlights the research process: asking good questions, documenting experiments, and sharing what did and did not work.",
+              "vi": "Triển lãm minh họa nêu bật quá trình nghiên cứu: đặt câu hỏi tốt, ghi chép thí nghiệm và chia sẻ những điều hiệu quả hoặc chưa hiệu quả."
+            },
+            {
+              "en": "This is a fictional milestone, not an award or a verified academic achievement.",
+              "vi": "Đây là cột mốc giả định, không phải giải thưởng hay thành tích học thuật đã được xác minh."
+            }
+          ],
+          "visible": true
+        }
+      ]
+    },
+    "copy": {
+      "RESEARCH LABORATORY": {
+        "en": "RESEARCH LABORATORY",
+        "vi": "PHÒNG THÍ NGHIỆM NGHIÊN CỨU"
+      },
+      "Skip to content": {
+        "en": "Skip to content",
+        "vi": "Đến nội dung"
+      },
+      "Exploring ideas. Connecting disciplines.": {
+        "en": "Exploring ideas. Connecting disciplines.",
+        "vi": "Khám phá ý tưởng. Kết nối lĩnh vực."
+      },
+      "Demo laboratory · Sample content": {
+        "en": "Demo laboratory · Sample content",
+        "vi": "Phòng lab minh họa · Dữ liệu mẫu"
+      },
+      "Get in touch": {
+        "en": "Get in touch",
+        "vi": "Liên hệ"
+      },
+      "Main navigation": {
+        "en": "Main navigation",
+        "vi": "Điều hướng chính"
+      },
+      "Switch to Vietnamese": {
+        "en": "Switch to Vietnamese",
+        "vi": "Chuyển sang tiếng Anh"
+      },
+      "Join us": {
+        "en": "Join us",
+        "vi": "Tham gia"
+      },
+      "Toggle navigation": {
+        "en": "Toggle navigation",
+        "vi": "Mở điều hướng"
+      },
+      "Mobile navigation": {
+        "en": "Mobile navigation",
+        "vi": "Điều hướng di động"
+      },
+      "Curiosity drives us. Collaboration connects us.\nResearch moves us forward.": {
+        "en": "Curiosity drives us. Collaboration connects us.\nResearch moves us forward.",
+        "vi": "Tò mò dẫn lối. Hợp tác kết nối.\nNghiên cứu đưa chúng ta tiến xa."
+      },
+      "Explore": {
+        "en": "Explore",
+        "vi": "Khám phá"
+      },
+      "Connect": {
+        "en": "Connect",
+        "vi": "Kết nối"
+      },
+      "Join the lab": {
+        "en": "Join the lab",
+        "vi": "Tham gia phòng lab"
+      },
+      "Contact us": {
+        "en": "Contact us",
+        "vi": "Liên hệ"
+      },
+      "News & events": {
+        "en": "News & events",
+        "vi": "Tin & sự kiện"
+      },
+      "Admin prototype": {
+        "en": "Admin prototype",
+        "vi": "Nguyên mẫu quản trị"
+      },
+      "Let’s explore what’s next.": {
+        "en": "Let’s explore what’s next.",
+        "vi": "Cùng khám phá tương lai."
+      },
+      "Hanoi, Vietnam · Illustrative location": {
+        "en": "Hanoi, Vietnam · Illustrative location",
+        "vi": "Hà Nội, Việt Nam · Địa điểm minh họa"
+      },
+      "All identities, research and affiliations are fictional demo content.": {
+        "en": "All identities, research and affiliations are fictional demo content.",
+        "vi": "Mọi danh tính, nghiên cứu và liên kết đều là nội dung minh họa giả định."
+      },
+      "Back to top": {
+        "en": "Back to top",
+        "vi": "Về đầu trang"
+      },
+      "Home": {
+        "en": "Home",
+        "vi": "Trang chủ"
+      },
+      "Explore research": {
+        "en": "Explore research",
+        "vi": "Khám phá nghiên cứu"
+      },
+      "Illustrative researcher profile": {
+        "en": "Illustrative researcher profile",
+        "vi": "Hồ sơ nhà nghiên cứu minh họa"
+      },
+      "Sample publication": {
+        "en": "Sample publication",
+        "vi": "Công bố mẫu"
+      },
+      "Former demo contributor": {
+        "en": "Former demo contributor",
+        "vi": "Tác giả minh họa trước đây"
+      },
+      "No matching results": {
+        "en": "No matching results",
+        "vi": "Không có kết quả phù hợp"
+      },
+      "Try another search or clear your filters.": {
+        "en": "Try another search or clear your filters.",
+        "vi": "Thử tìm kiếm khác hoặc xóa bộ lọc."
+      },
+      "Clear all filters": {
+        "en": "Clear all filters",
+        "vi": "Xóa tất cả bộ lọc"
+      },
+      "This is a demonstration website. All research, people and events are fictional sample content.": {
+        "en": "This is a demonstration website. All research, people and events are fictional sample content.",
+        "vi": "Đây là website minh họa. Mọi nghiên cứu, thành viên và sự kiện đều là dữ liệu mẫu giả định."
+      },
+      "Earth at night viewed from orbit": {
+        "en": "Earth at night viewed from orbit",
+        "vi": "Trái Đất về đêm nhìn từ quỹ đạo"
+      },
+      "AT THE INTERSECTION OF SCIENCE & TECHNOLOGY": {
+        "en": "AT THE INTERSECTION OF SCIENCE & TECHNOLOGY",
+        "vi": "GIAO THOA GIỮA KHOA HỌC & CÔNG NGHỆ"
+      },
+      "Intelligent systems.": {
+        "en": "Intelligent systems.",
+        "vi": "Hệ thống thông minh."
+      },
+      "Meaningful impact.": {
+        "en": "Meaningful impact.",
+        "vi": "Tác động thiết thực."
+      },
+      "We explore the connections between artificial intelligence,\nEarth observation, and wireless technologies —\nto understand our world and build a better one.": {
+        "en": "We explore the connections between artificial intelligence,\nEarth observation, and wireless technologies —\nto understand our world and build a better one.",
+        "vi": "Chúng tôi khám phá kết nối giữa trí tuệ nhân tạo,\nquan sát Trái Đất và công nghệ không dây —\nđể hiểu thế giới và xây dựng một tương lai tốt hơn."
+      },
+      "Explore our research": {
+        "en": "Explore our research",
+        "vi": "Khám phá nghiên cứu"
+      },
+      "Meet the laboratory": {
+        "en": "Meet the laboratory",
+        "vi": "Tìm hiểu phòng lab"
+      },
+      "CURIOSITY. COLLABORATION. DISCOVERY.": {
+        "en": "CURIOSITY. COLLABORATION. DISCOVERY.",
+        "vi": "TÒ MÒ. HỢP TÁC. KHÁM PHÁ."
+      },
+      "Scroll to research": {
+        "en": "Scroll to research",
+        "vi": "Đến phần nghiên cứu"
+      },
+      "Research directions": {
+        "en": "Research directions",
+        "vi": "Hướng nghiên cứu"
+      },
+      "Curious minds": {
+        "en": "Curious minds",
+        "vi": "Thành viên"
+      },
+      "Sample publications": {
+        "en": "Sample publications",
+        "vi": "Công bố mẫu"
+      },
+      "Research concepts": {
+        "en": "Research concepts",
+        "vi": "Ý tưởng nghiên cứu"
+      },
+      "WELCOME TO NEXUS": {
+        "en": "WELCOME TO NEXUS",
+        "vi": "CHÀO MỪNG ĐẾN NEXUS"
+      },
+      "Different perspectives.": {
+        "en": "Different perspectives.",
+        "vi": "Nhiều góc nhìn."
+      },
+      "Shared possibilities.": {
+        "en": "Shared possibilities.",
+        "vi": "Chung tiềm năng."
+      },
+      "A space for ambitious questions and interdisciplinary thinking.": {
+        "en": "A space for ambitious questions and interdisciplinary thinking.",
+        "vi": "Không gian cho những câu hỏi lớn và tư duy liên ngành."
+      },
+      "Nexus is an illustrative research laboratory bringing together researchers in AI, sensing, and connected systems. We believe meaningful progress happens when disciplines meet, ideas are shared, and research is grounded in real-world challenges.": {
+        "en": "Nexus is an illustrative research laboratory bringing together researchers in AI, sensing, and connected systems. We believe meaningful progress happens when disciplines meet, ideas are shared, and research is grounded in real-world challenges.",
+        "vi": "Nexus là phòng thí nghiệm minh họa kết nối các nhà nghiên cứu về AI, cảm biến và hệ thống kết nối. Chúng tôi tin rằng tiến bộ đến từ giao thoa lĩnh vực, chia sẻ ý tưởng và nghiên cứu gắn với thách thức thực tế."
+      },
+      "Discover our story": {
+        "en": "Discover our story",
+        "vi": "Khám phá câu chuyện"
+      },
+      "WHAT WE EXPLORE": {
+        "en": "WHAT WE EXPLORE",
+        "vi": "LĨNH VỰC KHÁM PHÁ"
+      },
+      "Research without boundaries.": {
+        "en": "Research without boundaries.",
+        "vi": "Nghiên cứu không giới hạn."
+      },
+      "Connected disciplines. Open questions. A world of possibilities.": {
+        "en": "Connected disciplines. Open questions. A world of possibilities.",
+        "vi": "Lĩnh vực kết nối. Câu hỏi rộng mở. Thế giới đầy tiềm năng."
+      },
+      "All research areas": {
+        "en": "All research areas",
+        "vi": "Tất cả lĩnh vực"
+      },
+      "IDEAS INTO KNOWLEDGE": {
+        "en": "IDEAS INTO KNOWLEDGE",
+        "vi": "Ý TƯỞNG THÀNH TRI THỨC"
+      },
+      "Selected publications.": {
+        "en": "Selected publications.",
+        "vi": "Công bố nổi bật."
+      },
+      "Browse publications": {
+        "en": "Browse publications",
+        "vi": "Xem các công bố"
+      },
+      "Illustrative publication records. No actual publication or academic achievement is claimed.": {
+        "en": "Illustrative publication records. No actual publication or academic achievement is claimed.",
+        "vi": "Các bản ghi công bố minh họa. Không tuyên bố về công bố hay thành tích học thuật thực tế."
+      },
+      "FROM QUESTIONS TO POSSIBILITIES": {
+        "en": "FROM QUESTIONS TO POSSIBILITIES",
+        "vi": "TỪ CÂU HỎI ĐẾN TIỀM NĂNG"
+      },
+      "Research in action.": {
+        "en": "Research in action.",
+        "vi": "Nghiên cứu trong thực tiễn."
+      },
+      "Explore projects": {
+        "en": "Explore projects",
+        "vi": "Khám phá dự án"
+      },
+      "THE PEOPLE BEHIND THE QUESTIONS": {
+        "en": "THE PEOPLE BEHIND THE QUESTIONS",
+        "vi": "CON NGƯỜI ĐẰNG SAU CÂU HỎI"
+      },
+      "Great ideas start with people.": {
+        "en": "Great ideas start with people.",
+        "vi": "Ý tưởng lớn bắt đầu từ con người."
+      },
+      "Meet the team": {
+        "en": "Meet the team",
+        "vi": "Gặp gỡ thành viên"
+      },
+      "LIFE AT THE LAB": {
+        "en": "LIFE AT THE LAB",
+        "vi": "CUỘC SỐNG TẠI LAB"
+      },
+      "The latest from Nexus.": {
+        "en": "The latest from Nexus.",
+        "vi": "Tin mới từ Nexus."
+      },
+      "All news & events": {
+        "en": "All news & events",
+        "vi": "Tất cả tin & sự kiện"
+      },
+      "BETTER, TOGETHER": {
+        "en": "BETTER, TOGETHER",
+        "vi": "CÙNG NHAU, TỐT HƠN"
+      },
+      "Built for collaboration.": {
+        "en": "Built for collaboration.",
+        "vi": "Xây dựng để hợp tác."
+      },
+      "Illustrative collaboration categories · No institutional affiliations implied": {
+        "en": "Illustrative collaboration categories · No institutional affiliations implied",
+        "vi": "Nhóm hợp tác minh họa · Không ngụ ý liên kết tổ chức"
+      },
+      "YOUR NEXT CHAPTER": {
+        "en": "YOUR NEXT CHAPTER",
+        "vi": "CHƯƠNG TIẾP THEO CỦA BẠN"
+      },
+      "Bring your curiosity.\nBuild something meaningful.": {
+        "en": "Bring your curiosity.\nBuild something meaningful.",
+        "vi": "Mang theo sự tò mò.\nXây dựng điều ý nghĩa."
+      },
+      "Explore research opportunities and find your place in the lab.": {
+        "en": "Explore research opportunities and find your place in the lab.",
+        "vi": "Khám phá cơ hội nghiên cứu và tìm vị trí của bạn tại phòng lab."
+      },
+      "Explore opportunities": {
+        "en": "Explore opportunities",
+        "vi": "Khám phá cơ hội"
+      },
+      "About the laboratory": {
+        "en": "About the laboratory",
+        "vi": "Giới thiệu phòng lab"
+      },
+      "Curiosity is our common ground.": {
+        "en": "Curiosity is our common ground.",
+        "vi": "Tò mò là điểm chung của chúng tôi."
+      },
+      "An interdisciplinary research concept shaped by open questions, thoughtful collaboration, and shared learning.": {
+        "en": "An interdisciplinary research concept shaped by open questions, thoughtful collaboration, and shared learning.",
+        "vi": "Ý tưởng nghiên cứu liên ngành hình thành từ câu hỏi rộng mở, hợp tác và học hỏi."
+      },
+      "Illustrative photograph of people collaborating around a table": {
+        "en": "Illustrative photograph of people collaborating around a table",
+        "vi": "Ảnh minh họa nhóm làm việc quanh bàn"
+      },
+      "Illustrative stock photograph": {
+        "en": "Illustrative stock photograph",
+        "vi": "Ảnh tư liệu minh họa"
+      },
+      "OUR STORY": {
+        "en": "OUR STORY",
+        "vi": "CÂU CHUYỆN"
+      },
+      "A meeting point for\nideas and disciplines.": {
+        "en": "A meeting point for\nideas and disciplines.",
+        "vi": "Điểm gặp gỡ của\ný tưởng và lĩnh vực."
+      },
+      "Nexus Research Lab is a fictional academic laboratory concept based in Hanoi. Its research themes connect artificial intelligence, geospatial analysis, wireless systems, and sustainable urban environments.": {
+        "en": "Nexus Research Lab is a fictional academic laboratory concept based in Hanoi. Its research themes connect artificial intelligence, geospatial analysis, wireless systems, and sustainable urban environments.",
+        "vi": "Nexus Research Lab là ý tưởng phòng thí nghiệm học thuật giả định tại Hà Nội. Các chủ đề kết nối trí tuệ nhân tạo, phân tích không gian địa lý, hệ thống không dây và môi trường đô thị bền vững."
+      },
+      "This frontend is designed to show how a real laboratory could make its research accessible, share knowledge, and welcome its next generation of researchers. No real institutional affiliation is implied.": {
+        "en": "This frontend is designed to show how a real laboratory could make its research accessible, share knowledge, and welcome its next generation of researchers. No real institutional affiliation is implied.",
+        "vi": "Frontend này minh họa cách phòng lab thực tế chia sẻ nghiên cứu, phổ biến tri thức và chào đón thế hệ nhà nghiên cứu mới. Không ngụ ý liên kết với tổ chức thực tế."
+      },
+      "Meet our example team": {
+        "en": "Meet our example team",
+        "vi": "Gặp gỡ nhóm minh họa"
+      },
+      "Our mission": {
+        "en": "Our mission",
+        "vi": "Sứ mệnh"
+      },
+      "Advance useful, responsible research by connecting foundational science with real-world questions.": {
+        "en": "Advance useful, responsible research by connecting foundational science with real-world questions.",
+        "vi": "Thúc đẩy nghiên cứu hữu ích, có trách nhiệm qua kết nối khoa học nền tảng với câu hỏi thực tiễn."
+      },
+      "Our vision": {
+        "en": "Our vision",
+        "vi": "Tầm nhìn"
+      },
+      "A connected research community where knowledge is open, collaboration is natural, and technology serves people.": {
+        "en": "A connected research community where knowledge is open, collaboration is natural, and technology serves people.",
+        "vi": "Cộng đồng nghiên cứu kết nối, tri thức mở, hợp tác tự nhiên và công nghệ phục vụ con người."
+      },
+      "Our approach": {
+        "en": "Our approach",
+        "vi": "Phương pháp"
+      },
+      "Ask carefully. Build transparently. Evaluate honestly. Share what we learn, including the questions that remain.": {
+        "en": "Ask carefully. Build transparently. Evaluate honestly. Share what we learn, including the questions that remain.",
+        "vi": "Đặt câu hỏi kỹ lưỡng. Xây dựng minh bạch. Đánh giá trung thực. Chia sẻ điều đã học và câu hỏi còn lại."
+      },
+      "SPACE TO EXPLORE": {
+        "en": "SPACE TO EXPLORE",
+        "vi": "KHÔNG GIAN KHÁM PHÁ"
+      },
+      "Tools for better questions.": {
+        "en": "Tools for better questions.",
+        "vi": "Công cụ cho câu hỏi tốt hơn."
+      },
+      "Illustrative facilities for the laboratory concept. Equipment and resources are examples, not a verified inventory.": {
+        "en": "Illustrative facilities for the laboratory concept. Equipment and resources are examples, not a verified inventory.",
+        "vi": "Cơ sở vật chất minh họa. Thiết bị và tài nguyên là ví dụ, không phải danh mục đã xác minh."
+      },
+      "Illustrative shared workspace": {
+        "en": "Illustrative shared workspace",
+        "vi": "Không gian làm việc chung minh họa"
+      },
+      "Computing & AI workspace": {
+        "en": "Computing & AI workspace",
+        "vi": "Không gian tính toán & AI"
+      },
+      "Example GPU workstations and reproducible experiment environments.": {
+        "en": "Example GPU workstations and reproducible experiment environments.",
+        "vi": "Máy trạm GPU mẫu và môi trường thí nghiệm có thể tái lập."
+      },
+      "Sensing & wireless testbed": {
+        "en": "Sensing & wireless testbed",
+        "vi": "Hệ thống thử nghiệm cảm biến & không dây"
+      },
+      "Example sensor kits and networking equipment for hands-on prototyping.": {
+        "en": "Example sensor kits and networking equipment for hands-on prototyping.",
+        "vi": "Bộ cảm biến và thiết bị mạng mẫu để xây dựng nguyên mẫu."
+      },
+      "Collaborative research space": {
+        "en": "Collaborative research space",
+        "vi": "Không gian nghiên cứu cộng tác"
+      },
+      "Shared desks, discussion areas, and a seminar room concept.": {
+        "en": "Shared desks, discussion areas, and a seminar room concept.",
+        "vi": "Bàn làm việc chung, khu thảo luận và ý tưởng phòng hội thảo."
+      },
+      "Your questions belong here.": {
+        "en": "Your questions belong here.",
+        "vi": "Câu hỏi của bạn thuộc về nơi đây."
+      },
+      "Explore example pathways into research. Bring an open mind, a thoughtful question, and a willingness to learn.": {
+        "en": "Explore example pathways into research. Bring an open mind, a thoughtful question, and a willingness to learn.",
+        "vi": "Khám phá con đường nghiên cứu minh họa. Mang theo tư duy rộng mở, câu hỏi sâu sắc và tinh thần học hỏi."
+      },
+      "RESEARCH PATHWAY": {
+        "en": "RESEARCH PATHWAY",
+        "vi": "CON ĐƯỜNG NGHIÊN CỨU"
+      },
+      "Explore this pathway": {
+        "en": "Explore this pathway",
+        "vi": "Khám phá con đường này"
+      },
+      "START A CONVERSATION": {
+        "en": "START A CONVERSATION",
+        "vi": "BẮT ĐẦU TRAO ĐỔI"
+      },
+      "Tell us what makes\nyou curious.": {
+        "en": "Tell us what makes\nyou curious.",
+        "vi": "Chia sẻ điều khiến\nbạn tò mò."
+      },
+      "For a real application, a laboratory would typically ask for a short research statement, a CV, and relevant academic experience. This demo form previews an inquiry without sending it.": {
+        "en": "For a real application, a laboratory would typically ask for a short research statement, a CV, and relevant academic experience. This demo form previews an inquiry without sending it.",
+        "vi": "Hồ sơ thực tế thường cần đề xuất nghiên cứu ngắn, CV và kinh nghiệm học thuật liên quan. Biểu mẫu mẫu này xem trước liên hệ mà không gửi đi."
+      },
+      "Explore a research direction": {
+        "en": "Explore a research direction",
+        "vi": "Tìm hiểu hướng nghiên cứu"
+      },
+      "Share your background and interests": {
+        "en": "Share your background and interests",
+        "vi": "Chia sẻ nền tảng và mối quan tâm"
+      },
+      "Start an informed conversation": {
+        "en": "Start an informed conversation",
+        "vi": "Bắt đầu trao đổi có cơ sở"
+      },
+      "Contact": {
+        "en": "Contact",
+        "vi": "Liên hệ"
+      },
+      "Good research starts with a conversation.": {
+        "en": "Good research starts with a conversation.",
+        "vi": "Nghiên cứu tốt bắt đầu từ trao đổi."
+      },
+      "Questions, ideas, or a potential collaboration? Try our demonstration contact experience.": {
+        "en": "Questions, ideas, or a potential collaboration? Try our demonstration contact experience.",
+        "vi": "Có câu hỏi, ý tưởng hay cơ hội hợp tác? Hãy thử trải nghiệm liên hệ minh họa."
+      },
+      "Let’s connect.": {
+        "en": "Let’s connect.",
+        "vi": "Cùng kết nối."
+      },
+      "The following address and email are placeholders for a future laboratory deployment.": {
+        "en": "The following address and email are placeholders for a future laboratory deployment.",
+        "vi": "Địa chỉ và email dưới đây là thông tin mẫu cho phòng lab trong tương lai."
+      },
+      "Visit the lab": {
+        "en": "Visit the lab",
+        "vi": "Ghé thăm phòng lab"
+      },
+      "Demo Research Building, Hanoi, Vietnam": {
+        "en": "Demo Research Building, Hanoi, Vietnam",
+        "vi": "Tòa nhà Nghiên cứu minh họa, Hà Nội, Việt Nam"
+      },
+      "General inquiries": {
+        "en": "General inquiries",
+        "vi": "Liên hệ chung"
+      },
+      "Example office hours": {
+        "en": "Example office hours",
+        "vi": "Giờ làm việc mẫu"
+      },
+      "Monday–Friday · 09:00–17:00 (ICT)": {
+        "en": "Monday–Friday · 09:00–17:00 (ICT)",
+        "vi": "Thứ Hai–Thứ Sáu · 09:00–17:00 (ICT)"
+      },
+      "Illustrative location diagram, not a real navigational map": {
+        "en": "Illustrative location diagram, not a real navigational map",
+        "vi": "Sơ đồ vị trí minh họa, không dùng để điều hướng"
+      },
+      "ILLUSTRATIVE LOCATION · HANOI": {
+        "en": "ILLUSTRATIVE LOCATION · HANOI",
+        "vi": "VỊ TRÍ MINH HỌA · HÀ NỘI"
+      },
+      "Your inquiry preview is ready.": {
+        "en": "Your inquiry preview is ready.",
+        "vi": "Bản xem trước liên hệ đã sẵn sàng."
+      },
+      "No message was sent. This frontend demo does not submit or store your information.": {
+        "en": "No message was sent. This frontend demo does not submit or store your information.",
+        "vi": "Chưa gửi tin nhắn. Frontend minh họa không gửi hay lưu thông tin của bạn."
+      },
+      "Name": {
+        "en": "Name",
+        "vi": "Họ tên"
+      },
+      "Subject": {
+        "en": "Subject",
+        "vi": "Chủ đề"
+      },
+      "Message": {
+        "en": "Message",
+        "vi": "Nội dung"
+      },
+      "Write another inquiry": {
+        "en": "Write another inquiry",
+        "vi": "Viết liên hệ khác"
+      },
+      "Research interest form": {
+        "en": "Research interest form",
+        "vi": "Biểu mẫu quan tâm nghiên cứu"
+      },
+      "Send us a note": {
+        "en": "Send us a note",
+        "vi": "Gửi lời nhắn"
+      },
+      "Fields marked * are required.": {
+        "en": "Fields marked * are required.",
+        "vi": "Các trường có dấu * là bắt buộc."
+      },
+      "Full name": {
+        "en": "Full name",
+        "vi": "Họ và tên"
+      },
+      "Your name": {
+        "en": "Your name",
+        "vi": "Họ tên của bạn"
+      },
+      "Email address": {
+        "en": "Email address",
+        "vi": "Địa chỉ email"
+      },
+      "I’m interested in": {
+        "en": "I’m interested in",
+        "vi": "Tôi quan tâm đến"
+      },
+      "Research pathway": {
+        "en": "Research pathway",
+        "vi": "Con đường nghiên cứu"
+      },
+      "What would you like to discuss?": {
+        "en": "What would you like to discuss?",
+        "vi": "Bạn muốn trao đổi điều gì?"
+      },
+      "Your background & research interests": {
+        "en": "Your background & research interests",
+        "vi": "Nền tảng & mối quan tâm nghiên cứu"
+      },
+      "Tell us a little more…": {
+        "en": "Tell us a little more…",
+        "vi": "Chia sẻ thêm với chúng tôi…"
+      },
+      "I understand this is a demo and no inquiry will be sent.": {
+        "en": "I understand this is a demo and no inquiry will be sent.",
+        "vi": "Tôi hiểu đây là bản minh họa và không gửi liên hệ thực tế."
+      },
+      "Preview inquiry": {
+        "en": "Preview inquiry",
+        "vi": "Xem trước liên hệ"
+      },
+      "Demonstration only · No data is persisted or transmitted": {
+        "en": "Demonstration only · No data is persisted or transmitted",
+        "vi": "Chỉ minh họa · Không lưu hay truyền dữ liệu"
+      },
+      "Research": {
+        "en": "Research",
+        "vi": "Nghiên cứu"
+      },
+      "Questions that connect us.": {
+        "en": "Questions that connect us.",
+        "vi": "Những câu hỏi kết nối chúng ta."
+      },
+      "Four complementary directions. One shared drive to understand and improve our world.": {
+        "en": "Four complementary directions. One shared drive to understand and improve our world.",
+        "vi": "Bốn hướng nghiên cứu bổ trợ. Một động lực chung để hiểu và cải thiện thế giới."
+      },
+      "People": {
+        "en": "People",
+        "vi": "Thành viên"
+      },
+      "Many minds. One shared curiosity.": {
+        "en": "Many minds. One shared curiosity.",
+        "vi": "Nhiều tư duy. Chung niềm khám phá."
+      },
+      "Meet the people behind our illustrative laboratory. Every identity and profile below is fictional.": {
+        "en": "Meet the people behind our illustrative laboratory. Every identity and profile below is fictional.",
+        "vi": "Gặp gỡ các thành viên phòng lab minh họa. Mọi danh tính và hồ sơ dưới đây đều là giả định."
+      },
+      "Search people…": {
+        "en": "Search people…",
+        "vi": "Tìm thành viên…"
+      },
+      "people": {
+        "en": "people",
+        "vi": "thành viên"
+      },
+      "Filter by role": {
+        "en": "Filter by role",
+        "vi": "Lọc theo vai trò"
+      },
+      "Everyone": {
+        "en": "Everyone",
+        "vi": "Tất cả"
+      },
+      "Publications": {
+        "en": "Publications",
+        "vi": "Công bố"
+      },
+      "Knowledge, shared openly.": {
+        "en": "Knowledge, shared openly.",
+        "vi": "Tri thức, được chia sẻ rộng mở."
+      },
+      "Explore our sample research library. Filter by year, format, contributor, or research direction.": {
+        "en": "Explore our sample research library. Filter by year, format, contributor, or research direction.",
+        "vi": "Khám phá thư viện nghiên cứu mẫu. Lọc theo năm, loại, tác giả hoặc hướng nghiên cứu."
+      },
+      "Search titles, authors, or keywords…": {
+        "en": "Search titles, authors, or keywords…",
+        "vi": "Tìm tiêu đề, tác giả hoặc từ khóa…"
+      },
+      "Year": {
+        "en": "Year",
+        "vi": "Năm"
+      },
+      "All years": {
+        "en": "All years",
+        "vi": "Tất cả năm"
+      },
+      "Type": {
+        "en": "Type",
+        "vi": "Loại"
+      },
+      "All types": {
+        "en": "All types",
+        "vi": "Tất cả loại"
+      },
+      "Author": {
+        "en": "Author",
+        "vi": "Tác giả"
+      },
+      "All authors": {
+        "en": "All authors",
+        "vi": "Tất cả tác giả"
+      },
+      "Research area": {
+        "en": "Research area",
+        "vi": "Lĩnh vực"
+      },
+      "Reset": {
+        "en": "Reset",
+        "vi": "Đặt lại"
+      },
+      "Showing": {
+        "en": "Showing",
+        "vi": "Hiển thị"
+      },
+      "publications": {
+        "en": "publications",
+        "vi": "công bố"
+      },
+      "Newest first": {
+        "en": "Newest first",
+        "vi": "Mới nhất trước"
+      },
+      "Demo": {
+        "en": "Demo",
+        "vi": "Mẫu"
+      },
+      "Citation preview": {
+        "en": "Citation preview",
+        "vi": "Xem trích dẫn"
+      },
+      "This publication is fictional. No real DOI, paper, or code repository is associated with it.": {
+        "en": "This publication is fictional. No real DOI, paper, or code repository is associated with it.",
+        "vi": "Công bố này là giả định. Không có DOI, bài báo hay kho mã thực tế liên quan."
+      },
+      "Copied": {
+        "en": "Copied",
+        "vi": "Đã sao chép"
+      },
+      "Copy BibTeX": {
+        "en": "Copy BibTeX",
+        "vi": "Sao chép BibTeX"
+      },
+      "Clipboard unavailable. Select and copy the text above.": {
+        "en": "Clipboard unavailable. Select and copy the text above.",
+        "vi": "Không thể truy cập bộ nhớ tạm. Hãy chọn và sao chép văn bản trên."
+      },
+      "Resource links are reserved for verified research outputs when a backend is connected.": {
+        "en": "Resource links are reserved for verified research outputs when a backend is connected.",
+        "vi": "Liên kết tài nguyên dành cho kết quả nghiên cứu đã xác minh khi kết nối backend."
+      },
+      "View publication details": {
+        "en": "View publication details",
+        "vi": "Xem chi tiết công bố"
+      },
+      "Projects": {
+        "en": "Research projects",
+        "vi": "Đề tài"
+      },
+      "Ideas with a direction.": {
+        "en": "Ideas with a direction.",
+        "vi": "Ý tưởng có định hướng."
+      },
+      "Explore demonstration projects connecting foundational questions with practical research concepts.": {
+        "en": "Explore demonstration projects connecting foundational questions with practical research concepts.",
+        "vi": "Khám phá các dự án minh họa kết nối câu hỏi nền tảng với ý tưởng nghiên cứu thực tiễn."
+      },
+      "Search projects…": {
+        "en": "Search projects…",
+        "vi": "Tìm dự án…"
+      },
+      "Research category": {
+        "en": "Research category",
+        "vi": "Nhóm nghiên cứu"
+      },
+      "All categories": {
+        "en": "All categories",
+        "vi": "Tất cả nhóm"
+      },
+      "Project status": {
+        "en": "Project status",
+        "vi": "Trạng thái dự án"
+      },
+      "All projects": {
+        "en": "All projects",
+        "vi": "Tất cả dự án"
+      },
+      "projects": {
+        "en": "projects",
+        "vi": "dự án"
+      },
+      "A laboratory, always in motion.": {
+        "en": "A laboratory, always in motion.",
+        "vi": "Phòng lab luôn chuyển động."
+      },
+      "Research conversations, new ideas, and moments from our illustrative community. All events are examples.": {
+        "en": "Research conversations, new ideas, and moments from our illustrative community. All events are examples.",
+        "vi": "Trao đổi nghiên cứu, ý tưởng mới và khoảnh khắc từ cộng đồng minh họa. Mọi sự kiện đều là ví dụ."
+      },
+      "Search news and events…": {
+        "en": "Search news and events…",
+        "vi": "Tìm tin và sự kiện…"
+      },
+      "stories": {
+        "en": "stories",
+        "vi": "bài viết"
+      },
+      "News category": {
+        "en": "News category",
+        "vi": "Nhóm tin tức"
+      },
+      "All updates": {
+        "en": "All updates",
+        "vi": "Tất cả tin"
+      },
+      "This record is no longer available.": {
+        "en": "This record is no longer available.",
+        "vi": "Bản ghi này không còn khả dụng."
+      },
+      "It may have been removed in the admin prototype. Reloading resets all demo content.": {
+        "en": "It may have been removed in the admin prototype. Reloading resets all demo content.",
+        "vi": "Có thể đã bị xóa trong nguyên mẫu quản trị. Tải lại trang để khôi phục dữ liệu mẫu."
+      },
+      "Back to collection": {
+        "en": "Back to collection",
+        "vi": "Về danh sách"
+      },
+      "Back to": {
+        "en": "Back to",
+        "vi": "Quay lại"
+      },
+      "DEMONSTRATION RECORD": {
+        "en": "DEMONSTRATION RECORD",
+        "vi": "BẢN GHI MINH HỌA"
+      },
+      "ILLUSTRATIVE PROFILE": {
+        "en": "ILLUSTRATIVE PROFILE",
+        "vi": "HỒ SƠ MINH HỌA"
+      },
+      "Our research questions": {
+        "en": "Our research questions",
+        "vi": "Các câu hỏi nghiên cứu"
+      },
+      "We approach this direction through careful experimentation, reproducible methods, and collaboration across disciplines. The topics below represent potential research interests for the fictional laboratory.": {
+        "en": "We approach this direction through careful experimentation, reproducible methods, and collaboration across disciplines. The topics below represent potential research interests for the fictional laboratory.",
+        "vi": "Chúng tôi tiếp cận hướng nghiên cứu qua thí nghiệm kỹ lưỡng, phương pháp có thể tái lập và hợp tác liên ngành. Các chủ đề dưới đây là mối quan tâm tiềm năng của phòng lab giả định."
+      },
+      "GET INVOLVED": {
+        "en": "GET INVOLVED",
+        "vi": "THAM GIA"
+      },
+      "Ask the next question.": {
+        "en": "Ask the next question.",
+        "vi": "Đặt câu hỏi tiếp theo."
+      },
+      "Explore an example research pathway and share your interests.": {
+        "en": "Explore an example research pathway and share your interests.",
+        "vi": "Khám phá con đường nghiên cứu mẫu và chia sẻ mối quan tâm."
+      },
+      "Research opportunities": {
+        "en": "Research opportunities",
+        "vi": "Cơ hội nghiên cứu"
+      },
+      "CONNECTED WORK": {
+        "en": "CONNECTED WORK",
+        "vi": "CÔNG VIỆC LIÊN QUAN"
+      },
+      "Related projects": {
+        "en": "Related projects",
+        "vi": "Đề tài liên quan"
+      },
+      "THE TEAM": {
+        "en": "THE TEAM",
+        "vi": "NHÓM NGHIÊN CỨU"
+      },
+      "People in this direction": {
+        "en": "People in this direction",
+        "vi": "Thành viên theo hướng này"
+      },
+      "Research interests & biography": {
+        "en": "Research interests & biography",
+        "vi": "Mối quan tâm nghiên cứu & tiểu sử"
+      },
+      "This illustrative profile shows where a verified biography, education history, and research statement could be added. No degrees, affiliations, or accomplishments are asserted beyond this fictional demonstration.": {
+        "en": "This illustrative profile shows where a verified biography, education history, and research statement could be added. No degrees, affiliations, or accomplishments are asserted beyond this fictional demonstration.",
+        "vi": "Hồ sơ này minh họa nơi bổ sung tiểu sử, lịch sử học tập và định hướng nghiên cứu đã xác minh. Không tuyên bố bằng cấp, liên kết hay thành tích ngoài minh họa giả định."
+      },
+      "Contact & collaboration": {
+        "en": "Contact & collaboration",
+        "vi": "Liên hệ & hợp tác"
+      },
+      "Placeholder email · does not receive messages": {
+        "en": "Placeholder email · does not receive messages",
+        "vi": "Email mẫu · không nhận thư"
+      },
+      "Contact the laboratory": {
+        "en": "Contact the laboratory",
+        "vi": "Liên hệ phòng lab"
+      },
+      "Project overview": {
+        "en": "Project overview",
+        "vi": "Tổng quan dự án"
+      },
+      "This is an illustrative project concept. Timelines and objectives are examples; no funding, partnership, deployment, or research result is claimed.": {
+        "en": "This is an illustrative project concept. Timelines and objectives are examples; no funding, partnership, deployment, or research result is claimed.",
+        "vi": "Đây là ý tưởng dự án minh họa. Thời gian và mục tiêu là ví dụ; không tuyên bố tài trợ, đối tác, triển khai hay kết quả nghiên cứu."
+      },
+      "Research objectives": {
+        "en": "Research objectives",
+        "vi": "Mục tiêu nghiên cứu"
+      },
+      "PROJECT SNAPSHOT": {
+        "en": "PROJECT SNAPSHOT",
+        "vi": "TỔNG QUAN DỰ ÁN"
+      },
+      "Status": {
+        "en": "Status",
+        "vi": "Trạng thái"
+      },
+      "Period": {
+        "en": "Period",
+        "vi": "Thời gian"
+      },
+      "Category": {
+        "en": "Category",
+        "vi": "Nhóm"
+      },
+      "Project lead": {
+        "en": "Project lead",
+        "vi": "Trưởng dự án"
+      },
+      "Abstract preview": {
+        "en": "Abstract preview",
+        "vi": "Xem trước tóm tắt"
+      },
+      "This record demonstrates publication metadata and resource controls. It does not describe a published study, peer review, or verified result. All citations generated from this page are marked as fictional.": {
+        "en": "This record demonstrates publication metadata and resource controls. It does not describe a published study, peer review, or verified result. All citations generated from this page are marked as fictional.",
+        "vi": "Bản ghi minh họa metadata và các nút tài nguyên. Không mô tả nghiên cứu đã công bố, bình duyệt hay kết quả xác minh. Trích dẫn tạo từ trang này được đánh dấu giả định."
+      },
+      "Contributors": {
+        "en": "Contributors",
+        "vi": "Tác giả"
+      },
+      "Resources & citation": {
+        "en": "Resources & citation",
+        "vi": "Tài nguyên & trích dẫn"
+      },
+      "PUBLICATION DETAILS": {
+        "en": "PUBLICATION DETAILS",
+        "vi": "CHI TIẾT CÔNG BỐ"
+      },
+      "Example venue": {
+        "en": "Example venue",
+        "vi": "Nơi công bố minh họa"
+      },
+      "Continue the conversation": {
+        "en": "Continue the conversation",
+        "vi": "Tiếp tục trao đổi"
+      },
+      "Explore the laboratory’s research directions and sample opportunities to learn how you could participate in a real research community.": {
+        "en": "Explore the laboratory’s research directions and sample opportunities to learn how you could participate in a real research community.",
+        "vi": "Khám phá hướng nghiên cứu và cơ hội mẫu để tìm hiểu cách tham gia cộng đồng nghiên cứu thực tế."
+      },
+      "STORY DETAILS": {
+        "en": "STORY DETAILS",
+        "vi": "CHI TIẾT BÀI VIẾT"
+      },
+      "Sample event or story. No registration or actual attendance is available.": {
+        "en": "Sample event or story. No registration or actual attendance is available.",
+        "vi": "Sự kiện hoặc bài viết mẫu. Không có đăng ký hay tham dự thực tế."
+      },
+      "RESEARCH OUTPUTS": {
+        "en": "RESEARCH OUTPUTS",
+        "vi": "KẾT QUẢ NGHIÊN CỨU"
+      },
+      "Related publications": {
+        "en": "Related publications",
+        "vi": "Công bố liên quan"
+      }
+    },
+    "media": {
+      "/images/earth.jpg": "/images/earth.jpg",
+      "/images/team.jpg": "/images/team.jpg",
+      "/images/campus.jpg": "/images/campus.jpg"
+    },
+    "pages": [
+      {
+        "id": "home",
+        "slug": "",
+        "title": {
+          "en": "Intelligent systems.\nMeaningful impact.",
+          "vi": "Hệ thống thông minh.\nTác động thiết thực."
+        },
+        "navigationTitle": {
+          "en": "Home",
+          "vi": "Trang chủ"
+        },
+        "description": {
+          "en": "We explore the connections between artificial intelligence,\nEarth observation, and wireless technologies —\nto understand our world and build a better one.",
+          "vi": "Chúng tôi khám phá kết nối giữa trí tuệ nhân tạo,\nquan sát Trái Đất và công nghệ không dây —\nđể hiểu thế giới và xây dựng một tương lai tốt hơn."
+        },
+        "template": "home",
+        "visible": true,
+        "showInNavigation": true,
+        "sections": []
+      },
+      {
+        "id": "about",
+        "slug": "about",
+        "title": {
+          "en": "Curiosity is our common ground.",
+          "vi": "Tò mò là điểm chung của chúng tôi."
+        },
+        "description": {
+          "en": "An interdisciplinary research concept shaped by open questions, thoughtful collaboration, and shared learning.",
+          "vi": "Ý tưởng nghiên cứu liên ngành hình thành từ câu hỏi rộng mở, hợp tác và học hỏi."
+        },
+        "navigationTitle": {
+          "en": "About",
+          "vi": "Giới thiệu"
+        },
+        "template": "about",
+        "visible": true,
+        "showInNavigation": true,
+        "sections": []
+      },
+      {
+        "id": "research",
+        "slug": "research",
+        "title": {
+          "en": "Questions that connect us.",
+          "vi": "Những câu hỏi kết nối chúng ta."
+        },
+        "description": {
+          "en": "Four complementary directions. One shared drive to understand and improve our world.",
+          "vi": "Bốn hướng nghiên cứu bổ trợ. Một động lực chung để hiểu và cải thiện thế giới."
+        },
+        "navigationTitle": {
+          "en": "Research groups",
+          "vi": "Nhóm nghiên cứu"
+        },
+        "template": "research",
+        "visible": true,
+        "showInNavigation": true,
+        "sections": []
+      },
+      {
+        "id": "people",
+        "slug": "people",
+        "title": {
+          "en": "Many minds. One shared curiosity.",
+          "vi": "Nhiều tư duy. Chung niềm khám phá."
+        },
+        "description": {
+          "en": "Meet the people behind our illustrative laboratory. Every identity and profile below is fictional.",
+          "vi": "Gặp gỡ các thành viên phòng lab minh họa. Mọi danh tính và hồ sơ dưới đây đều là giả định."
+        },
+        "navigationTitle": {
+          "en": "People",
+          "vi": "Thành viên"
+        },
+        "template": "people",
+        "visible": true,
+        "showInNavigation": true,
+        "sections": []
+      },
+      {
+        "id": "publications",
+        "slug": "publications",
+        "title": {
+          "en": "Knowledge, shared openly.",
+          "vi": "Tri thức, được chia sẻ rộng mở."
+        },
+        "description": {
+          "en": "Explore our sample research library. Filter by year, format, contributor, or research direction.",
+          "vi": "Khám phá thư viện nghiên cứu mẫu. Lọc theo năm, loại, tác giả hoặc hướng nghiên cứu."
+        },
+        "navigationTitle": {
+          "en": "Publications",
+          "vi": "Công bố"
+        },
+        "template": "publications",
+        "visible": true,
+        "showInNavigation": true,
+        "sections": []
+      },
+      {
+        "id": "projects",
+        "slug": "projects",
+        "title": {
+          "en": "Ideas with a direction.",
+          "vi": "Ý tưởng có định hướng."
+        },
+        "description": {
+          "en": "Explore demonstration projects connecting foundational questions with practical research concepts.",
+          "vi": "Khám phá các dự án minh họa kết nối câu hỏi nền tảng với ý tưởng nghiên cứu thực tiễn."
+        },
+        "navigationTitle": {
+          "en": "Research projects",
+          "vi": "Đề tài"
+        },
+        "template": "projects",
+        "visible": true,
+        "showInNavigation": true,
+        "sections": []
+      },
+      {
+        "id": "news",
+        "slug": "news",
+        "title": {
+          "en": "A laboratory, always in motion.",
+          "vi": "Phòng lab luôn chuyển động."
+        },
+        "description": {
+          "en": "Research conversations, new ideas, and moments from our illustrative community. All events are examples.",
+          "vi": "Trao đổi nghiên cứu, ý tưởng mới và khoảnh khắc từ cộng đồng minh họa. Mọi sự kiện đều là ví dụ."
+        },
+        "navigationTitle": {
+          "en": "News & Events",
+          "vi": "Tin & Sự kiện"
+        },
+        "template": "news",
+        "visible": true,
+        "showInNavigation": true,
+        "sections": []
+      },
+      {
+        "id": "join",
+        "slug": "join",
+        "title": {
+          "en": "Your questions belong here.",
+          "vi": "Câu hỏi của bạn thuộc về nơi đây."
+        },
+        "description": {
+          "en": "Explore example pathways into research. Bring an open mind, a thoughtful question, and a willingness to learn.",
+          "vi": "Khám phá con đường nghiên cứu minh họa. Mang theo tư duy rộng mở, câu hỏi sâu sắc và tinh thần học hỏi."
+        },
+        "navigationTitle": {
+          "en": "Join Us",
+          "vi": "Tham gia"
+        },
+        "template": "join",
+        "visible": true,
+        "showInNavigation": false,
+        "sections": []
+      },
+      {
+        "id": "contact",
+        "slug": "contact",
+        "title": {
+          "en": "Good research starts with a conversation.",
+          "vi": "Nghiên cứu tốt bắt đầu từ trao đổi."
+        },
+        "description": {
+          "en": "Questions, ideas, or a potential collaboration? Try our demonstration contact experience.",
+          "vi": "Có câu hỏi, ý tưởng hay cơ hội hợp tác? Hãy thử trải nghiệm liên hệ minh họa."
+        },
+        "navigationTitle": {
+          "en": "Contact",
+          "vi": "Liên hệ"
+        },
+        "template": "contact",
+        "visible": true,
+        "showInNavigation": false,
+        "sections": []
+      }
+    ]
+  },
+  "copySections": {
+    "RESEARCH LABORATORY": "general",
+    "Skip to content": "general",
+    "Exploring ideas. Connecting disciplines.": "general",
+    "Demo laboratory · Sample content": "general",
+    "Get in touch": "general",
+    "Main navigation": "general",
+    "Switch to Vietnamese": "general",
+    "Join us": "general",
+    "Toggle navigation": "general",
+    "Mobile navigation": "general",
+    "Curiosity drives us. Collaboration connects us.\nResearch moves us forward.": "general",
+    "Explore": "general",
+    "Connect": "general",
+    "Join the lab": "general",
+    "Contact us": "general",
+    "News & events": "general",
+    "Admin prototype": "general",
+    "Let’s explore what’s next.": "general",
+    "Hanoi, Vietnam · Illustrative location": "general",
+    "All identities, research and affiliations are fictional demo content.": "general",
+    "Back to top": "general",
+    "Home": "general",
+    "Explore research": "general",
+    "Illustrative researcher profile": "general",
+    "Sample publication": "general",
+    "Former demo contributor": "general",
+    "No matching results": "general",
+    "Try another search or clear your filters.": "general",
+    "Clear all filters": "general",
+    "This is a demonstration website. All research, people and events are fictional sample content.": "general",
+    "Earth at night viewed from orbit": "home",
+    "AT THE INTERSECTION OF SCIENCE & TECHNOLOGY": "home",
+    "Intelligent systems.": "home",
+    "Meaningful impact.": "home",
+    "We explore the connections between artificial intelligence,\nEarth observation, and wireless technologies —\nto understand our world and build a better one.": "home",
+    "Explore our research": "home",
+    "Meet the laboratory": "home",
+    "CURIOSITY. COLLABORATION. DISCOVERY.": "home",
+    "Scroll to research": "home",
+    "Research directions": "home",
+    "Curious minds": "home",
+    "Sample publications": "home",
+    "Research concepts": "home",
+    "WELCOME TO NEXUS": "home",
+    "Different perspectives.": "home",
+    "Shared possibilities.": "home",
+    "A space for ambitious questions and interdisciplinary thinking.": "home",
+    "Nexus is an illustrative research laboratory bringing together researchers in AI, sensing, and connected systems. We believe meaningful progress happens when disciplines meet, ideas are shared, and research is grounded in real-world challenges.": "home",
+    "Discover our story": "home",
+    "WHAT WE EXPLORE": "home",
+    "Research without boundaries.": "home",
+    "Connected disciplines. Open questions. A world of possibilities.": "home",
+    "All research areas": "home",
+    "IDEAS INTO KNOWLEDGE": "home",
+    "Selected publications.": "home",
+    "Browse publications": "home",
+    "Illustrative publication records. No actual publication or academic achievement is claimed.": "home",
+    "FROM QUESTIONS TO POSSIBILITIES": "home",
+    "Research in action.": "home",
+    "Explore projects": "home",
+    "THE PEOPLE BEHIND THE QUESTIONS": "home",
+    "Great ideas start with people.": "home",
+    "Meet the team": "home",
+    "LIFE AT THE LAB": "home",
+    "The latest from Nexus.": "home",
+    "All news & events": "home",
+    "BETTER, TOGETHER": "home",
+    "Built for collaboration.": "home",
+    "Illustrative collaboration categories · No institutional affiliations implied": "home",
+    "YOUR NEXT CHAPTER": "home",
+    "Bring your curiosity.\nBuild something meaningful.": "home",
+    "Explore research opportunities and find your place in the lab.": "home",
+    "Explore opportunities": "home",
+    "About the laboratory": "about",
+    "Curiosity is our common ground.": "about",
+    "An interdisciplinary research concept shaped by open questions, thoughtful collaboration, and shared learning.": "about",
+    "Illustrative photograph of people collaborating around a table": "about",
+    "Illustrative stock photograph": "about",
+    "OUR STORY": "about",
+    "A meeting point for\nideas and disciplines.": "about",
+    "Nexus Research Lab is a fictional academic laboratory concept based in Hanoi. Its research themes connect artificial intelligence, geospatial analysis, wireless systems, and sustainable urban environments.": "about",
+    "This frontend is designed to show how a real laboratory could make its research accessible, share knowledge, and welcome its next generation of researchers. No real institutional affiliation is implied.": "about",
+    "Meet our example team": "about",
+    "Our mission": "about",
+    "Advance useful, responsible research by connecting foundational science with real-world questions.": "about",
+    "Our vision": "about",
+    "A connected research community where knowledge is open, collaboration is natural, and technology serves people.": "about",
+    "Our approach": "about",
+    "Ask carefully. Build transparently. Evaluate honestly. Share what we learn, including the questions that remain.": "about",
+    "SPACE TO EXPLORE": "about",
+    "Tools for better questions.": "about",
+    "Illustrative facilities for the laboratory concept. Equipment and resources are examples, not a verified inventory.": "about",
+    "Illustrative shared workspace": "about",
+    "Computing & AI workspace": "about",
+    "Example GPU workstations and reproducible experiment environments.": "about",
+    "Sensing & wireless testbed": "about",
+    "Example sensor kits and networking equipment for hands-on prototyping.": "about",
+    "Collaborative research space": "about",
+    "Shared desks, discussion areas, and a seminar room concept.": "about",
+    "Your questions belong here.": "join",
+    "Explore example pathways into research. Bring an open mind, a thoughtful question, and a willingness to learn.": "join",
+    "RESEARCH PATHWAY": "join",
+    "Explore this pathway": "join",
+    "START A CONVERSATION": "join",
+    "Tell us what makes\nyou curious.": "join",
+    "For a real application, a laboratory would typically ask for a short research statement, a CV, and relevant academic experience. This demo form previews an inquiry without sending it.": "join",
+    "Explore a research direction": "join",
+    "Share your background and interests": "join",
+    "Start an informed conversation": "join",
+    "Contact": "contact",
+    "Good research starts with a conversation.": "contact",
+    "Questions, ideas, or a potential collaboration? Try our demonstration contact experience.": "contact",
+    "Let’s connect.": "contact",
+    "The following address and email are placeholders for a future laboratory deployment.": "contact",
+    "Visit the lab": "contact",
+    "Demo Research Building, Hanoi, Vietnam": "contact",
+    "General inquiries": "contact",
+    "Example office hours": "contact",
+    "Monday–Friday · 09:00–17:00 (ICT)": "contact",
+    "Illustrative location diagram, not a real navigational map": "contact",
+    "ILLUSTRATIVE LOCATION · HANOI": "contact",
+    "Your inquiry preview is ready.": "general",
+    "No message was sent. This frontend demo does not submit or store your information.": "general",
+    "Name": "general",
+    "Subject": "general",
+    "Message": "general",
+    "Write another inquiry": "general",
+    "Research interest form": "general",
+    "Send us a note": "general",
+    "Fields marked * are required.": "general",
+    "Full name": "general",
+    "Your name": "general",
+    "Email address": "general",
+    "I’m interested in": "general",
+    "Research pathway": "general",
+    "What would you like to discuss?": "general",
+    "Your background & research interests": "general",
+    "Tell us a little more…": "general",
+    "I understand this is a demo and no inquiry will be sent.": "general",
+    "Preview inquiry": "general",
+    "Demonstration only · No data is persisted or transmitted": "general",
+    "Research": "research",
+    "Questions that connect us.": "research",
+    "Four complementary directions. One shared drive to understand and improve our world.": "research",
+    "People": "people",
+    "Many minds. One shared curiosity.": "people",
+    "Meet the people behind our illustrative laboratory. Every identity and profile below is fictional.": "people",
+    "Search people…": "people",
+    "people": "people",
+    "Filter by role": "people",
+    "Everyone": "people",
+    "Publications": "publications",
+    "Knowledge, shared openly.": "publications",
+    "Explore our sample research library. Filter by year, format, contributor, or research direction.": "publications",
+    "Search titles, authors, or keywords…": "publications",
+    "Year": "publications",
+    "All years": "publications",
+    "Type": "publications",
+    "All types": "publications",
+    "Author": "publications",
+    "All authors": "publications",
+    "Research area": "publications",
+    "Reset": "publications",
+    "Showing": "publications",
+    "publications": "publications",
+    "Newest first": "publications",
+    "Demo": "general",
+    "Citation preview": "general",
+    "This publication is fictional. No real DOI, paper, or code repository is associated with it.": "general",
+    "Copied": "general",
+    "Copy BibTeX": "general",
+    "Clipboard unavailable. Select and copy the text above.": "general",
+    "Resource links are reserved for verified research outputs when a backend is connected.": "general",
+    "View publication details": "general",
+    "Projects": "projects",
+    "Ideas with a direction.": "projects",
+    "Explore demonstration projects connecting foundational questions with practical research concepts.": "projects",
+    "Search projects…": "projects",
+    "Research category": "projects",
+    "All categories": "projects",
+    "Project status": "projects",
+    "All projects": "projects",
+    "projects": "projects",
+    "A laboratory, always in motion.": "news",
+    "Research conversations, new ideas, and moments from our illustrative community. All events are examples.": "news",
+    "Search news and events…": "news",
+    "stories": "news",
+    "News category": "news",
+    "All updates": "news",
+    "This record is no longer available.": "detail",
+    "It may have been removed in the admin prototype. Reloading resets all demo content.": "detail",
+    "Back to collection": "detail",
+    "Back to": "detail",
+    "DEMONSTRATION RECORD": "detail",
+    "ILLUSTRATIVE PROFILE": "detail",
+    "Our research questions": "detail",
+    "We approach this direction through careful experimentation, reproducible methods, and collaboration across disciplines. The topics below represent potential research interests for the fictional laboratory.": "detail",
+    "GET INVOLVED": "detail",
+    "Ask the next question.": "detail",
+    "Explore an example research pathway and share your interests.": "detail",
+    "Research opportunities": "detail",
+    "CONNECTED WORK": "detail",
+    "Related projects": "detail",
+    "THE TEAM": "detail",
+    "People in this direction": "detail",
+    "Research interests & biography": "detail",
+    "This illustrative profile shows where a verified biography, education history, and research statement could be added. No degrees, affiliations, or accomplishments are asserted beyond this fictional demonstration.": "detail",
+    "Contact & collaboration": "detail",
+    "Placeholder email · does not receive messages": "detail",
+    "Contact the laboratory": "detail",
+    "Project overview": "detail",
+    "This is an illustrative project concept. Timelines and objectives are examples; no funding, partnership, deployment, or research result is claimed.": "detail",
+    "Research objectives": "detail",
+    "PROJECT SNAPSHOT": "detail",
+    "Status": "detail",
+    "Period": "detail",
+    "Category": "detail",
+    "Project lead": "detail",
+    "Abstract preview": "detail",
+    "This record demonstrates publication metadata and resource controls. It does not describe a published study, peer review, or verified result. All citations generated from this page are marked as fictional.": "detail",
+    "Contributors": "detail",
+    "Resources & citation": "detail",
+    "PUBLICATION DETAILS": "detail",
+    "Example venue": "detail",
+    "Continue the conversation": "detail",
+    "Explore the laboratory’s research directions and sample opportunities to learn how you could participate in a real research community.": "detail",
+    "STORY DETAILS": "detail",
+    "Sample event or story. No registration or actual attendance is available.": "detail",
+    "RESEARCH OUTPUTS": "detail",
+    "Related publications": "detail"
+  }
+}

@@ -4,6 +4,7 @@ WORKDIR /app
 COPY client/package*.json ./
 RUN npm ci
 COPY client/ ./
+COPY contracts/ /contracts/
 ARG VITE_API_BASE_URL
 ARG VITE_GOOGLE_CLIENT_ID=
 ARG VITE_DEFAULT_LOCALE=vi

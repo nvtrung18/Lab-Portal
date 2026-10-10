@@ -300,6 +300,9 @@ function getApiErrorMessage(error: AxiosError | unknown) {
 }
 
 function redirectToLogin() {
+  if (/^\/(vi|en)(\/|$)/.test(window.location.pathname) || window.location.pathname === '/') {
+    return;
+  }
   if (window.location.pathname !== '/login') {
     window.location.href = '/login';
   }

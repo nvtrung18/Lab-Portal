@@ -130,7 +130,7 @@ export function getResearchGroupMembershipLabName(
     membership.researchGroup?.labName ??
     membership.researchGroup?.lab?.name ??
     membership.researchGroup?.lab?.labName ??
-    'PTN'
+    '—'
   );
 }
 

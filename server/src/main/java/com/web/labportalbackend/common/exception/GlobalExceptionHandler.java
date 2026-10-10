@@ -313,6 +313,11 @@ public class GlobalExceptionHandler {
                 .body(Response.conflict(ex.getMessage()));
     }
 
+    @ExceptionHandler(WebsiteRevisionConflictException.class)
+    public ResponseEntity<Response<Void>> handleWebsiteRevisionConflict(WebsiteRevisionConflictException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(Response.conflict(ex.getMessage()));
+    }
+
     @ExceptionHandler(ReportVersionConflictException.class)
     public ResponseEntity<Response<Void>> handleReportVersionConflict(ReportVersionConflictException ex) {
         log.warn("Report version conflict: {}", ex.getMessage());

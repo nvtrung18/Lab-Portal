@@ -102,7 +102,7 @@ export function StudentDashboardPage() {
 
   return (
     <section className="mx-auto max-w-7xl space-y-6">
-      <header className="app-gradient-banner overflow-hidden rounded-2xl px-5 py-7 sm:px-8 sm:py-9">
+      <header className="app-feature-banner overflow-hidden rounded-2xl px-5 py-7 sm:px-8 sm:py-9">
         <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
           <div className="min-w-0 max-w-3xl">
             <p className="text-sm font-semibold text-blue-200">{t('dashboard.studySpace')}</p>
@@ -221,7 +221,7 @@ interface SummaryItemProps {
 
 function SummaryItem({ icon: Icon, label, value }: SummaryItemProps) {
   return (
-    <article className="app-surface-elevated flex min-w-0 items-center gap-4 rounded-2xl px-4 py-4">
+    <article className="app-stat-card app-surface-elevated flex min-w-0 items-center gap-4 rounded-2xl px-5 py-5">
       <span className="app-icon-badge flex h-11 w-11 shrink-0 items-center justify-center rounded-xl"><Icon aria-hidden="true" className="h-5 w-5" /></span>
       <div>
         <p className="text-2xl font-semibold tabular-nums text-slate-950 dark:text-white">{value}</p>

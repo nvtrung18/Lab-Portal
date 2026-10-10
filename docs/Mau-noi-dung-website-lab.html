@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mẫu nội dung thử nghiệm website Lab</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #f4f7f8; color: #17343d; font: 16px/1.7 Arial, sans-serif; }
+    main { max-width: 980px; margin: 32px auto; padding: 36px; background: white; border: 1px solid #dae3e6; border-radius: 12px; }
+    h1, h2, h3 { line-height: 1.3; }
+    h1 { font-size: 30px; }
+    h2 { margin-top: 30px; font-size: 24px; }
+    h3 { font-size: 19px; }
+    a { color: #087f86; }
+    code { overflow-wrap: anywhere; }
+    table { width: 100%; border-collapse: collapse; margin: 18px 0; }
+    th, td { padding: 12px; border: 1px solid #dae3e6; text-align: left; vertical-align: top; overflow-wrap: anywhere; }
+    th { background: #edf5f5; }
+    .notice { padding: 16px; background: #fff6dd; border-left: 4px solid #bc8a20; }
+    .instruction { padding: 12px 16px; background: #edf5f5; }
+    article { padding: 20px; margin: 16px 0 32px; border: 1px dashed #8eabad; }
+    article > :first-child { margin-top: 0; }
+    blockquote { margin: 20px 0; padding: 8px 18px; border-left: 4px solid #087f86; background: #f3f8f8; }
+    img { display: block; max-width: 100%; height: auto; border-radius: 8px; }
+    section { margin-top: 36px; }
+    @media (max-width: 640px) { main { margin: 0; padding: 20px; border-radius: 0; } table { font-size: 14px; } th, td { padding: 8px; } }
+    @media print { body { background: white; } main { margin: 0; border: 0; } article { break-inside: avoid; } }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Mẫu nội dung thử nghiệm website Lab</h1>
+  <p class="notice"><strong>Toàn bộ sự kiện, lịch trình, số lượng, địa điểm và thông tin liên hệ bên dưới là dữ liệu giả lập.</strong> Đây là nội dung để thử nghiệm CMS, không phải thông báo chính thức của lab. Các ảnh sử dụng tài nguyên mẫu đã có trong dự án.</p>
+
+  <section>
+    <h2>1. Cách sử dụng</h2>
+    <ol>
+      <li>Chạy FE và BE theo cấu hình hiện tại, đăng nhập bằng tài khoản Admin rồi mở mục quản lý website.</li>
+      <li>Mở file HTML này trong trình duyệt. Nhập từng trường theo bảng thông tin mẫu bên dưới.</li>
+      <li>Trong phần nội dung, chọn ngôn ngữ tương ứng. Sao chép <strong>chỉ nội dung bên trong khung nét đứt</strong> và dán vào editor. Không sao chép bảng thông tin hoặc hướng dẫn.</li>
+      <li>Kiểm tra định dạng được giữ lại; có thể dùng thanh công cụ để áp dụng lại định dạng nếu trình duyệt chỉ dán văn bản thuần.</li>
+      <li>Chọn <strong>Xem trước</strong>, sau đó <strong>Áp dụng vào bản nháp</strong> và <strong>Lưu bản nháp</strong>. Khi cần kiểm tra website công khai, dùng <strong>Xuất bản</strong> trên môi trường thử nghiệm.</li>
+    </ol>
+    <p>Ảnh trong bài dùng địa chỉ FE phát triển <code>http://localhost:5173</code>. Nếu FE chạy ở địa chỉ khác, sửa URL ảnh cho phù hợp hoặc tải ảnh từ <code>client/public/lab-website/images</code> bằng nút tải ảnh trong editor. URL ảnh là <strong>địa chỉ để mở ảnh</strong>, không phải chuỗi để dán vào nội dung như một đoạn văn.</p>
+  </section>
+
+  <section>
+    <h2>2. Bài viết mẫu — Seminar</h2>
+    <p>Tạo mới trong danh sách tin tức. Các giá trị dưới đây tương ứng với form bài viết hiện tại.</p>
+    <table>
+      <thead><tr><th>Trường</th><th>Tiếng Việt / giá trị chung</th><th>English</th></tr></thead>
+      <tbody>
+        <tr><td>Tiêu đề bài viết</td><td>[DEMO] Seminar: Từ dữ liệu cảm biến đến ứng dụng AI trong nghiên cứu</td><td>[DEMO] Seminar: From Sensor Data to AI Research Applications</td></tr>
+        <tr><td>Mô tả ngắn trong danh sách</td><td>Buổi seminar giả lập dành cho thành viên lab và sinh viên quan tâm, giới thiệu quy trình thu thập dữ liệu, xây dựng mô hình và trình bày kết quả nghiên cứu.</td><td>A fictional seminar for lab members and interested students, introducing data collection, model development and research presentation.</td></tr>
+        <tr><td>Loại bài viết</td><td>Seminar / Hội thảo</td><td>Dùng cùng một lựa chọn.</td></tr>
+        <tr><td>Ngày đăng / ngày sự kiện</td><td>18/10/2026 — giá trị ngày: 2026-10-18</td><td>Dùng cùng một ngày.</td></tr>
+        <tr><td>Địa điểm</td><td>Phòng seminar A — địa điểm giả lập</td><td>Seminar Room A — fictional location</td></tr>
+        <tr><td>Tên nguồn / báo / website</td><td colspan="2">Website minh họa Example — nguồn giả lập để thử form.</td></tr>
+        <tr><td>Link gốc</td><td colspan="2">https://example.com — chỉ thử nút liên kết, không phải nguồn của một seminar thật. Với bài lab tự viết, có thể để trống cả tên nguồn và link.</td></tr>
+        <tr><td>Ảnh bài viết</td><td colspan="2">http://localhost:5173/lab-website/images/team.jpg<br>Hoặc tải ảnh <code>client/public/lab-website/images/team.jpg</code> từ máy.</td></tr>
+        <tr><td>Hiển thị trên website sau khi xuất bản</td><td colspan="2">Bật để kiểm tra hiển thị; thử tắt trong bản nháp ở bước kiểm tra cuối.</td></tr>
+        <tr><td>Nội dung bài viết</td><td>Sao chép khung tiếng Việt ở mục 2.1.</td><td>Copy the English block in section 2.2.</td></tr>
+      </tbody>
+    </table>
+
+    <h3>2.1. Nội dung tiếng Việt — sao chép bên trong khung</h3>
+    <article lang="vi">
+      <h2>Kết nối ý tưởng, dữ liệu và thực nghiệm</h2>
+      <p><strong>[NỘI DUNG GIẢ LẬP]</strong> Lab tổ chức buổi seminar giới thiệu cách chuyển một ý tưởng nghiên cứu thành quy trình thực nghiệm có thể theo dõi và trình bày. Chương trình dành cho thành viên các nhóm nghiên cứu và sinh viên muốn tìm hiểu hoạt động của lab.</p>
+      <p>Với chủ đề <em>“Từ dữ liệu cảm biến đến ứng dụng AI trong nghiên cứu”</em>, người tham gia sẽ cùng thảo luận về dữ liệu đầu vào, lựa chọn phương pháp và cách báo cáo kết quả. <u>Mục tiêu của buổi học là hiểu quy trình và đặt được câu hỏi nghiên cứu rõ ràng.</u></p>
+
+      <h3>Thông tin chương trình</h3>
+      <ul>
+        <li><strong>Thời gian:</strong> 09:00–11:30, ngày 18/10/2026 — lịch giả lập.</li>
+        <li><strong>Địa điểm:</strong> Phòng seminar A — địa điểm giả lập.</li>
+        <li><strong>Phụ trách:</strong> Nhóm tổ chức seminar mẫu của lab.</li>
+        <li><strong>Đối tượng:</strong> Thành viên lab và sinh viên quan tâm đến nghiên cứu.</li>
+        <li><strong>Quy mô:</strong> 30 người — số lượng chỉ dùng để thử nội dung.</li>
+      </ul>
+
+      <h3>Các nội dung trao đổi</h3>
+      <ol>
+        <li>Xác định bài toán nghiên cứu và những thông tin cần thu thập.</li>
+        <li>Kiểm tra dữ liệu cảm biến, ghi nhận dữ liệu thiếu và mô tả quá trình xử lý.</li>
+        <li>Thiết kế thực nghiệm, theo dõi phiên bản dữ liệu và ghi lại các tham số.</li>
+        <li>Trình bày kết quả, giới hạn của phương pháp và hướng phát triển tiếp theo.</li>
+      </ol>
+
+      <blockquote><p>“Một kết quả nghiên cứu cần đi cùng mô tả đủ rõ để nhóm khác có thể hiểu cách chúng ta thực hiện.” — câu trích dẫn giả lập để thử định dạng.</p></blockquote>
+
+      <h3>Lịch trình dự kiến</h3>
+      <ul>
+        <li>09:00–09:15: Giới thiệu chương trình và các nhóm tham gia.</li>
+        <li>09:15–10:00: Quy trình từ dữ liệu đầu vào đến thiết kế thực nghiệm.</li>
+        <li>10:00–10:15: Nghỉ giải lao.</li>
+        <li>10:15–11:00: Thảo luận tình huống minh họa theo nhóm.</li>
+        <li>11:00–11:30: Hỏi đáp và tổng kết.</li>
+      </ul>
+
+      <p><img src="http://localhost:5173/lab-website/images/team.jpg" alt="Ảnh nhóm từ bộ tài nguyên mẫu của website; không phải ảnh sự kiện thật" title="Ảnh minh họa mẫu"></p>
+      <p><em>Ảnh minh họa từ tài nguyên mẫu của website, không phải ảnh chụp seminar này.</em></p>
+
+      <h3>Chuẩn bị trước khi tham gia</h3>
+      <p>Người tham gia có thể chuẩn bị máy tính cá nhân và một câu hỏi liên quan đến đề tài mình quan tâm. Không cần có kết quả nghiên cứu hoàn chỉnh để tham gia phần thảo luận.</p>
+      <p><s>Yêu cầu nộp báo cáo hoàn chỉnh trước seminar.</s> <strong>Thông tin thay thế trong mẫu:</strong> chỉ cần chuẩn bị một câu hỏi hoặc ý tưởng ngắn. Đoạn này dùng để kiểm tra định dạng gạch ngang.</p>
+      <p>Tham khảo trang <a href="http://localhost:5173/vi/research">Hướng nghiên cứu của lab</a> trước khi tham gia. Liên kết ngoài dùng để thử mở tab mới: <a href="https://example.com" target="_blank" rel="noopener noreferrer">Trang tài liệu minh họa</a>.</p>
+      <p><strong>Liên hệ giả lập:</strong> seminar@example.com. Địa chỉ này chỉ là văn bản mẫu; không gửi thư đăng ký.</p>
+      <p><strong>Lưu ý:</strong> việc đăng nhập không đồng nghĩa đã được duyệt vào lab. Nếu cần tham gia hoạt động nội bộ, hãy thực hiện quy trình nộp hồ sơ và chờ phê duyệt theo hệ thống.</p>
+    </article>
+
+    <h3>2.2. English content — copy inside the block</h3>
+    <article lang="en">
+      <h2>Connecting Ideas, Data and Experiments</h2>
+      <p><strong>[FICTIONAL DEMO CONTENT]</strong> The lab is hosting a sample seminar on turning a research idea into an experiment that can be tracked and presented. This fictional event is intended for research group members and students interested in lab activities.</p>
+      <p>Under the theme <em>“From Sensor Data to AI Research Applications”</em>, participants will discuss input data, method selection and reporting research findings. <u>The goal is to understand the workflow and formulate a clear research question.</u></p>
+
+      <h3>Event Information</h3>
+      <ul>
+        <li><strong>Time:</strong> 09:00–11:30 on 18 October 2026 — fictional schedule.</li>
+        <li><strong>Location:</strong> Seminar Room A — fictional location.</li>
+        <li><strong>Organizer:</strong> The lab's sample seminar organizing group.</li>
+        <li><strong>Audience:</strong> Lab members and students interested in research.</li>
+        <li><strong>Capacity:</strong> 30 participants — a sample value for content testing.</li>
+      </ul>
+
+      <h3>Discussion Topics</h3>
+      <ol>
+        <li>Define the research problem and identify the information to collect.</li>
+        <li>Review sensor data, record missing values and describe processing steps.</li>
+        <li>Design experiments, track dataset versions and document parameters.</li>
+        <li>Present results, method limitations and possible next steps.</li>
+      </ol>
+
+      <blockquote><p>“Research findings should include a clear description of how the work was carried out.” — a fictional quotation for formatting practice.</p></blockquote>
+
+      <h3>Proposed Schedule</h3>
+      <ul>
+        <li>09:00–09:15: Program introduction and participating groups.</li>
+        <li>09:15–10:00: From input data to experiment design.</li>
+        <li>10:00–10:15: Break.</li>
+        <li>10:15–11:00: Group discussion using an illustrative scenario.</li>
+        <li>11:00–11:30: Questions and closing remarks.</li>
+      </ul>
+
+      <p><img src="http://localhost:5173/lab-website/images/team.jpg" alt="Team image from the website's sample assets, not a photograph of a real event" title="Sample illustration"></p>
+      <p><em>Illustration from the website's sample assets; this is not a photograph of the fictional seminar.</em></p>
+
+      <h3>Before Attending</h3>
+      <p>Participants may bring a laptop and a question related to a research topic of interest. A completed research result is not required for the discussion.</p>
+      <p><s>Submit a completed report before the seminar.</s> <strong>Replacement sample information:</strong> prepare one short question or idea. This paragraph exercises strikethrough formatting.</p>
+      <p>Read the lab's <a href="http://localhost:5173/en/research">Research Directions</a>. To try an external link opening in a new tab, use the <a href="https://example.com" target="_blank" rel="noopener noreferrer">Illustrative Resource Page</a>.</p>
+      <p><strong>Fictional contact:</strong> seminar@example.com. This is sample text; do not send registration emails.</p>
+      <p><strong>Note:</strong> signing in does not mean that a student has been accepted into the lab. Access to internal activities follows the system's application and approval process.</p>
+    </article>
+  </section>
+
+  <section>
+    <h2>3. Khối nội dung mẫu cho một tab</h2>
+    <p>Thêm nội dung vào thư viện nội dung, rồi chọn khối này trong tab muốn hiển thị. Không cần tạo thêm tab.</p>
+    <table>
+      <thead><tr><th>Trường</th><th>Tiếng Việt / giá trị chung</th><th>English</th></tr></thead>
+      <tbody>
+        <tr><td>Tiêu đề nội dung</td><td>[DEMO] Từ ý tưởng đến đề tài nghiên cứu</td><td>[DEMO] From an Idea to a Research Project</td></tr>
+        <tr><td>Cách trình bày</td><td colspan="2">Chọn Ảnh và nội dung hai cột (split). Sau đó thử Văn bản (standard) và Khối nổi bật (featured).</td></tr>
+        <tr><td>Dòng nhấn</td><td>QUY TRÌNH NGHIÊN CỨU MẪU</td><td>SAMPLE RESEARCH WORKFLOW</td></tr>
+        <tr><td>Đoạn giới thiệu</td><td>Mô tả giả lập về cách một nhóm lựa chọn vấn đề, xây dựng kế hoạch và chia sẻ kết quả trong lab.</td><td>A fictional description of how a group selects a problem, develops a plan and shares findings within the lab.</td></tr>
+        <tr><td>Ảnh minh họa</td><td colspan="2">http://localhost:5173/lab-website/images/chip.jpg<br>Hoặc tải ảnh <code>client/public/lab-website/images/chip.jpg</code>.</td></tr>
+        <tr><td>Nhãn nút liên kết</td><td>Khám phá hướng nghiên cứu</td><td>Explore Research Directions</td></tr>
+        <tr><td>Đường dẫn liên kết</td><td colspan="2">/vi/research — một URL dùng chung trong form; nếu thử giao diện tiếng Anh, có thể đổi sang /en/research.</td></tr>
+        <tr><td>Cho phép hiển thị trên các tab đã chọn</td><td colspan="2">Bật. Đồng thời chọn khối này trong danh sách nội dung của tab cần thử.</td></tr>
+      </tbody>
+    </table>
+
+    <h3>3.1. Nội dung chính tiếng Việt</h3>
+    <article lang="vi">
+      <h2>Bắt đầu bằng một câu hỏi rõ ràng</h2>
+      <p><strong>[NỘI DUNG GIẢ LẬP]</strong> Một nhóm nghiên cứu mẫu tập trung vào câu hỏi: làm thế nào để sử dụng dữ liệu cảm biến nhằm mô tả những thay đổi trong môi trường thực nghiệm?</p>
+      <h3>Ba bước triển khai</h3>
+      <ol>
+        <li><strong>Xác định phạm vi:</strong> mô tả vấn đề, dữ liệu cần có và giới hạn của đề tài.</li>
+        <li><strong>Thực hiện nghiên cứu:</strong> lập kế hoạch, ghi nhận quá trình và trao đổi định kỳ trong nhóm.</li>
+        <li><strong>Chia sẻ kết quả:</strong> chuẩn bị báo cáo, ghi rõ hạn chế và đề xuất bước tiếp theo.</li>
+      </ol>
+      <blockquote><p>Ý tưởng có thể thay đổi trong quá trình nghiên cứu; các thay đổi cần được ghi lại để nhóm cùng theo dõi.</p></blockquote>
+      <p><em>Khối này có thể đặt trong tab Giới thiệu hoặc Hướng nghiên cứu để thử lựa chọn và sắp xếp nội dung.</em></p>
+    </article>
+
+    <h3>3.2. English main content</h3>
+    <article lang="en">
+      <h2>Start with a Clear Question</h2>
+      <p><strong>[FICTIONAL DEMO CONTENT]</strong> A sample research group asks how sensor data can describe changes in an experimental environment.</p>
+      <h3>Three Steps</h3>
+      <ol>
+        <li><strong>Define the scope:</strong> describe the problem, required data and project limitations.</li>
+        <li><strong>Conduct the research:</strong> plan the work, document the process and discuss progress regularly.</li>
+        <li><strong>Share the findings:</strong> prepare a report, state limitations and suggest next steps.</li>
+      </ol>
+      <blockquote><p>Ideas may change during research; record those changes so the group can follow the work.</p></blockquote>
+      <p><em>This block can be placed in the About or Research tab to try content selection and ordering.</em></p>
+    </article>
+    <p class="instruction">Để thử 3–4 nội dung trong một tab: tạo thêm các khối từ mẫu trên, đổi tiêu đề lần lượt thành “[DEMO] Thu thập dữ liệu”, “[DEMO] Theo dõi thực nghiệm” và “[DEMO] Chia sẻ kết quả”. Chọn các khối cho cùng một tab rồi đổi thứ tự hiển thị.</p>
+  </section>
+
+  <section>
+    <h2>4. Danh sách kiểm tra thủ công</h2>
+    <p>Đây là các thao tác để bạn tự kiểm tra, chưa phải kết quả kiểm thử đã thực hiện.</p>
+    <ul>
+      <li>Dấu tiếng Việt, dấu ngoặc kép và ký tự “09:00–11:30” hiển thị đúng.</li>
+      <li>Hai ngôn ngữ có nội dung riêng; đổi ngôn ngữ không làm mất nội dung đang nhập.</li>
+      <li>Tiêu đề H2/H3, in đậm, nghiêng, gạch chân, gạch ngang, danh sách và trích dẫn hiển thị phù hợp.</li>
+      <li>Ảnh đại diện bài viết và ảnh trong nội dung đều hiển thị; thử thêm một ảnh bằng nút tải ảnh.</li>
+      <li>Liên kết nghiên cứu điều hướng đúng; liên kết ngoài mở được sau khi xuất bản trên môi trường thử nghiệm.</li>
+      <li>Xem trước mở đúng bài viết hoặc tab; đóng xem trước rồi quay lại vẫn còn nội dung đang chỉnh.</li>
+      <li>Sau khi áp dụng và lưu bản nháp, tải lại màn hình Admin vẫn thấy nội dung đã lưu.</li>
+      <li>Trước khi xuất bản, bản nháp chưa thay thế nội dung website công khai.</li>
+      <li>Sau khi xuất bản, mở website bằng cửa sổ riêng để kiểm tra nội dung công khai.</li>
+      <li>Tắt hiển thị một bài hoặc bỏ chọn một khối khỏi tab, lưu và xuất bản để kiểm tra việc ẩn nội dung.</li>
+      <li>Đổi thứ tự 3–4 khối trong một tab, lưu và xuất bản để kiểm tra thứ tự trên website.</li>
+      <li>Xóa toàn bộ nội dung chính của một khối trong bản nháp để thử trường hợp trống; dùng Hoàn tác hoặc nhập lại mẫu trước khi xuất bản nếu muốn giữ nội dung.</li>
+    </ul>
+    <p>Chỉ dùng các định dạng hiện có trên thanh công cụ. Mẫu không yêu cầu bảng trong bài viết, video, iframe, font tùy chỉnh hoặc mã script.</p>
+  </section>
+</main>
+</body>
+</html>

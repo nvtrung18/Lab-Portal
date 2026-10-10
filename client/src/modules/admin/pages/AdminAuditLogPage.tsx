@@ -96,27 +96,27 @@ function formatLocalizedDateTime(value: string | undefined, locale: 'vi' | 'en',
 const getModuleBadgeColor = (module: string) => {
   switch (module.toUpperCase()) {
     case 'USER':
-      return 'bg-blue-500/10 text-blue-400 border border-blue-500/20';
+      return 'bg-blue-50 text-blue-700 ring-1 ring-blue-600/20 dark:bg-blue-950/60 dark:text-blue-300 dark:ring-blue-500/30';
     case 'LAB':
-      return 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20';
+      return 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/20 dark:bg-emerald-950/60 dark:text-emerald-300 dark:ring-emerald-500/30';
     case 'SYSTEM_CONFIG':
-      return 'bg-purple-500/10 text-purple-400 border border-purple-500/20';
+      return 'bg-purple-50 text-purple-700 ring-1 ring-purple-600/20 dark:bg-purple-950/60 dark:text-purple-300 dark:ring-purple-500/30';
     case 'BOOKING':
-      return 'bg-amber-500/10 text-amber-400 border border-amber-500/20';
+      return 'bg-amber-50 text-amber-700 ring-1 ring-amber-600/20 dark:bg-amber-950/60 dark:text-amber-300 dark:ring-amber-500/30';
     case 'CLEANING':
-      return 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20';
+      return 'bg-cyan-50 text-cyan-700 ring-1 ring-cyan-600/20 dark:bg-cyan-950/60 dark:text-cyan-300 dark:ring-cyan-500/30';
     case 'PENALTY':
-      return 'bg-rose-500/10 text-rose-400 border border-rose-500/20';
+      return 'bg-rose-50 text-rose-700 ring-1 ring-rose-600/20 dark:bg-rose-950/60 dark:text-rose-300 dark:ring-rose-500/30';
     case 'RESEARCH':
-      return 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20';
+      return 'bg-indigo-50 text-indigo-700 ring-1 ring-indigo-600/20 dark:bg-indigo-950/60 dark:text-indigo-300 dark:ring-indigo-500/30';
     case 'REPORT':
-      return 'bg-teal-500/10 text-teal-400 border border-teal-500/20';
+      return 'bg-teal-50 text-teal-700 ring-1 ring-teal-600/20 dark:bg-teal-950/60 dark:text-teal-300 dark:ring-teal-500/30';
     case 'PRODUCT':
-      return 'bg-sky-500/10 text-sky-400 border border-sky-500/20';
+      return 'bg-sky-50 text-sky-700 ring-1 ring-sky-600/20 dark:bg-sky-950/60 dark:text-sky-300 dark:ring-sky-500/30';
     case 'EVALUATION':
-      return 'bg-pink-500/10 text-pink-400 border border-pink-500/20';
+      return 'bg-pink-50 text-pink-700 ring-1 ring-pink-600/20 dark:bg-pink-950/60 dark:text-pink-300 dark:ring-pink-500/30';
     default:
-      return 'bg-slate-500/10 text-slate-400 border border-slate-500/20';
+      return 'bg-slate-100 text-slate-700 ring-1 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700';
   }
 };
 
@@ -180,31 +180,43 @@ export function AdminAuditLogPage() {
 
   return (
     <section className="space-y-6">
+      {/* Page Header */}
       <div className="flex flex-col gap-1">
-        <h2 className="text-xl font-semibold text-white">{t('audit.title')}</h2>
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+          {t('audit.title')}
+        </h1>
+        <p className="text-sm text-slate-500 dark:text-slate-400">
+          {locale === 'vi'
+            ? 'Theo dõi toàn bộ lịch sử hoạt động, kiểm toán và thay đổi bảo mật của hệ thống'
+            : 'Track system operational history, audit trails, and security changes'}
+        </p>
       </div>
 
       {/* Filter controls */}
       <form
         onSubmit={handleSearch}
-        className="grid min-w-0 gap-4 rounded-lg border border-slate-800 bg-slate-900 p-4 shadow-sm sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5"
+        className="grid min-w-0 gap-3 rounded-xl border border-slate-200/90 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/60 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5"
       >
-        <div className="flex flex-col gap-1">
-          <label htmlFor="filter-keyword" className="text-xs font-medium text-slate-400">{t('audit.filter.keyword')}</label>
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="filter-keyword" className="text-xs font-semibold text-slate-600 dark:text-slate-400">
+            {t('audit.filter.keyword')}
+          </label>
           <input
             id="filter-keyword"
-            className="min-h-11 w-full min-w-0 rounded-md border border-slate-700 bg-slate-950 px-3 py-1.5 text-base text-white outline-none placeholder:text-slate-500 focus:border-white sm:text-sm"
+            className="h-10 w-full min-w-0 rounded-lg border border-slate-200 bg-slate-50/50 px-3 text-sm text-slate-900 placeholder:text-slate-400 transition-all focus:border-teal-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-500/20 dark:border-slate-700/80 dark:bg-slate-950/50 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-teal-400 dark:focus:bg-slate-900"
             placeholder={t('audit.filter.keywordPlaceholder')}
             value={keywordInput}
             onChange={(e) => setKeywordInput(e.target.value)}
           />
         </div>
 
-        <div className="flex flex-col gap-1">
-          <label htmlFor="filter-module" className="text-xs font-medium text-slate-400">{t('audit.filter.module')}</label>
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="filter-module" className="text-xs font-semibold text-slate-600 dark:text-slate-400">
+            {t('audit.filter.module')}
+          </label>
           <select
             id="filter-module"
-            className="min-h-11 w-full min-w-0 rounded-md border border-slate-700 bg-slate-950 px-3 py-1.5 text-base text-white outline-none focus:border-white sm:text-sm"
+            className="h-10 w-full min-w-0 rounded-lg border border-slate-200 bg-slate-50/50 px-3 text-sm font-medium text-slate-700 transition focus:border-teal-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-500/20 dark:border-slate-700/80 dark:bg-slate-950/50 dark:text-slate-200 dark:focus:border-teal-400 dark:focus:bg-slate-900"
             value={moduleInput}
             onChange={(e) => setModuleInput(e.target.value)}
           >
@@ -217,11 +229,13 @@ export function AdminAuditLogPage() {
           </select>
         </div>
 
-        <div className="flex flex-col gap-1">
-          <label htmlFor="filter-action" className="text-xs font-medium text-slate-400">{t('audit.filter.action')}</label>
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="filter-action" className="text-xs font-semibold text-slate-600 dark:text-slate-400">
+            {t('audit.filter.action')}
+          </label>
           <select
             id="filter-action"
-            className="min-h-11 w-full min-w-0 rounded-md border border-slate-700 bg-slate-950 px-3 py-1.5 text-base text-white outline-none focus:border-white sm:text-sm"
+            className="h-10 w-full min-w-0 rounded-lg border border-slate-200 bg-slate-50/50 px-3 text-sm font-medium text-slate-700 transition focus:border-teal-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-500/20 dark:border-slate-700/80 dark:bg-slate-950/50 dark:text-slate-200 dark:focus:border-teal-400 dark:focus:bg-slate-900"
             value={actionInput}
             onChange={(e) => setActionInput(e.target.value)}
           >
@@ -234,32 +248,35 @@ export function AdminAuditLogPage() {
           </select>
         </div>
 
-        <div className="flex flex-col gap-1">
-          <label htmlFor="filter-from-date" className="text-xs font-medium text-slate-400">{t('audit.filter.fromDate')}</label>
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="filter-from-date" className="text-xs font-semibold text-slate-600 dark:text-slate-400">
+            {t('audit.filter.fromDate')}
+          </label>
           <input
             id="filter-from-date"
             type="date"
-            className="min-h-11 w-full min-w-0 rounded-md border border-slate-700 bg-slate-950 px-3 py-1.5 text-base text-white outline-none focus:border-white sm:text-sm"
+            className="h-10 w-full min-w-0 rounded-lg border border-slate-200 bg-slate-50/50 px-3 text-sm text-slate-900 transition focus:border-teal-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-500/20 dark:border-slate-700/80 dark:bg-slate-950/50 dark:text-slate-100 dark:focus:border-teal-400 dark:focus:bg-slate-900"
             value={fromDateInput}
             onChange={(e) => setFromDateInput(e.target.value)}
           />
         </div>
 
-        <div className="flex flex-col gap-1">
-          <label htmlFor="filter-to-date" className="text-xs font-medium text-slate-400">{t('audit.filter.toDate')}</label>
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="filter-to-date" className="text-xs font-semibold text-slate-600 dark:text-slate-400">
+            {t('audit.filter.toDate')}
+          </label>
           <input
             id="filter-to-date"
             type="date"
-            className="min-h-11 w-full min-w-0 rounded-md border border-slate-700 bg-slate-950 px-3 py-1.5 text-base text-white outline-none focus:border-white sm:text-sm"
+            className="h-10 w-full min-w-0 rounded-lg border border-slate-200 bg-slate-50/50 px-3 text-sm text-slate-900 transition focus:border-teal-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-500/20 dark:border-slate-700/80 dark:bg-slate-950/50 dark:text-slate-100 dark:focus:border-teal-400 dark:focus:bg-slate-900"
             value={toDateInput}
             onChange={(e) => setToDateInput(e.target.value)}
           />
         </div>
 
-        <div className="flex flex-col-reverse gap-2 border-t border-slate-800 pt-2 sm:col-span-2 sm:flex-row sm:justify-end xl:col-span-3 2xl:col-span-5">
+        <div className="flex flex-col-reverse gap-2 border-t border-slate-100 pt-3 dark:border-slate-800 sm:col-span-2 sm:flex-row sm:justify-end xl:col-span-3 2xl:col-span-5">
           <Button
             type="button"
-            className="border-slate-700 bg-transparent text-slate-200 hover:bg-slate-800"
             size="sm"
             variant="outline"
             onClick={handleReset}
@@ -268,8 +285,8 @@ export function AdminAuditLogPage() {
           </Button>
           <Button
             type="submit"
-            className="bg-white text-slate-950 hover:bg-slate-200"
             size="sm"
+            variant="primary"
           >
             {t('audit.search')}
           </Button>
@@ -278,82 +295,97 @@ export function AdminAuditLogPage() {
 
       {/* Content State */}
       {isLoading ? (
-        <div className="rounded-lg border border-slate-800 bg-slate-900 p-12 shadow-sm text-center">
-          <LoadingState className="text-slate-300">{t('audit.loading')}</LoadingState>
+        <div className="rounded-xl border border-slate-200/90 bg-white p-12 text-center shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+          <LoadingState className="text-slate-600 dark:text-slate-300">{t('audit.loading')}</LoadingState>
         </div>
       ) : isError ? (
-        <div className="rounded-lg border border-slate-800 bg-slate-900 p-6 shadow-sm">
-          <ErrorState className="border-red-950 bg-red-950/20 text-red-400" onRetry={() => refetch()}>
+        <div className="rounded-xl border border-slate-200/90 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+          <ErrorState onRetry={() => refetch()}>
             {t('audit.loadError')}
           </ErrorState>
         </div>
       ) : !data || data.items.length === 0 ? (
-        <div className="rounded-lg border border-slate-800 bg-slate-900 p-12 shadow-sm text-center">
-          <EmptyState className="border-slate-800 bg-slate-950 text-slate-400">
+        <div className="rounded-xl border border-dashed border-slate-300 bg-white p-12 text-center shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+          <EmptyState>
             {t('audit.empty')}
           </EmptyState>
         </div>
       ) : (
-        <div className="rounded-lg border border-slate-800 bg-slate-900 shadow-sm overflow-hidden">
-          <div className="divide-y divide-slate-800 md:hidden">
+        <div className="rounded-xl border border-slate-200/90 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900/60 overflow-hidden">
+          {/* Mobile Card List (< md) */}
+          <div className="divide-y divide-slate-100 dark:divide-slate-800 md:hidden">
             {data.items.map((log) => (
               <article className="min-w-0 space-y-3 p-4" key={log.id}>
                 <div className="flex flex-wrap items-start justify-between gap-2">
-                  <h3 className="min-w-0 flex-1 break-words font-semibold text-slate-100">
+                  <h3 className="min-w-0 flex-1 break-words font-semibold text-slate-900 dark:text-slate-100">
                     {t(actionLabelKeys[log.action] ?? '', log.action)}
                   </h3>
-                  <span className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${getModuleBadgeColor(log.module)}`}>
+                  <span className={`inline-flex shrink-0 items-center rounded-full px-2.5 py-1 text-xs font-semibold whitespace-nowrap ${getModuleBadgeColor(log.module)}`}>
                     {t(moduleLabelKeys[log.module] ?? '', log.module)}
                   </span>
                 </div>
-                <p className="text-sm text-slate-300">{formatLocalizedDateTime(log.createdAt, locale, t)}</p>
-                <dl className="grid grid-cols-2 gap-x-3 gap-y-3 text-sm">
-                  <div className="min-w-0"><dt className="text-slate-400">{t('audit.table.actor')}</dt><dd className="mt-1 break-words text-slate-100">{log.actorName || `ID: ${log.actorId}`}</dd></div>
-                  <div className="min-w-0"><dt className="text-slate-400">{t('audit.table.role')}</dt><dd className="mt-1 break-words text-slate-100">{formatRoleLocalized(log.actorRole, t)}</dd></div>
-                  <div className="col-span-2 min-w-0"><dt className="text-slate-400">{t('audit.table.target')}</dt><dd className="mt-1 break-words text-slate-100">{formatTargetLocalized(log.targetType, log.targetId, t)}</dd></div>
-                  <div className="col-span-2 min-w-0"><dt className="text-slate-400">{t('audit.table.description')}</dt><dd className="mt-1 break-words text-slate-100">{log.description || '—'}</dd></div>
+                <p className="text-xs text-slate-500 dark:text-slate-400">{formatLocalizedDateTime(log.createdAt, locale, t)}</p>
+                <dl className="grid grid-cols-1 min-[380px]:grid-cols-2 gap-x-3 gap-y-2.5 text-xs">
+                  <div className="min-w-0">
+                    <dt className="text-slate-400 dark:text-slate-500">{t('audit.table.actor')}</dt>
+                    <dd className="mt-0.5 break-words font-medium text-slate-800 dark:text-slate-200">{log.actorName || `ID: ${log.actorId}`}</dd>
+                  </div>
+                  <div className="min-w-0">
+                    <dt className="text-slate-400 dark:text-slate-500">{t('audit.table.role')}</dt>
+                    <dd className="mt-0.5 break-words text-slate-700 dark:text-slate-300">{formatRoleLocalized(log.actorRole, t)}</dd>
+                  </div>
+                  <div className="min-w-0 min-[380px]:col-span-2">
+                    <dt className="text-slate-400 dark:text-slate-500">{t('audit.table.target')}</dt>
+                    <dd className="mt-0.5 break-words text-slate-700 dark:text-slate-300">{formatTargetLocalized(log.targetType, log.targetId, t)}</dd>
+                  </div>
+                  <div className="min-w-0 min-[380px]:col-span-2">
+                    <dt className="text-slate-400 dark:text-slate-500">{t('audit.table.description')}</dt>
+                    <dd className="mt-0.5 break-words text-slate-600 dark:text-slate-400">{log.description || '—'}</dd>
+                  </div>
                 </dl>
               </article>
             ))}
           </div>
-          <div aria-label={t('audit.title')} className="hidden max-w-full overscroll-x-contain overflow-x-auto md:block" role="region" tabIndex={0}>
-            <table className="w-full min-w-[950px] divide-y divide-slate-800 text-sm text-left">
-              <thead>
-                <tr className="text-xs font-semibold uppercase text-slate-400 bg-slate-950/50">
-                  <th className="px-4 py-3">{t('audit.table.time')}</th>
-                  <th className="px-4 py-3">{t('audit.table.actor')}</th>
-                  <th className="px-4 py-3">{t('audit.table.role')}</th>
-                  <th className="px-4 py-3">{t('audit.table.module')}</th>
-                  <th className="px-4 py-3">{t('audit.table.action')}</th>
-                  <th className="px-4 py-3">{t('audit.table.target')}</th>
-                  <th className="px-4 py-3">{t('audit.table.description')}</th>
+
+          {/* Desktop Table (>= md) */}
+          <div aria-label={t('audit.title')} className="app-table-frame hidden min-w-0 max-w-full overflow-x-auto md:block" role="region" tabIndex={0}>
+            <table className="w-full min-w-[960px] text-sm text-left border-collapse">
+              <thead className="border-b border-slate-200/90 bg-slate-50/80 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:border-slate-800 dark:bg-slate-800/60 dark:text-slate-400">
+                <tr>
+                  <th className="px-4 py-3.5 min-w-[150px] font-semibold">{t('audit.table.time')}</th>
+                  <th className="px-4 py-3.5 min-w-[140px] font-semibold">{t('audit.table.actor')}</th>
+                  <th className="px-4 py-3.5 min-w-[110px] font-semibold">{t('audit.table.role')}</th>
+                  <th className="px-4 py-3.5 min-w-[120px] font-semibold">{t('audit.table.module')}</th>
+                  <th className="px-4 py-3.5 min-w-[170px] font-semibold">{t('audit.table.action')}</th>
+                  <th className="px-4 py-3.5 min-w-[170px] font-semibold">{t('audit.table.target')}</th>
+                  <th className="px-4 py-3.5 min-w-[200px] font-semibold">{t('audit.table.description')}</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800 bg-transparent">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/70">
                 {data.items.map((log) => (
-                  <tr key={log.id} className="hover:bg-slate-950/20 transition-colors">
-                    <td className="px-4 py-4.5 text-slate-300 whitespace-nowrap">
+                  <tr key={log.id} className="transition-colors hover:bg-slate-50/80 dark:hover:bg-slate-800/40">
+                    <td className="px-4 py-3.5 text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">
                       {formatLocalizedDateTime(log.createdAt, locale, t)}
                     </td>
-                    <td className="px-4 py-4.5 text-slate-100 font-medium whitespace-nowrap">
+                    <td className="px-4 py-3.5 font-medium text-slate-900 dark:text-slate-100 whitespace-nowrap">
                       {log.actorName || `ID: ${log.actorId}`}
                     </td>
-                    <td className="px-4 py-4.5 text-slate-300 whitespace-nowrap">
+                    <td className="px-4 py-3.5 text-slate-600 dark:text-slate-300 whitespace-nowrap">
                       {formatRoleLocalized(log.actorRole, t)}
                     </td>
-                    <td className="px-4 py-4.5 whitespace-nowrap">
-                      <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${getModuleBadgeColor(log.module)}`}>
+                    <td className="px-4 py-3.5 whitespace-nowrap">
+                      <span className={`inline-flex shrink-0 items-center rounded-full px-2.5 py-0.5 text-xs font-semibold whitespace-nowrap ${getModuleBadgeColor(log.module)}`}>
                         {t(moduleLabelKeys[log.module] ?? '', log.module)}
                       </span>
                     </td>
-                    <td className="px-4 py-4.5 text-slate-100 font-medium whitespace-nowrap">
+                    <td className="px-4 py-3.5 font-medium text-slate-900 dark:text-slate-100 whitespace-nowrap">
                       {t(actionLabelKeys[log.action] ?? '', log.action)}
                     </td>
-                    <td className="px-4 py-4.5 text-slate-300 whitespace-nowrap">
+                    <td className="px-4 py-3.5 text-slate-600 dark:text-slate-300 whitespace-nowrap">
                       {formatTargetLocalized(log.targetType, log.targetId, t)}
                     </td>
-                    <td className="px-4 py-4.5 text-slate-300 max-w-xs truncate" title={log.description}>
-                      {log.description || '-'}
+                    <td className="px-4 py-3.5 text-slate-600 dark:text-slate-400 max-w-xs truncate" title={log.description}>
+                      {log.description || '—'}
                     </td>
                   </tr>
                 ))}

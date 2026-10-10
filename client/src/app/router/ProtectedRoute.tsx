@@ -1,4 +1,4 @@
-import { Navigate, Outlet } from 'react-router-dom';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
 
 import { getAuthToken, getStoredUser } from '../../shared/api';
 import type { Role } from '../../shared/constants/roles';
@@ -14,13 +14,15 @@ function normalizeRole(role: string): string {
 export function ProtectedRoute({ allowedRoles }: ProtectedRouteProps) {
   const token = getAuthToken();
   const user = getStoredUser();
+  const location = useLocation();
+  const loginPath = `/login?returnUrl=${encodeURIComponent(location.pathname + location.search)}`;
 
   if (!token) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to={loginPath} replace />;
   }
 
   if (!user) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to={loginPath} replace />;
   }
 
   if (allowedRoles?.length) {
