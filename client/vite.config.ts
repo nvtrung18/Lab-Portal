@@ -48,7 +48,10 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [react()],
     server: {
+      fs: { allow: [process.cwd(), path.resolve(process.cwd(), '../contracts')] },
       host: '0.0.0.0',
+      port: 5173,
+      strictPort: true,
       ...(hasLocalCertificate
         ? {
             https: {

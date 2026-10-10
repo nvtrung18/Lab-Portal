@@ -57,7 +57,7 @@ export function ToastContainer() {
     <div className="toast-enter fixed inset-x-3 bottom-3 z-toast sm:inset-x-auto sm:bottom-4 sm:right-4 sm:w-96 sm:max-w-[calc(100vw-2rem)]">
       <div
         className={[
-          'relative break-words rounded-xl border px-4 py-3 pr-14 text-sm shadow-lg',
+          'app-toast relative break-words rounded-md border px-5 py-4 pr-14 text-sm shadow-lg',
           VARIANT_CLASSES[toast.variant],
         ].join(' ')}
         role={toast.variant === 'error' ? 'alert' : 'status'}

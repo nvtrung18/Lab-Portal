@@ -1,6 +1,7 @@
 package com.web.labportalbackend.auth.repository;
 
 import com.web.labportalbackend.auth.entity.User;
+import com.web.labportalbackend.admin.website.dto.WebsiteMemberSource;
 import com.web.labportalbackend.ai.context.AiAdminContext;
 import com.web.labportalbackend.common.enums.UserStatus;
 import jakarta.persistence.LockModeType;
@@ -16,6 +17,18 @@ import java.util.Optional;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
+
+    @Query("""
+            SELECT new com.web.labportalbackend.admin.website.dto.WebsiteMemberSource(
+                u.id, u.fullName, u.username, u.email, u.status)
+            FROM User u
+            WHERE u.deleted = false
+            ORDER BY u.id ASC
+            """)
+    List<WebsiteMemberSource> findWebsiteMemberSources();
+
+    @Query("SELECT u.id FROM User u WHERE u.deleted = false AND u.id IN :ids")
+    List<Long> findExistingWebsiteMemberIds(@Param("ids") List<Long> ids);
 
     @Lock(LockModeType.PESSIMISTIC_READ)
     @EntityGraph(attributePaths = "roles")

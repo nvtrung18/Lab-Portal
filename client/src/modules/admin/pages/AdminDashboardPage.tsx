@@ -264,7 +264,7 @@ export function AdminDashboardPage() {
 
 function DashboardHeader({ t }: { t: (key: string, fallback?: string) => string }) {
   return (
-    <header className="flex items-end justify-between gap-4">
+    <header className="app-feature-banner flex items-end justify-between gap-4">
       <div>
         <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-600 dark:text-slate-300">{t('layout.adminRole')}</p>
         <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-950 dark:text-white sm:text-3xl">{t('adminDashboard.title')}</h1>

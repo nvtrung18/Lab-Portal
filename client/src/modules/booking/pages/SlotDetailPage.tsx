@@ -181,7 +181,7 @@ export function SlotDetailPage() {
             </button>
           </div>
         ) : registrations.length ? (
-          <div className="max-w-full overscroll-x-contain overflow-x-auto">
+          <div aria-label={t('slotDetail.registrations')} role="region" tabIndex={0} className="min-w-0 max-w-full overscroll-x-contain overflow-x-auto">
             <table className="w-full min-w-[720px] divide-y divide-slate-200 text-sm">
               <thead className="bg-slate-50 text-left text-slate-500">
                 <tr>

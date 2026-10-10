@@ -283,7 +283,7 @@ export function AssistantPage() {
   return (
     <section className="mx-auto max-w-6xl">
       <header className="mb-6">
-        <p className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-slate-500"><Bot aria-hidden="true" className="h-4 w-4" /> {t('assistant.lab')}</p>
+        <p className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-slate-500"><Bot aria-hidden="true" className="h-4 w-4" /> {t('common.aiAssistant')}</p>
         <h1 className="mt-1 text-2xl font-semibold text-slate-950 dark:text-white">{t('assistant.title')}</h1>
       </header>
 
@@ -332,7 +332,7 @@ export function AssistantPage() {
         </aside>
 
         <div className="flex min-w-0 flex-col">
-          <div ref={scrollRef} aria-live="polite" className="max-h-[65vh] flex-1 space-y-5 overflow-y-auto bg-slate-50/40 p-4 dark:bg-slate-950/20 sm:p-6">
+          <div ref={scrollRef} aria-live="polite" className="max-h-[65dvh] flex-1 space-y-5 overflow-y-auto bg-slate-50/40 p-4 dark:bg-slate-950/20 sm:p-6">
           {conversation.hasNextPage ? (
             <div className="flex justify-center">
               <Button
@@ -348,7 +348,7 @@ export function AssistantPage() {
             </div>
           ) : null}
           {turns.length === 0 ? (
-            <div className="flex min-h-96 flex-col items-center justify-center text-center">
+            <div className="flex min-h-64 flex-col sm:min-h-96 items-center justify-center text-center">
               <Sparkles aria-hidden="true" className="h-9 w-9 text-slate-400" />
               <h2 className="mt-4 text-lg font-semibold text-slate-950 dark:text-white">{t('assistant.empty')}</h2>
             </div>

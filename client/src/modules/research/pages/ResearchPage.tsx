@@ -50,7 +50,7 @@ export function ResearchPage() {
 
   return (
     <section className="min-w-0 space-y-6">
-      <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+      <div className="app-page-heading rounded-lg border border-slate-200 bg-white p-4 sm:p-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="min-w-0">
             <h2 className="text-xl font-semibold text-slate-950">{t('research.title')}</h2>
@@ -90,7 +90,7 @@ function StudentResearchView({ currentUserId, activeMemberships }: StudentResear
 
   return (
     <section className="min-w-0 space-y-6">
-      <header className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+      <header className="app-page-heading rounded-lg border border-slate-200 bg-white p-4 sm:p-6">
         <h2 className="text-xl font-semibold text-slate-950">{t('research.title')}</h2>
       </header>
 

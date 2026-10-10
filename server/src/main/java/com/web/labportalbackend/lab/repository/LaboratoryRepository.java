@@ -18,6 +18,9 @@ import java.util.Optional;
 @Repository
 public interface LaboratoryRepository extends JpaRepository<Laboratory, Long> {
 
+    @Query("SELECT l.id FROM Laboratory l WHERE l.deleted = false AND l.id IN :ids")
+    List<Long> findExistingWebsiteResearchLabIds(@Param("ids") List<Long> ids);
+
     @Query("""
             SELECT new com.web.labportalbackend.ai.context.AiLabContext$Laboratory(l.id, l.labName, l.status)
             FROM Membership m JOIN m.laboratory l

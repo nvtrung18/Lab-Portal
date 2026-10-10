@@ -188,7 +188,7 @@ export function LabList() {
 
                 {lab.description ? <p className="mt-4 line-clamp-3 text-sm leading-6 text-slate-600 dark:text-slate-300">{lab.description}</p> : null}
 
-                <dl className="mt-4 grid flex-1 grid-cols-2 gap-3 text-sm">
+                <dl className="mt-4 grid flex-1 grid-cols-1 min-[380px]:grid-cols-2 gap-3 text-sm">
                   <div>
                     <dt className="text-slate-500">{t('lab.manager')}</dt>
                     <dd className="break-words font-medium text-slate-950 dark:text-white">
@@ -201,7 +201,7 @@ export function LabList() {
                       {lab.capacity ?? t('common.notUpdated')}
                     </dd>
                   </div>
-                  <div className="col-span-2">
+                  <div className="min-[380px]:col-span-2">
                     <dt className="text-slate-500">{t('lab.location')}</dt>
                     <dd className="break-words font-medium text-slate-950 dark:text-white">
                       {lab.location || t('common.notUpdated')}

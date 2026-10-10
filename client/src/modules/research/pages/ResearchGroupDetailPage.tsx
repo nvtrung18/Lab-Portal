@@ -562,7 +562,7 @@ function GroupMembersTab({ group, isLeader }: { group: ResearchGroup; isLeader: 
         {!group.members?.length ? <EmptyState>{t('research.group.noMembersInGroup')}</EmptyState> : null}
       </div>
 
-      <div className="hidden max-w-full overflow-x-auto overscroll-x-contain md:block">
+      <div aria-label={t('research.group.members')} role="region" tabIndex={0} className="hidden min-w-0 max-w-full overflow-x-auto overscroll-x-contain md:block">
         <table className="w-full min-w-[40rem] text-left text-sm border-collapse">
           <thead>
             <tr className="border-b border-slate-200 bg-slate-50 text-xs font-semibold uppercase tracking-wider text-slate-500">
@@ -716,7 +716,7 @@ function GroupTaskList({ groupId }: { groupId: number }) {
       ) : !tasks.length ? (
         <EmptyState className="mt-5">{t('research.group.noTasks')}</EmptyState>
       ) : (
-        <div className="mt-5 max-w-full overflow-x-auto overscroll-x-contain">
+        <div aria-label={t('research.group.taskBoard')} role="region" tabIndex={0} className="mt-5 min-w-0 max-w-full overflow-x-auto overscroll-x-contain">
           <table className="w-full min-w-[42rem] text-left text-sm">
             <thead>
               <tr className="border-b border-slate-200 bg-slate-50 text-xs font-semibold uppercase tracking-wider text-slate-500">

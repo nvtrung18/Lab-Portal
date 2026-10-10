@@ -2,11 +2,14 @@ package com.web.labportalbackend.auth.config;
 
 import com.web.labportalbackend.auth.security.CustomUserDetailsService;
 import com.web.labportalbackend.auth.security.JwtAuthenticationFilter;
+import com.web.labportalbackend.auth.security.PortalAccessService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpMethod;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authorization.AuthorizationDecision;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -42,8 +45,9 @@ public class SecurityConfig {
 
     private final CustomUserDetailsService userDetailsService;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final PortalAccessService portalAccessService;
 
-    @Value("${app.cors.allowed-origins:http://localhost:5173,http://localhost:5174,http://localhost:5175}")
+    @Value("${app.cors.allowed-origins:http://localhost:5173}")
     private String configuredAllowedOrigins;
 
     /**
@@ -99,8 +103,15 @@ public class SecurityConfig {
                 )
                 .authenticationProvider(authenticationProvider())
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(HttpMethod.GET, "/public/website").permitAll()
                         .requestMatchers(PUBLIC_URLS).permitAll()
-                        .anyRequest().authenticated()
+                        // Admission remains available before the student is accepted.
+                        .requestMatchers(HttpMethod.GET, "/users/me", "/auth/me",
+                                "/labs", "/labs/{labId}", "/applications/users/{userId}").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/labs/{labId}/apply",
+                                "/applications/labs/{labId}/apply").authenticated()
+                        .anyRequest().access((authentication, context) ->
+                                new AuthorizationDecision(portalAccessService.canEnter(authentication.get())))
                 )
                 .addFilterBefore(jwtAuthenticationFilter,
                         UsernamePasswordAuthenticationFilter.class);

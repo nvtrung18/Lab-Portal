@@ -15,6 +15,10 @@ public interface SystemConfigRepository extends JpaRepository<SystemConfigEntity
 
     Optional<SystemConfigEntity> findByConfigKeyAndDeletedFalse(String configKey);
 
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT config FROM SystemConfigEntity config WHERE config.configKey = :configKey AND config.deleted = false")
+    Optional<SystemConfigEntity> findByConfigKeyForUpdate(@Param("configKey") String configKey);
+
     @Lock(LockModeType.PESSIMISTIC_READ)
     @Query("""
             SELECT config

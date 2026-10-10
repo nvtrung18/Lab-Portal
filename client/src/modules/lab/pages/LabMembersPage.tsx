@@ -15,10 +15,10 @@ function isLabMemberRole(role: string): role is LabMemberRole {
 
 function statusClassName(status: string) {
   if (status.toUpperCase() === 'ACTIVE') {
-    return 'bg-emerald-50 text-emerald-700 ring-emerald-200';
+    return 'bg-emerald-50 text-emerald-700 ring-emerald-600/20 dark:bg-emerald-950/60 dark:text-emerald-300 dark:ring-emerald-500/30';
   }
 
-  return 'bg-slate-100 text-slate-600 ring-slate-200';
+  return 'bg-slate-100 text-slate-700 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700';
 }
 
 function formatDate(value: string | undefined, locale: Locale) {
@@ -234,7 +234,7 @@ export function LabMembersPage() {
                   <td className="px-3 py-4">
                     <span
                       className={[
-                        'inline-flex rounded-full px-2 py-1 text-xs font-semibold ring-1',
+                        'inline-flex shrink-0 items-center whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-semibold ring-1',
                         statusClassName(member.status),
                       ].join(' ')}
                     >
