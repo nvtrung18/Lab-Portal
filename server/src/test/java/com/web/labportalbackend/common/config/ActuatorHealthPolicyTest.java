@@ -42,10 +42,10 @@ class ActuatorHealthPolicyTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("UP"));
 
-        mockMvc.perform(get("/actuator/env").with(user("reviewer"))).andExpect(status().isNotFound());
-        mockMvc.perform(get("/actuator/beans").with(user("reviewer"))).andExpect(status().isNotFound());
-        mockMvc.perform(get("/actuator/configprops").with(user("reviewer"))).andExpect(status().isNotFound());
-        mockMvc.perform(get("/actuator/mappings").with(user("reviewer"))).andExpect(status().isNotFound());
+        mockMvc.perform(get("/actuator/env").with(user("reviewer").roles("ADMIN"))).andExpect(status().isNotFound());
+        mockMvc.perform(get("/actuator/beans").with(user("reviewer").roles("ADMIN"))).andExpect(status().isNotFound());
+        mockMvc.perform(get("/actuator/configprops").with(user("reviewer").roles("ADMIN"))).andExpect(status().isNotFound());
+        mockMvc.perform(get("/actuator/mappings").with(user("reviewer").roles("ADMIN"))).andExpect(status().isNotFound());
     }
 
     @Test

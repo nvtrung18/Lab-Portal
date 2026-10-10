@@ -75,7 +75,7 @@ class CorsConfigurationPolicyTest {
                 "https://frontend.example.invalid/path",
                 "https://frontend.example.invalid/"
         }) {
-            SecurityConfig config = new SecurityConfig(null, null);
+            SecurityConfig config = new SecurityConfig(null, null, null);
             ReflectionTestUtils.setField(config, "configuredAllowedOrigins", malformed);
             assertThatThrownBy(config::corsConfigurationSource)
                     .as("configured origin %s", malformed)
