@@ -68,7 +68,7 @@ public class WebsiteContentServiceImpl implements WebsiteContentService {
         User actor = currentAdmin();
         validateContent(request.content());
         SystemConfigEntity entity = repository.findByConfigKeyForUpdate(CONFIG_KEY)
-                .orElseThrow(() -> new IllegalStateException("Website content storage is not initialized. Apply migration V72."));
+                .orElseThrow(() -> new IllegalStateException("Website content storage is not initialized. Apply migration V74."));
         WebsiteState previous = read(entity);
         if (previous.revision() != request.revision()) throw new WebsiteRevisionConflictException();
         WebsiteState next = new WebsiteState(previous.revision() + 1, request.content(),

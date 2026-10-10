@@ -190,8 +190,13 @@ Không hỗ trợ nhúng script, iframe, video, HTML tùy ý, màu/font tùy ý 
 ## Dữ liệu và backend
 
 Nội dung dùng khóa `PUBLIC_WEBSITE_CONTENT` trong bảng `system_configs` hiện có,
-giữ riêng bản nháp và bản đã xuất bản. Migration **V72** từ phần CMS trước phải
+giữ riêng bản nháp và bản đã xuất bản. Migration **V74** khởi tạo vùng lưu website phải
 được áp dụng để lưu/xuất bản. Nội dung trong các tab được lưu bằng JSON hiện có.
+
+Profile `local` đọc thêm `db/migration-local` để giữ nguyên migration V72 của website
+đã chạy trên DB local. Profile `prod` tiếp tục dùng V72 dọn dữ liệu demo trong
+`db/migration-prod`, tránh trùng phiên bản với V72 local. V74 chỉ thêm cấu hình
+website khi chưa tồn tại, không thay bản nháp hoặc nội dung đã xuất bản.
 
 `pages` là trường bổ sung: dữ liệu cũ không có trường này được FE chuyển sang các trang
 của mẫu khi đọc. Khi `pages: []` hoặc thiếu một trang, FE khôi phục cấu trúc trang và
