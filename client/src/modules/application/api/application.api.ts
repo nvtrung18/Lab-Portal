@@ -1,7 +1,7 @@
 import { apiClient } from '../../../shared/api';
 import type { Response } from '../../../shared/types';
 
-export type ApplicationStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
+export type ApplicationStatus = 'PENDING' | 'REVIEWING' | 'APPROVED' | 'REJECTED';
 
 export interface ApplicationResponse {
   id: number;

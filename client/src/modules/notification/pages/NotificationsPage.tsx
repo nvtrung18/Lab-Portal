@@ -105,7 +105,7 @@ export function NotificationsPage() {
         {data && data.totalPages > 1 ? (
           <nav aria-label={t('notifications.pagination')} className="flex flex-col gap-3 border-t border-slate-200 px-4 py-3 dark:border-slate-800 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-sm text-slate-500 dark:text-slate-400">{t('common.page')} {data.page + 1}/{data.totalPages}</p>
-            <div className="grid grid-cols-2 gap-2 sm:flex">
+            <div className="grid grid-cols-1 min-[380px]:grid-cols-2 gap-2 sm:flex">
               <Button aria-label={t('notifications.previous')} disabled={page === 0} size="sm" variant="outline" onClick={() => setPage((value) => value - 1)}>
                 <ChevronLeft aria-hidden="true" className="h-4 w-4" /> {t('common.previous')}
               </Button>

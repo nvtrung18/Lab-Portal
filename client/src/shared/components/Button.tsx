@@ -12,19 +12,19 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const VARIANT_CLASSES: Record<ButtonVariant, string> = {
-  primary: 'app-button app-button-primary shadow-sm focus-visible:ring-slate-500',
+  primary: 'app-button app-button-primary focus-visible:ring-teal-500',
   secondary: 'app-button app-button-secondary focus-visible:ring-slate-400',
   outline:
-    'app-button app-button-outline border shadow-sm focus-visible:ring-slate-400',
+    'app-button app-button-outline border focus-visible:ring-teal-500',
   ghost: 'app-button app-button-ghost focus-visible:ring-slate-400',
-  danger: 'app-button app-button-danger shadow-sm focus-visible:ring-red-500',
-  success: 'app-button app-button-success shadow-sm focus-visible:ring-emerald-500',
+  danger: 'app-button app-button-danger focus-visible:ring-rose-500',
+  success: 'app-button app-button-success focus-visible:ring-emerald-500',
 };
 
 const SIZE_CLASSES: Record<ButtonSize, string> = {
-  sm: 'min-h-11 min-w-32 px-3 py-2 text-sm',
-  md: 'min-h-11 min-w-40 px-4 py-2 text-sm',
-  lg: 'min-h-12 min-w-48 px-5 py-3 text-base',
+  sm: 'h-8 min-h-[32px] px-3 py-1 text-xs font-semibold rounded-md whitespace-nowrap',
+  md: 'h-10 min-h-[40px] px-4 py-2 text-sm font-semibold rounded-lg whitespace-nowrap',
+  lg: 'h-11 min-h-[44px] px-6 py-2.5 text-sm font-semibold rounded-lg whitespace-nowrap',
 };
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
@@ -46,9 +46,9 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       ref={ref}
       aria-busy={loading || undefined}
       className={[
-        'inline-flex max-w-full items-center justify-center gap-2 rounded-lg text-center font-semibold leading-snug whitespace-normal transition-colors duration-200',
+        'inline-flex shrink-0 items-center justify-center gap-1.5 text-center leading-none whitespace-nowrap select-none transition-all duration-150',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2',
-        'disabled:cursor-not-allowed disabled:opacity-60',
+        'disabled:cursor-not-allowed disabled:opacity-50 active:scale-[0.98]',
         VARIANT_CLASSES[variant],
         SIZE_CLASSES[size],
         className,

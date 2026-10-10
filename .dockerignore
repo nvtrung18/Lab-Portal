@@ -20,6 +20,8 @@ node_modules
 ai-service/artifacts
 client/node_modules
 client/dist
+website/node_modules
+website/.next
 face-service/models
 server/target
 server/storage

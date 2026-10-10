@@ -1,11 +1,13 @@
 import axios from 'axios';
 import { type FormEvent, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { Eye, EyeOff } from 'lucide-react';
 
 import { googleLoginAPI, loginAPI, registerAPI, sendRegisterCodeAPI, verifyRegisterCodeAPI } from '../api';
 import { GoogleSignInButton } from '../components';
-import { getPrimaryRedirectPath, useAuth } from '../hooks';
+import { getPostAuthRedirectPath, useAuth } from '../hooks';
+import { USER_ME_QUERY_KEY } from '../../user/hooks';
 import type { Response } from '../../../shared/types';
 import { Button } from '../../../shared/components';
 import { translate, useI18n } from '../../../shared/i18n';
@@ -35,6 +37,9 @@ function isValidEmail(value: string) {
 export function RegisterPage() {
   const { t } = useI18n();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const returnUrl = searchParams.get('returnUrl');
+  const queryClient = useQueryClient();
   const { saveSession } = useAuth();
   const [step, setStep] = useState<RegisterStep>('email');
   const [email, setEmail] = useState('');
@@ -52,6 +57,13 @@ export function RegisterPage() {
 
   const normalizedEmail = email.trim().toLowerCase();
   const currentStepIndex = steps.findIndex((item) => item.key === step);
+
+  const completeAuthentication = async (token: string) => {
+    queryClient.clear();
+    const { user, profile } = await saveSession(token);
+    queryClient.setQueryData(USER_ME_QUERY_KEY, profile);
+    navigate(getPostAuthRedirectPath(user, returnUrl), { replace: true });
+  };
 
   const handleSendCode = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -138,8 +150,7 @@ export function RegisterPage() {
         password,
       });
       const loginResult = await loginAPI({ email: normalizedEmail, password });
-      await saveSession(loginResult.token);
-      navigate('/app/profile', { replace: true });
+      await completeAuthentication(loginResult.token);
     } catch (submitError) {
       setError(getErrorMessage(submitError));
     } finally {
@@ -153,8 +164,7 @@ export function RegisterPage() {
     setIsGoogleSubmitting(true);
     try {
       const result = await googleLoginAPI({ credential });
-      const { user } = await saveSession(result.token);
-      navigate(getPrimaryRedirectPath(user.roles), { replace: true });
+      await completeAuthentication(result.token);
     } catch (submitError) {
       setError(getErrorMessage(submitError));
     } finally {
@@ -347,7 +357,8 @@ export function RegisterPage() {
 
       <div className="mt-6 text-center text-sm text-slate-600 dark:text-slate-300">
         {t('auth.alreadyAccount')}{' '}
-        <Link className="font-semibold text-slate-950 hover:underline dark:text-white" to="/login">
+        <Link className="font-semibold text-slate-950 hover:underline dark:text-white"
+          to={`/login${returnUrl ? `?returnUrl=${encodeURIComponent(returnUrl)}` : ''}`}>
           {t('auth.signIn')}
         </Link>
       </div>

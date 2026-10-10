@@ -9,7 +9,7 @@ import { Eye, EyeOff, FlaskConical } from 'lucide-react';
 
 import { googleLoginAPI, loginAPI, type LoginResult } from '../api';
 import { GoogleSignInButton } from '../components';
-import { getPrimaryRedirectPath, useAuth } from '../hooks';
+import { getPostAuthRedirectPath, useAuth } from '../hooks';
 import { USER_ME_QUERY_KEY } from '../../user/hooks';
 import type { Response } from '../../../shared/types';
 import { Button } from '../../../shared/components';
@@ -34,25 +34,7 @@ function getErrorMessage(error: unknown) {
   return translate('auth.loginFailed');
 }
 
-export function getSafeReturnPath(returnUrl: string | null, fallback: string) {
-  if (
-    !returnUrl
-    || !returnUrl.startsWith('/')
-    || returnUrl.startsWith('//')
-    || returnUrl.includes('\\')
-  ) {
-    return fallback;
-  }
-
-  try {
-    const parsed = new URL(returnUrl, 'https://lab-portal.invalid');
-    return parsed.origin === 'https://lab-portal.invalid'
-      ? `${parsed.pathname}${parsed.search}${parsed.hash}`
-      : fallback;
-  } catch {
-    return fallback;
-  }
-}
+export { getSafeReturnPath } from '../../../shared/utils/navigation';
 
 export function LoginPage() {
   const { t } = useI18n();
@@ -62,6 +44,7 @@ export function LoginPage() {
   });
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const returnUrl = searchParams.get('returnUrl');
   const queryClient = useQueryClient();
   const { saveSession } = useAuth();
   const [serverError, setServerError] = useState<string | null>(null);
@@ -84,8 +67,7 @@ export function LoginPage() {
     queryClient.clear();
     const { user, profile } = await saveSession(result.token);
     queryClient.setQueryData(USER_ME_QUERY_KEY, profile);
-    const returnUrl = searchParams.get('returnUrl');
-    navigate(getSafeReturnPath(returnUrl, getPrimaryRedirectPath(user.roles)), { replace: true });
+    navigate(getPostAuthRedirectPath(user, returnUrl), { replace: true });
   };
 
   const onSubmit = async (values: LoginFormValues) => {
@@ -217,7 +199,7 @@ export function LoginPage() {
 
       <div className="mt-6 text-center text-sm text-slate-600 dark:text-slate-300">
         {t('auth.noAccount')}{' '}
-        <Link className="font-semibold text-slate-950 hover:underline dark:text-white" to="/register">
+        <Link className="font-semibold text-slate-950 hover:underline dark:text-white" to={`/register${returnUrl ? `?returnUrl=${encodeURIComponent(returnUrl)}` : ''}`}>
           {t('auth.register')}
         </Link>
       </div>

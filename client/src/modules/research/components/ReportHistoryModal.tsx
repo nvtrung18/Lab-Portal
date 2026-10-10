@@ -49,7 +49,7 @@ export function ReportHistoryModal({
       size="xl"
       title={t('research.report.historyTitle', undefined, { task: taskTitle })}
     >
-      <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
+      <div className="min-w-0 space-y-4">
         {isLoading ? (
           <p className="text-sm text-slate-500 py-4 text-center">{t('research.report.historyLoading')}</p>
         ) : isError ? (

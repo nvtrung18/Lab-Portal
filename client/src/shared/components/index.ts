@@ -1,3 +1,4 @@
+export * from './Badge';
 export * from './Button';
 export * from './ConfirmDialog';
 export * from './DataState';
@@ -6,6 +7,7 @@ export * from './Forbidden';
 export * from './ForbiddenPage';
 export * from './LanguageSwitcher';
 export * from './Modal';
+export * from './PortalBrand';
 export * from './NotFoundPage';
 export * from './ProtectedRoute';
 export * from './RoleBasedRoute';

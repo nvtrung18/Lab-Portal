@@ -1,6 +1,10 @@
 spring:
   config:
     import: optional:file:.env.properties
+  flyway:
+    locations:
+      - classpath:db/migration
+      - classpath:db/migration-local
   datasource:
     url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:lab_portal}?useUnicode=true&characterEncoding=utf8&connectionCollation=utf8mb4_unicode_ci&serverTimezone=Asia/Ho_Chi_Minh&useSSL=false&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true
     username: ${DB_USERNAME}

@@ -9,6 +9,8 @@ import {
   type StoredUser,
 } from '../../../shared/api';
 import { ADMIN, LAB_MANAGER, STUDENT, type Role } from '../../../shared/constants/roles';
+import { hasActiveMembership, type MembershipLike } from '../../../shared/utils/membership';
+import { getSafeReturnPath } from '../../../shared/utils/navigation';
 
 function normalizeRoles(roles: string[]): Role[] {
   return roles
@@ -18,22 +20,33 @@ function normalizeRoles(roles: string[]): Role[] {
     );
 }
 
-export function getPrimaryRedirectPath(roles: string[]) {
-  const normalizedRoles = normalizeRoles(roles);
+export function getPrimaryRedirectPath(user: { roles: string[]; memberships?: MembershipLike[] }) {
+  const normalizedRoles = normalizeRoles(user.roles);
 
   if (normalizedRoles.includes(ADMIN)) {
     return '/admin/dashboard';
   }
 
   if (normalizedRoles.includes(LAB_MANAGER)) {
-    return '/app/profile';
+    return '/app/lab-overview';
   }
 
   if (normalizedRoles.includes(STUDENT)) {
-    return '/app/dashboard';
+    return hasActiveMembership(user) ? '/app/dashboard' : '/vi';
   }
 
   return '/403';
+}
+
+export function getPostAuthRedirectPath(
+  user: { roles: string[]; memberships?: MembershipLike[] },
+  returnUrl: string | null,
+) {
+  const destination = getPrimaryRedirectPath(user);
+  const safeReturnPath = getSafeReturnPath(returnUrl, destination);
+  if (destination !== '/vi' && /^\/(vi|en)#lab-admission$/.test(safeReturnPath)) return destination;
+  return destination === '/vi' && !/^\/(vi|en)(\/|$)/.test(safeReturnPath)
+    ? destination : safeReturnPath;
 }
 
 export function useAuth() {

@@ -1,6 +1,7 @@
 import { X } from 'lucide-react';
 import { useEffect, useId, useRef } from 'react';
 import type { ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 
 import { useI18n } from '../i18n';
 import { Button } from './Button';
@@ -8,6 +9,9 @@ import { Button } from './Button';
 export type ModalSize = 'sm' | 'md' | 'lg' | 'xl' | '2xl' | 'full';
 
 interface ModalProps {
+  id?: string;
+  placement?: 'dialog' | 'drawer';
+  closeOnBackdrop?: boolean;
   backdropBlur?: boolean;
   centered?: boolean;
   children: ReactNode;
@@ -31,7 +35,15 @@ const SIZE_CLASSES: Record<ModalSize, string> = {
   full: 'max-w-7xl',
 };
 
+let openModalCount = 0;
+let originalBodyOverflow = '';
+let backgroundRoot: HTMLElement | null = null;
+let originalRootInert = false;
+
 export function Modal({
+  id,
+  placement = 'dialog',
+  closeOnBackdrop = false,
   backdropBlur = false,
   centered = true,
   children,
@@ -62,18 +74,27 @@ export function Modal({
     }
 
     const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
+    if (openModalCount === 0) {
+      originalBodyOverflow = document.body.style.overflow;
+      backgroundRoot = document.getElementById('root');
+      originalRootInert = backgroundRoot?.inert ?? false;
+      if (backgroundRoot) backgroundRoot.inert = true;
+      document.body.style.overflow = 'hidden';
+    }
+    openModalCount += 1;
     const focusableSelector = [
-      'button:not([disabled])',
+      'button:not(:disabled)',
       'a[href]',
-      'input:not([disabled])',
-      'select:not([disabled])',
-      'textarea:not([disabled])',
+      'input:not(:disabled):not([type="hidden"])',
+      'select:not(:disabled)',
+      'textarea:not(:disabled)',
+      '[contenteditable="true"]',
       '[tabindex]:not([tabindex="-1"])',
     ].join(',');
+    const getControls = () => Array.from(dialogRef.current?.querySelectorAll<HTMLElement>(focusableSelector) ?? [])
+      .filter(control => control.getClientRects().length > 0 && !control.matches(':disabled') && !control.closest('[inert], [hidden], [aria-hidden="true"]'));
     const focusFirstControl = window.requestAnimationFrame(() => {
-      dialogRef.current?.querySelector<HTMLElement>(focusableSelector)?.focus();
+      (getControls()[0] ?? dialogRef.current)?.focus();
     });
     const handleKeyDown = (event: KeyboardEvent) => {
       const dialogs = document.querySelectorAll<HTMLElement>('[role="dialog"][aria-modal="true"]');
@@ -83,7 +104,7 @@ export function Modal({
         return;
       }
       if (event.key !== 'Tab' || !dialogRef.current) return;
-      const controls = Array.from(dialogRef.current.querySelectorAll<HTMLElement>(focusableSelector));
+      const controls = getControls();
       if (controls.length === 0) {
         event.preventDefault();
         dialogRef.current.focus();
@@ -91,10 +112,10 @@ export function Modal({
       }
       const first = controls[0];
       const last = controls[controls.length - 1];
-      if (event.shiftKey && document.activeElement === first) {
+      if (event.shiftKey && (document.activeElement === first || !dialogRef.current.contains(document.activeElement))) {
         event.preventDefault();
         last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
+      } else if (!event.shiftKey && (document.activeElement === last || !dialogRef.current.contains(document.activeElement))) {
         event.preventDefault();
         first.focus();
       }
@@ -104,22 +125,38 @@ export function Modal({
     return () => {
       window.cancelAnimationFrame(focusFirstControl);
       window.removeEventListener('keydown', handleKeyDown);
-      document.body.style.overflow = previousOverflow;
-      previousFocus?.focus();
+      openModalCount -= 1;
+      if (openModalCount === 0) {
+        document.body.style.overflow = originalBodyOverflow;
+        if (backgroundRoot) backgroundRoot.inert = originalRootInert;
+        backgroundRoot = null;
+      }
+      if (previousFocus?.isConnected && !previousFocus.closest('[inert]')) previousFocus.focus();
     };
   }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen || placement !== 'drawer') return;
+    const desktop = window.matchMedia('(min-width: 1024px)');
+    const closeOnDesktop = () => { if (desktop.matches) onCloseRef.current(); };
+    closeOnDesktop();
+    desktop.addEventListener('change', closeOnDesktop);
+    return () => desktop.removeEventListener('change', closeOnDesktop);
+  }, [isOpen, placement]);
 
   if (!isOpen) {
     return null;
   }
 
-  return (
-    <div className={`fixed inset-0 z-modal flex justify-center overflow-y-auto overscroll-contain bg-slate-950/55 p-3 sm:p-6 ${centered ? 'items-center' : 'items-start'} ${backdropBlur ? 'backdrop-blur-sm' : ''}`}>
+  return createPortal(
+    <div className={`app-shell app-modal-layer fixed inset-0 z-modal flex overscroll-contain ${placement === 'drawer' ? 'items-stretch justify-start lg:hidden' : `justify-center overflow-y-auto p-3 sm:p-6 ${centered ? 'items-center' : 'items-start'}`} ${backdropBlur ? 'backdrop-blur-sm' : ''}`}
+      onClick={event => { if (closeOnBackdrop && event.target === event.currentTarget && !closeDisabled) onClose(); }}>
       <section
+        id={id}
         ref={dialogRef}
         aria-labelledby={titleId}
         aria-modal="true"
-        className={`flex max-h-[calc(100dvh-1.5rem)] min-w-0 w-full flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl dark:border-slate-700 dark:bg-slate-900 sm:max-h-[calc(100dvh-3rem)] ${SIZE_CLASSES[size]}`}
+        className={`app-dialog flex min-w-0 flex-col overflow-hidden border border-slate-200 bg-white shadow-xl dark:border-slate-700 dark:bg-slate-900 ${placement === 'drawer' ? 'app-sidebar app-navigation-dialog h-dvh w-72 max-w-[85vw]' : `max-h-[calc(100dvh-1.5rem)] w-full rounded-xl sm:max-h-[calc(100dvh-3rem)] ${SIZE_CLASSES[size]}`}`}
         role="dialog"
         tabIndex={-1}
       >
@@ -135,7 +172,7 @@ export function Modal({
             <span className="sr-only">{resolvedCloseLabel}</span>
           </Button>
         </header>
-        <div className="min-h-0 min-w-0 flex-1 overscroll-contain overflow-y-auto px-4 py-4 sm:px-6 sm:py-5">
+        <div className="app-dialog-body min-h-0 min-w-0 flex-1 overscroll-contain overflow-y-auto px-4 py-4 sm:px-6 sm:py-5">
           {children}
         </div>
         {footer ? (
@@ -144,6 +181,6 @@ export function Modal({
           </footer>
         ) : null}
       </section>
-    </div>
+    </div>, document.body,
   );
 }

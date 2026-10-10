@@ -26,7 +26,7 @@ export function ReportCommentsModal({
       size="lg"
       title={t('research.report.commentsTitle', undefined, { task: taskTitle, version })}
     >
-      <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
+      <div className="min-w-0 space-y-4">
         <ReportDiscussionPanel
           reportId={reportId}
           canComment={true}
