@@ -28,14 +28,14 @@
       "assistantKey": "ADMIN_ASSISTANT", "identifier": null, "version": null,
       "baseModelIdentifier": "Qwen/Qwen3-4B-Instruct-2507", "baseModelRevision": "cdbee75f17c01a7cc42f958dc650907174af0554",
       "status": "NOT_AVAILABLE", "artifact": null,
-      "sourceDecision": {"reference": "config/p6-t6-adapter-decisions.json", "identity": null, "outcome": "BASE_ONLY_APPROVED"},
+      "sourceDecision": {"reference": "ai-service/config/provenance/config/p6-t6-adapter-decisions.json", "identity": null, "outcome": "BASE_ONLY_APPROVED"},
       "sourceRegistryReference": null
     },
     "LAB_ASSISTANT": {
       "assistantKey": "LAB_ASSISTANT", "identifier": null, "version": null,
       "baseModelIdentifier": "Qwen/Qwen3-4B-Instruct-2507", "baseModelRevision": "cdbee75f17c01a7cc42f958dc650907174af0554",
       "status": "NOT_AVAILABLE", "artifact": null,
-      "sourceDecision": {"reference": "config/p6-t6-adapter-decisions.json", "identity": null, "outcome": "BASE_ONLY_APPROVED"},
+      "sourceDecision": {"reference": "ai-service/config/provenance/config/p6-t6-adapter-decisions.json", "identity": null, "outcome": "BASE_ONLY_APPROVED"},
       "sourceRegistryReference": null
     },
     "RESEARCH_ASSISTANT": {
@@ -55,10 +55,10 @@
           {"path": "research-assistant/1.0.0/vocab.json", "sha256": "ca10d7e9fb3ed18575dd1e277a2579c16d108e32f27439684afa0e10b1440910"}
         ]
       },
-      "sourceDecision": {"reference": "evidence/p7-t5-research-promotion/decision.json", "identity": "3918488ca342a2b5bc6cd73c1d2a56e42358f758c4c2f50b759b99f14548619e", "outcome": "ADAPTER_APPROVED"},
-      "sourceRegistryReference": "config/p7-t5-research-promotion/model-registry.json"
+      "sourceDecision": {"reference": "ai-service/config/provenance/evidence/p7-t5-research-promotion/decision.json", "identity": "3918488ca342a2b5bc6cd73c1d2a56e42358f758c4c2f50b759b99f14548619e", "outcome": "ADAPTER_APPROVED"},
+      "sourceRegistryReference": "ai-service/config/provenance/config/p7-t5-research-promotion/model-registry.json"
     }
   },
-  "sourceDecision": {"reference": "evidence/p7-t5-research-promotion/decision.json", "identity": "3918488ca342a2b5bc6cd73c1d2a56e42358f758c4c2f50b759b99f14548619e", "outcome": "ADAPTER_APPROVED"},
-  "sourceRegistryReference": "config/p7-t5-research-promotion/model-registry.json"
+  "sourceDecision": {"reference": "ai-service/config/provenance/evidence/p7-t5-research-promotion/decision.json", "identity": "3918488ca342a2b5bc6cd73c1d2a56e42358f758c4c2f50b759b99f14548619e", "outcome": "ADAPTER_APPROVED"},
+  "sourceRegistryReference": "ai-service/config/provenance/config/p7-t5-research-promotion/model-registry.json"
 }

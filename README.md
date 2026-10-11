@@ -230,6 +230,10 @@ Hệ thống được thiết kế theo kiến trúc **Client-Server**, backend 
 
 ## 📁 Cấu Trúc Dự Án
 
+Các folder được quản lý trên `main` và `dev`: `.github/`, `client/`, `server/`, `ai-service/`, `face-service/`, `contracts/`, `docker/`, `scripts/`, `docs/`, `infra/`. `scripts/` giữ công cụ vận hành/deploy; `docs/` giữ hướng dẫn triển khai và nội dung website. Chi tiết chính sách và cách tra cứu phần nghiên cứu đã lưu nằm trong [docs/REPOSITORY_LAYOUT.md](docs/REPOSITORY_LAYOUT.md).
+
+Dependency đã cài, build output, dữ liệu upload/storage, model weights và cấu hình riêng của từng máy được giữ ngoài Git. Frontend vẫn quản lý `client/package.json` và `client/package-lock.json`; AI vẫn quản lý cấu hình runtime trong `ai-service/config/`.
+
 ```
 Lab-Portal/
 │
@@ -287,7 +291,6 @@ Lab-Portal/
 │   │           ├── application.properties
 │   │           └── db/migration/        # 53 Flyway migration scripts (V1 → V53)
 │   │
-│   ├── storage/                         # File upload storage (reports, products)
 │   ├── .env.example                     # Environment variables template
 │   ├── mvnw / mvnw.cmd                 # Maven Wrapper
 │   └── pom.xml                          # Maven dependencies

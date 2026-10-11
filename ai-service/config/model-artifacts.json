@@ -19,7 +19,7 @@
       "status": "NOT_AVAILABLE",
       "artifact": null,
       "sourceDecision": {
-        "reference": "config/p6-t6-adapter-decisions.json",
+        "reference": "ai-service/config/provenance/config/p6-t6-adapter-decisions.json",
         "identity": null,
         "outcome": "BASE_ONLY_APPROVED"
       },
@@ -34,7 +34,7 @@
       "status": "NOT_AVAILABLE",
       "artifact": null,
       "sourceDecision": {
-        "reference": "config/p6-t6-adapter-decisions.json",
+        "reference": "ai-service/config/provenance/config/p6-t6-adapter-decisions.json",
         "identity": null,
         "outcome": "BASE_ONLY_APPROVED"
       },
@@ -91,15 +91,15 @@
       "sourceDecision": {
         "identity": "3918488ca342a2b5bc6cd73c1d2a56e42358f758c4c2f50b759b99f14548619e",
         "outcome": "ADAPTER_APPROVED",
-        "reference": "evidence/p7-t5-research-promotion/decision.json"
+        "reference": "ai-service/config/provenance/evidence/p7-t5-research-promotion/decision.json"
       },
-      "sourceRegistryReference": "config/p7-t5-research-promotion/model-registry.json"
+      "sourceRegistryReference": "ai-service/config/provenance/config/p7-t5-research-promotion/model-registry.json"
     }
   },
   "sourceDecision": {
     "identity": "3918488ca342a2b5bc6cd73c1d2a56e42358f758c4c2f50b759b99f14548619e",
     "outcome": "ADAPTER_APPROVED",
-    "reference": "evidence/p7-t5-research-promotion/decision.json"
+    "reference": "ai-service/config/provenance/evidence/p7-t5-research-promotion/decision.json"
   },
-  "sourceRegistryReference": "config/p7-t5-research-promotion/model-registry.json"
+  "sourceRegistryReference": "ai-service/config/provenance/config/p7-t5-research-promotion/model-registry.json"
 }

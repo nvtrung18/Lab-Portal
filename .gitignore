@@ -1,46 +1,19 @@
-.gitignore
-*.md
-!README.md
-!docs/decisions/P2-DECISION-01.md
-!docs/decisions/P2-DECISION-02.md
-!docs/decisions/P2-DECISION-03.md
-!docs/decisions/P2-DECISION-04.md
-!docs/architecture/p6-t6-adapter-strategy-decision.md
-!docs/deployment/
-!docs/deployment/**/*.md
-*.docx
-!docker-compose.yml
-.codegraph
-wfl
-# Docker folder
-!docker/
-!docker/**
-
-# Client folder
-!client/
-!client/**
-
-# Server folder
-!server/
-!server/**
-
-
-# IDE / OS
+# IDE and operating system
 .idea/
+.vscode/
 *.iml
 *.iws
 *.ipr
-.vscode/
 .DS_Store
 Thumbs.db
 
-# Logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# Backend build artifacts
+# Dependencies, build output and caches
+node_modules/
+client/dist/
+client/build/
+client/coverage/
+client/.pnp
+client/.pnp.js
 server/target/
 server/.eb-staging/
 server/.mvn/wrapper/maven-wrapper.jar
@@ -52,10 +25,17 @@ server/.settings/
 server/.springBeans
 server/.sts4-cache/
 server/HELP.md
-server/storage/
-server/uploads/
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+**/.next/
+/bin/
+/build/
+/out/
+/qa/
 
-# Environment files (examples and reviewed frontend mode files stay tracked)
+# Machine-specific environment; retain examples and reviewed frontend modes
 .env
 .env.*
 **/.env
@@ -67,51 +47,64 @@ server/uploads/
 !client/.env.production
 server/.env.properties
 
-# Frontend build artifacts & dependencies
-client/node_modules/
-client/dist/
-client/build/
-client/coverage/
-client/.pnp
-client/.pnp.js
-client/.env.local
-client/.env.development.local
-client/.env.test.local
-client/.env.production.local
+# Runtime data and downloaded model payloads
+/server/storage/
+/server/uploads/
+/runtime-artifacts/
+/ai-service/artifacts/
+/face-service/models/
 
-# Root level ignores
-node_modules/
-package-lock.json
-bin/
-build/
-out/
-qa/
+# Local tools, outputs and backups
+/.aiassistant/
+/.codegraph/
+/.artifacts/
+/.local-certs/
+/.docker-cache/
+/.cache/
+/tmp/
+/backups/
+/wfl/
+/website/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.docx
 
-# P6-T5 local benchmark evidence: may contain weights, raw model output, hardware paths and telemetry.
-.cache/p6-t5/
-.artifacts/p6-t5/
+# Research pipeline is retained in the pre-cleanup snapshot, outside main/dev
+/config/
+/datasets/
+/evals/
+/evidence/
+/requirements/
+/scripts/*p6-*
+/scripts/*p7-*
+/scripts/tests/
+/scripts/requirements-domain-dataset-schemas.txt
+/scripts/test_candidate_admission.py
+/scripts/test_provenance_inventory.py
+/scripts/validate-evaluation-suites.py
+/scripts/validate-domain-dataset-schemas.py
+/docs/architecture/
+/docs/decisions/
+/docs/demo/
+/docs/phases/
+/docs/verification/
 
-# P7-T2 external real-training outputs: validated locally, but too large and runtime-specific for Git.
-.artifacts/p7-t2/
-.artifacts/p7-t2-remediation-ready/
-.artifacts/p7-t2-remediation-v4-ready*/
+# Redundant root npm installation; frontend package and lockfile stay tracked
+/package.json
+/package-lock.json
 
-# P7-T4 portable evaluation bundles and raw comparison/review evidence stay local.
-.artifacts/p7-t4*/
-
-# P7-T5/P8 runtime model registry payloads are immutable deployment artifacts, not Git source.
-# Tracked manifests and checksums live under config/evidence; provision payloads via AI_MODEL_ARTIFACT_ROOT.
-ai-service/artifacts/
-
-# Python local environments and test/build artifacts
-.venv/
-__pycache__/
-*.py[cod]
-.pytest_cache/
-
-# User-owned Windows bundle supplied for Kaggle transfer; it is neither Linux runtime provenance nor benchmark evidence.
-# Preserve locally without deleting, reading as authoritative, or staging it.
-p6-t5-kaggle/
-p6-t5-kaggle.zip
-face-service/models/
-.docker-cache/
+# Known local transfer bundles and draft notebooks
+/p6-t5-kaggle/
+/p6-t5-kaggle.zip
+/Research_Lab.zip
+/ai-service*.zip
+/runtime-artifacts*.zip
+/AI_Service.ipynb
+/AI_Service_Test_Colab.ipynb
+/AI_Service_Test_Kaggle.ipynb
+/RUN_LOCAL_SERVICES.txt
+/docs/Bo-noi-dung-mau-website-20261011.zip
+/docs/Bo-noi-dung-mau-website-20261011/
+/docs/ui-responsive/
