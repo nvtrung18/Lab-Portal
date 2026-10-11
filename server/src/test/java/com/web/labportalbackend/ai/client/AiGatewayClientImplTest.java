@@ -106,13 +106,13 @@ class AiGatewayClientImplTest {
     }
 
     @Test
-    void timeoutUsesConfiguredPerAttemptDeadlineAndRetriesOnceWithoutSleeping() throws Exception {
+    void timeoutUsesConfiguredPerAttemptDeadlineAndRetriesOnce() throws Exception {
         assertEquals(Duration.ofSeconds(5), AiGatewayClientImpl.ATTEMPT_TIMEOUT);
         AtomicInteger attempts = new AtomicInteger();
         AiGatewayClient client = client(request -> {
             attempts.incrementAndGet();
             return Mono.never();
-        }, Duration.ZERO);
+        }, AiGatewayClientImpl.ATTEMPT_TIMEOUT);
 
         AiGatewayException exception = assertThrows(AiGatewayException.class,
                 () -> client.suggestions(request("{}", null)));
