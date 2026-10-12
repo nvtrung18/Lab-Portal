@@ -5,6 +5,7 @@ import type { LabResponse } from '../../lab/api';
 import { BilingualField, BilingualList, ImageField, SelectField, TextField } from './EditorFields';
 import { BilingualRichTextField } from './BilingualRichTextField';
 import { ArticleSourceFields } from './ArticleSourceFields';
+import { MemberScholarEditor } from './MemberScholarEditor';
 
 export type EditingRecord =
   | { collection: 'research'; record: ResearchArea }
@@ -45,7 +46,7 @@ export function RecordEditor({ value, data, onChange }: { value: EditingRecord; 
   const options = (items: Entity[]) => items.map(item => ({ value: item.id, label: item.title[locale] || item.title[locale === 'vi' ? 'en' : 'vi'] || item.id }));
   const common = <>
     <BilingualField label={value.collection === 'news' ? l('Tiêu đề bài viết', 'Article title') : l('Tiêu đề / tên hiển thị', 'Title / display name')} value={value.record.title} onChange={title => onChange({ ...value, record: { ...value.record, title } } as EditingRecord)} />
-    <BilingualField label={value.collection === 'news' ? l('Mô tả ngắn trong danh sách', 'Summary in the article list') : l('Mô tả / giới thiệu', 'Description / introduction')} value={value.record.description} multiline onChange={description => onChange({ ...value, record: { ...value.record, description } } as EditingRecord)} />
+    <BilingualField label={value.collection === 'news' || value.collection === 'members' ? l('Mô tả ngắn trong danh sách', 'Summary in the list') : l('Mô tả / giới thiệu', 'Description / introduction')} value={value.record.description} multiline onChange={description => onChange({ ...value, record: { ...value.record, description } } as EditingRecord)} />
     <label className="flex min-h-11 items-center gap-3 text-sm"><input type="checkbox" checked={value.record.visible !== false} onChange={e => onChange({ ...value, record: { ...value.record, visible: e.target.checked } } as EditingRecord)} />{l('Hiển thị trên website sau khi xuất bản', 'Show on the website after publication')}</label>
   </>;
   let details;
@@ -73,6 +74,7 @@ export function RecordEditor({ value, data, onChange }: { value: EditingRecord; 
           <TextField label={l('Chữ viết tắt trên ảnh đại diện', 'Avatar initials')} value={item.initials} onChange={initials => update({ initials })} />
           <TextField label={l('Màu nền ảnh đại diện', 'Avatar background')} value={item.color} onChange={color => update({ color })} />
         </div>
+        <MemberScholarEditor value={item.scholarProfile} onChange={scholarProfile => update({ scholarProfile })} />
       </>;
       break;
     }

@@ -1,0 +1,236 @@
+[
+  {
+    "id": "ngoc-tan-nguyen",
+    "title": { "en": "Ngoc-Tan Nguyen", "vi": "Ngoc-Tan Nguyen" },
+    "description": {
+      "en": "Lecturer at VNU-UET. Research interests include visible light communication, IoT and energy-efficient wireless networks.",
+      "vi": "Giảng viên tại Trường Đại học Công nghệ, ĐHQGHN. Nghiên cứu truyền thông ánh sáng nhìn thấy, IoT và mạng không dây tiết kiệm năng lượng."
+    },
+    "visible": true,
+    "role": "Faculty",
+    "initials": "TN",
+    "area": "",
+    "email": "",
+    "color": "#e1e8eb",
+    "image": "/lab-website/images/ngoc-tan-nguyen.jpg",
+    "scholarProfile": {
+      "url": "https://scholar.google.com/citations?user=I8PN-2oAAAAJ&hl=vi",
+      "affiliation": {
+        "en": "Lecturer at Faculty of Information Technology, VNU - University of Engineering and Technology",
+        "vi": "Giảng viên Khoa Công nghệ Thông tin, Trường Đại học Công nghệ, Đại học Quốc gia Hà Nội"
+      },
+      "interests": [
+        { "en": "VLC", "vi": "Truyền thông ánh sáng nhìn thấy (VLC)" },
+        { "en": "IoT", "vi": "Internet vạn vật (IoT)" },
+        { "en": "Wireless networks", "vi": "Mạng không dây" },
+        { "en": "Energy harvesting", "vi": "Thu hoạch năng lượng" },
+        { "en": "Backscatter communications", "vi": "Truyền thông tán xạ ngược" }
+      ],
+      "homepageUrl": "https://www.linkedin.com/in/at170/",
+      "retrievedOn": "2026-10-12",
+      "metrics": { "citations": 540, "hIndex": 8, "i10Index": 8, "sinceYear": 2021, "recentCitations": 441, "recentHIndex": 7, "recentI10Index": 5 },
+      "publications": [
+        {
+          "title": "A comprehensive survey of enabling and emerging technologies for social distancing—Part I: Fundamentals and enabling technologies",
+          "authors": "CT Nguyen, YM Saputra, N Van Huynh, NT Nguyen, TV Khoa, BM Tuan, ...",
+          "venue": "Ieee Access 8, 153479-153507",
+          "year": 2020, "citations": 190,
+          "url": "https://scholar.google.com/citations?view_op=view_citation&hl=vi&user=I8PN-2oAAAAJ&citation_for_view=I8PN-2oAAAAJ:eQOLeE2rZwMC"
+        },
+        {
+          "title": "Enabling and emerging technologies for social distancing: a comprehensive survey and open problems",
+          "authors": "CT Nguyen, YM Saputra, N Van Huynh, NT Nguyen, TV Khoa, BM Tuan, ...",
+          "venue": "arXiv preprint arXiv:2005.02816",
+          "year": 2020, "citations": 115,
+          "url": "https://scholar.google.com/citations?view_op=view_citation&hl=vi&user=I8PN-2oAAAAJ&citation_for_view=I8PN-2oAAAAJ:Tyk-4Ss8FVUC"
+        },
+        {
+          "title": "A comprehensive survey of enabling and emerging technologies for social distancing—Part II: Emerging technologies and open issues",
+          "authors": "CT Nguyen, YM Saputra, N Van Huynh, NT Nguyen, TV Khoa, BM Tuan, ...",
+          "venue": "Ieee Access 8, 154209-154236",
+          "year": 2020, "citations": 105,
+          "url": "https://scholar.google.com/citations?view_op=view_citation&hl=vi&user=I8PN-2oAAAAJ&citation_for_view=I8PN-2oAAAAJ:YsMSGLbcyi4C"
+        },
+        {
+          "title": "Time Scheduling and Energy Trading for Heterogeneous Wireless-Powered and Backscattering-based IoT Networks",
+          "authors": "NT Nguyen, DN Nguyen, DT Hoang, VH Nguyen, E Dutkiewicz, ...",
+          "venue": "arXiv preprint arXiv:2005.14573",
+          "year": 2020, "citations": 24,
+          "url": "https://scholar.google.com/citations?view_op=view_citation&hl=vi&user=I8PN-2oAAAAJ&citation_for_view=I8PN-2oAAAAJ:Y0pCki6q_DkC"
+        },
+        {
+          "title": "Improvement of the VLC localization method using the extended Kalman filter",
+          "authors": "NT Nguyen, NH Nguyen, VH Nguyen, K Sripimanwat, A Suebsomran",
+          "venue": "TENCON 2014-2014 IEEE Region 10 Conference, 1-6",
+          "year": 2014, "citations": 24,
+          "url": "https://scholar.google.com/citations?view_op=view_citation&hl=vi&user=I8PN-2oAAAAJ&citation_for_view=I8PN-2oAAAAJ:2osOgNQ5qMEC"
+        }
+      ]
+    }
+  },
+  {
+    "id": "linh-manh-pham",
+    "title": { "en": "Linh Manh Pham", "vi": "Linh Manh Pham" },
+    "description": {
+      "en": "Associate Professor at VNU-UET. Research interests include cloud, fog and edge computing, AIoT and agrotechnology.",
+      "vi": "Phó giáo sư tại Trường Đại học Công nghệ, ĐHQGHN. Nghiên cứu điện toán đám mây, sương mù và biên, AIoT và công nghệ nông nghiệp."
+    },
+    "visible": true,
+    "role": "Faculty",
+    "initials": "LP",
+    "area": "",
+    "email": "",
+    "color": "#e1e8eb",
+    "image": "/lab-website/images/linh-manh-pham.jpg",
+    "scholarProfile": {
+      "url": "https://scholar.google.com/citations?user=f1x57a4AAAAJ&hl=vi",
+      "affiliation": {
+        "en": "Associate Professor, Vietnam National University - University of Engineering and Technology",
+        "vi": "Phó giáo sư, Trường Đại học Công nghệ, Đại học Quốc gia Hà Nội"
+      },
+      "interests": [
+        { "en": "Cloud/Fog/Edge Computing", "vi": "Điện toán đám mây / sương mù / biên" },
+        { "en": "Agrotechnology", "vi": "Công nghệ nông nghiệp" },
+        { "en": "AIoT", "vi": "AIoT" },
+        { "en": "Elasticity", "vi": "Khả năng co giãn tài nguyên" },
+        { "en": "Autonomic Computing", "vi": "Điện toán tự quản" }
+      ],
+      "homepageUrl": "https://uet.vnu.edu.vn/~linhmp/",
+      "retrievedOn": "2026-10-12",
+      "metrics": { "citations": 388, "hIndex": 12, "i10Index": 13, "sinceYear": 2021, "recentCitations": 225, "recentHIndex": 9, "recentI10Index": 8 },
+      "publications": [
+        {
+          "title": "Real-time eye tracking using a smart camera",
+          "authors": "M Mehrubeoglu, LM Pham, HT Le, R Muddu, D Ryu",
+          "venue": "2011 IEEE Applied Imagery Pattern Recognition Workshop (AIPR), 1-7",
+          "year": 2011, "citations": 70,
+          "url": "https://scholar.google.com/citations?view_op=view_citation&hl=vi&user=f1x57a4AAAAJ&citation_for_view=f1x57a4AAAAJ:aqlVkmm33-oC"
+        },
+        {
+          "title": "Roboconf: A hybrid cloud orchestrator to deploy complex applications",
+          "authors": "LM Pham, A Tchana, D Donsez, N De Palma, V Zurczak, PY Gibello",
+          "venue": "2015 IEEE 8th International Conference on Cloud Computing, 365-372",
+          "year": 2015, "citations": 54,
+          "url": "https://scholar.google.com/citations?view_op=view_citation&hl=vi&user=f1x57a4AAAAJ&citation_for_view=f1x57a4AAAAJ:UeHWp8X0CEIC"
+        },
+        {
+          "title": "An adaptable framework to deploy complex applications onto multi-cloud platforms",
+          "authors": "LM Pham, A Tchana, D Donsez, V Zurczak, PY Gibello, N De Palma",
+          "venue": "The 2015 IEEE RIVF International Conference on Computing & Communication …",
+          "year": 2015, "citations": 27,
+          "url": "https://scholar.google.com/citations?view_op=view_citation&hl=vi&user=f1x57a4AAAAJ&citation_for_view=f1x57a4AAAAJ:8k81kl-MbHgC"
+        },
+        {
+          "title": "Load balancing using multipath routing in network functions virtualization",
+          "authors": "TM Pham, LM Pham",
+          "venue": "2016 IEEE RIVF International Conference on Computing & Communication …",
+          "year": 2016, "citations": 22,
+          "url": "https://scholar.google.com/citations?view_op=view_citation&hl=vi&user=f1x57a4AAAAJ&citation_for_view=f1x57a4AAAAJ:Wp0gIr-vW9MC"
+        },
+        {
+          "title": "LNLF-BERT: Transformer for Long Document Classification with Multiple Attention Levels",
+          "authors": "LM Pham, HC The",
+          "venue": "IEEE Access",
+          "year": 2024, "citations": 18,
+          "url": "https://scholar.google.com/citations?view_op=view_citation&hl=vi&user=f1x57a4AAAAJ&citation_for_view=f1x57a4AAAAJ:qxL8FJ1GzNcC"
+        }
+      ]
+    }
+  },
+  {
+    "id": "thai-duong-nguyen",
+    "title": { "en": "Thai-Duong Nguyen", "vi": "Thai-Duong Nguyen" },
+    "description": {
+      "en": "Lecturer at VNU-UET. Research interests include 5G/6G communications, deep and quantum reinforcement learning, and optimization.",
+      "vi": "Giảng viên tại Trường Đại học Công nghệ, ĐHQGHN. Nghiên cứu truyền thông 5G/6G, học tăng cường sâu, học tăng cường lượng tử và tối ưu hóa."
+    },
+    "visible": true,
+    "role": "Faculty",
+    "initials": "DN",
+    "area": "",
+    "email": "",
+    "color": "#e1e8eb",
+    "image": "/lab-website/images/thai-duong-nguyen.jpg",
+    "scholarProfile": {
+      "url": "https://scholar.google.com/citations?user=KfjB5lEAAAAJ&hl=vi",
+      "affiliation": {
+        "en": "Lecturer at Faculty of Information Technology, VNU - University of Engineering and Technology",
+        "vi": "Giảng viên Khoa Công nghệ Thông tin, Trường Đại học Công nghệ, Đại học Quốc gia Hà Nội"
+      },
+      "interests": [
+        { "en": "5G and 6G communications", "vi": "Truyền thông 5G và 6G" },
+        { "en": "Deep reinforcement learning", "vi": "Học tăng cường sâu" },
+        { "en": "Quantum reinforcement learning", "vi": "Học tăng cường lượng tử" },
+        { "en": "Optimization", "vi": "Tối ưu hóa" }
+      ],
+      "homepageUrl": "",
+      "retrievedOn": "2026-10-12",
+      "metrics": { "citations": 5, "hIndex": 2, "i10Index": 0, "sinceYear": 2021, "recentCitations": 5, "recentHIndex": 2, "recentI10Index": 0 },
+      "publications": [
+        {
+          "title": "Multi-Agent Deep Reinforcement Learning for Collaborative UAV Relay Networks Under Jamming Attacks",
+          "authors": "TD Nguyen, NT Nguyen, TD Nguyen, N Van Huynh, DH Tran, ...",
+          "venue": "2026 IEEE International Conference on Communications Workshops (ICC …",
+          "year": 2026, "citations": 2,
+          "url": "https://scholar.google.com/citations?view_op=view_citation&hl=vi&user=KfjB5lEAAAAJ&citation_for_view=KfjB5lEAAAAJ:qjMakFHDy7sC"
+        },
+        {
+          "title": "Air Quality Prediction in High-Density Livestock Operations: An Artificial Intelligence Approach to Odor Emission Mitigation",
+          "authors": "NT Nguyen, TD Nguyen, HT Nguyen, CT Pham",
+          "venue": "The 4th International Conference on Advances in Information and …",
+          "year": 2025, "citations": 2,
+          "url": "https://scholar.google.com/citations?view_op=view_citation&hl=vi&user=KfjB5lEAAAAJ&citation_for_view=KfjB5lEAAAAJ:d1gkVwhDpl0C"
+        },
+        {
+          "title": "Quantum Reinforcement Learning for 6G and Beyond Wireless Networks",
+          "authors": "DH Tran, TD Nguyen, TD Nguyen, NT Nguyen, VN Vo, H Tran, ...",
+          "venue": "arXiv preprint arXiv:2511.01070",
+          "year": 2025, "citations": 1,
+          "url": "https://scholar.google.com/citations?view_op=view_citation&hl=vi&user=KfjB5lEAAAAJ&citation_for_view=KfjB5lEAAAAJ:u5HHmVD_uO8C"
+        },
+        {
+          "title": "Safe-CTDE: Safety-Aware Joint Mobility and Power Control for Multi-UAV Relay Networks with Dynamic User Assignment",
+          "authors": "TT Hoang, TD Nguyen, NT Nguyen",
+          "venue": "2026 ASIAN Conference on Communication and Networks",
+          "year": 2026, "citations": null,
+          "url": "https://scholar.google.com/citations?view_op=view_citation&hl=vi&user=KfjB5lEAAAAJ&citation_for_view=KfjB5lEAAAAJ:Y0pCki6q_DkC"
+        },
+        {
+          "title": "A Closed Loop Security xApp for O-RAN Network Slicing: Adaptive Malicious UE Detection and Slice-Based Isolation",
+          "authors": "TT Nguyen, TD Nguyen, NT Nguyen, TT Hoang, PL Le",
+          "venue": "The 5th International Conference on Advances in Information and …",
+          "year": 2026, "citations": null,
+          "url": "https://scholar.google.com/citations?view_op=view_citation&hl=vi&user=KfjB5lEAAAAJ&citation_for_view=KfjB5lEAAAAJ:Tyk-4Ss8FVUC"
+        },
+        {
+          "title": "Energy-Efficient Resource Allocation in UAV-Enabled MEC Networks: A NoisyNet-based Multi-Agent Reinforcement Learning Approach",
+          "authors": "MT Dao, NT Nguyen, TT Do, TD Nguyen, TT Hoang",
+          "venue": "8th International Conference on Smart Computing and Informatics",
+          "year": 2026, "citations": null,
+          "url": "https://scholar.google.com/citations?view_op=view_citation&hl=vi&user=KfjB5lEAAAAJ&citation_for_view=KfjB5lEAAAAJ:zYLM7Y9cAGgC"
+        },
+        {
+          "title": "Resilient Multi-Agent D2D Communications under High-Power Jamming: An Active Jamming Modulation Approach with Hybrid MADDPG",
+          "authors": "TD Nguyen, TD Nguyen, TT Hoang, TH Nguyen, NT Nguyen",
+          "venue": "Sixth International Conference on Intelligent Systems and Networks (ICISN 2026)",
+          "year": 2026, "citations": null,
+          "url": "https://scholar.google.com/citations?view_op=view_citation&hl=vi&user=KfjB5lEAAAAJ&citation_for_view=KfjB5lEAAAAJ:IjCSPb-OGe4C"
+        },
+        {
+          "title": "Turning Interference into Power: Intelligent Anti-Jamming for Ambient Backscatter via Imitation-Augmented MADDPG",
+          "authors": "TD Nguyen, TD Nguyen, TT Hoang, VH Vu, NT Nguyen",
+          "venue": "Sixth International Conference on Intelligent Systems and Networks (ICISN 2026)",
+          "year": 2026, "citations": null,
+          "url": "https://scholar.google.com/citations?view_op=view_citation&hl=vi&user=KfjB5lEAAAAJ&citation_for_view=KfjB5lEAAAAJ:UeHWp8X0CEIC"
+        },
+        {
+          "title": "Enhancing 5G O-RAN Security with open-source xApps: Proactive Slice-Based Isolation of Compromised User",
+          "authors": "PL Le, NT Nguyen, TD Nguyen, MT Dao",
+          "venue": "The 4th International Conference on Advances in Information and …",
+          "year": 2025, "citations": null,
+          "url": "https://scholar.google.com/citations?view_op=view_citation&hl=vi&user=KfjB5lEAAAAJ&citation_for_view=KfjB5lEAAAAJ:u-x6o8ySG0sC"
+        }
+      ]
+    }
+  }
+]

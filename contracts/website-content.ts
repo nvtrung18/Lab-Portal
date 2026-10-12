@@ -21,6 +21,33 @@ export interface Member extends Entity {
   email: string;
   color: string;
   image?: string;
+  scholarProfile?: ScholarProfile | null;
+}
+export interface ScholarMetrics {
+  citations: number | null;
+  hIndex: number | null;
+  i10Index: number | null;
+  sinceYear: number | null;
+  recentCitations: number | null;
+  recentHIndex: number | null;
+  recentI10Index: number | null;
+}
+export interface ScholarPublication {
+  title: string;
+  authors: string;
+  venue: string;
+  year: number | null;
+  citations: number | null;
+  url: string;
+}
+export interface ScholarProfile {
+  url: string;
+  affiliation: LocalizedText;
+  interests: LocalizedText[];
+  homepageUrl?: string | null;
+  retrievedOn: string;
+  metrics?: ScholarMetrics | null;
+  publications: ScholarPublication[];
 }
 export type PublicationType = 'Journal' | 'Conference' | 'Book' | 'Preprint';
 export type ResourceKind = 'DOI' | 'PDF' | 'Code';

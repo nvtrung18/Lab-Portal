@@ -121,6 +121,31 @@ Website công khai chỉ trả các trường trình bày đã xuất bản, v�
 hồ sơ tài khoản để tự ghi đè nội dung. Thay đổi tên tài khoản không tự đổi tên trên website.
 Ẩn/xóa hồ sơ Thành viên không xóa tài khoản hoặc thu hồi quyền của người dùng.
 
+## Hồ sơ học thuật của ba thành viên
+
+Dữ liệu khởi tạo đặt Ngoc-Tan Nguyen, Linh Manh Pham và Thai-Duong Nguyen lên đầu
+tab Thành viên. Thẻ hiển thị ảnh, vai trò, tên, giới thiệu ngắn và **Xem hồ sơ →**;
+trang chi tiết hiển thị chức danh/đơn vị, lĩnh vực nghiên cứu, bảng trích dẫn,
+h-index/i10-index và bài viết có liên kết Google Scholar. Ảnh và thông tin công khai
+được lấy từ ba hồ sơ ngày 12/10/2026; chỉ số là bản ghi tại thời điểm đó.
+Danh sách bài viết gồm 5 bài đầu của thầy Tân, 5 bài đầu của thầy Linh và 9 bài
+của Thai-Duong Nguyen, theo thứ tự nguồn tại ngày lấy dữ liệu; nút Scholar mở
+danh sách đầy đủ. Không tự đồng bộ và không suy đoán email hay liên kết nhóm nghiên cứu.
+
+Với website đã có nội dung lưu: vào **Thành viên → Đưa 3 hồ sơ Scholar lên đầu**,
+xem trước rồi lưu nháp hoặc xuất bản. Thao tác chỉ thay đổi bản nháp đang soạn,
+giữ nội dung và liên kết tài khoản của hồ sơ đã có, bổ sung phần Scholar nếu thiếu;
+nhận diện theo ID, Scholar user ID hoặc tên trùng khớp. Không tự xuất bản.
+Admin có thể sửa từng trường, chỉ số, ngày lấy dữ liệu và bài viết trong form thành viên.
+
+`members[].scholarProfile` là trường JSON tùy chọn, dùng chung ở FE và BE;
+thiếu/null giữ cách hiển thị hồ sơ cũ. Trường số chưa có giữ `null`, số `0` vẫn hiển thị;
+các bài mà Scholar để trống số trích dẫn giữ `null`. Ngày nhận dữ liệu cần là ngày
+hợp lệ dạng `yyyy-MM-dd`. Trường này được lưu qua API nháp/xuất bản hiện có và
+trả qua API công khai, trong khi `userId` tiếp tục được loại khỏi dữ liệu công khai.
+Nguồn ba hồ sơ nằm trong `contracts/website-scholar-members.json`;
+không cần migration DB mới.
+
 ## Form soạn thảo bài viết và nội dung trong tab
 
 - **Tin tức & sự kiện** dùng form tiêu đề, mô tả ngắn, ảnh đại diện, loại/ngày/địa điểm và

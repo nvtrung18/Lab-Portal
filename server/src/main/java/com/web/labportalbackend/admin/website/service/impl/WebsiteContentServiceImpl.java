@@ -101,7 +101,7 @@ public class WebsiteContentServiceImpl implements WebsiteContentService {
                 data.members().stream().filter(item -> !Boolean.FALSE.equals(item.visible()))
                         .map(item -> new WebsiteContent.Member(item.id(), item.title(), item.description(),
                                 item.visible(), item.role(), item.initials(), item.area(), item.email(),
-                                item.color(), item.image(), null)).toList(),
+                                item.color(), item.image(), null, item.scholarProfile())).toList(),
                 data.publications().stream().filter(item -> !Boolean.FALSE.equals(item.visible())).toList(),
                 data.projects().stream().filter(item -> !Boolean.FALSE.equals(item.visible())).toList(),
                 data.news().stream().filter(item -> !Boolean.FALSE.equals(item.visible())).toList());
@@ -140,6 +140,12 @@ public class WebsiteContentServiceImpl implements WebsiteContentService {
             throw new IllegalArgumentException("A linked research group no longer exists. Change its linked group or remove the website direction.");
         }
         uniqueIds(data.members().stream().map(WebsiteContent.Member::id).toList());
+        for (WebsiteContent.Member member : data.members()) {
+            if (member.scholarProfile() != null) {
+                try { LocalDate.parse(member.scholarProfile().retrievedOn()); }
+                catch (DateTimeParseException ex) { throw new IllegalArgumentException("Invalid Scholar profile snapshot date."); }
+            }
+        }
         List<Long> memberUserIds = data.members().stream().map(WebsiteContent.Member::userId)
                 .filter(java.util.Objects::nonNull).toList();
         if (new HashSet<>(memberUserIds).size() != memberUserIds.size()) {
