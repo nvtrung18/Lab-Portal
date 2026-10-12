@@ -181,7 +181,7 @@ export function SiteHeader({ user, signedIn = false, checking = false }: {
   );
 }
 export function SiteFooter() {
-  const { locale, l, profile, pages, text } = useLab();
+  const { locale, l, profile, pages, text, data } = useLab();
   return (
     <footer className="site-footer">
       <div className="container">
@@ -239,10 +239,13 @@ export function SiteFooter() {
         <div className="footer-bottom">
           <span>© {new Date().getFullYear()} {profile.name}.</span>
           <span>
-            {profile.showDemoNotice && l(
+            {profile.showDemoNotice && (data.members.some(member => member.scholarProfile) ? l(
+              'Sample content and public academic profiles.',
+              'Nội dung mẫu và hồ sơ học thuật công khai.',
+            ) : l(
                 "All identities, research and affiliations are fictional demo content.",
               "Mọi danh tính, nghiên cứu và liên kết đều là nội dung minh họa giả định.",
-            )}
+            ))}
           </span>
           <a href="#main-content">
             {l("Back to top", "Về đầu trang")}

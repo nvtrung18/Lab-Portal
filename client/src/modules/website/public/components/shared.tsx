@@ -125,7 +125,7 @@ export function ResearchCard({
 export function MemberCard({ item }: { item: Member }) {
   const { locale, text, l } = useLab();
   return (
-    <Link className="member-card" href={`/${locale}/people/${item.id}`}>
+    <Link className={`member-card${item.scholarProfile ? ' member-card-scholar' : ''}`} href={`/${locale}/people/${item.id}`}>
       <div className="member-avatar" style={{ background: item.color }}>
         {item.image ? <Image src={item.image} alt={text(item.title)} fill sizes="(max-width: 640px) 50vw, 25vw" /> : <><span className="avatar-grid" /><span>{item.initials}</span></>}
         <ArrowUpRight size={19} />
@@ -135,6 +135,10 @@ export function MemberCard({ item }: { item: Member }) {
       <p>
         {text(item.description)}
       </p>
+      <span className="card-more">
+        {l("View profile", "Xem hồ sơ")}
+        <ArrowRight size={16} aria-hidden="true" />
+      </span>
     </Link>
   );
 }
@@ -257,12 +261,15 @@ export function EmptyState({ onReset }: { onReset?: () => void }) {
   );
 }
 export function DemoNotice() {
-  const { l, profile } = useLab();
+  const { l, profile, data } = useLab();
   if (!profile.showDemoNotice) return null;
   return (
     <div className="demo-notice">
       <CalendarDays size={17} />
-      {l(
+      {data.members.some(member => member.scholarProfile) ? l(
+        'This website includes sample content. Member profiles with Google Scholar links use public academic information.',
+        'Website có nội dung mẫu. Hồ sơ thành viên có liên kết Google Scholar sử dụng thông tin học thuật công khai.',
+      ) : l(
         "This is a demonstration website. All research, people and events are fictional sample content.",
         "Đây là website minh họa. Mọi nghiên cứu, thành viên và sự kiện đều là dữ liệu mẫu giả định.",
       )}

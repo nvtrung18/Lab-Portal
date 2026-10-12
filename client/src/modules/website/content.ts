@@ -1,5 +1,6 @@
 import seed from '../../../../contracts/website-demo-content.json';
-import type { WebsiteContent, WebsitePage, WebsiteSection } from '../../../../contracts/website-content';
+import scholarSeed from '../../../../contracts/website-scholar-members.json';
+import type { Member, WebsiteContent, WebsitePage, WebsiteSection } from '../../../../contracts/website-content';
 
 export type EditableWebsiteContent = WebsiteContent & { pages: WebsitePage[]; contentLibrary: WebsiteSection[] };
 
@@ -74,7 +75,34 @@ export function withPages(content: WebsiteContent): EditableWebsiteContent {
   })) };
 }
 
-export const demoContent = withPages(seed.content as WebsiteContent);
+export const scholarMembers = scholarSeed as Member[];
+
+export function withScholarMembers(content: WebsiteContent): WebsiteContent {
+  const selected = new Set<string>();
+  const first = scholarMembers.map(source => {
+    const existing = content.data.members.find(member => !selected.has(member.id) && (
+      member.id === source.id
+      || (member.scholarProfile && source.scholarProfile
+        && member.scholarProfile.url.match(/[?&]user=([^&#]+)/)?.[1]
+          === source.scholarProfile.url.match(/[?&]user=([^&#]+)/)?.[1])
+      || member.title.en.toLowerCase() === source.title.en.toLowerCase()
+      || member.title.vi.toLowerCase() === source.title.vi.toLowerCase()
+    ));
+    if (existing) selected.add(existing.id);
+    return existing ? { ...existing, scholarProfile: existing.scholarProfile ?? structuredClone(source.scholarProfile) }
+      : structuredClone(source);
+  });
+  return { ...content, data: { ...content.data,
+    members: [...first, ...content.data.members.filter(member => !selected.has(member.id))] } };
+}
+
+const initialContent = structuredClone(seed.content) as WebsiteContent;
+const peoplePage = initialContent.pages?.find(page => page.template === 'people');
+if (peoplePage) peoplePage.description = {
+  en: 'Meet our faculty and researchers, explore their research interests and academic profiles.',
+  vi: 'Gặp gỡ giảng viên và các nhà nghiên cứu, tìm hiểu lĩnh vực nghiên cứu và hồ sơ học thuật.',
+};
+export const demoContent = withPages(withScholarMembers(initialContent));
 
 export function createPage(): WebsitePage {
   return { id: crypto.randomUUID(), slug: '', title: { vi: '', en: '' },
