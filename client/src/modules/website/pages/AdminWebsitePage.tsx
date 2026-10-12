@@ -2,14 +2,13 @@ import { useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { isAxiosError } from 'axios';
 import { ArrowDown, ArrowUp, Eye, FileText, Globe, Pencil, Plus, Save, Send, Trash2 } from 'lucide-react';
-import seed from '../../../../../contracts/website-demo-content.json';
 import type { CollectionName, Entity, Member, ResearchArea, WebsiteContent, WebsiteState } from '../../../../../contracts/website-content';
 import { queryKeys } from '../../../shared/api';
 import { Button, Modal } from '../../../shared/components';
 import { useI18n } from '../../../shared/i18n';
 import { getWebsiteMemberSources, getWebsiteState, saveWebsite } from '../api';
 import { getLabs } from '../../lab/api';
-import { withPages } from '../content';
+import { demoContent, withPages, withScholarMembers } from '../content';
 import { inputClass } from '../components/EditorFields';
 import { PageContentEditor } from '../components/PageContentEditor';
 import { createMemberFromUser, createResearchFromLab, createRecord, putRecord, RecordEditor, type EditingRecord } from '../components/RecordEditor';
@@ -34,8 +33,8 @@ export function AdminWebsitePage() {
   const queryClient = useQueryClient();
   const query = useQuery({ queryKey: QUERY_KEY, queryFn: getWebsiteState, refetchOnWindowFocus: false });
   const initialized = useRef(false);
-  const [content, setContent] = useState<WebsiteContent>(() => withPages(structuredClone(seed.content) as WebsiteContent));
-  const [saved, setSaved] = useState(() => JSON.stringify(withPages(seed.content as WebsiteContent)));
+  const [content, setContent] = useState<WebsiteContent>(() => structuredClone(demoContent));
+  const [saved, setSaved] = useState(() => JSON.stringify(demoContent));
   const [section, setSection] = useState<Section>('copy');
   const [search, setSearch] = useState('');
   const [editing, setEditing] = useState<EditingRecord | null>(null);
@@ -55,7 +54,7 @@ export function AdminWebsitePage() {
   useEffect(() => {
     if (!query.data || initialized.current) return;
     initialized.current = true;
-    const draft = withPages(query.data.draft ?? query.data.published ?? structuredClone(seed.content) as WebsiteContent);
+    const draft = withPages(query.data.draft ?? query.data.published ?? structuredClone(demoContent));
     setContent(draft); setSaved(JSON.stringify(draft));
   }, [query.data]);
   const dirty = JSON.stringify(withPages(content)) !== saved;
@@ -140,7 +139,7 @@ export function AdminWebsitePage() {
       <div className="mt-5 flex flex-wrap items-center gap-x-6 gap-y-2 border-t border-slate-200 pt-4 text-xs text-slate-500 dark:border-slate-800">
         <span>{dirty ? l('Có thay đổi chưa lưu', 'Unsaved changes') : query.data?.draft ? l('Bản nháp đã lưu', 'Draft saved') : l('Đang dùng nội dung mẫu', 'Using template content')}</span>
         <span>{l('Xuất bản gần nhất:', 'Last published:')} {publishedAt}</span>
-        <button type="button" className="min-h-8 underline" disabled={query.isFetching || mutation.isPending} onClick={() => { if (dirty && !window.confirm(l('Bỏ các thay đổi chưa lưu và tải lại?', 'Discard unsaved changes and reload?'))) return; setError(''); setNotice(''); void query.refetch().then(result => { if (!result.data) return; const draft = withPages(result.data.draft ?? result.data.published ?? structuredClone(seed.content) as WebsiteContent); initialized.current = true; setContent(draft); setSaved(JSON.stringify(draft)); }); }}>{l('Tải lại', 'Reload')}</button>
+        <button type="button" className="min-h-8 underline" disabled={query.isFetching || mutation.isPending} onClick={() => { if (dirty && !window.confirm(l('Bỏ các thay đổi chưa lưu và tải lại?', 'Discard unsaved changes and reload?'))) return; setError(''); setNotice(''); void query.refetch().then(result => { if (!result.data) return; const draft = withPages(result.data.draft ?? result.data.published ?? structuredClone(demoContent)); initialized.current = true; setContent(draft); setSaved(JSON.stringify(draft)); }); }}>{l('Tải lại', 'Reload')}</button>
       </div>
     </div>
     {query.isLoading && <p role="status" className="text-sm text-slate-500">{l('Đang tải bản nháp đã lưu…', 'Loading the saved draft…')}</p>}
@@ -156,6 +155,13 @@ export function AdminWebsitePage() {
         {activeCollection && <>
           <div className="mb-5 flex flex-wrap items-center justify-between gap-3"><input aria-label={l('Tìm bản ghi', 'Find records')} type="search" className={`${inputClass} max-w-sm`} placeholder={l('Tìm theo tiêu đề hoặc tên…', 'Search titles or names…')} value={search} onChange={e => setSearch(e.target.value)} /><Button size="sm" onClick={() => addRecord(activeCollection)}><Plus size={16} />{activeCollection === 'members' ? l('Thêm từ người dùng', 'Add from users') : activeCollection === 'research' ? l('Thêm từ nhóm nghiên cứu', 'Add from research groups') : l('Thêm mới', 'Add record')}</Button></div>
           {activeCollection === 'members' && <p className="mb-4 text-sm text-slate-500">{l('Chọn người dùng rồi chỉnh hồ sơ hiển thị riêng cho từng người. Tích Hiển thị, xem trước và xuất bản để đưa lên website.', 'Select users and edit each public profile separately. Check Show, preview and publish to display them on the website.')}</p>}
+          {activeCollection === 'members' && <div className="mb-5 flex flex-wrap items-center gap-3">
+            <Button size="sm" variant="outline" onClick={() => {
+              setContent(withScholarMembers(content)); setSearch('');
+              setNotice(l('Đã đưa hồ sơ thầy Tân, thầy Linh và Thai-Duong Nguyen lên đầu bản nháp. Xem trước rồi lưu nháp hoặc xuất bản.', 'The three Scholar profiles are now first in the draft. Preview, then save or publish.'));
+            }}><Plus size={16} />{l('Đưa 3 hồ sơ Scholar lên đầu', 'Add 3 Scholar profiles first')}</Button>
+            <span className="text-xs text-slate-500">{l('Hồ sơ công khai đã chuẩn bị từ Google Scholar ngày 12/10/2026.', 'Public profiles prepared from Google Scholar on 12 October 2026.')}</span>
+          </div>}
           {activeCollection === 'research' && <p className="mb-4 text-sm text-slate-500">{l('Chọn nhóm nghiên cứu hiện có rồi chỉnh tên giới thiệu, mô tả, ảnh và chủ đề cho website. Tích Hiển thị, xem trước và xuất bản.', 'Select an existing research group and edit its public name, description, image and topics. Check Show, preview and publish.')}</p>}
           {activeCollection === 'news' && <p className="mb-4 text-sm text-slate-500">{l('Soạn bài viết, tin tức hoặc sự kiện trong form riêng. Có thể bổ sung tên nguồn và link bài gốc, xem trước rồi lưu nháp hoặc xuất bản.', 'Compose articles, news or events in the article form. Optionally add the source name and original article link, preview, then save a draft or publish.')}</p>}
           {activeCollection === 'publications' && <p className="mb-4 text-sm text-slate-500">{l('Nhập loại công bố, tác giả và tài nguyên DOI/PDF/Code; soạn nội dung giới thiệu và bổ sung nguồn/link gốc nếu có. Xem trước rồi lưu nháp hoặc xuất bản.', 'Enter publication type, contributors and DOI/PDF/Code resources; compose the article and optionally add its original source. Preview, then save a draft or publish.')}</p>}

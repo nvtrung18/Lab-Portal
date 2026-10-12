@@ -3604,6 +3604,59 @@
 }
 
 .lab-public .member-avatar img, .lab-public .profile-portrait img { object-fit: cover; }
+.lab-public .member-card > p {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+}
+.lab-public .member-card-scholar .member-avatar img,
+.lab-public .scholar-portrait img { object-fit: contain; }
+.lab-public .member-card-scholar .member-avatar:after { display: none; }
+.lab-public .member-card .card-more {
+  min-height: 44px;
+  margin-top: 0.5rem;
+}
+.lab-public .scholar-profile { min-width: 0; }
+.lab-public .scholar-interests {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0;
+}
+.lab-public .scholar-interests li {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--soft);
+  font-size: 0.875rem;
+}
+.lab-public .scholar-links { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; margin-top: 1.5rem; }
+.lab-public .scholar-profile .scholar-source-note { color: var(--muted); font-size: 0.8125rem; margin-top: 1rem; }
+.lab-public .scholar-profile table { width: 100%; border-collapse: collapse; }
+.lab-public .scholar-profile th, .lab-public .scholar-profile td {
+  padding: 0.75rem 0.5rem;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  vertical-align: top;
+}
+.lab-public .scholar-profile thead { font-size: 0.8125rem; color: var(--muted); }
+.lab-public .scholar-metrics h2 { font-size: 1.25rem; margin-bottom: 1rem; }
+.lab-public .scholar-metrics td { text-align: right; font-variant-numeric: tabular-nums; }
+.lab-public .scholar-metrics thead th:not(:first-child) { text-align: right; }
+.lab-public .scholar-publications { margin-top: 3rem; }
+.lab-public .scholar-publications .section-heading { gap: 1rem; margin-bottom: 0; }
+.lab-public .scholar-publications h2 { display: flex; align-items: center; gap: 0.75rem; font-size: 1.5rem; }
+.lab-public .scholar-table-wrap { overflow-x: auto; margin-top: 1.5rem; }
+.lab-public .scholar-table-wrap table { min-width: 420px; }
+.lab-public .scholar-table-wrap td:first-child { width: 78%; }
+.lab-public .scholar-table-wrap td > a { font-weight: 600; overflow-wrap: anywhere; }
+.lab-public .scholar-table-wrap td > a:hover { text-decoration: underline; }
+.lab-public .scholar-table-wrap td > a svg { display: inline; margin-left: 0.25rem; }
+.lab-public .scholar-table-wrap td p { color: var(--muted); font-size: 0.8125rem; margin: 0.5rem 0 0; }
+.lab-public .scholar-table-wrap td:not(:first-child) { white-space: nowrap; font-variant-numeric: tabular-nums; }
 
 
 /* Adaptations for the shared React/Vite frontend and editorial sections. */

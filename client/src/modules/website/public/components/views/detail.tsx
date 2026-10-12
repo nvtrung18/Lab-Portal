@@ -22,6 +22,7 @@ import { PublicationResources } from "./explore";
 import { Button } from "../ui/button";
 import { RichTextBody } from '../rich-text-body';
 import { ArticleSourceDetails } from '../article-source-details';
+import { ScholarProfileDetails } from '../scholar-profile-details';
 export function DetailView({ section, id }: { section: string; id: string }) {
   const { data, text, locale, l, profile } = useLab();
   const key =
@@ -85,7 +86,8 @@ export function DetailView({ section, id }: { section: string; id: string }) {
             <div>
               <span className="eyebrow">
                 <span />
-                {profile.showDemoNotice && l("DEMONSTRATION RECORD", "BẢN GHI MINH HỌA")}
+                {'scholarProfile' in item && item.scholarProfile ? l('ACADEMIC PROFILE', 'HỒ SƠ HỌC THUẬT')
+                  : profile.showDemoNotice && l("DEMONSTRATION RECORD", "BẢN GHI MINH HỌA")}
               </span>
               <h1>{text(item.title)}</h1>
               <p>{text(item.description)}</p>
@@ -104,11 +106,11 @@ export function DetailView({ section, id }: { section: string; id: string }) {
             )}
             {"initials" in item && (
               <div
-                className="profile-portrait"
+                className={`profile-portrait${item.scholarProfile ? ' scholar-portrait' : ''}`}
                 style={{ background: item.color }}
               >
                 {item.image ? <Image src={item.image} alt={text(item.title)} fill sizes="45vw" /> : <><span className="avatar-grid" /><span>{item.initials}</span></>}
-                {profile.showDemoNotice && <small>{l("ILLUSTRATIVE PROFILE", "HỒ SƠ MINH HỌA")}</small>}
+                {profile.showDemoNotice && !item.scholarProfile && <small>{l("ILLUSTRATIVE PROFILE", "HỒ SƠ MINH HỌA")}</small>}
               </div>
             )}
           </div>
@@ -116,7 +118,7 @@ export function DetailView({ section, id }: { section: string; id: string }) {
       </section>
       <section className="section">
         <div className="container">
-          <DemoNotice />
+          {!('scholarProfile' in item && item.scholarProfile) && <DemoNotice />}
           {section === "research" && "topics" in item && (
             <>
               <div className="detail-body-grid">
@@ -185,6 +187,7 @@ export function DetailView({ section, id }: { section: string; id: string }) {
             </>
           )}
           {section === "people" && "role" in item && (
+            item.scholarProfile ? <ScholarProfileDetails profile={item.scholarProfile} /> :
             <div className="detail-body-grid">
               <div>
                 <span className="badge">{l(item.role, roleVi[item.role])}</span>

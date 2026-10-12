@@ -102,7 +102,37 @@ public record WebsiteContent(
             @Schema(description = "Public email; may be empty") @NotNull @Email @Size(max = 254) String email,
             @Schema(description = "Avatar background color; may be empty") @NotNull @Pattern(regexp = "^$|#[0-9a-fA-F]{6}") String color,
             @Schema(description = "Optional portrait URL or asset path") @Pattern(regexp = ASSET_URL) String image,
-            @Schema(description = "Linked account identifier; null for legacy profiles and public responses") @Positive Long userId
+            @Schema(description = "Linked account identifier; null for legacy profiles and public responses") @Positive Long userId,
+            @Schema(description = "Public academic profile snapshot; null when not supplied") @Valid ScholarProfile scholarProfile
+    ) {}
+
+    public record ScholarProfile(
+            @Schema(description = "Google Scholar profile URL") @NotBlank @Size(max = 2000) @Pattern(regexp = HTTP_URL) String url,
+            @Schema(description = "Public position and institution") @NotNull @Valid LocalizedText affiliation,
+            @Schema(description = "Research interests in display order") @NotNull @Size(max = 100) List<@NotNull @Valid LocalizedText> interests,
+            @Schema(description = "Public personal website URL; null or empty when not supplied") @Size(max = 2000) @Pattern(regexp = HTTP_URL) String homepageUrl,
+            @Schema(description = "Snapshot date in yyyy-MM-dd format") @NotBlank @Pattern(regexp = "\\d{4}-\\d{2}-\\d{2}") String retrievedOn,
+            @Schema(description = "Citation metrics; null when not supplied") @Valid ScholarMetrics metrics,
+            @Schema(description = "Selected Scholar articles in display order") @NotNull @Size(max = 100) List<@NotNull @Valid ScholarPublication> publications
+    ) {}
+
+    public record ScholarMetrics(
+            @Schema(description = "All-time citations; null when unavailable") @Min(0) Integer citations,
+            @Schema(description = "All-time h-index; null when unavailable") @Min(0) Integer hIndex,
+            @Schema(description = "All-time i10-index; null when unavailable") @Min(0) Integer i10Index,
+            @Schema(description = "Starting year of the recent metrics; null when unavailable") @Min(1) @Max(9999) Integer sinceYear,
+            @Schema(description = "Citations since the starting year; null when unavailable") @Min(0) Integer recentCitations,
+            @Schema(description = "h-index since the starting year; null when unavailable") @Min(0) Integer recentHIndex,
+            @Schema(description = "i10-index since the starting year; null when unavailable") @Min(0) Integer recentI10Index
+    ) {}
+
+    public record ScholarPublication(
+            @Schema(description = "Article title as listed on Scholar") @NotBlank @Size(max = 2000) String title,
+            @Schema(description = "Author text as listed on Scholar; may be abbreviated") @NotNull @Size(max = 2000) String authors,
+            @Schema(description = "Publication venue as listed on Scholar; may be abbreviated") @NotNull @Size(max = 2000) String venue,
+            @Schema(description = "Article year; null when unavailable") @Min(1) @Max(9999) Integer year,
+            @Schema(description = "Article citations; null when not displayed on Scholar") @Min(0) Integer citations,
+            @Schema(description = "Original Scholar article URL") @NotBlank @Size(max = 2000) @Pattern(regexp = HTTP_URL) String url
     ) {}
 
     public enum ResourceKind { DOI, PDF, Code }
