@@ -7,6 +7,13 @@
   --soft: var(--lab-brand-soft);
   --teal: var(--lab-brand-teal);
   --radius: var(--lab-brand-radius);
+  --surface: #fff;
+  --page-background: var(--surface);
+  --header-background: #fffffffa;
+  --heading-background: #f3f6f7;
+  --action-background: var(--lab-brand-navy);
+  --action-text: #fff;
+  --action-hover: #234b62;
 }
 .lab-public * {
   box-sizing: border-box;
@@ -17,7 +24,7 @@
 }
 .lab-public {
   margin: 0;
-  background: #fff;
+  background: var(--page-background);
   color: var(--ink);
   font-family: "Manrope", Arial, Helvetica, sans-serif;
   font-size: 14px;
@@ -108,14 +115,14 @@
     transform 0.18s;
 }
 .lab-public .button-primary {
-  background: var(--navy);
-  color: white;
+  background: var(--action-background);
+  color: var(--action-text);
 }
 .lab-public .button-primary:hover {
-  background: #234b62;
+  background: var(--action-hover);
 }
 .lab-public .button-light {
-  background: white;
+  background: var(--surface);
   color: var(--navy);
 }
 .lab-public .button-light:hover {
@@ -123,7 +130,7 @@
 }
 .lab-public .button-outline {
   border-color: #d4dde2;
-  background: white;
+  background: var(--surface);
   color: var(--navy);
 }
 .lab-public .button-outline:hover {
@@ -190,7 +197,7 @@
   top: -60px;
   left: 12px;
   padding: 12px 20px;
-  background: white;
+  background: var(--surface);
   color: var(--navy);
   box-shadow: 0 3px 20px #0002;
 }
@@ -232,7 +239,7 @@
   position: sticky;
   top: 0;
   z-index: 30;
-  background: #fffffffa;
+  background: var(--header-background);
   border-bottom: 1px solid var(--line);
   backdrop-filter: blur(10px);
 }
@@ -640,7 +647,7 @@
 .lab-public .news-card {
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  background: #fff;
+  background: var(--surface);
   overflow: hidden;
   transition:
     box-shadow 0.2s,
@@ -812,7 +819,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  background: white;
+  background: var(--surface);
   color: #2c6d5c;
   padding: 4px 10px;
   border-radius: 3px;
@@ -1073,7 +1080,7 @@
   color: #abc0cc;
 }
 .lab-public .page-heading {
-  background: #f3f6f7;
+  background: var(--heading-background);
   padding: 30px 0 62px;
   overflow: hidden;
 }
@@ -1145,7 +1152,7 @@
   align-items: center;
   gap: 12px;
   border: 1px solid #dce4e8;
-  background: white;
+  background: var(--surface);
   min-height: 48px;
   border-radius: 4px;
   max-width: 520px;
@@ -1197,16 +1204,16 @@
 .lab-public .filter-tabs button {
   border: 1px solid var(--line);
   padding: 8px 16px;
-  background: white;
+  background: var(--surface);
   color: #667d8c;
   font-size: 11px;
   border-radius: 4px;
   font-weight: 500;
 }
 .lab-public .filter-tabs button.active {
-  background: var(--navy);
-  color: white;
-  border-color: var(--navy);
+  background: var(--action-background);
+  color: var(--action-text);
+  border-color: var(--action-background);
 }
 .lab-public .filter-tabs button:hover:not(.active) {
   background: #edf3f5;
@@ -1240,7 +1247,7 @@
   justify-content: space-between;
   gap: 15px;
   border: 1px solid #dce4e8;
-  background: white;
+  background: var(--surface);
   padding: 10px 12px;
   min-width: 135px;
   color: #597384;
@@ -1255,7 +1262,7 @@
 .lab-public .select-content {
   z-index: 70;
   overflow: hidden;
-  background: white;
+  background: var(--surface);
   box-shadow: 0 5px 30px #12334922;
   border: 1px solid var(--line);
   padding: 5px;
@@ -1370,7 +1377,7 @@
   align-items: center;
   gap: 7px;
   font-size: 10px;
-  background: white;
+  background: var(--surface);
   border: 1px solid #dbe5e9;
   border-radius: 3px;
   padding: 5px 10px;
@@ -1423,7 +1430,7 @@
   max-height: calc(100dvh - 48px);
   overflow-y: auto;
   z-index: 61;
-  background: white;
+  background: var(--surface);
   border: 1px solid var(--line);
   padding: 35px;
   border-radius: 8px;
@@ -1685,7 +1692,7 @@
   border-radius: 4px;
   font-size: 12px;
   color: var(--navy);
-  background: white;
+  background: var(--surface);
   line-height: 1.6;
   resize: vertical;
 }
@@ -1816,7 +1823,7 @@
 }
 .lab-public .map-marker strong {
   font-size: 8px;
-  background: white;
+  background: var(--surface);
   border: 1px solid #d2dde2;
   padding: 3px 7px;
   border-radius: 3px;
@@ -1862,7 +1869,7 @@
 }
 .lab-public .detail-heading {
   padding: 32px 0 60px;
-  background: #f3f6f7;
+  background: var(--heading-background);
 }
 .lab-public .back-link {
   display: flex;
@@ -2106,7 +2113,7 @@
   gap: 35px;
 }
 .lab-public .admin-sidebar {
-  background: white;
+  background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 5px;
   padding: 25px 14px;
@@ -2133,7 +2140,7 @@
   font-weight: 600;
 }
 .lab-public .admin-sidebar > a:hover {
-  background: #f3f6f7;
+  background: var(--heading-background);
 }
 .lab-public .admin-sidebar > a > span {
   margin-left: auto;
@@ -2189,7 +2196,7 @@
   gap: 15px;
 }
 .lab-public .admin-stats > a {
-  background: white;
+  background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 5px;
   padding: 24px 20px;
@@ -2221,7 +2228,7 @@
   margin-top: 26px;
 }
 .lab-public .admin-panel {
-  background: white;
+  background: var(--surface);
   border: 1px solid var(--line);
   padding: 28px;
   border-radius: 5px;
@@ -2275,7 +2282,7 @@
 }
 .lab-public .admin-table-wrap {
   overflow-x: auto;
-  background: white;
+  background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 5px;
 }
@@ -3809,7 +3816,7 @@
 .lab-public .editorial-featured .editorial-with-image { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 60px; align-items: center; }
 .lab-public .editorial-split .editorial-image,
 .lab-public .editorial-featured .editorial-image { margin-top: 0; }
-.lab-public .editorial-featured { background: var(--navy); color: #fff; }
+.lab-public .editorial-featured { background: var(--lab-brand-navy); color: #fff; }
 .lab-public .editorial-featured h2 { font-size: clamp(32px, 4vw, 54px); }
 .lab-public .editorial-featured p { color: #c5d6df; }
 .lab-public .editorial-featured .eyebrow,
@@ -3831,9 +3838,9 @@
 }
 .lab-public .admission-button {
   min-height: 44px;
-  border: 1px solid var(--navy);
-  background: var(--navy);
-  color: white;
+  border: 1px solid var(--action-background);
+  background: var(--action-background);
+  color: var(--action-text);
   border-radius: 6px;
   padding: 10px 18px;
   margin: 0 12px 12px 0;
@@ -3841,7 +3848,7 @@
   font: inherit;
 }
 .lab-public .admission-button.secondary {
-  background: white;
+  background: var(--surface);
   color: var(--navy);
 }
 .lab-public .admission-button:disabled {
@@ -3998,11 +4005,109 @@
 }
 .lab-public .language-switch a.selected {
   color: var(--navy);
-  background: #fff;
+  background: var(--surface);
   font-weight: 700;
 }
 .lab-public .language-switch a:hover { color: var(--navy); }
 @media (max-width: 800px) {
   .lab-public .utility-inner .utility-right { flex: 1; }
   .lab-public .utility-inner .language-switch { align-self: flex-start; }
+}
+
+/* Public pages share the portal's saved theme and semantic colors. */
+.lab-public .utility-preferences {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  gap: 8px;
+}
+.lab-public .website-theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--navy);
+}
+.lab-public .website-theme-toggle:hover {
+  border-color: var(--line);
+  background: var(--surface);
+}
+.lab-public .website-theme-toggle svg { flex-shrink: 0; }
+html.dark .lab-public {
+  --navy: var(--app-text-primary);
+  --ink: var(--app-text-primary);
+  --muted: var(--app-text-muted);
+  --line: var(--app-border-color);
+  --soft: var(--app-surface-soft);
+  --surface: var(--app-surface-color);
+  --page-background: var(--app-background-color);
+  --header-background: var(--app-surface-color);
+  --heading-background: var(--app-surface-color);
+  --action-background: var(--app-primary);
+  --action-text: var(--app-primary-text);
+  --action-hover: var(--app-primary-hover);
+}
+html.dark .lab-public .utility-bar {
+  background: var(--app-background-color);
+  border-color: var(--line);
+  color: var(--muted);
+}
+html.dark .lab-public .header-brand .brand-logo {
+  background: #fff;
+  border-radius: var(--radius);
+}
+html.dark .lab-public :is(.desktop-nav a, .label, .breadcrumb, .breadcrumb a,
+  .results-count, .results-header, .publication-year, .publication-venue,
+  .publication-meta > span:first-child, .news-meta time, .back-link,
+  .section-footnote, .detail-aside dt, .profile-portrait small,
+  .dialog-description, .search-field, .filter-tabs button:not(.active),
+  .select-trigger, .clear-filters, .edit-form label, .form-label) {
+  color: var(--muted);
+}
+html.dark .lab-public :is(.desktop-nav a:hover, .desktop-nav a.active,
+  .select-item, .detail-aside dd) {
+  color: var(--ink);
+}
+html.dark .lab-public :is(.text-link:hover, .publication-preview:hover h3,
+  .publication-content h3:hover, .resource-links button:hover) {
+  color: var(--app-accent-text);
+}
+html.dark .lab-public :is(.button-light:hover, .filter-tabs button:hover:not(.active),
+  .select-item[data-highlighted], .badge, .research-icon, .publication-icon) {
+  background: var(--app-accent-soft);
+  color: var(--app-accent-text);
+}
+html.dark .lab-public :is(.filter-panel, .empty-state, .detail-aside,
+  .contributor-links a, .dialog-close, .bibtex) {
+  background: var(--soft);
+  color: var(--muted);
+}
+html.dark .lab-public :is(.button-outline, .search-field, .select-trigger,
+  .resource-links button, .edit-form input, .edit-form textarea) {
+  border-color: var(--app-control-border);
+}
+html.dark .lab-public :is(.filter-panel, .empty-state, .detail-aside, .bibtex,
+  .mobile-nav a, .research-card:hover, .project-card:hover, .news-card:hover) {
+  border-color: var(--line);
+}
+html.dark .lab-public .resource-links button { color: var(--ink); }
+html.dark .lab-public .image-arrow { background: var(--surface); }
+html.dark .lab-public .card-image { background: var(--soft); }
+html.dark .lab-public .status-badge { color: var(--app-accent-text); }
+html.dark .lab-public .status-badge.completed { color: var(--muted); }
+html.dark .lab-public .page-heading-mark { color: var(--line); }
+html.dark .lab-public .skeleton {
+  background: linear-gradient(90deg, var(--surface), var(--soft), var(--surface));
+}
+html.dark .lab-public :is(button, a, input, select, textarea):focus-visible {
+  outline-color: var(--app-focus-indicator-color);
+}
+@media (max-width: 600px) {
+  .lab-public .utility-inner { flex-wrap: wrap; gap: 4px 12px; }
+  .lab-public .utility-preferences { margin-left: auto; }
 }

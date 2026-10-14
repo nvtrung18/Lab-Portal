@@ -4,11 +4,12 @@ import { useQueryClient } from '@tanstack/react-query';
 import type { UserProfileResponse } from '../../../user/api';
 import { getPrimaryRedirectPath } from '../../../auth/hooks';
 import { clearAuthTokens } from '../../../../shared/api';
-import { ArrowUpRight, Menu, X, ArrowRight } from "lucide-react";
+import { ArrowUpRight, Menu, X, ArrowRight, Moon, Sun } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useLab } from "./lab-provider";
 import { Button } from "./ui/button";
 import { LAB_BRAND } from '../../../../shared/constants';
+import { useTheme } from '../../../../shared/theme';
 export function Brand({ light = false }: { light?: boolean }) {
   return (
     <img
@@ -24,6 +25,11 @@ export function SiteHeader({ user, signedIn = false, checking = false }: {
   user?: UserProfileResponse; signedIn?: boolean; checking?: boolean;
 }) {
   const { locale, l, loadError, preview, pages, text } = useLab();
+  const { theme, toggleTheme } = useTheme();
+  const isDark = theme === 'dark';
+  const themeLabel = isDark
+    ? l('Switch to light mode', 'Chuyển sang chế độ sáng')
+    : l('Switch to dark mode', 'Chuyển sang chế độ tối');
   const { pathname, search, hash } = useLocation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -73,18 +79,24 @@ export function SiteHeader({ user, signedIn = false, checking = false }: {
               <button type="button" className="account-signout" onClick={logout}>{l('Sign out', 'Đăng xuất')}</button>
             </> : null}
           </div>
-          <nav className="language-switch" aria-label={l('Website language', 'Ngôn ngữ website')}>
-            {(['vi', 'en'] as const).map(language => (
-              <Link key={language} href={languagePath(language)} resolveTemplate={false}
-                hrefLang={language} lang={language}
-                className={locale === language ? 'selected' : ''}
-                aria-current={locale === language ? 'true' : undefined}
-                aria-label={language === 'vi' ? 'Tiếng Việt' : 'English'}
-                onClick={() => setOpen(false)}>
-                {language.toUpperCase()}
-              </Link>
-            ))}
-          </nav>
+          <div className="utility-preferences">
+            <button type="button" className="website-theme-toggle" onClick={toggleTheme}
+              aria-label={themeLabel} title={themeLabel}>
+              {isDark ? <Sun size={16} aria-hidden="true" /> : <Moon size={16} aria-hidden="true" />}
+            </button>
+            <nav className="language-switch" aria-label={l('Website language', 'Ngôn ngữ website')}>
+              {(['vi', 'en'] as const).map(language => (
+                <Link key={language} href={languagePath(language)} resolveTemplate={false}
+                  hrefLang={language} lang={language}
+                  className={locale === language ? 'selected' : ''}
+                  aria-current={locale === language ? 'true' : undefined}
+                  aria-label={language === 'vi' ? 'Tiếng Việt' : 'English'}
+                  onClick={() => setOpen(false)}>
+                  {language.toUpperCase()}
+                </Link>
+              ))}
+            </nav>
+          </div>
         </div>
       </div>
       <header className="site-header">
