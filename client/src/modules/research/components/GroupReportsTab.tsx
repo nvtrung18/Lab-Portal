@@ -291,27 +291,27 @@ export function GroupReportsTab({
                 {/* Submitter & File Details */}
                 <div className="grid gap-3 rounded-lg border border-slate-100/50 bg-slate-50/50 p-3 text-sm sm:grid-cols-2 xl:grid-cols-5">
                   <div className="min-w-0">
-                    <span className="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider">{t('research.report.uploader')}</span>
+                    <span className="block text-[11px] font-semibold text-slate-500 tracking-normal dark:text-slate-400">{t('research.report.uploader')}</span>
                     <span className="mt-0.5 block break-words font-medium text-slate-800" title={getSubmitterLabel(report)}>
                       {getSubmitterLabel(report)}
                     </span>
                   </div>
                   <div className="min-w-0">
-                    <span className="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider">{t('research.report.milestone')}</span>
+                    <span className="block text-[11px] font-semibold text-slate-500 tracking-normal dark:text-slate-400">{t('research.report.milestone')}</span>
                     <span className="mt-0.5 block break-words font-medium text-slate-800" title={report.milestoneTitle || t('common.notUpdated')}>
                       {report.milestoneTitle || t('research.report.commonTask')}
                     </span>
                   </div>
                   <div>
-                    <span className="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider">{t('research.report.latest')}</span>
+                    <span className="block text-[11px] font-semibold text-slate-500 tracking-normal dark:text-slate-400">{t('research.report.latest')}</span>
                     <span className="block mt-0.5 font-medium text-blue-700">{t('research.report.version', undefined, { version: report.version })}</span>
                   </div>
                   <div>
-                    <span className="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider">{t('research.report.submittedAt')}</span>
+                    <span className="block text-[11px] font-semibold text-slate-500 tracking-normal dark:text-slate-400">{t('research.report.submittedAt')}</span>
                     <span className="block mt-0.5 text-slate-700 font-medium">{formatDate(report.createdAt, locale)}</span>
                   </div>
                   <div className="min-w-0">
-                    <span className="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider">{t('research.product.fileName')}</span>
+                    <span className="block text-[11px] font-semibold text-slate-500 tracking-normal dark:text-slate-400">{t('research.product.fileName')}</span>
                     <button
                       onClick={() => handleDownload(report)}
                       className="mt-0.5 block w-full break-all text-left font-semibold text-blue-600 underline hover:text-blue-800"

@@ -179,7 +179,7 @@ export function ProfilePage() {
           <div className="min-w-0">
             <h1 className="break-words text-xl font-semibold text-slate-950 dark:text-white">{displayName}</h1>
             <p className="mt-1 hidden break-all text-sm text-slate-600 dark:text-slate-300 sm:block">{profile.email}</p>
-            <p className="mt-1 text-xs font-medium uppercase text-slate-500">{profile.roles.map((role) => formatRole(role, locale)).join(', ')}</p>
+            <p className="mt-1 text-xs font-medium tracking-normal text-slate-500 dark:text-slate-400">{profile.roles.map((role) => formatRole(role, locale)).join(', ')}</p>
           </div>
           <p className="w-full break-all text-sm text-slate-600 dark:text-slate-300 sm:hidden">{profile.email}</p>
         </div>

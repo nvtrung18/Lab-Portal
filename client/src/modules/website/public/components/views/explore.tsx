@@ -495,11 +495,11 @@ export function ProjectsView() {
               placeholder={l("Search projects…", "Tìm dự án…")}
             />
             <Select
-              label={l("Research category", "Nhóm nghiên cứu")}
+              label={l("Research areas", "Lĩnh vực nghiên cứu")}
               value={area}
               onValueChange={setArea}
               options={[
-                { value: "all", label: l("All categories", "Tất cả nhóm") },
+                { value: "all", label: l("All research areas", "Tất cả lĩnh vực") },
                 ...data.research.map((a) => ({
                   value: a.id,
                   label: text(a.title),

@@ -323,7 +323,7 @@ function SidebarContent({
           </div>
           {managedLabName ? (
             <div className="app-sidebar-context rounded-md">
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">{t('layout.managedLab')}</p>
+              <p className="text-[11px] font-semibold tracking-normal text-slate-500 dark:text-slate-400">{t('layout.managedLab')}</p>
               <p className="mt-1 truncate text-xs font-medium text-slate-700 dark:text-slate-200" title={managedLabName}>{managedLabName}</p>
             </div>
           ) : null}

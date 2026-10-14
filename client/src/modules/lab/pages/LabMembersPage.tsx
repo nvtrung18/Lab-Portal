@@ -178,7 +178,7 @@ export function LabMembersPage() {
         <ResponsiveTable className="mt-6 hidden md:block">
           <table className="w-full min-w-[840px] divide-y divide-slate-200 text-sm">
             <thead>
-              <tr className="text-left text-xs font-semibold uppercase text-slate-500">
+              <tr className="border-b border-slate-200 bg-slate-50/80 text-left text-xs font-semibold tracking-normal text-slate-600 dark:border-slate-800 dark:bg-slate-800/60 dark:text-slate-300">
                 <th className="px-3 py-3">{t('profile.fullName')}</th>
                 <th className="px-3 py-3">{t('common.email')}</th>
                 <th className="px-3 py-3">{t('lab.changeMemberRole')}</th>

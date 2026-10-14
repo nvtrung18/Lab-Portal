@@ -28,7 +28,7 @@ export const AttendanceChart = memo(function AttendanceChart({ byStudent }: Atte
   return (
     <div aria-label={t('research.attendance.student')} role="region" tabIndex={0} className="mt-4 min-w-0 max-w-full overflow-x-auto overscroll-x-contain">
       <table className="w-full min-w-[32rem] divide-y divide-slate-200 text-sm dark:divide-slate-800">
-        <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:bg-slate-950 dark:text-slate-400">
+        <thead className="bg-slate-50 text-left text-xs font-semibold tracking-normal text-slate-600 dark:bg-slate-800/60 dark:text-slate-300">
           <tr>
             <th className="px-3 py-3">{t('research.attendance.student')}</th>
             <th className="px-3 py-3">{t('research.attendance.rate')}</th>

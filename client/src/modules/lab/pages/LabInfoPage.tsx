@@ -6,7 +6,7 @@ export function LabInfoPage() {
   return (
     <section className="space-y-6">
       <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+        <p className="text-xs font-semibold tracking-normal text-slate-500 dark:text-slate-400">
           {t('lab.info.manager')}
         </p>
         <h2 className="mt-1 text-xl font-semibold text-slate-950">{t('lab.info.title')}</h2>

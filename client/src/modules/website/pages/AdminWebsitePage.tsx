@@ -126,7 +126,7 @@ export function AdminWebsitePage() {
   return <section className="space-y-6">
     <div className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900 sm:p-6">
       <div className="app-page-heading flex flex-wrap items-start justify-between gap-5">
-        <div><p className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-500"><Globe size={15} />Website</p>
+        <div><p className="mb-2 flex items-center gap-2 text-xs font-semibold tracking-normal text-slate-500 dark:text-slate-400"><Globe size={15} />Website</p>
           <h2 className="text-2xl font-semibold tracking-tight">{l('Quản trị website giới thiệu', 'Laboratory website content')}</h2>
           <p className="mt-2 max-w-2xl text-sm text-slate-500">{l('Chọn nội dung hiển thị trong từng tab, thêm theo mẫu hoặc tự soạn và sắp xếp các mục. Quản lý thành viên, hướng nghiên cứu, Publications, đề tài và tin tức. Xem trước, lưu nháp rồi xuất bản.', 'Select and arrange content in each tab, use presets or write new content. Manage people, research, publications, projects and news. Preview, save a draft and publish.')}</p>
         </div>

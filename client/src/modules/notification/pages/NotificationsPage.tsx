@@ -63,7 +63,7 @@ export function NotificationsPage() {
     <section className="mx-auto max-w-5xl">
       <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <header>
-          <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">{t('notifications.center')}</p>
+          <p className="text-sm font-semibold tracking-normal text-slate-500 dark:text-slate-400">{t('notifications.center')}</p>
           <h1 className="mt-1 text-2xl font-semibold text-slate-950 dark:text-white">{t('common.notifications')}</h1>
         </header>
         <Button

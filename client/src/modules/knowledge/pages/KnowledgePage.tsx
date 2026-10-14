@@ -156,7 +156,7 @@ export function KnowledgePage() {
 
   return (
     <section className="mx-auto max-w-6xl">
-      <header className="mb-6"><p className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-slate-500"><BookOpenCheck aria-hidden="true" className="h-4 w-4" /> {t('knowledge.badge')}</p><h1 className="mt-1 text-2xl font-semibold text-slate-950 dark:text-white">{t('knowledge.title')}</h1></header>
+      <header className="mb-6"><p className="flex items-center gap-2 text-sm font-semibold tracking-normal text-slate-500 dark:text-slate-400"><BookOpenCheck aria-hidden="true" className="h-4 w-4" /> {t('knowledge.badge')}</p><h1 className="mt-1 text-2xl font-semibold text-slate-950 dark:text-white">{t('knowledge.title')}</h1></header>
       {!isAdmin && managedLabName ? <div className="mb-5 break-words rounded-lg border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-900 dark:border-blue-900 dark:bg-blue-950/30 dark:text-blue-200"><span className="font-semibold">{t('knowledge.managedLab')}</span> {managedLabName}</div> : null}
       <div className="grid min-w-0 gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
         <form className="min-w-0 rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-5" onSubmit={submit}>

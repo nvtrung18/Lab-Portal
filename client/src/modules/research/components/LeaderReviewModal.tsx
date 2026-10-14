@@ -62,7 +62,7 @@ export function LeaderReviewModal({ isOpen, isSubmitting, decision, onClose, onS
         {/* Decision selector when opened from a generic action button */}
         {decision === null ? (
           <div>
-            <label className="block text-xs font-medium uppercase tracking-wider text-slate-500">
+            <label className="block text-xs font-medium tracking-normal text-slate-600 dark:text-slate-300">
               {t('research.review.decision')}
             </label>
             <div className="mt-2 flex flex-wrap gap-2">
@@ -93,7 +93,7 @@ export function LeaderReviewModal({ isOpen, isSubmitting, decision, onClose, onS
 
         {/* Comment Note Text Area */}
         <div>
-          <label className="block text-xs font-medium uppercase tracking-wider text-slate-500" htmlFor="leader-review-note">
+          <label className="block text-xs font-medium tracking-normal text-slate-600 dark:text-slate-300" htmlFor="leader-review-note">
             {t('research.review.note')}
           </label>
           <textarea
