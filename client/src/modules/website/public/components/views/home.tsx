@@ -4,11 +4,6 @@ import {
   ArrowUpRight,
   ArrowRight,
   MoveDown,
-  Globe2,
-  Network,
-  Cpu,
-  Layers,
-  Plus,
 } from "lucide-react";
 import { useLab } from "../lab-provider";
 import { Button } from "../ui/button";
@@ -23,7 +18,7 @@ import {
   MemberCard,
 } from "../shared";
 export function HomeView() {
-  const { locale, l, data, profile } = useLab();
+  const { locale, l, data } = useLab();
   return (
     <>
       <section className="hero hero-alela">
@@ -40,9 +35,6 @@ export function HomeView() {
           className="hero-image"
         />
         <div className="hero-shade" />
-        <div className="hero-coordinate" aria-hidden="true">
-          {profile.coordinates} <span>{profile.locationLabel}</span>
-        </div>
         <div className="container hero-content">
           <div className="hero-eyebrow">
             <span />
@@ -74,17 +66,13 @@ export function HomeView() {
                 "TÒ MÒ. HỢP TÁC. KHÁM PHÁ.",
               )}
             </span>
-            <a
+            {data.research.length > 0 && <a
               href="#research"
               aria-label={l("Scroll to research", "Đến phần nghiên cứu")}
             >
               <MoveDown size={20} />
-            </a>
+            </a>}
           </div>
-        </div>
-        <div className="hero-target" aria-hidden="true">
-          <Plus />
-          <span>EARTH OBSERVATION / 01</span>
         </div>
       </section>
       <DynamicSections />
@@ -96,7 +84,7 @@ export function HomeView() {
               l("Research directions", "Hướng nghiên cứu"),
             ],
             [data.members.length, l("Curious minds", "Thành viên")],
-            [data.publications.length, l("Sample publications", "Công bố mẫu")],
+            [data.publications.length, l("Publications", "Công bố")],
             [
               data.projects.length,
               l("Research concepts", "Ý tưởng nghiên cứu"),
@@ -140,7 +128,7 @@ export function HomeView() {
           </div>
         </div>
       </section>
-      <section className="section research-section" id="research">
+      {data.research.length > 0 && <section className="section research-section" id="research">
         <div className="container">
           <SectionHeading
             eyebrow={l("WHAT WE EXPLORE", "LĨNH VỰC KHÁM PHÁ")}
@@ -161,8 +149,8 @@ export function HomeView() {
             ))}
           </div>
         </div>
-      </section>
-      <section className="section publications-section">
+      </section>}
+      {data.publications.length > 0 && <section className="section publications-section">
         <div className="container">
           <SectionHeading
             eyebrow={l("IDEAS INTO KNOWLEDGE", "Ý TƯỞNG THÀNH TRI THỨC")}
@@ -175,15 +163,9 @@ export function HomeView() {
               <PublicationPreview key={item.id} item={item} />
             ))}
           </div>
-          <p className="section-footnote">
-            {l(
-              "Illustrative publication records. No actual publication or academic achievement is claimed.",
-              "Các bản ghi công bố minh họa. Không tuyên bố về công bố hay thành tích học thuật thực tế.",
-            )}
-          </p>
         </div>
-      </section>
-      <section className="section soft-section">
+      </section>}
+      {data.projects.length > 0 && <section className="section soft-section">
         <div className="container">
           <SectionHeading
             eyebrow={l(
@@ -200,7 +182,7 @@ export function HomeView() {
             ))}
           </div>
         </div>
-      </section>
+      </section>}
       <section className="section">
         <div className="container">
           <SectionHeading
@@ -222,7 +204,7 @@ export function HomeView() {
           </div>
         </div>
       </section>
-      <section className="section soft-section">
+      {data.news.length > 0 && <section className="section soft-section">
         <div className="container">
           <SectionHeading
             eyebrow={l("LIFE AT THE LAB", "CUỘC SỐNG TẠI LAB")}
@@ -236,45 +218,7 @@ export function HomeView() {
             ))}
           </div>
         </div>
-      </section>
-      <section className="partners-section">
-        <div className="container">
-          <span className="eyebrow">
-            {l("BETTER, TOGETHER", "CÙNG NHAU, TỐT HƠN")}
-          </span>
-          <h2>{l("Built for collaboration.", "Xây dựng để hợp tác.")}</h2>
-          <div className="partner-logos">
-            {[
-              [Globe2, "Academic institutions"],
-              [Network, "Research networks"],
-              [Cpu, "Technology partners"],
-              [Layers, "Open science communities"],
-            ].map(([Icon, title], index) => {
-              const Logo = Icon as typeof Globe2;
-              return (
-                <span key={index}>
-                  <Logo size={28} strokeWidth={1.4} />
-                  {l(
-                    title as string,
-                    [
-                      "Cơ sở học thuật",
-                      "Mạng lưới nghiên cứu",
-                      "Đối tác công nghệ",
-                      "Cộng đồng khoa học mở",
-                    ][index],
-                  )}
-                </span>
-              );
-            })}
-          </div>
-          <p>
-            {l(
-              "Illustrative collaboration categories · No institutional affiliations implied",
-              "Nhóm hợp tác minh họa · Không ngụ ý liên kết tổ chức",
-            )}
-          </p>
-        </div>
-      </section>
+      </section>}
     </>
   );
 }

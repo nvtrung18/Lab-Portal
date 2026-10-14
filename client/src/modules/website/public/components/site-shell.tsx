@@ -23,7 +23,7 @@ export function Brand({ light = false }: { light?: boolean }) {
 export function SiteHeader({ user, signedIn = false, checking = false }: {
   user?: UserProfileResponse; signedIn?: boolean; checking?: boolean;
 }) {
-  const { locale, l, profile, loadError, preview, pages, text } = useLab();
+  const { locale, l, loadError, preview, pages, text } = useLab();
   const { pathname, search, hash } = useLocation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -61,16 +61,10 @@ export function SiteHeader({ user, signedIn = false, checking = false }: {
       </a>
       <div className="utility-bar">
         <div className={`container utility-inner${signedIn ? ' account-utility' : ''}`}>
-          <span>
-            {LAB_BRAND.slogan}
-          </span>
           <div className="utility-right">
-            <span className="website-content-status">{profile.showDemoNotice && <span className="demo-dot" />}
-            {loadError && !preview ? l('Content unavailable · sample preview', 'Chưa tải được nội dung · đang xem mẫu') : preview ? l('Website preview', 'Xem trước website') : profile.showDemoNotice && l(
-              "Demo laboratory · Sample content",
-              "Phòng lab minh họa · Dữ liệu mẫu",
-            )}
-            </span>
+            {(loadError || preview) && <span className="website-content-status">
+              {loadError && !preview ? l('Content unavailable', 'Chưa tải được nội dung') : l('Website preview', 'Xem trước website')}
+            </span>}
             {signedIn ? <>
               <span className="account-name">{user?.fullName || user?.email}</span>
               {checking ? <span>{l('Checking access…', 'Đang kiểm tra quyền…')}</span> : canEnter && destination ?
@@ -96,11 +90,13 @@ export function SiteHeader({ user, signedIn = false, checking = false }: {
       <header className="site-header">
         <div className="container header-inner">
           <Link
+            className="header-brand"
             href={`/${locale}`}
             aria-label={LAB_BRAND.name}
             onClick={() => setOpen(false)}
           >
             <Brand />
+            <span className="header-slogan">{LAB_BRAND.slogan}</span>
           </Link>
           <nav
             className="desktop-nav"
@@ -174,7 +170,7 @@ export function SiteHeader({ user, signedIn = false, checking = false }: {
   );
 }
 export function SiteFooter() {
-  const { locale, l, profile, pages, text, data } = useLab();
+  const { locale, l, profile, pages, text } = useLab();
   return (
     <footer className="site-footer">
       <div className="container">
@@ -214,28 +210,13 @@ export function SiteFooter() {
               {l("Let’s explore what’s next.", "Cùng khám phá tương lai.")}
             </h3>
             <Link href={`/${locale}/contact`}>
-              {profile.email}
+              {profile.email || l('Contact us', 'Liên hệ')}
               <ArrowUpRight size={18} />
             </Link>
-            <p>
-              {l(
-                "Hanoi, Vietnam · Illustrative location",
-                "Hà Nội, Việt Nam · Địa điểm minh họa",
-              )}
-            </p>
           </div>
         </div>
         <div className="footer-bottom">
           <span>© {new Date().getFullYear()} {LAB_BRAND.name}.</span>
-          <span>
-            {profile.showDemoNotice && (data.members.some(member => member.scholarProfile) ? l(
-              'Sample content and public academic profiles.',
-              'Nội dung mẫu và hồ sơ học thuật công khai.',
-            ) : l(
-                "All identities, research and affiliations are fictional demo content.",
-              "Mọi danh tính, nghiên cứu và liên kết đều là nội dung minh họa giả định.",
-            ))}
-          </span>
           <a href="#main-content">
             {l("Back to top", "Về đầu trang")}
             <ArrowRight size={13} className="rotate-[-90deg]" />

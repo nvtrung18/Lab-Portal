@@ -49,7 +49,9 @@ export function LabProvider({ locale, initialContent, loadError, children }: {
     news: content.data.news.filter(item => item.visible !== false),
   };
   return <Context.Provider value={{
-    locale, data, profile: content.profile, media: content.media, preview, loadError, pages, page,
+    locale, data, profile: { ...content.profile,
+      email: content.profile.email.endsWith('.example') ? '' : content.profile.email,
+    }, media: content.media, preview, loadError, pages, page,
     text: value => value[locale],
     l: (en, vi) => content.copy[en]?.[locale] ?? (locale === 'vi' ? vi ?? '' : en),
   }}>{children}</Context.Provider>;
