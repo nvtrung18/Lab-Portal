@@ -83,7 +83,6 @@ export function SiteHeader({ user, signedIn = false, checking = false }: {
             <button type="button" className="website-theme-toggle" onClick={toggleTheme}
               aria-label={themeLabel} title={themeLabel}>
               {isDark ? <Sun size={16} aria-hidden="true" /> : <Moon size={16} aria-hidden="true" />}
-              <span>{isDark ? l('Light', 'Sáng') : l('Dark', 'Tối')}</span>
             </button>
             <nav className="language-switch" aria-label={l('Website language', 'Ngôn ngữ website')}>
               {(['vi', 'en'] as const).map(language => (
