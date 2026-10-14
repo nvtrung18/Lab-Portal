@@ -1312,13 +1312,9 @@
         "en": "Search projects…",
         "vi": "Tìm dự án…"
       },
-      "Research category": {
-        "en": "Research category",
-        "vi": "Nhóm nghiên cứu"
-      },
-      "All categories": {
-        "en": "All categories",
-        "vi": "Tất cả nhóm"
+      "Research areas": {
+        "en": "Research areas",
+        "vi": "Lĩnh vực nghiên cứu"
       },
       "Project status": {
         "en": "Project status",
@@ -1579,8 +1575,8 @@
           "vi": "Bốn hướng nghiên cứu bổ trợ. Một động lực chung để hiểu và cải thiện thế giới."
         },
         "navigationTitle": {
-          "en": "Research groups",
-          "vi": "Nhóm nghiên cứu"
+          "en": "Research areas",
+          "vi": "Lĩnh vực nghiên cứu"
         },
         "template": "research",
         "visible": true,
@@ -1888,8 +1884,7 @@
     "Ideas with a direction.": "projects",
     "Explore demonstration projects connecting foundational questions with practical research concepts.": "projects",
     "Search projects…": "projects",
-    "Research category": "projects",
-    "All categories": "projects",
+    "Research areas": "projects",
     "Project status": "projects",
     "All projects": "projects",
     "projects": "projects",
