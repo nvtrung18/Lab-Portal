@@ -38,6 +38,13 @@ export function withPages(content: WebsiteContent): EditableWebsiteContent {
         if (first && second) page.title = { en: `${first.en}\n${second.en}`, vi: `${first.vi}\n${second.vi}` };
       }
     }
+    const originalDescription = seed.content.pages.find(item => item.template === template.template)?.description;
+    if (originalDescription) {
+      page.description = {
+        en: page.description.en === originalDescription.en ? '' : page.description.en,
+        vi: page.description.vi === originalDescription.vi ? '' : page.description.vi,
+      };
+    }
     return { ...page, template: template.template, navigationTitle: template.navigationTitle,
       showInNavigation: template.showInNavigation, visible: true };
   });
@@ -102,7 +109,11 @@ const initialContent = structuredClone(seed.content) as WebsiteContent;
 initialContent.profile.name = LAB_BRAND.name;
 initialContent.profile.shortName = LAB_BRAND.shortName;
 initialContent.profile.summary = { ...LAB_BRAND.summary };
-initialContent.data.members = [];
+initialContent.profile.email = '';
+initialContent.profile.coordinates = '';
+initialContent.profile.locationLabel = '';
+initialContent.profile.showDemoNotice = false;
+initialContent.data = { research: [], members: [], publications: [], projects: [], news: [] };
 const peoplePage = initialContent.pages?.find(page => page.template === 'people');
 if (peoplePage) peoplePage.description = {
   en: 'Meet ALELA\'s steering members, core members, doctoral researchers and research partners.',

@@ -15,7 +15,6 @@ import {
   SectionHeading,
   ProjectCard,
   PublicationPreview,
-  DemoNotice,
   MemberCard,
 } from "../shared";
 import { PublicationResources } from "./explore";
@@ -24,7 +23,7 @@ import { RichTextBody } from '../rich-text-body';
 import { ArticleSourceDetails } from '../article-source-details';
 import { ScholarProfileDetails } from '../scholar-profile-details';
 export function DetailView({ section, id }: { section: string; id: string }) {
-  const { data, text, locale, l, profile } = useLab();
+  const { data, text, locale, l } = useLab();
   const key =
     section === "people"
       ? "members"
@@ -84,11 +83,10 @@ export function DetailView({ section, id }: { section: string; id: string }) {
           </Link>
           <div className="detail-heading-grid">
             <div>
-              <span className="eyebrow">
+              {'scholarProfile' in item && item.scholarProfile && <span className="eyebrow">
                 <span />
-                {'scholarProfile' in item && item.scholarProfile ? l('ACADEMIC PROFILE', 'HỒ SƠ HỌC THUẬT')
-                  : profile.showDemoNotice && l("DEMONSTRATION RECORD", "BẢN GHI MINH HỌA")}
-              </span>
+                {l('ACADEMIC PROFILE', 'HỒ SƠ HỌC THUẬT')}
+              </span>}
               <h1>{text(item.title)}</h1>
               <p>{text(item.description)}</p>
             </div>
@@ -110,7 +108,6 @@ export function DetailView({ section, id }: { section: string; id: string }) {
                 style={{ background: item.color }}
               >
                 {item.image ? <Image src={item.image} alt={text(item.title)} fill sizes="45vw" /> : <><span className="avatar-grid" /><span>{item.initials}</span></>}
-                {profile.showDemoNotice && !item.scholarProfile && <small>{l("ILLUSTRATIVE PROFILE", "HỒ SƠ MINH HỌA")}</small>}
               </div>
             )}
           </div>
@@ -118,7 +115,6 @@ export function DetailView({ section, id }: { section: string; id: string }) {
       </section>
       <section className="section">
         <div className="container">
-          {!('scholarProfile' in item && item.scholarProfile) && <DemoNotice />}
           {section === "research" && "topics" in item && (
             <>
               <div className="detail-body-grid">
@@ -143,8 +139,8 @@ export function DetailView({ section, id }: { section: string; id: string }) {
                   </h3>
                   <p>
                     {l(
-                      "Explore an example research pathway and share your interests.",
-                      "Khám phá con đường nghiên cứu mẫu và chia sẻ mối quan tâm.",
+                      "Explore research opportunities and share your interests.",
+                      "Tìm hiểu cơ hội nghiên cứu và chia sẻ mối quan tâm của bạn.",
                     )}
                   </p>
                   <Button asChild>
@@ -227,12 +223,6 @@ export function DetailView({ section, id }: { section: string; id: string }) {
               <div>
                 <h2>{l("Project overview", "Tổng quan dự án")}</h2>
                 <p>{text(item.description)}</p>
-                {profile.showDemoNotice && <p>
-                  {l(
-                    "This is an illustrative project concept. Timelines and objectives are examples; no funding, partnership, deployment, or research result is claimed.",
-                    "Đây là ý tưởng dự án minh họa. Thời gian và mục tiêu là ví dụ; không tuyên bố tài trợ, đối tác, triển khai hay kết quả nghiên cứu.",
-                  )}
-                </p>}
                 <RichTextBody html={item.bodyHtml} paragraphs={[]} />
                 <h3>{l("Research objectives", "Mục tiêu nghiên cứu")}</h3>
                 <ul className="topic-list">
@@ -283,12 +273,6 @@ export function DetailView({ section, id }: { section: string; id: string }) {
                 </span>
                 <h2>{l("Abstract", "Tóm tắt")}</h2>
                 <p>{text(item.description)}</p>
-                {profile.showDemoNotice && <p>
-                  {l(
-                    "This record demonstrates publication metadata and resource controls. It does not describe a published study, peer review, or verified result. All citations generated from this page are marked as fictional.",
-                    "Bản ghi minh họa metadata và các nút tài nguyên. Không mô tả nghiên cứu đã công bố, bình duyệt hay kết quả xác minh. Trích dẫn tạo từ trang này được đánh dấu giả định.",
-                  )}
-                </p>}
                 <RichTextBody html={item.bodyHtml} paragraphs={[]} />
                 <h3>{l("Contributors", "Tác giả")}</h3>
                 <div className="contributor-links">
@@ -352,8 +336,8 @@ export function DetailView({ section, id }: { section: string; id: string }) {
                 <h2>{l("Continue the conversation", "Tiếp tục trao đổi")}</h2>
                 <p>
                   {l(
-                    "Explore the laboratory’s research directions and sample opportunities to learn how you could participate in a real research community.",
-                    "Khám phá hướng nghiên cứu và cơ hội mẫu để tìm hiểu cách tham gia cộng đồng nghiên cứu thực tế.",
+                    "Explore the laboratory’s research directions and opportunities to participate in our research community.",
+                    "Khám phá hướng nghiên cứu và cơ hội tham gia cộng đồng nghiên cứu của phòng lab.",
                   )}
                 </p>
                 <Button asChild>
@@ -376,12 +360,6 @@ export function DetailView({ section, id }: { section: string; id: string }) {
                   {text(item.location)}
                 </p>}
                 <ArticleSourceDetails value={item} />
-                {profile.showDemoNotice && <p>
-                  {l(
-                    "Sample event or story. No registration or actual attendance is available.",
-                    "Sự kiện hoặc bài viết mẫu. Không có đăng ký hay tham dự thực tế.",
-                  )}
-                </p>}
               </aside>
             </div>
           )}

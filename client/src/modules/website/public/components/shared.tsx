@@ -10,7 +10,6 @@ import {
   Network,
   SearchX,
   FileText,
-  CalendarDays,
 } from "lucide-react";
 import { roleVi, useLab } from "./lab-provider";
 import type {
@@ -65,6 +64,7 @@ export function PageHeading({
   usePageContent?: boolean;
 }) {
   const { locale, l, page, text } = useLab();
+  const headingDescription = usePageContent && page ? text(page.description) : description;
   return (
     <><section className="page-heading">
       <div className="container">
@@ -78,7 +78,7 @@ export function PageHeading({
           {page ? text(page.navigationTitle) || text(page.title) : eyebrow}
         </span>
         <h1>{usePageContent && page ? text(page.title) : title}</h1>
-        <p>{usePageContent && page ? text(page.description) : description}</p>
+        {headingDescription && <p>{headingDescription}</p>}
         <span className="page-heading-mark" aria-hidden="true">
           +
         </span>
@@ -206,7 +206,7 @@ export function NewsCard({ item }: { item: NewsItem }) {
   );
 }
 export function PublicationPreview({ item }: { item: Publication }) {
-  const { data, text, l, locale, profile } = useLab();
+  const { data, text, l, locale } = useLab();
   return (
     <Link
       href={`/${locale}/publications/${item.id}`}
@@ -219,9 +219,6 @@ export function PublicationPreview({ item }: { item: Publication }) {
         <div className="publication-meta">
           <span>{item.year}</span>
           <span className="label">{l(item.type, roleVi[item.type])}</span>
-          {profile.showDemoNotice && <span className="sample-label">
-            {l("Sample publication", "Công bố mẫu")}
-          </span>}
         </div>
         <h3>{text(item.title)}</h3>
         <p>
@@ -258,22 +255,6 @@ export function EmptyState({ onReset }: { onReset?: () => void }) {
           {l("Clear all filters", "Xóa tất cả bộ lọc")}
           <ArrowRight size={16} />
         </button>
-      )}
-    </div>
-  );
-}
-export function DemoNotice() {
-  const { l, profile, data } = useLab();
-  if (!profile.showDemoNotice) return null;
-  return (
-    <div className="demo-notice">
-      <CalendarDays size={17} />
-      {data.members.some(member => member.scholarProfile) ? l(
-        'This website includes sample content. Member profiles with Google Scholar links use public academic information.',
-        'Website có nội dung mẫu. Hồ sơ thành viên có liên kết Google Scholar sử dụng thông tin học thuật công khai.',
-      ) : l(
-        "This is a demonstration website. All research, people and events are fictional sample content.",
-        "Đây là website minh họa. Mọi nghiên cứu, thành viên và sự kiện đều là dữ liệu mẫu giả định.",
       )}
     </div>
   );
