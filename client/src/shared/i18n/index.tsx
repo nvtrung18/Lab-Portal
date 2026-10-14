@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type PropsWithChildren } from 'react';
+import { LAB_BRAND } from '../constants/lab-brand';
 
 export type Locale = 'vi' | 'en';
 
@@ -10,7 +11,7 @@ export type TranslationParams = Record<string, string | number>;
 const TRANSLATIONS: Record<Locale, Record<string, string>> = {
   vi: {
     'nav.website': 'Website giới thiệu',
-    'common.appTitle': 'Cổng Lab Portal',
+    'common.appTitle': LAB_BRAND.name,
     'membership.checking': 'Đang kiểm tra tư cách thành viên...',
     'common.language': 'Ngôn ngữ',
     'common.vietnamese': 'Tiếng Việt',
@@ -2008,7 +2009,7 @@ const TRANSLATIONS: Record<Locale, Record<string, string>> = {
   },
   en: {
     'nav.website': 'Public website',
-    'common.appTitle': 'Lab Portal',
+    'common.appTitle': LAB_BRAND.name,
     'membership.checking': 'Checking membership...',
     'common.language': 'Language',
     'common.vietnamese': 'Vietnamese',

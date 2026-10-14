@@ -1,82 +1,173 @@
 [
   {
-    "id": "ngoc-tan-nguyen",
-    "title": { "en": "Ngoc-Tan Nguyen", "vi": "Ngoc-Tan Nguyen" },
+    "id": "nguyen-hoai-son",
+    "title": {
+      "en": "Nguyễn Hoài Sơn",
+      "vi": "Nguyễn Hoài Sơn"
+    },
     "description": {
-      "en": "Lecturer at VNU-UET. Research interests include visible light communication, IoT and energy-efficient wireless networks.",
-      "vi": "Giảng viên tại Trường Đại học Công nghệ, ĐHQGHN. Nghiên cứu truyền thông ánh sáng nhìn thấy, IoT và mạng không dây tiết kiệm năng lượng."
+      "en": "Associate Professor at VNU-UET. Research interests include networks, computer communications, P2P networks and cyber-physical systems.",
+      "vi": "Phó giáo sư tại Trường Đại học Công nghệ, ĐHQGHN. Nghiên cứu mạng máy tính, truyền thông máy tính, mạng ngang hàng và hệ thống không gian mạng–vật lý."
     },
     "visible": true,
-    "role": "Faculty",
-    "initials": "TN",
+    "role": "Steering Member",
+    "initials": "HS",
     "area": "",
     "email": "",
     "color": "#e1e8eb",
-    "image": "/lab-website/images/ngoc-tan-nguyen.jpg",
+    "image": "/lab-website/images/nguyen-hoai-son.jpg",
     "scholarProfile": {
-      "url": "https://scholar.google.com/citations?user=I8PN-2oAAAAJ&hl=vi",
+      "url": "https://scholar.google.com/citations?user=qemeoesAAAAJ",
       "affiliation": {
-        "en": "Lecturer at Faculty of Information Technology, VNU - University of Engineering and Technology",
-        "vi": "Giảng viên Khoa Công nghệ Thông tin, Trường Đại học Công nghệ, Đại học Quốc gia Hà Nội"
+        "en": "Associate Professor, VNU University of Engineering and Technology",
+        "vi": "Phó giáo sư, Trường Đại học Công nghệ, Đại học Quốc gia Hà Nội"
       },
       "interests": [
-        { "en": "VLC", "vi": "Truyền thông ánh sáng nhìn thấy (VLC)" },
-        { "en": "IoT", "vi": "Internet vạn vật (IoT)" },
-        { "en": "Wireless networks", "vi": "Mạng không dây" },
-        { "en": "Energy harvesting", "vi": "Thu hoạch năng lượng" },
-        { "en": "Backscatter communications", "vi": "Truyền thông tán xạ ngược" }
+        {
+          "en": "Network",
+          "vi": "Mạng máy tính"
+        },
+        {
+          "en": "Computer communication",
+          "vi": "Truyền thông máy tính"
+        },
+        {
+          "en": "P2P network",
+          "vi": "Mạng ngang hàng"
+        },
+        {
+          "en": "Cyber physical system",
+          "vi": "Hệ thống không gian mạng–vật lý"
+        }
       ],
-      "homepageUrl": "https://www.linkedin.com/in/at170/",
-      "retrievedOn": "2026-10-12",
-      "metrics": { "citations": 540, "hIndex": 8, "i10Index": 8, "sinceYear": 2021, "recentCitations": 441, "recentHIndex": 7, "recentI10Index": 5 },
+      "homepageUrl": "http://uet.vnu.edu.vn/~sonnh/",
+      "retrievedOn": "2026-10-14",
+      "metrics": {
+        "citations": 157,
+        "hIndex": 7,
+        "i10Index": 5,
+        "sinceYear": 2021,
+        "recentCitations": 79,
+        "recentHIndex": 5,
+        "recentI10Index": 1
+      },
       "publications": [
         {
-          "title": "A comprehensive survey of enabling and emerging technologies for social distancing—Part I: Fundamentals and enabling technologies",
-          "authors": "CT Nguyen, YM Saputra, N Van Huynh, NT Nguyen, TV Khoa, BM Tuan, ...",
-          "venue": "Ieee Access 8, 153479-153507",
-          "year": 2020, "citations": 190,
-          "url": "https://scholar.google.com/citations?view_op=view_citation&hl=vi&user=I8PN-2oAAAAJ&citation_for_view=I8PN-2oAAAAJ:eQOLeE2rZwMC"
+          "title": "Short-term prediction of energy consumption of air conditioners based on weather forecast",
+          "authors": "H Nguyen, Y Makino, Y Lim, Y Tan",
+          "venue": "2017 4th NAFOSTED conference on Information and Computer Science, 195-200",
+          "year": 2017,
+          "citations": 13,
+          "url": "https://scholar.google.com/citations?view_op=view_citation&user=qemeoesAAAAJ&citation_for_view=qemeoesAAAAJ:3fE2CSJIrl8C"
         },
         {
-          "title": "Enabling and emerging technologies for social distancing: a comprehensive survey and open problems",
-          "authors": "CT Nguyen, YM Saputra, N Van Huynh, NT Nguyen, TV Khoa, BM Tuan, ...",
-          "venue": "arXiv preprint arXiv:2005.02816",
-          "year": 2020, "citations": 115,
-          "url": "https://scholar.google.com/citations?view_op=view_citation&hl=vi&user=I8PN-2oAAAAJ&citation_for_view=I8PN-2oAAAAJ:Tyk-4Ss8FVUC"
+          "title": "Building high-accuracy thermal simulation for evaluation of thermal comfort in real houses",
+          "authors": "H Nguyen, Y Makino, AO Lim, Y Tan, Y Shinoda",
+          "venue": "International Conference on Smart Homes and Health Telematics, 159-166",
+          "year": 2013,
+          "citations": 12,
+          "url": "https://scholar.google.com/citations?view_op=view_citation&user=qemeoesAAAAJ&citation_for_view=qemeoesAAAAJ:WF5omc3nYNoC"
         },
         {
-          "title": "A comprehensive survey of enabling and emerging technologies for social distancing—Part II: Emerging technologies and open issues",
-          "authors": "CT Nguyen, YM Saputra, N Van Huynh, NT Nguyen, TV Khoa, BM Tuan, ...",
-          "venue": "Ieee Access 8, 154209-154236",
-          "year": 2020, "citations": 105,
-          "url": "https://scholar.google.com/citations?view_op=view_citation&hl=vi&user=I8PN-2oAAAAJ&citation_for_view=I8PN-2oAAAAJ:YsMSGLbcyi4C"
+          "title": "A low-delay push-pull based application layer multicast for p2p live video streaming",
+          "authors": "HBT Lan, HS Nguyen",
+          "venue": "2011 Third international conference on knowledge and systems engineering …",
+          "year": 2011,
+          "citations": 12,
+          "url": "https://scholar.google.com/citations?view_op=view_citation&user=qemeoesAAAAJ&citation_for_view=qemeoesAAAAJ:Tyk-4Ss8FVUC"
+        }
+      ]
+    }
+  },
+  {
+    "id": "duong-le-minh",
+    "title": {
+      "en": "Duong Le Minh",
+      "vi": "Dương Lê Minh"
+    },
+    "description": {
+      "en": "VNU-UET. Research interests include networking, software engineering, IoT and 5G.",
+      "vi": "Trường Đại học Công nghệ, ĐHQGHN. Nghiên cứu mạng máy tính, công nghệ phần mềm, IoT và 5G."
+    },
+    "visible": true,
+    "role": "Steering Member",
+    "initials": "LM",
+    "area": "",
+    "email": "",
+    "color": "#e1e8eb",
+    "image": "/lab-website/images/duong-le-minh.jpg",
+    "scholarProfile": {
+      "url": "https://scholar.google.com/citations?user=rynUI3IAAAAJ",
+      "affiliation": {
+        "en": "University of Engineering and Technology, Vietnam National University Hanoi",
+        "vi": "Trường Đại học Công nghệ, Đại học Quốc gia Hà Nội"
+      },
+      "interests": [
+        {
+          "en": "Networking",
+          "vi": "Mạng máy tính"
         },
         {
-          "title": "Time Scheduling and Energy Trading for Heterogeneous Wireless-Powered and Backscattering-based IoT Networks",
-          "authors": "NT Nguyen, DN Nguyen, DT Hoang, VH Nguyen, E Dutkiewicz, ...",
-          "venue": "arXiv preprint arXiv:2005.14573",
-          "year": 2020, "citations": 24,
-          "url": "https://scholar.google.com/citations?view_op=view_citation&hl=vi&user=I8PN-2oAAAAJ&citation_for_view=I8PN-2oAAAAJ:Y0pCki6q_DkC"
+          "en": "Software engineering",
+          "vi": "Công nghệ phần mềm"
         },
         {
-          "title": "Improvement of the VLC localization method using the extended Kalman filter",
-          "authors": "NT Nguyen, NH Nguyen, VH Nguyen, K Sripimanwat, A Suebsomran",
-          "venue": "TENCON 2014-2014 IEEE Region 10 Conference, 1-6",
-          "year": 2014, "citations": 24,
-          "url": "https://scholar.google.com/citations?view_op=view_citation&hl=vi&user=I8PN-2oAAAAJ&citation_for_view=I8PN-2oAAAAJ:2osOgNQ5qMEC"
+          "en": "IoT",
+          "vi": "Internet vạn vật"
+        },
+        {
+          "en": "5G",
+          "vi": "5G"
+        }
+      ],
+      "homepageUrl": "",
+      "retrievedOn": "2026-10-14",
+      "metrics": {
+        "citations": 15,
+        "hIndex": 2,
+        "i10Index": 0,
+        "sinceYear": 2021,
+        "recentCitations": 15,
+        "recentHIndex": 2,
+        "recentI10Index": 0
+      },
+      "publications": [
+        {
+          "title": "From orientation to transformation: linear and additive paths of eco-innovation and circular economy practices toward sustainable performance",
+          "authors": "T Van Bui, ML Tran, AT Vu, CD Duong, LMH Duong, TPT Nguyen, ...",
+          "venue": "Sustainable Futures 11, 101743",
+          "year": 2026,
+          "citations": 4,
+          "url": "https://scholar.google.com/citations?view_op=view_citation&user=rynUI3IAAAAJ&citation_for_view=rynUI3IAAAAJ:UebtZRa9Y70C"
+        },
+        {
+          "title": "Yolo-based detection for sperm motility analysis",
+          "authors": "VD Nguyen, QM Le, PA Pham-Quang, MK Nguyen, MH Tran, TTH Ngo, ...",
+          "venue": "2024 IEEE-EMBS Conference on Biomedical Engineering and Sciences (IECBES …",
+          "year": 2024,
+          "citations": 3,
+          "url": "https://scholar.google.com/citations?view_op=view_citation&user=rynUI3IAAAAJ&citation_for_view=rynUI3IAAAAJ:_FxGoFyzp5QC"
+        },
+        {
+          "title": "Effect of technical parameters on polylactic acid shrinkage during 3D printing",
+          "authors": "L Duong, PTH Nga, TM Le",
+          "venue": "Advances in Science and Technology. Research Journal 20 (6), 356-367",
+          "year": 2026,
+          "citations": 2,
+          "url": "https://scholar.google.com/citations?view_op=view_citation&user=rynUI3IAAAAJ&citation_for_view=rynUI3IAAAAJ:MXK_kJrjxJIC"
         }
       ]
     }
   },
   {
     "id": "linh-manh-pham",
-    "title": { "en": "Linh Manh Pham", "vi": "Linh Manh Pham" },
+    "title": { "en": "Linh Manh Pham", "vi": "Phạm Mạnh Linh" },
     "description": {
       "en": "Associate Professor at VNU-UET. Research interests include cloud, fog and edge computing, AIoT and agrotechnology.",
       "vi": "Phó giáo sư tại Trường Đại học Công nghệ, ĐHQGHN. Nghiên cứu điện toán đám mây, sương mù và biên, AIoT và công nghệ nông nghiệp."
     },
     "visible": true,
-    "role": "Faculty",
+    "role": "Core Member",
     "initials": "LP",
     "area": "",
     "email": "",
@@ -138,14 +229,365 @@
     }
   },
   {
+    "id": "pham-chau-thuy",
+    "title": {
+      "en": "Pham Chau Thuy",
+      "vi": "Phạm Châu Thùy"
+    },
+    "description": {
+      "en": "Ph.D at VNU-UET. Selected publications cover air pollution and environmental contaminants.",
+      "vi": "Tiến sĩ tại Trường Đại học Công nghệ, ĐHQGHN. Các công bố tiêu biểu về ô nhiễm không khí và chất ô nhiễm môi trường."
+    },
+    "visible": true,
+    "role": "Core Member",
+    "initials": "CT",
+    "area": "",
+    "email": "",
+    "color": "#e1e8eb",
+    "image": "/lab-website/images/pham-chau-thuy.jpg",
+    "scholarProfile": {
+      "url": "https://scholar.google.com/citations?user=_Wj4gjUAAAAJ",
+      "affiliation": {
+        "en": "Ph.D, VNU University of Engineering and Technology, Vietnam National University, Hanoi",
+        "vi": "Tiến sĩ, Trường Đại học Công nghệ, Đại học Quốc gia Hà Nội"
+      },
+      "interests": [],
+      "homepageUrl": "",
+      "retrievedOn": "2026-10-14",
+      "metrics": {
+        "citations": 660,
+        "hIndex": 14,
+        "i10Index": 17,
+        "sinceYear": 2021,
+        "recentCitations": 536,
+        "recentHIndex": 13,
+        "recentI10Index": 16
+      },
+      "publications": [
+        {
+          "title": "Polycyclic aromatic hydrocarbons and nitropolycyclic aromatic hydrocarbons in particulates emitted by motorcycles",
+          "authors": "Chau Thuy Pham, Takayuki Kameda, Akira Toriba, Kazuichi Hayakawa",
+          "venue": "Environmental Pollution 183, 175-183",
+          "year": 2013,
+          "citations": 89,
+          "url": "https://scholar.google.com/citations?view_op=view_citation&user=_Wj4gjUAAAAJ&citation_for_view=_Wj4gjUAAAAJ:d1gkVwhDpl0C"
+        },
+        {
+          "title": "Chemical characterization and source apportionment of ambient nanoparticles: a case study in Hanoi, Vietnam",
+          "authors": "TD Nghiem, TTT Nguyen, TTH Nguyen, BT Ly, K Sekiguchi, R Yamaguchi, ...",
+          "venue": "Environmental Science and Pollution Research 27 (24), 30661-30672",
+          "year": 2020,
+          "citations": 59,
+          "url": "https://scholar.google.com/citations?view_op=view_citation&user=_Wj4gjUAAAAJ&citation_for_view=_Wj4gjUAAAAJ:YsMSGLbcyi4C"
+        },
+        {
+          "title": "Soil and sediment contamination by unsubstituted and methylated polycyclic aromatic hydrocarbons in an informal e-waste recycling area, northern Vietnam: occurrence, source …",
+          "authors": "NTQ Hoa, HQ Anh, NM Tue, NT Trung, LN Da, T Van Quy, NTA Huong, ...",
+          "venue": "Science of the total environment 709, 135852",
+          "year": 2020,
+          "citations": 58,
+          "url": "https://scholar.google.com/citations?view_op=view_citation&user=_Wj4gjUAAAAJ&citation_for_view=_Wj4gjUAAAAJ:W7OEmFMy1HYC"
+        }
+      ]
+    }
+  },
+  {
+    "id": "ngoc-tan-nguyen",
+    "title": { "en": "Ngoc-Tan Nguyen", "vi": "Nguyễn Ngọc Tân" },
+    "description": {
+      "en": "Lecturer at VNU-UET. Research interests include visible light communication, IoT and energy-efficient wireless networks.",
+      "vi": "Giảng viên tại Trường Đại học Công nghệ, ĐHQGHN. Nghiên cứu truyền thông ánh sáng nhìn thấy, IoT và mạng không dây tiết kiệm năng lượng."
+    },
+    "visible": true,
+    "role": "Core Member",
+    "initials": "TN",
+    "area": "",
+    "email": "",
+    "color": "#e1e8eb",
+    "image": "/lab-website/images/ngoc-tan-nguyen.jpg",
+    "scholarProfile": {
+      "url": "https://scholar.google.com/citations?user=I8PN-2oAAAAJ&hl=vi",
+      "affiliation": {
+        "en": "Lecturer at Faculty of Information Technology, VNU - University of Engineering and Technology",
+        "vi": "Giảng viên Khoa Công nghệ Thông tin, Trường Đại học Công nghệ, Đại học Quốc gia Hà Nội"
+      },
+      "interests": [
+        { "en": "VLC", "vi": "Truyền thông ánh sáng nhìn thấy (VLC)" },
+        { "en": "IoT", "vi": "Internet vạn vật (IoT)" },
+        { "en": "Wireless networks", "vi": "Mạng không dây" },
+        { "en": "Energy harvesting", "vi": "Thu hoạch năng lượng" },
+        { "en": "Backscatter communications", "vi": "Truyền thông tán xạ ngược" }
+      ],
+      "homepageUrl": "https://www.linkedin.com/in/at170/",
+      "retrievedOn": "2026-10-12",
+      "metrics": { "citations": 540, "hIndex": 8, "i10Index": 8, "sinceYear": 2021, "recentCitations": 441, "recentHIndex": 7, "recentI10Index": 5 },
+      "publications": [
+        {
+          "title": "A comprehensive survey of enabling and emerging technologies for social distancing—Part I: Fundamentals and enabling technologies",
+          "authors": "CT Nguyen, YM Saputra, N Van Huynh, NT Nguyen, TV Khoa, BM Tuan, ...",
+          "venue": "Ieee Access 8, 153479-153507",
+          "year": 2020, "citations": 190,
+          "url": "https://scholar.google.com/citations?view_op=view_citation&hl=vi&user=I8PN-2oAAAAJ&citation_for_view=I8PN-2oAAAAJ:eQOLeE2rZwMC"
+        },
+        {
+          "title": "Enabling and emerging technologies for social distancing: a comprehensive survey and open problems",
+          "authors": "CT Nguyen, YM Saputra, N Van Huynh, NT Nguyen, TV Khoa, BM Tuan, ...",
+          "venue": "arXiv preprint arXiv:2005.02816",
+          "year": 2020, "citations": 115,
+          "url": "https://scholar.google.com/citations?view_op=view_citation&hl=vi&user=I8PN-2oAAAAJ&citation_for_view=I8PN-2oAAAAJ:Tyk-4Ss8FVUC"
+        },
+        {
+          "title": "A comprehensive survey of enabling and emerging technologies for social distancing—Part II: Emerging technologies and open issues",
+          "authors": "CT Nguyen, YM Saputra, N Van Huynh, NT Nguyen, TV Khoa, BM Tuan, ...",
+          "venue": "Ieee Access 8, 154209-154236",
+          "year": 2020, "citations": 105,
+          "url": "https://scholar.google.com/citations?view_op=view_citation&hl=vi&user=I8PN-2oAAAAJ&citation_for_view=I8PN-2oAAAAJ:YsMSGLbcyi4C"
+        },
+        {
+          "title": "Time Scheduling and Energy Trading for Heterogeneous Wireless-Powered and Backscattering-based IoT Networks",
+          "authors": "NT Nguyen, DN Nguyen, DT Hoang, VH Nguyen, E Dutkiewicz, ...",
+          "venue": "arXiv preprint arXiv:2005.14573",
+          "year": 2020, "citations": 24,
+          "url": "https://scholar.google.com/citations?view_op=view_citation&hl=vi&user=I8PN-2oAAAAJ&citation_for_view=I8PN-2oAAAAJ:Y0pCki6q_DkC"
+        },
+        {
+          "title": "Improvement of the VLC localization method using the extended Kalman filter",
+          "authors": "NT Nguyen, NH Nguyen, VH Nguyen, K Sripimanwat, A Suebsomran",
+          "venue": "TENCON 2014-2014 IEEE Region 10 Conference, 1-6",
+          "year": 2014, "citations": 24,
+          "url": "https://scholar.google.com/citations?view_op=view_citation&hl=vi&user=I8PN-2oAAAAJ&citation_for_view=I8PN-2oAAAAJ:2osOgNQ5qMEC"
+        }
+      ]
+    }
+  },
+  {
+    "id": "hoang-xuan-tung",
+    "title": {
+      "en": "Hoang Xuan Tung",
+      "vi": "Hoàng Xuân Tùng"
+    },
+    "description": {
+      "en": "Ph.D at VNU-UET. Department research areas include cloud systems, virtual desktop infrastructure, IoT and smart homes.",
+      "vi": "Tiến sĩ tại Trường Đại học Công nghệ, ĐHQGHN. Hướng nghiên cứu trên trang bộ môn gồm hệ thống đám mây, hạ tầng máy tính để bàn ảo, IoT và nhà thông minh."
+    },
+    "visible": true,
+    "role": "Core Member",
+    "initials": "XT",
+    "area": "",
+    "email": "",
+    "color": "#e1e8eb",
+    "image": "/lab-website/images/hoang-xuan-tung.jpg",
+    "scholarProfile": {
+      "url": "https://scholar.google.com/citations?user=piaD2uUAAAAJ",
+      "affiliation": {
+        "en": "Ph.D, VNU University of Engineering and Technology, Vietnam National University, Hanoi",
+        "vi": "Tiến sĩ, Trường Đại học Công nghệ, Đại học Quốc gia Hà Nội"
+      },
+      "interests": [],
+      "homepageUrl": "",
+      "retrievedOn": "2026-10-14",
+      "metrics": {
+        "citations": 73,
+        "hIndex": 5,
+        "i10Index": 1,
+        "sinceYear": 2021,
+        "recentCitations": 45,
+        "recentHIndex": 4,
+        "recentI10Index": 1
+      },
+      "publications": [
+        {
+          "title": "The development of a motion-tracking system to assess the recovery level for stroke survivors",
+          "authors": "TT Nguyen, QD Nguyen, MQ Ha, XT Hoang",
+          "venue": "",
+          "year": 2024,
+          "citations": 11,
+          "url": "https://scholar.google.com/citations?view_op=view_citation&user=piaD2uUAAAAJ&citation_for_view=piaD2uUAAAAJ:_Qo2XoVZTnwC"
+        },
+        {
+          "title": "An elasticity framework for distributed message queuing telemetry transport brokers",
+          "authors": "LM Pham",
+          "venue": "",
+          "year": 2021,
+          "citations": 8,
+          "url": "https://scholar.google.com/citations?view_op=view_citation&user=piaD2uUAAAAJ&citation_for_view=piaD2uUAAAAJ:KlAtU1dfN6UC"
+        },
+        {
+          "title": "An efficient scheme for reducing overhead in data-centric storage sensor networks",
+          "authors": "XT Hoang, Y Lee",
+          "venue": "IEEE communications letters 13 (12), 989-991",
+          "year": 2009,
+          "citations": 8,
+          "url": "https://scholar.google.com/citations?view_op=view_citation&user=piaD2uUAAAAJ&citation_for_view=piaD2uUAAAAJ:roLk4NBRz8UC"
+        }
+      ]
+    }
+  },
+  {
+    "id": "minh-cong-dang",
+    "title": {
+      "en": "Minh Cong Dang",
+      "vi": "Đặng Minh Công"
+    },
+    "description": {
+      "en": "Lecturer at UET, Vietnam National University. Research interests include queueing theory and computer networks.",
+      "vi": "Giảng viên tại Trường Đại học Công nghệ, ĐHQGHN. Nghiên cứu lý thuyết hàng đợi và mạng máy tính."
+    },
+    "visible": true,
+    "role": "Core Member",
+    "initials": "MD",
+    "area": "",
+    "email": "",
+    "color": "#e1e8eb",
+    "image": "",
+    "scholarProfile": {
+      "url": "https://scholar.google.com/citations?user=HgMzl84AAAAJ",
+      "affiliation": {
+        "en": "Lecturer, UET - Vietnam National University",
+        "vi": "Giảng viên, Trường Đại học Công nghệ, Đại học Quốc gia Hà Nội"
+      },
+      "interests": [
+        {
+          "en": "Queueing theory",
+          "vi": "Lý thuyết hàng đợi"
+        },
+        {
+          "en": "Computer network",
+          "vi": "Mạng máy tính"
+        }
+      ],
+      "homepageUrl": "",
+      "retrievedOn": "2026-10-14",
+      "metrics": {
+        "citations": 15,
+        "hIndex": 3,
+        "i10Index": 0,
+        "sinceYear": 2021,
+        "recentCitations": 15,
+        "recentHIndex": 3,
+        "recentI10Index": 0
+      },
+      "publications": [
+        {
+          "title": "Multiphase queuing system of blocking queues and a single common orbit retrial queue with limited buffer",
+          "authors": "V Vishnevsky, O Semenova, MC Dang, VH Nguyen",
+          "venue": "International Conference on Distributed Computer and Communication Networks …",
+          "year": 2023,
+          "citations": 5,
+          "url": "https://scholar.google.com/citations?view_op=view_citation&user=HgMzl84AAAAJ&citation_for_view=HgMzl84AAAAJ:9yKSN-GCB0IC"
+        },
+        {
+          "title": "Evaluation of the performance of a multiphase queuing system with retrial orbit using neural network model",
+          "authors": "MC Dang",
+          "venue": "2024 8th International Conference on Information, Control, and Communication …",
+          "year": 2024,
+          "citations": 3,
+          "url": "https://scholar.google.com/citations?view_op=view_citation&user=HgMzl84AAAAJ&citation_for_view=HgMzl84AAAAJ:u-x6o8ySG0sC"
+        },
+        {
+          "title": "A multiphase queueing system with markovian arrival process input flow and common retrial orbit",
+          "authors": "MC Dang",
+          "venue": "Proc. of Int. Conf. on Engineering and Telecommunications (En&T), 261-268",
+          "year": 2023,
+          "citations": 3,
+          "url": "https://scholar.google.com/citations?view_op=view_citation&user=HgMzl84AAAAJ&citation_for_view=HgMzl84AAAAJ:eQOLeE2rZwMC"
+        }
+      ]
+    }
+  },
+  {
+    "id": "nguyen-xuan-truong",
+    "title": {
+      "en": "Nguyễn Xuân Trường",
+      "vi": "Nguyễn Xuân Trường"
+    },
+    "description": {
+      "en": "VNU-UET. Research interests include AI, IoT, Big Data, cloud/fog computing and simulation.",
+      "vi": "Trường Đại học Công nghệ, ĐHQGHN. Nghiên cứu AI, IoT, dữ liệu lớn, điện toán đám mây/sương mù và mô phỏng."
+    },
+    "visible": true,
+    "role": "Core Member",
+    "initials": "XT",
+    "area": "",
+    "email": "",
+    "color": "#e1e8eb",
+    "image": "/lab-website/images/nguyen-xuan-truong.jpg",
+    "scholarProfile": {
+      "url": "https://scholar.google.com/citations?user=xq-BEbcAAAAJ",
+      "affiliation": {
+        "en": "VNU University of Engineering and Technology (VNU-UET)",
+        "vi": "Trường Đại học Công nghệ, ĐHQGHN (VNU-UET)"
+      },
+      "interests": [
+        {
+          "en": "AI",
+          "vi": "Trí tuệ nhân tạo"
+        },
+        {
+          "en": "IoT",
+          "vi": "Internet vạn vật"
+        },
+        {
+          "en": "Big Data",
+          "vi": "Dữ liệu lớn"
+        },
+        {
+          "en": "Cloud/Fog Computing",
+          "vi": "Điện toán đám mây/sương mù"
+        },
+        {
+          "en": "Simulator",
+          "vi": "Mô phỏng"
+        }
+      ],
+      "homepageUrl": "https://uet.vnu.edu.vn/",
+      "retrievedOn": "2026-10-14",
+      "metrics": {
+        "citations": 23,
+        "hIndex": 2,
+        "i10Index": 1,
+        "sinceYear": 2021,
+        "recentCitations": 23,
+        "recentHIndex": 2,
+        "recentI10Index": 1
+      },
+      "publications": [
+        {
+          "title": "Multi-level just-enough elasticity for MQTT brokers of Internet of Things applications",
+          "authors": "LM Pham, NTT Le, XT Nguyen",
+          "venue": "Cluster Computing 25 (6), 3961-3976",
+          "year": 2022,
+          "citations": 16,
+          "url": "https://scholar.google.com/citations?view_op=view_citation&user=xq-BEbcAAAAJ&citation_for_view=xq-BEbcAAAAJ:u5HHmVD_uO8C"
+        },
+        {
+          "title": "Detecting multiple perturbations on swine using data from simulation of precision feeding systems",
+          "authors": "XT Nguyen, ML Pham",
+          "venue": "International Journal of Emerging Technology and Advanced Engineering 12 (12 …",
+          "year": 2022,
+          "citations": 5,
+          "url": "https://scholar.google.com/citations?view_op=view_citation&user=xq-BEbcAAAAJ&citation_for_view=xq-BEbcAAAAJ:zYLM7Y9cAGgC"
+        },
+        {
+          "title": "A Cloud-Based Distributed System for Scalable Multi-Agent Simulation of Pig Health Monitoring Models",
+          "authors": "XT Nguyen, LM Pham, QH Bui",
+          "venue": "IEEE Access, https://ieeexplore.ieee.org/document/115",
+          "year": 2026,
+          "citations": 1,
+          "url": "https://scholar.google.com/citations?view_op=view_citation&user=xq-BEbcAAAAJ&citation_for_view=xq-BEbcAAAAJ:WF5omc3nYNoC"
+        }
+      ]
+    }
+  },
+  {
     "id": "thai-duong-nguyen",
-    "title": { "en": "Thai-Duong Nguyen", "vi": "Thai-Duong Nguyen" },
+    "title": { "en": "Thai-Duong Nguyen", "vi": "Nguyễn Thái Dương" },
     "description": {
       "en": "Lecturer at VNU-UET. Research interests include 5G/6G communications, deep and quantum reinforcement learning, and optimization.",
       "vi": "Giảng viên tại Trường Đại học Công nghệ, ĐHQGHN. Nghiên cứu truyền thông 5G/6G, học tăng cường sâu, học tăng cường lượng tử và tối ưu hóa."
     },
     "visible": true,
-    "role": "Faculty",
+    "role": "PhD student",
     "initials": "DN",
     "area": "",
     "email": "",
@@ -229,6 +671,482 @@
           "venue": "The 4th International Conference on Advances in Information and …",
           "year": 2025, "citations": null,
           "url": "https://scholar.google.com/citations?view_op=view_citation&hl=vi&user=KfjB5lEAAAAJ&citation_for_view=KfjB5lEAAAAJ:u-x6o8ySG0sC"
+        }
+      ]
+    }
+  },
+  {
+    "id": "tran-anh-tu",
+    "title": {
+      "en": "Tran Anh Tu",
+      "vi": "Trần Anh Tú"
+    },
+    "description": {
+      "en": "Hanoi Pedagogical University 2. Research interests include cloud/fog computing, machine learning, time series forecasting, IoT and elasticity.",
+      "vi": "Đại học Sư phạm Hà Nội 2. Nghiên cứu điện toán đám mây/sương mù, học máy, dự báo chuỗi thời gian, IoT và khả năng co giãn tài nguyên."
+    },
+    "visible": true,
+    "role": "PhD student",
+    "initials": "AT",
+    "area": "",
+    "email": "",
+    "color": "#e1e8eb",
+    "image": "/lab-website/images/tran-anh-tu.jpg",
+    "scholarProfile": {
+      "url": "https://scholar.google.com/citations?user=ZDBvXJgAAAAJ&hl=vi",
+      "affiliation": {
+        "en": "Hanoi Pedagogical University 2",
+        "vi": "Đại học Sư phạm Hà Nội 2"
+      },
+      "interests": [
+        {
+          "en": "Cloud/Fog Computing",
+          "vi": "Điện toán đám mây/sương mù"
+        },
+        {
+          "en": "Machine Learning",
+          "vi": "Học máy"
+        },
+        {
+          "en": "Time series forecasting",
+          "vi": "Dự báo chuỗi thời gian"
+        },
+        {
+          "en": "IoT",
+          "vi": "Internet vạn vật"
+        },
+        {
+          "en": "Elasticity",
+          "vi": "Khả năng co giãn tài nguyên"
+        }
+      ],
+      "homepageUrl": "https://www.hpu2.edu.vn/",
+      "retrievedOn": "2026-10-14",
+      "metrics": {
+        "citations": 8,
+        "hIndex": 1,
+        "i10Index": 0,
+        "sinceYear": 2021,
+        "recentCitations": 8,
+        "recentHIndex": 1,
+        "recentI10Index": 0
+      },
+      "publications": [
+        {
+          "title": "The Relationship Between Big Data and IoT",
+          "authors": "AT Tran",
+          "venue": "Journal of Computing and Electronic Information Management 10 (3), https …",
+          "year": 2023,
+          "citations": 7,
+          "url": "https://scholar.google.com/citations?view_op=view_citation&user=ZDBvXJgAAAAJ&citation_for_view=ZDBvXJgAAAAJ:9yKSN-GCB0IC"
+        },
+        {
+          "title": "Advances in Artificial Intelligence for Next-Generation Wireless Transmission",
+          "authors": "AT Tran, KH Tran",
+          "venue": "Journal of Computing and Electronic Information Management 17 (1), 25-32",
+          "year": 2025,
+          "citations": 1,
+          "url": "https://scholar.google.com/citations?view_op=view_citation&user=ZDBvXJgAAAAJ&citation_for_view=ZDBvXJgAAAAJ:qjMakFHDy7sC"
+        },
+        {
+          "title": "ProMESh: A Proactive Multi-level Elastic Framework for Smart Homes",
+          "authors": "AT Tran, LM Pham, NTT Le, NH Luong",
+          "venue": "IEEE Access",
+          "year": 2026,
+          "citations": null,
+          "url": "https://scholar.google.com/citations?view_op=view_citation&user=ZDBvXJgAAAAJ&citation_for_view=ZDBvXJgAAAAJ:UeHWp8X0CEIC"
+        }
+      ]
+    }
+  },
+  {
+    "id": "nguyen-quang-thanh",
+    "title": {
+      "en": "Nguyễn Quang Thành",
+      "vi": "Nguyễn Quang Thành"
+    },
+    "description": {
+      "en": "Hanoi Pedagogical University 2. Research interest: computer science.",
+      "vi": "Đại học Sư phạm Hà Nội 2. Lĩnh vực nghiên cứu: khoa học máy tính."
+    },
+    "visible": true,
+    "role": "PhD student",
+    "initials": "QT",
+    "area": "",
+    "email": "",
+    "color": "#e1e8eb",
+    "image": "/lab-website/images/nguyen-quang-thanh.jpg",
+    "scholarProfile": {
+      "url": "https://scholar.google.com/citations?user=wGyndCoAAAAJ&hl=vi",
+      "affiliation": {
+        "en": "Hanoi Pedagogical University 2",
+        "vi": "Đại học Sư phạm Hà Nội 2"
+      },
+      "interests": [
+        {
+          "en": "Computer science",
+          "vi": "Khoa học Máy tính"
+        }
+      ],
+      "homepageUrl": "",
+      "retrievedOn": "2026-10-14",
+      "metrics": {
+        "citations": 122,
+        "hIndex": 2,
+        "i10Index": 1,
+        "sinceYear": 2021,
+        "recentCitations": 108,
+        "recentHIndex": 2,
+        "recentI10Index": 1
+      },
+      "publications": [
+        {
+          "title": "Deep CNNs with self-attention for speaker identification",
+          "authors": "NN An, NQ Thanh, Y Liu",
+          "venue": "IEEE access 7, 85327-85337",
+          "year": 2019,
+          "citations": 117,
+          "url": "https://scholar.google.com/citations?view_op=view_citation&user=wGyndCoAAAAJ&citation_for_view=wGyndCoAAAAJ:u-x6o8ySG0sC"
+        },
+        {
+          "title": "Combining deep neural network with SVM to identify used in IOT",
+          "authors": "NN An, NQ Thanh, L Yanbing, F Wu",
+          "venue": "2019 15th International Wireless Communications & Mobile Computing …",
+          "year": 2019,
+          "citations": 5,
+          "url": "https://scholar.google.com/citations?view_op=view_citation&user=wGyndCoAAAAJ&citation_for_view=wGyndCoAAAAJ:u5HHmVD_uO8C"
+        },
+        {
+          "title": "Improving the Performance of the African Swine Fever Spreading",
+          "authors": "XT Nguyen, LM Pham, NQ Thanh",
+          "venue": "Smart City, Smart Life, Smart Education: Innovations in Mobility, Internet …",
+          "year": 2026,
+          "citations": null,
+          "url": "https://scholar.google.com/citations?view_op=view_citation&user=wGyndCoAAAAJ&citation_for_view=wGyndCoAAAAJ:UeHWp8X0CEIC"
+        }
+      ]
+    }
+  },
+  {
+    "id": "thanh-tung-hoang",
+    "title": {
+      "en": "Thanh Tung HOANG",
+      "vi": "Hoàng Thanh Tùng"
+    },
+    "description": {
+      "en": "Electric Power University. Research interests include IoT, network function virtualization, software-defined networks, edge and fog computing.",
+      "vi": "Đại học Điện lực. Nghiên cứu IoT, ảo hóa chức năng mạng, mạng định nghĩa bằng phần mềm, điện toán biên và điện toán sương mù."
+    },
+    "visible": true,
+    "role": "PhD student",
+    "initials": "TH",
+    "area": "",
+    "email": "",
+    "color": "#e1e8eb",
+    "image": "/lab-website/images/thanh-tung-hoang.jpg",
+    "scholarProfile": {
+      "url": "https://scholar.google.com/citations?user=RZApmnsAAAAJ&hl=vi",
+      "affiliation": {
+        "en": "Electric Power University",
+        "vi": "Đại học Điện lực"
+      },
+      "interests": [
+        {
+          "en": "IoT",
+          "vi": "Internet vạn vật"
+        },
+        {
+          "en": "Network Function Virtualization",
+          "vi": "Ảo hóa chức năng mạng"
+        },
+        {
+          "en": "Software Defined Network",
+          "vi": "Mạng định nghĩa bằng phần mềm"
+        },
+        {
+          "en": "Edge Computing",
+          "vi": "Điện toán biên"
+        },
+        {
+          "en": "Fog Computing",
+          "vi": "Điện toán sương mù"
+        }
+      ],
+      "homepageUrl": "",
+      "retrievedOn": "2026-10-14",
+      "metrics": {
+        "citations": 19,
+        "hIndex": 3,
+        "i10Index": 0,
+        "sinceYear": 2021,
+        "recentCitations": 19,
+        "recentHIndex": 3,
+        "recentI10Index": 0
+      },
+      "publications": [
+        {
+          "title": "Channel surfing to mitigate against jamming attacks on safety applications in vehicular networks",
+          "authors": "H Nguyen-Minh, HT Tran, AT Giang, TT Hoang",
+          "venue": "2020 RIVF International Conference on Computing and Communication …",
+          "year": 2020,
+          "citations": 8,
+          "url": "https://scholar.google.com/citations?view_op=view_citation&user=RZApmnsAAAAJ&citation_for_view=RZApmnsAAAAJ:u5HHmVD_uO8C"
+        },
+        {
+          "title": "Scaling and dynamic resource reallocation in NFV: challenges and research perspectives",
+          "authors": "TT Hoang, ML Pham, HS Nguyen",
+          "venue": "International journal of electrical and computer engineering systems 15 (10 …",
+          "year": 2024,
+          "citations": 5,
+          "url": "https://scholar.google.com/citations?view_op=view_citation&user=RZApmnsAAAAJ&citation_for_view=RZApmnsAAAAJ:d1gkVwhDpl0C"
+        },
+        {
+          "title": "Cosmetic consumption trends of Vietnamese young people–A case study of high school and university students in Hanoi",
+          "authors": "TT Hoang, NA Vu",
+          "venue": "(No Title)",
+          "year": 2022,
+          "citations": 3,
+          "url": "https://scholar.google.com/citations?view_op=view_citation&user=RZApmnsAAAAJ&citation_for_view=RZApmnsAAAAJ:zYLM7Y9cAGgC"
+        }
+      ]
+    }
+  },
+  {
+    "id": "nguyen-hoang-quan",
+    "title": {
+      "en": "Nguyen Hoang Quan",
+      "vi": "Nguyễn Hoàng Quân"
+    },
+    "description": {
+      "en": "Lecturer at VNU-UET. Research interests include engineering, fluid mechanics, heat and mass transfer, and CFD.",
+      "vi": "Giảng viên tại Trường Đại học Công nghệ, ĐHQGHN. Nghiên cứu kỹ thuật, cơ học chất lưu, truyền nhiệt và truyền khối, động lực học chất lưu tính toán."
+    },
+    "visible": true,
+    "role": "Guest",
+    "initials": "HQ",
+    "area": "",
+    "email": "",
+    "color": "#e1e8eb",
+    "image": "/lab-website/images/nguyen-hoang-quan.jpg",
+    "scholarProfile": {
+      "url": "https://scholar.google.com/citations?user=VvnCBGAAAAAJ&hl=en",
+      "affiliation": {
+        "en": "Lecturer, VNU University of Engineering and Technology (VNU-UET)",
+        "vi": "Giảng viên, Trường Đại học Công nghệ, ĐHQGHN (VNU-UET)"
+      },
+      "interests": [
+        {
+          "en": "Engineerings",
+          "vi": "Kỹ thuật"
+        },
+        {
+          "en": "Fluid mechanics",
+          "vi": "Cơ học chất lưu"
+        },
+        {
+          "en": "Heat and Mass Transfer",
+          "vi": "Truyền nhiệt và truyền khối"
+        },
+        {
+          "en": "CFD",
+          "vi": "Động lực học chất lưu tính toán (CFD)"
+        }
+      ],
+      "homepageUrl": "",
+      "retrievedOn": "2026-10-14",
+      "metrics": {
+        "citations": 69,
+        "hIndex": 4,
+        "i10Index": 1,
+        "sinceYear": 2021,
+        "recentCitations": 39,
+        "recentHIndex": 3,
+        "recentI10Index": 1
+      },
+      "publications": [
+        {
+          "title": "Global-local approach to the design of dynamic vibration absorber for damped structures",
+          "authors": "ND Anh, NX Nguyen, NH Quan",
+          "venue": "Journal of Vibration and Control 22 (14), 3182-3201",
+          "year": 2016,
+          "citations": 36,
+          "url": "https://scholar.google.com/citations?view_op=view_citation&user=VvnCBGAAAAAJ&citation_for_view=VvnCBGAAAAAJ:9yKSN-GCB0IC"
+        },
+        {
+          "title": "Fast and accurate simplified radiative model for modeling coupled heat transfers in glass forming process",
+          "authors": "HQ Nguyen, B Remy, A Degiovanni",
+          "venue": "Advanced Materials Research 39, 575-578",
+          "year": 2008,
+          "citations": 9,
+          "url": "https://scholar.google.com/citations?view_op=view_citation&user=VvnCBGAAAAAJ&citation_for_view=VvnCBGAAAAAJ:2osOgNQ5qMEC"
+        },
+        {
+          "title": "Modélisation et simulation du remplissage de moules verriers:«Prise en compte du transfert radiatif»",
+          "authors": "A DEGIOVANNI, N INPL, C MAIERON, ID Docteur",
+          "venue": "",
+          "year": 2009,
+          "citations": 8,
+          "url": "https://scholar.google.com/citations?view_op=view_citation&user=VvnCBGAAAAAJ&citation_for_view=VvnCBGAAAAAJ:qjMakFHDy7sC"
+        }
+      ]
+    }
+  },
+  {
+    "id": "viet-dung-duong",
+    "title": {
+      "en": "Viet-Dung Duong",
+      "vi": "Dương Việt Dũng"
+    },
+    "description": {
+      "en": "VNU-UET. Research interests include the lattice Boltzmann method, turbulence, physics-informed machine learning and porous media.",
+      "vi": "Trường Đại học Công nghệ, ĐHQGHN. Nghiên cứu phương pháp lattice Boltzmann, dòng chảy rối, học máy dựa trên vật lý và môi trường rỗng."
+    },
+    "visible": true,
+    "role": "Guest",
+    "initials": "VD",
+    "area": "",
+    "email": "",
+    "color": "#e1e8eb",
+    "image": "/lab-website/images/viet-dung-duong.jpg",
+    "scholarProfile": {
+      "url": "https://scholar.google.com/citations?user=nEU18xQAAAAJ&hl=vi",
+      "affiliation": {
+        "en": "VNU University of Engineering and Technology, Vietnam National University, Hanoi, Vietnam",
+        "vi": "Trường Đại học Công nghệ, Đại học Quốc gia Hà Nội, Việt Nam"
+      },
+      "interests": [
+        {
+          "en": "Lattice Boltzmann Method",
+          "vi": "Phương pháp lattice Boltzmann"
+        },
+        {
+          "en": "Turbulence",
+          "vi": "Dòng chảy rối"
+        },
+        {
+          "en": "Physics-informed ML",
+          "vi": "Học máy dựa trên vật lý"
+        },
+        {
+          "en": "Porous media",
+          "vi": "Môi trường rỗng"
+        }
+      ],
+      "homepageUrl": "https://flowphysicsvnu.com/",
+      "retrievedOn": "2026-10-14",
+      "metrics": {
+        "citations": 306,
+        "hIndex": 10,
+        "i10Index": 12,
+        "sinceYear": 2021,
+        "recentCitations": 300,
+        "recentHIndex": 10,
+        "recentI10Index": 12
+      },
+      "publications": [
+        {
+          "title": "Low-Reynolds-number wake of three tandem elliptic cylinders",
+          "authors": "VD Duong, VD Nguyen, VT Nguyen, IL Ngo",
+          "venue": "Physics of Fluids 34 (4)",
+          "year": 2022,
+          "citations": 50,
+          "url": "https://scholar.google.com/citations?view_op=view_citation&user=nEU18xQAAAAJ&citation_for_view=nEU18xQAAAAJ:LkGwnXOMwfcC"
+        },
+        {
+          "title": "Characteristics of the flow around four cylinders of various shapes",
+          "authors": "VL Nguyen, T Nguyen-Thoi, VD Duong",
+          "venue": "Ocean Engineering 238, 109690",
+          "year": 2021,
+          "citations": 31,
+          "url": "https://scholar.google.com/citations?view_op=view_citation&user=nEU18xQAAAAJ&citation_for_view=nEU18xQAAAAJ:d1gkVwhDpl0C"
+        },
+        {
+          "title": "On the choice of activation functions in physics-informed neural network for solving incompressible fluid flows",
+          "authors": "DV Dung, ND Song, PS Palar, LR Zuhal",
+          "venue": "AIAA SCITECH 2023 Forum, 1803",
+          "year": 2023,
+          "citations": 29,
+          "url": "https://scholar.google.com/citations?view_op=view_citation&user=nEU18xQAAAAJ&citation_for_view=nEU18xQAAAAJ:KlAtU1dfN6UC"
+        }
+      ]
+    }
+  },
+  {
+    "id": "nt-thanh-le",
+    "title": {
+      "en": "N.T. Thanh Le",
+      "vi": "Lê Nguyễn Tuấn Thành"
+    },
+    "description": {
+      "en": "Thuyloi University. Research interests include multi-agent systems, reinforcement learning, multi-agent reinforcement learning and crisis management.",
+      "vi": "Trường Đại học Thủy lợi. Nghiên cứu hệ đa tác tử, học tăng cường, học tăng cường đa tác tử và quản lý khủng hoảng."
+    },
+    "visible": true,
+    "role": "Guest",
+    "initials": "TL",
+    "area": "",
+    "email": "",
+    "color": "#e1e8eb",
+    "image": "/lab-website/images/nt-thanh-le.jpg",
+    "scholarProfile": {
+      "url": "https://scholar.google.com/citations?user=dJOGyqQAAAAJ&hl=fr",
+      "affiliation": {
+        "en": "Thuyloi University",
+        "vi": "Trường Đại học Thủy lợi"
+      },
+      "interests": [
+        {
+          "en": "Multi-Agent Systems",
+          "vi": "Hệ đa tác tử"
+        },
+        {
+          "en": "Reinforcement Learning",
+          "vi": "Học tăng cường"
+        },
+        {
+          "en": "Multi-Agent Reinforcement Learning",
+          "vi": "Học tăng cường đa tác tử"
+        },
+        {
+          "en": "Crisis Management",
+          "vi": "Quản lý khủng hoảng"
+        }
+      ],
+      "homepageUrl": "https://sites.google.com/view/thanhlnt/home",
+      "retrievedOn": "2026-10-14",
+      "metrics": {
+        "citations": 77,
+        "hIndex": 5,
+        "i10Index": 1,
+        "sinceYear": 2021,
+        "recentCitations": 51,
+        "recentHIndex": 4,
+        "recentI10Index": 1
+      },
+      "publications": [
+        {
+          "title": "Multi-level just-enough elasticity for MQTT brokers of Internet of Things applications",
+          "authors": "LM Pham, NTT Le, XT Nguyen",
+          "venue": "Cluster Computing 25 (6), 3961-3976",
+          "year": 2022,
+          "citations": 16,
+          "url": "https://scholar.google.com/citations?view_op=view_citation&user=dJOGyqQAAAAJ&citation_for_view=dJOGyqQAAAAJ:Zph67rFs4hoC"
+        },
+        {
+          "title": "Multi-agent reinforcement learning for traffic congestion on one-way multi-lane highways",
+          "authors": "NTT Le",
+          "venue": "Journal of Information and Telecommunication 7 (3), 255-269",
+          "year": 2023,
+          "citations": 9,
+          "url": "https://scholar.google.com/citations?view_op=view_citation&user=dJOGyqQAAAAJ&citation_for_view=dJOGyqQAAAAJ:YOwf2qJgpHMC"
+        },
+        {
+          "title": "Combining process simulation and agent organizational structure evaluation in order to analyze disaster response plans",
+          "authors": "NTT Le, C Hanachi, S Stinckwich, TV Ho",
+          "venue": "Agent and Multi-Agent Systems: Technologies and Applications: 9th KES …",
+          "year": 2015,
+          "citations": 8,
+          "url": "https://scholar.google.com/citations?view_op=view_citation&user=dJOGyqQAAAAJ&citation_for_view=dJOGyqQAAAAJ:LkGwnXOMwfcC"
         }
       ]
     }

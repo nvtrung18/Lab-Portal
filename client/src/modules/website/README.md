@@ -7,6 +7,13 @@ phạm vi `.lab-public`.
 
 ## Thiết kế dùng chung
 
+Nhận diện lab được khai báo tại `client/src/shared/constants/lab-brand.ts`: logo,
+tên đầy đủ, tên viết tắt, slogan và phần giới thiệu tiếng Việt/Anh. Header, footer,
+Trang chủ, Giới thiệu, Liên hệ, tiêu đề trình duyệt và khu vực đăng nhập/quản lý
+dùng chung thông tin ALELA này, kể cả khi bản nội dung đã lưu còn tên mẫu cũ.
+Các bài viết và nội dung động trong CMS vẫn giữ nguyên. Logo công khai rộng 144px
+(120px trên màn hình nhỏ), giữ tỷ lệ ảnh gốc bằng `height: auto` và `object-fit: contain`.
+
 `client/src/index.css` định nghĩa font và các biến `--lab-brand-*`: navy `#133449`,
 ink `#152f40`, mint `#81cdbd`, nền nhẹ `#f4f7f8`, đường phân cách `#e3e8eb`, bo góc 5px.
 Website công khai lấy các giá trị này; khu vực quản lý dùng các biến `--app-*`
@@ -121,29 +128,53 @@ Website công khai chỉ trả các trường trình bày đã xuất bản, v�
 hồ sơ tài khoản để tự ghi đè nội dung. Thay đổi tên tài khoản không tự đổi tên trên website.
 Ẩn/xóa hồ sơ Thành viên không xóa tài khoản hoặc thu hồi quyền của người dùng.
 
-## Hồ sơ học thuật của ba thành viên
+## Phân tầng thành viên và hồ sơ Scholar
 
-Dữ liệu khởi tạo đặt Ngoc-Tan Nguyen, Linh Manh Pham và Thai-Duong Nguyen lên đầu
-tab Thành viên. Thẻ hiển thị ảnh, vai trò, tên, giới thiệu ngắn và **Xem hồ sơ →**;
+Tab Thành viên chia thành các tầng nối theo dạng cây. Trong mỗi tầng, thứ tự
+theo danh sách đã lưu; các tầng không có thành viên không xuất hiện.
+
+| Vai trò | Thành viên theo thứ tự |
+| --- | --- |
+| Thành viên chỉ đạo (`Steering Member`) | Nguyễn Hoài Sơn, Dương Lê Minh |
+| Thành viên cốt lõi (`Core Member`) | Phạm Mạnh Linh, Phạm Châu Thùy, Nguyễn Ngọc Tân, Hoàng Xuân Tùng, Đặng Minh Công, Nguyễn Xuân Trường |
+| NCS (`PhD student`) | Nguyễn Thái Dương, Trần Anh Tú, Nguyễn Quang Thành, Hoàng Thanh Tùng |
+| HVCH (`MSc student`) | Chưa bổ sung |
+| SV NCKH (`Undergraduate`) | Chưa bổ sung |
+| Khách (`Guest`), hiển thị trong tầng Thành viên đối tác | Nguyễn Hoàng Quân, Dương Việt Dũng, Lê Nguyễn Tuấn Thành |
+
+Tên tiếng Việt và vai trò lấy theo chỉ đạo ngày 14/10/2026. Vai trò phân nhóm
+website, không thay đổi quyền tài khoản. Giá trị cũ `Faculty`, `Researcher`,
+`Alumni` và vai trò trống vẫn đọc/lưu được; các hồ sơ này nằm trong tầng
+Thành viên khác, trước tầng đối tác. Dữ liệu khởi tạo dùng 15 hồ sơ thật,
+không ghép thêm các thành viên minh họa trong seed cũ.
+
+Thẻ hiển thị ảnh, vai trò, tên, giới thiệu ngắn và **Xem hồ sơ →**;
 trang chi tiết hiển thị chức danh/đơn vị, lĩnh vực nghiên cứu, bảng trích dẫn,
-h-index/i10-index và bài viết có liên kết Google Scholar. Ảnh và thông tin công khai
-được lấy từ ba hồ sơ ngày 12/10/2026; chỉ số là bản ghi tại thời điểm đó.
-Danh sách bài viết gồm 5 bài đầu của thầy Tân, 5 bài đầu của thầy Linh và 9 bài
-của Thai-Duong Nguyen, theo thứ tự nguồn tại ngày lấy dữ liệu; nút Scholar mở
-danh sách đầy đủ. Không tự đồng bộ và không suy đoán email hay liên kết nhóm nghiên cứu.
+h-index/i10-index và bài viết có liên kết Google Scholar. Chỉ số của Nguyễn
+Ngọc Tân, Phạm Mạnh Linh và Nguyễn Thái Dương lấy ngày 12/10/2026; các hồ sơ
+còn lại lấy ngày 14/10/2026. Danh sách gồm 5 bài đầu của thầy Tân, 5 bài đầu
+của thầy Linh, 9 bài của thầy Dương và 3 bài đầu cho mỗi hồ sơ bổ sung;
+nút Scholar mở danh sách đầy đủ. Không tự đồng bộ hay suy đoán email.
 
-Với website đã có nội dung lưu: vào **Thành viên → Đưa 3 hồ sơ Scholar lên đầu**,
-xem trước rồi lưu nháp hoặc xuất bản. Thao tác chỉ thay đổi bản nháp đang soạn,
-giữ nội dung và liên kết tài khoản của hồ sơ đã có, bổ sung phần Scholar nếu thiếu;
-nhận diện theo ID, Scholar user ID hoặc tên trùng khớp. Không tự xuất bản.
-Admin có thể sửa từng trường, chỉ số, ngày lấy dữ liệu và bài viết trong form thành viên.
+Ảnh Nguyễn Hoài Sơn và Hoàng Xuân Tùng lấy từ
+[trang Bộ môn Mạng và Truyền thông máy tính](https://www.fit.uet.vnu.edu.vn/mang-va-truyen-thong-may-tinh/),
+đối chiếu theo tên ngay trước ảnh. Đặng Minh Công chưa có ảnh trên Scholar
+và chưa tìm thấy ảnh tương ứng trên trang bộ môn; giữ trống. Các ảnh còn lại
+lấy từ hồ sơ Scholar tương ứng.
+
+Với website đã có nội dung lưu: vào **Thành viên → Áp dụng phân tầng 15 hồ sơ
+Scholar**, xem trước rồi lưu nháp hoặc xuất bản. Nút cập nhật tên, vai trò và
+thứ tự cho 15 hồ sơ, giữ nội dung, ảnh và liên kết tài khoản đã lưu, bổ sung
+Scholar nếu thiếu; nhận diện theo ID, Scholar user ID hoặc tên trùng khớp.
+Các hồ sơ khác được giữ lại. Không tự xuất bản. Admin có thể sửa vai trò,
+di chuyển thứ tự, chỉnh hồ sơ và ẩn/hiện từng người.
 
 `members[].scholarProfile` là trường JSON tùy chọn, dùng chung ở FE và BE;
 thiếu/null giữ cách hiển thị hồ sơ cũ. Trường số chưa có giữ `null`, số `0` vẫn hiển thị;
 các bài mà Scholar để trống số trích dẫn giữ `null`. Ngày nhận dữ liệu cần là ngày
 hợp lệ dạng `yyyy-MM-dd`. Trường này được lưu qua API nháp/xuất bản hiện có và
 trả qua API công khai, trong khi `userId` tiếp tục được loại khỏi dữ liệu công khai.
-Nguồn ba hồ sơ nằm trong `contracts/website-scholar-members.json`;
+Nguồn 15 hồ sơ nằm trong `contracts/website-scholar-members.json`;
 không cần migration DB mới.
 
 ## Form soạn thảo bài viết và nội dung trong tab

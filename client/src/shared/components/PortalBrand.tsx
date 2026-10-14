@@ -1,20 +1,20 @@
-import { Network } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 import { useI18n } from '../i18n';
+import { LAB_BRAND } from '../constants';
 
-/** The public site's visual mark, with the portal's existing application name. */
+/** Shared ALELA identity for authentication and portal navigation. */
 export function PortalBrand({ subtitle, onNavigate, tabIndex }: {
   subtitle?: string;
   onNavigate?: () => void;
   tabIndex?: number;
 }) {
-  const { locale, t } = useI18n();
+  const { locale } = useI18n();
   return (
-    <Link className="portal-brand" to={`/${locale}`} onClick={onNavigate} tabIndex={tabIndex}>
-      <span className="portal-brand-mark"><Network aria-hidden="true" size={27} strokeWidth={1.5} /></span>
+    <Link className="portal-brand" to={`/${locale}`} onClick={onNavigate} tabIndex={tabIndex} aria-label={LAB_BRAND.name}>
+      <img className="portal-brand-logo" src={LAB_BRAND.logoSrc} alt="" width={1774} height={887} />
       <span className="min-w-0">
-        <span className="portal-brand-name">{t('common.appTitle')}</span>
+        <span className="portal-brand-name" title={LAB_BRAND.name}>{LAB_BRAND.shortName}</span>
         {subtitle ? <span className="portal-brand-subtitle">{subtitle}</span> : null}
       </span>
     </Link>

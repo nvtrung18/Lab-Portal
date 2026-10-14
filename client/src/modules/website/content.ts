@@ -1,6 +1,7 @@
 import seed from '../../../../contracts/website-demo-content.json';
 import scholarSeed from '../../../../contracts/website-scholar-members.json';
 import type { Member, WebsiteContent, WebsitePage, WebsiteSection } from '../../../../contracts/website-content';
+import { LAB_BRAND } from '../../shared/constants';
 
 export type EditableWebsiteContent = WebsiteContent & { pages: WebsitePage[]; contentLibrary: WebsiteSection[] };
 
@@ -89,7 +90,8 @@ export function withScholarMembers(content: WebsiteContent): WebsiteContent {
       || member.title.vi.toLowerCase() === source.title.vi.toLowerCase()
     ));
     if (existing) selected.add(existing.id);
-    return existing ? { ...existing, scholarProfile: existing.scholarProfile ?? structuredClone(source.scholarProfile) }
+    return existing ? { ...existing, title: structuredClone(source.title), role: source.role,
+      scholarProfile: existing.scholarProfile ?? structuredClone(source.scholarProfile) }
       : structuredClone(source);
   });
   return { ...content, data: { ...content.data,
@@ -97,10 +99,14 @@ export function withScholarMembers(content: WebsiteContent): WebsiteContent {
 }
 
 const initialContent = structuredClone(seed.content) as WebsiteContent;
+initialContent.profile.name = LAB_BRAND.name;
+initialContent.profile.shortName = LAB_BRAND.shortName;
+initialContent.profile.summary = { ...LAB_BRAND.summary };
+initialContent.data.members = [];
 const peoplePage = initialContent.pages?.find(page => page.template === 'people');
 if (peoplePage) peoplePage.description = {
-  en: 'Meet our faculty and researchers, explore their research interests and academic profiles.',
-  vi: 'Gặp gỡ giảng viên và các nhà nghiên cứu, tìm hiểu lĩnh vực nghiên cứu và hồ sơ học thuật.',
+  en: 'Meet ALELA\'s steering members, core members, doctoral researchers and research partners.',
+  vi: 'Đội ngũ ALELA gồm thành viên chỉ đạo, thành viên cốt lõi, nghiên cứu sinh và các thành viên đối tác.',
 };
 export const demoContent = withPages(withScholarMembers(initialContent));
 

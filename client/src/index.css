@@ -270,6 +270,17 @@ html:not(.dark) .admin-shell option {
   color: var(--app-active-indicator-color);
 }
 
+.portal-brand-logo {
+  flex: 0 0 auto;
+  display: block;
+  width: 96px;
+  height: auto;
+  object-fit: contain;
+  padding: 4px;
+  background: #fff;
+  border-radius: var(--lab-brand-radius);
+}
+
 .portal-brand-name {
   display: block;
   font-size: 19px;
@@ -1131,6 +1142,9 @@ html.dark .app-shell .app-state[role='alert'] {
     flex-basis: 36px;
     width: 36px;
     height: 36px;
+  }
+  .auth-topbar .portal-brand-logo {
+    width: 80px;
   }
   .auth-topbar-actions {
     gap: 4px;

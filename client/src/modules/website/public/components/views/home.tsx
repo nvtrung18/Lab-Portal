@@ -13,6 +13,7 @@ import {
 import { useLab } from "../lab-provider";
 import { Button } from "../ui/button";
 import { DynamicSections } from '../dynamic-sections';
+import { LAB_BRAND } from '../../../../../shared/constants';
 import {
   SectionHeading,
   ResearchCard,
@@ -22,11 +23,10 @@ import {
   MemberCard,
 } from "../shared";
 export function HomeView() {
-  const { locale, l, data, profile, page, text } = useLab();
-  const heading = (page ? text(page.title) : `${l('Intelligent systems.', 'Hệ thống thông minh.')}\n${l('Meaningful impact.', 'Tác động thiết thực.')}`).split('\n');
+  const { locale, l, data, profile } = useLab();
   return (
     <>
-      <section className="hero">
+      <section className="hero hero-alela">
         <Image
           src="/images/earth.jpg"
           alt={l(
@@ -46,20 +46,13 @@ export function HomeView() {
         <div className="container hero-content">
           <div className="hero-eyebrow">
             <span />
-            {l(
-              "AT THE INTERSECTION OF SCIENCE & TECHNOLOGY",
-              "GIAO THOA GIỮA KHOA HỌC & CÔNG NGHỆ",
-            )}
+            {LAB_BRAND.name}
           </div>
           <h1>
-            {heading[0]}
-            {heading.length > 1 && <><br /><span>{heading.slice(1).join('\n')}</span></>}
+            {LAB_BRAND.slogan}
           </h1>
           <p>
-            {page ? text(page.description) : l(
-              "We explore the connections between artificial intelligence,\nEarth observation, and wireless technologies —\nto understand our world and build a better one.",
-              "Chúng tôi khám phá kết nối giữa trí tuệ nhân tạo,\nquan sát Trái Đất và công nghệ không dây —\nđể hiểu thế giới và xây dựng một tương lai tốt hơn.",
-            )}
+            {LAB_BRAND.introduction[locale]}
           </p>
           <div className="hero-buttons">
             <Button asChild variant="light">
@@ -124,12 +117,10 @@ export function HomeView() {
           <div>
             <span className="eyebrow">
               <span />
-              {l("WELCOME TO NEXUS", "CHÀO MỪNG ĐẾN NEXUS")}
+              {l("WELCOME TO ALELA", "CHÀO MỪNG ĐẾN ALELA")}
             </span>
             <h2>
-              {l("Different perspectives.", "Nhiều góc nhìn.")}
-              <br />
-              {l("Shared possibilities.", "Chung tiềm năng.")}
+              {LAB_BRAND.slogan}
             </h2>
           </div>
           <div>
@@ -140,10 +131,7 @@ export function HomeView() {
               )}
             </p>
             <p>
-              {l(
-                "Nexus is an illustrative research laboratory bringing together researchers in AI, sensing, and connected systems. We believe meaningful progress happens when disciplines meet, ideas are shared, and research is grounded in real-world challenges.",
-                "Nexus là phòng thí nghiệm minh họa kết nối các nhà nghiên cứu về AI, cảm biến và hệ thống kết nối. Chúng tôi tin rằng tiến bộ đến từ giao thoa lĩnh vực, chia sẻ ý tưởng và nghiên cứu gắn với thách thức thực tế.",
-              )}
+              {LAB_BRAND.summary[locale]}
             </p>
             <Link href={`/${locale}/about`} className="text-link">
               {l("Discover our story", "Khám phá câu chuyện")}
@@ -238,7 +226,7 @@ export function HomeView() {
         <div className="container">
           <SectionHeading
             eyebrow={l("LIFE AT THE LAB", "CUỘC SỐNG TẠI LAB")}
-            title={l("The latest from Nexus.", "Tin mới từ Nexus.")}
+            title={l("The latest from ALELA.", "Tin mới từ ALELA.")}
             href={`/${locale}/news`}
             linkLabel={l("All news & events", "Tất cả tin & sự kiện")}
           />

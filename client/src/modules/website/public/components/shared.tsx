@@ -57,10 +57,12 @@ export function PageHeading({
   eyebrow,
   title,
   description,
+  usePageContent = true,
 }: {
   eyebrow: string;
   title: string;
   description: string;
+  usePageContent?: boolean;
 }) {
   const { locale, l, page, text } = useLab();
   return (
@@ -75,8 +77,8 @@ export function PageHeading({
           <span />
           {page ? text(page.navigationTitle) || text(page.title) : eyebrow}
         </span>
-        <h1>{page ? text(page.title) : title}</h1>
-        <p>{page ? text(page.description) : description}</p>
+        <h1>{usePageContent && page ? text(page.title) : title}</h1>
+        <p>{usePageContent && page ? text(page.description) : description}</p>
         <span className="page-heading-mark" aria-hidden="true">
           +
         </span>

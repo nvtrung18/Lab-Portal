@@ -8,7 +8,7 @@ import { Button, Modal } from '../../../shared/components';
 import { useI18n } from '../../../shared/i18n';
 import { getWebsiteMemberSources, getWebsiteState, saveWebsite } from '../api';
 import { getLabs } from '../../lab/api';
-import { demoContent, withPages, withScholarMembers } from '../content';
+import { demoContent, scholarMembers, withPages, withScholarMembers } from '../content';
 import { inputClass } from '../components/EditorFields';
 import { PageContentEditor } from '../components/PageContentEditor';
 import { createMemberFromUser, createResearchFromLab, createRecord, putRecord, RecordEditor, type EditingRecord } from '../components/RecordEditor';
@@ -158,9 +158,9 @@ export function AdminWebsitePage() {
           {activeCollection === 'members' && <div className="mb-5 flex flex-wrap items-center gap-3">
             <Button size="sm" variant="outline" onClick={() => {
               setContent(withScholarMembers(content)); setSearch('');
-              setNotice(l('Đã đưa hồ sơ thầy Tân, thầy Linh và Thai-Duong Nguyen lên đầu bản nháp. Xem trước rồi lưu nháp hoặc xuất bản.', 'The three Scholar profiles are now first in the draft. Preview, then save or publish.'));
-            }}><Plus size={16} />{l('Đưa 3 hồ sơ Scholar lên đầu', 'Add 3 Scholar profiles first')}</Button>
-            <span className="text-xs text-slate-500">{l('Hồ sơ công khai đã chuẩn bị từ Google Scholar ngày 12/10/2026.', 'Public profiles prepared from Google Scholar on 12 October 2026.')}</span>
+              setNotice(l(`Đã cập nhật tên, vai trò và thứ tự phân tầng cho ${scholarMembers.length} hồ sơ Scholar. Xem trước rồi lưu nháp hoặc xuất bản.`, `Updated names, roles and hierarchy order for ${scholarMembers.length} Scholar profiles. Preview, then save or publish.`));
+            }}><Plus size={16} />{l(`Áp dụng phân tầng ${scholarMembers.length} hồ sơ Scholar`, `Apply hierarchy to ${scholarMembers.length} Scholar profiles`)}</Button>
+            <span className="text-xs text-slate-500">{l('Ngày lấy dữ liệu được ghi riêng trong từng hồ sơ Scholar.', 'Each Scholar profile records its own retrieval date.')}</span>
           </div>}
           {activeCollection === 'research' && <p className="mb-4 text-sm text-slate-500">{l('Chọn nhóm nghiên cứu hiện có rồi chỉnh tên giới thiệu, mô tả, ảnh và chủ đề cho website. Tích Hiển thị, xem trước và xuất bản.', 'Select an existing research group and edit its public name, description, image and topics. Check Show, preview and publish.')}</p>}
           {activeCollection === 'news' && <p className="mb-4 text-sm text-slate-500">{l('Soạn bài viết, tin tức hoặc sự kiện trong form riêng. Có thể bổ sung tên nguồn và link bài gốc, xem trước rồi lưu nháp hoặc xuất bản.', 'Compose articles, news or events in the article form. Optionally add the source name and original article link, preview, then save a draft or publish.')}</p>}

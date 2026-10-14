@@ -21,20 +21,16 @@ import { useLab } from "../lab-provider";
 import { PageHeading, SectionHeading, DemoNotice } from "../shared";
 import { Button } from "../ui/button";
 import { Select } from "../ui/select";
+import { LAB_BRAND } from '../../../../../shared/constants';
 export function AboutView() {
   const { l, locale } = useLab();
   return (
     <>
       <PageHeading
         eyebrow={l("About the laboratory", "Giới thiệu phòng lab")}
-        title={l(
-          "Curiosity is our common ground.",
-          "Tò mò là điểm chung của chúng tôi.",
-        )}
-        description={l(
-          "An interdisciplinary research concept shaped by open questions, thoughtful collaboration, and shared learning.",
-          "Ý tưởng nghiên cứu liên ngành hình thành từ câu hỏi rộng mở, hợp tác và học hỏi.",
-        )}
+        title={LAB_BRAND.name}
+        description={LAB_BRAND.slogan}
+        usePageContent={false}
       />
       <section className="section">
         <div className="container">
@@ -59,25 +55,13 @@ export function AboutView() {
                 {l("OUR STORY", "CÂU CHUYỆN")}
               </span>
               <h2>
-                {l(
-                  "A meeting point for\nideas and disciplines.",
-                  "Điểm gặp gỡ của\ný tưởng và lĩnh vực.",
-                )}
+                {LAB_BRAND.name}
               </h2>
               <p>
-                {l(
-                  "Nexus Research Lab is a fictional academic laboratory concept based in Hanoi. Its research themes connect artificial intelligence, geospatial analysis, wireless systems, and sustainable urban environments.",
-                  "Nexus Research Lab là ý tưởng phòng thí nghiệm học thuật giả định tại Hà Nội. Các chủ đề kết nối trí tuệ nhân tạo, phân tích không gian địa lý, hệ thống không dây và môi trường đô thị bền vững.",
-                )}
-              </p>
-              <p>
-                {l(
-                  "This frontend is designed to show how a real laboratory could make its research accessible, share knowledge, and welcome its next generation of researchers. No real institutional affiliation is implied.",
-                  "Frontend này minh họa cách phòng lab thực tế chia sẻ nghiên cứu, phổ biến tri thức và chào đón thế hệ nhà nghiên cứu mới. Không ngụ ý liên kết với tổ chức thực tế.",
-                )}
+                {LAB_BRAND.introduction[locale]}
               </p>
               <Link href={`/${locale}/people`} className="text-link">
-                {l("Meet our example team", "Gặp gỡ nhóm minh họa")}
+                {l("Meet the ALELA team", "Gặp gỡ đội ngũ ALELA")}
                 <ArrowUpRight size={17} />
               </Link>
             </div>
@@ -391,7 +375,7 @@ export function ContactView() {
               <div className="map-road road-three" />
               <span className="map-marker">
                 <MapPin size={28} fill="#173b50" />
-                <strong>{profile.shortName} LAB</strong>
+                <strong>{LAB_BRAND.shortName}</strong>
               </span>
               <span className="map-caption">
                 {l("ILLUSTRATIVE LOCATION · HANOI", "VỊ TRÍ MINH HỌA · HÀ NỘI")}

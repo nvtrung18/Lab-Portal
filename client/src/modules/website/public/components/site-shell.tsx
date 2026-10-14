@@ -4,24 +4,20 @@ import { useQueryClient } from '@tanstack/react-query';
 import type { UserProfileResponse } from '../../../user/api';
 import { getPrimaryRedirectPath } from '../../../auth/hooks';
 import { clearAuthTokens } from '../../../../shared/api';
-import { ArrowUpRight, Menu, X, Network, ArrowRight } from "lucide-react";
+import { ArrowUpRight, Menu, X, ArrowRight } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useLab } from "./lab-provider";
 import { Button } from "./ui/button";
+import { LAB_BRAND } from '../../../../shared/constants';
 export function Brand({ light = false }: { light?: boolean }) {
-  const { l, profile } = useLab();
   return (
-    <span className={`brand ${light ? "brand-light" : ""}`}>
-      <span className="brand-symbol">
-        <Network size={29} strokeWidth={1.8} />
-      </span>
-      <span>
-        <strong>
-          {profile.shortName}<span className="brand-dot">.</span>
-        </strong>
-        <small>{l("RESEARCH LABORATORY", "PHÒNG THÍ NGHIỆM NGHIÊN CỨU")}</small>
-      </span>
-    </span>
+    <img
+      className={`brand-logo${light ? ' brand-logo-light' : ''}`}
+      src={LAB_BRAND.logoSrc}
+      alt={LAB_BRAND.name}
+      width={1774}
+      height={887}
+    />
   );
 }
 export function SiteHeader({ user, signedIn = false, checking = false }: {
@@ -66,10 +62,7 @@ export function SiteHeader({ user, signedIn = false, checking = false }: {
       <div className="utility-bar">
         <div className={`container utility-inner${signedIn ? ' account-utility' : ''}`}>
           <span>
-            {l(
-              "Exploring ideas. Connecting disciplines.",
-              "Khám phá ý tưởng. Kết nối lĩnh vực.",
-            )}
+            {LAB_BRAND.slogan}
           </span>
           <div className="utility-right">
             <span className="website-content-status">{profile.showDemoNotice && <span className="demo-dot" />}
@@ -104,7 +97,7 @@ export function SiteHeader({ user, signedIn = false, checking = false }: {
         <div className="container header-inner">
           <Link
             href={`/${locale}`}
-            aria-label={profile.shortName}
+            aria-label={LAB_BRAND.name}
             onClick={() => setOpen(false)}
           >
             <Brand />
@@ -190,12 +183,8 @@ export function SiteFooter() {
             <Link href={`/${locale}`}>
               <Brand light />
             </Link>
-            <p>
-              {l(
-                "Curiosity drives us. Collaboration connects us.\nResearch moves us forward.",
-                "Tò mò dẫn lối. Hợp tác kết nối.\nNghiên cứu đưa chúng ta tiến xa.",
-              )}
-            </p>
+            <strong className="footer-lab-name">{LAB_BRAND.name}</strong>
+            <p>{LAB_BRAND.slogan}</p>
           </div>
           <div>
             <h3>{l("Explore", "Khám phá")}</h3>
@@ -237,7 +226,7 @@ export function SiteFooter() {
           </div>
         </div>
         <div className="footer-bottom">
-          <span>© {new Date().getFullYear()} {profile.name}.</span>
+          <span>© {new Date().getFullYear()} {LAB_BRAND.name}.</span>
           <span>
             {profile.showDemoNotice && (data.members.some(member => member.scholarProfile) ? l(
               'Sample content and public academic profiles.',
