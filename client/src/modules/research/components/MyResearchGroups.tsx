@@ -73,7 +73,7 @@ export function MyResearchGroups({ labId, currentUserId }: MyResearchGroupsProps
                   </div>
 
                   <div className="space-y-1">
-                    <span className="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                    <span className="block text-[11px] font-semibold text-slate-500 tracking-normal dark:text-slate-400">
                       {t('research.group.projectLabelShort')}
                     </span>
                     <p className="min-w-0 break-words text-sm font-medium text-slate-800 line-clamp-2 leading-relaxed">

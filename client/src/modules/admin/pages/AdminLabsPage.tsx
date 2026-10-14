@@ -804,7 +804,7 @@ export function AdminLabsPage() {
             tabIndex={0}
           >
             <table className="w-full min-w-[960px] text-left text-sm border-collapse">
-              <thead className="border-b border-slate-200/90 bg-slate-50/80 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:border-slate-800 dark:bg-slate-800/60 dark:text-slate-400">
+              <thead className="border-b border-slate-200/90 bg-slate-50/80 text-xs font-semibold tracking-normal text-slate-600 dark:border-slate-800 dark:bg-slate-800/60 dark:text-slate-300">
                 <tr>
                   <th className="px-4 py-3.5 min-w-[200px] font-semibold">{t('adminLabs.tableName')}</th>
                   <th className="px-4 py-3.5 min-w-[170px] font-semibold">{t('adminLabs.tableDepartment')}</th>

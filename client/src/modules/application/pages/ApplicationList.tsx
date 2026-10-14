@@ -100,8 +100,13 @@ export function ApplicationList() {
   return (
     <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6 dark:border-slate-800 dark:bg-slate-900">
       <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-4">
-        <div>
-          <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100">{t('application.title')}</h1>
+        <div className="min-w-0 flex-1">
+          <h1 className="break-words text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100">{t('application.title')}</h1>
+          {managedLabName ? (
+            <p className="mt-0.5 break-words text-xs text-slate-500 dark:text-slate-400">
+              {managedLabName}
+            </p>
+          ) : null}
         </div>
         <span className="shrink-0 rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
           {applications.length} {t('application.count')}
@@ -185,7 +190,7 @@ export function ApplicationList() {
         <div className="mt-6 hidden max-w-full overflow-hidden rounded-lg border border-slate-200 dark:border-slate-800 md:block">
           <div className="overflow-x-auto">
             <table className="w-full min-w-[760px] text-left text-sm border-collapse">
-              <thead className="border-b border-slate-200 bg-slate-50/75 text-xs font-semibold uppercase tracking-wider text-slate-600 dark:border-slate-800 dark:bg-slate-950/60 dark:text-slate-400">
+              <thead className="border-b border-slate-200 bg-slate-50/75 text-xs font-semibold tracking-normal text-slate-600 dark:border-slate-800 dark:bg-slate-950/60 dark:text-slate-300">
                 <tr>
                   <th className="px-4 py-3 min-w-[160px]">{t('application.applicant')}</th>
                   <th className="px-4 py-3 min-w-[180px]">{t('common.email')}</th>

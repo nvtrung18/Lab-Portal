@@ -256,7 +256,7 @@ export function EvaluationPage({ projectId, groupId, role, currentUserId }: Eval
           </div>
           <div className="mt-5 hidden max-w-full overflow-x-auto overscroll-x-contain rounded-md border border-slate-200 min-[1440px]:block">
           <table className="w-full min-w-[66rem] divide-y divide-slate-200 text-sm">
-            <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">
+            <thead className="bg-slate-50 text-left text-xs font-semibold tracking-normal text-slate-600 dark:bg-slate-800/60 dark:text-slate-300">
               <tr>
                 <th className="px-3 py-3">{t('research.evaluation.name')}</th>
                 <th className="px-3 py-3">{t('research.evaluation.group')}</th>

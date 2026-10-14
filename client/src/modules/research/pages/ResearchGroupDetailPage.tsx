@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, Navigate, useParams, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 
@@ -19,7 +19,6 @@ import {
 import {
   useResearchProject,
   useResearchGroup,
-  useResearchGroupsByProject,
   useMilestonesByGroup,
   useMyMilestonesByGroup,
   useGroupTasks,
@@ -29,7 +28,7 @@ import {
   useProjectDashboardStats,
 } from '../hooks';
 import type { TaskBoardRole } from '../taskBoardHelpers';
-import type { ResearchGroup } from '../types';
+import type { ResearchGroup, ResearchProject } from '../types';
 import { formatDate, formatGroupStatus, formatProjectStatus, getApiErrorMessage } from '../utils';
 import { formatTaskStatus } from '../taskBoardHelpers';
 
@@ -93,9 +92,6 @@ export function ResearchGroupDetailPage() {
   const { data: group, isError: isGroupError, error: groupError, isLoading: isLoadingGroup, refetch: refetchGroup } = useResearchGroup(
     Number.isFinite(numericGroupId) ? numericGroupId : null
   );
-  const { data: groups = [], isLoading: isLoadingGroups } = useResearchGroupsByProject(
-    Number.isFinite(numericProjectId) ? numericProjectId : null
-  );
   const userInGroup = group?.members?.find((m) => m.userId === currentUser?.id);
   const groupRole = group?.myGroupRole || group?.myRole || userInGroup?.role;
   const isLeader = groupRole === 'LEADER';
@@ -123,7 +119,7 @@ export function ResearchGroupDetailPage() {
     return <Navigate to="/app/research" replace />;
   }
 
-  if (isLoadingUser || isLoadingProject || isLoadingGroup || isLoadingGroups) {
+  if (isLoadingUser || isLoadingProject || isLoadingGroup) {
     return (
       <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
         <LoadingState>{t('common.loading')}</LoadingState>
@@ -208,7 +204,7 @@ export function ResearchGroupDetailPage() {
               {t('common.back')}
             </Link>
           )}
-          <span className="min-w-0 break-words text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('research.groupTab.project')}: {project.title}</span>
+          <span className="min-w-0 break-words text-xs font-semibold text-slate-500 tracking-normal dark:text-slate-400">{t('research.groupTab.project')}: {project.title}</span>
         </div>
 
         <div className="mt-4 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -227,18 +223,18 @@ export function ResearchGroupDetailPage() {
 
         <dl className="mt-5 grid gap-4 text-sm sm:grid-cols-2 lg:grid-cols-5 border-t border-slate-100 pt-5">
           <div className="min-w-0 flex-1">
-            <dt className="font-semibold text-slate-500 text-xs uppercase tracking-wider">{t('research.groupTab.project')}</dt>
+            <dt className="font-semibold text-slate-500 text-xs tracking-normal dark:text-slate-400">{t('research.groupTab.project')}</dt>
             <dd className="mt-1 text-slate-800 font-medium truncate leading-snug" title={project.title}>
               {project.title}
             </dd>
           </div>
           <div>
-            <dt className="font-semibold text-slate-500 text-xs uppercase tracking-wider">{t('research.role.leader')}</dt>
+            <dt className="font-semibold text-slate-500 text-xs tracking-normal dark:text-slate-400">{t('research.role.leader')}</dt>
             <dd className="mt-1 text-slate-800 font-medium">{group.leaderName || t('common.notUpdated')}</dd>
           </div>
           {isStudent ? (
             <div>
-              <dt className="font-semibold text-slate-500 text-xs uppercase tracking-wider">{t('research.role.member')}</dt>
+              <dt className="font-semibold text-slate-500 text-xs tracking-normal dark:text-slate-400">{t('research.role.member')}</dt>
               <dd className="mt-1">
                 <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ${
                   isLeader ? 'bg-blue-50 text-blue-700 ring-blue-100' : 'bg-slate-50 text-slate-700 ring-slate-100'
@@ -249,12 +245,12 @@ export function ResearchGroupDetailPage() {
             </div>
           ) : (
             <div>
-              <dt className="font-semibold text-slate-500 text-xs uppercase tracking-wider">{t('research.groupTab.members')}</dt>
+              <dt className="font-semibold text-slate-500 text-xs tracking-normal dark:text-slate-400">{t('research.groupTab.members')}</dt>
               <dd className="mt-1 text-slate-800 font-medium">{group.members?.length ?? 0}</dd>
             </div>
           )}
           <div>
-            <dt className="font-semibold text-slate-500 text-xs uppercase tracking-wider">{t('slot.statusLabel')}</dt>
+            <dt className="font-semibold text-slate-500 text-xs tracking-normal dark:text-slate-400">{t('slot.statusLabel')}</dt>
             <dd className="mt-1">
               <span className="inline-flex rounded-full bg-slate-50 px-2.5 py-0.5 text-xs font-medium text-slate-700 ring-1 ring-slate-100">
                 {formatGroupStatus(group.status, locale)}
@@ -262,7 +258,7 @@ export function ResearchGroupDetailPage() {
             </dd>
           </div>
           <div>
-            <dt className="font-semibold text-slate-500 text-xs uppercase tracking-wider">{t('common.submittedAt')}</dt>
+            <dt className="font-semibold text-slate-500 text-xs tracking-normal dark:text-slate-400">{t('common.submittedAt')}</dt>
             <dd className="mt-1 text-slate-800 font-medium">{formatDate(group.createdAt, locale)}</dd>
           </div>
         </dl>
@@ -459,16 +455,16 @@ function GroupOverviewTab({
         <div className="min-w-0 space-y-4 rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
           <h3 className="text-base font-medium text-slate-900 border-b border-slate-100 pb-3">{t('research.groupTab.info')}</h3>
           <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 text-sm">
-            <div className="bg-slate-50/50 rounded-lg p-3.5 border border-slate-100 space-y-0.5">
-              <dt className="font-semibold text-slate-500 text-xs uppercase tracking-wider">{t('research.group.name')}</dt>
+            <div className="bg-slate-50/50 rounded-lg p-3.5 border border-slate-100 space-y-0.5 dark:border-slate-800 dark:bg-slate-950/40">
+              <dt className="font-semibold text-slate-500 text-xs tracking-normal dark:text-slate-400">{t('research.group.name')}</dt>
               <dd className="break-words font-medium text-slate-900 text-base">{group.name}</dd>
             </div>
-            <div className="bg-slate-50/50 rounded-lg p-3.5 border border-slate-100 space-y-0.5">
-              <dt className="font-semibold text-slate-500 text-xs uppercase tracking-wider">{t('research.group.leader')}</dt>
+            <div className="bg-slate-50/50 rounded-lg p-3.5 border border-slate-100 space-y-0.5 dark:border-slate-800 dark:bg-slate-950/40">
+              <dt className="font-semibold text-slate-500 text-xs tracking-normal dark:text-slate-400">{t('research.group.leader')}</dt>
               <dd className="font-medium text-slate-800">{group.leaderName || t('lab.notAssigned')}</dd>
             </div>
-            <div className="bg-slate-50/50 rounded-lg p-3.5 border border-slate-100 space-y-0.5">
-              <dt className="font-semibold text-slate-500 text-xs uppercase tracking-wider">{t('research.group.myRole')}</dt>
+            <div className="bg-slate-50/50 rounded-lg p-3.5 border border-slate-100 space-y-0.5 dark:border-slate-800 dark:bg-slate-950/40">
+              <dt className="font-semibold text-slate-500 text-xs tracking-normal dark:text-slate-400">{t('research.group.myRole')}</dt>
               <dd className="font-medium text-slate-800">
                 <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ${
                   isLeader ? 'bg-blue-50 text-blue-700 ring-blue-100' : 'bg-slate-50 text-slate-700 ring-slate-100'
@@ -477,16 +473,16 @@ function GroupOverviewTab({
                 </span>
               </dd>
             </div>
-            <div className="bg-slate-50/50 rounded-lg p-3.5 border border-slate-100 space-y-0.5">
-              <dt className="font-semibold text-slate-500 text-xs uppercase tracking-wider">{t('research.group.status')}</dt>
+            <div className="bg-slate-50/50 rounded-lg p-3.5 border border-slate-100 space-y-0.5 dark:border-slate-800 dark:bg-slate-950/40">
+              <dt className="font-semibold text-slate-500 text-xs tracking-normal dark:text-slate-400">{t('research.group.status')}</dt>
               <dd>
                 <span className="inline-flex rounded-full bg-slate-50 px-2.5 py-0.5 text-xs font-medium text-slate-700 ring-1 ring-slate-100">
                   {formatGroupStatus(group.status, locale)}
                 </span>
               </dd>
             </div>
-            <div className="bg-slate-50/50 rounded-lg p-3.5 border border-slate-100 space-y-0.5">
-              <dt className="font-semibold text-slate-500 text-xs uppercase tracking-wider">{t('research.group.createdAt')}</dt>
+            <div className="bg-slate-50/50 rounded-lg p-3.5 border border-slate-100 space-y-0.5 dark:border-slate-800 dark:bg-slate-950/40">
+              <dt className="font-semibold text-slate-500 text-xs tracking-normal dark:text-slate-400">{t('research.group.createdAt')}</dt>
               <dd className="font-medium text-slate-800">{formatDate(group.createdAt, locale)}</dd>
             </div>
           </dl>
@@ -565,7 +561,7 @@ function GroupMembersTab({ group, isLeader }: { group: ResearchGroup; isLeader: 
       <div aria-label={t('research.group.members')} role="region" tabIndex={0} className="hidden min-w-0 max-w-full overflow-x-auto overscroll-x-contain md:block">
         <table className="w-full min-w-[40rem] text-left text-sm border-collapse">
           <thead>
-            <tr className="border-b border-slate-200 bg-slate-50 text-xs font-semibold uppercase tracking-wider text-slate-500">
+            <tr className="border-b border-slate-200 bg-slate-50 text-xs font-semibold tracking-normal text-slate-600 dark:border-slate-800 dark:bg-slate-800/60 dark:text-slate-300">
               <th className="px-6 py-3 font-semibold">{t('research.group.fullName')}</th>
               <th className="px-6 py-3 font-semibold">{t('common.email')}</th>
               <th className="px-6 py-3 font-semibold">{t('research.group.role')}</th>
@@ -608,22 +604,22 @@ function GroupMembersTab({ group, isLeader }: { group: ResearchGroup; isLeader: 
 }
 
 // 3. Group Project Tab Subcomponent
-function GroupProjectTab({ project }: { project: any }) {
+function GroupProjectTab({ project }: { project: ResearchProject }) {
   const { locale, t } = useI18n();
 
-  function getProjectStatusClass(status?: string) {
+  function getProjectStatusClass(status: ResearchProject['status']) {
     switch (status) {
       case 'ONGOING':
-        return 'bg-emerald-50 text-emerald-700 ring-emerald-100';
+        return 'bg-emerald-50 text-emerald-700 ring-emerald-100 dark:bg-emerald-950/60 dark:text-emerald-300 dark:ring-emerald-500/30';
       case 'COMPLETED':
-        return 'bg-blue-50 text-blue-700 ring-blue-100';
+        return 'bg-blue-50 text-blue-700 ring-blue-100 dark:bg-blue-950/60 dark:text-blue-300 dark:ring-blue-500/30';
       case 'WAITING_REVIEW':
-        return 'bg-amber-50 text-amber-700 ring-amber-100';
+        return 'bg-amber-50 text-amber-700 ring-amber-100 dark:bg-amber-950/60 dark:text-amber-300 dark:ring-amber-500/30';
       case 'DRAFT':
       case 'PLANNED':
-        return 'bg-slate-50 text-slate-700 ring-slate-100';
+        return 'bg-slate-50 text-slate-700 ring-slate-100 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700';
       default:
-        return 'bg-red-50 text-red-700 ring-red-100';
+        return 'bg-red-50 text-red-700 ring-red-100 dark:bg-red-950/60 dark:text-red-300 dark:ring-red-500/30';
     }
   }
 
@@ -633,58 +629,58 @@ function GroupProjectTab({ project }: { project: any }) {
         <div>
           <h3 className="text-lg font-medium text-slate-950">{t('research.group.projectInfo')}</h3>
         </div>
-        <span className={`inline-flex shrink-0 rounded-full px-3 py-1 text-xs font-medium uppercase ring-1 ${getProjectStatusClass(project.status)}`}>
+        <span className={`inline-flex shrink-0 rounded-full px-3 py-1 text-xs font-medium ring-1 ${getProjectStatusClass(project.status)}`}>
           {formatProjectStatus(project.status, locale)}
         </span>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <div className="rounded-lg border border-slate-100 bg-slate-50/50 p-4 space-y-1">
-          <span className="block text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('research.group.projectName')}</span>
+        <div className="rounded-lg border border-slate-100 bg-slate-50/50 p-4 space-y-1 dark:border-slate-800 dark:bg-slate-950/40">
+          <span className="block text-xs font-semibold text-slate-500 tracking-normal dark:text-slate-400">{t('research.group.projectName')}</span>
           <span className="block break-words font-medium text-slate-900 text-sm leading-snug">{project.title}</span>
         </div>
-        <div className="rounded-lg border border-slate-100 bg-slate-50/50 p-4 space-y-1">
-          <span className="block text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('research.group.topic')}</span>
+        <div className="rounded-lg border border-slate-100 bg-slate-50/50 p-4 space-y-1 dark:border-slate-800 dark:bg-slate-950/40">
+          <span className="block text-xs font-semibold text-slate-500 tracking-normal dark:text-slate-400">{t('research.group.topic')}</span>
           <span className="block font-semibold text-slate-800 text-sm">{project.researchDirection || t('common.notUpdated')}</span>
         </div>
-        <div className="rounded-lg border border-slate-100 bg-slate-50/50 p-4 space-y-1">
-          <span className="block text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('research.group.codeManager')}</span>
+        <div className="rounded-lg border border-slate-100 bg-slate-50/50 p-4 space-y-1 dark:border-slate-800 dark:bg-slate-950/40">
+          <span className="block text-xs font-semibold text-slate-500 tracking-normal dark:text-slate-400">{t('research.group.codeManager')}</span>
           <span className="block font-semibold text-slate-800 text-sm">
             {project.code || t('common.notUpdated')} — {project.managerName || t('lab.notAssigned')}
           </span>
         </div>
-        <div className="rounded-lg border border-slate-100 bg-slate-50/50 p-4 space-y-1">
-          <span className="block text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('research.project.startDate')}</span>
+        <div className="rounded-lg border border-slate-100 bg-slate-50/50 p-4 space-y-1 dark:border-slate-800 dark:bg-slate-950/40">
+          <span className="block text-xs font-semibold text-slate-500 tracking-normal dark:text-slate-400">{t('research.project.startDate')}</span>
           <span className="block font-semibold text-slate-800 text-sm">{formatDate(project.startDate, locale)}</span>
         </div>
-        <div className="rounded-lg border border-slate-100 bg-slate-50/50 p-4 space-y-1 col-span-1 md:col-span-2">
-          <span className="block text-xs font-semibold text-slate-500 uppercase tracking-wider font-semibold">{t('research.project.expectedEndDate')}</span>
+        <div className="rounded-lg border border-slate-100 bg-slate-50/50 p-4 space-y-1 dark:border-slate-800 dark:bg-slate-950/40 col-span-1 md:col-span-2">
+          <span className="block text-xs font-semibold text-slate-500 tracking-normal dark:text-slate-400">{t('research.project.expectedEndDate')}</span>
           <span className="block font-semibold text-slate-800 text-sm">{formatDate(project.expectedEndDate, locale)}</span>
         </div>
       </div>
 
       <div className="border-t border-slate-100 pt-5 space-y-5">
         <div>
-          <h4 className="text-sm font-medium text-slate-900 uppercase tracking-wider">{t('research.group.details')}</h4>
+          <h4 className="text-sm font-medium text-slate-900 tracking-normal dark:text-slate-100">{t('research.group.details')}</h4>
           <p className="mt-2 break-words text-sm text-slate-600 leading-relaxed whitespace-pre-line">
             {project.description || t('research.group.noProjectDescription')}
           </p>
         </div>
         <div>
-          <h4 className="text-sm font-medium text-slate-900 uppercase tracking-wider">{t('research.group.objective')}</h4>
+          <h4 className="text-sm font-medium text-slate-900 tracking-normal dark:text-slate-100">{t('research.group.objective')}</h4>
           <p className="mt-2 break-words text-sm text-slate-600 leading-relaxed whitespace-pre-line">
             {project.objective || t('research.group.noProjectObjective')}
           </p>
         </div>
         <div>
-          <h4 className="text-sm font-medium text-slate-900 uppercase tracking-wider">{t('research.group.requiredProducts')}</h4>
-          <p className="mt-2 break-words text-sm text-slate-600 leading-relaxed whitespace-pre-line bg-blue-50/30 rounded-lg p-4 border border-blue-100/50">
+          <h4 className="text-sm font-medium text-slate-900 tracking-normal dark:text-slate-100">{t('research.group.requiredProducts')}</h4>
+          <p className="mt-2 break-words text-sm text-slate-600 leading-relaxed whitespace-pre-line bg-blue-50/30 rounded-lg p-4 border border-blue-100/50 dark:border-blue-900/50 dark:bg-blue-950/30">
             {project.requiredProducts || t('research.group.noRequiredProducts')}
           </p>
         </div>
         <div>
-          <h4 className="text-sm font-medium text-slate-900 uppercase tracking-wider">{t('research.group.evaluationCriteria')}</h4>
-          <p className="mt-2 break-words text-sm text-slate-600 leading-relaxed whitespace-pre-line bg-emerald-50/20 rounded-lg p-4 border border-emerald-100/30">
+          <h4 className="text-sm font-medium text-slate-900 tracking-normal dark:text-slate-100">{t('research.group.evaluationCriteria')}</h4>
+          <p className="mt-2 break-words text-sm text-slate-600 leading-relaxed whitespace-pre-line bg-emerald-50/20 rounded-lg p-4 border border-emerald-100/30 dark:border-emerald-900/50 dark:bg-emerald-950/30">
             {project.evaluationCriteria || t('research.group.noEvaluationCriteria')}
           </p>
         </div>
@@ -719,7 +715,7 @@ function GroupTaskList({ groupId }: { groupId: number }) {
         <div aria-label={t('research.group.taskBoard')} role="region" tabIndex={0} className="mt-5 min-w-0 max-w-full overflow-x-auto overscroll-x-contain">
           <table className="w-full min-w-[42rem] text-left text-sm">
             <thead>
-              <tr className="border-b border-slate-200 bg-slate-50 text-xs font-semibold uppercase tracking-wider text-slate-500">
+              <tr className="border-b border-slate-200 bg-slate-50 text-xs font-semibold tracking-normal text-slate-600 dark:border-slate-800 dark:bg-slate-800/60 dark:text-slate-300">
                 <th className="px-4 py-3 font-semibold">{t('research.group.task')}</th>
                 <th className="px-4 py-3 font-semibold">{t('research.group.assignee')}</th>
                 <th className="px-4 py-3 font-semibold">{t('research.group.deadline')}</th>
@@ -1009,7 +1005,7 @@ function StatItem({
   return (
     <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
       <div>
-        <span className="block text-xs font-semibold text-slate-500 uppercase tracking-wider">
+        <span className="block text-xs font-semibold text-slate-500 tracking-normal dark:text-slate-400">
           {title}
         </span>
         <span className="block mt-1 text-2xl font-medium text-slate-900 leading-none">

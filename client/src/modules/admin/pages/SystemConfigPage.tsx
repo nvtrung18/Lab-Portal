@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 
-import { EmptyState, ErrorState } from '../../../shared/components';
+import { Button, EmptyState, ErrorState, LoadingState } from '../../../shared/components';
 import { useI18n } from '../../../shared/i18n';
 import { useSystemConfig, useUpdateSystemConfig } from '../hooks';
 import type { SystemConfig } from '../api';
@@ -168,7 +168,7 @@ export function SystemConfigPage() {
     }));
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = () => {
     const nextErrors = validateConfig(normalizedForm, t);
     setErrors(nextErrors);
 
@@ -176,29 +176,31 @@ export function SystemConfigPage() {
       return;
     }
 
-    const saved = await updateMutation.mutateAsync(normalizedForm);
-    setForm(saved);
-    setReportTypes(formatTypes(saved.upload.reportAllowedTypes));
-    setProductTypes(formatTypes(saved.upload.productAllowedTypes));
+    updateMutation.mutate(normalizedForm, {
+      onSuccess: (saved) => {
+        setForm(saved);
+        setReportTypes(formatTypes(saved.upload.reportAllowedTypes));
+        setProductTypes(formatTypes(saved.upload.productAllowedTypes));
+      },
+    });
   };
 
   if (isLoading) {
     return (
-      <section className="rounded-lg border border-slate-800 bg-slate-900 p-6 shadow-sm">
+      <section className="rounded-xl border border-slate-200/90 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
         <PageHeader />
-        <p className="mt-6 text-sm text-slate-300">{t('adminConfig.loading')}</p>
+        <div className="mt-6">
+          <LoadingState>{t('adminConfig.loading')}</LoadingState>
+        </div>
       </section>
     );
   }
 
   if (isError) {
     return (
-      <section className="rounded-lg border border-slate-800 bg-slate-900 p-6 shadow-sm">
+      <section className="rounded-xl border border-slate-200/90 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
         <PageHeader />
-        <ErrorState
-          className="mt-6 border-red-900/70 bg-red-950/40 text-red-200"
-          onRetry={() => void refetch()}
-        >
+        <ErrorState className="mt-6" onRetry={() => void refetch()}>
           {t('adminConfig.loadError')}
         </ErrorState>
       </section>
@@ -207,9 +209,9 @@ export function SystemConfigPage() {
 
   if (!data) {
     return (
-      <section className="rounded-lg border border-slate-800 bg-slate-900 p-6 shadow-sm">
+      <section className="rounded-xl border border-slate-200/90 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
         <PageHeader />
-        <EmptyState className="mt-6 border-slate-700 bg-slate-800 text-slate-300">
+        <EmptyState className="mt-6">
           {t('adminConfig.empty')}
         </EmptyState>
       </section>
@@ -217,21 +219,21 @@ export function SystemConfigPage() {
   }
 
   return (
-    <section className="min-w-0 rounded-lg border border-slate-800 bg-slate-900 p-4 shadow-sm sm:p-6">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+    <div className="min-w-0 space-y-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <PageHeader />
-        <button
-          type="button"
-          className="min-h-11 w-full rounded-md bg-white px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-slate-200 disabled:cursor-not-allowed disabled:bg-slate-600 sm:w-auto"
-          disabled={updateMutation.isPending}
-          onClick={() => void handleSubmit()}
+        <Button
+          className="w-full sm:w-auto"
+          loading={updateMutation.isPending}
+          loadingText={t('adminConfig.saving')}
+          onClick={handleSubmit}
         >
-          {updateMutation.isPending ? t('adminConfig.saving') : t('adminConfig.save')}
-        </button>
+          {t('adminConfig.save')}
+        </Button>
       </div>
 
       {errors.length > 0 ? (
-        <div className="mt-6 rounded-md border border-red-900/70 bg-red-950/40 p-4 text-sm text-red-200">
+        <div role="alert" className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800 dark:border-red-900/70 dark:bg-red-950/40 dark:text-red-200">
           <p className="font-semibold">{t('adminConfig.validationTitle')}</p>
           <ul className="mt-2 list-disc space-y-1 pl-5">
             {errors.map((error) => (
@@ -241,7 +243,7 @@ export function SystemConfigPage() {
         </div>
       ) : null}
 
-      <div className="mt-8 space-y-6">
+      <div className="space-y-6">
         <ConfigSection title="adminConfig.accountPolicy">
           <ToggleField
             checked={form.account.requireEmailVerification}
@@ -390,7 +392,7 @@ export function SystemConfigPage() {
           <ToggleField checked={form.operational.includeFailureReasonCodes} label="adminConfig.failureReasonCodes" onChange={(value) => updateBoolean('operational', 'includeFailureReasonCodes', value)} />
         </ConfigSection>
       </div>
-    </section>
+    </div>
   );
 }
 
@@ -416,7 +418,7 @@ function ConfigSection({ children, title }: { children: ReactNode; title: string
 
   return (
     <section className="min-w-0 rounded-xl border border-slate-200/90 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
-      <h3 className="text-base font-semibold text-slate-900 dark:text-white">{localizeConfigLabel(t, title)}</h3>
+      <h2 className="text-base font-semibold text-slate-900 dark:text-white">{localizeConfigLabel(t, title)}</h2>
       <div className="mt-4 grid min-w-0 gap-4 xl:grid-cols-2">{children}</div>
     </section>
   );

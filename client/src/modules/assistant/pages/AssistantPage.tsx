@@ -283,7 +283,7 @@ export function AssistantPage() {
   return (
     <section className="mx-auto max-w-6xl">
       <header className="mb-6">
-        <p className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-slate-500"><Bot aria-hidden="true" className="h-4 w-4" /> {t('common.aiAssistant')}</p>
+        <p className="flex items-center gap-2 text-sm font-semibold tracking-normal text-slate-500 dark:text-slate-400"><Bot aria-hidden="true" className="h-4 w-4" /> {t('common.aiAssistant')}</p>
         <h1 className="mt-1 text-2xl font-semibold text-slate-950 dark:text-white">{t('assistant.title')}</h1>
       </header>
 

@@ -132,6 +132,11 @@ export function AdminAuditLogPage() {
   const [appliedFilters, setAppliedFilters] = useState<AuditLogFilters>({});
 
   const { data, isLoading, isError, refetch } = useAdminAuditLogs(page, appliedFilters);
+  const lastPage = (data?.totalPages ?? 0) - 1;
+  // Include ellipsis positions without allocating an entry for every page.
+  const paginationIndexes = [...new Set([0, 1, page - 1, page, page + 1, lastPage - 1, lastPage])]
+    .filter((index) => index >= 0 && index <= lastPage)
+    .sort((left, right) => left - right);
 
   const handleSearch = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -350,7 +355,7 @@ export function AdminAuditLogPage() {
           {/* Desktop Table (>= md) */}
           <div aria-label={t('audit.title')} className="app-table-frame hidden min-w-0 max-w-full overflow-x-auto md:block" role="region" tabIndex={0}>
             <table className="w-full min-w-[960px] text-sm text-left border-collapse">
-              <thead className="border-b border-slate-200/90 bg-slate-50/80 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:border-slate-800 dark:bg-slate-800/60 dark:text-slate-400">
+              <thead className="border-b border-slate-200/90 bg-slate-50/80 text-xs font-semibold tracking-normal text-slate-600 dark:border-slate-800 dark:bg-slate-800/60 dark:text-slate-300">
                 <tr>
                   <th className="px-4 py-3.5 min-w-[150px] font-semibold">{t('audit.table.time')}</th>
                   <th className="px-4 py-3.5 min-w-[140px] font-semibold">{t('audit.table.actor')}</th>
@@ -394,18 +399,17 @@ export function AdminAuditLogPage() {
           </div>
 
           {/* Pagination Controls */}
-          <div className="flex flex-col items-center justify-between gap-4 border-t border-slate-800 bg-slate-950/25 px-4 py-3.5 text-sm text-slate-400 lg:flex-row">
+          <div className="flex flex-col items-center justify-between gap-4 border-t border-slate-200/90 bg-slate-50/50 px-4 py-3.5 text-sm text-slate-500 dark:border-slate-800 dark:bg-slate-950/25 dark:text-slate-400 lg:flex-row">
             <div className="text-center lg:text-left">
-              {t('audit.pagination.showing')} <span className="font-semibold text-slate-200">{page * data.size + 1}</span> {t('audit.pagination.to')}{' '}
-              <span className="font-semibold text-slate-200">
+              {t('audit.pagination.showing')} <span className="font-semibold text-slate-900 dark:text-slate-200">{page * data.size + 1}</span> {t('audit.pagination.to')}{' '}
+              <span className="font-semibold text-slate-900 dark:text-slate-200">
                 {Math.min((page + 1) * data.size, data.totalElements)}
               </span>{' '}
-                {t('audit.pagination.of')} <span className="font-semibold text-slate-200">{data.totalElements}</span> {t('audit.pagination.entries')}
+                {t('audit.pagination.of')} <span className="font-semibold text-slate-900 dark:text-slate-200">{data.totalElements}</span> {t('audit.pagination.entries')}
             </div>
 
             <div className="flex max-w-full flex-wrap items-center justify-center gap-2">
               <Button
-                className="border-slate-700 bg-transparent text-slate-300 hover:bg-slate-800 disabled:opacity-40 disabled:hover:bg-transparent"
                 size="sm"
                 variant="outline"
                 disabled={page === 0}
@@ -414,7 +418,7 @@ export function AdminAuditLogPage() {
                 {t('audit.previous')}
               </Button>
               <div className="flex flex-wrap items-center justify-center gap-1.5">
-                {Array.from({ length: data.totalPages }).map((_, index) => {
+                {paginationIndexes.map((index) => {
                   // Only display max 5 page buttons around current page
                   if (
                     index === 0 ||
@@ -424,11 +428,13 @@ export function AdminAuditLogPage() {
                     return (
                       <button
                         key={index}
+                        type="button"
+                        aria-label={`${t('common.page')} ${index + 1}`}
                         aria-current={page === index ? 'page' : undefined}
-                        className={`h-11 w-11 rounded-md text-sm font-semibold transition ${
+                        className={`app-button h-11 w-11 rounded-md text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 ${
                           page === index
-                            ? 'bg-white text-slate-950'
-                            : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                            ? 'app-button-primary'
+                            : 'app-button-ghost'
                         }`}
                         onClick={() => setPage(index)}
                       >
@@ -437,13 +443,12 @@ export function AdminAuditLogPage() {
                     );
                   }
                   if (index === 1 || index === data.totalPages - 2) {
-                    return <span key={index} className="text-slate-600 px-0.5">...</span>;
+                    return <span key={index} className="text-slate-400 dark:text-slate-600 px-0.5">...</span>;
                   }
                   return null;
                 })}
               </div>
               <Button
-                className="border-slate-700 bg-transparent text-slate-300 hover:bg-slate-800 disabled:opacity-40 disabled:hover:bg-transparent"
                 size="sm"
                 variant="outline"
                 disabled={page >= data.totalPages - 1}
