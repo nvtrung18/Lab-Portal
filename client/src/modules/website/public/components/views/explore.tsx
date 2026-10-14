@@ -26,6 +26,7 @@ import { Select } from "../ui/select";
 import { Button } from "../ui/button";
 import { Dialog } from "../ui/dialog";
 import type { Publication } from "../../lib/types";
+import { memberRoleGroups } from '../../../member-roles';
 export function ResearchView() {
   const { l, data } = useLab();
   return (
@@ -58,17 +59,21 @@ export function PeopleView() {
   const { l, text, data } = useLab();
   const [role, setRole] = useState("all");
   const [query, setQuery] = useState("");
-  const roles = [
-    "Faculty",
-    "Researcher",
-    "PhD student",
-    "MSc student",
-    "Undergraduate",
-    "Alumni",
+  const isGrouped = (memberRole: string) => memberRoleGroups.some(group => group.role === memberRole);
+  const otherGroup = {
+    role: 'other', label: { en: 'Other members', vi: 'Thành viên khác' },
+    title: { en: 'Other Members', vi: 'Thành viên khác' },
+  };
+  const groups = [
+    ...memberRoleGroups.filter(group => group.role !== 'Guest'),
+    otherGroup,
+    ...memberRoleGroups.filter(group => group.role === 'Guest'),
   ];
+  const matchesRole = (memberRole: string, selected: string) => selected === 'other'
+    ? !isGrouped(memberRole) : memberRole === selected;
   const filtered = data.members.filter(
     (item) =>
-      (role === "all" || item.role === role) &&
+      (role === "all" || matchesRole(item.role, role)) &&
       `${text(item.title)} ${text(item.description)}`
         .toLowerCase()
         .includes(query.toLowerCase()),
@@ -82,8 +87,8 @@ export function PeopleView() {
           "Nhiều tư duy. Chung niềm khám phá.",
         )}
         description={l(
-          "Meet the people behind our illustrative laboratory. Every identity and profile below is fictional.",
-          "Gặp gỡ các thành viên phòng lab minh họa. Mọi danh tính và hồ sơ dưới đây đều là giả định.",
+          "Meet ALELA's steering members, core members, doctoral researchers and research partners.",
+          "Đội ngũ ALELA gồm thành viên chỉ đạo, thành viên cốt lõi, nghiên cứu sinh và các thành viên đối tác.",
         )}
       />
       <section className="section">
@@ -103,24 +108,35 @@ export function PeopleView() {
             role="group"
             aria-label={l("Filter by role", "Lọc theo vai trò")}
           >
-            {["all", ...roles].map((item) => (
+            {[{ role: 'all', label: { en: 'Everyone', vi: 'Tất cả' } },
+              ...groups.filter(group => data.members.some(member => matchesRole(member.role, group.role)))].map((item) => (
               <button
-                aria-pressed={role === item}
-                className={role === item ? "active" : ""}
-                key={item}
-                onClick={() => setRole(item)}
+                type="button"
+                aria-pressed={role === item.role}
+                className={role === item.role ? "active" : ""}
+                key={item.role}
+                onClick={() => setRole(item.role)}
               >
-                {item === "all"
-                  ? l("Everyone", "Tất cả")
-                  : l(item, roleVi[item])}
+                {text(item.label)}
               </button>
             ))}
           </div>
           {filtered.length ? (
-            <div className="cards-grid three">
-              {filtered.map((item) => (
-                <MemberCard item={item} key={item.id} />
-              ))}
+            <div className="member-hierarchy" aria-label={l('Laboratory membership hierarchy', 'Phân tầng thành viên lab')}>
+              {groups.map(group => {
+                const members = filtered.filter(item => matchesRole(item.role, group.role));
+                if (!members.length) return null;
+                const headingId = `member-group-${group.role.toLowerCase().replace(/ /g, '-')}`;
+                return <section className="member-tier" key={group.role} aria-labelledby={headingId}>
+                  <div className="member-tier-heading">
+                    <h2 id={headingId}>{text(group.title)}</h2>
+                    <span>{members.length} {l('members', 'thành viên')}</span>
+                  </div>
+                  <div className={`member-tier-grid member-tier-grid-${Math.min(members.length, 6)}`}>
+                    {members.map(item => <MemberCard item={item} key={item.id} />)}
+                  </div>
+                </section>;
+              })}
             </div>
           ) : (
             <EmptyState

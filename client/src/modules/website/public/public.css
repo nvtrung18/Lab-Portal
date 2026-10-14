@@ -249,6 +249,23 @@
   gap: 11px;
   line-height: 1;
 }
+.lab-public .brand-logo {
+  display: block;
+  width: 144px;
+  max-width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+.lab-public .brand-logo-light {
+  padding: 8px;
+  background: #fff;
+  border-radius: var(--radius);
+}
+@media (max-width: 600px) {
+  .lab-public .brand-logo {
+    width: 120px;
+  }
+}
 .lab-public .brand-symbol {
   display: grid;
   place-items: center;
@@ -409,6 +426,16 @@
   white-space: pre-line;
   font-weight: 400;
   max-width: 500px;
+}
+.lab-public .hero.hero-alela {
+  height: auto;
+  min-height: 590px;
+}
+.lab-public .hero-alela .hero-content {
+  padding-bottom: 40px;
+}
+.lab-public .hero.hero-alela p {
+  max-width: 780px;
 }
 .lab-public .hero-buttons {
   display: flex;
@@ -978,8 +1005,15 @@
   font-size: 10px;
   line-height: 1.9;
   white-space: pre-line;
-  margin-top: 22px;
+  margin-top: 10px;
   color: #8fa5b4;
+}
+.lab-public .footer-lab-name {
+  display: block;
+  margin-top: 20px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #edf4f8;
 }
 .lab-public .footer-top h3 {
   font-size: 11px;
@@ -3618,6 +3652,84 @@
   margin-top: 0.5rem;
 }
 .lab-public .scholar-profile { min-width: 0; }
+.lab-public .member-hierarchy {
+  display: flex;
+  flex-direction: column;
+  gap: 64px;
+  margin-top: 48px;
+}
+.lab-public .member-tier { position: relative; min-width: 0; }
+.lab-public .member-tier:not(:first-child)::before {
+  content: "";
+  position: absolute;
+  top: -64px;
+  left: 50%;
+  height: 64px;
+  border-left: 1px solid var(--line);
+}
+.lab-public .member-tier-heading {
+  position: relative;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 auto 24px;
+  padding: 12px 24px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--soft);
+  text-align: center;
+}
+.lab-public .member-tier-heading::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  height: 24px;
+  border-left: 1px solid var(--line);
+}
+.lab-public .member-tier-heading h2 {
+  font-size: 24px;
+  line-height: 1.3;
+  color: var(--navy);
+}
+.lab-public .member-tier-heading > span { display: block; margin-top: 6px; font-size: 12px; color: var(--muted); }
+.lab-public .member-tier-grid {
+  display: grid;
+  gap: 24px;
+  margin-inline: auto;
+  padding-top: 24px;
+  border-top: 1px solid var(--line);
+}
+.lab-public .member-tier-grid-1 { grid-template-columns: minmax(0, 1fr); max-width: 268px; }
+.lab-public .member-tier-grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 560px; }
+.lab-public .member-tier-grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); max-width: 840px; }
+.lab-public .member-tier-grid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); max-width: 1120px; }
+.lab-public .member-tier-grid-5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.lab-public .member-tier-grid-6 { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.lab-public .member-tier-grid .member-card { position: relative; }
+.lab-public .member-tier-grid .member-card::before {
+  content: "";
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  height: 24px;
+  border-left: 1px solid var(--line);
+}
+.lab-public .member-tier-grid .member-avatar { height: clamp(160px, 18vw, 224px); margin-bottom: 16px; }
+.lab-public .member-tier-grid .member-card .label { font-size: 10px; line-height: 1.5; }
+.lab-public .member-tier-grid .member-card h3 { font-size: 17px; line-height: 1.4; }
+.lab-public .member-tier-grid .member-card p { font-size: 12px; line-height: 1.75; }
+.lab-public .member-tier-grid .card-more { font-size: 13px; }
+@media (max-width: 1000px) {
+  .lab-public :is(.member-tier-grid-4, .member-tier-grid-5, .member-tier-grid-6) { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 640px) {
+  .lab-public .member-tier-grid:not(.member-tier-grid-1) { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px 16px; }
+  .lab-public .member-tier-heading h2 { font-size: 20px; }
+  .lab-public .member-tier-grid .member-card h3 { font-size: 16px; }
+}
+@media (max-width: 399px) {
+  .lab-public .member-hierarchy .member-tier-grid { grid-template-columns: minmax(0, 1fr); max-width: 268px; }
+}
 .lab-public .scholar-interests {
   display: flex;
   flex-wrap: wrap;
