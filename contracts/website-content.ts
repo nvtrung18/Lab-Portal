@@ -12,7 +12,8 @@ export interface ResearchArea extends Entity {
   icon: 'earth' | 'cpu' | 'radio' | 'network';
   topics: LocalizedText[];
 }
-export type MemberRole = 'Faculty' | 'Researcher' | 'PhD student' | 'MSc student' | 'Undergraduate' | 'Alumni';
+export type MemberRole = 'Steering Member' | 'Core Member' | 'PhD student' | 'MSc student' | 'Undergraduate' | 'Guest'
+  | 'Faculty' | 'Researcher' | 'Alumni';
 export interface Member extends Entity {
   userId?: number | null;
   role: MemberRole | '';

@@ -13,6 +13,7 @@ import { DetailView } from '../public/components/views/detail';
 import { getAuthToken } from '../../../shared/api';
 import { useCurrentUser } from '../../user/hooks';
 import { AdmissionPanel } from '../public/components/admission-panel';
+import { LAB_BRAND } from '../../../shared/constants';
 import '../public/public.css';
 
 export function PublicWebsitePage() {
@@ -41,12 +42,14 @@ export function PublicWebsitePage() {
 }
 
 function PublicContent({ recordId }: { recordId?: string }) {
-  const { page, text, profile, locale } = useLab();
+  const { page, text, locale } = useLab();
   useEffect(() => {
     const previous = document.title;
-    document.title = [page ? text(page.title) : '', profile.name].filter(Boolean).join(' | ');
+    const title = page?.template === 'home' ? LAB_BRAND.slogan
+      : page?.template === 'about' ? text(page.navigationTitle) : page ? text(page.title) : '';
+    document.title = [title, LAB_BRAND.name].filter(Boolean).join(' | ');
     return () => { document.title = previous; };
-  }, [page, locale, profile.name, text]);
+  }, [page, locale, text]);
   if (!page) return <section className="section"><div className="container missing-record"><h1>{locale === 'vi' ? 'Trang chưa được xuất bản hoặc đã được ẩn.' : 'This page is unpublished or hidden.'}</h1></div></section>;
   if (recordId) {
     if (!['research', 'people', 'publications', 'projects', 'news'].includes(page.template)) return <Navigate to="/404" replace />;

@@ -6,6 +6,7 @@ import { BilingualField, BilingualList, ImageField, SelectField, TextField } fro
 import { BilingualRichTextField } from './BilingualRichTextField';
 import { ArticleSourceFields } from './ArticleSourceFields';
 import { MemberScholarEditor } from './MemberScholarEditor';
+import { memberRoleGroups } from '../member-roles';
 
 export type EditingRecord =
   | { collection: 'research'; record: ResearchArea }
@@ -64,11 +65,14 @@ export function RecordEditor({ value, data, onChange }: { value: EditingRecord; 
     case 'members': {
       const item = value.record;
       const update = (patch: Partial<Member>) => onChange({ ...value, record: { ...item, ...patch } });
-      const roles: [Member['role'], string][] = [['Faculty','Giảng viên'],['Researcher','Nhà nghiên cứu'],['PhD student','Nghiên cứu sinh'],['MSc student','Học viên cao học'],['Undergraduate','Sinh viên'],['Alumni','Cựu thành viên']];
+      const roles = memberRoleGroups.map(group => ({ value: group.role, label: group.label[locale] }));
+      if (item.role && !roles.some(option => option.value === item.role)) {
+        roles.push({ value: item.role, label: item.role });
+      }
       details = <>
         <ImageField label={l('Ảnh đại diện', 'Portrait')} value={item.image ?? ''} onChange={image => update({ image })} />
         <div className="grid gap-4 md:grid-cols-2">
-          <SelectField label={l('Vai trò học thuật', 'Academic role')} value={item.role} options={roles.map(([role, vi]) => ({ value: role, label: locale === 'vi' ? vi : role }))} onChange={role => update({ role: role as Member['role'] })} />
+          <SelectField label={l('Vai trò trong lab', 'Laboratory role')} value={item.role} options={roles} onChange={role => update({ role: role as Member['role'] })} />
           <SelectField label={l('Hướng nghiên cứu', 'Research direction')} value={item.area} options={options(data.research)} onChange={area => update({ area })} />
           <TextField label={l('Email công khai (có thể để trống)', 'Public email (optional)')} type="email" value={item.email} onChange={email => update({ email })} />
           <TextField label={l('Chữ viết tắt trên ảnh đại diện', 'Avatar initials')} value={item.initials} onChange={initials => update({ initials })} />

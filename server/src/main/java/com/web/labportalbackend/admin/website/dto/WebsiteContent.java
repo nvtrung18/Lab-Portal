@@ -96,7 +96,8 @@ public record WebsiteContent(
             @Schema(description = "Public display name") @NotNull @Valid LocalizedText title,
             @Schema(description = "Public biography") @NotNull @Valid LocalizedText description,
             @Schema(description = "Whether the public profile is visible; null means visible") Boolean visible,
-            @Schema(description = "Academic role; may be empty") @NotNull @Pattern(regexp = "^$|Faculty|Researcher|PhD student|MSc student|Undergraduate|Alumni") String role,
+            @Schema(description = "Laboratory membership role; empty and legacy academic roles are accepted", allowableValues = {"Steering Member", "Core Member", "PhD student", "MSc student", "Undergraduate", "Guest", "Faculty", "Researcher", "Alumni", ""})
+            @NotNull @Pattern(regexp = "^$|Steering Member|Core Member|PhD student|MSc student|Undergraduate|Guest|Faculty|Researcher|Alumni") String role,
             @Schema(description = "Letters displayed when there is no portrait") @NotNull @Size(max = 10) String initials,
             @Schema(description = "Related research direction identifier; may be empty") @NotNull @Size(max = 80) String area,
             @Schema(description = "Public email; may be empty") @NotNull @Email @Size(max = 254) String email,
