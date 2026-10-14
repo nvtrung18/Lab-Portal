@@ -20,7 +20,6 @@ import {
   NewsCard,
   PageHeading,
   EmptyState,
-  DemoNotice,
 } from "../shared";
 import { Select } from "../ui/select";
 import { Button } from "../ui/button";
@@ -37,14 +36,10 @@ export function ResearchView() {
           "Questions that connect us.",
           "Những câu hỏi kết nối chúng ta.",
         )}
-        description={l(
-          "Four complementary directions. One shared drive to understand and improve our world.",
-          "Bốn hướng nghiên cứu bổ trợ. Một động lực chung để hiểu và cải thiện thế giới.",
-        )}
+        description=""
       />
       <section className="section">
         <div className="container">
-          <DemoNotice />
           <div className="cards-grid two">
             {data.research.map((item, index) => (
               <ResearchCard key={item.id} item={item} index={index} />
@@ -220,14 +215,10 @@ export function PublicationsView() {
           "Knowledge, shared openly.",
           "Tri thức, được chia sẻ rộng mở.",
         )}
-        description={l(
-          "Explore our sample research library. Filter by year, format, contributor, or research direction.",
-          "Khám phá thư viện nghiên cứu mẫu. Lọc theo năm, loại, tác giả hoặc hướng nghiên cứu.",
-        )}
+        description=""
       />
       <section className="section">
         <div className="container">
-          <DemoNotice />
           <div className="filter-panel">
             <SearchInput
               value={query}
@@ -319,7 +310,7 @@ export function PublicationsView() {
   );
 }
 export function PublicationRow({ item }: { item: Publication }) {
-  const { locale, text, l, data, profile } = useLab();
+  const { locale, text, l, data } = useLab();
   return (
     <article className="publication-row">
       <span className="publication-year">{item.year}</span>
@@ -334,7 +325,6 @@ export function PublicationRow({ item }: { item: Publication }) {
               },
             )}
           </span>
-          {profile.showDemoNotice && <span className="sample-label">{l("Demo", "Mẫu")}</span>}
         </div>
         <Link href={`/${locale}/publications/${item.id}`}>
           <h3>
@@ -368,18 +358,18 @@ export function PublicationRow({ item }: { item: Publication }) {
   );
 }
 export function PublicationResources({ item }: { item: Publication }) {
-  const { l, text, data, locale, profile } = useLab();
+  const { l, text, data, locale } = useLab();
   const [resource, setResource] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [copyError, setCopyError] = useState(false);
-  const bibtex = `@${item.type === "Journal" ? "article" : item.type === "Book" ? "book" : item.type === "Conference" ? "inproceedings" : "misc"}{${profile.showDemoNotice ? "nexus_demo" : "publication"}_${item.id.replace(/-/g, "_")},\n  title = {${text(item.title)}},\n  author = {${item.authors
+  const bibtex = `@${item.type === "Journal" ? "article" : item.type === "Book" ? "book" : item.type === "Conference" ? "inproceedings" : "misc"}{publication_${item.id.replace(/-/g, "_")},\n  title = {${text(item.title)}},\n  author = {${item.authors
     .map((id) => {
       const member = data.members.find((m) => m.id === id);
       return member ? text(member.title) : id;
     })
     .join(
       " and ",
-    )}},\n  year = {${item.year ?? ""}}${profile.showDemoNotice ? ",\n  note = {FICTIONAL DEMONSTRATION RECORD - not a published work}" : ""}\n}`;
+    )}},\n  year = {${item.year ?? ""}}\n}`;
   async function copy() {
     try {
       await navigator.clipboard.writeText(bibtex);
@@ -427,12 +417,9 @@ export function PublicationResources({ item }: { item: Publication }) {
         title={
           resource === "BibTeX"
             ? l("Citation preview", "Xem trích dẫn")
-            : l(`${resource} · sample resource`, `${resource} · tài nguyên mẫu`)
+            : resource ?? ''
         }
-        description={profile.showDemoNotice ? l(
-          "This publication is fictional. No real DOI, paper, or code repository is associated with it.",
-          "Công bố này là giả định. Không có DOI, bài báo hay kho mã thực tế liên quan.",
-        ) : l('The link for this resource has not been supplied.', 'Liên kết tài nguyên này chưa được cập nhật.')}
+        description={resource === 'BibTeX' ? undefined : l('The link for this resource has not been supplied.', 'Liên kết tài nguyên này chưa được cập nhật.')}
       >
         {resource === "BibTeX" ? (
           <>
@@ -497,10 +484,7 @@ export function ProjectsView() {
       <PageHeading
         eyebrow={l("Projects", "Đề tài")}
         title={l("Ideas with a direction.", "Ý tưởng có định hướng.")}
-        description={l(
-          "Explore demonstration projects connecting foundational questions with practical research concepts.",
-          "Khám phá các dự án minh họa kết nối câu hỏi nền tảng với ý tưởng nghiên cứu thực tiễn.",
-        )}
+        description=""
       />
       <section className="section">
         <div className="container">
@@ -583,10 +567,7 @@ export function NewsView() {
           "A laboratory, always in motion.",
           "Phòng lab luôn chuyển động.",
         )}
-        description={l(
-          "Research conversations, new ideas, and moments from our illustrative community. All events are examples.",
-          "Trao đổi nghiên cứu, ý tưởng mới và khoảnh khắc từ cộng đồng minh họa. Mọi sự kiện đều là ví dụ.",
-        )}
+        description=""
       />
       <section className="section">
         <div className="container">
