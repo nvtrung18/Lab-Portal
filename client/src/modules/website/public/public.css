@@ -4025,15 +4025,13 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 0 12px;
+  width: 44px;
+  height: 44px;
+  padding: 0;
   border: 1px solid transparent;
   border-radius: var(--radius);
   background: transparent;
   color: var(--navy);
-  font-size: 12px;
-  font-weight: 600;
-  line-height: 1.4;
 }
 .lab-public .website-theme-toggle:hover {
   border-color: var(--line);
@@ -4112,5 +4110,4 @@ html.dark .lab-public :is(button, a, input, select, textarea):focus-visible {
 @media (max-width: 600px) {
   .lab-public .utility-inner { flex-wrap: wrap; gap: 4px 12px; }
   .lab-public .utility-preferences { margin-left: auto; }
-  .lab-public .website-theme-toggle { padding-inline: 8px; }
 }
