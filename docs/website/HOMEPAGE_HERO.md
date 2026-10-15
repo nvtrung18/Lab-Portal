@@ -1,5 +1,10 @@
 # Homepage Hero — nội dung quản trị qua CMS
 
+**Cập nhật Rich Text và Our Story:** xem [HERO_AND_OUR_STORY.md](HERO_AND_OUR_STORY.md).
+Mô tả Hero nay dùng editor đơn giản và trường `descriptionHtml` tùy chọn; `description`
+plain text cũ tiếp tục được giữ và dùng khi chưa có HTML. Các giới hạn và kết quả bên
+dưới mô tả lần triển khai Hero ban đầu.
+
 Kiểm tra ngày 15/10/2026 (giờ Việt Nam), trên commit nền `61b7eb7`. Đã đối chiếu implementation và các handover trong `docs/website/`. `PROJECT_CONTEXT_FOR_CHATGPT.md` không còn có trong checkout tại thời điểm bắt đầu nhiệm vụ này.
 
 Không commit, push, deploy, migrate hay ghi dữ liệu production. Các thao tác upload/save/publish bằng trình duyệt chỉ thực hiện với tài khoản giả và mock API tại localhost.

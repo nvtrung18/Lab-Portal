@@ -56,6 +56,7 @@
 .website-rich-content a { text-decoration: underline; text-underline-offset: 3px; }
 .website-rich-content img { max-width: 100%; height: auto; margin: 1.2em 0; border-radius: 5px; }
 .website-rich-content .ProseMirror-selectednode { outline: 2px solid var(--lab-brand-teal); }
+.website-rich-editor-intro .tiptap { min-height: 180px; }
 @media (max-width: 600px) {
   .website-rich-content .tiptap { padding: 16px; min-height: 240px; }
 }

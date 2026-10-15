@@ -6,6 +6,7 @@ import { Button, Modal } from '../../../shared/components';
 import { LAB_BRAND } from '../../../shared/constants';
 import { useI18n } from '../../../shared/i18n';
 import { BilingualField, ImageField } from './EditorFields';
+import { BilingualRichTextField } from './BilingualRichTextField';
 
 export function HeroEditor({ content, page, onChange, onPreview }: {
   content: WebsiteContent; page: WebsitePage; onChange: (content: WebsiteContent) => void;
@@ -20,6 +21,9 @@ export function HeroEditor({ content, page, onChange, onPreview }: {
   const previewPath = page.slug ? `/${encodeURIComponent(page.slug)}` : '';
   function validate() {
     if (!editing || uploading) return false;
+    if (Object.values(editing.descriptionHtml ?? {}).some(html => html.length > 200000)) {
+      setError(l('Mô tả có định dạng tối đa 200.000 ký tự HTML cho mỗi ngôn ngữ.', 'Formatted descriptions allow up to 200,000 HTML characters per language.')); return false;
+    }
     if ([editing.primaryCta.url.vi, editing.primaryCta.url.en, editing.secondaryCta.url.vi, editing.secondaryCta.url.en].some(url => url.length > 2000 || !isHeroUrl(url))) {
       setError(l('URL của nút phải là https://…, http://…, đường dẫn /… hoặc #mục; có thể để trống để ẩn nút.', 'Button URLs must use https://…, http://…, an internal /… path or #anchor; leave blank to hide a button.')); return false;
     }
@@ -42,7 +46,7 @@ export function HeroEditor({ content, page, onChange, onPreview }: {
         <fieldset disabled={uploading} className="min-w-0 space-y-6" aria-busy={uploading}>
           <BilingualField label={l('Tiêu đề chính', 'Main title')} value={editing.title} multiline maxLength={2000} onChange={title => update({ title })} />
           <BilingualField label={l('Dòng giới thiệu nhỏ', 'Eyebrow introduction')} value={editing.eyebrow} maxLength={2000} onChange={eyebrow => update({ eyebrow })} />
-          <BilingualField label={l('Đoạn mô tả', 'Description')} value={editing.description} multiline maxLength={20000} onChange={description => update({ description })} />
+          <BilingualRichTextField label={l('Đoạn mô tả', 'Description')} value={editing.descriptionHtml} paragraphs={[editing.description]} variant="intro" disabled={uploading} onChange={descriptionHtml => update({ descriptionHtml })} />
           <fieldset className="min-w-0 space-y-4 rounded-lg border border-slate-200 p-4 dark:border-slate-700"><legend className="px-2 font-semibold">{l('Nút CTA chính', 'Primary CTA')}</legend>
             <BilingualField label={l('Nội dung nút chính', 'Primary button label')} value={editing.primaryCta.label} maxLength={2000} onChange={label => update({ primaryCta: { ...editing.primaryCta, label } })} />
             <BilingualField label={l('URL nút chính', 'Primary button URL')} value={editing.primaryCta.url} maxLength={2000} onChange={url => update({ primaryCta: { ...editing.primaryCta, url } })} />

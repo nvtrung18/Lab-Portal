@@ -61,7 +61,7 @@ class WebsiteGalleryTest {
                 new WebsiteContent.RichTextContent("<p><strong>Original</strong></p>", "<p><a href=\"https://example.org\">Nội dung</a></p>"),
                 List.of(mapper.treeToValue(image(1), WebsiteContent.GalleryImage.class)), new WebsiteContent.ImageText("Cover", "Ảnh đại diện"), new WebsiteContent.ImageText("Caption", "Chú thích"));
         root.putArray("contentLibrary").add(mapper.valueToTree(section));
-        root.putArray("pages").add(mapper.valueToTree(new WebsiteContent.WebsitePage("products", "products", text, text, text, "products", true, true, List.of(), List.of(section.id()), null)));
+        root.putArray("pages").add(mapper.valueToTree(new WebsiteContent.WebsitePage("products", "products", text, text, text, "products", true, true, List.of(), List.of(section.id()), null, null)));
         return root;
     }
     WebsiteContent content(ObjectNode node) throws Exception { return mapper.treeToValue(node, WebsiteContent.class); }

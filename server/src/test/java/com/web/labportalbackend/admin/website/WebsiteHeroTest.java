@@ -53,10 +53,26 @@ class WebsiteHeroTest {
         var secondary = new WebsiteContent.HeroCta(new WebsiteContent.HeroText("Collaborate", "Liên hệ"), new WebsiteContent.HeroUrl("https://example.org/contact", "#contact"));
         return new WebsiteContent.WebsiteHero(title, new WebsiteContent.HeroText("Research group", "Nhóm nghiên cứu"),
                 new WebsiteContent.LocalizedText("English description\nSecond line", "Mô tả tiếng Việt\nDòng thứ hai"), primary, secondary,
-                "/api/uploads/website/new-background.png", new WebsiteContent.HeroText("Background", "Ảnh nền"), new WebsiteContent.HeroText("Discover together", "Cùng khám phá"));
+                "/api/uploads/website/new-background.png", new WebsiteContent.HeroText("Background", "Ảnh nền"), new WebsiteContent.HeroText("Discover together", "Cùng khám phá"), null);
     }
     ObjectNode configured() throws Exception {
         var node = legacy(); homepage(node).set("hero", mapper.valueToTree(hero())); return node;
+    }
+    ObjectNode about(ObjectNode node) {
+        for (var page : node.path("pages")) if (page.path("template").asText().equals("about")) return (ObjectNode) page;
+        throw new IllegalStateException("Missing About fixture");
+    }
+    ObjectNode richConfigured() throws Exception {
+        var node = configured();
+        var description = new WebsiteContent.IntroRichTextContent(
+                "<p><strong>Our story</strong> and <em>research</em><br>Next line</p><p><a href=\"/en/people\" target=\"_blank\" rel=\"noopener noreferrer\">Team</a></p>",
+                "<p><b>Câu chuyện</b> và <i>nghiên cứu</i><br>Dòng mới</p><p><a href=\"https://example.org/team\" title=\"Nhóm\">Đội ngũ</a></p>");
+        ((ObjectNode) homepage(node).path("hero")).set("descriptionHtml", mapper.valueToTree(description));
+        var story = new WebsiteContent.WebsiteOurStory(new WebsiteContent.HeroText("OUR STORY", "CÂU CHUYỆN"),
+                new WebsiteContent.HeroText("About title", "Tiêu đề Câu chuyện"),
+                new WebsiteContent.LocalizedText("Legacy story\nLiteral <b>text</b>", "Câu chuyện cũ\nDòng hai"),
+                new WebsiteContent.HeroText("Team", "Đội ngũ"), description);
+        about(node).set("ourStory", mapper.valueToTree(story)); return node;
     }
     WebsiteContent content(ObjectNode node) throws Exception { return mapper.treeToValue(node, WebsiteContent.class); }
     boolean valid(ObjectNode node) throws Exception {
@@ -141,6 +157,87 @@ class WebsiteHeroTest {
         var edited = content(configured());
         assertThrows(AccessDeniedException.class, () -> service.saveDraft(new WebsiteSaveRequest(0L, edited)));
         assertThrows(AccessDeniedException.class, () -> service.publish(new WebsiteSaveRequest(0L, edited)));
+        verify(repository, never()).save(any());
+    }
+    @Test void oldJsonWithPlainHeroAndNoStoryOrHtmlRetainsAllTextAndDoesNotPopulateDefaults() throws Exception {
+        var node = configured(); assertTrue(valid(node));
+        var content = content(node);
+        assertNull(content.pages().getFirst().hero().descriptionHtml());
+        assertNull(content.pages().get(1).ourStory());
+        assertEquals(hero().description(), content.pages().getFirst().hero().description());
+        homepage(node).withObject("hero").putNull("descriptionHtml"); about(node).putNull("ourStory");
+        assertEquals(content, content(node));
+    }
+    @Test void richHeroAndStoryRetainParagraphsFormattingAndLinksThroughJsonRoundTrip() throws Exception {
+        var node = richConfigured(); assertTrue(valid(node)); var content = content(node);
+        var restored = mapper.readValue(mapper.writeValueAsString(content), WebsiteContent.class);
+        assertEquals(content, restored);
+        assertEquals(hero().description(), restored.pages().getFirst().hero().description());
+        assertEquals("Legacy story\nLiteral <b>text</b>", restored.pages().get(1).ourStory().description().en());
+        assertTrue(restored.pages().getFirst().hero().descriptionHtml().vi().contains("<i>nghiên cứu</i>"));
+    }
+    @Test void unsafeOrLayoutChangingHtmlIsRejectedForBothDescriptionsAndLanguages() throws Exception {
+        for (String target : List.of("hero", "ourStory")) for (String language : List.of("vi", "en")) {
+            for (String bad : List.of("<script>alert(1)</script>", "<p onclick=\"alert(1)\">Text</p>",
+                    "<img src=\"/x.png\" onerror=\"alert(1)\">", "<svg onload=\"alert(1)\"></svg>",
+                    "<a href=\"javascript:alert(1)\">Bad</a>", "<a href=\"java&#x73;cript:alert(1)\">Bad</a>",
+                    "<a href=\"//example.org\">Bad</a>", "<a href=\"data:text/html,x\">Bad</a>",
+                    "<p style=\"color:red\">Styled</p>", "<h2>Heading</h2>", "<iframe src=\"/x\"></iframe>")) {
+                var node = richConfigured(); var page = target.equals("hero") ? homepage(node) : about(node);
+                ((ObjectNode) page.path(target).path("descriptionHtml")).put(language, bad);
+                assertFalse(valid(node), target + ":" + language + ":" + bad);
+            }
+        }
+    }
+    @Test void richDescriptionLanguageAndSizeValidationAndExplicitEmptyContent() throws Exception {
+        for (String target : List.of("hero", "ourStory")) {
+            var node = richConfigured(); var page = target.equals("hero") ? homepage(node) : about(node);
+            var html = (ObjectNode) page.path(target).path("descriptionHtml");
+            html.put("vi", ""); html.put("en", ""); assertTrue(valid(node));
+            html.put("en", "x".repeat(200001)); assertFalse(valid(node));
+            html.remove("en"); assertFalse(valid(node));
+        }
+        var node = richConfigured(); var story = (ObjectNode) about(node).path("ourStory");
+        ((ObjectNode) story.path("title")).put("vi", "x".repeat(2001)); assertFalse(valid(node));
+        ((ObjectNode) story.path("title")).put("vi", ""); ((ObjectNode) story.path("ctaLabel")).put("vi", ""); assertTrue(valid(node));
+        story.remove("eyebrow"); assertFalse(valid(node));
+    }
+    @Test void storyAlsoSupportsPlainTextWithoutRichFieldAndIntentionalNull() throws Exception {
+        var node = richConfigured(); ((ObjectNode) about(node).path("ourStory")).remove("descriptionHtml");
+        assertTrue(valid(node)); var plain = content(node).pages().get(1).ourStory(); assertNull(plain.descriptionHtml());
+        ((ObjectNode) about(node).path("ourStory")).putNull("descriptionHtml");
+        assertEquals(plain, content(node).pages().get(1).ourStory());
+    }
+    @Test void independentEditsSurviveDraftPublishConflictAndReload() throws Exception {
+        admin(); var old = content(richConfigured()); var node = richConfigured();
+        ((ObjectNode) homepage(node).path("hero").path("descriptionHtml")).put("vi", "<p>Only Hero changed</p>");
+        var heroEdited = content(node);
+        var row = row(new WebsiteState(3, old, old, Instant.now()));
+        when(repository.findByConfigKeyForUpdate("PUBLIC_WEBSITE_CONTENT")).thenReturn(Optional.of(row));
+        var draft = service.saveDraft(new WebsiteSaveRequest(3L, heroEdited));
+        assertEquals(old, draft.published()); assertEquals(old.pages().get(1).ourStory(), draft.draft().pages().get(1).ourStory());
+        ((ObjectNode) about(node).path("ourStory").path("descriptionHtml")).put("en", "<p>Only Story changed</p>");
+        var bothEdited = content(node);
+        assertThrows(WebsiteRevisionConflictException.class, () -> service.publish(new WebsiteSaveRequest(3L, bothEdited)));
+        var published = service.publish(new WebsiteSaveRequest(4L, bothEdited));
+        assertEquals(heroEdited.pages().getFirst().hero(), published.published().pages().getFirst().hero());
+        assertEquals(old.data(), published.published().data()); assertEquals(old.copy(), published.published().copy());
+        assertEquals(old.pages().get(1).sections(), published.published().pages().get(1).sections());
+        assertEquals(published, mapper.readValue(row.getConfigValueJson(), WebsiteState.class));
+    }
+    @Test void richPublicProjectionKeepsBothConfigsAndNeverChangesSavedDraftOrLibrary() throws Exception {
+        var content = content(richConfigured()); var row = row(new WebsiteState(1, content, content, Instant.now())); var before = row.getConfigValueJson();
+        when(repository.findByConfigKeyAndDeletedFalse("PUBLIC_WEBSITE_CONTENT")).thenReturn(Optional.of(row));
+        when(scholar.overlay(anyList())).thenAnswer(call -> call.getArgument(0));
+        var published = service.getPublished().content();
+        assertEquals(content.pages().getFirst().hero(), published.pages().getFirst().hero());
+        assertEquals(content.pages().get(1).ourStory(), published.pages().get(1).ourStory());
+        assertNull(published.contentLibrary()); assertEquals(before, row.getConfigValueJson()); verify(repository, never()).save(any());
+    }
+    @Test void storyOnOtherTemplateIsRejectedWithoutWritingAndNonAdminCannotPublishIt() throws Exception {
+        var node = richConfigured(); assertThrows(AccessDeniedException.class, () -> service.publish(new WebsiteSaveRequest(0L, content(node))));
+        admin(); homepage(node).set("ourStory", about(node).path("ourStory"));
+        assertThrows(IllegalArgumentException.class, () -> service.saveDraft(new WebsiteSaveRequest(0L, content(node))));
         verify(repository, never()).save(any());
     }
 }

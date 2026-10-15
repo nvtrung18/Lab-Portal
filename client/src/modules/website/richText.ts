@@ -1,14 +1,16 @@
 import DOMPurify from 'dompurify';
-import type { LocalizedText } from '../../../../contracts/website-content';
 import { websiteAssetUrl } from './api';
+export { paragraphsToHtml } from '../../../../contracts/website-rich-text';
 
 const tags = ['p', 'br', 'h2', 'h3', 'strong', 'b', 'em', 'i', 'u', 's', 'ul', 'ol', 'li', 'blockquote', 'a', 'img'];
 const attributes = ['href', 'target', 'rel', 'title', 'src', 'alt', 'start'];
 export const isWebsiteLink = (value: string) => /^(https?:\/\/[^\s]+|\/(?!\/)[^\s]*|#[^\s]*)$/.test(value);
 export const isWebsiteImage = (value: string) => /^(https?:\/\/[^\s]+|\/(?!\/)[^\s]*)$/.test(value);
 
-export function sanitizeWebsiteHtml(value: string, resolveImages = false): string {
-  const cleaned = DOMPurify.sanitize(value, { ALLOWED_TAGS: tags, ALLOWED_ATTR: attributes,
+export function sanitizeWebsiteHtml(value: string, resolveImages = false, variant: 'article' | 'intro' = 'article'): string {
+  const cleaned = DOMPurify.sanitize(value, {
+    ALLOWED_TAGS: variant === 'intro' ? ['p', 'br', 'strong', 'b', 'em', 'i', 'a'] : tags,
+    ALLOWED_ATTR: variant === 'intro' ? ['href', 'target', 'rel', 'title'] : attributes,
     ALLOW_DATA_ATTR: false, ALLOW_ARIA_ATTR: false });
   const template = document.createElement('template');
   template.innerHTML = cleaned;
@@ -23,11 +25,4 @@ export function sanitizeWebsiteHtml(value: string, resolveImages = false): strin
     if (resolveImages) img.setAttribute('src', websiteAssetUrl(src));
   });
   return template.innerHTML;
-}
-
-export function paragraphsToHtml(paragraphs: LocalizedText[]): LocalizedText {
-  const escape = (value: string) => value.replace(/&/g, '&amp;').replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/\r?\n/g, '<br>');
-  const convert = (locale: keyof LocalizedText) => paragraphs.map(item => `<p>${escape(item[locale])}</p>`).join('');
-  return { vi: convert('vi'), en: convert('en') };
 }

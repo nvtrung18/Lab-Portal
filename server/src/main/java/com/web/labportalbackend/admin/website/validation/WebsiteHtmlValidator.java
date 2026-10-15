@@ -21,13 +21,24 @@ public class WebsiteHtmlValidator implements ConstraintValidator<SafeWebsiteHtml
             .addProtocols("a", "href", "http", "https", "#")
             .addProtocols("img", "src", "http", "https")
             .preserveRelativeLinks(true);
+    private static final Safelist PROSE = Safelist.none()
+            .addTags("p", "br", "strong", "b", "em", "i", "a")
+            .addAttributes("a", "href", "target", "rel", "title")
+            .addProtocols("a", "href", "http", "https", "#")
+            .preserveRelativeLinks(true);
+    private Safelist allowed = ALLOWED;
+
+    @Override
+    public void initialize(SafeWebsiteHtml constraint) {
+        allowed = constraint.proseOnly() ? PROSE : ALLOWED;
+    }
 
     @Override
     public boolean isValid(String value, ConstraintValidatorContext context) {
         if (value == null) return true;
         if (value.length() > 200000) return false;
         Document document = Jsoup.parseBodyFragment(value, "https://website.invalid/");
-        if (!new Cleaner(ALLOWED).isValid(document)) return false;
+        if (!new Cleaner(allowed).isValid(document)) return false;
         return document.select("a[href]").stream().allMatch(link -> LINK_URL.matcher(link.attr("href")).matches())
                 && document.select("img").stream().allMatch(image -> !image.attr("src").isEmpty()
                     && IMAGE_URL.matcher(image.attr("src")).matches())

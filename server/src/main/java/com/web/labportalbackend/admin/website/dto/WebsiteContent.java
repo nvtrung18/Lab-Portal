@@ -36,7 +36,8 @@ public record WebsiteContent(
             @Schema(description = "Legacy or resolved editorial sections in display order") @NotNull @Size(max = 100) List<@NotNull @Valid WebsiteSection> sections,
             @Schema(description = "Selected library identifiers in display order; null uses legacy sections")
             @Size(max = 100) List<@NotBlank @Pattern(regexp = "[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}") String> sectionIds,
-            @Schema(description = "Homepage hero; null retains the existing brand defaults") @Valid WebsiteHero hero
+            @Schema(description = "Homepage hero; null retains the existing brand defaults") @Valid WebsiteHero hero,
+            @Schema(description = "About Our Story; null retains the existing independent brand defaults") @Valid WebsiteOurStory ourStory
     ) {}
 
     public record HeroText(
@@ -59,7 +60,21 @@ public record WebsiteContent(
             @NotNull @Valid HeroCta secondaryCta,
             @NotNull @Size(max = 2000) @Pattern(regexp = ASSET_URL) String backgroundImage,
             @NotNull @Valid HeroText backgroundAlt,
-            @NotNull @Valid HeroText footerText
+            @NotNull @Valid HeroText footerText,
+            @Schema(description = "Optional formatted description; null uses legacy plain text, empty clears it") @Valid IntroRichTextContent descriptionHtml
+    ) {}
+
+    public record WebsiteOurStory(
+            @NotNull @Valid HeroText eyebrow,
+            @NotNull @Valid HeroText title,
+            @NotNull @Valid LocalizedText description,
+            @NotNull @Valid HeroText ctaLabel,
+            @Schema(description = "Optional formatted introduction; null uses plain description, empty clears it") @Valid IntroRichTextContent descriptionHtml
+    ) {}
+
+    public record IntroRichTextContent(
+            @NotNull @Size(max = 200000) @SafeWebsiteHtml(proseOnly = true) String en,
+            @NotNull @Size(max = 200000) @SafeWebsiteHtml(proseOnly = true) String vi
     ) {}
 
     public record WebsiteSection(

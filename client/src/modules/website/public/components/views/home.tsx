@@ -9,6 +9,7 @@ import { useLab } from "../lab-provider";
 import { Button } from "../ui/button";
 import { DynamicSections } from '../dynamic-sections';
 import { LAB_BRAND } from '../../../../../shared/constants';
+import { IntroTextBody } from '../intro-text-body';
 import {
   SectionHeading,
   ResearchCard,
@@ -41,9 +42,7 @@ export function HomeView() {
           <h1>
             {text(hero.title)}
           </h1>
-          <p>
-            {text(hero.description)}
-          </p>
+          <IntroTextBody html={hero.descriptionHtml} plain={hero.description} />
           <div className="hero-buttons">
             {(legacyHero || text(hero.primaryCta.label).trim()) && text(hero.primaryCta.url) && <Button asChild variant="light">
               <Link href={text(hero.primaryCta.url)} resolveTemplate={false}>
