@@ -9,6 +9,7 @@ import { PageHeading } from '../public/components/shared';
 import { HomeView } from '../public/components/views/home';
 import { AboutView, ContactView } from '../public/components/views/information';
 import { NewsView, PeopleView, ProjectsView, PublicationsView, ResearchView } from '../public/components/views/explore';
+import { ProductsView } from '../public/components/views/products';
 import { DetailView } from '../public/components/views/detail';
 import { getAuthToken } from '../../../shared/api';
 import { useCurrentUser } from '../../user/hooks';
@@ -62,6 +63,7 @@ function PublicContent({ recordId }: { recordId?: string }) {
     case 'people': return <PeopleView />;
     case 'publications': return <PublicationsView />;
     case 'projects': return <ProjectsView />;
+    case 'products': return <ProductsView />;
     case 'news': return <NewsView />;
     case 'join': return null;
     case 'contact': return <ContactView />;

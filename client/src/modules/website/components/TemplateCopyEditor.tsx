@@ -7,7 +7,7 @@ import { BilingualField, inputClass } from './EditorFields';
 const groups = [
   ['home', 'Trang chủ', 'Home'], ['about', 'Giới thiệu', 'About'], ['research', 'Nghiên cứu', 'Research'],
   ['people', 'Thành viên', 'People'], ['publications', 'Publications', 'Publications'],
-  ['projects', 'Đề tài', 'Research projects'], ['news', 'Tin tức', 'News'], ['join', 'Tham gia', 'Join'],
+  ['projects', 'Đề tài', 'Research projects'], ['products', 'Sản phẩm', 'Products'], ['news', 'Tin tức', 'News'], ['join', 'Tham gia', 'Join'],
   ['contact', 'Liên hệ', 'Contact'], ['general', 'Nội dung chung', 'General'], ['detail', 'Trang chi tiết', 'Detail pages'],
 ];
 export function TemplateCopyEditor({ content, onChange }: { content: WebsiteContent; onChange: (content: WebsiteContent) => void }) {

@@ -30,7 +30,7 @@ public record WebsiteContent(
             @Schema(description = "Editable page heading") @NotNull @Valid LocalizedText title,
             @Schema(description = "Page introduction") @NotNull @Valid LocalizedText description,
             @Schema(description = "Navigation label; empty uses the page heading") @NotNull @Valid LocalizedText navigationTitle,
-            @Schema(description = "Template body or custom editorial content") @NotNull @Pattern(regexp = "home|about|research|people|publications|projects|news|join|contact|custom") String template,
+            @Schema(description = "Template body or custom editorial content") @NotNull @Pattern(regexp = "home|about|research|people|publications|projects|products|news|join|contact|custom") String template,
             @Schema(description = "Whether the page is public; null means visible") Boolean visible,
             @Schema(description = "Whether the page appears in the main menu") boolean showInNavigation,
             @Schema(description = "Legacy or resolved editorial sections in display order") @NotNull @Size(max = 100) List<@NotNull @Valid WebsiteSection> sections,

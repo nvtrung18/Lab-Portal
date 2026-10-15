@@ -196,7 +196,7 @@ export function SiteFooter() {
           </div>
           <div>
             <h3>{l("Explore", "Khám phá")}</h3>
-            {pages.filter(page => page.showInNavigation && page.slug !== '' && (text(page.navigationTitle) || text(page.title))).slice(0, 4).map(page => (
+            {pages.filter(page => page.showInNavigation && page.slug !== '' && (text(page.navigationTitle) || text(page.title))).map(page => (
               <Link href={`/${locale}/${page.slug}`} key={page.id} resolveTemplate={false}>
                 {text(page.navigationTitle) || text(page.title)}
               </Link>

@@ -104,3 +104,12 @@ app:
   auth:
     google:
       client-id: ${GOOGLE_CLIENT_ID:}
+
+# Backend-only Scholar provider configuration; snapshots never rewrite CMS state.
+website:
+  scholar:
+    enabled: ${SCHOLAR_SYNC_ENABLED:false}
+    api-key: ${SCHOLAR_SERPAPI_API_KEY:}
+    max-pages: ${SCHOLAR_SYNC_MAX_PAGES:100}
+    request-timeout-seconds: ${SCHOLAR_SYNC_TIMEOUT_SECONDS:30}
+    max-snapshot-bytes: ${SCHOLAR_SYNC_MAX_SNAPSHOT_BYTES:8000000}

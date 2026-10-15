@@ -11,6 +11,22 @@ export interface WebsiteMemberSource {
   status: 'ACTIVE' | 'PENDING_VERIFICATION' | 'INACTIVE' | 'SUSPENDED';
 }
 
+export interface ScholarSyncMemberStatus {
+  memberId: string; authorId: string; status: string;
+  lastAttemptAt: string | null; lastSuccessAt: string | null; nextAttemptAt: string | null;
+  sourceUpdatedAt: string | null; publicationCount: number; error: string | null;
+  errors: { at: string; code: string }[];
+}
+export interface ScholarSyncStatus { configured: boolean; enabled: boolean; members: ScholarSyncMemberStatus[] }
+
+export async function getScholarSyncStatus(): Promise<ScholarSyncStatus> {
+  const response = await apiClient.get<Response<ScholarSyncStatus>>('/api/admin/website/scholar-sync');
+  return response.data.data;
+}
+export async function syncScholarNow(authorId: string): Promise<void> {
+  await apiClient.post(`/api/admin/website/scholar-sync/${encodeURIComponent(authorId)}`);
+}
+
 export async function getWebsiteMemberSources(): Promise<WebsiteMemberSource[]> {
   const response = await apiClient.get<Response<WebsiteMemberSource[]>>('/api/admin/website/member-sources');
   return response.data.data;

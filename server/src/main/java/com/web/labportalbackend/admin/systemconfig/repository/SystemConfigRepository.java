@@ -9,11 +9,15 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
+import java.util.Collection;
+import java.util.List;
 
 @Repository
 public interface SystemConfigRepository extends JpaRepository<SystemConfigEntity, Long> {
 
     Optional<SystemConfigEntity> findByConfigKeyAndDeletedFalse(String configKey);
+
+    List<SystemConfigEntity> findByConfigKeyInAndDeletedFalse(Collection<String> configKeys);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT config FROM SystemConfigEntity config WHERE config.configKey = :configKey AND config.deleted = false")

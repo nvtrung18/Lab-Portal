@@ -10,7 +10,8 @@
     "dev:user": "npm run dev",
     "build": "tsc --noEmit -p tsconfig.json && vite build",
     "preview": "vite preview",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "test:website": "node --experimental-strip-types --test tests/website.test.ts"
   },
   "dependencies": {
     "@fontsource/inter": "^5.2.8",

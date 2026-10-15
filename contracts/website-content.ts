@@ -110,7 +110,7 @@ export interface WebsiteContent {
   pages?: WebsitePage[];
   contentLibrary?: WebsiteSection[] | null;
 }
-export type PageTemplate = 'home' | 'about' | 'research' | 'people' | 'publications' | 'projects' | 'news' | 'join' | 'contact' | 'custom';
+export type PageTemplate = 'home' | 'about' | 'research' | 'people' | 'publications' | 'projects' | 'products' | 'news' | 'join' | 'contact' | 'custom';
 export interface WebsiteSection extends Entity {
   eyebrow: LocalizedText;
   body: LocalizedText[];

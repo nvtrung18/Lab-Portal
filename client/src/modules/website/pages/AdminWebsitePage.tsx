@@ -10,6 +10,7 @@ import { getWebsiteMemberSources, getWebsiteState, saveWebsite } from '../api';
 import { getLabs } from '../../lab/api';
 import { demoContent, scholarMembers, withPages, withScholarMembers } from '../content';
 import { inputClass } from '../components/EditorFields';
+import { ScholarSyncPanel } from '../components/ScholarSyncPanel';
 import { PageContentEditor } from '../components/PageContentEditor';
 import { createMemberFromUser, createResearchFromLab, createRecord, putRecord, RecordEditor, type EditingRecord } from '../components/RecordEditor';
 import { MemberSourcePicker } from '../components/MemberSourcePicker';
@@ -152,6 +153,7 @@ export function AdminWebsitePage() {
       </nav>
       <fieldset disabled={!query.data || query.isLoading || mutation.isPending} className="min-w-0 rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900 sm:p-6">
         {section === 'copy' && <PageContentEditor content={content} onChange={setContent} onPreview={(draft, path) => { setPreviewContent(draft); setPreviewPath(`/${locale}${path}`); setPreview(true); }} />}
+        {activeCollection === 'members' && <ScholarSyncPanel members={content.data.members} />}
         {activeCollection && <>
           <div className="mb-5 flex flex-wrap items-center justify-between gap-3"><input aria-label={l('Tìm bản ghi', 'Find records')} type="search" className={`${inputClass} max-w-sm`} placeholder={l('Tìm theo tiêu đề hoặc tên…', 'Search titles or names…')} value={search} onChange={e => setSearch(e.target.value)} /><Button size="sm" onClick={() => addRecord(activeCollection)}><Plus size={16} />{activeCollection === 'members' ? l('Thêm từ người dùng', 'Add from users') : activeCollection === 'research' ? l('Thêm từ nhóm nghiên cứu', 'Add from research groups') : l('Thêm mới', 'Add record')}</Button></div>
           {activeCollection === 'members' && <p className="mb-4 text-sm text-slate-500">{l('Chọn người dùng rồi chỉnh hồ sơ hiển thị riêng cho từng người. Tích Hiển thị, xem trước và xuất bản để đưa lên website.', 'Select users and edit each public profile separately. Check Show, preview and publish to display them on the website.')}</p>}

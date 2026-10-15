@@ -4160,3 +4160,6 @@ html.dark .lab-public :is(button, a, input, select, textarea):focus-visible {
   .lab-public .utility-inner { flex-wrap: wrap; gap: 4px 12px; }
   .lab-public .utility-preferences { margin-left: auto; }
 }
+
+.lab-public .scholar-sort-button { display: inline-flex; align-items: center; gap: .35rem; min-height: 44px; color: inherit; font: inherit; cursor: pointer; white-space: nowrap; }
+.lab-public .scholar-sort-button:focus-visible { outline: 2px solid var(--app-focus-indicator-color); outline-offset: 3px; }

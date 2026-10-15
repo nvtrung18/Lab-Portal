@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { WebsiteContent } from '../../../../../contracts/website-content';
 import { useI18n } from '../../../shared/i18n';
 import { withPages } from '../content';
+import { ProductSectionsTransfer } from './ProductSectionsTransfer';
 import { ContentLibraryEditor } from './ContentLibraryEditor';
 
 export function PageContentEditor({ content, onChange, onPreview }: { content: WebsiteContent; onChange: (content: WebsiteContent) => void; onPreview: (content: WebsiteContent, path: string) => void }) {
@@ -29,6 +30,7 @@ export function PageContentEditor({ content, onChange, onPreview }: { content: W
           <p className="text-xs text-slate-500">{l('Đang cấu hình nội dung cho tab', 'Configuring content in')}</p>
           <h3 className="mt-1 text-lg font-semibold">{selected.navigationTitle[locale] || selected.navigationTitle[otherLocale] || selected.title[locale]}</h3>
         </div>
+        {selected.template === 'products' && <ProductSectionsTransfer content={editable} onChange={onChange} />}
         <ContentLibraryEditor content={editable} page={selected} onChange={onChange} onPreview={onPreview} />
       </div> : <p className="py-10 text-sm text-slate-500">{l('Chưa có tab website được cấu hình.', 'No website tabs are configured.')}</p>}
     </div>

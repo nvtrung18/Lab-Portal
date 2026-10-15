@@ -1,4 +1,6 @@
-import { ArrowUpRight, BookOpen } from 'lucide-react';
+import { useState } from 'react';
+import { defaultScholarSort, sortScholarPublications, toggleScholarSort } from '../../../../../../contracts/scholar-sort';
+import { ArrowUpRight, ArrowDown, ArrowUp, ArrowUpDown, BookOpen } from 'lucide-react';
 import type { ScholarProfile } from '../../../../../../contracts/website-content';
 import { formatPublicDate } from '../lib/utils';
 import { useLab } from './lab-provider';
@@ -6,6 +8,8 @@ import Link from './site-link';
 
 export function ScholarProfileDetails({ profile }: { profile: ScholarProfile }) {
   const { text, l, locale } = useLab();
+  const [sort, setSort] = useState(defaultScholarSort);
+  const publications = sortScholarPublications(profile.publications, sort);
   const metrics = profile.metrics;
   const rows = metrics ? [
     [l('Citations', 'Trích dẫn'), metrics.citations, metrics.recentCitations],
@@ -54,20 +58,27 @@ export function ScholarProfileDetails({ profile }: { profile: ScholarProfile }) 
     </div>
     {profile.publications.length > 0 && <section className="scholar-publications">
       <div className="section-heading">
-        <h2><BookOpen size={22} aria-hidden="true" />{l('Selected publications', 'Bài viết từ Google Scholar')}</h2>
+        <h2><BookOpen size={22} aria-hidden="true" />{l('Publications from Google Scholar', 'Bài viết từ Google Scholar')}</h2>
         <Link href={profile.url} className="text-link" target="_blank" rel="noopener noreferrer">
           {l('View all on Scholar', 'Xem đầy đủ trên Scholar')} <ArrowUpRight size={16} aria-hidden="true" />
         </Link>
       </div>
-      <p className="scholar-source-note">{l('Selected articles from this profile. Author and venue text follows the source and may be abbreviated.', 'Một số bài viết trong hồ sơ. Tên tác giả và nơi công bố giữ theo nguồn, có thể được viết rút gọn.')}</p>
+      <p className="scholar-source-note">{l('Articles stored from this Scholar profile. Author and venue text follows the source and may be abbreviated.', 'Bài viết đã lưu từ hồ sơ Scholar. Tên tác giả và nơi công bố giữ theo nguồn, có thể được viết rút gọn.')}</p>
       <div className="scholar-table-wrap" role="region" aria-label={l('Selected publication list', 'Danh sách bài viết')} tabIndex={0}>
         <table>
           <thead><tr>
             <th scope="col">{l('Title / authors / venue', 'Tiêu đề / tác giả / nơi công bố')}</th>
-            <th scope="col">{l('Citations', 'Trích dẫn')}</th>
-            <th scope="col">{l('Year', 'Năm')}</th>
+            {(['citations', 'year'] as const).map(column => {
+              const active = sort.column === column;
+              const Icon = active ? sort.direction === 'descending' ? ArrowDown : ArrowUp : ArrowUpDown;
+              return <th key={column} scope="col" aria-sort={active ? sort.direction : 'none'}>
+                <button type="button" className="scholar-sort-button" onClick={() => setSort(current => toggleScholarSort(current, column))}>
+                  {column === 'year' ? l('Year', 'Năm') : l('Citations', 'Trích dẫn')}<Icon size={14} aria-hidden="true" />
+                </button>
+              </th>;
+            })}
           </tr></thead>
-          <tbody>{profile.publications.map((publication, index) => <tr key={`${publication.url}-${index}`}>
+          <tbody>{publications.map((publication, index) => <tr key={`${publication.url}-${index}`}>
             <td>
               <Link href={publication.url} target="_blank" rel="noopener noreferrer">{publication.title}<ArrowUpRight size={14} aria-hidden="true" /></Link>
               {publication.authors && <p>{publication.authors}</p>}

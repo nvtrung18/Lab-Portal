@@ -8,6 +8,7 @@ import com.web.labportalbackend.admin.audit.service.AuditLogService;
 import com.web.labportalbackend.admin.systemconfig.entity.SystemConfigEntity;
 import com.web.labportalbackend.admin.systemconfig.repository.SystemConfigRepository;
 import com.web.labportalbackend.admin.website.dto.*;
+import com.web.labportalbackend.admin.website.scholar.ScholarSnapshotStore;
 import com.web.labportalbackend.admin.website.service.WebsiteContentService;
 import com.web.labportalbackend.auth.entity.User;
 import com.web.labportalbackend.auth.repository.UserRepository;
@@ -37,6 +38,7 @@ public class WebsiteContentServiceImpl implements WebsiteContentService {
     private final UserRepository userRepository;
     private final LaboratoryRepository laboratoryRepository;
     private final AuditLogService auditLogService;
+    private final ScholarSnapshotStore scholarSnapshots;
 
     @Override
     @Transactional(readOnly = true)
@@ -98,7 +100,7 @@ public class WebsiteContentServiceImpl implements WebsiteContentService {
                 data.research().stream().filter(item -> !Boolean.FALSE.equals(item.visible()))
                         .map(item -> new WebsiteContent.ResearchArea(item.id(), item.title(), item.description(),
                                 item.visible(), item.image(), item.icon(), item.topics(), null)).toList(),
-                data.members().stream().filter(item -> !Boolean.FALSE.equals(item.visible()))
+                scholarSnapshots.overlay(data.members()).stream().filter(item -> !Boolean.FALSE.equals(item.visible()))
                         .map(item -> new WebsiteContent.Member(item.id(), item.title(), item.description(),
                                 item.visible(), item.role(), item.initials(), item.area(), item.email(),
                                 item.color(), item.image(), null, item.scholarProfile())).toList(),

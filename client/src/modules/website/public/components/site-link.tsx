@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { forwardRef, type ComponentProps } from 'react';
 import { useLab } from './lab-provider';
 
-const templates = new Set(['about', 'research', 'people', 'publications', 'projects', 'news', 'join', 'contact']);
+const templates = new Set(['about', 'research', 'people', 'publications', 'projects', 'products', 'news', 'join', 'contact']);
 const SiteLink = forwardRef<HTMLAnchorElement, Omit<ComponentProps<'a'>, 'href'> & { href: string; resolveTemplate?: boolean }>(function SiteLink({ href, resolveTemplate = true, ...props }, ref) {
   const { preview, pages, page: currentPage } = useLab();
   if (href.startsWith('/')) {
