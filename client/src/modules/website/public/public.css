@@ -460,6 +460,11 @@
 }
 .lab-public .hero-alela :is(h1, p, .hero-eyebrow, .hero-bottom > span) { overflow-wrap: anywhere; min-width: 0; }
 .lab-public .hero-alela .hero-buttons > * { min-width: 0; overflow-wrap: anywhere; white-space: normal; }
+.lab-public .website-intro-prose { min-width: 0; overflow-wrap: anywhere; }
+.lab-public .website-intro-prose p { white-space: pre-line; }
+.lab-public .website-intro-prose p + p { margin-top: 1em; }
+.lab-public .website-intro-prose a { text-decoration: underline; text-underline-offset: 3px; }
+.lab-public .hero .website-intro-prose a:focus-visible { outline-color: currentColor; }
 .lab-public .hero-buttons {
   display: flex;
   align-items: center;

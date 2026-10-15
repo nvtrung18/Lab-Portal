@@ -113,7 +113,7 @@ public class WebsiteContentServiceImpl implements WebsiteContentService {
                 .filter(page -> !Boolean.FALSE.equals(page.visible()))
                 .map(page -> new WebsiteContent.WebsitePage(page.id(), page.slug(), page.title(), page.description(),
                         page.navigationTitle(), page.template(), page.visible(), page.showInNavigation(),
-                        publishedSections(page, library), null, page.hero()))
+                        publishedSections(page, library), null, page.hero(), page.ourStory()))
                 .toList();
         return new PublishedWebsiteContent(new WebsiteContent(content.profile(), visible, content.copy(), content.media(), pages, null), state.publishedAt());
     }
@@ -179,6 +179,9 @@ public class WebsiteContentServiceImpl implements WebsiteContentService {
             for (WebsiteContent.WebsitePage page : content.pages()) {
                 if (page.hero() != null && !"home".equals(page.template())) {
                     throw new IllegalArgumentException("Hero configuration is only supported on the homepage.");
+                }
+                if (page.ourStory() != null && !"about".equals(page.template())) {
+                    throw new IllegalArgumentException("Our Story configuration is only supported on About.");
                 }
                 uniqueIds(page.sections().stream().map(WebsiteContent.WebsiteSection::id).toList());
                 if (page.sectionIds() != null) {

@@ -12,6 +12,7 @@ import java.lang.annotation.Target;
 @Target({ElementType.FIELD, ElementType.PARAMETER, ElementType.RECORD_COMPONENT})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface SafeWebsiteHtml {
+    boolean proseOnly() default false;
     String message() default "Website article contains unsupported HTML or an invalid image/link URL.";
     Class<?>[] groups() default {};
     Class<? extends Payload>[] payload() default {};

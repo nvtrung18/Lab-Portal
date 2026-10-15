@@ -3,9 +3,10 @@ import { ArrowUpRight, Mail } from "lucide-react";
 import { useLab } from "../lab-provider";
 import { PageHeading } from "../shared";
 import { LAB_BRAND } from '../../../../../shared/constants';
+import { IntroTextBody } from '../intro-text-body';
 
 export function AboutView() {
-  const { l, locale } = useLab();
+  const { l, locale, text, aboutStory: story, page } = useLab();
   return (
     <>
       <PageHeading
@@ -20,14 +21,14 @@ export function AboutView() {
             <div>
               <span className="eyebrow">
                 <span />
-                {l("OUR STORY", "CÂU CHUYỆN")}
+                {text(story.eyebrow)}
               </span>
-              <h2>{LAB_BRAND.name}</h2>
-              <p>{LAB_BRAND.introduction[locale]}</p>
-              <Link href={`/${locale}/people`} className="text-link">
-                {l("Meet the ALELA team", "Gặp gỡ đội ngũ ALELA")}
+              <h2>{text(story.title)}</h2>
+              <IntroTextBody html={story.descriptionHtml} plain={story.description} />
+              {(page?.ourStory == null || text(story.ctaLabel).trim()) && <Link href={`/${locale}/people`} className="text-link">
+                {text(story.ctaLabel)}
                 <ArrowUpRight size={17} />
-              </Link>
+              </Link>}
             </div>
           </div>
         </div>

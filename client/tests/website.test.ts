@@ -11,6 +11,8 @@ import { appendGalleryImages, articleImages, MAX_GALLERY_IMAGES, MAX_WEBSITE_IMA
 import type { GalleryImage } from '../../contracts/website-content.ts';
 import { defaultHomeHero, isHeroUrl, resolveHomeHero, withHomeHero } from '../../contracts/website-hero.ts';
 import { LAB_BRAND } from '../src/shared/constants/lab-brand.ts';
+import { defaultAboutStory, resolveAboutStory, withAboutStory } from '../../contracts/website-story.ts';
+import { paragraphsToHtml } from '../../contracts/website-rich-text.ts';
 
 const seed = JSON.parse(readFileSync(new URL('../../contracts/website-demo-content.json', import.meta.url), 'utf8')).content as WebsiteContent;
 const templates = seed.pages as WebsitePage[];
@@ -23,6 +25,68 @@ const section: WebsiteSection = {
 const paper = (title: string, year: number | null, citations: number | null): ScholarPublication => ({ title, year, citations, authors: '', venue: '', url: 'https://example.org/' + title });
 
 const galleryImage = (id: string): GalleryImage => ({ id, src: `/api/uploads/website/${id}.png`, alt: { vi: `Ảnh ${id}`, en: `Image ${id}` }, caption: { vi: `Chú thích ${id}`, en: `Caption ${id}` } });
+test('Missing/null Our Story exactly matches the previous independent About defaults and copy overrides', () => {
+  const fallback = defaultAboutStory(LAB_BRAND);
+  assert.deepEqual(resolveAboutStory(undefined, LAB_BRAND), fallback);
+  assert.deepEqual(resolveAboutStory(null, LAB_BRAND), fallback);
+  assert.deepEqual(fallback.description, LAB_BRAND.introduction);
+  assert.deepEqual(fallback.title, { vi: LAB_BRAND.name, en: LAB_BRAND.name });
+  const overridden = defaultAboutStory(LAB_BRAND, { 'OUR STORY': { vi: 'Chuyện đã biên tập', en: '' }, 'Meet the ALELA team': { vi: 'Đội ngũ', en: 'Team' } });
+  assert.equal(overridden.eyebrow.en, ''); assert.equal(overridden.eyebrow.vi, 'Chuyện đã biên tập');
+  assert.equal(overridden.ctaLabel.vi, 'Đội ngũ');
+});
+test('Plain descriptions enter the rich editor as escaped literal text with all VI/EN line breaks intact', () => {
+  const plain = { vi: 'A & B\n<b>không phải HTML</b>\r\n"trích dẫn"', en: "<script>alert('text')</script>\nNext line" };
+  assert.deepEqual(paragraphsToHtml([plain]), {
+    vi: '<p>A &amp; B<br>&lt;b&gt;không phải HTML&lt;/b&gt;<br>&quot;trích dẫn&quot;</p>',
+    en: '<p>&lt;script&gt;alert(&#39;text&#39;)&lt;/script&gt;<br>Next line</p>',
+  });
+  assert.deepEqual(paragraphsToHtml([{ vi: '', en: '' }]), { vi: '<p></p>', en: '<p></p>' });
+});
+test('Editing Our Story and Hero independently preserves each other, all sections and unrelated collections', () => {
+  const input = normalizeWebsitePages(structuredClone(seed), templates);
+  const before = structuredClone(input);
+  const about = input.pages.find(page => page.template === 'about')!;
+  const home = input.pages.find(page => page.template === 'home')!;
+  const story = defaultAboutStory(LAB_BRAND);
+  story.descriptionHtml = { vi: '<p><strong>Câu chuyện</strong></p><p><em>Nghiên cứu</em><br>Tiếp tục <a href="/vi/people">đội ngũ</a></p>', en: '<p><strong>Our story</strong></p><p><em>Research</em><br>Next <a href="https://example.org">Team</a></p>' };
+  const withStory = withAboutStory(input, about.id, story);
+  const hero = defaultHomeHero(LAB_BRAND);
+  hero.descriptionHtml = { vi: '<p>Hero <strong>VI</strong></p>', en: '<p>Hero <em>EN</em></p>' };
+  const result = withHomeHero(withStory, home.id, hero);
+  assert.deepEqual(result.pages!.find(page => page.id === about.id), { ...about, ourStory: story });
+  assert.deepEqual(result.pages!.find(page => page.id === home.id), { ...home, hero });
+  const updatedStory = { ...story, title: { vi: 'Mới', en: 'New' } };
+  const changed = withAboutStory(result, about.id, updatedStory);
+  assert.deepEqual(changed.pages!.find(page => page.id === home.id)!.hero, hero);
+  assert.deepEqual(changed.data, input.data); assert.deepEqual(changed.copy, input.copy);
+  assert.deepEqual(changed.contentLibrary, input.contentLibrary);
+  assert.deepEqual(input, before);
+  story.title.vi = 'Unsaved mutation'; assert.notEqual(result.pages!.find(page => page.id === about.id)!.ourStory!.title.vi, story.title.vi);
+  assert.throws(() => withAboutStory(input, home.id, story), /ABOUT_PAGE_REQUIRED/);
+});
+test('Our Story rich HTML survives legacy normalization, preview/save JSON and public projection without changing plain text', () => {
+  const input = normalizeWebsitePages(structuredClone(seed), templates);
+  const about = input.pages.find(page => page.template === 'about')!;
+  const story = defaultAboutStory(LAB_BRAND);
+  story.descriptionHtml = { vi: '<p><strong>VI</strong><br><em>Dòng mới</em></p><p><a href="#team">Nhóm</a></p>', en: '<p><strong>EN</strong></p><p><a href="/en/people">Team</a></p>' };
+  const saved = normalizeWebsitePages(JSON.parse(JSON.stringify(withAboutStory(input, about.id, story))), templates);
+  const projected = { ...saved, contentLibrary: undefined, pages: saved.pages.map(page => ({ ...page, sectionIds: undefined })) };
+  assert.deepEqual(normalizeWebsitePages(projected, templates).pages.find(page => page.id === about.id)!.ourStory, story);
+  assert.deepEqual(story.description, LAB_BRAND.introduction);
+  assert.equal(input.pages.find(page => page.id === about.id)!.ourStory, undefined);
+});
+test('Explicitly cleared rich content and one edited language do not restore defaults or overwrite the other language', () => {
+  const story = defaultAboutStory(LAB_BRAND);
+  story.descriptionHtml = { vi: '', en: '<p>English only</p>' };
+  story.ctaLabel.vi = '';
+  const resolved = resolveAboutStory(story, LAB_BRAND);
+  assert.equal(resolved.descriptionHtml!.vi, ''); assert.equal(resolved.ctaLabel.vi, '');
+  assert.equal(resolved.descriptionHtml!.en, '<p>English only</p>');
+  resolved.descriptionHtml!.en = 'Unsaved'; assert.equal(story.descriptionHtml.en, '<p>English only</p>');
+  const hero = defaultHomeHero(LAB_BRAND); hero.descriptionHtml = { vi: '', en: '<p>Hero</p>' };
+  assert.deepEqual(resolveHomeHero(hero, LAB_BRAND).descriptionHtml, hero.descriptionHtml);
+});
 test('Absent/null Hero uses the exact existing ALELA brand, Earth image and bilingual CTA defaults', () => {
   const fallback = defaultHomeHero(LAB_BRAND);
   assert.deepEqual(resolveHomeHero(undefined, LAB_BRAND), fallback);

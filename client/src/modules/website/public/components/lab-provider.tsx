@@ -1,7 +1,8 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { useLocation, useSearchParams } from 'react-router-dom';
-import type { LabData, Locale, LocalizedText, SiteProfile, WebsiteContent, WebsitePage, WebsiteHero } from '../lib/types';
+import type { LabData, Locale, LocalizedText, SiteProfile, WebsiteContent, WebsitePage, WebsiteHero, WebsiteOurStory } from '../lib/types';
 import { resolveHomeHero } from '../../../../../../contracts/website-hero';
+import { resolveAboutStory } from '../../../../../../contracts/website-story';
 import { LAB_BRAND } from '../../../../shared/constants';
 import { withPages } from '../../content';
 import { memberRoleGroups } from '../../member-roles';
@@ -10,6 +11,7 @@ interface LabContext {
   preview: boolean; loadError: boolean;
   pages: WebsitePage[]; page: WebsitePage | undefined;
   homeHero: WebsiteHero;
+  aboutStory: WebsiteOurStory;
   text: (value: LocalizedText) => string;
   l: (en: string, vi: string) => string;
 }
@@ -56,6 +58,7 @@ export function LabProvider({ locale, initialContent, loadError, children }: {
       email: content.profile.email.endsWith('.example') ? '' : content.profile.email,
     }, media: content.media, preview, loadError, pages, page,
     homeHero: resolveHomeHero(pages.find(item => item.template === 'home')?.hero, LAB_BRAND, content.copy, pages),
+    aboutStory: resolveAboutStory(page?.ourStory, LAB_BRAND, content.copy),
     text: value => value[locale],
     l: (en, vi) => content.copy[en]?.[locale] ?? (locale === 'vi' ? vi ?? '' : en),
   }}>{children}</Context.Provider>;

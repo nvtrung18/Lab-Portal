@@ -126,11 +126,20 @@ export interface WebsiteHero {
   title: LocalizedText;
   eyebrow: LocalizedText;
   description: LocalizedText;
+  /** Optional sanitized prose. Missing/null renders the original plain description. */
+  descriptionHtml?: LocalizedText | null;
   primaryCta: HeroCta;
   secondaryCta: HeroCta;
   backgroundImage: string;
   backgroundAlt: LocalizedText;
   footerText: LocalizedText;
+}
+export interface WebsiteOurStory {
+  eyebrow: LocalizedText;
+  title: LocalizedText;
+  description: LocalizedText;
+  descriptionHtml?: LocalizedText | null;
+  ctaLabel: LocalizedText;
 }
 export interface WebsiteSection extends Entity, ArticleImages {
   eyebrow: LocalizedText;
@@ -149,6 +158,8 @@ export interface WebsitePage extends Entity {
   sectionIds?: string[] | null;
   /** Homepage only. Omitted/null keeps the existing brand and copy defaults. */
   hero?: WebsiteHero | null;
+  /** About only. Missing/null keeps the existing Our Story, independently of Hero. */
+  ourStory?: WebsiteOurStory | null;
 }
 export interface WebsiteState {
   revision: number;

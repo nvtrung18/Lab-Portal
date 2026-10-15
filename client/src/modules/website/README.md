@@ -1,5 +1,11 @@
 # Website giới thiệu và quản trị nội dung
 
+Hero Homepage và phần **Câu chuyện / Our Story** hiện có thể biên tập riêng tại
+**Nội dung các tab → Trang chủ / Giới thiệu**. Cả hai dùng chung Rich Text Editor
+đơn giản cho mô tả VI/EN (đậm, nghiêng, đoạn văn, xuống dòng, liên kết), giữ dữ liệu
+plain text cũ làm fallback. Xem `docs/website/HERO_AND_OUR_STORY.md` về schema,
+quy trình preview/nháp/xuất bản, giới hạn HTML và kết quả kiểm thử.
+
 Website đã được ghép vào frontend React/TypeScript/Vite hiện tại trong `client`.
 Giao diện, font Manrope và ảnh được chuyển từ `Research_Lab.zip`. Website và
 Admin, Manager, User dùng chung nhận diện thiết kế; bố cục website vẫn nằm trong
