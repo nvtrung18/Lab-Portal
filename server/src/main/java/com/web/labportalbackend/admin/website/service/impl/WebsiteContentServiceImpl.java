@@ -113,7 +113,7 @@ public class WebsiteContentServiceImpl implements WebsiteContentService {
                 .filter(page -> !Boolean.FALSE.equals(page.visible()))
                 .map(page -> new WebsiteContent.WebsitePage(page.id(), page.slug(), page.title(), page.description(),
                         page.navigationTitle(), page.template(), page.visible(), page.showInNavigation(),
-                        publishedSections(page, library), null))
+                        publishedSections(page, library), null, page.hero()))
                 .toList();
         return new PublishedWebsiteContent(new WebsiteContent(content.profile(), visible, content.copy(), content.media(), pages, null), state.publishedAt());
     }
@@ -177,6 +177,9 @@ public class WebsiteContentServiceImpl implements WebsiteContentService {
             if (new HashSet<>(slugs).size() != slugs.size()) throw new IllegalArgumentException("Website page URL segments must be unique.");
             if (slugs.contains("admin")) throw new IllegalArgumentException("The admin URL segment is reserved.");
             for (WebsiteContent.WebsitePage page : content.pages()) {
+                if (page.hero() != null && !"home".equals(page.template())) {
+                    throw new IllegalArgumentException("Hero configuration is only supported on the homepage.");
+                }
                 uniqueIds(page.sections().stream().map(WebsiteContent.WebsiteSection::id).toList());
                 if (page.sectionIds() != null) {
                     uniqueIds(page.sectionIds());

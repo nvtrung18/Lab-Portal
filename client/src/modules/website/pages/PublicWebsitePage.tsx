@@ -43,14 +43,14 @@ export function PublicWebsitePage() {
 }
 
 function PublicContent({ recordId }: { recordId?: string }) {
-  const { page, text, locale } = useLab();
+  const { page, text, locale, homeHero } = useLab();
   useEffect(() => {
     const previous = document.title;
-    const title = page?.template === 'home' ? LAB_BRAND.slogan
+    const title = page?.template === 'home' ? text(homeHero.title)
       : page?.template === 'about' ? text(page.navigationTitle) : page ? text(page.title) : '';
     document.title = [title, LAB_BRAND.name].filter(Boolean).join(' | ');
     return () => { document.title = previous; };
-  }, [page, locale, text]);
+  }, [page, locale, text, homeHero]);
   if (!page) return <section className="section"><div className="container missing-record"><h1>{locale === 'vi' ? 'Trang chưa được xuất bản hoặc đã được ẩn.' : 'This page is unpublished or hidden.'}</h1></div></section>;
   if (recordId) {
     if (!['research', 'people', 'publications', 'projects', 'news'].includes(page.template)) return <Navigate to="/404" replace />;

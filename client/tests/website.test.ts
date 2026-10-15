@@ -9,6 +9,8 @@ import type { ScholarPublication, WebsiteContent, WebsitePage, WebsiteSection } 
 import { memberRoleGroups, matchesMemberRole } from '../src/modules/website/member-roles.ts';
 import { appendGalleryImages, articleImages, MAX_GALLERY_IMAGES, MAX_WEBSITE_IMAGE_BYTES, moveGalleryImage, promoteGalleryImage, validWebsiteImageFile } from '../../contracts/website-gallery.ts';
 import type { GalleryImage } from '../../contracts/website-content.ts';
+import { defaultHomeHero, isHeroUrl, resolveHomeHero, withHomeHero } from '../../contracts/website-hero.ts';
+import { LAB_BRAND } from '../src/shared/constants/lab-brand.ts';
 
 const seed = JSON.parse(readFileSync(new URL('../../contracts/website-demo-content.json', import.meta.url), 'utf8')).content as WebsiteContent;
 const templates = seed.pages as WebsitePage[];
@@ -21,6 +23,73 @@ const section: WebsiteSection = {
 const paper = (title: string, year: number | null, citations: number | null): ScholarPublication => ({ title, year, citations, authors: '', venue: '', url: 'https://example.org/' + title });
 
 const galleryImage = (id: string): GalleryImage => ({ id, src: `/api/uploads/website/${id}.png`, alt: { vi: `Ảnh ${id}`, en: `Image ${id}` }, caption: { vi: `Chú thích ${id}`, en: `Caption ${id}` } });
+test('Absent/null Hero uses the exact existing ALELA brand, Earth image and bilingual CTA defaults', () => {
+  const fallback = defaultHomeHero(LAB_BRAND);
+  assert.deepEqual(resolveHomeHero(undefined, LAB_BRAND), fallback);
+  assert.deepEqual(resolveHomeHero(null, LAB_BRAND), fallback);
+  assert.equal(fallback.title.vi, LAB_BRAND.slogan);
+  assert.equal(fallback.title.en, LAB_BRAND.slogan);
+  assert.equal(fallback.eyebrow.vi, LAB_BRAND.name);
+  assert.deepEqual(fallback.description, LAB_BRAND.introduction);
+  assert.equal(fallback.backgroundImage, '/images/earth.jpg');
+  assert.deepEqual(fallback.primaryCta.url, { vi: '/vi/research', en: '/en/research' });
+  assert.deepEqual(fallback.secondaryCta.url, { vi: '/vi/about', en: '/en/about' });
+});
+test('Legacy Hero fallback keeps copy overrides (including intentional blanks), media source and renamed routes', () => {
+  const content = normalizeWebsitePages(structuredClone(seed), templates);
+  content.copy['Explore our research'] = { vi: 'Nút đã biên tập', en: '' };
+  content.copy['Earth at night viewed from orbit'] = { vi: 'Ảnh cũ', en: 'Old image' };
+  content.pages.find(page => page.template === 'research')!.slug = 'custom-research';
+  const before = structuredClone(content);
+  const fallback = defaultHomeHero(LAB_BRAND, content.copy, content.pages);
+  assert.deepEqual(fallback.primaryCta.label, { vi: 'Nút đã biên tập', en: '' });
+  assert.deepEqual(fallback.primaryCta.url, { vi: '/vi/custom-research', en: '/en/custom-research' });
+  assert.equal(fallback.backgroundAlt.vi, 'Ảnh cũ');
+  assert.equal(fallback.backgroundImage, '/images/earth.jpg');
+  assert.deepEqual(content, before);
+});
+test('Applying a Hero changes only the selected Homepage and preserves CMS sections/gallery/copy', () => {
+  const content = normalizeWebsitePages(structuredClone(seed), templates);
+  content.contentLibrary.push({ ...structuredClone(section), gallery: [galleryImage('retained')] });
+  const before = structuredClone(content);
+  const hero = defaultHomeHero(LAB_BRAND);
+  hero.title = { vi: 'Tiêu đề VI', en: 'English title' };
+  hero.primaryCta.url = { vi: '#research', en: 'https://example.org/english' };
+  const home = content.pages.find(page => page.template === 'home')!;
+  const updated = withHomeHero(content, home.id, hero);
+  assert.deepEqual(updated.pages!.find(page => page.id === home.id), { ...home, hero });
+  assert.deepEqual(updated.pages!.filter(page => page.id !== home.id), content.pages.filter(page => page.id !== home.id));
+  assert.deepEqual(updated.contentLibrary, content.contentLibrary); assert.deepEqual(updated.data, content.data);
+  assert.deepEqual(content, before);
+  assert.throws(() => withHomeHero(content, content.pages.find(page => page.template === 'news')!.id, hero), /HOMEPAGE_REQUIRED/);
+});
+test('Configured Hero preserves explicit empty text, independent language URLs and background clearing', () => {
+  const hero = defaultHomeHero(LAB_BRAND);
+  hero.title.vi = '';
+  hero.primaryCta.label.vi = ''; hero.primaryCta.url.vi = '';
+  hero.backgroundImage = '';
+  assert.deepEqual(resolveHomeHero(hero, LAB_BRAND), hero);
+  const resolved = resolveHomeHero(hero, LAB_BRAND);
+  resolved.title.en = 'Unsaved edit';
+  assert.equal(hero.title.en, LAB_BRAND.slogan);
+});
+test('Hero survives normalized legacy headings, save/preview JSON and public sections-only round-trip', () => {
+  const input = normalizeWebsitePages(structuredClone(seed), templates);
+  const home = input.pages.find(page => page.template === 'home')!;
+  const hero = defaultHomeHero(LAB_BRAND);
+  hero.backgroundImage = '/api/uploads/website/hero.png';
+  hero.primaryCta.url = { vi: '/vi/products?from=hero#intro', en: 'https://example.org/products' };
+  const updated = withHomeHero(input, home.id, hero);
+  const saved = normalizeWebsitePages(JSON.parse(JSON.stringify(updated)), templates);
+  assert.deepEqual(saved.pages.find(page => page.id === home.id)!.hero, hero);
+  const projected = { ...saved, contentLibrary: undefined, pages: saved.pages.map(page => ({ ...page, sectionIds: undefined })) };
+  assert.deepEqual(normalizeWebsitePages(projected, templates).pages.find(page => page.id === home.id)!.hero, hero);
+  assert.equal(input.pages.find(page => page.id === home.id)!.hero, undefined);
+});
+test('Hero CTA policy supports localized paths, anchors and HTTP(S), rejects executable/protocol-relative URLs', () => {
+  for (const value of ['', '/vi/products?from=hero#demo', '/en/research', '#research', 'https://example.org/a', 'http://example.org']) assert.equal(isHeroUrl(value), true, value);
+  for (const value of ['javascript:alert(1)', '//example.org', 'data:text/html,x', 'file:///etc/passwd', 'products', 'https://example.org/a b']) assert.equal(isHeroUrl(value), false, value);
+});
 test('Gallery reads 0/1/many images and absent/null legacy fields without modifying the cover', () => {
   assert.deepEqual(articleImages({ image: '' }), []);
   const legacy = { image: '/images/legacy.jpg' };

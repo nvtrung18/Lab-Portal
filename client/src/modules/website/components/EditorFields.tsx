@@ -1,4 +1,4 @@
-import { useId, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { Upload } from 'lucide-react';
 import { useI18n } from '../../../shared/i18n';
 import type { LocalizedText } from '../../../../../contracts/website-content';
@@ -48,19 +48,27 @@ export function BilingualList({ label, value, onChange }: {
     <button type="button" className="min-h-11 text-sm font-semibold underline" onClick={() => onChange([...value, { vi: '', en: '' }])}>{l('Thêm mục', 'Add item')}</button>
   </fieldset>;
 }
-export function ImageField({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
+export function ImageField({ label, value, onChange, onBusyChange }: { label: string; value: string; onChange: (value: string) => void; onBusyChange?: (busy: boolean) => void }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const callbacks = useRef({ onChange, onBusyChange });
+  callbacks.current = { onChange, onBusyChange };
+  const mounted = useRef(true);
+  const uploading = useRef(false);
+  useEffect(() => {
+    mounted.current = true;
+    return () => { mounted.current = false; callbacks.current.onBusyChange?.(false); };
+  }, []);
   const { locale } = useI18n();
   const l = (vi: string, en: string) => locale === 'vi' ? vi : en;
   const src = websiteAssetUrl(value);
   async function upload(file?: File) {
-    if (!file) return;
+    if (!file || uploading.current) return;
     if (file.size > 5 * 1024 * 1024) { setError(l('Ảnh không được vượt quá 5 MB.', 'Images must not exceed 5 MB.')); return; }
-    setBusy(true); setError('');
-    try { onChange(await uploadWebsiteImage(file)); }
-    catch { setError(l('Không tải được ảnh. Vui lòng thử lại.', 'Image upload failed. Please try again.')); }
-    finally { setBusy(false); }
+    uploading.current = true; setBusy(true); setError(''); callbacks.current.onBusyChange?.(true);
+    try { const url = await uploadWebsiteImage(file); if (mounted.current) callbacks.current.onChange(url); }
+    catch { if (mounted.current) setError(l('Không tải được ảnh. Vui lòng thử lại.', 'Image upload failed. Please try again.')); }
+    finally { uploading.current = false; if (mounted.current) { setBusy(false); callbacks.current.onBusyChange?.(false); } }
   }
   return <div className="space-y-3">
     <TextField label={label} value={value} onChange={onChange} />

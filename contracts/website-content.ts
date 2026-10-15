@@ -121,6 +121,17 @@ export interface WebsiteContent {
   contentLibrary?: WebsiteSection[] | null;
 }
 export type PageTemplate = 'home' | 'about' | 'research' | 'people' | 'publications' | 'projects' | 'products' | 'news' | 'join' | 'contact' | 'custom';
+export interface HeroCta { label: LocalizedText; url: LocalizedText }
+export interface WebsiteHero {
+  title: LocalizedText;
+  eyebrow: LocalizedText;
+  description: LocalizedText;
+  primaryCta: HeroCta;
+  secondaryCta: HeroCta;
+  backgroundImage: string;
+  backgroundAlt: LocalizedText;
+  footerText: LocalizedText;
+}
 export interface WebsiteSection extends Entity, ArticleImages {
   eyebrow: LocalizedText;
   body: LocalizedText[];
@@ -136,6 +147,8 @@ export interface WebsitePage extends Entity {
   showInNavigation: boolean;
   sections: WebsiteSection[];
   sectionIds?: string[] | null;
+  /** Homepage only. Omitted/null keeps the existing brand and copy defaults. */
+  hero?: WebsiteHero | null;
 }
 export interface WebsiteState {
   revision: number;

@@ -35,7 +35,31 @@ public record WebsiteContent(
             @Schema(description = "Whether the page appears in the main menu") boolean showInNavigation,
             @Schema(description = "Legacy or resolved editorial sections in display order") @NotNull @Size(max = 100) List<@NotNull @Valid WebsiteSection> sections,
             @Schema(description = "Selected library identifiers in display order; null uses legacy sections")
-            @Size(max = 100) List<@NotBlank @Pattern(regexp = "[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}") String> sectionIds
+            @Size(max = 100) List<@NotBlank @Pattern(regexp = "[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}") String> sectionIds,
+            @Schema(description = "Homepage hero; null retains the existing brand defaults") @Valid WebsiteHero hero
+    ) {}
+
+    public record HeroText(
+            @NotNull @Size(max = 2000) String en,
+            @NotNull @Size(max = 2000) String vi
+    ) {}
+
+    public record HeroUrl(
+            @NotNull @Size(max = 2000) @Pattern(regexp = PAGE_LINK_URL) String en,
+            @NotNull @Size(max = 2000) @Pattern(regexp = PAGE_LINK_URL) String vi
+    ) {}
+
+    public record HeroCta(@NotNull @Valid HeroText label, @NotNull @Valid HeroUrl url) {}
+
+    public record WebsiteHero(
+            @NotNull @Valid HeroText title,
+            @NotNull @Valid HeroText eyebrow,
+            @NotNull @Valid LocalizedText description,
+            @NotNull @Valid HeroCta primaryCta,
+            @NotNull @Valid HeroCta secondaryCta,
+            @NotNull @Size(max = 2000) @Pattern(regexp = ASSET_URL) String backgroundImage,
+            @NotNull @Valid HeroText backgroundAlt,
+            @NotNull @Valid HeroText footerText
     ) {}
 
     public record WebsiteSection(

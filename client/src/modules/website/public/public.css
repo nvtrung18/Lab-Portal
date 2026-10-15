@@ -458,6 +458,8 @@
 .lab-public .hero.hero-alela p {
   max-width: 780px;
 }
+.lab-public .hero-alela :is(h1, p, .hero-eyebrow, .hero-bottom > span) { overflow-wrap: anywhere; min-width: 0; }
+.lab-public .hero-alela .hero-buttons > * { min-width: 0; overflow-wrap: anywhere; white-space: normal; }
 .lab-public .hero-buttons {
   display: flex;
   align-items: center;
@@ -1045,7 +1047,7 @@
 .lab-public .site-footer {
   background: #0d2738;
   color: #c0ced7;
-  padding-top: 57px;
+  padding-top: 24px;
 }
 .lab-public .brand-light {
   color: white;
@@ -1059,66 +1061,102 @@
 }
 .lab-public .footer-top {
   display: grid;
-  grid-template-columns: 1.4fr 0.7fr 0.7fr 1.1fr;
-  gap: 55px;
-  padding-bottom: 48px;
+  grid-template-columns: 1.2fr 1.35fr 0.85fr 1fr;
+  align-items: start;
+  gap: 28px;
+  padding-bottom: 20px;
 }
-.lab-public .footer-top > div:first-child > p {
-  font-size: 10px;
-  line-height: 1.9;
+.lab-public .footer-top > div {
+  min-width: 0;
+}
+.lab-public .footer-brand > a {
+  display: inline-flex;
+}
+.lab-public .site-footer .brand-logo {
+  width: 112px;
+  height: auto;
+  padding: 4px;
+  object-fit: contain;
+}
+.lab-public .footer-brand > p {
+  font-size: 12px;
+  line-height: 1.6;
   white-space: pre-line;
-  margin-top: 10px;
-  color: #8fa5b4;
+  margin-top: 4px;
+  color: #a9bdca;
 }
 .lab-public .footer-lab-name {
   display: block;
-  margin-top: 20px;
+  max-width: 30ch;
+  margin-top: 8px;
   font-size: 13px;
-  line-height: 1.6;
+  line-height: 20px;
   color: #edf4f8;
 }
 .lab-public .footer-top h3 {
-  font-size: 11px;
+  font-size: 14px;
+  line-height: 20px;
   font-weight: 600;
   letter-spacing: 0;
   color: #edf4f8;
-  margin-bottom: 18px;
+  margin-bottom: 8px;
 }
-.lab-public .footer-top > div > a:not(:first-child) {
-  display: block;
-  font-size: 10px;
-  color: #99afbf;
-  margin-bottom: 10px;
+.lab-public .footer-links {
+  display: grid;
+}
+.lab-public .footer-explore-links {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 16px;
+}
+.lab-public .footer-links a {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  padding-block: 4px;
+  font-size: 13px;
+  line-height: 20px;
+  color: #b2c5d2;
+  overflow-wrap: anywhere;
+}
+.lab-public .site-footer a:hover {
+  color: #fff;
+}
+.lab-public .site-footer a:focus-visible {
+  outline-color: #c0ced7;
 }
 .lab-public .footer-contact > a {
-  display: flex !important;
+  display: flex;
   align-items: center;
   justify-content: space-between;
-  color: white !important;
-  font-size: 12px !important;
+  gap: 8px;
+  color: white;
+  font-size: 13px;
+  line-height: 20px;
   border-bottom: 1px solid #63829344;
-  padding-bottom: 13px;
+  padding-block: 4px 8px;
+  overflow-wrap: anywhere;
 }
-.lab-public .footer-contact > p {
-  font-size: 9px;
-  margin-top: 13px;
-  color: #96acba;
+.lab-public .footer-contact > a > svg {
+  flex-shrink: 0;
 }
 .lab-public .footer-bottom {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 20px;
-  padding-block: 20px;
+  gap: 8px 20px;
+  padding-block: 10px;
   border-top: 1px solid #6f8e9d25;
-  font-size: 8px;
-  color: #8199a9;
+  font-size: 12px;
+  line-height: 20px;
+  color: #a9bdca;
 }
 .lab-public .footer-bottom a {
   display: flex;
   align-items: center;
-  gap: 10px;
-  color: #abc0cc;
+  gap: 8px;
+  flex-shrink: 0;
+  min-height: 24px;
+  color: #b2c5d2;
 }
 .lab-public .page-heading {
   background: var(--heading-background);

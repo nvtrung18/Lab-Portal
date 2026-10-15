@@ -37,8 +37,8 @@ class WebsiteProductsTest {
         var t = new WebsiteContent.LocalizedText("Products","Sản phẩm");
         var html = new WebsiteContent.RichTextContent("<p><strong>Product</strong></p>","<p><a href=\"https://example.org\">Sản phẩm</a><img src=\"/api/uploads/website/a.png\" alt=\"Ảnh\"></p>");
         var section = new WebsiteContent.WebsiteSection("product",t,t,t,List.of(),"/api/uploads/website/a.png","split",t,"https://example.org",true,html,null,null,null);
-        var product = new WebsiteContent.WebsitePage("products","products",t,t,t,"products",true,true,List.of(section),List.of("product"));
-        var news = new WebsiteContent.WebsitePage("news","news",t,t,t,"news",true,true,List.of(),List.of());
+        var product = new WebsiteContent.WebsitePage("products","products",t,t,t,"products",true,true,List.of(section),List.of("product"),null);
+        var news = new WebsiteContent.WebsitePage("news","news",t,t,t,"news",true,true,List.of(),List.of(),null);
         return new WebsiteContent(original.profile(),original.data(),original.copy(),original.media(),List.of(product,news),List.of(section));
     }
     Path fixturePath() { return java.util.stream.Stream.of(Path.of("../contracts/website-demo-content.json"),Path.of("contracts/website-demo-content.json")).filter(Files::exists).findFirst().orElseThrow(); }

@@ -271,6 +271,15 @@ trùng trong cùng tab. Giới hạn: 100 mục được chọn/tab, 5000 mục 
 Endpoint công khai trả các `sections` đã resolve, không trả thư viện hay `sectionIds` riêng.
 
 Các API ADMIN hiện có tiếp tục sử dụng `/api/admin/website`, `/draft`, `/publish`, `/images`.
+
+Trong **Nội dung các tab → Trang chủ → Chỉnh sửa Hero / Banner giới thiệu**, ADMIN
+có thể sửa tiêu đề, dòng giới thiệu nhỏ, mô tả, nhãn/URL của hai CTA, alt ảnh nền và
+dòng chữ cuối Hero theo VI/EN; thay ảnh nền qua upload hiện có. **Xem trước Hero**
+bao gồm cả thay đổi chưa Áp dụng, có thể chuyển VI/EN trong iframe. **Áp dụng Hero
+vào bản nháp → Lưu nháp → Xuất bản** mới thay đổi nội dung lưu/công khai tương ứng.
+Nếu page Homepage chưa có `hero` hoặc giá trị là null, giữ đúng Hero mặc định trước
+đây; không tự ghi cấu hình mặc định vào CMS. Xem `docs/website/HOMEPAGE_HERO.md`.
+
 Ảnh PNG/JPEG/WebP tối đa 5 MB lưu ở `uploads/website`; frontend dùng origin API hiện tại
 để đọc ảnh. Ảnh/font mẫu nằm trong `client/public/lab-website`, gồm giấy phép font OFL.
 

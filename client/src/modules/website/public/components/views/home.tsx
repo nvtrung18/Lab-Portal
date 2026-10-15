@@ -18,53 +18,48 @@ import {
   MemberCard,
 } from "../shared";
 export function HomeView() {
-  const { locale, l, data } = useLab();
+  const { locale, l, data, text, page, homeHero: hero } = useLab();
+  const legacyHero = page?.hero == null;
   return (
     <>
       <section className="hero hero-alela">
-        <Image
-          src="/images/earth.jpg"
-          alt={l(
-            "Earth at night viewed from orbit",
-            "Trái Đất về đêm nhìn từ quỹ đạo",
-          )}
+        {hero.backgroundImage && <Image
+          src={hero.backgroundImage}
+          alt={text(hero.backgroundAlt)}
           fill
           loading="eager"
           fetchPriority="high"
           sizes="100vw"
           className="hero-image"
-        />
+        />}
         <div className="hero-shade" />
         <div className="container hero-content">
           <div className="hero-eyebrow">
             <span />
-            {LAB_BRAND.name}
+            {text(hero.eyebrow)}
           </div>
           <h1>
-            {LAB_BRAND.slogan}
+            {text(hero.title)}
           </h1>
           <p>
-            {LAB_BRAND.introduction[locale]}
+            {text(hero.description)}
           </p>
           <div className="hero-buttons">
-            <Button asChild variant="light">
-              <Link href={`/${locale}/research`}>
-                {l("Explore our research", "Khám phá nghiên cứu")}
+            {(legacyHero || text(hero.primaryCta.label).trim()) && text(hero.primaryCta.url) && <Button asChild variant="light">
+              <Link href={text(hero.primaryCta.url)} resolveTemplate={false}>
+                {text(hero.primaryCta.label)}
                 <ArrowUpRight size={17} />
               </Link>
-            </Button>
-            <Link className="hero-secondary" href={`/${locale}/about`}>
-              {l("Meet the laboratory", "Tìm hiểu phòng lab")}
+            </Button>}
+            {(legacyHero || text(hero.secondaryCta.label).trim()) && text(hero.secondaryCta.url) && <Link className="hero-secondary" href={text(hero.secondaryCta.url)} resolveTemplate={false}>
+              {text(hero.secondaryCta.label)}
               <ArrowRight size={17} />
-            </Link>
+            </Link>}
           </div>
           <div className="hero-bottom">
             <span>
               <span className="live-dot" />
-              {l(
-                "CURIOSITY. COLLABORATION. DISCOVERY.",
-                "TÒ MÒ. HỢP TÁC. KHÁM PHÁ.",
-              )}
+              {text(hero.footerText)}
             </span>
             {data.research.length > 0 && <a
               href="#research"
