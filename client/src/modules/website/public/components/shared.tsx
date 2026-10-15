@@ -101,7 +101,7 @@ export function ResearchCard({
       <div className="card-image">
         <Image
           src={item.image}
-          alt=""
+          alt={item.imageAlt?.[locale] ?? ''}
           fill
           sizes="(max-width: 640px) 100vw, (max-width: 1000px) 50vw, 33vw"
         />
@@ -151,7 +151,7 @@ export function ProjectCard({ item }: { item: Project }) {
       <div className="card-image">
         <Image
           src={item.image}
-          alt=""
+          alt={item.imageAlt?.[locale] ?? ''}
           fill
           sizes="(max-width: 640px) 100vw, 33vw"
         />
@@ -182,7 +182,7 @@ export function NewsCard({ item }: { item: NewsItem }) {
       <div className="card-image">
         <Image
           src={item.image}
-          alt=""
+          alt={item.imageAlt?.[locale] ?? ''}
           fill
           sizes="(max-width: 640px) 100vw, 33vw"
         />

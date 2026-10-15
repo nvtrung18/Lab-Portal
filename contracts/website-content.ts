@@ -1,14 +1,26 @@
 export type Locale = 'en' | 'vi';
 export interface LocalizedText { en: string; vi: string }
+export interface GalleryImage {
+  id: string;
+  src: string;
+  alt: LocalizedText;
+  caption: LocalizedText;
+}
+export interface ArticleImages {
+  /** Legacy cover URL; retained independently of the additional images. */
+  image: string;
+  imageAlt?: LocalizedText | null;
+  imageCaption?: LocalizedText | null;
+  gallery?: GalleryImage[] | null;
+}
 export interface Entity {
   id: string;
   title: LocalizedText;
   description: LocalizedText;
   visible?: boolean;
 }
-export interface ResearchArea extends Entity {
+export interface ResearchArea extends Entity, ArticleImages {
   labId?: number | null;
-  image: string;
   icon: 'earth' | 'cpu' | 'radio' | 'network';
   topics: LocalizedText[];
 }
@@ -67,20 +79,18 @@ export interface Publication extends Entity, ArticleSource {
   links?: Partial<Record<ResourceKind, string>>;
   bodyHtml?: LocalizedText | null;
 }
-export interface Project extends Entity, ArticleSource {
+export interface Project extends Entity, ArticleSource, ArticleImages {
   area: string;
   category: LocalizedText;
   status: 'Ongoing' | 'Completed' | '';
   period: string;
-  image: string;
   lead: string;
   objectives: LocalizedText[];
   bodyHtml?: LocalizedText | null;
 }
-export interface NewsItem extends Entity, ArticleSource {
+export interface NewsItem extends Entity, ArticleSource, ArticleImages {
   category: 'News' | 'Seminar' | 'Achievement' | 'Event' | '';
   date: string;
-  image: string;
   location: LocalizedText;
   body: LocalizedText[];
   bodyHtml?: LocalizedText | null;
@@ -111,11 +121,10 @@ export interface WebsiteContent {
   contentLibrary?: WebsiteSection[] | null;
 }
 export type PageTemplate = 'home' | 'about' | 'research' | 'people' | 'publications' | 'projects' | 'products' | 'news' | 'join' | 'contact' | 'custom';
-export interface WebsiteSection extends Entity {
+export interface WebsiteSection extends Entity, ArticleImages {
   eyebrow: LocalizedText;
   body: LocalizedText[];
   bodyHtml?: LocalizedText | null;
-  image: string;
   presentation: 'standard' | 'featured' | 'split';
   linkLabel: LocalizedText;
   linkUrl: string;

@@ -4196,3 +4196,30 @@ html.dark .lab-public :is(button, a, input, select, textarea):focus-visible {
 
 .lab-public .scholar-sort-button { display: inline-flex; align-items: center; gap: .35rem; min-height: 44px; color: inherit; font: inherit; cursor: pointer; white-space: nowrap; }
 .lab-public .scholar-sort-button:focus-visible { outline: 2px solid var(--app-focus-indicator-color); outline-offset: 3px; }
+
+/* Article galleries share the legacy editorial/detail image frames. */
+.lab-public .article-gallery { min-width: 0; }
+.lab-public .gallery-main { background: var(--soft); }
+.lab-public .gallery-open { display: block; position: relative; width: 100%; height: 100%; border: 0; padding: 0; background: transparent; cursor: zoom-in; }
+.lab-public .gallery-main .gallery-open img { display: block; width: 100%; height: 100%; object-fit: contain; object-position: center; }
+.lab-public .gallery-indicator { display: inline-flex; align-items: center; gap: 8px; position: absolute; right: 10px; bottom: 10px; min-height: 32px; padding: 4px 9px; border-radius: 4px; background: #102f43e6; color: #fff; font-size: 12px; }
+.lab-public .gallery-caption { margin: 10px 0 0; color: var(--muted); font-size: 13px; line-height: 1.6; overflow-wrap: anywhere; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+.lab-public .editorial-featured .gallery-caption { color: #c5d6df; }
+.lab-public .gallery-thumbnails { display: flex; gap: 8px; overflow-x: auto; padding: 4px; margin-top: 10px; overscroll-behavior-x: contain; }
+.lab-public .gallery-thumbnails button { flex: 0 0 64px; height: 56px; padding: 3px; border: 2px solid var(--line); border-radius: 5px; background: var(--soft); cursor: pointer; }
+.lab-public .gallery-thumbnails button[aria-pressed="true"] { border-color: var(--teal); }
+.lab-public .gallery-thumbnails img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.lab-public :is(.gallery-open, .gallery-thumbnails button, .gallery-lightbox-controls button):focus-visible { outline: 3px solid var(--teal); outline-offset: -3px; }
+.lab-public dialog.gallery-lightbox { width: min(1100px, calc(100vw - 28px)); padding: 24px; }
+.lab-public .gallery-lightbox .dialog-title { margin: 0 0 16px; padding-right: 36px; font-size: clamp(18px, 3vw, 26px); color: var(--ink); }
+.lab-public .gallery-lightbox-stage { height: min(58dvh, 600px); background: var(--soft); border-radius: 5px; touch-action: pan-y; }
+.lab-public .gallery-lightbox-stage img { display: block; width: 100%; height: 100%; object-fit: contain; object-position: center; }
+.lab-public .gallery-lightbox-controls { display: flex; align-items: center; justify-content: center; gap: 20px; margin-top: 14px; color: var(--ink); }
+.lab-public .gallery-lightbox-controls button { display: grid; place-items: center; min-width: 44px; min-height: 44px; padding: 8px; border: 1px solid var(--line); border-radius: 5px; color: var(--ink); background: var(--soft); cursor: pointer; }
+.lab-public .gallery-lightbox .gallery-lightbox-caption { margin-top: 12px; font-size: 14px; color: var(--ink); overflow-wrap: anywhere; white-space: pre-wrap; }
+.lab-public .gallery-lightbox .dialog-close { min-width: 44px; min-height: 44px; }
+@media (max-width: 600px) {
+  .lab-public dialog.gallery-lightbox { padding: 18px; }
+  .lab-public .gallery-lightbox .dialog-close { top: 10px; right: 10px; }
+  .lab-public .gallery-thumbnails button { flex-basis: 56px; height: 52px; }
+}

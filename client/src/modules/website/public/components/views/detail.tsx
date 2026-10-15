@@ -22,6 +22,7 @@ import { Button } from "../ui/button";
 import { RichTextBody } from '../rich-text-body';
 import { ArticleSourceDetails } from '../article-source-details';
 import { ScholarProfileDetails } from '../scholar-profile-details';
+import { ArticleGallery } from '../article-gallery';
 export function DetailView({ section, id }: { section: string; id: string }) {
   const { data, text, locale, l } = useLab();
   const key =
@@ -91,16 +92,7 @@ export function DetailView({ section, id }: { section: string; id: string }) {
               <p>{text(item.description)}</p>
             </div>
             {"image" in item && !('initials' in item) && (
-              <div className="detail-image">
-                <Image
-                  src={item.image ?? ''}
-                  alt=""
-                  fill
-                  loading="eager"
-                  fetchPriority="high"
-                  sizes="(max-width: 800px) 100vw, 45vw"
-                />
-              </div>
+              <ArticleGallery key={`${item.id}-${locale}`} value={item} title={text(item.title)} frameClass="detail-image" eager />
             )}
             {"initials" in item && (
               <div

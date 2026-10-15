@@ -99,7 +99,7 @@ public class WebsiteContentServiceImpl implements WebsiteContentService {
         WebsiteContent.LabData visible = new WebsiteContent.LabData(
                 data.research().stream().filter(item -> !Boolean.FALSE.equals(item.visible()))
                         .map(item -> new WebsiteContent.ResearchArea(item.id(), item.title(), item.description(),
-                                item.visible(), item.image(), item.icon(), item.topics(), null)).toList(),
+                                item.visible(), item.image(), item.icon(), item.topics(), null, item.gallery(), item.imageAlt(), item.imageCaption())).toList(),
                 scholarSnapshots.overlay(data.members()).stream().filter(item -> !Boolean.FALSE.equals(item.visible()))
                         .map(item -> new WebsiteContent.Member(item.id(), item.title(), item.description(),
                                 item.visible(), item.role(), item.initials(), item.area(), item.email(),
@@ -131,6 +131,11 @@ public class WebsiteContentServiceImpl implements WebsiteContentService {
 
     private void validateContent(WebsiteContent content) {
         WebsiteContent.LabData data = content.data();
+        data.research().forEach(item -> validateGallery(item.gallery()));
+        data.projects().forEach(item -> validateGallery(item.gallery()));
+        data.news().forEach(item -> validateGallery(item.gallery()));
+        if (content.contentLibrary() != null) content.contentLibrary().forEach(item -> validateGallery(item.gallery()));
+        if (content.pages() != null) content.pages().forEach(page -> page.sections().forEach(item -> validateGallery(item.gallery())));
         uniqueIds(data.research().stream().map(WebsiteContent.ResearchArea::id).toList());
         List<Long> researchLabIds = data.research().stream().map(WebsiteContent.ResearchArea::labId)
                 .filter(java.util.Objects::nonNull).toList();
@@ -187,6 +192,10 @@ public class WebsiteContentServiceImpl implements WebsiteContentService {
                 catch (DateTimeParseException ex) { throw new IllegalArgumentException("Invalid news or event date."); }
             }
         }
+    }
+
+    private void validateGallery(List<WebsiteContent.GalleryImage> gallery) {
+        if (gallery != null) uniqueIds(gallery.stream().map(WebsiteContent.GalleryImage::id).toList());
     }
 
     private void uniqueIds(List<String> ids) {

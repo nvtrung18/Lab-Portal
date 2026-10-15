@@ -273,6 +273,16 @@ Endpoint công khai trả các `sections` đã resolve, không trả thư viện
 Các API ADMIN hiện có tiếp tục sử dụng `/api/admin/website`, `/draft`, `/publish`, `/images`.
 Ảnh PNG/JPEG/WebP tối đa 5 MB lưu ở `uploads/website`; frontend dùng origin API hiện tại
 để đọc ảnh. Ảnh/font mẫu nằm trong `client/public/lab-website`, gồm giấy phép font OFL.
+
+Content Library và các bản ghi Research/Projects/News hỗ trợ cover `image` cùng tối đa
+15 ảnh bổ sung trong `gallery`, có thứ tự và alt/caption VI/EN. CMS cho phép chọn hoặc
+kéo thả nhiều file, đổi thứ tự bằng nút lên/xuống và hoán đổi cover mà giữ lại ảnh cũ.
+Bỏ ảnh khỏi bài không xóa file vật lý. Chờ upload hoàn tất rồi Áp dụng → Lưu nháp →
+Xem trước → Xuất bản. Cards chỉ hiển thị cover; gallery đầy đủ ở chi tiết hoặc ngay
+trong editorial section, với thumbnail cuộn ngang và lightbox hỗ trợ ESC/phím mũi tên.
+Nội dung một ảnh cũ không cần chuyển đổi hay migration. Xem `docs/website/MULTI_IMAGE_GALLERY.md`
+để biết schema, giới hạn và kết quả kiểm thử.
+
 Kiểu dữ liệu và dữ liệu mẫu dùng chung nằm trong `contracts/website-content.ts`
 và `contracts/website-demo-content.json`. Docker đã được bổ sung copy/mount thư mục này.
 

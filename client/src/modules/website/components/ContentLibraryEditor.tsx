@@ -13,6 +13,7 @@ export function ContentLibraryEditor({ content, page, onChange, onPreview }: {
   const { locale } = useI18n();
   const l = (vi: string, en: string) => locale === 'vi' ? vi : en;
   const [search, setSearch] = useState('');
+  const [uploading, setUploading] = useState(false);
   const [editing, setEditing] = useState<{ item: WebsiteSection; creating: boolean } | null>(null);
   const [deleting, setDeleting] = useState<WebsiteSection | null>(null);
   const selectedIds = page.sectionIds ?? [];
@@ -42,6 +43,7 @@ export function ContentLibraryEditor({ content, page, onChange, onPreview }: {
     return withPages({ ...content, contentLibrary, pages });
   }
   function apply() {
+    if (uploading) return;
     onChange(editedContent());
     setEditing(null);
   }
@@ -88,11 +90,11 @@ export function ContentLibraryEditor({ content, page, onChange, onPreview }: {
       <div className="flex flex-wrap gap-3"><Button variant="outline" onClick={() => create('standard')}><FileText size={16} />{l('Mẫu văn bản', 'Text preset')}</Button><Button variant="outline" onClick={() => create('split')}><Image size={16} />{l('Mẫu ảnh + nội dung', 'Image + text preset')}</Button><Button variant="outline" onClick={() => create('featured')}><Sparkles size={16} />{l('Mẫu nổi bật', 'Featured preset')}</Button><Button onClick={() => create('standard')}><Plus size={16} />{l('Tự soạn', 'Write content')}</Button></div>
       <p className="text-xs text-slate-500">{l('Nội dung mới để trống để bạn nhập thông tin. Khi áp dụng, nội dung được lưu vào thư viện và chọn cho tab này.', 'New content starts empty. Applying adds it to the library and selects it for this tab.')}</p>
     </section>
-    {editing && <Modal title={editing.creating ? l('Thêm nội dung', 'Create content') : l('Chỉnh sửa nội dung', 'Edit content')} size="full" onClose={() => setEditing(null)}>
+    {editing && <Modal title={editing.creating ? l('Thêm nội dung', 'Create content') : l('Chỉnh sửa nội dung', 'Edit content')} size="full" closeDisabled={uploading} onClose={() => { if (!uploading) setEditing(null); }}>
       <form onSubmit={event => { event.preventDefault(); apply(); }}>
         {!editing.creating && <p className="mb-5 text-sm text-slate-500">{l('Thay đổi áp dụng cho mọi tab đang chọn nội dung này, sau khi xuất bản.', 'After publication, edits apply to every tab using this content.')}</p>}
-        <SectionEditor value={editing.item} onChange={item => setEditing({ ...editing, item })} />
-        <div className="mt-7 flex flex-wrap justify-end gap-3"><Button variant="outline" onClick={() => setEditing(null)}>{l('Hủy', 'Cancel')}</Button><Button variant="outline" onClick={() => onPreview(editedContent(), page.slug ? `/${encodeURIComponent(page.slug)}` : '')}><Eye size={16} />{l('Xem trước', 'Preview')}</Button><Button type="submit">{l('Áp dụng vào bản nháp', 'Apply to draft')}</Button></div>
+        <SectionEditor onBusyChange={setUploading} value={editing.item} onChange={item => setEditing({ ...editing, item })} />
+        <div className="mt-7 flex flex-wrap justify-end gap-3"><Button disabled={uploading} variant="outline" onClick={() => setEditing(null)}>{l('Hủy', 'Cancel')}</Button><Button disabled={uploading} variant="outline" onClick={() => onPreview(editedContent(), page.slug ? `/${encodeURIComponent(page.slug)}` : '')}><Eye size={16} />{l('Xem trước', 'Preview')}</Button><Button disabled={uploading} type="submit">{l('Áp dụng vào bản nháp', 'Apply to draft')}</Button></div>
       </form>
     </Modal>}
     {deleting && <Modal title={l('Xóa khỏi thư viện?', 'Delete from library?')} onClose={() => setDeleting(null)}><p className="text-sm">{l('Nội dung sẽ bị xóa khỏi thư viện và bỏ chọn ở mọi tab. Website công khai thay đổi sau khi xuất bản.', 'Content will be deleted from the library and deselected in every tab. The public website changes after publication.')}</p><div className="mt-6 flex justify-end gap-3"><Button variant="outline" onClick={() => setDeleting(null)}>{l('Hủy', 'Cancel')}</Button><Button variant="danger" onClick={remove}>{l('Xóa nội dung', 'Delete content')}</Button></div></Modal>}

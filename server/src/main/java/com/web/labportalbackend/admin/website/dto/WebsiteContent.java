@@ -49,7 +49,23 @@ public record WebsiteContent(
             @Schema(description = "Optional action label") @NotNull @Valid LocalizedText linkLabel,
             @Schema(description = "Optional HTTP URL, internal path or anchor") @NotNull @Size(max = 2000) @Pattern(regexp = PAGE_LINK_URL) String linkUrl,
             @Schema(description = "Whether the section is public; null means visible") Boolean visible,
-            @Schema(description = "Formatted editorial body; null uses legacy paragraphs, empty text clears the body") @Valid RichTextContent bodyHtml
+            @Schema(description = "Formatted editorial body; null uses legacy paragraphs, empty text clears the body") @Valid RichTextContent bodyHtml,
+            @Schema(description = "Additional article images in display order; null retains legacy cover-only content")
+            @Size(max = 15) List<@NotNull @Valid GalleryImage> gallery,
+            @Schema(description = "Optional bilingual cover alt text") @Valid ImageText imageAlt,
+            @Schema(description = "Optional bilingual cover caption") @Valid ImageText imageCaption
+    ) {}
+
+    public record ImageText(
+            @NotNull @Size(max = 2000) String en,
+            @NotNull @Size(max = 2000) String vi
+    ) {}
+
+    public record GalleryImage(
+            @NotBlank @Pattern(regexp = "[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}") String id,
+            @NotBlank @Size(max = 2000) @Pattern(regexp = ASSET_URL) String src,
+            @NotNull @Valid ImageText alt,
+            @NotNull @Valid ImageText caption
     ) {}
 
     public record LocalizedText(
@@ -88,7 +104,11 @@ public record WebsiteContent(
             @Schema(description = "Direction image URL or asset path") @NotNull @Pattern(regexp = ASSET_URL) String image,
             @Schema(description = "Template icon", allowableValues = {"earth", "cpu", "radio", "network"}) @NotNull @Pattern(regexp = "earth|cpu|radio|network") String icon,
             @Schema(description = "Research subjects in display order") @NotNull @Size(max = 100) List<@NotNull @Valid LocalizedText> topics,
-            @Schema(description = "Linked research group identifier using the existing laboratory ID; null for legacy content and public responses") @Positive Long labId
+            @Schema(description = "Linked research group identifier using the existing laboratory ID; null for legacy content and public responses") @Positive Long labId,
+            @Schema(description = "Additional article images in display order; null retains legacy cover-only content")
+            @Size(max = 15) List<@NotNull @Valid GalleryImage> gallery,
+            @Schema(description = "Optional bilingual cover alt text") @Valid ImageText imageAlt,
+            @Schema(description = "Optional bilingual cover caption") @Valid ImageText imageCaption
     ) {}
 
     public record Member(
@@ -171,7 +191,11 @@ public record WebsiteContent(
             @Schema(description = "Project objectives in display order") @NotNull @Size(max = 100) List<@NotNull @Valid LocalizedText> objectives,
             @Schema(description = "Formatted project details; omitted, null or empty text means no additional body") @Valid RichTextContent bodyHtml,
             @Schema(description = "Source outlet name; omitted, null or empty means no source label") @Size(max = 200) String sourceName,
-            @Schema(description = "Original project HTTP(S) URL; omitted, null or empty means no source link") @Size(max = 2000) @Pattern(regexp = HTTP_URL) String sourceUrl
+            @Schema(description = "Original project HTTP(S) URL; omitted, null or empty means no source link") @Size(max = 2000) @Pattern(regexp = HTTP_URL) String sourceUrl,
+            @Schema(description = "Additional article images in display order; null retains legacy cover-only content")
+            @Size(max = 15) List<@NotNull @Valid GalleryImage> gallery,
+            @Schema(description = "Optional bilingual cover alt text") @Valid ImageText imageAlt,
+            @Schema(description = "Optional bilingual cover caption") @Valid ImageText imageCaption
     ) {}
 
     public record NewsItem(
@@ -186,6 +210,10 @@ public record WebsiteContent(
             @Schema(description = "Legacy article paragraphs in display order") @NotNull @Size(max = 200) List<@NotNull @Valid LocalizedText> body,
             @Schema(description = "Formatted article body; null uses legacy paragraphs, empty text clears the body") @Valid RichTextContent bodyHtml,
             @Schema(description = "Source outlet name; omitted, null or empty means no source label") @Size(max = 200) String sourceName,
-            @Schema(description = "Original article HTTP(S) URL; omitted, null or empty means no source link") @Size(max = 2000) @Pattern(regexp = HTTP_URL) String sourceUrl
+            @Schema(description = "Original article HTTP(S) URL; omitted, null or empty means no source link") @Size(max = 2000) @Pattern(regexp = HTTP_URL) String sourceUrl,
+            @Schema(description = "Additional article images in display order; null retains legacy cover-only content")
+            @Size(max = 15) List<@NotNull @Valid GalleryImage> gallery,
+            @Schema(description = "Optional bilingual cover alt text") @Valid ImageText imageAlt,
+            @Schema(description = "Optional bilingual cover caption") @Valid ImageText imageCaption
     ) {}
 }

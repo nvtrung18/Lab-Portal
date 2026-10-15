@@ -5,6 +5,7 @@ import type { LabResponse } from '../../lab/api';
 import { BilingualField, BilingualList, ImageField, SelectField, TextField } from './EditorFields';
 import { BilingualRichTextField } from './BilingualRichTextField';
 import { ArticleSourceFields } from './ArticleSourceFields';
+import { GalleryEditor } from './GalleryEditor';
 import { MemberScholarEditor } from './MemberScholarEditor';
 import { memberRoleGroups } from '../member-roles';
 
@@ -41,7 +42,7 @@ export function createMemberFromUser(user: WebsiteMemberSource): Extract<Editing
   } };
 }
 
-export function RecordEditor({ value, data, onChange }: { value: EditingRecord; data: LabData; onChange: (value: EditingRecord) => void }) {
+export function RecordEditor({ value, data, onChange, onBusyChange }: { value: EditingRecord; data: LabData; onChange: (value: EditingRecord) => void; onBusyChange?: (busy: boolean) => void }) {
   const { locale } = useI18n();
   const l = (vi: string, en: string) => locale === 'vi' ? vi : en;
   const options = (items: Entity[]) => items.map(item => ({ value: item.id, label: item.title[locale] || item.title[locale === 'vi' ? 'en' : 'vi'] || item.id }));
@@ -56,7 +57,7 @@ export function RecordEditor({ value, data, onChange }: { value: EditingRecord; 
       const item = value.record;
       const update = (patch: Partial<ResearchArea>) => onChange({ ...value, record: { ...item, ...patch } });
       details = <>
-        <ImageField label={l('Ảnh hướng nghiên cứu', 'Research image')} value={item.image} onChange={image => update({ image })} />
+        <GalleryEditor value={item} onChange={update} onBusyChange={onBusyChange} />
         <SelectField label={l('Biểu tượng', 'Icon')} value={item.icon} allowEmpty={false} options={['earth', 'cpu', 'radio', 'network'].map(icon => ({ value: icon, label: icon }))} onChange={icon => update({ icon: icon as ResearchArea['icon'] })} />
         <BilingualList label={l('Các chủ đề', 'Research subjects')} value={item.topics} onChange={topics => update({ topics })} />
       </>;
@@ -111,7 +112,7 @@ export function RecordEditor({ value, data, onChange }: { value: EditingRecord; 
       const item = value.record;
       const update = (patch: Partial<Project>) => onChange({ ...value, record: { ...item, ...patch } });
       details = <>
-        <ImageField label={l('Ảnh dự án', 'Project image')} value={item.image} onChange={image => update({ image })} />
+        <GalleryEditor value={item} onChange={update} onBusyChange={onBusyChange} />
         <BilingualField label={l('Phân loại', 'Category')} value={item.category} onChange={category => update({ category })} />
         <div className="grid gap-4 md:grid-cols-2">
           <SelectField label={l('Trạng thái', 'Status')} value={item.status} options={[{ value: 'Ongoing', label: l('Đang thực hiện', 'Ongoing') }, { value: 'Completed', label: l('Hoàn thành', 'Completed') }]} onChange={status => update({ status: status as Project['status'] })} />
@@ -129,7 +130,7 @@ export function RecordEditor({ value, data, onChange }: { value: EditingRecord; 
       const item = value.record;
       const update = (patch: Partial<NewsItem>) => onChange({ ...value, record: { ...item, ...patch } });
       details = <>
-        <ImageField label={l('Ảnh bài viết', 'Article image')} value={item.image} onChange={image => update({ image })} />
+        <GalleryEditor value={item} onChange={update} onBusyChange={onBusyChange} />
         <div className="grid gap-4 md:grid-cols-2">
           <SelectField label={l('Loại bài viết', 'Article category')} value={item.category} options={[['News','Tin tức'],['Seminar','Hội thảo'],['Achievement','Thành tựu'],['Event','Sự kiện']].map(([category, vi]) => ({ value: category, label: locale === 'vi' ? vi : category }))} onChange={category => update({ category: category as NewsItem['category'] })} />
           <TextField label={l('Ngày đăng / ngày sự kiện', 'Article / event date')} type="date" value={item.date} onChange={date => update({ date })} />

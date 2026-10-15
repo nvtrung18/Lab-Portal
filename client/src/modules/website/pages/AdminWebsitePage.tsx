@@ -39,6 +39,7 @@ export function AdminWebsitePage() {
   const [section, setSection] = useState<Section>('copy');
   const [search, setSearch] = useState('');
   const [editing, setEditing] = useState<EditingRecord | null>(null);
+  const [uploading, setUploading] = useState(false);
   const [selectingMember, setSelectingMember] = useState<{ record: Member | null } | null>(null);
   const memberSources = useQuery({ queryKey: ['admin', 'website', 'member-sources'], queryFn: getWebsiteMemberSources,
     enabled: section === 'members' || selectingMember !== null, staleTime: 30_000 });
@@ -182,7 +183,7 @@ export function AdminWebsitePage() {
         </>}
       </fieldset>
     </div>
-    {editing && !selectingMember && !selectingResearch && <Modal title={articleEditorTitle ?? l('Chỉnh sửa nội dung website', 'Edit website content')} size={articleEditorTitle ? 'full' : '2xl'} onClose={() => setEditing(null)}><form onSubmit={e => { e.preventDefault(); setContent({ ...content, data: putRecord(content.data, editing) }); setEditing(null); setNotice(''); }}>
+    {editing && !selectingMember && !selectingResearch && <Modal title={articleEditorTitle ?? l('Chỉnh sửa nội dung website', 'Edit website content')} size={articleEditorTitle ? 'full' : '2xl'} closeDisabled={uploading} onClose={() => { if (!uploading) setEditing(null); }}><form onSubmit={e => { e.preventDefault(); if (uploading) return; setContent({ ...content, data: putRecord(content.data, editing) }); setEditing(null); setNotice(''); }}>
       {editing.collection === 'research' && <div className="mb-6 space-y-3 rounded-lg border border-slate-200 p-4 dark:border-slate-700">
         <h3 className="text-sm font-semibold">{l('Nhóm nghiên cứu liên kết', 'Linked research group')}</h3>
         <p className="break-words text-sm">{editingLab ? editingLab.labName : editing.record.labId != null ? l(`Nhóm #${editing.record.labId} — thông tin hiện không khả dụng`, `Group #${editing.record.labId} — details currently unavailable`) : l('Nội dung cũ chưa liên kết nhóm nghiên cứu.', 'Legacy content without a linked research group.')}</p>
@@ -195,7 +196,7 @@ export function AdminWebsitePage() {
         <p className="text-xs text-slate-500">{l('Các trường bên dưới chỉ sửa hồ sơ công khai trên website. Vai trò học thuật không thay đổi quyền tài khoản.', 'The fields below edit only the public website profile. Academic role does not change account permissions.')}</p>
         <Button size="sm" variant="outline" onClick={() => setSelectingMember({ record: editing.record })}>{editing.record.userId == null ? l('Liên kết người dùng', 'Link a user') : l('Đổi người dùng liên kết', 'Change linked user')}</Button>
       </div>}
-      <RecordEditor value={editing} data={content.data} onChange={setEditing} /><div className="app-form-actions mt-7 flex flex-wrap justify-end gap-3"><Button variant="outline" onClick={() => setEditing(null)}>{l('Hủy', 'Cancel')}</Button><Button variant="outline" onClick={previewRecord}><Eye size={16} />{l('Xem trước', 'Preview')}</Button><Button type="submit">{l('Áp dụng vào bản nháp', 'Apply to draft')}</Button></div></form></Modal>}
+      <RecordEditor onBusyChange={setUploading} value={editing} data={content.data} onChange={setEditing} /><div className="app-form-actions mt-7 flex flex-wrap justify-end gap-3"><Button disabled={uploading} variant="outline" onClick={() => setEditing(null)}>{l('Hủy', 'Cancel')}</Button><Button disabled={uploading} variant="outline" onClick={previewRecord}><Eye size={16} />{l('Xem trước', 'Preview')}</Button><Button disabled={uploading} type="submit">{l('Áp dụng vào bản nháp', 'Apply to draft')}</Button></div></form></Modal>}
     {selectingMember && <Modal title={l('Chọn Thành viên từ người dùng', 'Select a member from users')} size="xl" onClose={() => setSelectingMember(null)}>
       <MemberSourcePicker users={memberSources.data ?? []} members={content.data.members} target={selectingMember.record}
         loading={memberSources.isPending} failed={memberSources.isError} refreshing={memberSources.isFetching}

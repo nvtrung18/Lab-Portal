@@ -5,23 +5,23 @@ import type { LocalizedText } from '../../../../../contracts/website-content';
 import { uploadWebsiteImage, websiteAssetUrl } from '../api';
 
 export const inputClass = 'min-h-11 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 focus:border-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100';
-export function TextField({ label, value, onChange, multiline = false, type = 'text' }: {
-  label: string; value: string; onChange: (value: string) => void; multiline?: boolean; type?: string;
+export function TextField({ label, value, onChange, multiline = false, type = 'text', maxLength }: {
+  label: string; value: string; onChange: (value: string) => void; multiline?: boolean; type?: string; maxLength?: number;
 }) {
   const id = useId();
   return <label htmlFor={id} className="block space-y-2 text-sm font-medium">
     <span>{label}</span>
-    {multiline ? <textarea id={id} className={inputClass} rows={4} value={value} onChange={e => onChange(e.target.value)} />
-      : <input id={id} className={inputClass} type={type} value={value} onChange={e => onChange(e.target.value)} />}
+    {multiline ? <textarea id={id} className={inputClass} rows={4} maxLength={maxLength} value={value} onChange={e => onChange(e.target.value)} />
+      : <input id={id} className={inputClass} type={type} maxLength={maxLength} value={value} onChange={e => onChange(e.target.value)} />}
   </label>;
 }
-export function BilingualField({ label, value, onChange, multiline = false }: {
-  label: string; value: LocalizedText; onChange: (value: LocalizedText) => void; multiline?: boolean;
+export function BilingualField({ label, value, onChange, multiline = false, maxLength }: {
+  label: string; value: LocalizedText; onChange: (value: LocalizedText) => void; multiline?: boolean; maxLength?: number;
 }) {
   return <fieldset className="space-y-3"><legend className="mb-3 text-sm font-semibold">{label}</legend>
     <div className="grid gap-4 md:grid-cols-2">
-      <TextField label="Tiếng Việt" value={value.vi} multiline={multiline} onChange={vi => onChange({ ...value, vi })} />
-      <TextField label="English" value={value.en} multiline={multiline} onChange={en => onChange({ ...value, en })} />
+      <TextField label="Tiếng Việt" value={value.vi} multiline={multiline} maxLength={maxLength} onChange={vi => onChange({ ...value, vi })} />
+      <TextField label="English" value={value.en} multiline={multiline} maxLength={maxLength} onChange={en => onChange({ ...value, en })} />
     </div>
   </fieldset>;
 }
