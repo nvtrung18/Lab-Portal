@@ -20,6 +20,14 @@ Examples contain an empty key and disable automatic synchronization. Never use a
 
 A restart/recreation of the backend is needed after configuring its environment. This document does **not** authorize performing a production restart or deploy.
 
+### GitHub Actions production deployment
+
+In the repository, open **Settings → Secrets and variables → Actions → New repository secret** and create `SCHOLAR_SERPAPI_API_KEY` with the provider key. A secret with the same name in the `production` environment is also supported. Keep the key out of commits, including `.env` files.
+
+The production workflow passes this secret through `DEPLOY_SCHOLAR_SERPAPI_API_KEY`. When present, the deployment script sets the backend's `SCHOLAR_SERPAPI_API_KEY` and enables `SCHOLAR_SYNC_ENABLED=true` for the deployment process. These process variables take precedence over the existing production env file; the script never writes the key into that file or prints it. The other production settings still come from `D:\Lab-Portal\.env.production`.
+
+If the secret is absent or blank, the script leaves existing Scholar configuration unchanged. Adding a secret does not restart the backend by itself; it takes effect on the next normal deployment. The tracked workflow/configuration can be committed; the local `.env` remains ignored.
+
 ### Scheduling and manual synchronization
 
 - The scheduler checks saved draft **and** published members one minute after startup, then hourly. Each Scholar author ID is fetched once per successful **7-day** interval, persisted across restarts. Several members referring to the same author share one snapshot.

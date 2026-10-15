@@ -40,4 +40,6 @@ jobs:
 
       - name: Build, deploy, and wait for healthy services
         shell: cmd
+        env:
+          DEPLOY_SCHOLAR_SERPAPI_API_KEY: ${{ secrets.SCHOLAR_SERPAPI_API_KEY }}
         run: powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File ".\scripts\deploy-production.ps1" -Build -EnvFile "D:\Lab-Portal\.env.production"

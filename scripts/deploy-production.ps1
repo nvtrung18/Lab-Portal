@@ -31,6 +31,14 @@ if ($placeholderKeys.Count -gt 0) {
     throw "Production env still has template values for: $($placeholderKeys -join ', '). Replace them before deployment."
 }
 
+# An optional Actions secret overrides only Scholar settings for this process.
+# With no secret, keep the existing production environment file authoritative.
+# Never echo the secret or write it into the checkout/production env file.
+if (![string]::IsNullOrWhiteSpace($env:DEPLOY_SCHOLAR_SERPAPI_API_KEY)) {
+    $env:SCHOLAR_SERPAPI_API_KEY = $env:DEPLOY_SCHOLAR_SERPAPI_API_KEY
+    $env:SCHOLAR_SYNC_ENABLED = 'true'
+}
+
 Push-Location $repoRoot
 try {
     docker compose --env-file $envFile -f $composeFile config --quiet
