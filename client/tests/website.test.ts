@@ -6,6 +6,7 @@ import { defaultScholarSort, sortScholarPublications, toggleScholarSort } from '
 import { normalizeWebsitePages } from '../../contracts/website-pages.ts';
 import { productTransferCandidates, transferProductSections } from '../../contracts/website-product-transfer.ts';
 import type { ScholarPublication, WebsiteContent, WebsitePage, WebsiteSection } from '../../contracts/website-content.ts';
+import { memberRoleGroups, matchesMemberRole } from '../src/modules/website/member-roles.ts';
 
 const seed = JSON.parse(readFileSync(new URL('../../contracts/website-demo-content.json', import.meta.url), 'utf8')).content as WebsiteContent;
 const templates = seed.pages as WebsitePage[];
@@ -16,6 +17,33 @@ const section: WebsiteSection = {
   image: '/api/uploads/website/hero.png', presentation: 'split', linkLabel: { vi: 'Xem', en: 'Read' }, linkUrl: 'https://example.org',
 };
 const paper = (title: string, year: number | null, citations: number | null): ScholarPublication => ({ title, year, citations, authors: '', venue: '', url: 'https://example.org/' + title });
+
+test('Master\'s tier follows PhD, remains visible when empty, and is available to the CMS role selector', () => {
+  const roles = memberRoleGroups.map(group => group.role);
+  assert.equal(roles.indexOf('MSc student'), roles.indexOf('PhD student') + 1);
+  assert(roles.indexOf('MSc student') < roles.indexOf('Guest'));
+  const masters = memberRoleGroups.find(group => group.role === 'MSc student')!;
+  assert.equal(masters.showWhenEmpty, true);
+  assert.equal(masters.label.vi, 'ThS');
+  assert.equal(masters.title.en, "Master's Students");
+});
+test('Academic role filtering keeps doctoral members with ThS titles in PhD and preserves existing data', () => {
+  const members = [
+    { title: 'ThS. Doctoral researcher', role: 'PhD student' },
+    { title: 'Graduate researcher', role: 'MSc student' },
+    { title: 'ThS. Guest', role: 'Guest' },
+    { title: 'Faculty member', role: 'Faculty' },
+  ];
+  const before = structuredClone(members);
+  assert.deepEqual(members.filter(member => matchesMemberRole(member.role, 'MSc student')).map(member => member.title), ['Graduate researcher']);
+  assert.deepEqual(members.filter(member => matchesMemberRole(member.role, 'PhD student')).map(member => member.title), ['ThS. Doctoral researcher']);
+  assert.deepEqual(members.filter(member => matchesMemberRole(member.role, 'other')).map(member => member.title), ['Faculty member']);
+  assert.deepEqual(members, before);
+  const guest = memberRoleGroups.find(group => group.role === 'Guest')!;
+  assert.deepEqual(guest.label, { vi: 'Khách mời', en: 'Guests' });
+  assert.equal(matchesMemberRole('Guest', 'Guest'), true);
+  assert.equal(matchesMemberRole('Guest', 'MSc student'), false);
+});
 
 test('Scholar ID parser supports URL encoding and fragments and rejects ambiguous/foreign URLs', () => {
   assert.equal(scholarAuthorId('https://scholar.google.com/citations?hl=vi&user=abc%2Ddef#articles'), 'abc-def');

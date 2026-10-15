@@ -131,16 +131,17 @@ hồ sơ tài khoản để tự ghi đè nội dung. Thay đổi tên tài kho�
 ## Phân tầng thành viên và hồ sơ Scholar
 
 Tab Thành viên chia thành các tầng nối theo dạng cây. Trong mỗi tầng, thứ tự
-theo danh sách đã lưu; các tầng không có thành viên không xuất hiện.
+theo danh sách đã lưu. Tầng ThS và bộ lọc tương ứng luôn xuất hiện, kể cả khi chưa
+có học viên cao học; các tầng khác tiếp tục ẩn khi không có thành viên.
 
 | Vai trò | Thành viên theo thứ tự |
 | --- | --- |
 | Thành viên chỉ đạo (`Steering Member`) | Nguyễn Hoài Sơn, Dương Lê Minh |
 | Thành viên cốt lõi (`Core Member`) | Phạm Mạnh Linh, Phạm Châu Thùy, Nguyễn Ngọc Tân, Hoàng Xuân Tùng, Đặng Minh Công, Nguyễn Xuân Trường |
 | NCS (`PhD student`) | Nguyễn Thái Dương, Trần Anh Tú, Nguyễn Quang Thành, Hoàng Thanh Tùng |
-| HVCH (`MSc student`) | Chưa bổ sung |
+| ThS — Học viên cao học (`MSc student`) | Chưa bổ sung; hiển thị trạng thái trống |
 | SV NCKH (`Undergraduate`) | Chưa bổ sung |
-| Khách (`Guest`), hiển thị trong tầng Thành viên đối tác | Nguyễn Hoàng Quân, Dương Việt Dũng, Lê Nguyễn Tuấn Thành |
+| Khách mời (`Guest`), hiển thị trong tầng Thành viên đối tác | Nguyễn Hoàng Quân, Dương Việt Dũng, Lê Nguyễn Tuấn Thành |
 
 Tên tiếng Việt và vai trò lấy theo chỉ đạo ngày 14/10/2026. Vai trò phân nhóm
 website, không thay đổi quyền tài khoản. Giá trị cũ `Faculty`, `Researcher`,
