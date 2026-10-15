@@ -187,35 +187,39 @@ export function SiteFooter() {
     <footer className="site-footer">
       <div className="container">
         <div className="footer-top">
-          <div>
+          <div className="footer-brand">
             <Link href={`/${locale}`}>
               <Brand light />
             </Link>
             <strong className="footer-lab-name">{LAB_BRAND.name}</strong>
             <p>{LAB_BRAND.slogan}</p>
           </div>
-          <div>
+          <div className="footer-explore">
             <h3>{l("Explore", "Khám phá")}</h3>
-            {pages.filter(page => page.showInNavigation && page.slug !== '' && (text(page.navigationTitle) || text(page.title))).map(page => (
-              <Link href={`/${locale}/${page.slug}`} key={page.id} resolveTemplate={false}>
-                {text(page.navigationTitle) || text(page.title)}
-              </Link>
-            ))}
+            <nav className="footer-links footer-explore-links" aria-label={l('Explore', 'Khám phá')}>
+              {pages.filter(page => page.showInNavigation && page.slug !== '' && (text(page.navigationTitle) || text(page.title))).map(page => (
+                <Link href={`/${locale}/${page.slug}`} key={page.id} resolveTemplate={false}>
+                  {text(page.navigationTitle) || text(page.title)}
+                </Link>
+              ))}
+            </nav>
           </div>
-          <div>
+          <div className="footer-connect">
             <h3>{l("Connect", "Kết nối")}</h3>
-            <Link href={`/${locale}/join`}>
-              {l("Join the lab", "Tham gia phòng lab")}
-            </Link>
-            <Link href={`/${locale}/contact`}>
-              {l("Contact us", "Liên hệ")}
-            </Link>
-            <Link href={`/${locale}/news`}>
-              {l("News & events", "Tin & sự kiện")}
-            </Link>
-            <Link href="/admin/website">
-              {l("Website administration", "Quản trị website")}
-            </Link>
+            <nav className="footer-links" aria-label={l('Connect', 'Kết nối')}>
+              <Link href={`/${locale}/join`}>
+                {l("Join the lab", "Tham gia phòng lab")}
+              </Link>
+              <Link href={`/${locale}/contact`}>
+                {l("Contact us", "Liên hệ")}
+              </Link>
+              <Link href={`/${locale}/news`}>
+                {l("News & events", "Tin & sự kiện")}
+              </Link>
+              <Link href="/admin/website">
+                {l("Website administration", "Quản trị website")}
+              </Link>
+            </nav>
           </div>
           <div className="footer-contact">
             <h3>

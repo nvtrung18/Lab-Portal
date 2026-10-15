@@ -2559,7 +2559,7 @@
     padding: 23px;
   }
   .lab-public .footer-top {
-    gap: 35px;
+    gap: 20px;
   }
   .lab-public .detail-body-grid {
     gap: 55px;
@@ -2640,12 +2640,11 @@
     font-size: 18px;
   }
   .lab-public .footer-top {
-    grid-template-columns: 1.2fr 0.7fr 0.7fr;
-    gap: 35px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 24px 32px;
   }
   .lab-public .footer-contact {
-    grid-column: 1/-1;
-    max-width: 400px;
+    grid-column: auto;
   }
   .lab-public .partner-logos {
     display: grid;
@@ -3299,41 +3298,28 @@
     padding: 13px 19px;
   }
   .lab-public .site-footer {
-    padding-top: 40px;
+    padding-top: 24px;
   }
   .lab-public .footer-top {
-    grid-template-columns: 1fr 1fr;
-    gap: 34px 24px;
-    padding-bottom: 36px;
+    gap: 20px 24px;
+    padding-bottom: 16px;
   }
-  .lab-public .footer-top > div:first-child {
+  .lab-public .footer-brand,
+  .lab-public .footer-explore {
     grid-column: 1/-1;
   }
-  .lab-public .footer-top > div:first-child > p {
-    font-size: 10px;
-    margin-top: 18px;
+  .lab-public .footer-lab-name {
+    max-width: none;
   }
-  .lab-public .footer-top h3 {
-    font-size: 12px;
-  }
-  .lab-public .footer-top > div > a:not(:first-child) {
-    font-size: 11px;
-  }
-  .lab-public .footer-contact {
-    grid-column: 1/-1;
-  }
+  .lab-public .footer-links a,
   .lab-public .footer-contact > a {
-    font-size: 13px !important;
+    min-height: 44px;
   }
   .lab-public .footer-bottom {
     flex-wrap: wrap;
-    gap: 13px;
-    font-size: 7px;
   }
-  .lab-public .footer-bottom > span:nth-child(2) {
-    order: 3;
-    width: 100%;
-    line-height: 1.9;
+  .lab-public .footer-bottom a {
+    min-height: 44px;
   }
   .lab-public .page-heading {
     padding: 24px 0 40px;
@@ -4077,10 +4063,9 @@
   .lab-public .account-utility .account-name { flex: 1; text-align: left; }
   .lab-public .brand small { font-size: 7px; }
   .lab-public :is(.language-switch, .hero-secondary, .text-link, .resource-links button) { font-size: 13px; }
-  .lab-public :is(.eyebrow, .hero-eyebrow, .publication-meta, .label, .breadcrumb, .section-footnote, .demo-notice, .footer-bottom) { font-size: 11px; }
-  .lab-public :is(.card-body p, .member-card p, .section-heading p, .page-heading p, .publication-preview p, .join-banner p, .partners-section p, .about-grid p, .contact-info p, .website-rich-body, .dialog-description, .footer-top > div:first-child > p),
+  .lab-public :is(.eyebrow, .hero-eyebrow, .publication-meta, .label, .breadcrumb, .section-footnote, .demo-notice) { font-size: 11px; }
+  .lab-public :is(.card-body p, .member-card p, .section-heading p, .page-heading p, .publication-preview p, .join-banner p, .partners-section p, .about-grid p, .contact-info p, .website-rich-body, .dialog-description),
   .lab-public .intro-grid p:not(.intro-lead), .lab-public .research-section .card-body p { font-size: 14px; line-height: 1.75; }
-  .lab-public .footer-top > div > a:not(:first-child) { display: flex; min-height: 44px; align-items: center; font-size: 13px; }
 }
 @media (max-width: 399px) {
   .lab-public .cards-grid.four { grid-template-columns: minmax(0, 1fr); }
