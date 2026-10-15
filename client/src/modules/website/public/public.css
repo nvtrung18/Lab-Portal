@@ -3665,7 +3665,10 @@
   -webkit-line-clamp: 3;
   overflow: hidden;
 }
-.lab-public .member-card-scholar .member-avatar img,
+.lab-public .member-card-scholar .member-avatar img {
+  object-fit: cover;
+  object-position: center top;
+}
 .lab-public .scholar-portrait img { object-fit: contain; }
 .lab-public .member-card-scholar .member-avatar:after { display: none; }
 .lab-public .member-card .card-more {
