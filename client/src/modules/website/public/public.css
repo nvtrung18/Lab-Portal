@@ -642,6 +642,52 @@
 .lab-public .cards-grid.two {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
+.lab-public .member-carousel {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: calc((100% - 72px) / 4);
+  gap: 24px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x proximity;
+  padding-bottom: 20px;
+}
+.lab-public .member-carousel > .member-card {
+  scroll-snap-align: start;
+}
+.lab-public .member-carousel:focus-visible {
+  outline: 2px solid var(--navy);
+  outline-offset: 4px;
+}
+.lab-public .member-carousel::-webkit-scrollbar {
+  height: 12px;
+}
+.lab-public .member-carousel::-webkit-scrollbar-track {
+  background: var(--line);
+  border-radius: 6px;
+}
+.lab-public .member-carousel::-webkit-scrollbar-thumb {
+  background: var(--navy);
+  border: 2px solid var(--line);
+  border-radius: 6px;
+}
+@supports not selector(::-webkit-scrollbar) {
+  .lab-public .member-carousel {
+    scrollbar-color: var(--navy) var(--line);
+  }
+}
+@media (max-width: 1000px) {
+  .lab-public .member-carousel {
+    grid-auto-columns: calc((100% - 20px) / 2);
+    gap: 20px;
+  }
+}
+@media (max-width: 600px) {
+  .lab-public .member-carousel {
+    grid-auto-columns: 82%;
+    gap: 16px;
+  }
+}
 .lab-public .research-card,
 .lab-public .project-card,
 .lab-public .news-card {

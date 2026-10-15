@@ -197,8 +197,13 @@ export function HomeView() {
             href={`/${locale}/people`}
             linkLabel={l("Meet the team", "Gặp gỡ thành viên")}
           />
-          <div className="cards-grid four">
-            {data.members.slice(0, 4).map((item) => (
+          <div
+            className="member-carousel"
+            role="region"
+            aria-label={l("All members — scroll horizontally", "Tất cả thành viên — cuộn ngang để xem")}
+            tabIndex={0}
+          >
+            {data.members.map((item) => (
               <MemberCard key={item.id} item={item} />
             ))}
           </div>
