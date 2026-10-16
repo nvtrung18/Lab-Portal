@@ -4258,6 +4258,10 @@ html.dark .lab-public :is(button, a, input, select, textarea):focus-visible {
 /* Search the published editorial text without turning it into inferred academic metadata. */
 .lab-public .content-search { padding-block: 32px; scroll-margin-top: 140px; }
 .lab-public .content-search .filter-selects:empty { display: none; }
+.lab-public .content-search .search-only { display: flex; align-items: center; gap: 12px; }
+.lab-public .content-search .search-only .search-field { flex: 1; min-width: 0; }
+.lab-public .content-search .search-only .filter-selects { margin-top: 0; flex-shrink: 0; }
+.lab-public .content-search .clear-filters { min-height: 44px; font-size: 13px; }
 .lab-public .content-search-note { margin: 8px 0 20px; font-size: 13px; line-height: 1.7; }
 .lab-public .editorial-search-results { display: grid; gap: 16px; }
 .lab-public .editorial-search-hit { min-width: 0; padding: 20px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }

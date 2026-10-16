@@ -57,7 +57,7 @@ export function ContentSearch<T extends SearchRecord>({ kind, records, renderRec
   return <>
     <section className="section content-search" id="content-search" aria-label={l('Search published content', 'Tìm nội dung đã xuất bản')}>
       <div className="container">
-        <div className="filter-panel">
+        <div className={`filter-panel${available.length ? '' : ' search-only'}`}>
           <SearchInput value={query} onChange={value => { setQuery(value); clearSource(); }} placeholder={placeholders[kind]} />
           <div className="filter-selects">
             {available.map(({ key, values }) => <Select key={key} label={l(...labels[key])} value={String(activeFilters[key] ?? 'all')}
