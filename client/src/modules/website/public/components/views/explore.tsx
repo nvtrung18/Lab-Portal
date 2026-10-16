@@ -1,8 +1,5 @@
 import { useState } from "react";
 import {
-  Search,
-  SlidersHorizontal,
-  X,
   ArrowUpRight,
   FileText,
   Code2,
@@ -21,34 +18,18 @@ import {
   PageHeading,
   EmptyState,
 } from "../shared";
-import { Select } from "../ui/select";
 import { Button } from "../ui/button";
 import { Dialog } from "../ui/dialog";
 import type { Publication } from "../../lib/types";
+import { ContentSearch } from "../content-search";
+import { SearchInput } from "../search-input";
 import { memberRoleGroups, matchesMemberRole } from '../../../member-roles';
 export function ResearchView() {
   const { l, data } = useLab();
-  return (
-    <>
-      <PageHeading
-        eyebrow={l("Research", "Nghiên cứu")}
-        title={l(
-          "Questions that connect us.",
-          "Những câu hỏi kết nối chúng ta.",
-        )}
-        description=""
-      />
-      <section className="section">
-        <div className="container">
-          <div className="cards-grid two">
-            {data.research.map((item, index) => (
-              <ResearchCard key={item.id} item={item} index={index} />
-            ))}
-          </div>
-        </div>
-      </section>
-    </>
-  );
+  return <>
+    <PageHeading eyebrow={l("Research", "Nghiên cứu")} title={l("Questions that connect us.", "Những câu hỏi kết nối chúng ta.")} description="" showSections={false} />
+    <ContentSearch kind="research" records={data.research} renderRecords={items => <div className="cards-grid two">{items.map((item, index) => <ResearchCard key={item.id} item={item} index={index} />)}</div>} />
+  </>;
 }
 export function PeopleView() {
   const { l, text, data } = useLab();
@@ -146,168 +127,12 @@ export function PeopleView() {
     </>
   );
 }
-export function SearchInput({
-  value,
-  onChange,
-  placeholder,
-}: {
-  value: string;
-  onChange: (value: string) => void;
-  placeholder: string;
-}) {
-  return (
-    <div className="search-field">
-      <Search size={18} />
-      <input
-        type="search"
-        aria-label={placeholder}
-        placeholder={placeholder}
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-      />
-      {value && (
-        <button
-          onClick={() => onChange("")}
-          aria-label={
-            placeholder.startsWith("Search") ? "Clear search" : "Xóa tìm kiếm"
-          }
-        >
-          <X size={15} />
-        </button>
-      )}
-    </div>
-  );
-}
 export function PublicationsView() {
-  const { l, text, data } = useLab();
-  const [query, setQuery] = useState("");
-  const [year, setYear] = useState("all");
-  const [type, setType] = useState("all");
-  const [author, setAuthor] = useState("all");
-  const [area, setArea] = useState("all");
-  const reset = () => {
-    setQuery("");
-    setYear("all");
-    setType("all");
-    setAuthor("all");
-    setArea("all");
-  };
-  const filtered = data.publications.filter(
-    (item) =>
-      (year === "all" || String(item.year) === year) &&
-      (type === "all" || item.type === type) &&
-      (author === "all" || item.authors.includes(author)) &&
-      (area === "all" || item.area === area) &&
-      `${text(item.title)} ${text(item.venue)} ${item.authors
-        .map((id) => {
-          const m = data.members.find((x) => x.id === id);
-          return m ? text(m.title) : "";
-        })
-        .join(" ")}`
-        .toLowerCase()
-        .includes(query.toLowerCase()),
-  );
-  return (
-    <>
-      <PageHeading
-        eyebrow={l("Publications", "Công bố")}
-        title={l(
-          "Knowledge, shared openly.",
-          "Tri thức, được chia sẻ rộng mở.",
-        )}
-        description=""
-      />
-      <section className="section">
-        <div className="container">
-          <div className="filter-panel">
-            <SearchInput
-              value={query}
-              onChange={setQuery}
-              placeholder={l(
-                "Search titles, authors, or keywords…",
-                "Tìm tiêu đề, tác giả hoặc từ khóa…",
-              )}
-            />
-            <div className="filter-selects">
-              <SlidersHorizontal size={18} />
-              <Select
-                label={l("Year", "Năm")}
-                value={year}
-                onValueChange={setYear}
-                options={[
-                  { value: "all", label: l("All years", "Tất cả năm") },
-                  ...Array.from(new Set(data.publications.map((p) => p.year)))
-                    .filter((value): value is number => value !== null)
-                    .sort((a, b) => b - a)
-                    .map((y) => ({ value: String(y), label: String(y) })),
-                ]}
-              />
-              <Select
-                label={l("Type", "Loại")}
-                value={type}
-                onValueChange={setType}
-                options={[
-                  { value: "all", label: l("All types", "Tất cả loại") },
-                  ...["Journal", "Conference", "Book", "Preprint"].map((v) => ({
-                    value: v,
-                    label: l(v, roleVi[v]),
-                  })),
-                ]}
-              />
-              <Select
-                label={l("Author", "Tác giả")}
-                value={author}
-                onValueChange={setAuthor}
-                options={[
-                  { value: "all", label: l("All authors", "Tất cả tác giả") },
-                  ...data.members.map((m) => ({
-                    value: m.id,
-                    label: text(m.title),
-                  })),
-                ]}
-              />
-              <Select
-                label={l("Research area", "Lĩnh vực")}
-                value={area}
-                onValueChange={setArea}
-                options={[
-                  {
-                    value: "all",
-                    label: l("All research areas", "Tất cả lĩnh vực"),
-                  },
-                  ...data.research.map((a) => ({
-                    value: a.id,
-                    label: text(a.title),
-                  })),
-                ]}
-              />
-              <button onClick={reset} className="clear-filters">
-                {l("Reset", "Đặt lại")}
-              </button>
-            </div>
-          </div>
-          <div className="results-header" aria-live="polite">
-            <span>
-              {l("Showing", "Hiển thị")} <strong>{filtered.length}</strong>{" "}
-              {l("publications", "công bố")}
-            </span>
-            <span>{l("Newest first", "Mới nhất trước")}</span>
-          </div>
-          {filtered.length ? (
-            <div className="publication-results">
-              {[...filtered]
-                .sort((a, b) => (b.year ?? 0) - (a.year ?? 0))
-                .map((item) => (
-                  <PublicationRow item={item} key={item.id} />
-                ))}
-            </div>
-          ) : (
-            <EmptyState onReset={reset} />
-          )}
-        </div>
-      </section>
-    </>
-  );
+  const { l, data } = useLab();
+  return <>
+    <PageHeading eyebrow={l("Publications", "Công bố")} title={l("Knowledge, shared openly.", "Tri thức, được chia sẻ rộng mở.")} description="" showSections={false} />
+    <ContentSearch kind="publications" records={data.publications} renderRecords={items => <div className="publication-results">{[...items].sort((a, b) => (b.year ?? 0) - (a.year ?? 0)).map(item => <PublicationRow item={item} key={item.id} />)}</div>} />
+  </>;
 }
 export function PublicationRow({ item }: { item: Publication }) {
   const { locale, text, l, data } = useLab();
@@ -467,156 +292,16 @@ function ArrowRightIcon() {
   return <ArrowUpRight size={16} />;
 }
 export function ProjectsView() {
-  const { l, text, data } = useLab();
-  const [status, setStatus] = useState("all");
-  const [area, setArea] = useState("all");
-  const [query, setQuery] = useState("");
-  const filtered = data.projects.filter(
-    (item) =>
-      (status === "all" || item.status === status) &&
-      (area === "all" || item.area === area) &&
-      `${text(item.title)} ${text(item.description)}`
-        .toLowerCase()
-        .includes(query.toLowerCase()),
-  );
-  return (
-    <>
-      <PageHeading
-        eyebrow={l("Projects", "Đề tài")}
-        title={l("Ideas with a direction.", "Ý tưởng có định hướng.")}
-        description=""
-      />
-      <section className="section">
-        <div className="container">
-          <div className="filter-bar">
-            <SearchInput
-              value={query}
-              onChange={setQuery}
-              placeholder={l("Search projects…", "Tìm dự án…")}
-            />
-            <Select
-              label={l("Research areas", "Lĩnh vực nghiên cứu")}
-              value={area}
-              onValueChange={setArea}
-              options={[
-                { value: "all", label: l("All research areas", "Tất cả lĩnh vực") },
-                ...data.research.map((a) => ({
-                  value: a.id,
-                  label: text(a.title),
-                })),
-              ]}
-            />
-          </div>
-          <div
-            className="filter-tabs"
-            role="group"
-            aria-label={l("Project status", "Trạng thái dự án")}
-          >
-            {["all", "Ongoing", "Completed"].map((item) => (
-              <button
-                key={item}
-                aria-pressed={status === item}
-                className={status === item ? "active" : ""}
-                onClick={() => setStatus(item)}
-              >
-                {item === "all"
-                  ? l("All projects", "Tất cả dự án")
-                  : l(item, roleVi[item])}
-              </button>
-            ))}
-            <span className="results-count" aria-live="polite">
-              {filtered.length} {l("projects", "dự án")}
-            </span>
-          </div>
-          {filtered.length ? (
-            <div className="cards-grid three">
-              {filtered.map((item) => (
-                <ProjectCard item={item} key={item.id} />
-              ))}
-            </div>
-          ) : (
-            <EmptyState
-              onReset={() => {
-                setQuery("");
-                setStatus("all");
-                setArea("all");
-              }}
-            />
-          )}
-        </div>
-      </section>
-    </>
-  );
+  const { l, data } = useLab();
+  return <>
+    <PageHeading eyebrow={l("Projects", "Đề tài")} title={l("Ideas with a direction.", "Ý tưởng có định hướng.")} description="" showSections={false} />
+    <ContentSearch kind="projects" records={data.projects} renderRecords={items => <div className="cards-grid three">{items.map(item => <ProjectCard item={item} key={item.id} />)}</div>} />
+  </>;
 }
 export function NewsView() {
-  const { l, text, data } = useLab();
-  const [category, setCategory] = useState("all");
-  const [query, setQuery] = useState("");
-  const filtered = data.news.filter(
-    (item) =>
-      (category === "all" || item.category === category) &&
-      `${text(item.title)} ${text(item.description)}`
-        .toLowerCase()
-        .includes(query.toLowerCase()),
-  );
-  return (
-    <>
-      <PageHeading
-        eyebrow={l("News & events", "Tin & sự kiện")}
-        title={l(
-          "A laboratory, always in motion.",
-          "Phòng lab luôn chuyển động.",
-        )}
-        description=""
-      />
-      <section className="section">
-        <div className="container">
-          <div className="filter-bar">
-            <SearchInput
-              value={query}
-              onChange={setQuery}
-              placeholder={l("Search news and events…", "Tìm tin và sự kiện…")}
-            />
-            <span className="results-count" aria-live="polite">
-              {filtered.length} {l("stories", "bài viết")}
-            </span>
-          </div>
-          <div
-            className="filter-tabs"
-            role="group"
-            aria-label={l("News category", "Nhóm tin tức")}
-          >
-            {["all", "News", "Seminar", "Achievement", "Event"].map((item) => (
-              <button
-                key={item}
-                aria-pressed={category === item}
-                className={category === item ? "active" : ""}
-                onClick={() => setCategory(item)}
-              >
-                {item === "all"
-                  ? l("All updates", "Tất cả tin")
-                  : l(item, roleVi[item])}
-              </button>
-            ))}
-          </div>
-          {filtered.length ? (
-            <div className="cards-grid three">
-              {[...filtered]
-                .sort((a, b) => b.date.localeCompare(a.date))
-                .map((item) => (
-                  <NewsCard item={item} key={item.id} />
-                ))}
-            </div>
-          ) : (
-            <EmptyState
-              onReset={() => {
-                setQuery("");
-                setCategory("all");
-              }}
-            />
-          )}
-        </div>
-      </section>
-    </>
-  );
+  const { l, data } = useLab();
+  return <>
+    <PageHeading eyebrow={l("News & events", "Tin & sự kiện")} title={l("A laboratory, always in motion.", "Phòng lab luôn chuyển động.")} description="" showSections={false} />
+    <ContentSearch kind="news" records={data.news} renderRecords={items => <div className="cards-grid three">{[...items].sort((a, b) => b.date.localeCompare(a.date)).map(item => <NewsCard item={item} key={item.id} />)}</div>} />
+  </>;
 }

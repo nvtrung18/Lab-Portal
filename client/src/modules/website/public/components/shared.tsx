@@ -57,11 +57,13 @@ export function PageHeading({
   title,
   description,
   usePageContent = true,
+  showSections = true,
 }: {
   eyebrow: string;
   title: string;
   description: string;
   usePageContent?: boolean;
+  showSections?: boolean;
 }) {
   const { locale, l, page, text } = useLab();
   const headingDescription = usePageContent && page ? text(page.description) : description;
@@ -83,7 +85,7 @@ export function PageHeading({
           +
         </span>
       </div>
-    </section><DynamicSections /></>
+    </section>{showSections && <DynamicSections />}</>
   );
 }
 const icons = { earth: Globe2, cpu: Cpu, radio: Radio, network: Network };
