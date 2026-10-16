@@ -924,15 +924,6 @@
   background-size: 40px 40px;
   mask-image: linear-gradient(135deg, black, transparent);
 }
-.lab-public .member-avatar:after {
-  content: "";
-  position: absolute;
-  width: 155px;
-  height: 155px;
-  border: 1px solid #fff8;
-  border-radius: 50%;
-  transform: translate(74px, 96px);
-}
 .lab-public .member-avatar svg {
   position: absolute;
   bottom: 15px;
@@ -3740,7 +3731,6 @@
   object-position: center top;
 }
 .lab-public .scholar-portrait img { object-fit: contain; }
-.lab-public .member-card-scholar .member-avatar:after { display: none; }
 .lab-public .member-card .card-more {
   min-height: 44px;
   margin-top: 0.5rem;
