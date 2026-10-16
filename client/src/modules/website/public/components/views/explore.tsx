@@ -23,7 +23,7 @@ import { Dialog } from "../ui/dialog";
 import type { Publication } from "../../lib/types";
 import { ContentSearch } from "../content-search";
 import { SearchInput } from "../search-input";
-import { memberRoleGroups, matchesMemberRole } from '../../../member-roles';
+import { memberRoleGroups, matchesMemberRole, partitionMemberDisplayGroups } from '../../../member-roles';
 export function ResearchView() {
   const { l, data } = useLab();
   return <>
@@ -52,6 +52,27 @@ export function PeopleView() {
         .toLowerCase()
         .includes(query.toLowerCase()),
   );
+  const visibleGroups = groups.map(group => ({
+    ...group,
+    members: filtered.filter(item => matchesMemberRole(item.role, group.role)),
+  })).filter(group => group.members.length || (group.showWhenEmpty &&
+    (role === group.role || (role === 'all' && !query.trim()))));
+  const { hierarchy, additional, collaborators } = partitionMemberDisplayGroups(visibleGroups);
+  const researchCount = [...hierarchy, ...additional].reduce((count, group) => count + group.members.length, 0);
+  const renderTier = (group: typeof visibleGroups[number], hierarchical: boolean) => {
+    const headingId = `member-group-${group.role.toLowerCase().replace(/ /g, '-')}`;
+    return <section className={hierarchical ? 'member-tier' : 'member-additional'} key={group.role} aria-labelledby={headingId}>
+      <div className="member-tier-heading">
+        <h3 id={headingId}>{text(group.title)}</h3>
+        <span>{group.members.length} {l('members', 'thành viên')}</span>
+      </div>
+      {group.members.length ? <div className={`member-tier-grid member-tier-grid-${Math.min(group.members.length, 6)}`}>
+        {group.members.map(item => <MemberCard item={item} key={item.id} />)}
+      </div> : <p className="member-tier-empty" role="status">{query.trim()
+        ? l('No matching master\'s students.', 'Không có học viên cao học phù hợp.')
+        : l('No master\'s students have been added yet.', 'Chưa có học viên cao học trong danh sách.')}</p>}
+    </section>;
+  };
   return (
     <>
       <PageHeading
@@ -95,24 +116,27 @@ export function PeopleView() {
               </button>
             ))}
           </div>
-          {filtered.length || role === 'MSc student' || (role === 'all' && !query.trim()) ? (
-            <div className="member-hierarchy" aria-label={l('Laboratory membership hierarchy', 'Phân tầng thành viên lab')}>
-              {groups.map(group => {
-                const members = filtered.filter(item => matchesMemberRole(item.role, group.role));
-                if (!members.length && !(group.showWhenEmpty && (role === group.role || (role === 'all' && !query.trim())))) return null;
-                const headingId = `member-group-${group.role.toLowerCase().replace(/ /g, '-')}`;
-                return <section className="member-tier" key={group.role} aria-labelledby={headingId}>
-                  <div className="member-tier-heading">
-                    <h2 id={headingId}>{text(group.title)}</h2>
-                    <span>{members.length} {l('members', 'thành viên')}</span>
-                  </div>
-                  {members.length ? <div className={`member-tier-grid member-tier-grid-${Math.min(members.length, 6)}`}>
-                    {members.map(item => <MemberCard item={item} key={item.id} />)}
-                  </div> : <p className="member-tier-empty" role="status">{query.trim()
-                    ? l('No matching master\'s students.', 'Không có học viên cao học phù hợp.')
-                    : l('No master\'s students have been added yet.', 'Chưa có học viên cao học trong danh sách.')}</p>}
-                </section>;
-              })}
+          {visibleGroups.length ? (
+            <div className="member-groups">
+              {hierarchy.length + additional.length > 0 && <section className="member-research-group" aria-labelledby="member-research-heading">
+                <div className="member-group-heading">
+                  <h2 id="member-research-heading">{l('ALELA Research Team', 'Đội ngũ nghiên cứu ALELA')}</h2>
+                  <span>{researchCount} {l('members', 'thành viên')}</span>
+                </div>
+                {hierarchy.length > 0 && <div className="member-hierarchy" aria-label={l('Research team hierarchy', 'Phân tầng đội ngũ nghiên cứu')}>
+                  {hierarchy.map(group => renderTier(group, true))}
+                </div>}
+                {additional.map(group => renderTier(group, false))}
+              </section>}
+              {collaborators.map(group => <section className="member-collaborators" key={group.role} aria-labelledby="member-collaborators-heading">
+                <div className="member-group-heading">
+                  <h2 id="member-collaborators-heading">{l('Guests & Collaborators', 'Khách mời & Đối tác')}</h2>
+                  <span>{group.members.length} {l('members', 'thành viên')}</span>
+                </div>
+                <div className="member-collaborator-grid member-tier-grid">
+                  {group.members.map(item => <MemberCard item={item} key={item.id} />)}
+                </div>
+              </section>)}
             </div>
           ) : (
             <EmptyState

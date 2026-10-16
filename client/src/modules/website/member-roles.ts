@@ -14,3 +14,13 @@ export function matchesMemberRole(memberRole: string, selected: string) {
     ? !memberRoleGroups.some(group => group.role === memberRole)
     : memberRole === selected;
 }
+
+// Display grouping only: preserve legacy roles without adding them to the academic chain.
+export function partitionMemberDisplayGroups<T extends { role: string }>(groups: T[]) {
+  const academicRoles = new Set(['Steering Member', 'Core Member', 'PhD student', 'MSc student']);
+  return {
+    hierarchy: groups.filter(group => academicRoles.has(group.role)),
+    additional: groups.filter(group => !academicRoles.has(group.role) && group.role !== 'Guest'),
+    collaborators: groups.filter(group => group.role === 'Guest'),
+  };
+}

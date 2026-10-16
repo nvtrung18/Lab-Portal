@@ -6,7 +6,7 @@ import { defaultScholarSort, sortScholarPublications, toggleScholarSort } from '
 import { normalizeWebsitePages } from '../../contracts/website-pages.ts';
 import { productTransferCandidates, transferProductSections } from '../../contracts/website-product-transfer.ts';
 import type { ScholarPublication, WebsiteContent, WebsitePage, WebsiteSection } from '../../contracts/website-content.ts';
-import { memberRoleGroups, matchesMemberRole } from '../src/modules/website/member-roles.ts';
+import { memberRoleGroups, matchesMemberRole, partitionMemberDisplayGroups } from '../src/modules/website/member-roles.ts';
 import { appendGalleryImages, articleImages, MAX_GALLERY_IMAGES, MAX_WEBSITE_IMAGE_BYTES, moveGalleryImage, promoteGalleryImage, validWebsiteImageFile } from '../../contracts/website-gallery.ts';
 import type { GalleryImage } from '../../contracts/website-content.ts';
 import { defaultHomeHero, isHeroUrl, resolveHomeHero, withHomeHero } from '../../contracts/website-hero.ts';
@@ -355,4 +355,24 @@ test('Unknown project status, empty metadata and no-match queries are not given 
   assert.equal(filterSearch(docs, { query: '', filters: { status: 'Completed' } }).length, 0);
   assert.deepEqual(searchFilterValues(docs, 'status'), []);
   assert.deepEqual(filterSearch([], { query: '', filters: {} }), []);
+});
+
+
+test('People display keeps guests independent and the academic chain ends at MSc without losing legacy roles', () => {
+  const groups = [...memberRoleGroups, { role: 'other' }];
+  const before = structuredClone(groups);
+  const display = partitionMemberDisplayGroups(groups);
+  assert.deepEqual(display.hierarchy.map(group => group.role), ['Steering Member', 'Core Member', 'PhD student', 'MSc student']);
+  assert.deepEqual(display.collaborators.map(group => group.role), ['Guest']);
+  assert.deepEqual(display.additional.map(group => group.role), ['Undergraduate', 'other']);
+  assert.equal(display.hierarchy.length + display.additional.length + display.collaborators.length, groups.length);
+  assert.deepEqual(groups, before);
+  const guestsOnly = partitionMemberDisplayGroups(groups.filter(group => group.role === 'Guest'));
+  assert.deepEqual(guestsOnly.hierarchy, []);
+  assert.deepEqual(guestsOnly.additional, []);
+  assert.equal(guestsOnly.collaborators.length, 1);
+  const doctoralOnly = partitionMemberDisplayGroups(groups.filter(group => group.role === 'PhD student'));
+  assert.equal(doctoralOnly.hierarchy.length, 1);
+  assert.deepEqual(doctoralOnly.collaborators, []);
+  assert.deepEqual(partitionMemberDisplayGroups([]), { hierarchy: [], additional: [], collaborators: [] });
 });
