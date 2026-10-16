@@ -319,3 +319,40 @@ test('Colliding IDs/slugs and hidden library content are not overwritten or sile
   assert.deepEqual(normalized.contentLibrary, input.contentLibrary);
   assert.deepEqual(normalized.pages.find(p => p.template === 'products')!.sectionIds, []);
 });
+
+test('Published editorial list passages are searchable by author/year/venue/DOI/code without inferred metadata', async () => {
+  const { filterSearch } = await import('../../contracts/website-search.ts');
+  const docs = [
+    { id: 'li-7', text: 'A. T. Tran L. M. Pham ProMESh IEEE Access 2026 doi: 10.1109/ACCESS.2026.3656429', metadata: {}, value: 'li-7' },
+    { id: 'li-8', text: 'Nguyễn Đình An nội dung nhiều đoạn DOI 10.1000/example', metadata: {}, value: 'li-8' },
+    { id: 'project', text: 'Điện toán đám mây QG20.55', metadata: {}, value: 'project' },
+  ];
+  for (const query of ['promesh', 'IEEE Access 2026', 'L. M. Pham', '10.1109/ACCESS.2026.3656429']) assert.deepEqual(filterSearch(docs, { query, filters: {} }).map(doc => doc.id), ['li-7']);
+  assert.deepEqual(filterSearch(docs, { query: 'nguyen dinh an', filters: {} }).map(doc => doc.id), ['li-8']);
+  assert.deepEqual(filterSearch(docs, { query: 'QG20.55', filters: {} }).map(doc => doc.id), ['project']);
+  assert.equal(filterSearch(docs, { query: '', filters: { year: '2026' } }).length, 0);
+});
+test('Mixed search applies only explicit metadata and preserves source order and inputs', async () => {
+  const { filterSearch, searchFilterValues } = await import('../../contracts/website-search.ts');
+  const docs = [
+    { id: 'editorial', text: 'Cloud IEEE 2026', metadata: {}, value: 1 },
+    { id: 'record-a', text: 'Cloud IEEE 2026', metadata: { year: '2026', author: ['a', 'b'], type: 'Journal' }, value: 2 },
+    { id: 'record-b', text: 'Cloud 2025', metadata: { year: '2025', author: ['b'], type: 'Conference' }, value: 3 },
+  ];
+  const original = structuredClone(docs);
+  assert.deepEqual(filterSearch(docs, { query: '  CLOUD  ', filters: {} }).map(doc => doc.id), ['editorial', 'record-a', 'record-b']);
+  assert.deepEqual(filterSearch(docs, { query: 'cloud', filters: { author: 'b', year: '2026', type: 'Journal' } }).map(doc => doc.id), ['record-a']);
+  assert.deepEqual(searchFilterValues(docs, 'year'), ['2026', '2025']);
+  assert.deepEqual(searchFilterValues(docs, 'author'), ['a', 'b']);
+  assert.deepEqual(searchFilterValues(docs, 'status'), []);
+  assert.deepEqual(docs, original);
+});
+test('Unknown project status, empty metadata and no-match queries are not given fabricated classifications', async () => {
+  const { filterSearch, searchFilterValues } = await import('../../contracts/website-search.ts');
+  const docs = [{ id: 'free-text', text: 'Đề tài QG20.55 hoàn thành năm 2026', metadata: {}, value: 1 }];
+  assert.equal(filterSearch(docs, { query: '', filters: {} }).length, 1);
+  assert.equal(filterSearch(docs, { query: 'unavailable', filters: {} }).length, 0);
+  assert.equal(filterSearch(docs, { query: '', filters: { status: 'Completed' } }).length, 0);
+  assert.deepEqual(searchFilterValues(docs, 'status'), []);
+  assert.deepEqual(filterSearch([], { query: '', filters: {} }), []);
+});

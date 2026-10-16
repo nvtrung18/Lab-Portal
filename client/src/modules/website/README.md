@@ -330,3 +330,20 @@ Khởi động lại BE và FE để nạp cấu hình mới. Thay đổi truy c
 
 Build/compile/lint chỉ xác nhận mã nguồn và cấu hình tương ứng; không chứng minh
 lưu/xuất bản trên DB thực, hiển thị trình duyệt hoặc triển khai Docker.
+
+## Tìm kiếm nội dung public và danh sách học thuật
+
+Publications, Projects, Research và News tìm cả structured records và các mục/đoạn
+trong editorial sections **được chọn trên trang hiện tại**, theo ngôn ngữ đang xem.
+Các kết quả văn bản không bị tự coi là công bố/đề tài riêng và không được suy đoán
+metadata từ bibliography. Bộ lọc chỉ hiện giá trị structured metadata thực có;
+đặt lại bộ lọc để tìm toàn bộ văn bản. Nút **Xem trong nội dung gốc** dẫn tới đúng
+mục, giữ số thứ tự, định dạng, liên kết và hình ảnh đã xuất bản.
+
+Danh sách HTML `ol/ul` hiển thị đầy đủ; không còn bị cắt bởi giới hạn 5 dòng.
+Đọc tiếp/Thu gọn tiếp tục áp dụng cho prose; mở rộng bỏ giới hạn chiều cao pixel.
+Không có thay đổi dữ liệu CMS, DTO, API hay migration. Xem
+`docs/website/PUBLIC_SEARCH_AND_READING.md` về giới hạn, kế hoạch chuyển dữ liệu có
+admin rà soát và kết quả kiểm thử. Browser harness không thêm dependency:
+`npm run dev -- --mode production` với `VITE_API_BASE_URL` local phù hợp, rồi mở
+`/tests/website-search.browser.html`; file test không nằm trong production bundle.

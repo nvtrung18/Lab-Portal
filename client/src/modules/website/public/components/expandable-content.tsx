@@ -1,15 +1,17 @@
 import { useId, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { ChevronDown } from 'lucide-react';
+import { scrollToEditorialTarget } from '../../editorial-search';
 
 /** Measure the rendered content rather than truncating CMS HTML or guessing its length. */
-export function ExpandableContent({ children, title, readMore, showLess, collapseTargetId }: {
+export function ExpandableContent({ children, title, readMore, showLess, collapseTargetId, defaultExpanded = false }: {
   children: ReactNode; title: string; readMore: string; showLess: string; collapseTargetId?: string;
+  defaultExpanded?: boolean;
 }) {
   const id = useId();
   const root = useRef<HTMLDivElement>(null);
   const content = useRef<HTMLDivElement>(null);
-  const [expanded, setExpanded] = useState(false);
-  const [size, setSize] = useState<{ full: number; collapsed: number } | null>(null);
+  const [expanded, setExpanded] = useState(defaultExpanded);
+  const [size, setSize] = useState<{ full: number; collapsed: number; hasList: boolean } | null>(null);
 
   useLayoutEffect(() => {
     const element = content.current;
@@ -20,9 +22,9 @@ export function ExpandableContent({ children, title, readMore, showLess, collaps
       const firstText = element.querySelector('p, li') ?? element;
       const style = window.getComputedStyle(firstText);
       const lineHeight = parseFloat(style.lineHeight) || parseFloat(style.fontSize) * 1.8;
-      const next = { full: element.getBoundingClientRect().height, collapsed: lineHeight * 5 };
+      const next = { full: element.getBoundingClientRect().height, collapsed: lineHeight * 5, hasList: Boolean(element.querySelector('ol, ul')) };
       setSize(previous => previous && Math.abs(previous.full - next.full) < .5
-        && Math.abs(previous.collapsed - next.collapsed) < .5 ? previous : next);
+        && Math.abs(previous.collapsed - next.collapsed) < .5 && previous.hasList === next.hasList ? previous : next);
     };
     measure();
     const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(measure);
@@ -38,14 +40,16 @@ export function ExpandableContent({ children, title, readMore, showLess, collaps
     };
   }, [children]);
 
-  const overflows = size !== null && size.full > size.collapsed + 1;
+  // A five-line crop can bisect a citation, list marker or DOI. Semantic lists stay complete.
+  const overflows = size !== null && !size.hasList && size.full > size.collapsed + 1;
+  const unrestricted = expanded || (size !== null && !overflows);
   const label = expanded ? showLess : readMore;
   return <div ref={root} className="expandable-content">
-    <div id={id} className="expandable-content-viewport"
-      style={{ maxHeight: size ? overflows ? expanded ? size.full : size.collapsed : 'none' : '9em' }}
+    <div id={id} className={`expandable-content-viewport${unrestricted ? ' is-unrestricted' : ''}`}
+      style={{ maxHeight: unrestricted ? 'none' : size?.collapsed ?? '9em' }}
       onFocusCapture={event => {
         // A keyboard user reaching a clipped link must be able to see its focus.
-        if (!expanded && size && content.current
+        if (!expanded && overflows && size && content.current
           && event.target.getBoundingClientRect().bottom - content.current.getBoundingClientRect().top > size.collapsed) {
           setExpanded(true);
         }
@@ -58,7 +62,7 @@ export function ExpandableContent({ children, title, readMore, showLess, collaps
         // Keep the article in view when collapsing a long body from its bottom.
         if (expanded && root.current && root.current.getBoundingClientRect().top < 0) {
           const anchor = collapseTargetId ? document.getElementById(collapseTargetId) : null;
-          (anchor ?? root.current).scrollIntoView({ block: 'start', behavior: 'instant' });
+          scrollToEditorialTarget(anchor ?? root.current);
         }
         setExpanded(value => !value);
       }}>
