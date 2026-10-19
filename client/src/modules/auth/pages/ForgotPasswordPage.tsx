@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { type FormEvent, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, FlaskConical } from 'lucide-react';
 
 import {
   resetPasswordAPI,
@@ -144,9 +144,17 @@ export function ForgotPasswordPage() {
   };
 
   return (
-    <section className="app-surface-elevated min-w-0 w-full rounded-xl p-5 sm:p-8">
-      <h1 className="text-2xl font-semibold text-slate-950 dark:text-white">{t('auth.forgotTitle')}</h1>
-      <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">{t('auth.forgotDescription')}</p>
+    <section className="app-surface-elevated min-w-0 w-full rounded-2xl p-5 sm:p-8">
+      <div className="mb-7 flex items-center gap-3">
+        <span className="app-icon-badge flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl">
+          <FlaskConical aria-hidden="true" className="h-6 w-6" />
+        </span>
+        <div className="min-w-0">
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-600 dark:text-slate-300">{t('common.appTitle')}</p>
+          <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-950 dark:text-white">{t('auth.forgotTitle')}</h1>
+        </div>
+      </div>
+      <p className="mb-6 text-sm text-slate-600 dark:text-slate-300">{t('auth.forgotDescription')}</p>
 
       <div className="my-6 grid w-full grid-cols-3 items-center gap-2 text-center">
         {steps.map((item, index) => (
@@ -155,7 +163,7 @@ export function ForgotPasswordPage() {
             className={[
               'flex min-w-0 items-center justify-center break-words text-xs font-medium text-slate-400 sm:text-sm',
               index === currentStepIndex ? 'font-bold text-slate-950 dark:text-white' : '',
-              index < currentStepIndex ? 'text-emerald-700' : '',
+              index < currentStepIndex ? 'text-emerald-700 dark:text-emerald-400' : '',
             ].join(' ')}
           >
             {index + 1}. {t(item.labelKey)}
@@ -165,16 +173,18 @@ export function ForgotPasswordPage() {
 
       {step === 'email' ? (
         <form className="space-y-5" onSubmit={handleSendCode}>
-          <label className="block text-sm font-medium text-slate-700 dark:text-slate-200" htmlFor="forgot-email">{t('auth.email')}</label>
-          <input
-            autoComplete="email"
-            className="w-full min-h-12 rounded-md border border-slate-300 bg-white px-3 py-2 text-base text-slate-950 outline-none focus:border-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:focus:border-white"
-            id="forgot-email"
-            placeholder={t('auth.email')}
-            type="email"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-          />
+          <div>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-200" htmlFor="forgot-email">{t('auth.email')}</label>
+            <input
+              autoComplete="email"
+              className="mt-2 block min-h-12 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-base text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10 dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:focus:border-white"
+              id="forgot-email"
+              placeholder={t('auth.email')}
+              type="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+            />
+          </div>
           <Button
             className="w-full"
             loading={isSubmitting}
@@ -189,21 +199,23 @@ export function ForgotPasswordPage() {
 
       {step === 'otp' ? (
         <form className="space-y-5" onSubmit={handleVerifyCode}>
-          <p className="break-words rounded-md bg-slate-50 px-3 py-2 text-sm text-slate-700 dark:bg-slate-950 dark:text-slate-300">
+          <p className="break-words rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-700 dark:bg-slate-950 dark:text-slate-300">
             {t('auth.codeSentTo')}{' '}
             <span className="font-semibold text-slate-950 dark:text-white">{normalizedEmail}</span>
           </p>
-          <label className="block text-sm font-medium text-slate-700 dark:text-slate-200" htmlFor="forgot-code">{t('auth.verificationCode')}</label>
-          <input
-            autoComplete="one-time-code"
-            className="w-full min-h-12 rounded-md border border-slate-300 bg-white px-3 py-2 text-base text-slate-950 outline-none focus:border-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:focus:border-white"
-            id="forgot-code"
-            inputMode="numeric"
-            maxLength={6}
-            placeholder={t('auth.codeSixDigits')}
-            value={code}
-            onChange={(event) => setCode(event.target.value.replace(/\D/g, ''))}
-          />
+          <div>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-200" htmlFor="forgot-code">{t('auth.verificationCode')}</label>
+            <input
+              autoComplete="one-time-code"
+              className="mt-2 block min-h-12 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-base text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10 dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:focus:border-white"
+              id="forgot-code"
+              inputMode="numeric"
+              maxLength={6}
+              placeholder={t('auth.codeSixDigits')}
+              value={code}
+              onChange={(event) => setCode(event.target.value.replace(/\D/g, ''))}
+            />
+          </div>
           <Button
             className="w-full"
             loading={isSubmitting}
@@ -227,49 +239,53 @@ export function ForgotPasswordPage() {
 
       {step === 'password' ? (
         <form className="space-y-5" onSubmit={handleResetPassword}>
-          <p className="break-words rounded-md bg-emerald-50 px-3 py-2 text-sm text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-200">
+          <p className="break-words rounded-xl bg-emerald-50 px-4 py-3 text-sm text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-200">
             {t('auth.validCodeFor')}{' '}
-            <span className="font-semibold text-emerald-900">{normalizedEmail}</span>
+            <span className="font-semibold text-emerald-900 dark:text-emerald-100">{normalizedEmail}</span>
           </p>
-          <label className="block text-sm font-medium text-slate-700 dark:text-slate-200" htmlFor="forgot-new-password">{t('auth.newPassword')}</label>
-          <div className="relative">
-            <input
-              autoComplete="new-password"
-              className="w-full min-h-12 rounded-md border border-slate-300 bg-white px-3 py-2 pr-14 text-base text-slate-950 outline-none focus:border-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:focus:border-white"
-              id="forgot-new-password"
-              placeholder={t('auth.newPassword')}
-              type={showPassword ? 'text' : 'password'}
-              value={newPassword}
-              onChange={(event) => setNewPassword(event.target.value)}
-            />
-            <button
-              aria-label={showPassword ? t('auth.hidePassword') : t('auth.showPassword')}
-              className="absolute right-1 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-lg text-slate-600 dark:text-slate-300"
-              onClick={() => setShowPassword((value) => !value)}
-              type="button"
-            >
-              {showPassword ? <EyeOff aria-hidden="true" size={18} /> : <Eye aria-hidden="true" size={18} />}
-            </button>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-200" htmlFor="forgot-new-password">{t('auth.newPassword')}</label>
+            <div className="relative mt-2">
+              <input
+                autoComplete="new-password"
+                className="block min-h-12 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 pr-14 text-base text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10 dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:focus:border-white"
+                id="forgot-new-password"
+                placeholder={t('auth.newPassword')}
+                type={showPassword ? 'text' : 'password'}
+                value={newPassword}
+                onChange={(event) => setNewPassword(event.target.value)}
+              />
+              <button
+                aria-label={showPassword ? t('auth.hidePassword') : t('auth.showPassword')}
+                className="app-button-ghost absolute right-1 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-xl p-0 text-slate-600 hover:text-slate-950 disabled:cursor-not-allowed disabled:text-slate-300 dark:text-slate-300 dark:hover:text-white"
+                onClick={() => setShowPassword((value) => !value)}
+                type="button"
+              >
+                {showPassword ? <EyeOff aria-hidden="true" size={18} /> : <Eye aria-hidden="true" size={18} />}
+              </button>
+            </div>
           </div>
-          <label className="block text-sm font-medium text-slate-700 dark:text-slate-200" htmlFor="forgot-confirm-password">{t('auth.confirmPassword')}</label>
-          <div className="relative">
-            <input
-              autoComplete="new-password"
-              className="w-full min-h-12 rounded-md border border-slate-300 bg-white px-3 py-2 pr-14 text-base text-slate-950 outline-none focus:border-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:focus:border-white"
-              id="forgot-confirm-password"
-              placeholder={t('auth.confirmPassword')}
-              type={showConfirmPassword ? 'text' : 'password'}
-              value={confirmPassword}
-              onChange={(event) => setConfirmPassword(event.target.value)}
-            />
-            <button
-              aria-label={showConfirmPassword ? t('auth.hidePassword') : t('auth.showPassword')}
-              className="absolute right-1 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-lg text-slate-600 dark:text-slate-300"
-              onClick={() => setShowConfirmPassword((value) => !value)}
-              type="button"
-            >
-              {showConfirmPassword ? <EyeOff aria-hidden="true" size={18} /> : <Eye aria-hidden="true" size={18} />}
-            </button>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-200" htmlFor="forgot-confirm-password">{t('auth.confirmPassword')}</label>
+            <div className="relative mt-2">
+              <input
+                autoComplete="new-password"
+                className="block min-h-12 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 pr-14 text-base text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10 dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:focus:border-white"
+                id="forgot-confirm-password"
+                placeholder={t('auth.confirmPassword')}
+                type={showConfirmPassword ? 'text' : 'password'}
+                value={confirmPassword}
+                onChange={(event) => setConfirmPassword(event.target.value)}
+              />
+              <button
+                aria-label={showConfirmPassword ? t('auth.hidePassword') : t('auth.showPassword')}
+                className="app-button-ghost absolute right-1 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-xl p-0 text-slate-600 hover:text-slate-950 disabled:cursor-not-allowed disabled:text-slate-300 dark:text-slate-300 dark:hover:text-white"
+                onClick={() => setShowConfirmPassword((value) => !value)}
+                type="button"
+              >
+                {showConfirmPassword ? <EyeOff aria-hidden="true" size={18} /> : <Eye aria-hidden="true" size={18} />}
+              </button>
+            </div>
           </div>
           <Button
             className="w-full"

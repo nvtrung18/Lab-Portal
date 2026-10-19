@@ -56,9 +56,9 @@ export function ResearchProjectList({ labId, canCreate, mode = 'manager' }: Rese
       ) : (
         <div className="mt-5 grid gap-4 lg:grid-cols-2">
           {projects.map((project) => (
-            <article key={project.id} className="min-w-0 rounded-md border border-slate-200 p-4">
+            <article key={project.id} className="min-w-0 rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-5">
               <div className="flex flex-wrap items-start justify-between gap-3">
-                <h4 className="min-w-0 break-words text-base font-semibold text-slate-950">
+                <h4 className="min-w-0 break-words text-base font-semibold text-slate-950 dark:text-white">
                   {project.code ? `${project.code} - ` : ''}
                   {project.title}
                 </h4>
@@ -66,33 +66,33 @@ export function ResearchProjectList({ labId, canCreate, mode = 'manager' }: Rese
                   {formatProjectStatus(project.status, locale)}
                 </span>
               </div>
-              <p className="mt-2 break-words text-sm font-medium text-slate-700">
+              <p className="mt-2 break-words text-sm font-medium text-slate-700 dark:text-slate-300">
                 {project.researchDirection ?? t('research.project.noDirection')}
               </p>
-              <p className="mt-3 break-words text-sm text-slate-600">
+              <p className="mt-3 break-words text-sm text-slate-600 dark:text-slate-400">
                 {project.objective || project.description || t('research.group.noObjective')}
               </p>
               <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
                 <div>
-                  <dt className="font-semibold text-slate-700">{t('research.project.startDateLabel')}</dt>
-                  <dd className="mt-1 text-slate-600">{formatDate(project.startDate, locale)}</dd>
+                  <dt className="font-semibold text-slate-700 dark:text-slate-300">{t('research.project.startDateLabel')}</dt>
+                  <dd className="mt-1 text-slate-600 dark:text-slate-400">{formatDate(project.startDate, locale)}</dd>
                 </div>
                 <div>
-                  <dt className="font-semibold text-slate-700">{t('research.project.expectedEndDateLabel')}</dt>
-                  <dd className="mt-1 text-slate-600">{formatDate(project.expectedEndDate ?? project.endDate, locale)}</dd>
+                  <dt className="font-semibold text-slate-700 dark:text-slate-300">{t('research.project.expectedEndDateLabel')}</dt>
+                  <dd className="mt-1 text-slate-600 dark:text-slate-400">{formatDate(project.expectedEndDate ?? project.endDate, locale)}</dd>
                 </div>
                 <div>
-                  <dt className="font-semibold text-slate-700">{t('research.project.priority')}</dt>
-                  <dd className="mt-1 text-slate-600">{formatPriority(project.priority, locale)}</dd>
+                  <dt className="font-semibold text-slate-700 dark:text-slate-300">{t('research.project.priority')}</dt>
+                  <dd className="mt-1 text-slate-600 dark:text-slate-400">{formatPriority(project.priority, locale)}</dd>
                 </div>
                 <div>
-                  <dt className="font-semibold text-slate-700">{t('research.project.manager')}</dt>
-                  <dd className="mt-1 text-slate-600">{project.managerName ?? t('common.notUpdated')}</dd>
+                  <dt className="font-semibold text-slate-700 dark:text-slate-300">{t('research.project.manager')}</dt>
+                  <dd className="mt-1 text-slate-600 dark:text-slate-400">{project.managerName ?? t('common.notUpdated')}</dd>
                 </div>
               </dl>
               <div className="mt-4 flex flex-wrap gap-2">
                 <Link
-                  className="inline-flex min-h-11 items-center rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100"
+                  className="inline-flex h-8 items-center rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
                   to={`/app/research/projects/${project.id}`}
                 >
                   {t('common.viewDetails')}
