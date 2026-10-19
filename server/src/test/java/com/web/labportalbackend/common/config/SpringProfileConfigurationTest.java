@@ -22,8 +22,22 @@ class SpringProfileConfigurationTest {
         assertThat(properties.getProperty("spring.datasource.password")).isEqualTo("${DB_PASSWORD}");
         assertThat(properties.getProperty("spring.data.redis.host")).isEqualTo("${REDIS_HOST}");
         assertThat(properties.getProperty("jwt.secret")).isEqualTo("${JWT_SECRET}");
-        assertThat(properties.getProperty("app.dev-seed.enabled")).isEqualTo("false");
+        assertThat(properties.getProperty("app.dev-seed.enabled")).isNull();
         assertThat(properties.getProperty("logging.level.org.hibernate.SQL")).isEqualTo("WARN");
+    }
+
+    @Test
+    void applicationDistributionHasNoAutomaticMockSeederOrManualDemoFixtures() {
+        ClassLoader loader = getClass().getClassLoader();
+        assertThat(loader.getResource("com/web/labportalbackend/common/config/DevDataSeeder.class")).isNull();
+        for (String resource : new String[]{
+                "db/dev/seed-dev-large-data.sql", "db/dev/rollback-dev-large-data.sql",
+                "db/dev/seed-existing-labs-research.sql", "db/dev/seed-nckh-thesis.sql",
+                "db/dev/reconcile-nckh-thesis-initial.sql", "db/demo/seed-production-nckh-foundation.sql"
+        }) {
+            assertThat(loader.getResource(resource)).as(resource).isNull();
+        }
+        assertThat(load("application-local.yml").getProperty("app.dev-seed.enabled")).isNull();
     }
 
     @Test

@@ -113,7 +113,6 @@ services:
       FACE_INTERNAL_SERVICE_TOKEN: ${FACE_INTERNAL_SERVICE_TOKEN:?FACE_INTERNAL_SERVICE_TOKEN is required}
       FACE_EMBEDDING_ENCRYPTION_KEY: ${FACE_EMBEDDING_ENCRYPTION_KEY:?FACE_EMBEDDING_ENCRYPTION_KEY is required}
       APP_DEFAULT_LOCALE: ${APP_DEFAULT_LOCALE:-vi}
-      DEV_SEED_ENABLED: "false"
     volumes:
       - lab_portal_backend_storage:/app/storage
       - lab_portal_backend_uploads:/app/uploads

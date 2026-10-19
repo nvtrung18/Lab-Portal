@@ -2,7 +2,8 @@
 param(
     [string]$OutputDirectory = (Join-Path $env:ProgramData 'LabPortal\Backups'),
     [ValidateRange(1, 3650)]
-    [int]$RetentionDays = 30
+    [int]$RetentionDays = 30,
+    [switch]$SkipRetention
 )
 
 $ErrorActionPreference = 'Stop'
@@ -102,8 +103,9 @@ finally {
     Pop-Location
 }
 
-$retentionCutoff = (Get-Date).AddDays(-$RetentionDays)
-$expiredBackups = Get-ChildItem -LiteralPath $outputRoot -Directory -Filter 'lab-portal-*' |
+if (!$SkipRetention) {
+    $retentionCutoff = (Get-Date).AddDays(-$RetentionDays)
+    $expiredBackups = Get-ChildItem -LiteralPath $outputRoot -Directory -Filter 'lab-portal-*' |
     Where-Object {
         $_.Name -match '^lab-portal-\d{8}-\d{6}$' -and
         -not ($_.Attributes -band [System.IO.FileAttributes]::ReparsePoint) -and
@@ -112,8 +114,9 @@ $expiredBackups = Get-ChildItem -LiteralPath $outputRoot -Directory -Filter 'lab
         (Test-Path -LiteralPath (Join-Path $_.FullName 'backup-complete.json')) -and
         ((Get-Content -LiteralPath (Join-Path $_.FullName 'backup-complete.json') -Raw -ErrorAction SilentlyContinue | ConvertFrom-Json -ErrorAction SilentlyContinue).backupFormat -eq 'LabPortalBackupV1')
     }
-foreach ($expiredBackup in $expiredBackups) {
-    Remove-Item -LiteralPath $expiredBackup.FullName -Recurse -Force
+    foreach ($expiredBackup in $expiredBackups) {
+        Remove-Item -LiteralPath $expiredBackup.FullName -Recurse -Force
+    }
 }
 
 Write-Output "Backup written to $backupDirectory"

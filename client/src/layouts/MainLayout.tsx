@@ -263,14 +263,13 @@ export function MainLayout() {
                   <span className="block text-xs text-slate-500 dark:text-slate-400">{roleLabel}</span>
                 </span>
               </div>
-              <Button className="hidden sm:inline-flex" onClick={handleLogout} size="sm" variant="outline">
+              <Button className="hidden h-11 px-4 sm:inline-flex" onClick={handleLogout} variant="outline">
                 {t('common.logout')}
               </Button>
               <Button
                 aria-label={t('common.logout')}
-                className="sm:hidden"
+                className="flex h-11 w-11 items-center justify-center p-0 sm:hidden"
                 onClick={handleLogout}
-                size="sm"
                 variant="outline"
               >
                 <LogOut aria-hidden="true" className="h-4 w-4" />

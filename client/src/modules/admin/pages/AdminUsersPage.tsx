@@ -222,8 +222,8 @@ export function AdminUsersPage() {
           </div>
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
             {locale === 'vi'
-              ? 'Quản lý tài khoản, vai trò và phân công phòng thí nghiệm cho người dùng hệ thống'
-              : 'Manage accounts, roles, and laboratory assignments for system users'}
+              ? 'Quản lý tài khoản, vai trò và phân công lĩnh vực nghiên cứu cho người dùng hệ thống'
+              : 'Manage accounts, roles, and research area assignments for system users'}
           </p>
         </div>
       </div>

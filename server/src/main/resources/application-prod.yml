@@ -44,8 +44,6 @@ app:
   research:
     report-storage-path: ${REPORT_STORAGE_PATH}
     product-storage-path: ${PRODUCT_STORAGE_PATH}
-  dev-seed:
-    enabled: false
 
 jwt:
   secret: ${JWT_SECRET}

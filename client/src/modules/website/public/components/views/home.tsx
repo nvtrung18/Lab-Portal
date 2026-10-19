@@ -75,13 +75,13 @@ export function HomeView() {
           {[
             [
               data.research.length,
-              l("Research directions", "Hướng nghiên cứu"),
+              l("Research areas", "Lĩnh vực nghiên cứu"),
             ],
             [data.members.length, l("Curious minds", "Thành viên")],
             [data.publications.length, l("Publications", "Công bố")],
             [
               data.projects.length,
-              l("Research concepts", "Ý tưởng nghiên cứu"),
+              l("Research projects", "Đề tài nghiên cứu"),
             ],
           ].map(([number, label]) => (
             <div key={label}>
@@ -135,7 +135,7 @@ export function HomeView() {
               "Lĩnh vực kết nối. Câu hỏi rộng mở. Thế giới đầy tiềm năng.",
             )}
             href={`/${locale}/research`}
-            linkLabel={l("All research areas", "Tất cả lĩnh vực")}
+            linkLabel={l("All research areas", "Tất cả lĩnh vực nghiên cứu")}
           />
           <div className="cards-grid three">
             {data.research.slice(0, 3).map((item, index) => (
@@ -168,7 +168,7 @@ export function HomeView() {
             )}
             title={l("Research in action.", "Nghiên cứu trong thực tiễn.")}
             href={`/${locale}/projects`}
-            linkLabel={l("Explore projects", "Khám phá dự án")}
+            linkLabel={l("Explore projects", "Khám phá đề tài")}
           />
           <div className="cards-grid three">
             {data.projects.map((item) => (

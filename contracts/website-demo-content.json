@@ -688,9 +688,9 @@
         "en": "Home",
         "vi": "Trang chủ"
       },
-      "Explore research": {
-        "en": "Explore research",
-        "vi": "Khám phá nghiên cứu"
+      "Explore research area": {
+        "en": "Explore research area",
+        "vi": "Tìm hiểu lĩnh vực nghiên cứu"
       },
       "Illustrative researcher profile": {
         "en": "Illustrative researcher profile",
@@ -756,9 +756,9 @@
         "en": "Scroll to research",
         "vi": "Đến phần nghiên cứu"
       },
-      "Research directions": {
-        "en": "Research directions",
-        "vi": "Hướng nghiên cứu"
+      "Research areas": {
+        "en": "Research areas",
+        "vi": "Lĩnh vực nghiên cứu"
       },
       "Curious minds": {
         "en": "Curious minds",
@@ -768,9 +768,9 @@
         "en": "Sample publications",
         "vi": "Công bố mẫu"
       },
-      "Research concepts": {
-        "en": "Research concepts",
-        "vi": "Ý tưởng nghiên cứu"
+      "Research projects": {
+        "en": "Research projects",
+        "vi": "Đề tài nghiên cứu"
       },
       "WELCOME TO NEXUS": {
         "en": "WELCOME TO NEXUS",
@@ -810,7 +810,7 @@
       },
       "All research areas": {
         "en": "All research areas",
-        "vi": "Tất cả lĩnh vực"
+        "vi": "Tất cả lĩnh vực nghiên cứu"
       },
       "IDEAS INTO KNOWLEDGE": {
         "en": "IDEAS INTO KNOWLEDGE",
@@ -838,7 +838,7 @@
       },
       "Explore projects": {
         "en": "Explore projects",
-        "vi": "Khám phá dự án"
+        "vi": "Khám phá đề tài"
       },
       "THE PEOPLE BEHIND THE QUESTIONS": {
         "en": "THE PEOPLE BEHIND THE QUESTIONS",
@@ -1023,10 +1023,6 @@
       "For a real application, a laboratory would typically ask for a short research statement, a CV, and relevant academic experience. This demo form previews an inquiry without sending it.": {
         "en": "For a real application, a laboratory would typically ask for a short research statement, a CV, and relevant academic experience. This demo form previews an inquiry without sending it.",
         "vi": "Hồ sơ thực tế thường cần đề xuất nghiên cứu ngắn, CV và kinh nghiệm học thuật liên quan. Biểu mẫu mẫu này xem trước liên hệ mà không gửi đi."
-      },
-      "Explore a research direction": {
-        "en": "Explore a research direction",
-        "vi": "Tìm hiểu hướng nghiên cứu"
       },
       "Share your background and interests": {
         "en": "Share your background and interests",
@@ -1246,7 +1242,7 @@
       },
       "Research area": {
         "en": "Research area",
-        "vi": "Lĩnh vực"
+        "vi": "Lĩnh vực nghiên cứu"
       },
       "Reset": {
         "en": "Reset",
@@ -1311,10 +1307,6 @@
       "Search projects…": {
         "en": "Search projects…",
         "vi": "Tìm dự án…"
-      },
-      "Research areas": {
-        "en": "Research areas",
-        "vi": "Lĩnh vực nghiên cứu"
       },
       "Project status": {
         "en": "Project status",
@@ -1410,7 +1402,7 @@
       },
       "THE TEAM": {
         "en": "THE TEAM",
-        "vi": "NHÓM NGHIÊN CỨU"
+        "vi": "LĨNH VỰC NGHIÊN CỨU"
       },
       "People in this direction": {
         "en": "People in this direction",
@@ -1575,8 +1567,8 @@
           "vi": "Bốn hướng nghiên cứu bổ trợ. Một động lực chung để hiểu và cải thiện thế giới."
         },
         "navigationTitle": {
-          "en": "Research areas",
-          "vi": "Lĩnh vực nghiên cứu"
+          "vi": "Lĩnh vực nghiên cứu",
+          "en": "Research areas"
         },
         "template": "research",
         "visible": true,
@@ -1728,7 +1720,7 @@
     "All identities, research and affiliations are fictional demo content.": "general",
     "Back to top": "general",
     "Home": "general",
-    "Explore research": "general",
+    "Explore research area": "general",
     "Illustrative researcher profile": "general",
     "Sample publication": "general",
     "Former demo contributor": "general",
@@ -1745,10 +1737,10 @@
     "Meet the laboratory": "home",
     "CURIOSITY. COLLABORATION. DISCOVERY.": "home",
     "Scroll to research": "home",
-    "Research directions": "home",
+    "Research areas": "home",
     "Curious minds": "home",
     "Sample publications": "home",
-    "Research concepts": "home",
+    "Research projects": "home",
     "WELCOME TO NEXUS": "home",
     "Different perspectives.": "home",
     "Shared possibilities.": "home",
@@ -1812,7 +1804,6 @@
     "START A CONVERSATION": "join",
     "Tell us what makes\nyou curious.": "join",
     "For a real application, a laboratory would typically ask for a short research statement, a CV, and relevant academic experience. This demo form previews an inquiry without sending it.": "join",
-    "Explore a research direction": "join",
     "Share your background and interests": "join",
     "Start an informed conversation": "join",
     "Contact": "contact",
@@ -1884,7 +1875,6 @@
     "Ideas with a direction.": "projects",
     "Explore demonstration projects connecting foundational questions with practical research concepts.": "projects",
     "Search projects…": "projects",
-    "Research areas": "projects",
     "Project status": "projects",
     "All projects": "projects",
     "projects": "projects",

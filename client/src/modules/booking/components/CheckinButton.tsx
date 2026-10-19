@@ -43,7 +43,7 @@ export function CheckinButton({ booking, qrHistory }: CheckinButtonProps) {
   if (booking.status === 'CHECKED_IN') {
     return (
       <button
-        className="w-full rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-700"
+        className="w-full rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300"
         disabled
         type="button"
       >
@@ -78,7 +78,7 @@ export function CheckinButton({ booking, qrHistory }: CheckinButtonProps) {
 
   const studentFaceCheckinPanel = (
     <section
-      className="rounded-lg border border-blue-200 bg-blue-50/70 p-3 dark:border-blue-900 dark:bg-blue-950/30"
+      className="rounded-xl border border-blue-200 bg-blue-50/70 p-3 dark:border-blue-900 dark:bg-blue-950/30"
       aria-label={t('checkin.selfLabel')}
     >
       <p className="text-sm font-semibold text-blue-950 dark:text-blue-100">{t('checkin.selfTitle')}</p>
@@ -91,7 +91,7 @@ export function CheckinButton({ booking, qrHistory }: CheckinButtonProps) {
       <div className="space-y-3">
         {studentFaceCheckinPanel}
         <button
-          className="min-h-11 w-full rounded-md bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500"
+          className="min-h-11 w-full rounded-xl bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white"
           type="button"
           onClick={() => setIsQrOpen(true)}
         >
@@ -113,7 +113,7 @@ export function CheckinButton({ booking, qrHistory }: CheckinButtonProps) {
       <div className="space-y-3">
         {studentFaceCheckinPanel}
         <button
-          className="w-full rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-700"
+          className="w-full rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-700 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-300"
           disabled
           type="button"
         >
@@ -132,7 +132,7 @@ export function CheckinButton({ booking, qrHistory }: CheckinButtonProps) {
             {t('checkin.qrReason')}
             <select
               id={`fallback-reason-${booking.id}`}
-              className="mt-1.5 min-h-11 w-full rounded-md border border-slate-300 bg-white px-3 text-base text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-slate-700 dark:bg-slate-950 dark:text-white"
+              className="mt-1.5 min-h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-base text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-slate-700 dark:bg-slate-950 dark:text-white"
               value={fallbackReason}
               onChange={(event) => setFallbackReason(event.target.value as FaceFallbackReason | '')}
             >
@@ -146,7 +146,7 @@ export function CheckinButton({ booking, qrHistory }: CheckinButtonProps) {
           {fallbackReason === 'OTHER' ? (
             <textarea
               aria-label={t('checkin.reasonOther')}
-              className="mt-2 min-h-20 w-full rounded-md border border-slate-300 px-3 py-2 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-slate-700 dark:bg-slate-950 dark:text-white"
+              className="mt-2 min-h-20 w-full rounded-xl border border-slate-300 px-3 py-2 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-slate-700 dark:bg-slate-950 dark:text-white"
               maxLength={1000}
               placeholder={t('checkin.reasonPlaceholder')}
               value={customReason}
@@ -155,7 +155,7 @@ export function CheckinButton({ booking, qrHistory }: CheckinButtonProps) {
           ) : null}
         </div>
         <button
-          className="min-h-11 w-full rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600 dark:bg-slate-700 dark:hover:bg-slate-600"
+          className="min-h-11 w-full rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white dark:disabled:bg-slate-800 dark:disabled:text-slate-500"
           disabled={qrDisabled}
           type="button"
           onClick={handleCreateQr}

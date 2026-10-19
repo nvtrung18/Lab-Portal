@@ -917,15 +917,16 @@ cd server && ./mvnw spring-boot:run
 
 ## 📖 Hướng Dẫn Sử Dụng
 
-### Tài Khoản Mặc Định
+### Khởi tạo tài khoản thật
 
-| Vai Trò | Email / Username | Mật Khẩu |
-|---------|-----------------|-----------|
-| **Admin** | `admin@labportal.com ` | `admin123` |
-| **Lab Manager** | `manager01@labportal.com` | `manager123` |
-| **Student** | `student01@labortal.com` | `user123` |
+Production dùng `BOOTSTRAP_ADMIN_USERNAME`, `BOOTSTRAP_ADMIN_EMAIL` và
+`BOOTSTRAP_ADMIN_PASSWORD` để tạo quản trị viên đầu tiên. Mật khẩu của tài khoản
+đã tồn tại không bị đặt lại khi khởi động. Các tài khoản khác được tạo qua luồng
+đăng ký và phân quyền của hệ thống; backend không còn bộ seed/import demo thủ công.
 
-> ⚠️ **Lưu ý**: Tài khoản mặc định được tạo bởi `AuthDataSeeder` khi khởi động lần đầu. Cần thay đổi mật khẩu cho môi trường production.
+Các migration Flyway lịch sử được giữ nguyên để bảo toàn checksum. Việc bỏ mã seed
+không tự xóa dữ liệu demo đã nhập vào một database đang tồn tại; xem
+[dọn dữ liệu demo production](docs/deployment/PRODUCTION_NCKH_DEMO.md).
 
 ### Quy Trình Sử Dụng Cơ Bản
 
@@ -1198,7 +1199,7 @@ Schema evolution có kiểm soát, seed data cho môi trường dev.
 | 3 | Backend chưa Docker hóa | Thấp | Không có Dockerfile cho Spring Boot, chạy ngoài Docker |
 | 4 | File storage cục bộ | Trung bình | Upload lưu thư mục local (`storage/`), chưa cloud storage |
 | 5 | CORS chưa restrict | Thấp | Cho phép `http://localhost:*`, cần config domain cho production |
-| 6 | Mật khẩu seed hardcode | Thấp | `admin123`, `manager123`, `user123` — OK cho dev |
+| 6 | Dữ liệu demo lịch sử | Cần kiểm kê | Source seed/import thủ công đã bỏ; DB hiện hữu cần dọn theo runbook production |
 | 7 | Student dashboard placeholder | Thấp | `DashboardPlaceholder.tsx` chưa triển khai nội dung |
 | 8 | Chưa có real-time notification | Trung bình | Mọi thông báo qua email, chưa WebSocket/SSE |
 

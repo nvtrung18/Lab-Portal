@@ -49,7 +49,7 @@ export function ManagerComplaintsPage() {
 
   if (isLoadingUser || isLoading) {
     return (
-      <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+      <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
         <div className="h-6 w-52 animate-pulse rounded bg-slate-200" />
         <div className="mt-6 h-36 animate-pulse rounded bg-slate-100" />
       </section>
@@ -58,7 +58,7 @@ export function ManagerComplaintsPage() {
 
   if (!managedLabId) {
     return (
-      <section className="rounded-lg border border-amber-200 bg-white p-6 text-sm text-amber-700 shadow-sm">
+      <section className="rounded-xl border border-amber-200 bg-white p-6 text-sm text-amber-700 shadow-sm dark:border-amber-900/50 dark:bg-slate-900 dark:text-amber-400">
         {t('layout.unassignedLab')}
       </section>
     );
@@ -66,9 +66,9 @@ export function ManagerComplaintsPage() {
 
   return (
     <section className="space-y-6">
-      <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <h1 className="text-xl font-semibold text-slate-950 dark:text-white">{t('penalty.complaintsTitle')}</h1>
-        <p className="mt-3 text-sm font-medium text-slate-800">
+        <p className="mt-3 text-sm font-medium text-slate-800 dark:text-slate-300">
           {t('lab.label')}: {managedLabName ?? `#${managedLabId}`}
         </p>
       </div>
@@ -88,7 +88,7 @@ export function ManagerComplaintsPage() {
         </div>
         <input
           aria-label={t('penalty.searchComplaints')}
-          className="min-h-11 w-full rounded-md border border-slate-300 px-3 py-2 text-base outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10 lg:w-80"
+          className="min-h-11 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-base outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10 dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:focus:border-slate-500 lg:w-80"
           placeholder={t('penalty.searchComplaints')}
           value={search}
           onChange={(event) => setSearch(event.target.value)}
@@ -106,14 +106,14 @@ export function ManagerComplaintsPage() {
       ) : (
         <div className="space-y-4">
           {filteredComplaints.map((complaint) => (
-            <article key={complaint.id} className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+            <article key={complaint.id} className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div>
-                  <h3 className="text-base font-semibold text-slate-950">
+                  <h3 className="text-base font-semibold text-slate-950 dark:text-white">
                     {complaint.studentName || complaint.studentEmail || `${t('penalty.complaint.student')} #${complaint.userId}`}
                   </h3>
-                  <p className="mt-1 text-sm text-slate-600">{complaint.studentEmail}</p>
-                  <p className="mt-1 text-sm text-slate-600">{t('lab.label')}: {complaint.labName ?? t('lab.shortName')}</p>
+                  <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">{complaint.studentEmail}</p>
+                  <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">{t('lab.label')}: {complaint.labName ?? t('lab.shortName')}</p>
                 </div>
                 <span
                   className={`w-fit rounded-full px-3 py-1 text-xs font-semibold ring-1 ${getComplaintStatusClass(complaint.status)}`}
@@ -124,27 +124,27 @@ export function ManagerComplaintsPage() {
 
               <dl className="mt-4 grid gap-3 text-sm lg:grid-cols-2">
                 <div>
-                  <dt className="font-semibold text-slate-700">{t('penalty.typeLabel')}</dt>
-                  <dd className="mt-1 text-slate-600">{formatPenaltyType(null)}</dd>
+                  <dt className="font-semibold text-slate-700 dark:text-slate-300">{t('penalty.typeLabel')}</dt>
+                  <dd className="mt-1 text-slate-600 dark:text-slate-400">{formatPenaltyType(null)}</dd>
                 </div>
                 <div>
-                  <dt className="font-semibold text-slate-700">{t('common.submittedAt')}</dt>
-                    <dd className="mt-1 text-slate-600">{formatDateTime(complaint.createdAt, locale)}</dd>
+                  <dt className="font-semibold text-slate-700 dark:text-slate-300">{t('common.submittedAt')}</dt>
+                    <dd className="mt-1 text-slate-600 dark:text-slate-400">{formatDateTime(complaint.createdAt, locale)}</dd>
                 </div>
                 <div>
-                  <dt className="font-semibold text-slate-700">{t('penalty.reasonLabel')}</dt>
-                  <dd className="mt-1 whitespace-pre-wrap text-slate-600">
+                  <dt className="font-semibold text-slate-700 dark:text-slate-300">{t('penalty.reasonLabel')}</dt>
+                  <dd className="mt-1 whitespace-pre-wrap text-slate-600 dark:text-slate-400">
                     {complaint.penaltyReason ?? t('common.notUpdated')}
                   </dd>
                 </div>
                 <div>
-                  <dt className="font-semibold text-slate-700">{t('penalty.complaintContentLabel')}</dt>
-                  <dd className="mt-1 whitespace-pre-wrap text-slate-600">{complaint.content}</dd>
+                  <dt className="font-semibold text-slate-700 dark:text-slate-300">{t('penalty.complaintContentLabel')}</dt>
+                  <dd className="mt-1 whitespace-pre-wrap text-slate-600 dark:text-slate-400">{complaint.content}</dd>
                 </div>
               </dl>
 
               {complaint.resolutionNote ? (
-                <div className="mt-4 rounded-md border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
+                <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700 dark:border-slate-800 dark:bg-slate-800/60 dark:text-slate-300">
                   {t('penalty.resolutionNote')}: {complaint.resolutionNote}
                 </div>
               ) : null}

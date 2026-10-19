@@ -74,7 +74,7 @@ export function RecordEditor({ value, data, onChange, onBusyChange }: { value: E
         <ImageField label={l('Ảnh đại diện', 'Portrait')} value={item.image ?? ''} onChange={image => update({ image })} />
         <div className="grid gap-4 md:grid-cols-2">
           <SelectField label={l('Vai trò trong lab', 'Laboratory role')} value={item.role} options={roles} onChange={role => update({ role: role as Member['role'] })} />
-          <SelectField label={l('Hướng nghiên cứu', 'Research direction')} value={item.area} options={options(data.research)} onChange={area => update({ area })} />
+          <SelectField label={l('Lĩnh vực nghiên cứu', 'Research area')} value={item.area} options={options(data.research)} onChange={area => update({ area })} />
           <TextField label={l('Email công khai (có thể để trống)', 'Public email (optional)')} type="email" value={item.email} onChange={email => update({ email })} />
           <TextField label={l('Chữ viết tắt trên ảnh đại diện', 'Avatar initials')} value={item.initials} onChange={initials => update({ initials })} />
           <TextField label={l('Màu nền ảnh đại diện', 'Avatar background')} value={item.color} onChange={color => update({ color })} />
@@ -91,7 +91,7 @@ export function RecordEditor({ value, data, onChange, onBusyChange }: { value: E
         <div className="grid gap-4 md:grid-cols-2">
           <SelectField label={l('Loại công bố', 'Publication format')} value={item.type} options={[{ value: 'Journal', label: 'Journal' }, { value: 'Conference', label: 'Conference' }, { value: 'Book', label: 'Book' }, { value: 'Preprint', label: 'Preprint' }]} onChange={type => update({ type: type as Publication['type'] })} />
           <TextField label={l('Năm công bố', 'Publication year')} type="number" value={item.year === null ? '' : String(item.year)} onChange={year => update({ year: year === '' ? null : Number(year) })} />
-          <SelectField label={l('Hướng nghiên cứu', 'Research direction')} value={item.area} options={options(data.research)} onChange={area => update({ area })} />
+          <SelectField label={l('Lĩnh vực nghiên cứu', 'Research area')} value={item.area} options={options(data.research)} onChange={area => update({ area })} />
           <SelectField label={l('Đề tài liên quan', 'Related project')} value={item.project} options={options(data.projects)} onChange={project => update({ project })} />
         </div>
         <BilingualField label={l('Tạp chí / hội nghị / nhà xuất bản', 'Journal / conference / publisher')} value={item.venue} onChange={venue => update({ venue })} />
@@ -117,7 +117,7 @@ export function RecordEditor({ value, data, onChange, onBusyChange }: { value: E
         <div className="grid gap-4 md:grid-cols-2">
           <SelectField label={l('Trạng thái', 'Status')} value={item.status} options={[{ value: 'Ongoing', label: l('Đang thực hiện', 'Ongoing') }, { value: 'Completed', label: l('Hoàn thành', 'Completed') }]} onChange={status => update({ status: status as Project['status'] })} />
           <TextField label={l('Thời gian thực hiện', 'Project period')} value={item.period} onChange={period => update({ period })} />
-          <SelectField label={l('Hướng nghiên cứu', 'Research direction')} value={item.area} options={options(data.research)} onChange={area => update({ area })} />
+          <SelectField label={l('Lĩnh vực nghiên cứu', 'Research area')} value={item.area} options={options(data.research)} onChange={area => update({ area })} />
           <SelectField label={l('Người phụ trách', 'Project lead')} value={item.lead} options={options(data.members)} onChange={lead => update({ lead })} />
         </div>
         <BilingualList label={l('Mục tiêu', 'Objectives')} value={item.objectives} onChange={objectives => update({ objectives })} />
