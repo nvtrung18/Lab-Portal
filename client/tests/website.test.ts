@@ -269,6 +269,23 @@ test('Citation header starts descending and toggles; zero is known, missing/NaN 
   assert.deepEqual(sortScholarPublications(input, descending).map(p => p.title), ['a', 'b', 'zero', 'missing', 'nan']);
   assert.deepEqual(sortScholarPublications(input, toggleScholarSort(descending, 'citations')).map(p => p.title), ['zero', 'a', 'b', 'missing', 'nan']);
 });
+test('Legacy research-group menus become research areas without changing saved content or links', () => {
+  const legacy = structuredClone(seed);
+  const research = legacy.pages!.find(page => page.template === 'research')!;
+  research.navigationTitle = { vi: 'Nhóm nghiên cứu', en: 'Research groups' };
+  research.title = { vi: 'Tiêu đề đã biên tập', en: '' };
+  research.slug = 'our-groups';
+  legacy.data.research[0].labId = 42;
+  const before = structuredClone(legacy);
+  const normalized = normalizeWebsitePages(legacy, templates);
+  const page = normalized.pages.find(item => item.template === 'research')!;
+  assert.deepEqual(page.navigationTitle, { vi: 'Lĩnh vực nghiên cứu', en: 'Research areas' });
+  assert.deepEqual(page.title, research.title);
+  assert.equal(page.slug, 'our-groups');
+  assert.deepEqual(normalized.data, before.data);
+  assert.deepEqual(legacy, before);
+  assert.deepEqual(normalizeWebsitePages(normalized, templates), normalized);
+});
 test('Legacy CMS gets Products between Projects and News, without moving or duplicating sections', () => {
   const legacy = structuredClone(seed);
   legacy.pages!.find(p => p.template === 'news')!.sections = [structuredClone(section)];

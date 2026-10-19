@@ -140,11 +140,11 @@ public class WebsiteContentServiceImpl implements WebsiteContentService {
         List<Long> researchLabIds = data.research().stream().map(WebsiteContent.ResearchArea::labId)
                 .filter(java.util.Objects::nonNull).toList();
         if (new HashSet<>(researchLabIds).size() != researchLabIds.size()) {
-            throw new IllegalArgumentException("Each research group can have only one website research direction.");
+            throw new IllegalArgumentException("Each research area can have only one public website profile.");
         }
         if (!researchLabIds.isEmpty()
                 && laboratoryRepository.findExistingWebsiteResearchLabIds(researchLabIds).size() != researchLabIds.size()) {
-            throw new IllegalArgumentException("A linked research group no longer exists. Change its linked group or remove the website direction.");
+            throw new IllegalArgumentException("A linked research area no longer exists. Change its linked area or remove the website profile.");
         }
         uniqueIds(data.members().stream().map(WebsiteContent.Member::id).toList());
         for (WebsiteContent.Member member : data.members()) {

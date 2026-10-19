@@ -119,7 +119,7 @@ export function ResearchCard({
         <h3>{text(item.title)}</h3>
         <p>{text(item.description)}</p>
         <span className="card-more">
-          {l("Explore research", "Khám phá nghiên cứu")}
+          {l("Explore research area", "Tìm hiểu lĩnh vực nghiên cứu")}
           <ArrowRight size={15} />
         </span>
       </div>

@@ -128,7 +128,7 @@ public record WebsiteContent(
     ) {}
 
     public record LabData(
-            @Schema(description = "Research directions in display order") @NotNull @Size(max = 200) List<@NotNull @Valid ResearchArea> research,
+            @Schema(description = "Public research area profiles in display order") @NotNull @Size(max = 200) List<@NotNull @Valid ResearchArea> research,
             @Schema(description = "Public member profiles in display order") @NotNull @Size(max = 500) List<@NotNull @Valid Member> members,
             @Schema(description = "Publication records in display order") @NotNull @Size(max = 1000) List<@NotNull @Valid Publication> publications,
             @Schema(description = "Public project summaries in display order") @NotNull @Size(max = 500) List<@NotNull @Valid Project> projects,
@@ -137,13 +137,13 @@ public record WebsiteContent(
 
     public record ResearchArea(
             @Schema(description = "Stable detail page identifier") @NotBlank @Pattern(regexp = "[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}") String id,
-            @Schema(description = "Direction name") @NotNull @Valid LocalizedText title,
-            @Schema(description = "Direction summary") @NotNull @Valid LocalizedText description,
+            @Schema(description = "Research area display name") @NotNull @Valid LocalizedText title,
+            @Schema(description = "Research area summary") @NotNull @Valid LocalizedText description,
             @Schema(description = "Whether the record is visible on the published website; null means visible") Boolean visible,
-            @Schema(description = "Direction image URL or asset path") @NotNull @Pattern(regexp = ASSET_URL) String image,
+            @Schema(description = "Research area image URL or asset path") @NotNull @Pattern(regexp = ASSET_URL) String image,
             @Schema(description = "Template icon", allowableValues = {"earth", "cpu", "radio", "network"}) @NotNull @Pattern(regexp = "earth|cpu|radio|network") String icon,
             @Schema(description = "Research subjects in display order") @NotNull @Size(max = 100) List<@NotNull @Valid LocalizedText> topics,
-            @Schema(description = "Linked research group identifier using the existing laboratory ID; null for legacy content and public responses") @Positive Long labId,
+            @Schema(description = "Linked research area identifier using the existing laboratory ID; null for legacy content and public responses") @Positive Long labId,
             @Schema(description = "Additional article images in display order; null retains legacy cover-only content")
             @Size(max = 15) List<@NotNull @Valid GalleryImage> gallery,
             @Schema(description = "Optional bilingual cover alt text") @Valid ImageText imageAlt,
@@ -158,7 +158,7 @@ public record WebsiteContent(
             @Schema(description = "Laboratory membership role; empty and legacy academic roles are accepted", allowableValues = {"Steering Member", "Core Member", "PhD student", "MSc student", "Undergraduate", "Guest", "Faculty", "Researcher", "Alumni", ""})
             @NotNull @Pattern(regexp = "^$|Steering Member|Core Member|PhD student|MSc student|Undergraduate|Guest|Faculty|Researcher|Alumni") String role,
             @Schema(description = "Letters displayed when there is no portrait") @NotNull @Size(max = 10) String initials,
-            @Schema(description = "Related research direction identifier; may be empty") @NotNull @Size(max = 80) String area,
+            @Schema(description = "Related public research area profile identifier; may be empty") @NotNull @Size(max = 80) String area,
             @Schema(description = "Public email; may be empty") @NotNull @Email @Size(max = 254) String email,
             @Schema(description = "Avatar background color; may be empty") @NotNull @Pattern(regexp = "^$|#[0-9a-fA-F]{6}") String color,
             @Schema(description = "Optional portrait URL or asset path") @Pattern(regexp = ASSET_URL) String image,
@@ -205,7 +205,7 @@ public record WebsiteContent(
             @Schema(description = "Publication year; null when not supplied") @Min(1) @Max(9999) Integer year,
             @Schema(description = "Publication format; may be empty") @NotNull @Pattern(regexp = "^$|Journal|Conference|Book|Preprint") String type,
             @Schema(description = "Contributor profile identifiers or external contributor names") @NotNull @Size(max = 100) List<@NotNull @Size(max = 200) String> authors,
-            @Schema(description = "Related research direction identifier; may be empty") @NotNull @Size(max = 80) String area,
+            @Schema(description = "Related public research area profile identifier; may be empty") @NotNull @Size(max = 80) String area,
             @Schema(description = "Journal, conference, publisher or venue") @NotNull @Valid LocalizedText venue,
             @Schema(description = "Related project identifier; may be empty") @NotNull @Size(max = 80) String project,
             @Schema(description = "Resource buttons shown by the template") @NotNull @Size(max = 3) List<@NotNull ResourceKind> resources,
@@ -221,7 +221,7 @@ public record WebsiteContent(
             @Schema(description = "Public project title") @NotNull @Valid LocalizedText title,
             @Schema(description = "Public project summary") @NotNull @Valid LocalizedText description,
             @Schema(description = "Whether the summary is visible; null means visible") Boolean visible,
-            @Schema(description = "Related research direction identifier; may be empty") @NotNull @Size(max = 80) String area,
+            @Schema(description = "Related public research area profile identifier; may be empty") @NotNull @Size(max = 80) String area,
             @Schema(description = "Public project category") @NotNull @Valid LocalizedText category,
             @Schema(description = "Project status; may be empty") @NotNull @Pattern(regexp = "^$|Ongoing|Completed") String status,
             @Schema(description = "Displayed project period; may be empty") @NotNull @Size(max = 200) String period,
