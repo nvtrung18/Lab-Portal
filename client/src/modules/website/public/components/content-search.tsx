@@ -13,7 +13,7 @@ const filtersFor: Record<SearchCollection, SearchFilter[]> = {
 };
 const labels: Record<SearchFilter, [string, string]> = {
   year: ['Year', 'Năm'], type: ['Type', 'Loại'], author: ['Author', 'Tác giả'],
-  area: ['Research area', 'Lĩnh vực'], status: ['Project status', 'Trạng thái đề tài'], category: ['News category', 'Nhóm tin tức'],
+  area: ['Research area', 'Lĩnh vực nghiên cứu'], status: ['Project status', 'Trạng thái đề tài'], category: ['News category', 'Nhóm tin tức'],
 };
 export function ContentSearch<T extends SearchRecord>({ kind, records, renderRecords }: {
   kind: SearchCollection; records: T[]; renderRecords: (items: T[]) => ReactNode;
@@ -52,7 +52,7 @@ export function ContentSearch<T extends SearchRecord>({ kind, records, renderRec
   const placeholders: Record<SearchCollection, string> = {
     publications: l('Search titles, authors, years, venues, DOI…', 'Tìm tiêu đề, tác giả, năm, nơi công bố, DOI…'),
     projects: l('Search project names, codes or content…', 'Tìm tên, mã đề tài hoặc nội dung…'),
-    research: l('Search research content…', 'Tìm nội dung nghiên cứu…'), news: l('Search news and events…', 'Tìm tin và sự kiện…'),
+    research: l('Search research areas…', 'Tìm lĩnh vực nghiên cứu…'), news: l('Search news and events…', 'Tìm tin và sự kiện…'),
   };
   return <>
     <section className="section content-search" id="content-search" aria-label={l('Search published content', 'Tìm nội dung đã xuất bản')}>

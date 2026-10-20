@@ -27,7 +27,7 @@ import { memberRoleGroups, matchesMemberRole, partitionMemberDisplayGroups } fro
 export function ResearchView() {
   const { l, data } = useLab();
   return <>
-    <PageHeading eyebrow={l("Research", "Nghiên cứu")} title={l("Questions that connect us.", "Những câu hỏi kết nối chúng ta.")} description="" showSections={false} />
+    <PageHeading eyebrow={l("Research areas", "Lĩnh vực nghiên cứu")} title={l("Questions that connect us.", "Những câu hỏi kết nối chúng ta.")} description="" showSections={false} />
     <ContentSearch kind="research" records={data.research} renderRecords={items => <div className="cards-grid two">{items.map((item, index) => <ResearchCard key={item.id} item={item} index={index} />)}</div>} />
   </>;
 }

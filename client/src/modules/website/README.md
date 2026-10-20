@@ -83,32 +83,37 @@ mẫu hoặc tiêu đề/đoạn giới thiệu cố định của trang. Các g
 Nội dung mới để trống; không tự tạo dữ liệu nghiên cứu hoặc thành viên. Nếu chưa từng có
 mục bổ sung, thư viện trống và admin có thể tạo bằng các mẫu có sẵn.
 
-Hướng nghiên cứu, thành viên, Publications, dự án và tin tức vẫn được quản lý tại
+Lĩnh vực nghiên cứu, thành viên, Publications, đề tài và tin tức vẫn được quản lý tại
 các mục tương ứng. Publications hỗ trợ Journal, Conference, Book và Preprint.
 Các bản ghi này có thể thêm, sửa, xóa, đổi thứ tự và tích chọn hiển thị ngay trong danh sách.
 
-## Hướng nghiên cứu từ danh sách nhóm hiện có
+## Lĩnh vực nghiên cứu trong một lab
 
-1. Vào **Hướng nghiên cứu → Thêm từ nhóm nghiên cứu**. Bộ chọn dùng lại `GET /api/labs`
-   và kiểu `LabResponse` của hệ thống. Theo hệ quy chiếu mới, mỗi bản ghi phòng thí nghiệm
-   được xem là một nhóm/hướng nghiên cứu. Tên bảng, API và ID cũ được giữ để tương thích.
+Hệ quy chiếu hiển thị: **một lab ALELA → lĩnh vực nghiên cứu → đề tài → nhóm thực hiện**.
+Website giới thiệu và bộ nội dung CMS là của lab chung. Các đơn vị nội bộ, quản lý,
+thành viên, ứng tuyển, ca sử dụng, điểm danh và vệ sinh tiếp tục có phạm vi theo lĩnh vực.
+`ResearchGroup` bên trong đề tài là **nhóm thực hiện**, khác với lĩnh vực nghiên cứu.
+
+1. Vào **Lĩnh vực nghiên cứu → Thêm từ lĩnh vực nghiên cứu**. Bộ chọn dùng lại `GET /api/labs`
+   và kiểu `LabResponse` của hệ thống. Mỗi bản ghi `Laboratory` được hiển thị là một
+   lĩnh vực nghiên cứu thuộc lab. Tên bảng, API, kiểu `ResearchArea` và ID cũ được giữ để tương thích.
 2. Danh sách giữ quy tắc API hiện có: `active = true`, `deleted = false`, không lọc thêm
-   theo trạng thái. Tìm theo tên, mô tả hoặc đơn vị; FE xếp ID tăng dần và phân trang 20 nhóm/trang.
+   theo trạng thái. Tìm theo tên, mô tả hoặc đơn vị; FE xếp ID tăng dần và phân trang 20 lĩnh vực/trang.
 3. Khi chọn tạo mới, tên và mô tả hiện có điền vào cả hai trường Việt/Anh (không tự dịch).
    Mô tả chưa có để trống; ảnh và chủ đề để trống để admin bổ sung. Chỉnh nội dung công khai,
-   tích **Hiển thị**, áp dụng, xem trước rồi lưu nháp/xuất bản. Không tự xuất bản toàn bộ nhóm.
-4. Nội dung mẫu/cũ vẫn giữ. Trong form chọn **Liên kết nhóm nghiên cứu** để gắn nhóm mà giữ
+   tích **Hiển thị**, áp dụng, xem trước rồi lưu nháp/xuất bản. Không tự xuất bản toàn bộ lĩnh vực.
+4. Nội dung mẫu/cũ vẫn giữ. Trong form chọn **Liên kết lĩnh vực nghiên cứu** để gắn lĩnh vực mà giữ
    ID và nội dung đã có, gồm các tham chiếu từ Thành viên, công bố và dự án.
-   Đổi nhóm liên kết cũng giữ nội dung đang chỉnh.
+   Đổi lĩnh vực liên kết cũng giữ nội dung đang chỉnh.
 
 `research[].labId` là trường tùy chọn trong JSON website, không cần migration schema mới.
-Mỗi nhóm có tối đa một hướng nghiên cứu trên website, kể cả bản ghi đang ẩn. BE kiểm tra
-các ID bằng một truy vấn theo danh sách, từ chối nhóm trùng, không tồn tại hoặc đã xóa.
-Nhóm đã liên kết chuyển không hoạt động vẫn giữ nội dung công khai cho admin quyết định;
+Mỗi lĩnh vực có tối đa một hồ sơ giới thiệu trên website, kể cả bản ghi đang ẩn. BE kiểm tra
+các ID bằng một truy vấn theo danh sách, từ chối lĩnh vực trùng, không tồn tại hoặc đã xóa.
+Lĩnh vực đã liên kết chuyển không hoạt động vẫn giữ nội dung công khai cho admin quyết định;
 nếu đã bị xóa thì cần đổi liên kết hoặc gỡ nội dung trước khi lưu lại.
 Endpoint công khai trả `labId: null` và chỉ dùng nội dung đã xuất bản.
-Chỉnh/xóa nội dung website không đổi tên, mô tả hay xóa nhóm trong hệ thống nội bộ.
-Thay đổi dữ liệu nhóm không tự ghi đè nội dung website đã chỉnh riêng.
+Chỉnh/xóa nội dung website không đổi tên, mô tả hay xóa lĩnh vực trong hệ thống nội bộ.
+Thay đổi dữ liệu lĩnh vực không tự ghi đè nội dung website đã chỉnh riêng.
 
 ## Thành viên từ danh sách người dùng
 
@@ -119,7 +124,7 @@ Thay đổi dữ liệu nhóm không tự ghi đè nội dung website đã chỉ
 2. Tìm theo tên, tên đăng nhập hoặc email; danh sách phân trang tại FE, 20 người/trang.
 3. Chọn người dùng để mở hồ sơ công khai. Tên đầy đủ hiện tại được điền vào tên hiển thị
    Việt/Anh; nếu chưa có tên đầy đủ thì để trống. Ảnh, giới thiệu, vai trò học thuật,
-   hướng nghiên cứu, chữ viết tắt và email công khai do admin nhập riêng.
+   lĩnh vực nghiên cứu, chữ viết tắt và email công khai do admin nhập riêng.
    Email đăng nhập và thông tin riêng của tài khoản không tự sao chép sang hồ sơ.
 4. Chỉnh từng người, tích **Hiển thị**, áp dụng, xem trước rồi lưu nháp/xuất bản như các mục khác.
    Mỗi tài khoản có tối đa một hồ sơ Thành viên, kể cả hồ sơ đang ẩn.
@@ -196,10 +201,10 @@ không cần migration DB mới.
 - **Xem trước** ngay trong form mở đúng trang/bài đang chỉnh, gồm thay đổi chưa áp dụng.
   Đóng preview để tiếp tục soạn, **Áp dụng vào bản nháp**, rồi **Lưu nháp** hoặc **Xuất bản**
   ở màn hình quản trị. Preview không tự lưu hay xuất bản nội dung.
-- Thành viên và Hướng nghiên cứu tiếp tục dùng form theo từng trường.
+- Thành viên và Lĩnh vực nghiên cứu tiếp tục dùng form theo từng trường.
 - **Publications**, **Dự án giới thiệu** và **Tin tức & sự kiện** có form theo từng loại,
   mở rộng để soạn bài bằng editor Việt/Anh, chèn ảnh và liên kết. Publications giữ
-  loại/năm công bố, tác giả, nơi công bố và DOI/PDF/Code; Dự án giữ nhóm nghiên cứu,
+  loại/năm công bố, tác giả, nơi công bố và DOI/PDF/Code; Đề tài giữ lĩnh vực nghiên cứu,
   thời gian, người phụ trách và mục tiêu; Tin tức giữ loại bài, ngày và địa điểm.
   Tác giả ngoài lab hiển thị đúng tên admin nhập.
 

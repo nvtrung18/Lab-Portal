@@ -72,11 +72,11 @@ export function DetailView({ section, id }: { section: string; id: string }) {
             <ArrowLeft size={16} />
             {l("Back to", "Quay lại")}{" "}
             {l(
-              section === "people" ? "people" : section,
+              section === "research" ? "research areas" : section === "people" ? "people" : section,
               {
-                research: "nghiên cứu",
+                research: "lĩnh vực nghiên cứu",
                 people: "thành viên",
-                projects: "dự án",
+                projects: "đề tài",
                 publications: "công bố",
                 news: "tin tức",
               }[section] || section,
@@ -158,10 +158,10 @@ export function DetailView({ section, id }: { section: string; id: string }) {
               </div>
               <div className="detail-related">
                 <SectionHeading
-                  eyebrow={l("THE TEAM", "NHÓM NGHIÊN CỨU")}
+                  eyebrow={l("AREA MEMBERS", "THÀNH VIÊN TRONG LĨNH VỰC")}
                   title={l(
-                    "People in this direction",
-                    "Thành viên theo hướng này",
+                    "People in this research area",
+                    "Thành viên trong lĩnh vực này",
                   )}
                 />
                 <div className="cards-grid four">
@@ -328,8 +328,8 @@ export function DetailView({ section, id }: { section: string; id: string }) {
                 <h2>{l("Continue the conversation", "Tiếp tục trao đổi")}</h2>
                 <p>
                   {l(
-                    "Explore the laboratory’s research directions and opportunities to participate in our research community.",
-                    "Khám phá hướng nghiên cứu và cơ hội tham gia cộng đồng nghiên cứu của phòng lab.",
+                    "Explore the laboratory’s research areas and opportunities to participate in our research community.",
+                    "Tìm hiểu các lĩnh vực nghiên cứu và cơ hội tham gia cộng đồng nghiên cứu của lab.",
                   )}
                 </p>
                 <Button asChild>

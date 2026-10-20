@@ -1,7 +1,7 @@
 import { CalendarClock, History, QrCode } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
-import { ConfirmDialog, EmptyState, ErrorState, LoadingState } from '../../../shared/components';
+import { Button, ConfirmDialog, EmptyState, ErrorState, LoadingState } from '../../../shared/components';
 import { translate, useI18n, type Locale } from '../../../shared/i18n';
 import { CheckinButton, CheckinQrModal } from '../components';
 import type { CheckinQrHistoryResponse } from '../api';
@@ -114,9 +114,9 @@ export function MyBookingsPage() {
                   </div>
                   <p className="mt-4 text-xs text-slate-500">{t('bookings.validUntil')}: {formatDateTime(item.expiresAt, locale)}</p>
                   {item.status === 'APPROVED' && item.token && booking ? (
-                    <button className="mt-4 min-h-11 w-full rounded-md bg-blue-700 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-800" type="button" onClick={() => setSelectedQr(item)}>
+                    <Button className="mt-4 w-full" onClick={() => setSelectedQr(item)}>
                       {t('bookings.viewQr')}
-                    </button>
+                    </Button>
                   ) : null}
                 </article>
               );
@@ -154,14 +154,13 @@ export function MyBookingsPage() {
                 <div className={`mt-5 border-t border-slate-200 pt-4 dark:border-slate-800 ${canCancel ? 'grid gap-3 lg:grid-cols-[minmax(0,1fr)_14rem] lg:items-end' : ''}`}>
                   <CheckinButton booking={booking} qrHistory={qrByBookingId.get(booking.id)} />
                   {canCancel ? (
-                    <button
-                      className="min-h-11 rounded-md border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 disabled:opacity-60 dark:border-red-900 dark:bg-red-950/40 dark:text-red-200"
+                    <Button
+                      variant="danger"
                       disabled={cancelBooking.isPending}
-                      type="button"
                       onClick={() => setBookingPendingCancel(booking.id)}
                     >
                        {t('bookings.cancel')}
-                    </button>
+                    </Button>
                   ) : null}
                 </div>
               </article>

@@ -74,7 +74,7 @@ export function AdmissionPanel({ user, signedIn, checking, failed, onRefresh }: 
       </div>
     </section>
     {open && pending && createPortal(<div className="app-shell">
-      <Modal title={label('Nộp CV tham gia lab', 'Submit a lab application')} size="full" onClose={() => setOpen(false)}>
+      <Modal title={label('Nộp CV tham gia lĩnh vực nghiên cứu', 'Apply to join a research area')} size="full" onClose={() => setOpen(false)}>
         <LabList />
       </Modal>
     </div>, document.body)}

@@ -56,7 +56,7 @@ export function CleaningPage() {
 
   if (isLoadingUser || isLoading) {
     return (
-      <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+      <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
         <div className="h-6 w-44 animate-pulse rounded bg-slate-200" />
         <div className="mt-6 grid gap-4 md:grid-cols-2">
           <div className="h-36 animate-pulse rounded bg-slate-100" />
@@ -68,7 +68,7 @@ export function CleaningPage() {
 
   if (!managedLabId) {
     return (
-      <section className="rounded-lg border border-amber-200 bg-white p-6 text-sm text-amber-700 shadow-sm">
+      <section className="rounded-xl border border-amber-200 bg-white p-6 text-sm text-amber-700 shadow-sm dark:border-amber-900/50 dark:bg-slate-900 dark:text-amber-400">
         {t('layout.unassignedLab')}
       </section>
     );
@@ -76,9 +76,9 @@ export function CleaningPage() {
 
   return (
     <section className="space-y-6">
-      <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
         <h1 className="text-xl font-semibold text-slate-950 dark:text-white">{t('cleaning.title')}</h1>
-        <p className="mt-3 text-sm font-medium text-slate-800">
+        <p className="mt-3 text-sm font-medium text-slate-800 dark:text-slate-300">
           {t('lab.label')}: {managedLabName ?? `#${managedLabId}`}
         </p>
       </div>
@@ -109,12 +109,12 @@ export function CleaningPage() {
           {filteredTasks.map((task) => (
             <article
               key={task.id ?? `slot-${task.slotId}-pending`}
-              className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"
+              className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900"
             >
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div>
                   <h3 className="text-base font-semibold text-slate-950 dark:text-white">{task.labName ?? t('lab.shortName')}</h3>
-                  <p className="mt-1 text-sm text-slate-600">
+                  <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
                     {formatDateTime(task.startTime)} - {formatDateTime(task.endTime)}
                   </p>
                 </div>
@@ -127,12 +127,12 @@ export function CleaningPage() {
 
               <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
                 <div>
-                  <dt className="font-semibold text-slate-700">{t('cleaning.participants')}</dt>
-                  <dd className="mt-1 text-slate-600">{task.participantCount ?? 0}</dd>
+                  <dt className="font-semibold text-slate-700 dark:text-slate-300">{t('cleaning.participants')}</dt>
+                  <dd className="mt-1 text-slate-600 dark:text-slate-400">{task.participantCount ?? 0}</dd>
                 </div>
                 <div>
-                  <dt className="font-semibold text-slate-700">{t('cleaning.assignedStudent')}</dt>
-                  <dd className="mt-1 text-slate-600">
+                  <dt className="font-semibold text-slate-700 dark:text-slate-300">{t('cleaning.assignedStudent')}</dt>
+                  <dd className="mt-1 text-slate-600 dark:text-slate-400">
                     {task.staffName || task.staffEmail || t('lab.notAssigned')}
                   </dd>
                 </div>

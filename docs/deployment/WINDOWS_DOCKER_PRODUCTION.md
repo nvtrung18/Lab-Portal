@@ -6,7 +6,7 @@ Runbook này dùng `docker-compose.prod.yml` và Docker Desktop với Linux cont
 
 Mã nguồn đã tách dữ liệu phát triển khỏi profile `prod`, nhưng chưa có bằng chứng khởi chạy stack production trên máy này. Kiểm tra migration, tài khoản quản trị và các luồng vận hành trước khi mở truy cập.
 
-- `DEV_SEED_ENABLED=false` tắt `DevDataSeeder`; `AuthDataSeeder` chỉ chạy khi profile khác `prod`.
+- Backend đã bỏ `DevDataSeeder`, cấu hình bật seed và các bộ SQL demo thủ công. `AuthDataSeeder` chỉ nâng cấp mật khẩu plaintext lịch sử ở profile khác `prod`, không tạo tài khoản.
 - Flyway production chạy thêm `db/migration-prod`: migration `V68_1` vô hiệu hóa tài khoản demo lịch sử và `V72` xóa các bản ghi demo xác định được. `ProductionAdminBootstrapper` tạo admin bằng thông tin cấu hình ở lần chạy đầu, không đặt lại mật khẩu của admin đã tồn tại.
 - MySQL production dùng volume riêng. Dữ liệu mock đang có trong MySQL development không tự chuyển sang production; không trỏ production vào database development để chuyển dữ liệu.
 

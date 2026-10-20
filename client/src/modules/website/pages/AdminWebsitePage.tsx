@@ -21,7 +21,7 @@ const QUERY_KEY = ['admin', 'website'] as const;
 type Section = 'copy' | CollectionName;
 const sections: { key: Section; vi: string; en: string }[] = [
   { key: 'copy', vi: 'Nội dung các tab', en: 'Tab content' },
-  { key: 'research', vi: 'Hướng nghiên cứu', en: 'Research directions' },
+  { key: 'research', vi: 'Lĩnh vực nghiên cứu', en: 'Research areas' },
   { key: 'members', vi: 'Thành viên', en: 'People' },
   { key: 'publications', vi: 'Publications', en: 'Publications' },
   { key: 'projects', vi: 'Đề tài giới thiệu', en: 'Public research projects' },
@@ -130,7 +130,7 @@ export function AdminWebsitePage() {
       <div className="app-page-heading flex flex-wrap items-start justify-between gap-5">
         <div><p className="mb-2 flex items-center gap-2 text-xs font-semibold tracking-normal text-slate-500 dark:text-slate-400"><Globe size={15} />Website</p>
           <h2 className="text-2xl font-semibold tracking-tight">{l('Quản trị website giới thiệu', 'Laboratory website content')}</h2>
-          <p className="mt-2 max-w-2xl text-sm text-slate-500">{l('Chọn nội dung hiển thị trong từng tab, thêm theo mẫu hoặc tự soạn và sắp xếp các mục. Quản lý thành viên, hướng nghiên cứu, Publications, đề tài và tin tức. Xem trước, lưu nháp rồi xuất bản.', 'Select and arrange content in each tab, use presets or write new content. Manage people, research, publications, projects and news. Preview, save a draft and publish.')}</p>
+          <p className="mt-2 max-w-2xl text-sm text-slate-500">{l('Chọn nội dung hiển thị trong từng tab, thêm theo mẫu hoặc tự soạn và sắp xếp các mục. Quản lý thành viên, lĩnh vực nghiên cứu, Publications, đề tài và tin tức. Xem trước, lưu nháp rồi xuất bản.', 'Select and arrange content in each tab, use presets or write new content. Manage people, research areas, publications, projects and news. Preview, save a draft and publish.')}</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Button size="sm" variant="outline" onClick={() => { setPreviewContent(null); setPreviewPath(undefined); setPreview(true); }}><Eye size={16} />{l('Xem trước', 'Preview')}</Button>
@@ -156,7 +156,7 @@ export function AdminWebsitePage() {
         {section === 'copy' && <PageContentEditor content={content} onChange={setContent} onPreview={(draft, path) => { setPreviewContent(draft); setPreviewPath(`/${locale}${path}`); setPreview(true); }} />}
         {activeCollection === 'members' && <ScholarSyncPanel members={content.data.members} />}
         {activeCollection && <>
-          <div className="mb-5 flex flex-wrap items-center justify-between gap-3"><input aria-label={l('Tìm bản ghi', 'Find records')} type="search" className={`${inputClass} max-w-sm`} placeholder={l('Tìm theo tiêu đề hoặc tên…', 'Search titles or names…')} value={search} onChange={e => setSearch(e.target.value)} /><Button size="sm" onClick={() => addRecord(activeCollection)}><Plus size={16} />{activeCollection === 'members' ? l('Thêm từ người dùng', 'Add from users') : activeCollection === 'research' ? l('Thêm từ nhóm nghiên cứu', 'Add from research groups') : l('Thêm mới', 'Add record')}</Button></div>
+          <div className="mb-5 flex flex-wrap items-center justify-between gap-3"><input aria-label={l('Tìm bản ghi', 'Find records')} type="search" className={`${inputClass} max-w-sm`} placeholder={l('Tìm theo tiêu đề hoặc tên…', 'Search titles or names…')} value={search} onChange={e => setSearch(e.target.value)} /><Button size="sm" onClick={() => addRecord(activeCollection)}><Plus size={16} />{activeCollection === 'members' ? l('Thêm từ người dùng', 'Add from users') : activeCollection === 'research' ? l('Thêm từ lĩnh vực nghiên cứu', 'Add from research areas') : l('Thêm mới', 'Add record')}</Button></div>
           {activeCollection === 'members' && <p className="mb-4 text-sm text-slate-500">{l('Chọn người dùng rồi chỉnh hồ sơ hiển thị riêng cho từng người. Tích Hiển thị, xem trước và xuất bản để đưa lên website.', 'Select users and edit each public profile separately. Check Show, preview and publish to display them on the website.')}</p>}
           {activeCollection === 'members' && <div className="mb-5 flex flex-wrap items-center gap-3">
             <Button size="sm" variant="outline" onClick={() => {
@@ -165,7 +165,7 @@ export function AdminWebsitePage() {
             }}><Plus size={16} />{l(`Áp dụng phân tầng ${scholarMembers.length} hồ sơ Scholar`, `Apply hierarchy to ${scholarMembers.length} Scholar profiles`)}</Button>
             <span className="text-xs text-slate-500">{l('Ngày lấy dữ liệu được ghi riêng trong từng hồ sơ Scholar.', 'Each Scholar profile records its own retrieval date.')}</span>
           </div>}
-          {activeCollection === 'research' && <p className="mb-4 text-sm text-slate-500">{l('Chọn nhóm nghiên cứu hiện có rồi chỉnh tên giới thiệu, mô tả, ảnh và chủ đề cho website. Tích Hiển thị, xem trước và xuất bản.', 'Select an existing research group and edit its public name, description, image and topics. Check Show, preview and publish.')}</p>}
+          {activeCollection === 'research' && <p className="mb-4 text-sm text-slate-500">{l('Chọn lĩnh vực nghiên cứu hiện có rồi chỉnh tên giới thiệu, mô tả, ảnh và chủ đề cho website. Tích Hiển thị, xem trước và xuất bản.', 'Select an existing research area and edit its public name, description, image and topics. Check Show, preview and publish.')}</p>}
           {activeCollection === 'news' && <p className="mb-4 text-sm text-slate-500">{l('Soạn bài viết, tin tức hoặc sự kiện trong form riêng. Có thể bổ sung tên nguồn và link bài gốc, xem trước rồi lưu nháp hoặc xuất bản.', 'Compose articles, news or events in the article form. Optionally add the source name and original article link, preview, then save a draft or publish.')}</p>}
           {activeCollection === 'publications' && <p className="mb-4 text-sm text-slate-500">{l('Nhập loại công bố, tác giả và tài nguyên DOI/PDF/Code; soạn nội dung giới thiệu và bổ sung nguồn/link gốc nếu có. Xem trước rồi lưu nháp hoặc xuất bản.', 'Enter publication type, contributors and DOI/PDF/Code resources; compose the article and optionally add its original source. Preview, then save a draft or publish.')}</p>}
           {activeCollection === 'projects' && <p className="mb-4 text-sm text-slate-500">{l('Nhập thông tin đề tài, mục tiêu và người phụ trách; soạn bài giới thiệu với ảnh, liên kết và nguồn/link gốc nếu có. Xem trước rồi lưu nháp hoặc xuất bản.', 'Enter project details, objectives and lead; compose the project article with images, links and an optional original source. Preview, then save a draft or publish.')}</p>}
@@ -185,10 +185,10 @@ export function AdminWebsitePage() {
     </div>
     {editing && !selectingMember && !selectingResearch && <Modal title={articleEditorTitle ?? l('Chỉnh sửa nội dung website', 'Edit website content')} size={articleEditorTitle ? 'full' : '2xl'} closeDisabled={uploading} onClose={() => { if (!uploading) setEditing(null); }}><form onSubmit={e => { e.preventDefault(); if (uploading) return; setContent({ ...content, data: putRecord(content.data, editing) }); setEditing(null); setNotice(''); }}>
       {editing.collection === 'research' && <div className="mb-6 space-y-3 rounded-lg border border-slate-200 p-4 dark:border-slate-700">
-        <h3 className="text-sm font-semibold">{l('Nhóm nghiên cứu liên kết', 'Linked research group')}</h3>
-        <p className="break-words text-sm">{editingLab ? editingLab.labName : editing.record.labId != null ? l(`Nhóm #${editing.record.labId} — thông tin hiện không khả dụng`, `Group #${editing.record.labId} — details currently unavailable`) : l('Nội dung cũ chưa liên kết nhóm nghiên cứu.', 'Legacy content without a linked research group.')}</p>
-        <p className="text-xs text-slate-500">{l('Các trường bên dưới chỉ chỉnh nội dung công khai của hướng nghiên cứu trên website.', 'The fields below edit the public website content of this research direction.')}</p>
-        <Button size="sm" variant="outline" onClick={() => setSelectingResearch({ record: editing.record })}>{editing.record.labId == null ? l('Liên kết nhóm nghiên cứu', 'Link a research group') : l('Đổi nhóm liên kết', 'Change linked group')}</Button>
+        <h3 className="text-sm font-semibold">{l('Lĩnh vực nghiên cứu liên kết', 'Linked research area')}</h3>
+        <p className="break-words text-sm">{editingLab ? editingLab.labName : editing.record.labId != null ? l(`Lĩnh vực #${editing.record.labId} — thông tin hiện không khả dụng`, `Research area #${editing.record.labId} — details currently unavailable`) : l('Nội dung cũ chưa liên kết lĩnh vực nghiên cứu.', 'Legacy content without a linked research area.')}</p>
+        <p className="text-xs text-slate-500">{l('Các trường bên dưới chỉ chỉnh hồ sơ giới thiệu công khai của lĩnh vực nghiên cứu trên website.', 'The fields below edit the public website profile of this research area.')}</p>
+        <Button size="sm" variant="outline" onClick={() => setSelectingResearch({ record: editing.record })}>{editing.record.labId == null ? l('Liên kết lĩnh vực nghiên cứu', 'Link a research area') : l('Đổi lĩnh vực liên kết', 'Change linked area')}</Button>
       </div>}
       {editing.collection === 'members' && <div className="mb-6 space-y-3 rounded-lg border border-slate-200 p-4 dark:border-slate-700">
         <h3 className="text-sm font-semibold">{l('Tài khoản liên kết', 'Linked account')}</h3>
@@ -205,7 +205,7 @@ export function AdminWebsitePage() {
           setSelectingMember(null);
         }} />
     </Modal>}
-    {selectingResearch && <Modal title={l('Chọn Hướng nghiên cứu từ nhóm hiện có', 'Select a direction from research groups')} size="xl" onClose={() => setSelectingResearch(null)}>
+    {selectingResearch && <Modal title={l('Chọn lĩnh vực nghiên cứu để giới thiệu', 'Select a research area to feature')} size="xl" onClose={() => setSelectingResearch(null)}>
       <ResearchSourcePicker labs={researchSources.data ?? []} research={content.data.research} target={selectingResearch.record}
         loading={researchSources.isPending} failed={researchSources.isError} refreshing={researchSources.isFetching}
         onRetry={() => { void researchSources.refetch(); }} onSelect={lab => {

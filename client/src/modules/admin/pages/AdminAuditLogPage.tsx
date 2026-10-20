@@ -431,7 +431,7 @@ export function AdminAuditLogPage() {
                         type="button"
                         aria-label={`${t('common.page')} ${index + 1}`}
                         aria-current={page === index ? 'page' : undefined}
-                        className={`app-button h-11 w-11 rounded-md text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 ${
+                        className={`app-button h-8 w-8 min-h-[32px] rounded-md text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 ${
                           page === index
                             ? 'app-button-primary'
                             : 'app-button-ghost'

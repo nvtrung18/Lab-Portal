@@ -546,10 +546,15 @@ html:not(.dark) .admin-shell option {
 }
 
 .app-shell .app-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
   border: 1px solid transparent;
-  line-height: 1.4;
+  line-height: 1.25;
   letter-spacing: -.01em;
   box-shadow: none;
+  text-decoration: none;
 }
 
 .app-shell :is(.app-button-primary, button.bg-slate-900, button.bg-slate-950, button.bg-slate-800, button.bg-blue-600, button.bg-blue-700, button.bg-indigo-600) {
