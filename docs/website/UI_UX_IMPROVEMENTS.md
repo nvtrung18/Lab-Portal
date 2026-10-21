@@ -34,3 +34,60 @@ Implemented against `ff2ceef`; no CMS records, member roles, Scholar snapshots, 
 - People VI/EN: verified the empty MSc tier and filter; Guest filtering returned the same three seeded Guest profiles. A disposable MSc profile in the local fixture verified correct card rendering/count and filtering; it was never added to CMS or repository content.
 
 No new dependencies. Backend tests were not run because no backend code or contracts changed. Physical phones, Safari and a full screen-reader audit were not tested. No push, deploy, migration, publish or production writes were performed.
+
+
+## Compact public spacing (21 October 2026)
+
+Branch: `feature/compact-public-layout`. The implementation changes only
+`client/src/modules/website/public/public.css`; CMS content, contracts, search,
+Scholar, routing and backend behavior are unchanged.
+
+- Shared tokens define 32px section padding (24px on mobile), 16px following-section
+  padding, 24px content spacing and 24px/20px heading padding. Adjacent sections
+  share their separation; content after search does not add another top padding.
+- Page headings retain breadcrumb, labels, typography and the decorative plus.
+  The plus is vertically centered, and heading height follows content. Homepage
+  Hero HTML and its measured geometry are unchanged.
+- Search panels use 16px padding; result counts/notes and editorial content follow
+  without stacked 85px section padding. Search notes retain a 16px gap before
+  in-panel results, and no extra trailing margin before the following section.
+- People group/tier headings and connectors share spacing variables: 48px between
+  tiers and 16px branches. The connector lengths match the new spacing. Flex card
+  widths, last-row centering, role filters and the independent guest group remain.
+- Editorial image/text columns align at the top, use a 32px gap, and featured
+  headings use 28–40px. Article HTML, list markers, expand/collapse, gallery frames
+  and lightbox code are untouched. Empty states and detail headings are also compact.
+
+Measured VI content positions at 1366×768, using a read-only published snapshot:
+
+| Page | Before: first body/image top | After |
+| --- | ---: | ---: |
+| Publications | 838px | 581px |
+| Projects | 838px | 581px |
+| People | 858px | 633px |
+| Research | 936px | 631px |
+| Products | 728px | 452px |
+| About | 651px | 440px |
+| Contact | 561px | 401px |
+
+Standard heading height decreased from 259px to 160px; About is 196px because
+its existing text is longer. Mobile headings grow naturally with wrapped text.
+News has no published records in the snapshot and preserves its empty state.
+
+Verification:
+
+- 32/32 website tests pass. Typecheck + production build pass. ESLint reports
+  0 errors and 31 pre-existing warnings; the existing bundle-size warning remains.
+- Checked 128 loaded layouts: eight content pages, VI/EN, light/dark, and viewports
+  1366×768, 1440×900, 768×1024 and 390×844. No page-level horizontal overflow or
+  overlapping top-level sections; desktop first body/image or empty state is
+  inside the initial viewport. Before/after screenshots were saved locally.
+- Publications preserves 101 list items and unrestricted height/visible overflow.
+  ProMESh search returns one result; its source target is approximately 16px below
+  the sticky header. Products retains identical rich HTML across expand/collapse;
+  lightbox ArrowRight advances 1/2 to 2/2 and ESC closes it.
+- Verified homepage Hero HTML and geometry against the baseline at 1366px.
+  No production writes, publish, migration, commit, push, merge or deployment.
+- Checks use the local built app with published JSON; uploaded-image URLs redirect
+  to their existing public assets. No physical-device/Safari or full screen-reader
+  audit was performed. Backend tests were not needed for this CSS-only change.
