@@ -80,7 +80,7 @@ public class AiUnifiedChatServiceImpl implements AiUnifiedChatService {
 
     private AiUnifiedChatResponse generateResponse(String input, String requestId, TurnState turn) {
         String normalizedRequestId = AiGatewayRequest.normalizeRequestId(requestId);
-        List<AiToolCandidate> candidates = List.copyOf(candidateCatalog.candidates());
+        List<AiToolCandidate> candidates = List.copyOf(candidateCatalog.candidates(input));
         if (candidates.isEmpty()) {
             return nonTool(AiUnifiedChatResponseType.REFUSED, NO_AUTHORIZED_CAPABILITY, 0, 0);
         }
@@ -129,6 +129,11 @@ public class AiUnifiedChatServiceImpl implements AiUnifiedChatService {
                 ? null : selected.parentResource().resourceId());
         AiAssistantChatResponse answer = assistantGatewayService.chat(
                 selected.assistantKey(), delegated, normalizedRequestId);
+        if (answer.safeRefusal()) {
+            return new AiUnifiedChatResponse(AiUnifiedChatResponseType.REFUSED, answer.assistantKey(),
+                    answer.answer(), Math.addExact(planning.promptTokens(), answer.promptTokens()),
+                    Math.addExact(planning.completionTokens(), answer.completionTokens()), answer.citations());
+        }
         if (definition.capability() == AiCapability.LAB_SHIFT_CREATE_DRAFT) {
             if (hasLabShiftKind(answer.answer(), "LAB_SHIFT_CREATE_INTERPRETATION")) {
                 try {
@@ -187,6 +192,13 @@ public class AiUnifiedChatServiceImpl implements AiUnifiedChatService {
                     Math.addExact(planning.promptTokens(), answer.promptTokens()),
                     Math.addExact(planning.completionTokens(), answer.completionTokens()), answer.citations(),
                     preview, null);
+        }
+        if (turn.pending != null && turn.pending.suggestionId() != null) {
+            try {
+                actionSuggestionService.cancel(turn.pending.suggestionId());
+            } catch (com.web.labportalbackend.ai.service.AiActionPreviewNotPendingException ignored) {
+                // Một thao tác confirm/cancel đồng thời đã kết thúc preview.
+            }
         }
         turn.pending = null;
         return new AiUnifiedChatResponse(AiUnifiedChatResponseType.ANSWER, answer.assistantKey(), answer.answer(),

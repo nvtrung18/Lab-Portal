@@ -78,7 +78,7 @@ class AiToolExecutionServiceImplTest {
         AiToolHandler policyHandler = handler(AiToolId.LAB_POLICY_READ);
         AiToolExecutionServiceImpl service = service(slotHandler, policyHandler);
         AiAuthorizedContext authorized = context(AiCapability.LAB_SLOT_READ, 17L, null, "request-123");
-        when(availabilityService.requireAvailableForActor(AiAssistantKey.LAB_ASSISTANT))
+        when(availabilityService.identifyActor(AiAssistantKey.LAB_ASSISTANT))
                 .thenReturn(availability(profile(AiAssistantKey.LAB_ASSISTANT, AiAssistantToolGroup.LAB_READ)));
         when(contextFacade.build(any())).thenReturn(authorized);
         when(slotHandler.execute(AiToolId.LAB_SLOT_READ, authorized)).thenReturn(authorized.context());
@@ -90,7 +90,7 @@ class AiToolExecutionServiceImplTest {
                 AiAssistantKey.LAB_ASSISTANT, AiCapability.LAB_SLOT_READ, 17L, null);
         ArgumentCaptor<AiToolAuditEvent> auditEvent = ArgumentCaptor.forClass(AiToolAuditEvent.class);
         InOrder order = inOrder(availabilityService, contextFacade, slotHandler, auditUsageService);
-        order.verify(availabilityService).requireAvailableForActor(AiAssistantKey.LAB_ASSISTANT);
+        order.verify(availabilityService).identifyActor(AiAssistantKey.LAB_ASSISTANT);
         order.verify(contextFacade).build(new AiContextBuildRequest(expectedCapabilityRequest, "request-123"));
         order.verify(slotHandler).execute(AiToolId.LAB_SLOT_READ, authorized);
         order.verify(auditUsageService).recordToolOutcome(auditEvent.capture());
@@ -132,7 +132,7 @@ class AiToolExecutionServiceImplTest {
                     () -> service.execute(request, "request-unknown"));
         }
 
-        verify(availabilityService, never()).requireAvailableForActor(any());
+        verify(availabilityService, never()).identifyActor(any());
         verify(contextFacade, never()).build(any());
         verify(handler, never()).execute(any(), any());
         ArgumentCaptor<AiToolAuditEvent> auditEvents = ArgumentCaptor.forClass(AiToolAuditEvent.class);
@@ -158,7 +158,7 @@ class AiToolExecutionServiceImplTest {
         assertFailure(AiToolExecutionFailure.INVALID_TOOL_ARGUMENTS,
                 () -> service.execute(request, "request-injected"));
 
-        verify(availabilityService, never()).requireAvailableForActor(any());
+        verify(availabilityService, never()).identifyActor(any());
         verify(contextFacade, never()).build(any());
         verify(handler, never()).execute(any(), any());
     }
@@ -193,7 +193,7 @@ class AiToolExecutionServiceImplTest {
                     () -> service.execute(malformed, "request-invalid"));
         }
 
-        verify(availabilityService, never()).requireAvailableForActor(any());
+        verify(availabilityService, never()).identifyActor(any());
         verify(contextFacade, never()).build(any());
         verify(handler, never()).execute(any(), any());
     }
@@ -202,7 +202,7 @@ class AiToolExecutionServiceImplTest {
     void assistantKeyTamperingAndForeignToolGroupsCannotBroadenExecution() {
         AiToolHandler handler = handler(AiToolId.RESEARCH_ASSIGNED_TASK_READ);
         AiToolExecutionServiceImpl service = service(handler);
-        when(availabilityService.requireAvailableForActor(AiAssistantKey.LAB_ASSISTANT))
+        when(availabilityService.identifyActor(AiAssistantKey.LAB_ASSISTANT))
                 .thenReturn(availability(profile(AiAssistantKey.LAB_ASSISTANT, AiAssistantToolGroup.LAB_READ)));
 
         assertFailure(AiToolExecutionFailure.TOOL_NOT_ALLOWED,
@@ -217,7 +217,7 @@ class AiToolExecutionServiceImplTest {
     void actorToolGroupDenialPreventsFreshContextAndHandlerInvocation() {
         AiToolHandler handler = handler(AiToolId.LAB_SLOT_READ);
         AiToolExecutionServiceImpl service = service(handler);
-        when(availabilityService.requireAvailableForActor(AiAssistantKey.LAB_ASSISTANT))
+        when(availabilityService.identifyActor(AiAssistantKey.LAB_ASSISTANT))
                 .thenReturn(availability(profile(AiAssistantKey.LAB_ASSISTANT, AiAssistantToolGroup.LAB_DRAFT)));
 
         assertFailure(AiToolExecutionFailure.TOOL_NOT_ALLOWED,
@@ -232,7 +232,7 @@ class AiToolExecutionServiceImplTest {
     void currentCapabilityOrBusinessPermissionDenialNeverInvokesHandler() {
         AiToolHandler handler = handler(AiToolId.LAB_SLOT_READ);
         AiToolExecutionServiceImpl service = service(handler);
-        when(availabilityService.requireAvailableForActor(AiAssistantKey.LAB_ASSISTANT))
+        when(availabilityService.identifyActor(AiAssistantKey.LAB_ASSISTANT))
                 .thenReturn(availability(profile(AiAssistantKey.LAB_ASSISTANT, AiAssistantToolGroup.LAB_READ)));
         when(contextFacade.build(any())).thenThrow(new AiContextReadDeniedException());
 
@@ -252,7 +252,7 @@ class AiToolExecutionServiceImplTest {
     void mismatchedAuthorizedResourceFailsClosedBeforeHandlerInvocation() {
         AiToolHandler handler = handler(AiToolId.LAB_SLOT_READ);
         AiToolExecutionServiceImpl service = service(handler);
-        when(availabilityService.requireAvailableForActor(AiAssistantKey.LAB_ASSISTANT))
+        when(availabilityService.identifyActor(AiAssistantKey.LAB_ASSISTANT))
                 .thenReturn(availability(profile(AiAssistantKey.LAB_ASSISTANT, AiAssistantToolGroup.LAB_READ)));
         when(contextFacade.build(any())).thenReturn(context(AiCapability.LAB_SLOT_READ, 99L, null, "request-cross"));
 
@@ -277,7 +277,7 @@ class AiToolExecutionServiceImplTest {
                 valid.requestId(), valid.assistantKey(), valid.domain(), valid.capability(), valid.resource(),
                 new AiAuthorizedToolPolicy(tampered), valid.contextVersion(), valid.builtAt(),
                 valid.freshness(), valid.context());
-        when(availabilityService.requireAvailableForActor(AiAssistantKey.LAB_ASSISTANT))
+        when(availabilityService.identifyActor(AiAssistantKey.LAB_ASSISTANT))
                 .thenReturn(availability(profile(AiAssistantKey.LAB_ASSISTANT, AiAssistantToolGroup.LAB_READ)));
         when(contextFacade.build(any())).thenReturn(returned);
 
@@ -293,7 +293,7 @@ class AiToolExecutionServiceImplTest {
         AiToolHandler readHandler = handler(AiToolId.LAB_SLOT_READ);
         AiToolExecutionServiceImpl service = service(readHandler);
         AiAuthorizedContext authorized = context(AiCapability.LAB_BOOKING_DRAFT, 17L, null, "request-gated");
-        when(availabilityService.requireAvailableForActor(AiAssistantKey.LAB_ASSISTANT))
+        when(availabilityService.identifyActor(AiAssistantKey.LAB_ASSISTANT))
                 .thenReturn(availability(profile(AiAssistantKey.LAB_ASSISTANT, AiAssistantToolGroup.LAB_DRAFT)));
         when(contextFacade.build(any())).thenReturn(authorized);
 
@@ -321,7 +321,7 @@ class AiToolExecutionServiceImplTest {
         AiToolDefinition draftDefinition = registry.get(AiToolId.LAB_BOOKING_DRAFT);
         AiAuthorizedContext authorized = context(
                 AiCapability.LAB_BOOKING_DRAFT, 17L, null, "request-sensitive");
-        when(availabilityService.requireAvailableForActor(AiAssistantKey.LAB_ASSISTANT))
+        when(availabilityService.identifyActor(AiAssistantKey.LAB_ASSISTANT))
                 .thenReturn(availability(profile(AiAssistantKey.LAB_ASSISTANT, AiAssistantToolGroup.LAB_DRAFT)));
         when(contextFacade.build(any())).thenReturn(authorized);
         when(actionGateService.classify(draftDefinition)).thenReturn(decision);
@@ -331,7 +331,7 @@ class AiToolExecutionServiceImplTest {
                         AiToolId.LAB_BOOKING_DRAFT, 17L, null), "request-sensitive"));
 
         InOrder order = inOrder(availabilityService, contextFacade, actionGateService);
-        order.verify(availabilityService).requireAvailableForActor(AiAssistantKey.LAB_ASSISTANT);
+        order.verify(availabilityService).identifyActor(AiAssistantKey.LAB_ASSISTANT);
         order.verify(contextFacade).build(any());
         order.verify(actionGateService).classify(draftDefinition);
         verify(readHandler, never()).execute(any(), any());
@@ -355,7 +355,7 @@ class AiToolExecutionServiceImplTest {
         AiToolDefinition definition = registry.get(AiToolId.LAB_SLOT_READ);
         AiAuthorizedContext authorized = context(
                 AiCapability.LAB_SLOT_READ, 17L, null, "request-gate-failure");
-        when(availabilityService.requireAvailableForActor(AiAssistantKey.LAB_ASSISTANT))
+        when(availabilityService.identifyActor(AiAssistantKey.LAB_ASSISTANT))
                 .thenReturn(availability(profile(AiAssistantKey.LAB_ASSISTANT, AiAssistantToolGroup.LAB_READ)));
         when(contextFacade.build(any())).thenReturn(authorized);
 
@@ -379,7 +379,7 @@ class AiToolExecutionServiceImplTest {
         AiToolHandler handler = handler(AiToolId.LAB_SLOT_READ);
         AiToolExecutionServiceImpl service = service(handler);
         AiAuthorizedContext authorized = context(AiCapability.LAB_SLOT_READ, 17L, null, "request-failed");
-        when(availabilityService.requireAvailableForActor(AiAssistantKey.LAB_ASSISTANT))
+        when(availabilityService.identifyActor(AiAssistantKey.LAB_ASSISTANT))
                 .thenReturn(availability(profile(AiAssistantKey.LAB_ASSISTANT, AiAssistantToolGroup.LAB_READ)));
         when(contextFacade.build(any())).thenReturn(authorized);
         when(handler.execute(AiToolId.LAB_SLOT_READ, authorized))
@@ -404,7 +404,7 @@ class AiToolExecutionServiceImplTest {
         AiToolHandler handler = handler(AiToolId.LAB_SLOT_READ);
         AiToolExecutionServiceImpl service = service(handler);
         AiAuthorizedContext authorized = context(AiCapability.LAB_SLOT_READ, 17L, null, "request-audit-failed");
-        when(availabilityService.requireAvailableForActor(AiAssistantKey.LAB_ASSISTANT))
+        when(availabilityService.identifyActor(AiAssistantKey.LAB_ASSISTANT))
                 .thenReturn(availability(profile(AiAssistantKey.LAB_ASSISTANT, AiAssistantToolGroup.LAB_READ)));
         when(contextFacade.build(any())).thenReturn(authorized);
         when(handler.execute(AiToolId.LAB_SLOT_READ, authorized)).thenReturn(authorized.context());
@@ -421,7 +421,7 @@ class AiToolExecutionServiceImplTest {
     @Test
     void unregisteredReadToolAndDuplicateHandlerRegistrationFailClosed() {
         AiToolExecutionServiceImpl noHandlers = service();
-        when(availabilityService.requireAvailableForActor(AiAssistantKey.LAB_ASSISTANT))
+        when(availabilityService.identifyActor(AiAssistantKey.LAB_ASSISTANT))
                 .thenReturn(availability(profile(AiAssistantKey.LAB_ASSISTANT, AiAssistantToolGroup.LAB_READ)));
         when(contextFacade.build(any())).thenReturn(context(
                 AiCapability.LAB_SLOT_READ, 17L, null, "request-unregistered"));

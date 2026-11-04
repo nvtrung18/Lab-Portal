@@ -351,6 +351,7 @@ class TaskProposalMySqlIntegrationTest {
         jdbcTemplate.update("""
                 INSERT INTO ai_assistant_config (assistant_key, system_prompt_key, max_requests_per_day, max_context_tokens)
                 VALUES ('LAB_ASSISTANT', 'mysql-it', 1, 1)
+                ON DUPLICATE KEY UPDATE system_prompt_key = 'mysql-it', max_requests_per_day = 1, max_context_tokens = 1
                 """);
         jdbcTemplate.update("""
                 INSERT INTO ai_action_suggestion (requested_by, assistant_key, action_type, target_module, payload_json,

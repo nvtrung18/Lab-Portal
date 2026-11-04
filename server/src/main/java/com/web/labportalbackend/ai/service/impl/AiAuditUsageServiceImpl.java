@@ -69,8 +69,9 @@ public class AiAuditUsageServiceImpl implements AiAuditUsageService {
                     .groupId(event.groupId())
                     .promptTokens(event.promptTokens())
                     .completionTokens(event.completionTokens())
-                    .status("SUCCESS")
-                    .errorMessage(null)
+                    .status(event.executionResult() == com.web.labportalbackend.ai.service.AiAuditExecutionResult.REFUSED
+                            ? "REFUSED" : "SUCCESS")
+                    .errorMessage(event.failureCode() == null ? null : event.failureCode().name())
                     .build());
         }
     }

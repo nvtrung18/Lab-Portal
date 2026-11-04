@@ -32,6 +32,13 @@ public interface LaboratoryRepository extends JpaRepository<Laboratory, Long> {
     List<AiLabContext.Laboratory> findAiCandidateLabsForStudent(
             @Param("actorId") Long actorId, Pageable pageable);
 
+    @Query("""
+            SELECT new com.web.labportalbackend.ai.context.AiLabContext$Laboratory(l.id, l.labName, l.status, l.capacity)
+            FROM Laboratory l WHERE l.manager.id = :actorId AND l.active = true AND l.deleted = false
+            ORDER BY l.id ASC
+            """)
+    List<AiLabContext.Laboratory> findAiCandidateLabsForManager(@Param("actorId") Long actorId, Pageable pageable);
+
     @Lock(LockModeType.PESSIMISTIC_READ)
     @EntityGraph(type = EntityGraph.EntityGraphType.FETCH)
     @Query("""

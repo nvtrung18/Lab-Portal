@@ -3,6 +3,7 @@ package com.web.labportalbackend.ai.context;
 import com.web.labportalbackend.ai.enums.AiAssistantDomain;
 import com.web.labportalbackend.ai.enums.AiAssistantKey;
 import com.web.labportalbackend.ai.enums.AiCapability;
+import com.web.labportalbackend.ai.enums.AiAssistantSystemRole;
 import com.web.labportalbackend.ai.service.AiAuthorizedToolPolicy;
 import com.web.labportalbackend.ai.service.AiCapabilityDecision;
 import java.time.Instant;
@@ -17,7 +18,15 @@ public record AiAuthorizedContext(
         String contextVersion,
         Instant builtAt,
         Freshness freshness,
-        AiDomainContext context) {
+        AiDomainContext context,
+        AiAssistantSystemRole selectedSystemRole) {
+
+    public AiAuthorizedContext(String requestId, AiAssistantKey assistantKey, AiAssistantDomain domain,
+            AiCapability capability, AiCapabilityDecision.ResolvedResource resource, AiAuthorizedToolPolicy toolPolicy,
+            String contextVersion, Instant builtAt, Freshness freshness, AiDomainContext context) {
+        this(requestId, assistantKey, domain, capability, resource, toolPolicy, contextVersion, builtAt, freshness,
+                context, null);
+    }
 
     public enum Freshness { LIVE_READ_NO_CACHE }
 

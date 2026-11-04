@@ -90,6 +90,42 @@ class AiAssistantGatewayServiceImplTest {
             shiftDefaults);
 
     @Test
+    void quotaAndRetrievalUseFreshCapabilityRoleInsteadOfFirstAccountRole() {
+        AiAssistantProfile profile = profile(AiAssistantKey.LAB_ASSISTANT);
+        when(availabilityService.identifyActor(AiAssistantKey.LAB_ASSISTANT)).thenReturn(
+                new AiAssistantAvailability(profile, 7L, AiAssistantSystemRole.ADMIN));
+        var request = capabilityRequest(AiAssistantKey.LAB_ASSISTANT, 7L,
+                AiCapability.LAB_POLICY_READ, 10L, null);
+        var base = context(request);
+        var fresh = new AiAuthorizedContext(base.requestId(), base.assistantKey(), base.domain(),
+                base.capability(), base.resource(), base.toolPolicy(), base.contextVersion(), base.builtAt(),
+                base.freshness(), base.context(), AiAssistantSystemRole.LAB_MANAGER);
+        when(contextFacade.build(any())).thenReturn(fresh);
+        when(gatewayClient.chat(any())).thenReturn(new AiChatResponse("LAB_ASSISTANT", "Policy", 0, 0, Map.of()));
+
+        service.chat(AiAssistantKey.LAB_ASSISTANT, request(AiCapability.LAB_POLICY_READ, 10L, null), "role-test");
+
+        var effective = new AiAssistantAvailability(profile, 7L, AiAssistantSystemRole.LAB_MANAGER);
+        verify(availabilityService).requireQuota(effective);
+        verify(ragRetrievalService).retrieve(profile, 7L, AiAssistantSystemRole.LAB_MANAGER, fresh,
+                "Summarize what I may access.");
+    }
+
+    @Test
+    void globalResourceIdentityIncludesExplicitNullWithProductionJacksonInclusion() {
+        ObjectMapper mapper = new ObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL);
+        for (AiResourceType type : List.of(AiResourceType.SYSTEM, AiResourceType.AUDIT_LOG, AiResourceType.SYSTEM_CONFIG)) {
+            JsonNode serialized = mapper.valueToTree(new AiPythonAuthorizedContext.ResourceReference(type, null));
+            assertTrue(serialized.has("resourceId"), type.name());
+            assertTrue(serialized.get("resourceId").isNull());
+        }
+        JsonNode admin = mapper.valueToTree(new AiAdminContext(
+                new AiAdminContext.SystemSummary(3, 4), null, AiBoundedList.fromOverfetch(List.of(), 14), false));
+        assertTrue(admin.has("targetUser"));
+        assertTrue(admin.get("targetUser").isNull());
+    }
+
+    @Test
     void parentResourceTypeRemainsExplicitlyNullWithProductionJacksonInclusion() {
         ObjectMapper productionMapper = new ObjectMapper()
                 .setSerializationInclusion(JsonInclude.Include.NON_NULL);
@@ -132,7 +168,7 @@ class AiAssistantGatewayServiceImplTest {
         AiAssistantChatRequest publicRequest = request(AiCapability.ADMIN_SYSTEM_SUMMARY, null, null);
         AiCapabilityRequest capabilityRequest = capabilityRequest(
                 AiAssistantKey.ADMIN_ASSISTANT, 1L, AiCapability.ADMIN_SYSTEM_SUMMARY, null, null);
-        when(availabilityService.requireAvailableForActor(AiAssistantKey.ADMIN_ASSISTANT)).thenReturn(availability);
+        when(availabilityService.identifyActor(AiAssistantKey.ADMIN_ASSISTANT)).thenReturn(availability);
         when(contextFacade.build(any())).thenReturn(context(capabilityRequest));
         when(gatewayClient.chat(any())).thenReturn(new AiChatResponse(
                 AiAssistantKey.ADMIN_ASSISTANT.name(), "Bounded summary", 3, 2, Map.of()));
@@ -153,6 +189,26 @@ class AiAssistantGatewayServiceImplTest {
     }
 
     @Test
+    void semanticRefusalIsNotRecordedAsSuccessfulInference() {
+        AiAssistantProfile profile = profile(AiAssistantKey.ADMIN_ASSISTANT);
+        when(availabilityService.identifyActor(AiAssistantKey.ADMIN_ASSISTANT))
+                .thenReturn(new AiAssistantAvailability(profile, 1L, AiAssistantSystemRole.ADMIN));
+        when(contextFacade.build(any())).thenReturn(context(capabilityRequest(
+                AiAssistantKey.ADMIN_ASSISTANT, 1L, AiCapability.ADMIN_SYSTEM_SUMMARY, null, null)));
+        when(gatewayClient.chat(any())).thenReturn(new AiChatResponse("ADMIN_ASSISTANT", "Refused", 4, 2,
+                Map.of("safeRefusal", objectMapper.valueToTree(true))));
+
+        service.chat(AiAssistantKey.ADMIN_ASSISTANT, request(AiCapability.ADMIN_SYSTEM_SUMMARY, null, null),
+                "request-refusal");
+
+        ArgumentCaptor<AiAssistantAuditEvent> event = ArgumentCaptor.forClass(AiAssistantAuditEvent.class);
+        verify(auditUsageService).recordAssistantRequest(event.capture());
+        assertFalse(event.getValue().executionResult() == AiAuditExecutionResult.SUCCEEDED);
+        assertTrue(event.getValue().consumesUsage());
+        assertEquals(4, event.getValue().promptTokens());
+    }
+
+    @Test
     void authorizedContextToolsAndResourcesAreProjectedBeforeCallingPython() throws Exception {
         AiAssistantProfile profile = profile(AiAssistantKey.LAB_ASSISTANT);
         AiAssistantAvailability availability = new AiAssistantAvailability(
@@ -161,7 +217,7 @@ class AiAssistantGatewayServiceImplTest {
         AiCapabilityRequest capabilityRequest = capabilityRequest(
                 AiAssistantKey.LAB_ASSISTANT, 7L, AiCapability.LAB_SLOT_READ, 17L, null);
         AiAuthorizedContext authorizedContext = context(capabilityRequest);
-        when(availabilityService.requireAvailableForActor(AiAssistantKey.LAB_ASSISTANT)).thenReturn(availability);
+        when(availabilityService.identifyActor(AiAssistantKey.LAB_ASSISTANT)).thenReturn(availability);
         when(contextFacade.build(new AiContextBuildRequest(capabilityRequest, "request-123")))
                 .thenReturn(authorizedContext);
         doReturn(new AiAuthorizedRetrieval("lab-knowledge", List.of(
@@ -180,7 +236,7 @@ class AiAssistantGatewayServiceImplTest {
         verify(gatewayClient).chat(gatewayRequest.capture());
         ArgumentCaptor<AiAssistantAuditEvent> auditEvent = ArgumentCaptor.forClass(AiAssistantAuditEvent.class);
         InOrder invocationOrder = inOrder(availabilityService, contextFacade, gatewayClient, auditUsageService);
-        invocationOrder.verify(availabilityService).requireAvailableForActor(AiAssistantKey.LAB_ASSISTANT);
+        invocationOrder.verify(availabilityService).identifyActor(AiAssistantKey.LAB_ASSISTANT);
         invocationOrder.verify(contextFacade).build(new AiContextBuildRequest(capabilityRequest, "request-123"));
         invocationOrder.verify(gatewayClient).chat(any());
         invocationOrder.verify(auditUsageService).recordAssistantRequest(auditEvent.capture());
@@ -244,7 +300,7 @@ class AiAssistantGatewayServiceImplTest {
         AiCapabilityRequest capabilityRequest = capabilityRequest(
                 AiAssistantKey.LAB_ASSISTANT, 7L, AiCapability.LAB_SHIFT_CREATE_DRAFT, 10L, null);
         AiAuthorizedContext authorizedContext = context(capabilityRequest);
-        when(availabilityService.requireAvailableForActor(AiAssistantKey.LAB_ASSISTANT)).thenReturn(availability);
+        when(availabilityService.identifyActor(AiAssistantKey.LAB_ASSISTANT)).thenReturn(availability);
         when(contextFacade.build(any())).thenReturn(authorizedContext);
         when(gatewayClient.chat(any())).thenReturn(new AiChatResponse(
                 AiAssistantKey.LAB_ASSISTANT.name(), "Draft", 12, 7, Map.of()));
@@ -272,7 +328,7 @@ class AiAssistantGatewayServiceImplTest {
         AiCapabilityRequest capabilityRequest = capabilityRequest(
                 AiAssistantKey.RESEARCH_ASSISTANT, 7L,
                 AiCapability.RESEARCH_TASK_PROPOSAL_DRAFT, 30L, 20L);
-        when(availabilityService.requireAvailableForActor(AiAssistantKey.RESEARCH_ASSISTANT))
+        when(availabilityService.identifyActor(AiAssistantKey.RESEARCH_ASSISTANT))
                 .thenReturn(availability);
         when(contextFacade.build(any())).thenReturn(context(capabilityRequest));
         when(gatewayClient.chat(any())).thenReturn(new AiChatResponse(
@@ -301,7 +357,7 @@ class AiAssistantGatewayServiceImplTest {
     @ParameterizedTest
     @MethodSource("availabilityDenials")
     void deniedAvailabilityNeverInvokesCapabilityContextOrClient(AiAssistantAvailabilityFailure failure) {
-        when(availabilityService.requireAvailableForActor(AiAssistantKey.RESEARCH_ASSISTANT))
+        when(availabilityService.identifyActor(AiAssistantKey.RESEARCH_ASSISTANT))
                 .thenThrow(new AiAssistantAvailabilityException(failure));
 
         AiAssistantAvailabilityException exception = assertThrows(AiAssistantAvailabilityException.class,
@@ -329,7 +385,7 @@ class AiAssistantGatewayServiceImplTest {
                 AiCapabilityDecisionReason.DENIED_BY_RESOURCE_POLICY,
                 AiCapabilityDenialReason.NOT_GROUP_MEMBER, AiActionRiskBoundary.READ_ONLY,
                 Set.of(), null);
-        when(availabilityService.requireAvailableForActor(AiAssistantKey.RESEARCH_ASSISTANT))
+        when(availabilityService.identifyActor(AiAssistantKey.RESEARCH_ASSISTANT))
                 .thenReturn(availability);
         when(contextFacade.build(any())).thenThrow(new AiCapabilityDeniedException(denied));
 
@@ -353,7 +409,7 @@ class AiAssistantGatewayServiceImplTest {
                 profile(AiAssistantKey.LAB_ASSISTANT), 7L, AiAssistantSystemRole.STUDENT);
         AiCapabilityRequest capabilityRequest = capabilityRequest(
                 AiAssistantKey.LAB_ASSISTANT, 7L, AiCapability.LAB_SLOT_READ, 17L, null);
-        when(availabilityService.requireAvailableForActor(AiAssistantKey.LAB_ASSISTANT))
+        when(availabilityService.identifyActor(AiAssistantKey.LAB_ASSISTANT))
                 .thenReturn(availability);
         when(contextFacade.build(any())).thenReturn(context(capabilityRequest));
         when(gatewayClient.chat(any())).thenThrow(new IllegalStateException(
@@ -376,7 +432,7 @@ class AiAssistantGatewayServiceImplTest {
     void contextAuthorizationFailureNeverInvokesPython() {
         AiAssistantAvailability availability = new AiAssistantAvailability(
                 profile(AiAssistantKey.LAB_ASSISTANT), 7L, AiAssistantSystemRole.STUDENT);
-        when(availabilityService.requireAvailableForActor(AiAssistantKey.LAB_ASSISTANT))
+        when(availabilityService.identifyActor(AiAssistantKey.LAB_ASSISTANT))
                 .thenReturn(availability);
         when(contextFacade.build(any())).thenThrow(new AiContextReadDeniedException());
 
@@ -393,7 +449,7 @@ class AiAssistantGatewayServiceImplTest {
                 profile(AiAssistantKey.LAB_ASSISTANT), 7L, AiAssistantSystemRole.STUDENT);
         AiCapabilityRequest differentAssistant = capabilityRequest(
                 AiAssistantKey.RESEARCH_ASSISTANT, 7L, AiCapability.RESEARCH_GROUP_SUMMARY, 30L, null);
-        when(availabilityService.requireAvailableForActor(AiAssistantKey.LAB_ASSISTANT))
+        when(availabilityService.identifyActor(AiAssistantKey.LAB_ASSISTANT))
                 .thenReturn(availability);
         when(contextFacade.build(any())).thenReturn(context(differentAssistant));
 
@@ -414,7 +470,7 @@ class AiAssistantGatewayServiceImplTest {
         AiAuthorizedContext crossDomain = new AiAuthorizedContext(
                 valid.requestId(), valid.assistantKey(), valid.domain(), valid.capability(), valid.resource(),
                 valid.toolPolicy(), valid.contextVersion(), valid.builtAt(), valid.freshness(), researchContext(30L));
-        when(availabilityService.requireAvailableForActor(AiAssistantKey.LAB_ASSISTANT))
+        when(availabilityService.identifyActor(AiAssistantKey.LAB_ASSISTANT))
                 .thenReturn(availability);
         when(contextFacade.build(any())).thenReturn(crossDomain);
 

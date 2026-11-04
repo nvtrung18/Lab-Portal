@@ -14,6 +14,13 @@ from app.research_mvp import ResearchAssistantMvp
 from app.routes.foundation import router
 from app.security import InternalSecurityMiddleware, safe_error_response
 from app.tool_planner import ToolPlanner
+from app.runtime import GenerationBudgetExceeded
+
+
+async def generation_budget_handler(request: Request, _exception: GenerationBudgetExceeded) -> JSONResponse:
+    return safe_error_response(request, error_code="AI_REQUEST_TIMEOUT",
+        message="Inference did not complete within the request budget.", retryable=False,
+        status_code=status.HTTP_504_GATEWAY_TIMEOUT)
 
 
 async def validation_error_handler(request: Request, _exception: RequestValidationError) -> JSONResponse:
@@ -83,6 +90,7 @@ def create_app(
     application.include_router(router)
     application.add_middleware(InternalSecurityMiddleware, settings=resolved_settings)
     application.add_exception_handler(RequestValidationError, validation_error_handler)
+    application.add_exception_handler(GenerationBudgetExceeded, generation_budget_handler)
     application.add_exception_handler(Exception, unexpected_error_handler)
     return application
 

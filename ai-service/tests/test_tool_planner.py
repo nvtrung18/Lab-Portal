@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+import pytest
+import json
+from pathlib import Path
+
 from app.models import AssistantKey, ToolPlanningRequest
 from app.runtime import RuntimeGeneration
 from app.tool_planner import ToolPlanner
@@ -15,6 +19,174 @@ class StubBackend:
         assert json_output is True
         self.messages = messages
         return RuntimeGeneration(text=self.output, prompt_tokens=11, completion_tokens=3)
+
+
+@pytest.mark.parametrize("first_output", [
+    '{"decision":"REFUSAL","intent":"UPDATE_SHIFT","candidateIndex":null,"message":"Unsupported"}',
+    # Captured on Kaggle from the accented and unaccented configuration requests.
+    '{"decision":"REFUSAL","intent":"CANCEL_PENDING","candidateIndex":null,"message":null}',
+    '{"decision":"REFUSAL","intent":"OTHER_DRAFT","candidateIndex":null,"message":"Không hỗ trợ việc áp dụng ngay cấu hình hệ thống. Yêu cầu này không được phép thực hiện trong môi trường hiện tại."}',
+])
+def test_config_request_misclassification_gets_one_semantic_retry_and_counts_usage(first_output: str) -> None:
+    class SequenceBackend(StubBackend):
+        calls = 0
+        def generate(self, *args, **kwargs):
+            self.calls += 1
+            self.output = (first_output
+                           if self.calls == 1 else '{"decision":"TOOL_REQUEST","intent":"OTHER_DRAFT","candidateIndex":0,"message":null}')
+            return super().generate(*args, **kwargs)
+    backend = SequenceBackend("")
+    request = ToolPlanningRequest.model_validate({"input": "Áp dụng ngay cấu hình toàn hệ thống", "candidates": [{
+        "assistantKey": "ADMIN_ASSISTANT", "schemaVersion": "v1", "toolId": "admin.config.draft", "description": "Advisory configuration draft",
+        "resource": {"resourceType": "SYSTEM_CONFIG", "resourceId": None}, "parentResource": None}]})
+    result = ToolPlanner(backend).plan(request)
+    assert result.decision == "TOOL_REQUEST"
+    assert result.tool_request.tool_id == "admin.config.draft"
+    assert backend.calls == 2
+    assert result.prompt_tokens == 22 and result.completion_tokens == 6
+
+
+def test_repeated_config_misclassification_has_bounded_retry_and_no_lab_specific_answer() -> None:
+    backend = StubBackend('{"decision":"REFUSAL","intent":"UPDATE_SHIFT","candidateIndex":null,"message":"Unsupported"}')
+    request = ToolPlanningRequest.model_validate({"input": "Áp dụng cấu hình ngay", "candidates": [{
+        "assistantKey": "ADMIN_ASSISTANT", "schemaVersion": "v1", "toolId": "admin.config.draft", "description": "Advisory configuration draft",
+        "resource": {"resourceType": "SYSTEM_CONFIG", "resourceId": None}, "parentResource": None}]})
+    result = ToolPlanner(backend).plan(request)
+    assert result.decision == "CLARIFICATION" and result.tool_request is None
+    assert "cấu hình" in result.message and "ca đã tạo" not in result.message
+    assert result.prompt_tokens == 22 and result.completion_tokens == 6
+
+
+def test_configuration_refusal_without_an_authorized_config_candidate_does_not_retry_or_grant_a_tool() -> None:
+    backend = StubBackend('{"decision":"REFUSAL","intent":"OTHER_DRAFT","candidateIndex":null,"message":"Unavailable"}')
+    result = ToolPlanner(backend).plan(ToolPlanningRequest.model_validate({
+        "input": "Áp dụng ngay cấu hình toàn hệ thống", "candidates": [{
+            "assistantKey": "ADMIN_ASSISTANT", "schemaVersion": "v1", "toolId": "admin.system.summary",
+            "description": "System summary only", "resource": {"resourceType": "SYSTEM", "resourceId": None},
+            "parentResource": None,
+        }],
+    }))
+    assert result.decision == "REFUSAL" and result.tool_request is None
+    assert result.prompt_tokens == 11 and result.completion_tokens == 3
+
+
+@pytest.mark.parametrize("second_output,expected_decision", [
+    ('{"decision":"REFUSAL","intent":"OTHER_DRAFT","candidateIndex":null,"message":"Unavailable"}', "REFUSAL"),
+    ('{"decision":"TOOL_REQUEST","intent":"OTHER_DRAFT","candidateIndex":99,"message":null}', "CLARIFICATION"),
+    ('{"decision":"TOOL_REQUEST","intent":"OTHER_DRAFT","candidateIndex":true,"message":null}', "CLARIFICATION"),
+])
+def test_configuration_retry_stays_bounded_and_cannot_invent_a_candidate(second_output: str, expected_decision: str) -> None:
+    class SequenceBackend(StubBackend):
+        calls = 0
+        def generate(self, *args, **kwargs):
+            self.calls += 1
+            assert self.calls <= 2
+            self.output = ('{"decision":"REFUSAL","intent":"OTHER_DRAFT","candidateIndex":null,"message":"Unavailable"}'
+                           if self.calls == 1 else second_output)
+            return super().generate(*args, **kwargs)
+    corpus = json.loads((Path(__file__).parent / "fixtures/runtime-corpus.json").read_text(encoding="utf-8"))
+    request = next(row["request"] for row in corpus["cases"] if row["id"] == "admin-config-planner-vi")
+    backend = SequenceBackend("")
+    result = ToolPlanner(backend).plan(ToolPlanningRequest.model_validate(request))
+    assert result.decision == expected_decision and result.tool_request is None
+    assert backend.calls == 2
+    assert result.prompt_tokens == 22 and result.completion_tokens == 6
+
+
+_WORKFLOW_CASES = [case for case in json.loads((Path(__file__).parent / "fixtures/runtime-corpus.json").read_text(encoding="utf-8"))["cases"]
+                   if case["group"] == "unsupported"]
+
+
+@pytest.mark.parametrize("case", _WORKFLOW_CASES, ids=lambda case: case["id"])
+def test_unsupported_workflow_cannot_select_an_unrelated_authorized_tool(case) -> None:
+    index = 4 if case["id"] in {"unsupported-r24-1", "unsupported-r25-1"} else 0
+    backend = StubBackend(json.dumps({"decision": "TOOL_REQUEST", "intent": "OTHER_DRAFT" if index == 4 else "READ",
+                                     "candidateIndex": index, "message": None}))
+    result = ToolPlanner(backend).plan(ToolPlanningRequest.model_validate(case["request"]))
+    assert result.decision == "REFUSAL" and result.tool_request is None
+    assert "chưa hỗ trợ" in result.message
+    assert result.prompt_tokens == 11 and result.completion_tokens == 3
+
+
+@pytest.mark.parametrize("prompt,index", [
+    ("Hướng dẫn quy trình vệ sinh Lab", 0), ("Thủ tục gửi khiếu nại ở Lab là gì?", 0),
+    ("Explain the cleaning procedure", 0), ("Summarize the project status", 0),
+    ("Soạn proposal cho group 19, chỉ draft, không nộp", 2),
+    ("Draft a task proposal, do not submit it", 2),
+    ("Gợi ý cách hoàn thành task, chỉ tư vấn", 2),
+])
+def test_workflow_limit_does_not_block_information_or_advisory_requests(prompt: str, index: int) -> None:
+    candidates = json.loads((Path(__file__).parent / "fixtures/runtime-corpus.json").read_text(encoding="utf-8"))["cases"]
+    request = next(case["request"] for case in candidates if case["id"] == "planner-vi-envelope")
+    payload = ToolPlanningRequest.model_validate({**request, "input": prompt})
+    backend = StubBackend(json.dumps({"decision": "TOOL_REQUEST", "intent": "OTHER_DRAFT" if index == 2 else "READ",
+                                     "candidateIndex": index, "message": None}))
+    result = ToolPlanner(backend).plan(payload)
+    assert result.decision == "TOOL_REQUEST"
+    assert result.tool_request.tool_id == payload.candidates[index].tool_id
+
+
+@pytest.mark.parametrize("variant", ["planner-vi-plain", "planner-vi-envelope", "planner-vi-plain-plain",
+                                    "planner-vi-plain-envelope", "planner-en-plain", "planner-en-envelope"])
+def test_kaggle_capability_intent_alias_preserves_the_authorized_proposal(variant: str) -> None:
+    corpus = json.loads((Path(__file__).parent / "fixtures/runtime-corpus.json").read_text(encoding="utf-8"))
+    case = next(row for row in corpus["cases"] if row["id"] == variant)
+    # Captured from the real Kaggle model; strict routing previously returned CLARIFICATION.
+    backend = StubBackend('{"decision":"TOOL_REQUEST","intent":"RESEARCH_TASK_PROPOSAL_DRAFT","candidateIndex":2}')
+    result = ToolPlanner(backend).plan(ToolPlanningRequest.model_validate(case["request"]))
+    assert result.decision == "TOOL_REQUEST"
+    assert result.tool_request.tool_id == "research.task.proposal.draft"
+    assert result.tool_request.arguments["resource"]["resourceId"] == 19
+    assert result.tool_request.arguments["parentResource"]["resourceId"] == 16
+
+
+@pytest.mark.parametrize("intent,index", [("RESEARCH_TASK_PROPOSAL_DRAFT", 0), ("UNAUTHORIZED_DRAFT", 2),
+                                         ("RESEARCH_TASK_PROPOSAL_DRAFT", True),
+                                         ("RESEARCH_TASK_PROPOSAL_DRAFT", 99)])
+def test_capability_alias_cannot_change_the_selected_candidate_or_invent_a_tool(intent, index) -> None:
+    corpus = json.loads((Path(__file__).parent / "fixtures/runtime-corpus.json").read_text(encoding="utf-8"))
+    case = next(row for row in corpus["cases"] if row["id"] == "planner-vi-envelope")
+    backend = StubBackend(json.dumps({"decision": "TOOL_REQUEST", "intent": intent, "candidateIndex": index}))
+    result = ToolPlanner(backend).plan(ToolPlanningRequest.model_validate(case["request"]))
+    assert result.decision == "CLARIFICATION"
+    assert result.tool_request is None
+
+
+def test_new_spring_conversation_routes_the_same_request_as_plain_input() -> None:
+    payload = json.loads((Path(__file__).parent / "fixtures/planner-research-context.json").read_text(encoding="utf-8"))
+    wrapped = ToolPlanningRequest.model_validate(payload)
+    plain = wrapped.model_copy(update={"input": json.loads(wrapped.input)["message"]})
+    plain_backend = StubBackend('{"decision":"TOOL_REQUEST","intent":"OTHER_DRAFT","candidateIndex":2,"message":null}')
+    wrapped_backend = StubBackend(plain_backend.output)
+
+    ToolPlanner(plain_backend).plan(plain)
+    ToolPlanner(wrapped_backend).plan(wrapped)
+
+    assert wrapped_backend.messages == plain_backend.messages
+    assert "temporalContext" not in wrapped_backend.messages[1]["content"]
+
+
+@pytest.mark.parametrize("tool,resource_type,resource_id,parent,prompt", [
+    ("research.task.proposal.draft", "GROUP", 19, {"resourceType": "PROJECT", "resourceId": 16},
+     "Soạn một đề xuất task cho nhóm 19 dự án 16, chỉ draft, không tạo record."),
+    ("research.task.suggestion.draft", "TASK", 88, None,
+     "Gợi ý cách làm task 88, chỉ draft tư vấn, không đổi trạng thái task."),
+])
+def test_research_drafts_keep_their_authorized_domain(tool, resource_type, resource_id, parent, prompt) -> None:
+    backend = StubBackend('{"decision":"TOOL_REQUEST","intent":"OTHER_DRAFT","candidateIndex":0,"message":null}')
+    request = ToolPlanningRequest.model_validate({"input": prompt, "candidates": [{
+        "assistantKey": "RESEARCH_ASSISTANT", "schemaVersion": "v1", "toolId": tool,
+        "description": "Authorized research draft", "resource": {"resourceType": resource_type, "resourceId": resource_id},
+        "parentResource": parent,
+    }]})
+
+    result = ToolPlanner(backend).plan(request)
+
+    assert result.decision == "TOOL_REQUEST"
+    assert result.tool_request is not None
+    assert result.tool_request.tool_id == tool
+    assert result.tool_request.arguments["resource"]["resourceId"] == resource_id
+    assert "CREATE_SHIFT means creating a Lab time slot only" in backend.messages[0]["content"]
 
 
 def _manager_shift_request(

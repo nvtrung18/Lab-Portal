@@ -10,7 +10,14 @@ public record AiAssistantChatResponse(
         @Schema(description = "Prompt token count reported by the AI runtime") int promptTokens,
         @Schema(description = "Completion token count reported by the AI runtime") int completionTokens,
         @Schema(description = "Authorized document chunks used as sources for the answer")
-        List<AiRagCitationResponse> citations) {
+        List<AiRagCitationResponse> citations,
+        @Schema(description = "True when the runtime refused the response after context or output validation; false for valid answers and drafts")
+        boolean safeRefusal) {
+
+    public AiAssistantChatResponse(String assistantKey, String answer, int promptTokens, int completionTokens,
+                                   List<AiRagCitationResponse> citations) {
+        this(assistantKey, answer, promptTokens, completionTokens, citations, false);
+    }
 
     public AiAssistantChatResponse {
         citations = citations == null ? List.of() : List.copyOf(citations);

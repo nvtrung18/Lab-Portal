@@ -14,6 +14,7 @@ from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from app.config import Settings
 from app.models import ErrorResponse
+from app.runtime import generation_deadline
 
 
 logger = logging.getLogger(__name__)
@@ -109,6 +110,7 @@ class InternalSecurityMiddleware:
             await send(message)
 
         request = Request(scope, receive=receive)
+        deadline_context = generation_deadline.set(perf_counter() + max(self._timeout_seconds - 0.25, 0.01))
         try:
             if not request_id_valid:
                 response = safe_error_response(
@@ -158,6 +160,7 @@ class InternalSecurityMiddleware:
             scope["state"]["error_code"] = "AI_INTERNAL_ERROR"
             raise
         finally:
+            generation_deadline.reset(deadline_context)
             duration_ms = (perf_counter() - started_at) * 1000
             try:
                 logger.info(

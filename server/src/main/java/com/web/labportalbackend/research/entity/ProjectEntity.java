@@ -6,6 +6,8 @@ import com.web.labportalbackend.lab.entity.Laboratory;
 import com.web.labportalbackend.research.enums.ProjectStatus;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDate;
 
@@ -54,9 +56,11 @@ public class ProjectEntity extends BaseEntity {
     private ProjectStatus status = ProjectStatus.DRAFT;
 
     @Column(name = "start_date")
+    @JdbcTypeCode(SqlTypes.LOCAL_DATE)
     private LocalDate startDate;
 
     @Column(name = "end_date")
+    @JdbcTypeCode(SqlTypes.LOCAL_DATE)
     private LocalDate endDate;
 
     @Builder.Default

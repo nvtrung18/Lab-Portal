@@ -7,6 +7,8 @@ import com.web.labportalbackend.research.enums.TaskStatus;
 import com.web.labportalbackend.research.enums.TaskType;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDate;
 
@@ -51,9 +53,11 @@ public class TaskEntity extends BaseEntity {
     private String description;
 
     @Column
+    @JdbcTypeCode(SqlTypes.LOCAL_DATE)
     private LocalDate deadline;
 
     @Column(name = "due_date")
+    @JdbcTypeCode(SqlTypes.LOCAL_DATE)
     private LocalDate dueDate;
 
     @Builder.Default

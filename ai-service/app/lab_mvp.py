@@ -15,6 +15,7 @@ from app.profiles import AssistantProfile, ProfileLoader
 from app.rag_context import AuthorizedRetrieval
 from app.research_mvp import GenerationBackend
 from app.runtime import RuntimeGeneration
+from app.grounded_answers import grounded_answer
 from app.shift_interpretation import dialogue_input, interpret_shift
 
 
@@ -50,7 +51,11 @@ _ISO_DATE_PATTERN = re.compile(r"\b(?P<year>\d{4})-(?P<month>\d{2})-(?P<day>\d{2
 _WORD_DATE_PATTERN = re.compile(
     r"\bngay\s+(?P<day>\d{1,2})\s+thang\s+(?P<month>\d{1,2})(?:\s+nam\s+(?P<year>\d{4}))?\b"
 )
-_CAPACITY_PATTERN = re.compile(r"\bsuc\s+chua\s+(?P<value>\d+)\b")
+_CAPACITY_PATTERN = re.compile(
+    r"\b(?:suc\s+chua|capacity)\s*[:=]?\s*(?P<value>[+\-−]?\s*\d+(?:[.,]\d+)?(?:e[+\-]?\d+)?)\b"
+)
+# Spring CreateTimeSlotRequest.capacity and the stored action payload use Integer.
+_SPRING_CAPACITY_MAX = 2_147_483_647
 _TOOL_SHAPES = {
     _POLICY_TOOL: ("LABORATORY", "READ_ONLY"),
     "lab.slot.read": ("TIME_SLOT", "READ_ONLY"),
@@ -173,9 +178,27 @@ class LabAssistantMvp:
         if selected is None:
             return self._safe_refusal()
         tool_id, context, resources = selected
+        if tool_id not in _DRAFT_TOOLS:
+            return ChatResponse(assistant_key=AssistantKey.LAB_ASSISTANT,
+                answer=grounded_answer(context.context.model_dump(by_alias=True, mode="json"),
+                                       context.authorized_retrieval, locale=payload.locale),
+                prompt_tokens=0, completion_tokens=0,
+                metadata={"resourceReferences": resources, "grounding": "AUTHORIZED_SNAPSHOT"})
         if tool_id == _SHIFT_CREATE_DRAFT_TOOL and dialogue_input(payload.input) is not None:
-            return interpret_shift(self._backend, payload.input, context.context.laboratory.id)
+            return interpret_shift(self._backend, payload.input, context.context.laboratory.id, context.context.laboratory.name)
         if tool_id == _SHIFT_CREATE_DRAFT_TOOL:
+            capacity_literals = [re.sub(r"\s+", "", value).replace("−", "-")
+                                 for value in _CAPACITY_PATTERN.findall(self._normalized(payload.input))]
+            try:
+                capacity_values = {int(value) for value in capacity_literals}
+            except ValueError:
+                return self._safe_refusal()
+            if capacity_literals and (
+                any(re.fullmatch(r"\+?\d+", value) is None for value in capacity_literals)
+                or len(capacity_values) != 1
+                or not 0 < next(iter(capacity_values)) <= _SPRING_CAPACITY_MAX
+            ):
+                return self._safe_refusal()
             missing_fields = self._missing_shift_fields(payload.input)
             if missing_fields:
                 return self._shift_clarification(
@@ -366,7 +389,7 @@ class LabAssistantMvp:
             return None
         capacity_match = _CAPACITY_PATTERN.search(normalized)
         capacity = (
-            int(capacity_match.group("value"))
+            int(re.sub(r"\s+", "", capacity_match.group("value")).replace("−", "-"))
             if capacity_match is not None
             else context.context.laboratory.capacity
         )

@@ -66,7 +66,7 @@ public class TimeSlotServiceImpl implements TimeSlotService {
     private final NotificationEmitter notificationEmitter;
 
     @Override
-    @Transactional
+    @Transactional(noRollbackFor = com.web.labportalbackend.common.exception.TimeSlotUnavailableException.class)
     public TimeSlotResponse createSlot(CreateTimeSlotRequest request) {
         User currentUser = getCurrentUser();
         Laboratory lab = laboratoryRepository.findById(request.getLabId())
@@ -305,7 +305,8 @@ public class TimeSlotServiceImpl implements TimeSlotService {
                         TERMINAL_SLOT_STATUSES)
                 .isEmpty();
         if (hasOverlap) {
-            throw new IllegalStateException("Khung giờ này bị trùng với một ca sử dụng đang hoạt động");
+            throw new com.web.labportalbackend.common.exception.TimeSlotUnavailableException(
+                    "Khung giờ này bị trùng với một ca sử dụng đang hoạt động");
         }
     }
 
@@ -345,10 +346,8 @@ public class TimeSlotServiceImpl implements TimeSlotService {
     }
 
     private void assertManagerOwnsLab(User currentUser, Laboratory lab) {
-        Laboratory managedLab = laboratoryRepository.findFirstByManagerIdAndDeletedFalse(currentUser.getId())
-                .orElseThrow(() -> new AccessDeniedException("Lab manager is not assigned to any lab"));
-
-        if (!managedLab.getId().equals(lab.getId())) {
+        if (!Boolean.TRUE.equals(lab.getActive()) || Boolean.TRUE.equals(lab.getDeleted())
+                || lab.getManager() == null || !currentUser.getId().equals(lab.getManager().getId())) {
             throw new AccessDeniedException("Cannot manage time slots from another lab");
         }
     }

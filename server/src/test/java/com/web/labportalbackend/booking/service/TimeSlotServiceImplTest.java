@@ -86,7 +86,7 @@ class TimeSlotServiceImplTest {
         booking.setStatus(BookingStatus.CHECKED_IN);
 
         when(userRepository.findByUsername("manager")).thenReturn(Optional.of(manager));
-        when(labRepository.findFirstByManagerIdAndDeletedFalse(3L)).thenReturn(Optional.of(lab));
+        lab.setManager(manager);
         when(slotRepository.findActiveById(9L)).thenReturn(Optional.of(slot));
         when(bookingRepository.findBySlotIdAndStatusIn(9L,
                 List.of(BookingStatus.CHECKED_IN, BookingStatus.IN_PROGRESS))).thenReturn(List.of(booking));
@@ -131,7 +131,7 @@ class TimeSlotServiceImplTest {
         slot.setLab(lab);
         slot.setStatus(TimeSlotStatus.AVAILABLE);
         when(userRepository.findByUsername("manager")).thenReturn(Optional.of(manager));
-        when(labRepository.findFirstByManagerIdAndDeletedFalse(3L)).thenReturn(Optional.of(lab));
+        lab.setManager(manager);
         when(slotRepository.findActiveById(9L)).thenReturn(Optional.of(slot));
         when(bookingRepository.countActiveByTimeSlotIdAndStatusIn(9L,
                 List.of(BookingStatus.PENDING_APPROVAL, BookingStatus.APPROVED,
@@ -172,7 +172,7 @@ class TimeSlotServiceImplTest {
 
         when(userRepository.findByUsername("manager")).thenReturn(Optional.of(manager));
         when(labRepository.findById(5L)).thenReturn(Optional.of(lab));
-        when(labRepository.findFirstByManagerIdAndDeletedFalse(3L)).thenReturn(Optional.of(lab));
+        lab.setManager(manager);
         when(systemConfigService.getConfig()).thenReturn(new SystemConfigResponse(
                 null, null, new SystemConfigResponse.BookingConfig(10, 30, true, true), null, null));
         when(slotRepository.findUsableByLabId(eq(5L), any(Instant.class), anyList()))
@@ -225,7 +225,7 @@ class TimeSlotServiceImplTest {
 
         when(userRepository.findByUsername("manager")).thenReturn(Optional.of(manager));
         when(labRepository.findById(5L)).thenReturn(Optional.of(lab));
-        when(labRepository.findFirstByManagerIdAndDeletedFalse(3L)).thenReturn(Optional.of(lab));
+        lab.setManager(manager);
         when(slotRepository.findHistoryByLabId(eq(5L), any(Instant.class), anyList()))
                 .thenReturn(List.of(closedSlot));
         when(bookingRepository.findActiveCountsByTimeSlotIds(List.of(9L)))
@@ -300,7 +300,7 @@ class TimeSlotServiceImplTest {
 
         when(userRepository.findByUsername("manager")).thenReturn(Optional.of(manager));
         when(labRepository.findById(5L)).thenReturn(Optional.of(lab));
-        when(labRepository.findFirstByManagerIdAndDeletedFalse(3L)).thenReturn(Optional.of(lab));
+        lab.setManager(manager);
         when(slotRepository.findOverlappingSlots(eq(5L), eq(start), eq(end), anyList()))
                 .thenReturn(List.of());
         when(slotRepository.save(any(TimeSlot.class))).thenAnswer(invocation -> {

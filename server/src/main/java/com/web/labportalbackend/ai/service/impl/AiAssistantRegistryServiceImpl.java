@@ -52,7 +52,7 @@ public class AiAssistantRegistryServiceImpl implements AiAssistantRegistry {
     }
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, noRollbackFor = AiAssistantRegistryException.class)
     public AiAssistantProfile getAvailableProfile(AiAssistantKey assistantKey, AiAssistantSystemRole systemRole) {
         AiAssistantProfile profile = getProfile(assistantKey);
         if (systemRole == null || !profile.allowedSystemRoles().contains(systemRole)) {

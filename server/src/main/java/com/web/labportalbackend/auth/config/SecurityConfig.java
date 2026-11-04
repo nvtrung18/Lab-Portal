@@ -110,6 +110,8 @@ public class SecurityConfig {
                                 "/labs", "/labs/{labId}", "/applications/users/{userId}").authenticated()
                         .requestMatchers(HttpMethod.POST, "/labs/{labId}/apply",
                                 "/applications/labs/{labId}/apply").authenticated()
+                        // Public policy is available before admission; capability/resource checks remain mandatory.
+                        .requestMatchers(HttpMethod.POST, "/ai/assistants/LAB_ASSISTANT/chat").authenticated()
                         .anyRequest().access((authentication, context) ->
                                 new AuthorizationDecision(portalAccessService.canEnter(authentication.get())))
                 )

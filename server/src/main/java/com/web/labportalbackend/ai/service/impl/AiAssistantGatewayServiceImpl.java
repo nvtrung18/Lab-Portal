@@ -82,7 +82,7 @@ public class AiAssistantGatewayServiceImpl implements AiAssistantGatewayService 
                 throw new IllegalArgumentException("AI capability selection is invalid");
             }
             requestShapeValidated = true;
-            availability = availabilityService.requireAvailableForActor(assistantKey);
+            availability = availabilityService.identifyActor(assistantKey);
             profile = availability.profile();
             AiCapabilityRequest capabilityRequest = new AiCapabilityRequest(
                     profile.key(), availability.actorId(), request.getCapability(),
@@ -94,6 +94,10 @@ public class AiAssistantGatewayServiceImpl implements AiAssistantGatewayService 
                     request.getCapability().action());
             authorized = contextFacade.build(new AiContextBuildRequest(capabilityRequest, normalizedRequestId));
             validateAuthority(profile, capabilityRequest, authorized);
+            if (authorized.selectedSystemRole() != null) {
+                availability = new AiAssistantAvailability(profile, availability.actorId(), authorized.selectedSystemRole());
+            }
+            availabilityService.requireQuota(availability);
             retrieval = ragRetrievalService.retrieve(profile, availability.actorId(),
                     availability.selectedSystemRole(), authorized, request.getInput());
 
@@ -112,7 +116,7 @@ public class AiAssistantGatewayServiceImpl implements AiAssistantGatewayService 
         auditUsageService.recordAssistantRequest(succeededEvent(
                 normalizedRequestId, profile, availability, authorized, response));
         return new AiAssistantChatResponse(profile.key().name(), response.answer(),
-                response.promptTokens(), response.completionTokens(), citations(retrieval));
+                response.promptTokens(), response.completionTokens(), citations(retrieval), isRefusal(response));
     }
 
     private static String supportedLocale() {
@@ -162,9 +166,15 @@ public class AiAssistantGatewayServiceImpl implements AiAssistantGatewayService 
                 availability.actorId(), profile.key(), authorized.capability(), resource.type(), resource.id(),
                 profile.modelProfile(), profile.adapterReference(), profile.promptVersion(), requestId,
                 AiAuditGateStatus.from(authorized.capability().riskBoundary()),
-                AiAuditExecutionResult.SUCCEEDED, null, availability.selectedSystemRole(),
+                isRefusal(response) ? AiAuditExecutionResult.REFUSED : AiAuditExecutionResult.SUCCEEDED,
+                isRefusal(response) ? AiAuditFailureCode.MODEL_REFUSED : null, availability.selectedSystemRole(),
                 resource.labId(), resource.projectId(), resource.groupId(),
                 response.promptTokens(), response.completionTokens(), true);
+    }
+
+    private static boolean isRefusal(AiChatResponse response) {
+        var value = response.metadata().get("safeRefusal");
+        return value != null && value.isBoolean() && value.booleanValue();
     }
 
     private static AiAssistantAuditEvent failedEvent(String requestId,

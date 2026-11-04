@@ -35,6 +35,8 @@ import com.web.labportalbackend.ai.service.AiSuggestionPayloadValidationExceptio
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
@@ -75,9 +77,51 @@ class AiUnifiedChatServiceImplTest {
                 null);
     }
 
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void switchingFromPendingPreviewToReadCancelsTheOldActionBeforeClearingState(boolean alreadyTerminal) {
+        var pending = new com.web.labportalbackend.ai.service.AiShiftDialogueState(
+                10L, "2026-11-09", "09:00:00", "11:00:00", 5, "Asia/Ho_Chi_Minh").withSuggestion(91L);
+        when(conversationHistoryService.prepareInput(any(), any())).thenReturn(
+                new AiConversationHistoryService.PreparedInput(41L, "Read slots instead", pending));
+        when(candidateCatalog.candidates(any())).thenReturn(List.of(candidate));
+        when(planningClient.plan(any())).thenReturn(new AiToolPlanningResponse(
+                AiToolPlanningDecision.TOOL_REQUEST, null, candidate.toCanonicalToolRequest(OBJECT_MAPPER), 1, 1));
+        when(toolRegistry.get(candidate.toolId())).thenReturn(new AiToolRegistryServiceImpl().get(candidate.toolId()));
+        when(assistantGatewayService.chat(any(), any(), any())).thenReturn(
+                new AiAssistantChatResponse("LAB_ASSISTANT", "Slots", 0, 0, List.of()));
+        if (alreadyTerminal) org.mockito.Mockito.doThrow(
+                new com.web.labportalbackend.ai.service.AiActionPreviewNotPendingException())
+                .when(actionSuggestionService).cancel(91L);
+
+        var response = service.chat(request("Read slots instead"), "switch-read");
+
+        assertEquals(AiUnifiedChatResponseType.ANSWER, response.type());
+        verify(actionSuggestionService).cancel(91L);
+        verify(conversationHistoryService).saveTurn(eq(41L), eq("Read slots instead"), any(),
+                org.mockito.ArgumentMatchers.isNull());
+    }
+
+    @Test
+    void semanticRefusalRemainsRefusedAndCannotBecomeAnActionablePreview() {
+        when(candidateCatalog.candidates(any())).thenReturn(List.of(candidate));
+        when(planningClient.plan(any())).thenReturn(new AiToolPlanningResponse(
+                AiToolPlanningDecision.TOOL_REQUEST, null, candidate.toCanonicalToolRequest(OBJECT_MAPPER), 5, 2));
+        when(toolRegistry.get(candidate.toolId())).thenReturn(new AiToolRegistryServiceImpl().get(candidate.toolId()));
+        when(assistantGatewayService.chat(any(), any(), any())).thenReturn(
+                new AiAssistantChatResponse("LAB_ASSISTANT", "Cannot answer safely", 11, 4, List.of(), true));
+
+        var response = service.chat(request("Read policy"), "refusal-test");
+
+        assertEquals(AiUnifiedChatResponseType.REFUSED, response.type());
+        assertEquals(16, response.promptTokens());
+        assertEquals(6, response.completionTokens());
+        verifyNoInteractions(actionSuggestionService);
+    }
+
     @Test
     void conversationalAnswerDoesNotDispatchBusinessTools() {
-        when(candidateCatalog.candidates()).thenReturn(List.of(candidate));
+        when(candidateCatalog.candidates(any())).thenReturn(List.of(candidate));
         when(planningClient.plan(any())).thenReturn(new AiToolPlanningResponse(
                 AiToolPlanningDecision.ANSWER, "Xin chào", null, 5, 2));
         var response = service.chat(request("Chào bạn"), "greeting");
@@ -89,7 +133,7 @@ class AiUnifiedChatServiceImplTest {
     @Test
     void canonicalPlannedCandidateIsReauthorizedByExistingGateway() {
         AiUnifiedChatRequest request = request("Cho tôi xem các ca Lab ngày mai");
-        when(candidateCatalog.candidates()).thenReturn(List.of(candidate));
+        when(candidateCatalog.candidates(any())).thenReturn(List.of(candidate));
         when(planningClient.plan(any())).thenReturn(new AiToolPlanningResponse(
                 AiToolPlanningDecision.TOOL_REQUEST, null, candidate.toCanonicalToolRequest(OBJECT_MAPPER), 5, 2));
         when(toolRegistry.get(AiToolId.LAB_AVAILABLE_SLOTS_READ)).thenReturn(
@@ -114,7 +158,7 @@ class AiUnifiedChatServiceImplTest {
     @Test
     void pythonPlannerResponseWithAnIntegerResourceIdMatchesAuthorizedLongCandidate() throws Exception {
         AiUnifiedChatRequest request = request("Cho tôi xem các ca Lab ngày mai");
-        when(candidateCatalog.candidates()).thenReturn(List.of(candidate));
+        when(candidateCatalog.candidates(any())).thenReturn(List.of(candidate));
         ObjectNode pythonToolRequest = (ObjectNode) OBJECT_MAPPER.readTree("""
                 {"assistantKey":"LAB_ASSISTANT","schemaVersion":"v1","toolId":"lab.available.slots.read",
                 "arguments":{"resource":{"resourceType":"LABORATORY","resourceId":10}}}
@@ -136,7 +180,7 @@ class AiUnifiedChatServiceImplTest {
 
     @Test
     void modelCannotReturnARequestThatWasNotInServerCandidates() {
-        when(candidateCatalog.candidates()).thenReturn(List.of(candidate));
+        when(candidateCatalog.candidates(any())).thenReturn(List.of(candidate));
         ObjectNode invented = candidate.toCanonicalToolRequest(OBJECT_MAPPER).deepCopy();
         invented.put("toolId", "admin.system.summary");
         when(planningClient.plan(any())).thenReturn(new AiToolPlanningResponse(
@@ -150,7 +194,7 @@ class AiUnifiedChatServiceImplTest {
 
     @Test
     void clarificationDoesNotReachBusinessGateway() {
-        when(candidateCatalog.candidates()).thenReturn(List.of(candidate));
+        when(candidateCatalog.candidates(any())).thenReturn(List.of(candidate));
         when(planningClient.plan(any())).thenReturn(new AiToolPlanningResponse(
                 AiToolPlanningDecision.CLARIFICATION, "Bạn muốn xem Lab nào?", null, 5, 2));
 
@@ -167,7 +211,7 @@ class AiUnifiedChatServiceImplTest {
                 AiAssistantKey.LAB_ASSISTANT, "v1", AiToolId.LAB_SHIFT_CREATE_DRAFT,
                 "Create a time slot in managed Lab 10",
                 new AiToolCandidate.ResourceReference(AiResourceType.LABORATORY, 10L), null);
-        when(candidateCatalog.candidates()).thenReturn(List.of(shiftCandidate));
+        when(candidateCatalog.candidates(any())).thenReturn(List.of(shiftCandidate));
         when(planningClient.plan(any())).thenReturn(new AiToolPlanningResponse(
                 AiToolPlanningDecision.TOOL_REQUEST, null,
                 shiftCandidate.toCanonicalToolRequest(OBJECT_MAPPER), 5, 2));
@@ -196,7 +240,7 @@ class AiUnifiedChatServiceImplTest {
                 AiAssistantKey.LAB_ASSISTANT, "v1", AiToolId.LAB_SHIFT_CREATE_DRAFT,
                 "Create a time slot in managed Lab 10",
                 new AiToolCandidate.ResourceReference(AiResourceType.LABORATORY, 10L), null);
-        when(candidateCatalog.candidates()).thenReturn(List.of(shiftCandidate));
+        when(candidateCatalog.candidates(any())).thenReturn(List.of(shiftCandidate));
         when(planningClient.plan(any())).thenReturn(new AiToolPlanningResponse(
                 AiToolPlanningDecision.TOOL_REQUEST, null,
                 shiftCandidate.toCanonicalToolRequest(OBJECT_MAPPER), 5, 2));
@@ -224,7 +268,7 @@ class AiUnifiedChatServiceImplTest {
                 AiAssistantKey.LAB_ASSISTANT, "v1", AiToolId.LAB_SHIFT_CREATE_DRAFT,
                 "Create a time slot in managed Lab 10",
                 new AiToolCandidate.ResourceReference(AiResourceType.LABORATORY, 10L), null);
-        when(candidateCatalog.candidates()).thenReturn(List.of(shiftCandidate));
+        when(candidateCatalog.candidates(any())).thenReturn(List.of(shiftCandidate));
         when(planningClient.plan(any())).thenReturn(new AiToolPlanningResponse(
                 AiToolPlanningDecision.TOOL_REQUEST, null,
                 shiftCandidate.toCanonicalToolRequest(OBJECT_MAPPER), 5, 2));
@@ -250,7 +294,7 @@ class AiUnifiedChatServiceImplTest {
                 AiAssistantKey.LAB_ASSISTANT, "v1", AiToolId.LAB_SHIFT_CREATE_DRAFT,
                 "Create a time slot in managed Lab 10",
                 new AiToolCandidate.ResourceReference(AiResourceType.LABORATORY, 10L), null);
-        when(candidateCatalog.candidates()).thenReturn(List.of(shiftCandidate));
+        when(candidateCatalog.candidates(any())).thenReturn(List.of(shiftCandidate));
         when(planningClient.plan(any())).thenReturn(new AiToolPlanningResponse(
                 AiToolPlanningDecision.TOOL_REQUEST, null,
                 shiftCandidate.toCanonicalToolRequest(OBJECT_MAPPER), 5, 2));
@@ -300,7 +344,7 @@ class AiUnifiedChatServiceImplTest {
         });
         var shift = new AiToolCandidate(AiAssistantKey.LAB_ASSISTANT, "v1", AiToolId.LAB_SHIFT_CREATE_DRAFT,
                 "Create", new AiToolCandidate.ResourceReference(AiResourceType.LABORATORY, 10L), null);
-        when(candidateCatalog.candidates()).thenReturn(List.of(shift));
+        when(candidateCatalog.candidates(any())).thenReturn(List.of(shift));
         when(planningClient.plan(any())).thenReturn(new AiToolPlanningResponse(AiToolPlanningDecision.TOOL_REQUEST,
                 null, shift.toCanonicalToolRequest(OBJECT_MAPPER), 1, 1));
         when(toolRegistry.get(AiToolId.LAB_SHIFT_CREATE_DRAFT)).thenReturn(AiToolRegistryServiceImpl.defaultDefinitions()

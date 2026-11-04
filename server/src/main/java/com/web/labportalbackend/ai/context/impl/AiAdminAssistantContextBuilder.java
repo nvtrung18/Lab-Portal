@@ -59,7 +59,7 @@ public class AiAdminAssistantContextBuilder implements AiDomainContextBuilder {
     }
 
     private AiAdminContext.AuditBucket toBucket(AiAuditSummaryBucket bucket) {
-        return new AiAdminContext.AuditBucket(java.sql.Date.valueOf(bucket.getDay().toString()).toLocalDate(),
+        return new AiAdminContext.AuditBucket(java.time.LocalDate.parse(bucket.getDay()),
                 bucket.getModule(), bucket.getAction(), bucket.getCount());
     }
 }

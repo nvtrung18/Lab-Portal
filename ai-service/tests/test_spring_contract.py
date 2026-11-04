@@ -106,7 +106,7 @@ def test_shared_manifest_matches_python_assistant_and_tool_catalogs() -> None:
     profiles = ProfileLoader.from_file(settings.profile_config_path)
     registry = OutputSchemaRegistry.from_file(settings.output_schema_config_path, profiles)
 
-    assert CONTRACT["schemaVersion"] == "1.3.0"
+    assert CONTRACT["schemaVersion"] == "1.4.0"
     assert set(CONTRACT["assistantKeys"]) == {key.value for key in AssistantKey}
     assert set(CONTRACT["assistantKeys"]) == {key.value for key in profiles.profiles}
     assert set(CONTRACT["toolIds"]) == set(registry.tools)

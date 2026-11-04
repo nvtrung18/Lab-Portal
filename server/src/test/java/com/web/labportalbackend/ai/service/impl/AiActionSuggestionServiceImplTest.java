@@ -140,7 +140,8 @@ class AiActionSuggestionServiceImplTest {
                 .thenReturn(new AiCurrentActor(7L, AiAssistantSystemRole.LAB_MANAGER));
         AiActionSuggestionEntity suggestion = pendingSuggestion();
         when(repository.findByIdForUpdate(41L)).thenReturn(java.util.Optional.of(suggestion));
-        doThrow(new IllegalStateException("Time slot overlaps with an existing slot in this lab"))
+        doThrow(new com.web.labportalbackend.common.exception.TimeSlotUnavailableException(
+                "Time slot overlaps with an existing slot in this lab"))
                 .when(timeSlotService).createSlot(any());
 
         var result = service.confirm(41L);

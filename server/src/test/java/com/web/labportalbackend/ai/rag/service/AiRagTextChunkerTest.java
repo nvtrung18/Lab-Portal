@@ -34,6 +34,19 @@ class AiRagTextChunkerTest {
                 && chunk.content().length() <= AiRagTextChunker.MAX_CHUNK_CHARACTERS));
     }
 
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(ints = {1198, 1199, 1200, 2399})
+    void supplementaryUnicodeCannotBeSplitInsideASurrogatePair(int prefixLength) {
+        String content = "đ".repeat(prefixLength) + "🧪" + "ữ".repeat(1205);
+        var chunks = chunker.chunk(content);
+        assertEquals(content, chunks.stream().map(AiRagTextChunker.Chunk::content).collect(java.util.stream.Collectors.joining()));
+        assertTrue(chunks.stream().allMatch(chunk -> chunk.content().length() <= AiRagTextChunker.MAX_CHUNK_CHARACTERS));
+        for (var chunk : chunks) {
+            assertTrue(java.nio.charset.StandardCharsets.UTF_8.newEncoder().canEncode(chunk.content()),
+                    "Each chunk must remain valid Unicode before database serialization");
+        }
+    }
+
     @Test
     void blankContentFailsClosed() {
         assertThrows(IllegalArgumentException.class, () -> chunker.chunk(" \n\f "));

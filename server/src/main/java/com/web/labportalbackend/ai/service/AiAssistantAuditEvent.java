@@ -43,7 +43,8 @@ public record AiAssistantAuditEvent(
         if (resourceType == null && resourceId != null) {
             throw new IllegalArgumentException("resourceType is required when resourceId is present");
         }
-        if ((executionResult == AiAuditExecutionResult.SUCCEEDED) != consumesUsage) {
+        if ((executionResult == AiAuditExecutionResult.SUCCEEDED
+                || executionResult == AiAuditExecutionResult.REFUSED) != consumesUsage) {
             throw new IllegalArgumentException("only completed assistant operations consume usage");
         }
         if ((failureCode == null) != (executionResult == AiAuditExecutionResult.SUCCEEDED)) {

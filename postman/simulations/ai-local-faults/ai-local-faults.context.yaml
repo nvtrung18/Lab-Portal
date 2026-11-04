@@ -1,0 +1,30 @@
+purpose:
+  stands_in_for: Local Lab Portal Python AI upstream, POST /v1/assistants/chat.
+  unblocks: Verify the real Spring WebClient's retries, deadlines, headers and error classification without Kaggle or application DB mutation.
+assumptions:
+  - id: bounded-client-retries
+    status: supported
+    claim: In this simulation the Spring client makes one attempt for 401/422/429, HTML502/524/530 and non-retryable504, and two for retryable503/504 and timeout.
+    reason: The test asserts both caller failure category and the stand-in's received-attempt counter.
+    verification: AiGatewayPostmanSimulationTest passed13 tests on2026-11-04, including success, timeout, proxy-reset and direct socket close. See .artifacts/ai-hybrid-20261104/integration-63aa-final/junit/http-faults and http-faults.log.
+    source: server/src/main/java/com/web/labportalbackend/ai/client/AiGatewayClientImpl.java; server/src/test/java/com/web/labportalbackend/ai/client/AiGatewayPostmanSimulationTest.java
+    updated_at: '2026-11-04'
+  - id: actual-reset-boundary
+    status: supported
+    claim: Dropping the mock socket behind the Postman router becomes proxy502/PROTOCOL, whereas direct local HTTP socket close becomes NETWORK with two attempts.
+    reason: These are different fault boundaries; treating the proxy response as a native network reset would misstate what was exercised.
+    verification: Separate parameterized proxy-reset case and JDK HttpServer direct-socket test passed; neither returned an answer.
+    source: postman/mocks/ai-upstream/default.js; server/src/test/java/com/web/labportalbackend/ai/client/AiGatewayPostmanSimulationTest.java
+    updated_at: '2026-11-04'
+  - id: real-kaggle-throughput
+    status: unknown
+    claim: The new runtime returns correct complete answers for four concurrent users on the user's Kaggle T4 session.
+    reason: The mock has no GPU, adapter, authorization logic or persistent business state. A synthetic success or fault does not establish Kaggle behavior.
+    verification: Use independent Kaggle and Spring evidence in docs/testing/AI_SERVICE_HYBRID_REPORT_20261104.json; this stand-in cannot certify model behavior or end-user concurrency.
+    source: ai-service/app/runtime.py; AI_Service_Kaggle.ipynb; docs/testing/AI_SERVICE_REMEDIATION_REPORT_20261104.md
+    updated_at: '2026-11-04'
+fingerprints:
+  - id: remediation20261104
+    date: '2026-11-04'
+    commit: be045a82c44c2eee33b6f016eba8c2af1912169d plus uncommitted fix/ai-service-regressions changes
+    cli: Local Postman CLI commands verified by --help; no remote resources changed.

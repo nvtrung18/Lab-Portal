@@ -74,18 +74,19 @@ public class AiShiftDialogueService {
         }
         // Re-read defaults through the same actor-scoped projection used by the authorized context.
         var actor = actors.requireCurrentActor();
-        if (actor.role() != AiAssistantSystemRole.LAB_MANAGER
-                || !labs.existsAiContextManagedLab(actor.id(), labId, actor.role().name())) {
+        if (!actor.systemRoles().contains(AiAssistantSystemRole.LAB_MANAGER)
+                || !labs.existsAiContextManagedLab(actor.id(), labId, AiAssistantSystemRole.LAB_MANAGER.name())) {
             throw new AccessDeniedException("Lab is outside the manager's scope");
         }
-        var lab = labs.findAiContextLaboratory(actor.id(), labId, actor.role().name())
+        var lab = labs.findAiContextLaboratory(actor.id(), labId, AiAssistantSystemRole.LAB_MANAGER.name())
                 .orElseThrow(() -> new AccessDeniedException("Lab is outside the manager's scope"));
         boolean continuing = "CONTINUE".equals(patch.mode()) && previous != null && labId.equals(previous.labId());
-        // The candidate was already resolved from the manager's authorized scope. A manager
-        // currently has one managed Lab candidate, so an omitted Lab name means "that Lab";
-        // only an explicitly different name must require clarification.
+        // The selected candidate has already passed authorization; an explicitly different
+        // Lab name still requires clarification before a preview can be confirmed.
+        boolean multipleLabs = !continuing && labs.findAiCandidateLabsForManager(actor.id(),
+                org.springframework.data.domain.PageRequest.of(0, 2)).size() > 1;
         boolean labConfirmed = patch.requestedLabName() == null
-                ? !continuing || previous.labConfirmed()
+                ? continuing ? previous.labConfirmed() : !multipleLabs
                 : normalizedName(lab.name()).equals(normalizedName(patch.requestedLabName()));
         var prior = continuing
                 ? previous : new AiShiftDialogueState(labId, null, null, null, null, null);

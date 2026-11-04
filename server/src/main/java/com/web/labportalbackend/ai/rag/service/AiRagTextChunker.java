@@ -58,6 +58,10 @@ public class AiRagTextChunker {
         while (offset < value.length()) {
             int end = Math.min(offset + MAX_CHUNK_CHARACTERS, value.length());
             if (end < value.length()) {
+                // Keep a supplementary Unicode character intact at the chunk boundary.
+                if (Character.isHighSurrogate(value.charAt(end - 1)) && Character.isLowSurrogate(value.charAt(end))) {
+                    end--;
+                }
                 int whitespace = value.lastIndexOf(' ', end);
                 if (whitespace > offset) {
                     end = whitespace;

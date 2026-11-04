@@ -1,10 +1,12 @@
 package com.web.labportalbackend.ai.context;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.web.labportalbackend.common.enums.UserStatus;
 import com.web.labportalbackend.admin.audit.enums.AuditAction;
 import com.web.labportalbackend.admin.audit.enums.AuditModule;
 import java.time.LocalDate;
 
+@JsonInclude(JsonInclude.Include.ALWAYS)
 public record AiAdminContext(
         SystemSummary systemSummary,
         TargetUser targetUser,

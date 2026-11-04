@@ -147,7 +147,7 @@ public class AiActionSuggestionServiceImpl implements AiActionSuggestionService 
                     .capacity(payload.capacity())
                     .status(TimeSlotStatus.AVAILABLE)
                     .build());
-        } catch (IllegalArgumentException | IllegalStateException exception) {
+        } catch (com.web.labportalbackend.common.exception.TimeSlotUnavailableException exception) {
             suggestion.setStatus(AiActionSuggestionStatus.REJECTED);
             suggestion.setConfirmationStatus(AiActionConfirmationStatus.REJECTED);
             suggestion.setExecutionStatus(AiActionExecutionStatus.NOT_REQUESTED);
@@ -189,7 +189,7 @@ public class AiActionSuggestionServiceImpl implements AiActionSuggestionService 
         if (suggestion.getStatus() != AiActionSuggestionStatus.PENDING
                 || suggestion.getConfirmationStatus() != AiActionConfirmationStatus.PENDING
                 || suggestion.getExecutionStatus() != AiActionExecutionStatus.NOT_REQUESTED) {
-            throw new IllegalStateException("AI action preview is no longer pending");
+            throw new com.web.labportalbackend.ai.service.AiActionPreviewNotPendingException();
         }
         if (!CREATE_LAB_SHIFT.equals(suggestion.getActionType())
                 || !BOOKING_MODULE.equals(suggestion.getTargetModule())
@@ -204,10 +204,10 @@ public class AiActionSuggestionServiceImpl implements AiActionSuggestionService 
 
     private AiCurrentActor requireManager() {
         AiCurrentActor actor = currentActorProvider.requireCurrentActor();
-        if (actor.role() != AiAssistantSystemRole.LAB_MANAGER) {
+        if (!actor.systemRoles().contains(AiAssistantSystemRole.LAB_MANAGER)) {
             throw new AccessDeniedException("Only lab managers can manage lab shift previews");
         }
-        return actor;
+        return new AiCurrentActor(actor.id(), AiAssistantSystemRole.LAB_MANAGER, actor.systemRoles());
     }
 
     private StoredLabShift readStored(AiActionSuggestionEntity suggestion) {

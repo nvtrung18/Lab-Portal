@@ -10,4 +10,8 @@ public interface AiAssistantAvailabilityService {
     AiAssistantProfile requireAvailable(AiAssistantKey assistantKey);
 
     AiAssistantAvailability requireAvailableForActor(AiAssistantKey assistantKey);
+
+    AiAssistantAvailability identifyActor(AiAssistantKey assistantKey);
+
+    void requireQuota(AiAssistantAvailability availability);
 }
