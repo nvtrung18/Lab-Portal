@@ -1,0 +1,11 @@
+version: 1
+id: b0812113-fb38-41db-8c47-70ac0215d9d9
+name: Lab Portal AI upstream test double
+slug: lab-portal-ai-upstream-test-doub
+protocol: http
+port: 4501
+interceptRequests: true
+scenarios:
+  - name: default
+    path: ./default.js
+    default: true
