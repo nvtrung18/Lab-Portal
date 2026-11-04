@@ -1,0 +1,5201 @@
+{
+  "capturedAtUtc": "2026-11-04T14:59:38.399251+00:00",
+  "branch": "fix/ai-service-regressions",
+  "gitRevision": "be045a82c44c2eee33b6f016eba8c2af1912169d",
+  "sourceZipSha256": "63aa1ca0e241d55a06f0074f3fd3b7a652cc10e2ed6121d43d094ecbbf61142f",
+  "backend": "SCRIPTED_TEST",
+  "kaggleCalledThisRun": false,
+  "baseline": {
+    "total": 204,
+    "passed": 112
+  },
+  "after": {
+    "total": 204,
+    "passed": 125,
+    "newlyClosed": 13,
+    "percentage": 61.274509803921575,
+    "states": {
+      "PASS": 125,
+      "PENDING_KAGGLE": 17,
+      "PARTIAL": 25,
+      "PENDING_FIXTURE": 37
+    }
+  },
+  "codeEvidence": {
+    "focusedFixtures": {
+      "total": 105,
+      "passed": 105,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "springMySql": {
+      "total": 244,
+      "passed": 240,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 4
+    },
+    "postmanFaults": {
+      "total": 13,
+      "passed": 13,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  },
+  "closedCaseIds": [
+    "A03",
+    "A04",
+    "M07",
+    "M10",
+    "Q01",
+    "R02",
+    "R03",
+    "R20",
+    "R21",
+    "R26",
+    "S05",
+    "S07",
+    "SEC02"
+  ],
+  "partiallyVerifiedCaseIds": [
+    "G04",
+    "G16"
+  ],
+  "cases": [
+    {
+      "caseId": "A03",
+      "scenario": "Admin: tổng hợp audit theo ngày/module/action",
+      "expected": "Đúng buckets trong khoảng/context, không bịa từng event.",
+      "before": "PARTIAL",
+      "after": "PASS",
+      "actual": "8 biến thể audit direct/unified: từng bucket ngày/module/action/count khớp SQL; mô tả event riêng không lọt context/answer.",
+      "requiredVariants": [
+        "A03-A04-0-false",
+        "A03-A04-0-true",
+        "A03-A04-1-false",
+        "A03-A04-1-true",
+        "A03-A04-14-false",
+        "A03-A04-14-true",
+        "A03-A04-15-false",
+        "A03-A04-15-true"
+      ],
+      "requiredEvidenceLayers": [
+        "Spring/JWT/MySQL",
+        "production Python HTTP/parser/validator",
+        "SQL/context oracle"
+      ],
+      "backend": "SCRIPTED_TEST",
+      "modelSelectionVerifiedThisRun": false,
+      "requestIds": [
+        "A03-A04-0-false-3b7e8725-91f0-4bcb-9e6b-7959cfe7faa1",
+        "A03-A04-1-false-64b0b39a-39d6-4910-9d5f-97b4bbd60ea3",
+        "A03-A04-14-false-b4885165-f183-47f9-9129-08d1788a55c7",
+        "A03-A04-15-false-78f09199-08c1-4870-8f50-fc5cf6dd4465",
+        "A03-A04-0-true-058854ce-2d55-4b12-9821-a6893ddd73a9",
+        "A03-A04-1-true-83b3ee7f-7ea6-4ccb-83c3-abde971e9352",
+        "A03-A04-14-true-d6a5c9f7-5562-45a6-a60a-4086c5a2a7e0",
+        "A03-A04-15-true-b4e37dae-b6f1-4b5c-a168-42c3737f7881"
+      ],
+      "assertions": [
+        {
+          "requestId": "A03-A04-0-false-3b7e8725-91f0-4bcb-9e6b-7959cfe7faa1",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "A03-A04-0-false",
+          "expected": {
+            "buckets": [],
+            "truncated": false
+          },
+          "actual": {
+            "values": [],
+            "returnedCount": 0,
+            "limit": 14,
+            "truncated": false
+          },
+          "caseIds": [
+            "A03",
+            "A04"
+          ]
+        },
+        {
+          "requestId": "A03-A04-1-false-64b0b39a-39d6-4910-9d5f-97b4bbd60ea3",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "A03-A04-1-false",
+          "expected": {
+            "buckets": [
+              {
+                "day": "2026-11-02",
+                "module": "USER",
+                "action": "CHANGE_USER_ROLE",
+                "count": 1
+              }
+            ],
+            "truncated": false
+          },
+          "actual": {
+            "values": [
+              {
+                "day": "2026-11-02",
+                "module": "USER",
+                "action": "CHANGE_USER_ROLE",
+                "count": 1
+              }
+            ],
+            "returnedCount": 1,
+            "limit": 14,
+            "truncated": false
+          },
+          "caseIds": [
+            "A03",
+            "A04"
+          ]
+        },
+        {
+          "requestId": "A03-A04-14-false-b4885165-f183-47f9-9129-08d1788a55c7",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "A03-A04-14-false",
+          "expected": {
+            "buckets": [
+              {
+                "day": "2026-11-02",
+                "module": "AI",
+                "action": "PUBLISH_WEBSITE",
+                "count": 2
+              },
+              {
+                "day": "2026-11-02",
+                "module": "CLEANING",
+                "action": "UPDATE_LAB",
+                "count": 2
+              },
+              {
+                "day": "2026-11-02",
+                "module": "PRODUCT",
+                "action": "UPDATE_SYSTEM_CONFIG",
+                "count": 3
+              },
+              {
+                "day": "2026-11-02",
+                "module": "RESEARCH",
+                "action": "ASSIGN_MANAGER",
+                "count": 1
+              },
+              {
+                "day": "2026-11-02",
+                "module": "SYSTEM_CONFIG",
+                "action": "UNBAN_USER",
+                "count": 3
+              },
+              {
+                "day": "2026-11-02",
+                "module": "USER",
+                "action": "CANCEL_SLOT",
+                "count": 1
+              },
+              {
+                "day": "2026-11-02",
+                "module": "USER",
+                "action": "CHANGE_USER_ROLE",
+                "count": 1
+              },
+              {
+                "day": "2026-11-01",
+                "module": "BOOKING",
+                "action": "CREATE_LAB",
+                "count": 1
+              },
+              {
+                "day": "2026-11-01",
+                "module": "EVALUATION",
+                "action": "SAVE_WEBSITE_DRAFT",
+                "count": 1
+              },
+              {
+                "day": "2026-11-01",
+                "module": "FACE",
+                "action": "CREATE_SLOT",
+                "count": 3
+              },
+              {
+                "day": "2026-11-01",
+                "module": "LAB",
+                "action": "BAN_USER",
+                "count": 2
+              },
+              {
+                "day": "2026-11-01",
+                "module": "LAB",
+                "action": "REVIEW_APPLICATION",
+                "count": 2
+              },
+              {
+                "day": "2026-11-01",
+                "module": "PENALTY",
+                "action": "DEACTIVATE_LAB",
+                "count": 3
+              },
+              {
+                "day": "2026-11-01",
+                "module": "REPORT",
+                "action": "CHANGE_LAB_MEMBER_ROLE",
+                "count": 2
+              }
+            ],
+            "truncated": false
+          },
+          "actual": {
+            "values": [
+              {
+                "day": "2026-11-02",
+                "module": "AI",
+                "action": "PUBLISH_WEBSITE",
+                "count": 2
+              },
+              {
+                "day": "2026-11-02",
+                "module": "CLEANING",
+                "action": "UPDATE_LAB",
+                "count": 2
+              },
+              {
+                "day": "2026-11-02",
+                "module": "PRODUCT",
+                "action": "UPDATE_SYSTEM_CONFIG",
+                "count": 3
+              },
+              {
+                "day": "2026-11-02",
+                "module": "RESEARCH",
+                "action": "ASSIGN_MANAGER",
+                "count": 1
+              },
+              {
+                "day": "2026-11-02",
+                "module": "SYSTEM_CONFIG",
+                "action": "UNBAN_USER",
+                "count": 3
+              },
+              {
+                "day": "2026-11-02",
+                "module": "USER",
+                "action": "CANCEL_SLOT",
+                "count": 1
+              },
+              {
+                "day": "2026-11-02",
+                "module": "USER",
+                "action": "CHANGE_USER_ROLE",
+                "count": 1
+              },
+              {
+                "day": "2026-11-01",
+                "module": "BOOKING",
+                "action": "CREATE_LAB",
+                "count": 1
+              },
+              {
+                "day": "2026-11-01",
+                "module": "EVALUATION",
+                "action": "SAVE_WEBSITE_DRAFT",
+                "count": 1
+              },
+              {
+                "day": "2026-11-01",
+                "module": "FACE",
+                "action": "CREATE_SLOT",
+                "count": 3
+              },
+              {
+                "day": "2026-11-01",
+                "module": "LAB",
+                "action": "BAN_USER",
+                "count": 2
+              },
+              {
+                "day": "2026-11-01",
+                "module": "LAB",
+                "action": "REVIEW_APPLICATION",
+                "count": 2
+              },
+              {
+                "day": "2026-11-01",
+                "module": "PENALTY",
+                "action": "DEACTIVATE_LAB",
+                "count": 3
+              },
+              {
+                "day": "2026-11-01",
+                "module": "REPORT",
+                "action": "CHANGE_LAB_MEMBER_ROLE",
+                "count": 2
+              }
+            ],
+            "returnedCount": 14,
+            "limit": 14,
+            "truncated": false
+          },
+          "caseIds": [
+            "A03",
+            "A04"
+          ]
+        },
+        {
+          "requestId": "A03-A04-15-false-78f09199-08c1-4870-8f50-fc5cf6dd4465",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "A03-A04-15-false",
+          "expected": {
+            "buckets": [
+              {
+                "day": "2026-11-02",
+                "module": "AI",
+                "action": "PUBLISH_WEBSITE",
+                "count": 2
+              },
+              {
+                "day": "2026-11-02",
+                "module": "CLEANING",
+                "action": "UPDATE_LAB",
+                "count": 2
+              },
+              {
+                "day": "2026-11-02",
+                "module": "PRODUCT",
+                "action": "UPDATE_SYSTEM_CONFIG",
+                "count": 3
+              },
+              {
+                "day": "2026-11-02",
+                "module": "RESEARCH",
+                "action": "ASSIGN_MANAGER",
+                "count": 1
+              },
+              {
+                "day": "2026-11-02",
+                "module": "SYSTEM_CONFIG",
+                "action": "STUDENT_UPLOAD_REPORT",
+                "count": 3
+              },
+              {
+                "day": "2026-11-02",
+                "module": "SYSTEM_CONFIG",
+                "action": "UNBAN_USER",
+                "count": 3
+              },
+              {
+                "day": "2026-11-02",
+                "module": "USER",
+                "action": "CANCEL_SLOT",
+                "count": 1
+              },
+              {
+                "day": "2026-11-02",
+                "module": "USER",
+                "action": "CHANGE_USER_ROLE",
+                "count": 1
+              },
+              {
+                "day": "2026-11-01",
+                "module": "BOOKING",
+                "action": "CREATE_LAB",
+                "count": 1
+              },
+              {
+                "day": "2026-11-01",
+                "module": "EVALUATION",
+                "action": "SAVE_WEBSITE_DRAFT",
+                "count": 1
+              },
+              {
+                "day": "2026-11-01",
+                "module": "FACE",
+                "action": "CREATE_SLOT",
+                "count": 3
+              },
+              {
+                "day": "2026-11-01",
+                "module": "LAB",
+                "action": "BAN_USER",
+                "count": 2
+              },
+              {
+                "day": "2026-11-01",
+                "module": "LAB",
+                "action": "REVIEW_APPLICATION",
+                "count": 2
+              },
+              {
+                "day": "2026-11-01",
+                "module": "PENALTY",
+                "action": "DEACTIVATE_LAB",
+                "count": 3
+              }
+            ],
+            "truncated": true
+          },
+          "actual": {
+            "values": [
+              {
+                "day": "2026-11-02",
+                "module": "AI",
+                "action": "PUBLISH_WEBSITE",
+                "count": 2
+              },
+              {
+                "day": "2026-11-02",
+                "module": "CLEANING",
+                "action": "UPDATE_LAB",
+                "count": 2
+              },
+              {
+                "day": "2026-11-02",
+                "module": "PRODUCT",
+                "action": "UPDATE_SYSTEM_CONFIG",
+                "count": 3
+              },
+              {
+                "day": "2026-11-02",
+                "module": "RESEARCH",
+                "action": "ASSIGN_MANAGER",
+                "count": 1
+              },
+              {
+                "day": "2026-11-02",
+                "module": "SYSTEM_CONFIG",
+                "action": "STUDENT_UPLOAD_REPORT",
+                "count": 3
+              },
+              {
+                "day": "2026-11-02",
+                "module": "SYSTEM_CONFIG",
+                "action": "UNBAN_USER",
+                "count": 3
+              },
+              {
+                "day": "2026-11-02",
+                "module": "USER",
+                "action": "CANCEL_SLOT",
+                "count": 1
+              },
+              {
+                "day": "2026-11-02",
+                "module": "USER",
+                "action": "CHANGE_USER_ROLE",
+                "count": 1
+              },
+              {
+                "day": "2026-11-01",
+                "module": "BOOKING",
+                "action": "CREATE_LAB",
+                "count": 1
+              },
+              {
+                "day": "2026-11-01",
+                "module": "EVALUATION",
+                "action": "SAVE_WEBSITE_DRAFT",
+                "count": 1
+              },
+              {
+                "day": "2026-11-01",
+                "module": "FACE",
+                "action": "CREATE_SLOT",
+                "count": 3
+              },
+              {
+                "day": "2026-11-01",
+                "module": "LAB",
+                "action": "BAN_USER",
+                "count": 2
+              },
+              {
+                "day": "2026-11-01",
+                "module": "LAB",
+                "action": "REVIEW_APPLICATION",
+                "count": 2
+              },
+              {
+                "day": "2026-11-01",
+                "module": "PENALTY",
+                "action": "DEACTIVATE_LAB",
+                "count": 3
+              }
+            ],
+            "returnedCount": 14,
+            "limit": 14,
+            "truncated": true
+          },
+          "caseIds": [
+            "A03",
+            "A04"
+          ]
+        },
+        {
+          "requestId": "A03-A04-0-true-058854ce-2d55-4b12-9821-a6893ddd73a9",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "A03-A04-0-true",
+          "expected": {
+            "buckets": [],
+            "truncated": false
+          },
+          "actual": {
+            "values": [],
+            "returnedCount": 0,
+            "limit": 14,
+            "truncated": false
+          },
+          "caseIds": [
+            "A03",
+            "A04"
+          ]
+        },
+        {
+          "requestId": "A03-A04-1-true-83b3ee7f-7ea6-4ccb-83c3-abde971e9352",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "A03-A04-1-true",
+          "expected": {
+            "buckets": [
+              {
+                "day": "2026-11-02",
+                "module": "USER",
+                "action": "CHANGE_USER_ROLE",
+                "count": 1
+              }
+            ],
+            "truncated": false
+          },
+          "actual": {
+            "values": [
+              {
+                "day": "2026-11-02",
+                "module": "USER",
+                "action": "CHANGE_USER_ROLE",
+                "count": 1
+              }
+            ],
+            "returnedCount": 1,
+            "limit": 14,
+            "truncated": false
+          },
+          "caseIds": [
+            "A03",
+            "A04"
+          ]
+        },
+        {
+          "requestId": "A03-A04-14-true-d6a5c9f7-5562-45a6-a60a-4086c5a2a7e0",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "A03-A04-14-true",
+          "expected": {
+            "buckets": [
+              {
+                "day": "2026-11-02",
+                "module": "AI",
+                "action": "PUBLISH_WEBSITE",
+                "count": 2
+              },
+              {
+                "day": "2026-11-02",
+                "module": "CLEANING",
+                "action": "UPDATE_LAB",
+                "count": 2
+              },
+              {
+                "day": "2026-11-02",
+                "module": "PRODUCT",
+                "action": "UPDATE_SYSTEM_CONFIG",
+                "count": 3
+              },
+              {
+                "day": "2026-11-02",
+                "module": "RESEARCH",
+                "action": "ASSIGN_MANAGER",
+                "count": 1
+              },
+              {
+                "day": "2026-11-02",
+                "module": "SYSTEM_CONFIG",
+                "action": "UNBAN_USER",
+                "count": 3
+              },
+              {
+                "day": "2026-11-02",
+                "module": "USER",
+                "action": "CANCEL_SLOT",
+                "count": 1
+              },
+              {
+                "day": "2026-11-02",
+                "module": "USER",
+                "action": "CHANGE_USER_ROLE",
+                "count": 1
+              },
+              {
+                "day": "2026-11-01",
+                "module": "BOOKING",
+                "action": "CREATE_LAB",
+                "count": 1
+              },
+              {
+                "day": "2026-11-01",
+                "module": "EVALUATION",
+                "action": "SAVE_WEBSITE_DRAFT",
+                "count": 1
+              },
+              {
+                "day": "2026-11-01",
+                "module": "FACE",
+                "action": "CREATE_SLOT",
+                "count": 3
+              },
+              {
+                "day": "2026-11-01",
+                "module": "LAB",
+                "action": "BAN_USER",
+                "count": 2
+              },
+              {
+                "day": "2026-11-01",
+                "module": "LAB",
+                "action": "REVIEW_APPLICATION",
+                "count": 2
+              },
+              {
+                "day": "2026-11-01",
+                "module": "PENALTY",
+                "action": "DEACTIVATE_LAB",
+                "count": 3
+              },
+              {
+                "day": "2026-11-01",
+                "module": "REPORT",
+                "action": "CHANGE_LAB_MEMBER_ROLE",
+                "count": 2
+              }
+            ],
+            "truncated": false
+          },
+          "actual": {
+            "values": [
+              {
+                "day": "2026-11-02",
+                "module": "AI",
+                "action": "PUBLISH_WEBSITE",
+                "count": 2
+              },
+              {
+                "day": "2026-11-02",
+                "module": "CLEANING",
+                "action": "UPDATE_LAB",
+                "count": 2
+              },
+              {
+                "day": "2026-11-02",
+                "module": "PRODUCT",
+                "action": "UPDATE_SYSTEM_CONFIG",
+                "count": 3
+              },
+              {
+                "day": "2026-11-02",
+                "module": "RESEARCH",
+                "action": "ASSIGN_MANAGER",
+                "count": 1
+              },
+              {
+                "day": "2026-11-02",
+                "module": "SYSTEM_CONFIG",
+                "action": "UNBAN_USER",
+                "count": 3
+              },
+              {
+                "day": "2026-11-02",
+                "module": "USER",
+                "action": "CANCEL_SLOT",
+                "count": 1
+              },
+              {
+                "day": "2026-11-02",
+                "module": "USER",
+                "action": "CHANGE_USER_ROLE",
+                "count": 1
+              },
+              {
+                "day": "2026-11-01",
+                "module": "BOOKING",
+                "action": "CREATE_LAB",
+                "count": 1
+              },
+              {
+                "day": "2026-11-01",
+                "module": "EVALUATION",
+                "action": "SAVE_WEBSITE_DRAFT",
+                "count": 1
+              },
+              {
+                "day": "2026-11-01",
+                "module": "FACE",
+                "action": "CREATE_SLOT",
+                "count": 3
+              },
+              {
+                "day": "2026-11-01",
+                "module": "LAB",
+                "action": "BAN_USER",
+                "count": 2
+              },
+              {
+                "day": "2026-11-01",
+                "module": "LAB",
+                "action": "REVIEW_APPLICATION",
+                "count": 2
+              },
+              {
+                "day": "2026-11-01",
+                "module": "PENALTY",
+                "action": "DEACTIVATE_LAB",
+                "count": 3
+              },
+              {
+                "day": "2026-11-01",
+                "module": "REPORT",
+                "action": "CHANGE_LAB_MEMBER_ROLE",
+                "count": 2
+              }
+            ],
+            "returnedCount": 14,
+            "limit": 14,
+            "truncated": false
+          },
+          "caseIds": [
+            "A03",
+            "A04"
+          ]
+        },
+        {
+          "requestId": "A03-A04-15-true-b4e37dae-b6f1-4b5c-a168-42c3737f7881",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "A03-A04-15-true",
+          "expected": {
+            "buckets": [
+              {
+                "day": "2026-11-02",
+                "module": "AI",
+                "action": "PUBLISH_WEBSITE",
+                "count": 2
+              },
+              {
+                "day": "2026-11-02",
+                "module": "CLEANING",
+                "action": "UPDATE_LAB",
+                "count": 2
+              },
+              {
+                "day": "2026-11-02",
+                "module": "PRODUCT",
+                "action": "UPDATE_SYSTEM_CONFIG",
+                "count": 3
+              },
+              {
+                "day": "2026-11-02",
+                "module": "RESEARCH",
+                "action": "ASSIGN_MANAGER",
+                "count": 1
+              },
+              {
+                "day": "2026-11-02",
+                "module": "SYSTEM_CONFIG",
+                "action": "STUDENT_UPLOAD_REPORT",
+                "count": 3
+              },
+              {
+                "day": "2026-11-02",
+                "module": "SYSTEM_CONFIG",
+                "action": "UNBAN_USER",
+                "count": 3
+              },
+              {
+                "day": "2026-11-02",
+                "module": "USER",
+                "action": "CANCEL_SLOT",
+                "count": 1
+              },
+              {
+                "day": "2026-11-02",
+                "module": "USER",
+                "action": "CHANGE_USER_ROLE",
+                "count": 1
+              },
+              {
+                "day": "2026-11-01",
+                "module": "BOOKING",
+                "action": "CREATE_LAB",
+                "count": 1
+              },
+              {
+                "day": "2026-11-01",
+                "module": "EVALUATION",
+                "action": "SAVE_WEBSITE_DRAFT",
+                "count": 1
+              },
+              {
+                "day": "2026-11-01",
+                "module": "FACE",
+                "action": "CREATE_SLOT",
+                "count": 3
+              },
+              {
+                "day": "2026-11-01",
+                "module": "LAB",
+                "action": "BAN_USER",
+                "count": 2
+              },
+              {
+                "day": "2026-11-01",
+                "module": "LAB",
+                "action": "REVIEW_APPLICATION",
+                "count": 2
+              },
+              {
+                "day": "2026-11-01",
+                "module": "PENALTY",
+                "action": "DEACTIVATE_LAB",
+                "count": 3
+              }
+            ],
+            "truncated": true
+          },
+          "actual": {
+            "values": [
+              {
+                "day": "2026-11-02",
+                "module": "AI",
+                "action": "PUBLISH_WEBSITE",
+                "count": 2
+              },
+              {
+                "day": "2026-11-02",
+                "module": "CLEANING",
+                "action": "UPDATE_LAB",
+                "count": 2
+              },
+              {
+                "day": "2026-11-02",
+                "module": "PRODUCT",
+                "action": "UPDATE_SYSTEM_CONFIG",
+                "count": 3
+              },
+              {
+                "day": "2026-11-02",
+                "module": "RESEARCH",
+                "action": "ASSIGN_MANAGER",
+                "count": 1
+              },
+              {
+                "day": "2026-11-02",
+                "module": "SYSTEM_CONFIG",
+                "action": "STUDENT_UPLOAD_REPORT",
+                "count": 3
+              },
+              {
+                "day": "2026-11-02",
+                "module": "SYSTEM_CONFIG",
+                "action": "UNBAN_USER",
+                "count": 3
+              },
+              {
+                "day": "2026-11-02",
+                "module": "USER",
+                "action": "CANCEL_SLOT",
+                "count": 1
+              },
+              {
+                "day": "2026-11-02",
+                "module": "USER",
+                "action": "CHANGE_USER_ROLE",
+                "count": 1
+              },
+              {
+                "day": "2026-11-01",
+                "module": "BOOKING",
+                "action": "CREATE_LAB",
+                "count": 1
+              },
+              {
+                "day": "2026-11-01",
+                "module": "EVALUATION",
+                "action": "SAVE_WEBSITE_DRAFT",
+                "count": 1
+              },
+              {
+                "day": "2026-11-01",
+                "module": "FACE",
+                "action": "CREATE_SLOT",
+                "count": 3
+              },
+              {
+                "day": "2026-11-01",
+                "module": "LAB",
+                "action": "BAN_USER",
+                "count": 2
+              },
+              {
+                "day": "2026-11-01",
+                "module": "LAB",
+                "action": "REVIEW_APPLICATION",
+                "count": 2
+              },
+              {
+                "day": "2026-11-01",
+                "module": "PENALTY",
+                "action": "DEACTIVATE_LAB",
+                "count": 3
+              }
+            ],
+            "returnedCount": 14,
+            "limit": 14,
+            "truncated": true
+          },
+          "caseIds": [
+            "A03",
+            "A04"
+          ]
+        }
+      ],
+      "pendingReason": "",
+      "evidence": [
+        ".artifacts/ai-fixture-expansion-20261104/integration-final/fixture-assertions.jsonl",
+        ".artifacts/ai-fixture-expansion-20261104/integration-final/wire-results.jsonl",
+        ".artifacts/ai-fixture-expansion-20261104/integration-final/source-fingerprint.json",
+        ".artifacts/ai-fixture-expansion-20261104/integration-final/junit/mysql-http"
+      ],
+      "sourceZipSha256": "63aa1ca0e241d55a06f0074f3fd3b7a652cc10e2ed6121d43d094ecbbf61142f"
+    },
+    {
+      "caseId": "A04",
+      "scenario": "Audit không có dữ liệu hoặc bị truncated",
+      "expected": "Không gọi list bounded là toàn bộ lịch sử.",
+      "before": "PENDING_FIXTURE",
+      "after": "PASS",
+      "actual": "Audit 0/1/14/15 bucket: count, overfetch, truncated và cảnh báo danh sách giới hạn đúng; deleted/ngoài 14 ngày bị loại.",
+      "requiredVariants": [
+        "A03-A04-0-false",
+        "A03-A04-0-true",
+        "A03-A04-1-false",
+        "A03-A04-1-true",
+        "A03-A04-14-false",
+        "A03-A04-14-true",
+        "A03-A04-15-false",
+        "A03-A04-15-true"
+      ],
+      "requiredEvidenceLayers": [
+        "Spring/JWT/MySQL",
+        "production Python HTTP/parser/validator",
+        "SQL/context oracle"
+      ],
+      "backend": "SCRIPTED_TEST",
+      "modelSelectionVerifiedThisRun": false,
+      "requestIds": [
+        "A03-A04-0-false-3b7e8725-91f0-4bcb-9e6b-7959cfe7faa1",
+        "A03-A04-1-false-64b0b39a-39d6-4910-9d5f-97b4bbd60ea3",
+        "A03-A04-14-false-b4885165-f183-47f9-9129-08d1788a55c7",
+        "A03-A04-15-false-78f09199-08c1-4870-8f50-fc5cf6dd4465",
+        "A03-A04-0-true-058854ce-2d55-4b12-9821-a6893ddd73a9",
+        "A03-A04-1-true-83b3ee7f-7ea6-4ccb-83c3-abde971e9352",
+        "A03-A04-14-true-d6a5c9f7-5562-45a6-a60a-4086c5a2a7e0",
+        "A03-A04-15-true-b4e37dae-b6f1-4b5c-a168-42c3737f7881"
+      ],
+      "assertions": [
+        {
+          "requestId": "A03-A04-0-false-3b7e8725-91f0-4bcb-9e6b-7959cfe7faa1",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "A03-A04-0-false",
+          "expected": {
+            "buckets": [],
+            "truncated": false
+          },
+          "actual": {
+            "values": [],
+            "returnedCount": 0,
+            "limit": 14,
+            "truncated": false
+          },
+          "caseIds": [
+            "A03",
+            "A04"
+          ]
+        },
+        {
+          "requestId": "A03-A04-1-false-64b0b39a-39d6-4910-9d5f-97b4bbd60ea3",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "A03-A04-1-false",
+          "expected": {
+            "buckets": [
+              {
+                "day": "2026-11-02",
+                "module": "USER",
+                "action": "CHANGE_USER_ROLE",
+                "count": 1
+              }
+            ],
+            "truncated": false
+          },
+          "actual": {
+            "values": [
+              {
+                "day": "2026-11-02",
+                "module": "USER",
+                "action": "CHANGE_USER_ROLE",
+                "count": 1
+              }
+            ],
+            "returnedCount": 1,
+            "limit": 14,
+            "truncated": false
+          },
+          "caseIds": [
+            "A03",
+            "A04"
+          ]
+        },
+        {
+          "requestId": "A03-A04-14-false-b4885165-f183-47f9-9129-08d1788a55c7",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "A03-A04-14-false",
+          "expected": {
+            "buckets": [
+              {
+                "day": "2026-11-02",
+                "module": "AI",
+                "action": "PUBLISH_WEBSITE",
+                "count": 2
+              },
+              {
+                "day": "2026-11-02",
+                "module": "CLEANING",
+                "action": "UPDATE_LAB",
+                "count": 2
+              },
+              {
+                "day": "2026-11-02",
+                "module": "PRODUCT",
+                "action": "UPDATE_SYSTEM_CONFIG",
+                "count": 3
+              },
+              {
+                "day": "2026-11-02",
+                "module": "RESEARCH",
+                "action": "ASSIGN_MANAGER",
+                "count": 1
+              },
+              {
+                "day": "2026-11-02",
+                "module": "SYSTEM_CONFIG",
+                "action": "UNBAN_USER",
+                "count": 3
+              },
+              {
+                "day": "2026-11-02",
+                "module": "USER",
+                "action": "CANCEL_SLOT",
+                "count": 1
+              },
+              {
+                "day": "2026-11-02",
+                "module": "USER",
+                "action": "CHANGE_USER_ROLE",
+                "count": 1
+              },
+              {
+                "day": "2026-11-01",
+                "module": "BOOKING",
+                "action": "CREATE_LAB",
+                "count": 1
+              },
+              {
+                "day": "2026-11-01",
+                "module": "EVALUATION",
+                "action": "SAVE_WEBSITE_DRAFT",
+                "count": 1
+              },
+              {
+                "day": "2026-11-01",
+                "module": "FACE",
+                "action": "CREATE_SLOT",
+                "count": 3
+              },
+              {
+                "day": "2026-11-01",
+                "module": "LAB",
+                "action": "BAN_USER",
+                "count": 2
+              },
+              {
+                "day": "2026-11-01",
+                "module": "LAB",
+                "action": "REVIEW_APPLICATION",
+                "count": 2
+              },
+              {
+                "day": "2026-11-01",
+                "module": "PENALTY",
+                "action": "DEACTIVATE_LAB",
+                "count": 3
+              },
+              {
+                "day": "2026-11-01",
+                "module": "REPORT",
+                "action": "CHANGE_LAB_MEMBER_ROLE",
+                "count": 2
+              }
+            ],
+            "truncated": false
+          },
+          "actual": {
+            "values": [
+              {
+                "day": "2026-11-02",
+                "module": "AI",
+                "action": "PUBLISH_WEBSITE",
+                "count": 2
+              },
+              {
+                "day": "2026-11-02",
+                "module": "CLEANING",
+                "action": "UPDATE_LAB",
+                "count": 2
+              },
+              {
+                "day": "2026-11-02",
+                "module": "PRODUCT",
+                "action": "UPDATE_SYSTEM_CONFIG",
+                "count": 3
+              },
+              {
+                "day": "2026-11-02",
+                "module": "RESEARCH",
+                "action": "ASSIGN_MANAGER",
+                "count": 1
+              },
+              {
+                "day": "2026-11-02",
+                "module": "SYSTEM_CONFIG",
+                "action": "UNBAN_USER",
+                "count": 3
+              },
+              {
+                "day": "2026-11-02",
+                "module": "USER",
+                "action": "CANCEL_SLOT",
+                "count": 1
+              },
+              {
+                "day": "2026-11-02",
+                "module": "USER",
+                "action": "CHANGE_USER_ROLE",
+                "count": 1
+              },
+              {
+                "day": "2026-11-01",
+                "module": "BOOKING",
+                "action": "CREATE_LAB",
+                "count": 1
+              },
+              {
+                "day": "2026-11-01",
+                "module": "EVALUATION",
+                "action": "SAVE_WEBSITE_DRAFT",
+                "count": 1
+              },
+              {
+                "day": "2026-11-01",
+                "module": "FACE",
+                "action": "CREATE_SLOT",
+                "count": 3
+              },
+              {
+                "day": "2026-11-01",
+                "module": "LAB",
+                "action": "BAN_USER",
+                "count": 2
+              },
+              {
+                "day": "2026-11-01",
+                "module": "LAB",
+                "action": "REVIEW_APPLICATION",
+                "count": 2
+              },
+              {
+                "day": "2026-11-01",
+                "module": "PENALTY",
+                "action": "DEACTIVATE_LAB",
+                "count": 3
+              },
+              {
+                "day": "2026-11-01",
+                "module": "REPORT",
+                "action": "CHANGE_LAB_MEMBER_ROLE",
+                "count": 2
+              }
+            ],
+            "returnedCount": 14,
+            "limit": 14,
+            "truncated": false
+          },
+          "caseIds": [
+            "A03",
+            "A04"
+          ]
+        },
+        {
+          "requestId": "A03-A04-15-false-78f09199-08c1-4870-8f50-fc5cf6dd4465",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "A03-A04-15-false",
+          "expected": {
+            "buckets": [
+              {
+                "day": "2026-11-02",
+                "module": "AI",
+                "action": "PUBLISH_WEBSITE",
+                "count": 2
+              },
+              {
+                "day": "2026-11-02",
+                "module": "CLEANING",
+                "action": "UPDATE_LAB",
+                "count": 2
+              },
+              {
+                "day": "2026-11-02",
+                "module": "PRODUCT",
+                "action": "UPDATE_SYSTEM_CONFIG",
+                "count": 3
+              },
+              {
+                "day": "2026-11-02",
+                "module": "RESEARCH",
+                "action": "ASSIGN_MANAGER",
+                "count": 1
+              },
+              {
+                "day": "2026-11-02",
+                "module": "SYSTEM_CONFIG",
+                "action": "STUDENT_UPLOAD_REPORT",
+                "count": 3
+              },
+              {
+                "day": "2026-11-02",
+                "module": "SYSTEM_CONFIG",
+                "action": "UNBAN_USER",
+                "count": 3
+              },
+              {
+                "day": "2026-11-02",
+                "module": "USER",
+                "action": "CANCEL_SLOT",
+                "count": 1
+              },
+              {
+                "day": "2026-11-02",
+                "module": "USER",
+                "action": "CHANGE_USER_ROLE",
+                "count": 1
+              },
+              {
+                "day": "2026-11-01",
+                "module": "BOOKING",
+                "action": "CREATE_LAB",
+                "count": 1
+              },
+              {
+                "day": "2026-11-01",
+                "module": "EVALUATION",
+                "action": "SAVE_WEBSITE_DRAFT",
+                "count": 1
+              },
+              {
+                "day": "2026-11-01",
+                "module": "FACE",
+                "action": "CREATE_SLOT",
+                "count": 3
+              },
+              {
+                "day": "2026-11-01",
+                "module": "LAB",
+                "action": "BAN_USER",
+                "count": 2
+              },
+              {
+                "day": "2026-11-01",
+                "module": "LAB",
+                "action": "REVIEW_APPLICATION",
+                "count": 2
+              },
+              {
+                "day": "2026-11-01",
+                "module": "PENALTY",
+                "action": "DEACTIVATE_LAB",
+                "count": 3
+              }
+            ],
+            "truncated": true
+          },
+          "actual": {
+            "values": [
+              {
+                "day": "2026-11-02",
+                "module": "AI",
+                "action": "PUBLISH_WEBSITE",
+                "count": 2
+              },
+              {
+                "day": "2026-11-02",
+                "module": "CLEANING",
+                "action": "UPDATE_LAB",
+                "count": 2
+              },
+              {
+                "day": "2026-11-02",
+                "module": "PRODUCT",
+                "action": "UPDATE_SYSTEM_CONFIG",
+                "count": 3
+              },
+              {
+                "day": "2026-11-02",
+                "module": "RESEARCH",
+                "action": "ASSIGN_MANAGER",
+                "count": 1
+              },
+              {
+                "day": "2026-11-02",
+                "module": "SYSTEM_CONFIG",
+                "action": "STUDENT_UPLOAD_REPORT",
+                "count": 3
+              },
+              {
+                "day": "2026-11-02",
+                "module": "SYSTEM_CONFIG",
+                "action": "UNBAN_USER",
+                "count": 3
+              },
+              {
+                "day": "2026-11-02",
+                "module": "USER",
+                "action": "CANCEL_SLOT",
+                "count": 1
+              },
+              {
+                "day": "2026-11-02",
+                "module": "USER",
+                "action": "CHANGE_USER_ROLE",
+                "count": 1
+              },
+              {
+                "day": "2026-11-01",
+                "module": "BOOKING",
+                "action": "CREATE_LAB",
+                "count": 1
+              },
+              {
+                "day": "2026-11-01",
+                "module": "EVALUATION",
+                "action": "SAVE_WEBSITE_DRAFT",
+                "count": 1
+              },
+              {
+                "day": "2026-11-01",
+                "module": "FACE",
+                "action": "CREATE_SLOT",
+                "count": 3
+              },
+              {
+                "day": "2026-11-01",
+                "module": "LAB",
+                "action": "BAN_USER",
+                "count": 2
+              },
+              {
+                "day": "2026-11-01",
+                "module": "LAB",
+                "action": "REVIEW_APPLICATION",
+                "count": 2
+              },
+              {
+                "day": "2026-11-01",
+                "module": "PENALTY",
+                "action": "DEACTIVATE_LAB",
+                "count": 3
+              }
+            ],
+            "returnedCount": 14,
+            "limit": 14,
+            "truncated": true
+          },
+          "caseIds": [
+            "A03",
+            "A04"
+          ]
+        },
+        {
+          "requestId": "A03-A04-0-true-058854ce-2d55-4b12-9821-a6893ddd73a9",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "A03-A04-0-true",
+          "expected": {
+            "buckets": [],
+            "truncated": false
+          },
+          "actual": {
+            "values": [],
+            "returnedCount": 0,
+            "limit": 14,
+            "truncated": false
+          },
+          "caseIds": [
+            "A03",
+            "A04"
+          ]
+        },
+        {
+          "requestId": "A03-A04-1-true-83b3ee7f-7ea6-4ccb-83c3-abde971e9352",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "A03-A04-1-true",
+          "expected": {
+            "buckets": [
+              {
+                "day": "2026-11-02",
+                "module": "USER",
+                "action": "CHANGE_USER_ROLE",
+                "count": 1
+              }
+            ],
+            "truncated": false
+          },
+          "actual": {
+            "values": [
+              {
+                "day": "2026-11-02",
+                "module": "USER",
+                "action": "CHANGE_USER_ROLE",
+                "count": 1
+              }
+            ],
+            "returnedCount": 1,
+            "limit": 14,
+            "truncated": false
+          },
+          "caseIds": [
+            "A03",
+            "A04"
+          ]
+        },
+        {
+          "requestId": "A03-A04-14-true-d6a5c9f7-5562-45a6-a60a-4086c5a2a7e0",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "A03-A04-14-true",
+          "expected": {
+            "buckets": [
+              {
+                "day": "2026-11-02",
+                "module": "AI",
+                "action": "PUBLISH_WEBSITE",
+                "count": 2
+              },
+              {
+                "day": "2026-11-02",
+                "module": "CLEANING",
+                "action": "UPDATE_LAB",
+                "count": 2
+              },
+              {
+                "day": "2026-11-02",
+                "module": "PRODUCT",
+                "action": "UPDATE_SYSTEM_CONFIG",
+                "count": 3
+              },
+              {
+                "day": "2026-11-02",
+                "module": "RESEARCH",
+                "action": "ASSIGN_MANAGER",
+                "count": 1
+              },
+              {
+                "day": "2026-11-02",
+                "module": "SYSTEM_CONFIG",
+                "action": "UNBAN_USER",
+                "count": 3
+              },
+              {
+                "day": "2026-11-02",
+                "module": "USER",
+                "action": "CANCEL_SLOT",
+                "count": 1
+              },
+              {
+                "day": "2026-11-02",
+                "module": "USER",
+                "action": "CHANGE_USER_ROLE",
+                "count": 1
+              },
+              {
+                "day": "2026-11-01",
+                "module": "BOOKING",
+                "action": "CREATE_LAB",
+                "count": 1
+              },
+              {
+                "day": "2026-11-01",
+                "module": "EVALUATION",
+                "action": "SAVE_WEBSITE_DRAFT",
+                "count": 1
+              },
+              {
+                "day": "2026-11-01",
+                "module": "FACE",
+                "action": "CREATE_SLOT",
+                "count": 3
+              },
+              {
+                "day": "2026-11-01",
+                "module": "LAB",
+                "action": "BAN_USER",
+                "count": 2
+              },
+              {
+                "day": "2026-11-01",
+                "module": "LAB",
+                "action": "REVIEW_APPLICATION",
+                "count": 2
+              },
+              {
+                "day": "2026-11-01",
+                "module": "PENALTY",
+                "action": "DEACTIVATE_LAB",
+                "count": 3
+              },
+              {
+                "day": "2026-11-01",
+                "module": "REPORT",
+                "action": "CHANGE_LAB_MEMBER_ROLE",
+                "count": 2
+              }
+            ],
+            "truncated": false
+          },
+          "actual": {
+            "values": [
+              {
+                "day": "2026-11-02",
+                "module": "AI",
+                "action": "PUBLISH_WEBSITE",
+                "count": 2
+              },
+              {
+                "day": "2026-11-02",
+                "module": "CLEANING",
+                "action": "UPDATE_LAB",
+                "count": 2
+              },
+              {
+                "day": "2026-11-02",
+                "module": "PRODUCT",
+                "action": "UPDATE_SYSTEM_CONFIG",
+                "count": 3
+              },
+              {
+                "day": "2026-11-02",
+                "module": "RESEARCH",
+                "action": "ASSIGN_MANAGER",
+                "count": 1
+              },
+              {
+                "day": "2026-11-02",
+                "module": "SYSTEM_CONFIG",
+                "action": "UNBAN_USER",
+                "count": 3
+              },
+              {
+                "day": "2026-11-02",
+                "module": "USER",
+                "action": "CANCEL_SLOT",
+                "count": 1
+              },
+              {
+                "day": "2026-11-02",
+                "module": "USER",
+                "action": "CHANGE_USER_ROLE",
+                "count": 1
+              },
+              {
+                "day": "2026-11-01",
+                "module": "BOOKING",
+                "action": "CREATE_LAB",
+                "count": 1
+              },
+              {
+                "day": "2026-11-01",
+                "module": "EVALUATION",
+                "action": "SAVE_WEBSITE_DRAFT",
+                "count": 1
+              },
+              {
+                "day": "2026-11-01",
+                "module": "FACE",
+                "action": "CREATE_SLOT",
+                "count": 3
+              },
+              {
+                "day": "2026-11-01",
+                "module": "LAB",
+                "action": "BAN_USER",
+                "count": 2
+              },
+              {
+                "day": "2026-11-01",
+                "module": "LAB",
+                "action": "REVIEW_APPLICATION",
+                "count": 2
+              },
+              {
+                "day": "2026-11-01",
+                "module": "PENALTY",
+                "action": "DEACTIVATE_LAB",
+                "count": 3
+              },
+              {
+                "day": "2026-11-01",
+                "module": "REPORT",
+                "action": "CHANGE_LAB_MEMBER_ROLE",
+                "count": 2
+              }
+            ],
+            "returnedCount": 14,
+            "limit": 14,
+            "truncated": false
+          },
+          "caseIds": [
+            "A03",
+            "A04"
+          ]
+        },
+        {
+          "requestId": "A03-A04-15-true-b4e37dae-b6f1-4b5c-a168-42c3737f7881",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "A03-A04-15-true",
+          "expected": {
+            "buckets": [
+              {
+                "day": "2026-11-02",
+                "module": "AI",
+                "action": "PUBLISH_WEBSITE",
+                "count": 2
+              },
+              {
+                "day": "2026-11-02",
+                "module": "CLEANING",
+                "action": "UPDATE_LAB",
+                "count": 2
+              },
+              {
+                "day": "2026-11-02",
+                "module": "PRODUCT",
+                "action": "UPDATE_SYSTEM_CONFIG",
+                "count": 3
+              },
+              {
+                "day": "2026-11-02",
+                "module": "RESEARCH",
+                "action": "ASSIGN_MANAGER",
+                "count": 1
+              },
+              {
+                "day": "2026-11-02",
+                "module": "SYSTEM_CONFIG",
+                "action": "STUDENT_UPLOAD_REPORT",
+                "count": 3
+              },
+              {
+                "day": "2026-11-02",
+                "module": "SYSTEM_CONFIG",
+                "action": "UNBAN_USER",
+                "count": 3
+              },
+              {
+                "day": "2026-11-02",
+                "module": "USER",
+                "action": "CANCEL_SLOT",
+                "count": 1
+              },
+              {
+                "day": "2026-11-02",
+                "module": "USER",
+                "action": "CHANGE_USER_ROLE",
+                "count": 1
+              },
+              {
+                "day": "2026-11-01",
+                "module": "BOOKING",
+                "action": "CREATE_LAB",
+                "count": 1
+              },
+              {
+                "day": "2026-11-01",
+                "module": "EVALUATION",
+                "action": "SAVE_WEBSITE_DRAFT",
+                "count": 1
+              },
+              {
+                "day": "2026-11-01",
+                "module": "FACE",
+                "action": "CREATE_SLOT",
+                "count": 3
+              },
+              {
+                "day": "2026-11-01",
+                "module": "LAB",
+                "action": "BAN_USER",
+                "count": 2
+              },
+              {
+                "day": "2026-11-01",
+                "module": "LAB",
+                "action": "REVIEW_APPLICATION",
+                "count": 2
+              },
+              {
+                "day": "2026-11-01",
+                "module": "PENALTY",
+                "action": "DEACTIVATE_LAB",
+                "count": 3
+              }
+            ],
+            "truncated": true
+          },
+          "actual": {
+            "values": [
+              {
+                "day": "2026-11-02",
+                "module": "AI",
+                "action": "PUBLISH_WEBSITE",
+                "count": 2
+              },
+              {
+                "day": "2026-11-02",
+                "module": "CLEANING",
+                "action": "UPDATE_LAB",
+                "count": 2
+              },
+              {
+                "day": "2026-11-02",
+                "module": "PRODUCT",
+                "action": "UPDATE_SYSTEM_CONFIG",
+                "count": 3
+              },
+              {
+                "day": "2026-11-02",
+                "module": "RESEARCH",
+                "action": "ASSIGN_MANAGER",
+                "count": 1
+              },
+              {
+                "day": "2026-11-02",
+                "module": "SYSTEM_CONFIG",
+                "action": "STUDENT_UPLOAD_REPORT",
+                "count": 3
+              },
+              {
+                "day": "2026-11-02",
+                "module": "SYSTEM_CONFIG",
+                "action": "UNBAN_USER",
+                "count": 3
+              },
+              {
+                "day": "2026-11-02",
+                "module": "USER",
+                "action": "CANCEL_SLOT",
+                "count": 1
+              },
+              {
+                "day": "2026-11-02",
+                "module": "USER",
+                "action": "CHANGE_USER_ROLE",
+                "count": 1
+              },
+              {
+                "day": "2026-11-01",
+                "module": "BOOKING",
+                "action": "CREATE_LAB",
+                "count": 1
+              },
+              {
+                "day": "2026-11-01",
+                "module": "EVALUATION",
+                "action": "SAVE_WEBSITE_DRAFT",
+                "count": 1
+              },
+              {
+                "day": "2026-11-01",
+                "module": "FACE",
+                "action": "CREATE_SLOT",
+                "count": 3
+              },
+              {
+                "day": "2026-11-01",
+                "module": "LAB",
+                "action": "BAN_USER",
+                "count": 2
+              },
+              {
+                "day": "2026-11-01",
+                "module": "LAB",
+                "action": "REVIEW_APPLICATION",
+                "count": 2
+              },
+              {
+                "day": "2026-11-01",
+                "module": "PENALTY",
+                "action": "DEACTIVATE_LAB",
+                "count": 3
+              }
+            ],
+            "returnedCount": 14,
+            "limit": 14,
+            "truncated": true
+          },
+          "caseIds": [
+            "A03",
+            "A04"
+          ]
+        }
+      ],
+      "pendingReason": "",
+      "evidence": [
+        ".artifacts/ai-fixture-expansion-20261104/integration-final/fixture-assertions.jsonl",
+        ".artifacts/ai-fixture-expansion-20261104/integration-final/wire-results.jsonl",
+        ".artifacts/ai-fixture-expansion-20261104/integration-final/source-fingerprint.json",
+        ".artifacts/ai-fixture-expansion-20261104/integration-final/junit/mysql-http"
+      ],
+      "sourceZipSha256": "63aa1ca0e241d55a06f0074f3fd3b7a652cc10e2ed6121d43d094ecbbf61142f"
+    },
+    {
+      "caseId": "S05",
+      "scenario": "Nonmember/revoked membership đọc slots",
+      "expected": "Bị từ chối; prompt “đã là member” không đổi DB quyền.",
+      "before": "PARTIAL",
+      "after": "PASS",
+      "actual": "Nonmember và membership inactive/deleted bị 403 ở direct; catalog bỏ tool đọc ca, lượt sau cùng conversation REFUSED; lời khai đã là member không đổi membership.",
+      "requiredVariants": [
+        "S05-deleted",
+        "S05-inactive",
+        "S05-nonmember"
+      ],
+      "requiredEvidenceLayers": [
+        "Spring/JWT/MySQL",
+        "production Python HTTP/parser/validator",
+        "SQL/context oracle"
+      ],
+      "backend": "SCRIPTED_TEST",
+      "modelSelectionVerifiedThisRun": false,
+      "requestIds": [
+        "S05-nonmember-b4ecc0e9-081b-4053-88fe-183c8e8d5e5f-direct",
+        "S05-nonmember-b4ecc0e9-081b-4053-88fe-183c8e8d5e5f-after",
+        "S05-inactive-3c92689c-4dff-4c8d-bdd4-4ec1e2e06c79-before",
+        "S05-inactive-3c92689c-4dff-4c8d-bdd4-4ec1e2e06c79-direct",
+        "S05-inactive-3c92689c-4dff-4c8d-bdd4-4ec1e2e06c79-after",
+        "S05-deleted-95f0575a-4314-4295-b8b3-014479ce21e7-before",
+        "S05-deleted-95f0575a-4314-4295-b8b3-014479ce21e7-direct",
+        "S05-deleted-95f0575a-4314-4295-b8b3-014479ce21e7-after"
+      ],
+      "assertions": [
+        {
+          "requestId": "S05-nonmember-b4ecc0e9-081b-4053-88fe-183c8e8d5e5f",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "S05-nonmember",
+          "expected": "Fresh membership required on both entry points",
+          "actual": [],
+          "caseIds": [
+            "S05"
+          ]
+        },
+        {
+          "requestId": "S05-inactive-3c92689c-4dff-4c8d-bdd4-4ec1e2e06c79",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "S05-inactive",
+          "expected": "Fresh membership required on both entry points",
+          "actual": [
+            {
+              "id": 288,
+              "active": false,
+              "deleted": false
+            }
+          ],
+          "caseIds": [
+            "S05"
+          ]
+        },
+        {
+          "requestId": "S05-deleted-95f0575a-4314-4295-b8b3-014479ce21e7",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "S05-deleted",
+          "expected": "Fresh membership required on both entry points",
+          "actual": [
+            {
+              "id": 290,
+              "active": true,
+              "deleted": true
+            }
+          ],
+          "caseIds": [
+            "S05"
+          ]
+        }
+      ],
+      "pendingReason": "",
+      "evidence": [
+        ".artifacts/ai-fixture-expansion-20261104/integration-final/fixture-assertions.jsonl",
+        ".artifacts/ai-fixture-expansion-20261104/integration-final/wire-results.jsonl",
+        ".artifacts/ai-fixture-expansion-20261104/integration-final/source-fingerprint.json",
+        ".artifacts/ai-fixture-expansion-20261104/integration-final/junit/mysql-http"
+      ],
+      "sourceZipSha256": "63aa1ca0e241d55a06f0074f3fd3b7a652cc10e2ed6121d43d094ecbbf61142f"
+    },
+    {
+      "caseId": "S07",
+      "scenario": "Slot thuộc Lab khác/inactive/deleted/missing",
+      "expected": "Không trả nhầm slot được phép gần nhất.",
+      "before": "PARTIAL",
+      "after": "PASS",
+      "actual": "10 biến thể Student/Manager × active/inactive/deleted/foreign/missing: positive đúng selected slot; negative 403 không thay slot lân cận; SQL không đổi.",
+      "requiredVariants": [
+        "S07-LAB_MANAGER-active",
+        "S07-LAB_MANAGER-deleted",
+        "S07-LAB_MANAGER-foreign",
+        "S07-LAB_MANAGER-inactive",
+        "S07-LAB_MANAGER-missing",
+        "S07-STUDENT-active",
+        "S07-STUDENT-deleted",
+        "S07-STUDENT-foreign",
+        "S07-STUDENT-inactive",
+        "S07-STUDENT-missing"
+      ],
+      "requiredEvidenceLayers": [
+        "Spring/JWT/MySQL",
+        "production Python HTTP/parser/validator",
+        "SQL/context oracle"
+      ],
+      "backend": "SCRIPTED_TEST",
+      "modelSelectionVerifiedThisRun": false,
+      "requestIds": [
+        "S07-STUDENT-active-3c5dc553-02fe-4fc2-b6a5-fa0d676b15f8",
+        "S07-STUDENT-inactive-b339a355-dce8-4ea6-9b7d-733dd5379cf6",
+        "S07-STUDENT-deleted-8ca316b1-cc10-4ba3-a38c-dd44355f4bb0",
+        "S07-STUDENT-foreign-305bba78-b60f-4ed9-8fab-2b5dbfcbafe2",
+        "S07-STUDENT-missing-876e55e7-7fe9-434b-8677-a9ff97050c4f",
+        "S07-LAB_MANAGER-active-41346685-3d64-4f2d-98b0-5b892869cda1",
+        "S07-LAB_MANAGER-inactive-c874142b-be12-481c-89ba-e8f3ef25f12e",
+        "S07-LAB_MANAGER-deleted-b25dd423-81b9-45c6-9a17-7efec4339c5d",
+        "S07-LAB_MANAGER-foreign-b51e1cd3-d33d-4d10-8df2-79544fb1566d",
+        "S07-LAB_MANAGER-missing-8a59a018-8a37-4a4e-9d5d-055d0fbdbaaa"
+      ],
+      "assertions": [
+        {
+          "requestId": "S07-STUDENT-active-3c5dc553-02fe-4fc2-b6a5-fa0d676b15f8",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "S07-STUDENT-active",
+          "expected": "Only selected slot",
+          "actual": [
+            {
+              "id": 175,
+              "lab_id": 67,
+              "active": true,
+              "deleted": false,
+              "status": "AVAILABLE"
+            },
+            {
+              "id": 176,
+              "lab_id": 67,
+              "active": true,
+              "deleted": false,
+              "status": "AVAILABLE"
+            }
+          ],
+          "caseIds": [
+            "S07"
+          ]
+        },
+        {
+          "requestId": "S07-STUDENT-inactive-b339a355-dce8-4ea6-9b7d-733dd5379cf6",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "S07-STUDENT-inactive",
+          "expected": "403 without fallback",
+          "actual": [
+            {
+              "id": 177,
+              "lab_id": 68,
+              "active": true,
+              "deleted": false,
+              "status": "AVAILABLE"
+            },
+            {
+              "id": 178,
+              "lab_id": 68,
+              "active": false,
+              "deleted": false,
+              "status": "AVAILABLE"
+            }
+          ],
+          "caseIds": [
+            "S07"
+          ]
+        },
+        {
+          "requestId": "S07-STUDENT-deleted-8ca316b1-cc10-4ba3-a38c-dd44355f4bb0",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "S07-STUDENT-deleted",
+          "expected": "403 without fallback",
+          "actual": [
+            {
+              "id": 179,
+              "lab_id": 69,
+              "active": true,
+              "deleted": false,
+              "status": "AVAILABLE"
+            },
+            {
+              "id": 180,
+              "lab_id": 69,
+              "active": true,
+              "deleted": true,
+              "status": "AVAILABLE"
+            }
+          ],
+          "caseIds": [
+            "S07"
+          ]
+        },
+        {
+          "requestId": "S07-STUDENT-foreign-305bba78-b60f-4ed9-8fab-2b5dbfcbafe2",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "S07-STUDENT-foreign",
+          "expected": "403 without fallback",
+          "actual": [
+            {
+              "id": 181,
+              "lab_id": 70,
+              "active": true,
+              "deleted": false,
+              "status": "AVAILABLE"
+            },
+            {
+              "id": 182,
+              "lab_id": 71,
+              "active": true,
+              "deleted": false,
+              "status": "AVAILABLE"
+            }
+          ],
+          "caseIds": [
+            "S07"
+          ]
+        },
+        {
+          "requestId": "S07-STUDENT-missing-876e55e7-7fe9-434b-8677-a9ff97050c4f",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "S07-STUDENT-missing",
+          "expected": "403 without fallback",
+          "actual": [
+            {
+              "id": 183,
+              "lab_id": 72,
+              "active": true,
+              "deleted": false,
+              "status": "AVAILABLE"
+            },
+            {
+              "id": 184,
+              "lab_id": 72,
+              "active": true,
+              "deleted": false,
+              "status": "AVAILABLE"
+            }
+          ],
+          "caseIds": [
+            "S07"
+          ]
+        },
+        {
+          "requestId": "S07-LAB_MANAGER-active-41346685-3d64-4f2d-98b0-5b892869cda1",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "S07-LAB_MANAGER-active",
+          "expected": "Only selected slot",
+          "actual": [
+            {
+              "id": 185,
+              "lab_id": 73,
+              "active": true,
+              "deleted": false,
+              "status": "AVAILABLE"
+            },
+            {
+              "id": 186,
+              "lab_id": 73,
+              "active": true,
+              "deleted": false,
+              "status": "AVAILABLE"
+            }
+          ],
+          "caseIds": [
+            "S07"
+          ]
+        },
+        {
+          "requestId": "S07-LAB_MANAGER-inactive-c874142b-be12-481c-89ba-e8f3ef25f12e",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "S07-LAB_MANAGER-inactive",
+          "expected": "403 without fallback",
+          "actual": [
+            {
+              "id": 187,
+              "lab_id": 74,
+              "active": true,
+              "deleted": false,
+              "status": "AVAILABLE"
+            },
+            {
+              "id": 188,
+              "lab_id": 74,
+              "active": false,
+              "deleted": false,
+              "status": "AVAILABLE"
+            }
+          ],
+          "caseIds": [
+            "S07"
+          ]
+        },
+        {
+          "requestId": "S07-LAB_MANAGER-deleted-b25dd423-81b9-45c6-9a17-7efec4339c5d",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "S07-LAB_MANAGER-deleted",
+          "expected": "403 without fallback",
+          "actual": [
+            {
+              "id": 189,
+              "lab_id": 75,
+              "active": true,
+              "deleted": false,
+              "status": "AVAILABLE"
+            },
+            {
+              "id": 190,
+              "lab_id": 75,
+              "active": true,
+              "deleted": true,
+              "status": "AVAILABLE"
+            }
+          ],
+          "caseIds": [
+            "S07"
+          ]
+        },
+        {
+          "requestId": "S07-LAB_MANAGER-foreign-b51e1cd3-d33d-4d10-8df2-79544fb1566d",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "S07-LAB_MANAGER-foreign",
+          "expected": "403 without fallback",
+          "actual": [
+            {
+              "id": 191,
+              "lab_id": 76,
+              "active": true,
+              "deleted": false,
+              "status": "AVAILABLE"
+            },
+            {
+              "id": 192,
+              "lab_id": 77,
+              "active": true,
+              "deleted": false,
+              "status": "AVAILABLE"
+            }
+          ],
+          "caseIds": [
+            "S07"
+          ]
+        },
+        {
+          "requestId": "S07-LAB_MANAGER-missing-8a59a018-8a37-4a4e-9d5d-055d0fbdbaaa",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "S07-LAB_MANAGER-missing",
+          "expected": "403 without fallback",
+          "actual": [
+            {
+              "id": 193,
+              "lab_id": 78,
+              "active": true,
+              "deleted": false,
+              "status": "AVAILABLE"
+            },
+            {
+              "id": 194,
+              "lab_id": 78,
+              "active": true,
+              "deleted": false,
+              "status": "AVAILABLE"
+            }
+          ],
+          "caseIds": [
+            "S07"
+          ]
+        }
+      ],
+      "pendingReason": "",
+      "evidence": [
+        ".artifacts/ai-fixture-expansion-20261104/integration-final/fixture-assertions.jsonl",
+        ".artifacts/ai-fixture-expansion-20261104/integration-final/wire-results.jsonl",
+        ".artifacts/ai-fixture-expansion-20261104/integration-final/source-fingerprint.json",
+        ".artifacts/ai-fixture-expansion-20261104/integration-final/junit/mysql-http"
+      ],
+      "sourceZipSha256": "63aa1ca0e241d55a06f0074f3fd3b7a652cc10e2ed6121d43d094ecbbf61142f"
+    },
+    {
+      "caseId": "M07",
+      "scenario": "Không có Lab hoặc Lab inactive/deleted",
+      "expected": "Không tự chọn Lab bất kỳ.",
+      "before": "PENDING_FIXTURE",
+      "after": "PASS",
+      "actual": "Manager có Lab active đọc đúng Lab; không có Lab, Lab inactive/deleted bị chặn direct, unified REFUSED và không có managed candidate.",
+      "requiredVariants": [
+        "M07-active",
+        "M07-deleted",
+        "M07-inactive",
+        "M07-none"
+      ],
+      "requiredEvidenceLayers": [
+        "Spring/JWT/MySQL",
+        "production Python HTTP/parser/validator",
+        "SQL/context oracle"
+      ],
+      "backend": "SCRIPTED_TEST",
+      "modelSelectionVerifiedThisRun": false,
+      "requestIds": [
+        "M07-active-0161bdcc-5a3e-4284-89fb-bf227ce856b7-direct",
+        "M07-active-0161bdcc-5a3e-4284-89fb-bf227ce856b7",
+        "M07-none-6e581f0d-f698-4eb8-9fb8-9fb71843f1d2-direct",
+        "M07-none-6e581f0d-f698-4eb8-9fb8-9fb71843f1d2",
+        "M07-inactive-7e03b0a0-0a20-467b-87cb-83c356643b5b-direct",
+        "M07-inactive-7e03b0a0-0a20-467b-87cb-83c356643b5b",
+        "M07-deleted-c327b67b-4809-42e4-8659-03737d3bace9-direct",
+        "M07-deleted-c327b67b-4809-42e4-8659-03737d3bace9"
+      ],
+      "assertions": [
+        {
+          "requestId": "M07-active-0161bdcc-5a3e-4284-89fb-bf227ce856b7",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "M07-active",
+          "expected": "No arbitrary Lab fallback",
+          "actual": {
+            "state": "active",
+            "selectedLab": 213
+          },
+          "caseIds": [
+            "M07"
+          ]
+        },
+        {
+          "requestId": "M07-none-6e581f0d-f698-4eb8-9fb8-9fb71843f1d2",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "M07-none",
+          "expected": "No arbitrary Lab fallback",
+          "actual": {
+            "state": "none",
+            "selectedLab": 215
+          },
+          "caseIds": [
+            "M07"
+          ]
+        },
+        {
+          "requestId": "M07-inactive-7e03b0a0-0a20-467b-87cb-83c356643b5b",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "M07-inactive",
+          "expected": "No arbitrary Lab fallback",
+          "actual": {
+            "state": "inactive",
+            "selectedLab": 217
+          },
+          "caseIds": [
+            "M07"
+          ]
+        },
+        {
+          "requestId": "M07-deleted-c327b67b-4809-42e4-8659-03737d3bace9",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "M07-deleted",
+          "expected": "No arbitrary Lab fallback",
+          "actual": {
+            "state": "deleted",
+            "selectedLab": 219
+          },
+          "caseIds": [
+            "M07"
+          ]
+        }
+      ],
+      "pendingReason": "",
+      "evidence": [
+        ".artifacts/ai-fixture-expansion-20261104/integration-final/fixture-assertions.jsonl",
+        ".artifacts/ai-fixture-expansion-20261104/integration-final/wire-results.jsonl",
+        ".artifacts/ai-fixture-expansion-20261104/integration-final/source-fingerprint.json",
+        ".artifacts/ai-fixture-expansion-20261104/integration-final/junit/mysql-http"
+      ],
+      "sourceZipSha256": "63aa1ca0e241d55a06f0074f3fd3b7a652cc10e2ed6121d43d094ecbbf61142f"
+    },
+    {
+      "caseId": "M10",
+      "scenario": "Thu hồi/reassign manager khi hội thoại đang mở",
+      "expected": "Lượt sau/context mới dùng quyền mới; history không giữ quyền.",
+      "before": "PENDING_FIXTURE",
+      "after": "PASS",
+      "actual": "Reassign manager giữa hai lượt cùng conversation: manager cũ mất candidate và direct 403/unified REFUSED; manager mới đọc được; slot SQL không đổi.",
+      "requiredVariants": [
+        "M10"
+      ],
+      "requiredEvidenceLayers": [
+        "Spring/JWT/MySQL",
+        "production Python HTTP/parser/validator",
+        "SQL/context oracle"
+      ],
+      "backend": "SCRIPTED_TEST",
+      "modelSelectionVerifiedThisRun": false,
+      "requestIds": [
+        "M10-445ae4c4-9865-44d0-80fa-af4d3d41bf84-before",
+        "M10-445ae4c4-9865-44d0-80fa-af4d3d41bf84-direct",
+        "M10-445ae4c4-9865-44d0-80fa-af4d3d41bf84-after",
+        "M10-445ae4c4-9865-44d0-80fa-af4d3d41bf84-replacement"
+      ],
+      "assertions": [
+        {
+          "requestId": "M10-445ae4c4-9865-44d0-80fa-af4d3d41bf84",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "M10",
+          "expected": "Old manager denied; replacement allowed; same conversation",
+          "actual": [
+            {
+              "id": 174,
+              "status": "AVAILABLE",
+              "active": true,
+              "deleted": false
+            }
+          ],
+          "caseIds": [
+            "M10"
+          ]
+        }
+      ],
+      "pendingReason": "",
+      "evidence": [
+        ".artifacts/ai-fixture-expansion-20261104/integration-final/fixture-assertions.jsonl",
+        ".artifacts/ai-fixture-expansion-20261104/integration-final/wire-results.jsonl",
+        ".artifacts/ai-fixture-expansion-20261104/integration-final/source-fingerprint.json",
+        ".artifacts/ai-fixture-expansion-20261104/integration-final/junit/mysql-http"
+      ],
+      "sourceZipSha256": "63aa1ca0e241d55a06f0074f3fd3b7a652cc10e2ed6121d43d094ecbbf61142f"
+    },
+    {
+      "caseId": "R02",
+      "scenario": "Manager đọc project đúng/khác Lab",
+      "expected": "Đúng managed scope; cross-Lab denied.",
+      "before": "PARTIAL",
+      "after": "PASS",
+      "actual": "Manager đúng Lab đọc title/facts từ project; project Lab khác 403, không lộ canary, SQL không đổi.",
+      "requiredVariants": [
+        "R02-R03-manager-active",
+        "R02-R03-manager-deleted",
+        "R02-R03-manager-foreign",
+        "R02-R03-manager-inactive",
+        "R02-R03-manager-missing",
+        "R02-R03-member-active",
+        "R02-R03-member-deleted",
+        "R02-R03-member-foreign",
+        "R02-R03-member-inactive",
+        "R02-R03-member-missing"
+      ],
+      "requiredEvidenceLayers": [
+        "Spring/JWT/MySQL",
+        "production Python HTTP/parser/validator",
+        "SQL/context oracle"
+      ],
+      "backend": "SCRIPTED_TEST",
+      "modelSelectionVerifiedThisRun": false,
+      "requestIds": [
+        "R02-R03-manager-active-a05bcdbe-c9b3-4d8f-8666-769dc3cbdea6",
+        "R02-R03-manager-inactive-b6ab6763-afb3-44e9-a6bb-e3ab46b9237f",
+        "R02-R03-manager-deleted-461cd9ce-9993-4e4c-85c6-313d7430c4a5",
+        "R02-R03-manager-missing-48f795ff-bb0b-452f-8636-ab320e5640e8",
+        "R02-R03-manager-foreign-cff966d4-8350-40d4-a4f9-63877a209409",
+        "R02-R03-member-active-8bdfabb1-938f-4e2c-af95-2a72cc356bee",
+        "R02-R03-member-inactive-0af09ee6-66f8-446a-9cdc-24510452e004",
+        "R02-R03-member-deleted-16c0787f-7653-47ca-9766-988c81505cee",
+        "R02-R03-member-missing-313a8c0a-b4c6-4ae1-84f9-3eeb6daf2a86",
+        "R02-R03-member-foreign-7125f28e-4b9a-4f17-8698-cc4e403dbcc9"
+      ],
+      "assertions": [
+        {
+          "requestId": "R02-R03-manager-active-a05bcdbe-c9b3-4d8f-8666-769dc3cbdea6",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "R02-R03-manager-active",
+          "expected": "Authorized project facts",
+          "actual": {
+            "id": 40,
+            "lab_id": 101,
+            "title": "LOCAL_PROJECT_PRIVATE_41ebc68d-1f1a-4326-80f9-ee636ac4d007",
+            "active": true,
+            "deleted": false,
+            "status": "DRAFT"
+          },
+          "caseIds": [
+            "R02",
+            "R03"
+          ]
+        },
+        {
+          "requestId": "R02-R03-manager-inactive-b6ab6763-afb3-44e9-a6bb-e3ab46b9237f",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "R02-R03-manager-inactive",
+          "expected": "403 without neighbouring project",
+          "actual": {
+            "id": 41,
+            "lab_id": 102,
+            "title": "LOCAL_PROJECT_PRIVATE_19057002-8270-4d7d-9474-e62bac633091",
+            "active": false,
+            "deleted": false,
+            "status": "DRAFT"
+          },
+          "caseIds": [
+            "R02",
+            "R03"
+          ]
+        },
+        {
+          "requestId": "R02-R03-manager-deleted-461cd9ce-9993-4e4c-85c6-313d7430c4a5",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "R02-R03-manager-deleted",
+          "expected": "403 without neighbouring project",
+          "actual": {
+            "id": 42,
+            "lab_id": 103,
+            "title": "LOCAL_PROJECT_PRIVATE_b3657995-9906-4e4b-bcd3-28c2efaa0ac0",
+            "active": true,
+            "deleted": true,
+            "status": "DRAFT"
+          },
+          "caseIds": [
+            "R02",
+            "R03"
+          ]
+        },
+        {
+          "requestId": "R02-R03-manager-missing-48f795ff-bb0b-452f-8636-ab320e5640e8",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "R02-R03-manager-missing",
+          "expected": "403 without neighbouring project",
+          "actual": {
+            "id": 43,
+            "lab_id": 104,
+            "title": "LOCAL_PROJECT_PRIVATE_56900b81-8057-4efb-b2a5-0daccf48cb6e",
+            "active": true,
+            "deleted": false,
+            "status": "DRAFT"
+          },
+          "caseIds": [
+            "R02",
+            "R03"
+          ]
+        },
+        {
+          "requestId": "R02-R03-manager-foreign-cff966d4-8350-40d4-a4f9-63877a209409",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "R02-R03-manager-foreign",
+          "expected": "403 without neighbouring project",
+          "actual": {
+            "id": 45,
+            "lab_id": 106,
+            "title": "LOCAL_PROJECT_PRIVATE_6c5a9010-265e-4d25-8608-9428836f27ac",
+            "active": true,
+            "deleted": false,
+            "status": "DRAFT"
+          },
+          "caseIds": [
+            "R02",
+            "R03"
+          ]
+        },
+        {
+          "requestId": "R02-R03-member-active-8bdfabb1-938f-4e2c-af95-2a72cc356bee",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "R02-R03-member-active",
+          "expected": "Authorized project facts",
+          "actual": {
+            "id": 46,
+            "lab_id": 107,
+            "title": "LOCAL_PROJECT_PRIVATE_5ade3025-e64a-4472-8210-24620a9e6b0b",
+            "active": true,
+            "deleted": false,
+            "status": "DRAFT"
+          },
+          "caseIds": [
+            "R02",
+            "R03"
+          ]
+        },
+        {
+          "requestId": "R02-R03-member-inactive-0af09ee6-66f8-446a-9cdc-24510452e004",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "R02-R03-member-inactive",
+          "expected": "403 without neighbouring project",
+          "actual": {
+            "id": 47,
+            "lab_id": 108,
+            "title": "LOCAL_PROJECT_PRIVATE_daafa6bf-df78-442b-b615-ac82c242d0cc",
+            "active": false,
+            "deleted": false,
+            "status": "DRAFT"
+          },
+          "caseIds": [
+            "R02",
+            "R03"
+          ]
+        },
+        {
+          "requestId": "R02-R03-member-deleted-16c0787f-7653-47ca-9766-988c81505cee",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "R02-R03-member-deleted",
+          "expected": "403 without neighbouring project",
+          "actual": {
+            "id": 48,
+            "lab_id": 109,
+            "title": "LOCAL_PROJECT_PRIVATE_e28c8a9a-d458-4825-a276-004a4e3b62bc",
+            "active": true,
+            "deleted": true,
+            "status": "DRAFT"
+          },
+          "caseIds": [
+            "R02",
+            "R03"
+          ]
+        },
+        {
+          "requestId": "R02-R03-member-missing-313a8c0a-b4c6-4ae1-84f9-3eeb6daf2a86",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "R02-R03-member-missing",
+          "expected": "403 without neighbouring project",
+          "actual": {
+            "id": 49,
+            "lab_id": 110,
+            "title": "LOCAL_PROJECT_PRIVATE_04ebcd6e-e775-4615-b67b-9eb160f0c2e2",
+            "active": true,
+            "deleted": false,
+            "status": "DRAFT"
+          },
+          "caseIds": [
+            "R02",
+            "R03"
+          ]
+        },
+        {
+          "requestId": "R02-R03-member-foreign-7125f28e-4b9a-4f17-8698-cc4e403dbcc9",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "R02-R03-member-foreign",
+          "expected": "403 without neighbouring project",
+          "actual": {
+            "id": 51,
+            "lab_id": 112,
+            "title": "LOCAL_PROJECT_PRIVATE_8ca12bfe-93c2-4748-895a-1d886213895e",
+            "active": true,
+            "deleted": false,
+            "status": "DRAFT"
+          },
+          "caseIds": [
+            "R02",
+            "R03"
+          ]
+        }
+      ],
+      "pendingReason": "",
+      "evidence": [
+        ".artifacts/ai-fixture-expansion-20261104/integration-final/fixture-assertions.jsonl",
+        ".artifacts/ai-fixture-expansion-20261104/integration-final/wire-results.jsonl",
+        ".artifacts/ai-fixture-expansion-20261104/integration-final/source-fingerprint.json",
+        ".artifacts/ai-fixture-expansion-20261104/integration-final/junit/mysql-http"
+      ],
+      "sourceZipSha256": "63aa1ca0e241d55a06f0074f3fd3b7a652cc10e2ed6121d43d094ecbbf61142f"
+    },
+    {
+      "caseId": "R03",
+      "scenario": "Project active/deleted/inactive/missing",
+      "expected": "Không đọc resource unavailable hoặc thay thế project khác.",
+      "before": "PARTIAL",
+      "after": "PASS",
+      "actual": "Student member và manager: project active hợp lệ; inactive/deleted/missing 403, không tự thay resource; SQL trước/sau khớp.",
+      "requiredVariants": [
+        "R02-R03-manager-active",
+        "R02-R03-manager-deleted",
+        "R02-R03-manager-foreign",
+        "R02-R03-manager-inactive",
+        "R02-R03-manager-missing",
+        "R02-R03-member-active",
+        "R02-R03-member-deleted",
+        "R02-R03-member-foreign",
+        "R02-R03-member-inactive",
+        "R02-R03-member-missing"
+      ],
+      "requiredEvidenceLayers": [
+        "Spring/JWT/MySQL",
+        "production Python HTTP/parser/validator",
+        "SQL/context oracle"
+      ],
+      "backend": "SCRIPTED_TEST",
+      "modelSelectionVerifiedThisRun": false,
+      "requestIds": [
+        "R02-R03-manager-active-a05bcdbe-c9b3-4d8f-8666-769dc3cbdea6",
+        "R02-R03-manager-inactive-b6ab6763-afb3-44e9-a6bb-e3ab46b9237f",
+        "R02-R03-manager-deleted-461cd9ce-9993-4e4c-85c6-313d7430c4a5",
+        "R02-R03-manager-missing-48f795ff-bb0b-452f-8636-ab320e5640e8",
+        "R02-R03-manager-foreign-cff966d4-8350-40d4-a4f9-63877a209409",
+        "R02-R03-member-active-8bdfabb1-938f-4e2c-af95-2a72cc356bee",
+        "R02-R03-member-inactive-0af09ee6-66f8-446a-9cdc-24510452e004",
+        "R02-R03-member-deleted-16c0787f-7653-47ca-9766-988c81505cee",
+        "R02-R03-member-missing-313a8c0a-b4c6-4ae1-84f9-3eeb6daf2a86",
+        "R02-R03-member-foreign-7125f28e-4b9a-4f17-8698-cc4e403dbcc9"
+      ],
+      "assertions": [
+        {
+          "requestId": "R02-R03-manager-active-a05bcdbe-c9b3-4d8f-8666-769dc3cbdea6",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "R02-R03-manager-active",
+          "expected": "Authorized project facts",
+          "actual": {
+            "id": 40,
+            "lab_id": 101,
+            "title": "LOCAL_PROJECT_PRIVATE_41ebc68d-1f1a-4326-80f9-ee636ac4d007",
+            "active": true,
+            "deleted": false,
+            "status": "DRAFT"
+          },
+          "caseIds": [
+            "R02",
+            "R03"
+          ]
+        },
+        {
+          "requestId": "R02-R03-manager-inactive-b6ab6763-afb3-44e9-a6bb-e3ab46b9237f",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "R02-R03-manager-inactive",
+          "expected": "403 without neighbouring project",
+          "actual": {
+            "id": 41,
+            "lab_id": 102,
+            "title": "LOCAL_PROJECT_PRIVATE_19057002-8270-4d7d-9474-e62bac633091",
+            "active": false,
+            "deleted": false,
+            "status": "DRAFT"
+          },
+          "caseIds": [
+            "R02",
+            "R03"
+          ]
+        },
+        {
+          "requestId": "R02-R03-manager-deleted-461cd9ce-9993-4e4c-85c6-313d7430c4a5",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "R02-R03-manager-deleted",
+          "expected": "403 without neighbouring project",
+          "actual": {
+            "id": 42,
+            "lab_id": 103,
+            "title": "LOCAL_PROJECT_PRIVATE_b3657995-9906-4e4b-bcd3-28c2efaa0ac0",
+            "active": true,
+            "deleted": true,
+            "status": "DRAFT"
+          },
+          "caseIds": [
+            "R02",
+            "R03"
+          ]
+        },
+        {
+          "requestId": "R02-R03-manager-missing-48f795ff-bb0b-452f-8636-ab320e5640e8",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "R02-R03-manager-missing",
+          "expected": "403 without neighbouring project",
+          "actual": {
+            "id": 43,
+            "lab_id": 104,
+            "title": "LOCAL_PROJECT_PRIVATE_56900b81-8057-4efb-b2a5-0daccf48cb6e",
+            "active": true,
+            "deleted": false,
+            "status": "DRAFT"
+          },
+          "caseIds": [
+            "R02",
+            "R03"
+          ]
+        },
+        {
+          "requestId": "R02-R03-manager-foreign-cff966d4-8350-40d4-a4f9-63877a209409",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "R02-R03-manager-foreign",
+          "expected": "403 without neighbouring project",
+          "actual": {
+            "id": 45,
+            "lab_id": 106,
+            "title": "LOCAL_PROJECT_PRIVATE_6c5a9010-265e-4d25-8608-9428836f27ac",
+            "active": true,
+            "deleted": false,
+            "status": "DRAFT"
+          },
+          "caseIds": [
+            "R02",
+            "R03"
+          ]
+        },
+        {
+          "requestId": "R02-R03-member-active-8bdfabb1-938f-4e2c-af95-2a72cc356bee",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "R02-R03-member-active",
+          "expected": "Authorized project facts",
+          "actual": {
+            "id": 46,
+            "lab_id": 107,
+            "title": "LOCAL_PROJECT_PRIVATE_5ade3025-e64a-4472-8210-24620a9e6b0b",
+            "active": true,
+            "deleted": false,
+            "status": "DRAFT"
+          },
+          "caseIds": [
+            "R02",
+            "R03"
+          ]
+        },
+        {
+          "requestId": "R02-R03-member-inactive-0af09ee6-66f8-446a-9cdc-24510452e004",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "R02-R03-member-inactive",
+          "expected": "403 without neighbouring project",
+          "actual": {
+            "id": 47,
+            "lab_id": 108,
+            "title": "LOCAL_PROJECT_PRIVATE_daafa6bf-df78-442b-b615-ac82c242d0cc",
+            "active": false,
+            "deleted": false,
+            "status": "DRAFT"
+          },
+          "caseIds": [
+            "R02",
+            "R03"
+          ]
+        },
+        {
+          "requestId": "R02-R03-member-deleted-16c0787f-7653-47ca-9766-988c81505cee",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "R02-R03-member-deleted",
+          "expected": "403 without neighbouring project",
+          "actual": {
+            "id": 48,
+            "lab_id": 109,
+            "title": "LOCAL_PROJECT_PRIVATE_e28c8a9a-d458-4825-a276-004a4e3b62bc",
+            "active": true,
+            "deleted": true,
+            "status": "DRAFT"
+          },
+          "caseIds": [
+            "R02",
+            "R03"
+          ]
+        },
+        {
+          "requestId": "R02-R03-member-missing-313a8c0a-b4c6-4ae1-84f9-3eeb6daf2a86",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "R02-R03-member-missing",
+          "expected": "403 without neighbouring project",
+          "actual": {
+            "id": 49,
+            "lab_id": 110,
+            "title": "LOCAL_PROJECT_PRIVATE_04ebcd6e-e775-4615-b67b-9eb160f0c2e2",
+            "active": true,
+            "deleted": false,
+            "status": "DRAFT"
+          },
+          "caseIds": [
+            "R02",
+            "R03"
+          ]
+        },
+        {
+          "requestId": "R02-R03-member-foreign-7125f28e-4b9a-4f17-8698-cc4e403dbcc9",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "R02-R03-member-foreign",
+          "expected": "403 without neighbouring project",
+          "actual": {
+            "id": 51,
+            "lab_id": 112,
+            "title": "LOCAL_PROJECT_PRIVATE_8ca12bfe-93c2-4748-895a-1d886213895e",
+            "active": true,
+            "deleted": false,
+            "status": "DRAFT"
+          },
+          "caseIds": [
+            "R02",
+            "R03"
+          ]
+        }
+      ],
+      "pendingReason": "",
+      "evidence": [
+        ".artifacts/ai-fixture-expansion-20261104/integration-final/fixture-assertions.jsonl",
+        ".artifacts/ai-fixture-expansion-20261104/integration-final/wire-results.jsonl",
+        ".artifacts/ai-fixture-expansion-20261104/integration-final/source-fingerprint.json",
+        ".artifacts/ai-fixture-expansion-20261104/integration-final/junit/mysql-http"
+      ],
+      "sourceZipSha256": "63aa1ca0e241d55a06f0074f3fd3b7a652cc10e2ed6121d43d094ecbbf61142f"
+    },
+    {
+      "caseId": "R20",
+      "scenario": "Leader self-review; member thường; manager Lab khác",
+      "expected": "Không cấp quyền ngoài report-review policy.",
+      "before": "PENDING_FIXTURE",
+      "after": "PASS",
+      "actual": "Leader tự review, member thường và manager Lab khác đều 403; catalog không cấp report-review candidate và official review không đổi.",
+      "requiredVariants": [
+        "R20-foreignManager",
+        "R20-ordinaryMember",
+        "R20-selfLeader"
+      ],
+      "requiredEvidenceLayers": [
+        "Spring/JWT/MySQL",
+        "production Python HTTP/parser/validator",
+        "SQL/context oracle"
+      ],
+      "backend": "SCRIPTED_TEST",
+      "modelSelectionVerifiedThisRun": false,
+      "requestIds": [
+        "R20-selfLeader-db34b439-aa05-43fe-83e8-122a42c510c8",
+        "R20-ordinaryMember-e9566093-c575-486e-841b-97a82a4d2e25",
+        "R20-foreignManager-2d11bed6-c5e3-4602-94cf-76c8940351fd"
+      ],
+      "assertions": [
+        {
+          "requestId": "R20-selfLeader-db34b439-aa05-43fe-83e8-122a42c510c8",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "R20-selfLeader",
+          "expected": "403 and unchanged official review",
+          "actual": {
+            "project_id": 37,
+            "group_id": 77,
+            "milestone_id": 74,
+            "task_id": 84,
+            "status": "SUBMITTED",
+            "leader_reviewer_id": null,
+            "leader_reviewed_at": null,
+            "leader_comment": null,
+            "manager_reviewer_id": null,
+            "manager_reviewed_at": null,
+            "manager_comment": null
+          },
+          "caseIds": [
+            "R20"
+          ]
+        },
+        {
+          "requestId": "R20-ordinaryMember-e9566093-c575-486e-841b-97a82a4d2e25",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "R20-ordinaryMember",
+          "expected": "403 and unchanged official review",
+          "actual": {
+            "project_id": 38,
+            "group_id": 78,
+            "milestone_id": 75,
+            "task_id": 85,
+            "status": "SUBMITTED",
+            "leader_reviewer_id": null,
+            "leader_reviewed_at": null,
+            "leader_comment": null,
+            "manager_reviewer_id": null,
+            "manager_reviewed_at": null,
+            "manager_comment": null
+          },
+          "caseIds": [
+            "R20"
+          ]
+        },
+        {
+          "requestId": "R20-foreignManager-2d11bed6-c5e3-4602-94cf-76c8940351fd",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "R20-foreignManager",
+          "expected": "403 and unchanged official review",
+          "actual": {
+            "project_id": 39,
+            "group_id": 79,
+            "milestone_id": 76,
+            "task_id": 86,
+            "status": "SUBMITTED",
+            "leader_reviewer_id": null,
+            "leader_reviewed_at": null,
+            "leader_comment": null,
+            "manager_reviewer_id": null,
+            "manager_reviewed_at": null,
+            "manager_comment": null
+          },
+          "caseIds": [
+            "R20"
+          ]
+        }
+      ],
+      "pendingReason": "",
+      "evidence": [
+        ".artifacts/ai-fixture-expansion-20261104/integration-final/fixture-assertions.jsonl",
+        ".artifacts/ai-fixture-expansion-20261104/integration-final/wire-results.jsonl",
+        ".artifacts/ai-fixture-expansion-20261104/integration-final/source-fingerprint.json",
+        ".artifacts/ai-fixture-expansion-20261104/integration-final/junit/mysql-http"
+      ],
+      "sourceZipSha256": "63aa1ca0e241d55a06f0074f3fd3b7a652cc10e2ed6121d43d094ecbbf61142f"
+    },
+    {
+      "caseId": "R21",
+      "scenario": "Report thiếu/inactive/deleted, task/project/group/milestone lệch",
+      "expected": "Không tạo review như dữ liệu coherent.",
+      "before": "PARTIAL",
+      "after": "PASS",
+      "actual": "38 biến thể 19 state/mismatch × leader/manager: resource hợp lệ trước khi đổi; sau đổi 403; project/group/task/milestone coherence bắt buộc, official review không đổi.",
+      "requiredVariants": [
+        "R21-leader-groupDeleted",
+        "R21-leader-groupInactive",
+        "R21-leader-milestoneDeleted",
+        "R21-leader-milestoneGroupMismatch",
+        "R21-leader-milestoneInactive",
+        "R21-leader-milestoneProjectMismatch",
+        "R21-leader-missing",
+        "R21-leader-projectDeleted",
+        "R21-leader-projectInactive",
+        "R21-leader-reportDeleted",
+        "R21-leader-reportGroupMismatch",
+        "R21-leader-reportInactive",
+        "R21-leader-reportMilestoneMismatch",
+        "R21-leader-reportProjectMismatch",
+        "R21-leader-taskDeleted",
+        "R21-leader-taskGroupMismatch",
+        "R21-leader-taskInactive",
+        "R21-leader-taskMilestoneMismatch",
+        "R21-leader-taskProjectMismatch",
+        "R21-manager-groupDeleted",
+        "R21-manager-groupInactive",
+        "R21-manager-milestoneDeleted",
+        "R21-manager-milestoneGroupMismatch",
+        "R21-manager-milestoneInactive",
+        "R21-manager-milestoneProjectMismatch",
+        "R21-manager-missing",
+        "R21-manager-projectDeleted",
+        "R21-manager-projectInactive",
+        "R21-manager-reportDeleted",
+        "R21-manager-reportGroupMismatch",
+        "R21-manager-reportInactive",
+        "R21-manager-reportMilestoneMismatch",
+        "R21-manager-reportProjectMismatch",
+        "R21-manager-taskDeleted",
+        "R21-manager-taskGroupMismatch",
+        "R21-manager-taskInactive",
+        "R21-manager-taskMilestoneMismatch",
+        "R21-manager-taskProjectMismatch"
+      ],
+      "requiredEvidenceLayers": [
+        "Spring/JWT/MySQL",
+        "production Python HTTP/parser/validator",
+        "SQL/context oracle"
+      ],
+      "backend": "SCRIPTED_TEST",
+      "modelSelectionVerifiedThisRun": false,
+      "requestIds": [
+        "R21-leader-missing-ea32875a-4c50-463d-b0dc-9fadc5a0aad6",
+        "R21-manager-missing-54513042-5d36-40cf-82fe-286593a7a13d",
+        "R21-leader-reportInactive-bd7f11df-c724-4673-81fe-2b79f70add79",
+        "R21-manager-reportInactive-be64c766-c2d0-427d-8a71-102ea6f08aba",
+        "R21-leader-reportDeleted-3901f3f3-536c-4395-94ad-0205ddc40f0f",
+        "R21-manager-reportDeleted-9e3c1fc6-c9fe-49de-9a67-b46861a07b5a",
+        "R21-leader-projectInactive-6510539c-6fc6-4a4c-b040-c367ef54b33e",
+        "R21-manager-projectInactive-e28c10c3-3e15-45ed-a7cb-cb4d5cabf793",
+        "R21-leader-projectDeleted-a324c2e2-5502-4041-9b21-4a466344a70b",
+        "R21-manager-projectDeleted-ff8fdaf5-e96f-49c7-9934-096a2a762c95",
+        "R21-leader-groupInactive-03b7f1e2-cd8e-4727-806f-32a9ea046dbe",
+        "R21-manager-groupInactive-23e2ffdc-cf04-4e3e-a46a-a551a0e53f2e",
+        "R21-leader-groupDeleted-48f1a77d-9181-4300-8fdd-361a9762d8fc",
+        "R21-manager-groupDeleted-b4b5f066-8146-471d-953e-566791ac9126",
+        "R21-leader-taskInactive-89b894a6-b965-46d7-b251-5691cd8bee85",
+        "R21-manager-taskInactive-857fe453-b474-4e83-a941-a6594393a988",
+        "R21-leader-taskDeleted-350c53a1-6105-4fc8-95a2-f6c43f5e1b77",
+        "R21-manager-taskDeleted-97e3c087-b19f-4ea0-b035-05b68b342a2e",
+        "R21-leader-milestoneInactive-1e2ceeac-a9aa-4c74-87ad-633d635a0a5c",
+        "R21-manager-milestoneInactive-db7435ae-9a6a-49e4-870a-dc04d15da2a1",
+        "R21-leader-milestoneDeleted-451a1558-8866-4541-a53a-4462e396594a",
+        "R21-manager-milestoneDeleted-9d6e9336-cf73-4efd-8ad4-5e7037cf1852",
+        "R21-leader-reportProjectMismatch-2a1d849c-f57c-4b9f-8bb0-dff9c91e1b05",
+        "R21-manager-reportProjectMismatch-ded52263-030d-468b-b8f4-da64f32bf87c",
+        "R21-leader-reportGroupMismatch-fe813d70-53db-4bb8-acbe-1384a97f508a",
+        "R21-manager-reportGroupMismatch-d6558ad9-eafa-4fcb-8a9f-6e0edc967a46",
+        "R21-leader-reportMilestoneMismatch-bc8cb17c-dacc-4975-96fa-f635c0afadce",
+        "R21-manager-reportMilestoneMismatch-3f5d0613-71d9-4871-a8ce-9452de8b506c",
+        "R21-leader-taskProjectMismatch-3eed7379-8432-4116-a1f3-78a68f94ad27",
+        "R21-manager-taskProjectMismatch-680032d7-9fbe-4ef6-8ed5-8846f930c787",
+        "R21-leader-taskGroupMismatch-0198ac25-b9c9-4b2a-b107-e2d184ca39cd",
+        "R21-manager-taskGroupMismatch-682ae898-3480-45cf-8bd4-63285173814b",
+        "R21-leader-taskMilestoneMismatch-f94ada29-c189-4f98-a8bb-63557491a8f7",
+        "R21-manager-taskMilestoneMismatch-7acfdb6a-d9a6-4682-bbfe-2a27015ed692",
+        "R21-leader-milestoneProjectMismatch-5eea6fe1-507c-4882-8327-6e212c3a4fc9",
+        "R21-manager-milestoneProjectMismatch-5b797a91-5a36-43ae-93d5-d50b417887f1",
+        "R21-leader-milestoneGroupMismatch-b8db7797-db9e-44bb-adfd-260fe96b152f",
+        "R21-manager-milestoneGroupMismatch-de490f07-b6d2-4f8b-b46e-bd22e9e2d91d"
+      ],
+      "assertions": [
+        {
+          "requestId": "R21-leader-missing-ea32875a-4c50-463d-b0dc-9fadc5a0aad6",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "R21-leader-missing",
+          "expected": "No draft for unavailable or incoherent resource",
+          "actual": {
+            "project_id": 52,
+            "group_id": 92,
+            "milestone_id": 89,
+            "task_id": 99,
+            "status": "SUBMITTED",
+            "leader_reviewer_id": null,
+            "leader_reviewed_at": null,
+            "leader_comment": null,
+            "manager_reviewer_id": null,
+            "manager_reviewed_at": null,
+            "manager_comment": null
+          },
+          "caseIds": [
+            "R21"
+          ]
+        },
+        {
+          "requestId": "R21-manager-missing-54513042-5d36-40cf-82fe-286593a7a13d",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "R21-manager-missing",
+          "expected": "No draft for unavailable or incoherent resource",
+          "actual": {
+            "project_id": 54,
+            "group_id": 94,
+            "milestone_id": 91,
+            "task_id": 101,
+            "status": "SUBMITTED",
+            "leader_reviewer_id": null,
+            "leader_reviewed_at": null,
+            "leader_comment": null,
+            "manager_reviewer_id": null,
+            "manager_reviewed_at": null,
+            "manager_comment": null
+          },
+          "caseIds": [
+            "R21"
+          ]
+        },
+        {
+          "requestId": "R21-leader-reportInactive-bd7f11df-c724-4673-81fe-2b79f70add79",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "R21-leader-reportInactive",
+          "expected": "No draft for unavailable or incoherent resource",
+          "actual": {
+            "project_id": 56,
+            "group_id": 96,
+            "milestone_id": 93,
+            "task_id": 103,
+            "status": "SUBMITTED",
+            "leader_reviewer_id": null,
+            "leader_reviewed_at": null,
+            "leader_comment": null,
+            "manager_reviewer_id": null,
+            "manager_reviewed_at": null,
+            "manager_comment": null
+          },
+          "caseIds": [
+            "R21"
+          ]
+        },
+        {
+          "requestId": "R21-manager-reportInactive-be64c766-c2d0-427d-8a71-102ea6f08aba",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "R21-manager-reportInactive",
+          "expected": "No draft for unavailable or incoherent resource",
+          "actual": {
+            "project_id": 58,
+            "group_id": 98,
+            "milestone_id": 95,
+            "task_id": 105,
+            "status": "SUBMITTED",
+            "leader_reviewer_id": null,
+            "leader_reviewed_at": null,
+            "leader_comment": null,
+            "manager_reviewer_id": null,
+            "manager_reviewed_at": null,
+            "manager_comment": null
+          },
+          "caseIds": [
+            "R21"
+          ]
+        },
+        {
+          "requestId": "R21-leader-reportDeleted-3901f3f3-536c-4395-94ad-0205ddc40f0f",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "R21-leader-reportDeleted",
+          "expected": "No draft for unavailable or incoherent resource",
+          "actual": {
+            "project_id": 60,
+            "group_id": 100,
+            "milestone_id": 97,
+            "task_id": 107,
+            "status": "SUBMITTED",
+            "leader_reviewer_id": null,
+            "leader_reviewed_at": null,
+            "leader_comment": null,
+            "manager_reviewer_id": null,
+            "manager_reviewed_at": null,
+            "manager_comment": null
+          },
+          "caseIds": [
+            "R21"
+          ]
+        },
+        {
+          "requestId": "R21-manager-reportDeleted-9e3c1fc6-c9fe-49de-9a67-b46861a07b5a",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "R21-manager-reportDeleted",
+          "expected": "No draft for unavailable or incoherent resource",
+          "actual": {
+            "project_id": 62,
+            "group_id": 102,
+            "milestone_id": 99,
+            "task_id": 109,
+            "status": "SUBMITTED",
+            "leader_reviewer_id": null,
+            "leader_reviewed_at": null,
+            "leader_comment": null,
+            "manager_reviewer_id": null,
+            "manager_reviewed_at": null,
+            "manager_comment": null
+          },
+          "caseIds": [
+            "R21"
+          ]
+        },
+        {
+          "requestId": "R21-leader-projectInactive-6510539c-6fc6-4a4c-b040-c367ef54b33e",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "R21-leader-projectInactive",
+          "expected": "No draft for unavailable or incoherent resource",
+          "actual": {
+            "project_id": 64,
+            "group_id": 104,
+            "milestone_id": 101,
+            "task_id": 111,
+            "status": "SUBMITTED",
+            "leader_reviewer_id": null,
+            "leader_reviewed_at": null,
+            "leader_comment": null,
+            "manager_reviewer_id": null,
+            "manager_reviewed_at": null,
+            "manager_comment": null
+          },
+          "caseIds": [
+            "R21"
+          ]
+        },
+        {
+          "requestId": "R21-manager-projectInactive-e28c10c3-3e15-45ed-a7cb-cb4d5cabf793",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "R21-manager-projectInactive",
+          "expected": "No draft for unavailable or incoherent resource",
+          "actual": {
+            "project_id": 66,
+            "group_id": 106,
+            "milestone_id": 103,
+            "task_id": 113,
+            "status": "SUBMITTED",
+            "leader_reviewer_id": null,
+            "leader_reviewed_at": null,
+            "leader_comment": null,
+            "manager_reviewer_id": null,
+            "manager_reviewed_at": null,
+            "manager_comment": null
+          },
+          "caseIds": [
+            "R21"
+          ]
+        },
+        {
+          "requestId": "R21-leader-projectDeleted-a324c2e2-5502-4041-9b21-4a466344a70b",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "R21-leader-projectDeleted",
+          "expected": "No draft for unavailable or incoherent resource",
+          "actual": {
+            "project_id": 68,
+            "group_id": 108,
+            "milestone_id": 105,
+            "task_id": 115,
+            "status": "SUBMITTED",
+            "leader_reviewer_id": null,
+            "leader_reviewed_at": null,
+            "leader_comment": null,
+            "manager_reviewer_id": null,
+            "manager_reviewed_at": null,
+            "manager_comment": null
+          },
+          "caseIds": [
+            "R21"
+          ]
+        },
+        {
+          "requestId": "R21-manager-projectDeleted-ff8fdaf5-e96f-49c7-9934-096a2a762c95",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "R21-manager-projectDeleted",
+          "expected": "No draft for unavailable or incoherent resource",
+          "actual": {
+            "project_id": 70,
+            "group_id": 110,
+            "milestone_id": 107,
+            "task_id": 117,
+            "status": "SUBMITTED",
+            "leader_reviewer_id": null,
+            "leader_reviewed_at": null,
+            "leader_comment": null,
+            "manager_reviewer_id": null,
+            "manager_reviewed_at": null,
+            "manager_comment": null
+          },
+          "caseIds": [
+            "R21"
+          ]
+        },
+        {
+          "requestId": "R21-leader-groupInactive-03b7f1e2-cd8e-4727-806f-32a9ea046dbe",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "R21-leader-groupInactive",
+          "expected": "No draft for unavailable or incoherent resource",
+          "actual": {
+            "project_id": 72,
+            "group_id": 112,
+            "milestone_id": 109,
+            "task_id": 119,
+            "status": "SUBMITTED",
+            "leader_reviewer_id": null,
+            "leader_reviewed_at": null,
+            "leader_comment": null,
+            "manager_reviewer_id": null,
+            "manager_reviewed_at": null,
+            "manager_comment": null
+          },
+          "caseIds": [
+            "R21"
+          ]
+        },
+        {
+          "requestId": "R21-manager-groupInactive-23e2ffdc-cf04-4e3e-a46a-a551a0e53f2e",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "R21-manager-groupInactive",
+          "expected": "No draft for unavailable or incoherent resource",
+          "actual": {
+            "project_id": 74,
+            "group_id": 114,
+            "milestone_id": 111,
+            "task_id": 121,
+            "status": "SUBMITTED",
+            "leader_reviewer_id": null,
+            "leader_reviewed_at": null,
+            "leader_comment": null,
+            "manager_reviewer_id": null,
+            "manager_reviewed_at": null,
+            "manager_comment": null
+          },
+          "caseIds": [
+            "R21"
+          ]
+        },
+        {
+          "requestId": "R21-leader-groupDeleted-48f1a77d-9181-4300-8fdd-361a9762d8fc",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "R21-leader-groupDeleted",
+          "expected": "No draft for unavailable or incoherent resource",
+          "actual": {
+            "project_id": 76,
+            "group_id": 116,
+            "milestone_id": 113,
+            "task_id": 123,
+            "status": "SUBMITTED",
+            "leader_reviewer_id": null,
+            "leader_reviewed_at": null,
+            "leader_comment": null,
+            "manager_reviewer_id": null,
+            "manager_reviewed_at": null,
+            "manager_comment": null
+          },
+          "caseIds": [
+            "R21"
+          ]
+        },
+        {
+          "requestId": "R21-manager-groupDeleted-b4b5f066-8146-471d-953e-566791ac9126",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "R21-manager-groupDeleted",
+          "expected": "No draft for unavailable or incoherent resource",
+          "actual": {
+            "project_id": 78,
+            "group_id": 118,
+            "milestone_id": 115,
+            "task_id": 125,
+            "status": "SUBMITTED",
+            "leader_reviewer_id": null,
+            "leader_reviewed_at": null,
+            "leader_comment": null,
+            "manager_reviewer_id": null,
+            "manager_reviewed_at": null,
+            "manager_comment": null
+          },
+          "caseIds": [
+            "R21"
+          ]
+        },
+        {
+          "requestId": "R21-leader-taskInactive-89b894a6-b965-46d7-b251-5691cd8bee85",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "R21-leader-taskInactive",
+          "expected": "No draft for unavailable or incoherent resource",
+          "actual": {
+            "project_id": 80,
+            "group_id": 120,
+            "milestone_id": 117,
+            "task_id": 127,
+            "status": "SUBMITTED",
+            "leader_reviewer_id": null,
+            "leader_reviewed_at": null,
+            "leader_comment": null,
+            "manager_reviewer_id": null,
+            "manager_reviewed_at": null,
+            "manager_comment": null
+          },
+          "caseIds": [
+            "R21"
+          ]
+        },
+        {
+          "requestId": "R21-manager-taskInactive-857fe453-b474-4e83-a941-a6594393a988",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "R21-manager-taskInactive",
+          "expected": "No draft for unavailable or incoherent resource",
+          "actual": {
+            "project_id": 82,
+            "group_id": 122,
+            "milestone_id": 119,
+            "task_id": 129,
+            "status": "SUBMITTED",
+            "leader_reviewer_id": null,
+            "leader_reviewed_at": null,
+            "leader_comment": null,
+            "manager_reviewer_id": null,
+            "manager_reviewed_at": null,
+            "manager_comment": null
+          },
+          "caseIds": [
+            "R21"
+          ]
+        },
+        {
+          "requestId": "R21-leader-taskDeleted-350c53a1-6105-4fc8-95a2-f6c43f5e1b77",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "R21-leader-taskDeleted",
+          "expected": "No draft for unavailable or incoherent resource",
+          "actual": {
+            "project_id": 84,
+            "group_id": 124,
+            "milestone_id": 121,
+            "task_id": 131,
+            "status": "SUBMITTED",
+            "leader_reviewer_id": null,
+            "leader_reviewed_at": null,
+            "leader_comment": null,
+            "manager_reviewer_id": null,
+            "manager_reviewed_at": null,
+            "manager_comment": null
+          },
+          "caseIds": [
+            "R21"
+          ]
+        },
+        {
+          "requestId": "R21-manager-taskDeleted-97e3c087-b19f-4ea0-b035-05b68b342a2e",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "R21-manager-taskDeleted",
+          "expected": "No draft for unavailable or incoherent resource",
+          "actual": {
+            "project_id": 86,
+            "group_id": 126,
+            "milestone_id": 123,
+            "task_id": 133,
+            "status": "SUBMITTED",
+            "leader_reviewer_id": null,
+            "leader_reviewed_at": null,
+            "leader_comment": null,
+            "manager_reviewer_id": null,
+            "manager_reviewed_at": null,
+            "manager_comment": null
+          },
+          "caseIds": [
+            "R21"
+          ]
+        },
+        {
+          "requestId": "R21-leader-milestoneInactive-1e2ceeac-a9aa-4c74-87ad-633d635a0a5c",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "R21-leader-milestoneInactive",
+          "expected": "No draft for unavailable or incoherent resource",
+          "actual": {
+            "project_id": 88,
+            "group_id": 128,
+            "milestone_id": 125,
+            "task_id": 135,
+            "status": "SUBMITTED",
+            "leader_reviewer_id": null,
+            "leader_reviewed_at": null,
+            "leader_comment": null,
+            "manager_reviewer_id": null,
+            "manager_reviewed_at": null,
+            "manager_comment": null
+          },
+          "caseIds": [
+            "R21"
+          ]
+        },
+        {
+          "requestId": "R21-manager-milestoneInactive-db7435ae-9a6a-49e4-870a-dc04d15da2a1",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "R21-manager-milestoneInactive",
+          "expected": "No draft for unavailable or incoherent resource",
+          "actual": {
+            "project_id": 90,
+            "group_id": 130,
+            "milestone_id": 127,
+            "task_id": 137,
+            "status": "SUBMITTED",
+            "leader_reviewer_id": null,
+            "leader_reviewed_at": null,
+            "leader_comment": null,
+            "manager_reviewer_id": null,
+            "manager_reviewed_at": null,
+            "manager_comment": null
+          },
+          "caseIds": [
+            "R21"
+          ]
+        },
+        {
+          "requestId": "R21-leader-milestoneDeleted-451a1558-8866-4541-a53a-4462e396594a",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "R21-leader-milestoneDeleted",
+          "expected": "No draft for unavailable or incoherent resource",
+          "actual": {
+            "project_id": 92,
+            "group_id": 132,
+            "milestone_id": 129,
+            "task_id": 139,
+            "status": "SUBMITTED",
+            "leader_reviewer_id": null,
+            "leader_reviewed_at": null,
+            "leader_comment": null,
+            "manager_reviewer_id": null,
+            "manager_reviewed_at": null,
+            "manager_comment": null
+          },
+          "caseIds": [
+            "R21"
+          ]
+        },
+        {
+          "requestId": "R21-manager-milestoneDeleted-9d6e9336-cf73-4efd-8ad4-5e7037cf1852",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "R21-manager-milestoneDeleted",
+          "expected": "No draft for unavailable or incoherent resource",
+          "actual": {
+            "project_id": 94,
+            "group_id": 134,
+            "milestone_id": 131,
+            "task_id": 141,
+            "status": "SUBMITTED",
+            "leader_reviewer_id": null,
+            "leader_reviewed_at": null,
+            "leader_comment": null,
+            "manager_reviewer_id": null,
+            "manager_reviewed_at": null,
+            "manager_comment": null
+          },
+          "caseIds": [
+            "R21"
+          ]
+        },
+        {
+          "requestId": "R21-leader-reportProjectMismatch-2a1d849c-f57c-4b9f-8bb0-dff9c91e1b05",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "R21-leader-reportProjectMismatch",
+          "expected": "No draft for unavailable or incoherent resource",
+          "actual": {
+            "project_id": 97,
+            "group_id": 136,
+            "milestone_id": 133,
+            "task_id": 143,
+            "status": "SUBMITTED",
+            "leader_reviewer_id": null,
+            "leader_reviewed_at": null,
+            "leader_comment": null,
+            "manager_reviewer_id": null,
+            "manager_reviewed_at": null,
+            "manager_comment": null
+          },
+          "caseIds": [
+            "R21"
+          ]
+        },
+        {
+          "requestId": "R21-manager-reportProjectMismatch-ded52263-030d-468b-b8f4-da64f32bf87c",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "R21-manager-reportProjectMismatch",
+          "expected": "No draft for unavailable or incoherent resource",
+          "actual": {
+            "project_id": 99,
+            "group_id": 138,
+            "milestone_id": 135,
+            "task_id": 145,
+            "status": "SUBMITTED",
+            "leader_reviewer_id": null,
+            "leader_reviewed_at": null,
+            "leader_comment": null,
+            "manager_reviewer_id": null,
+            "manager_reviewed_at": null,
+            "manager_comment": null
+          },
+          "caseIds": [
+            "R21"
+          ]
+        },
+        {
+          "requestId": "R21-leader-reportGroupMismatch-fe813d70-53db-4bb8-acbe-1384a97f508a",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "R21-leader-reportGroupMismatch",
+          "expected": "No draft for unavailable or incoherent resource",
+          "actual": {
+            "project_id": 100,
+            "group_id": 141,
+            "milestone_id": 137,
+            "task_id": 147,
+            "status": "SUBMITTED",
+            "leader_reviewer_id": null,
+            "leader_reviewed_at": null,
+            "leader_comment": null,
+            "manager_reviewer_id": null,
+            "manager_reviewed_at": null,
+            "manager_comment": null
+          },
+          "caseIds": [
+            "R21"
+          ]
+        },
+        {
+          "requestId": "R21-manager-reportGroupMismatch-d6558ad9-eafa-4fcb-8a9f-6e0edc967a46",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "R21-manager-reportGroupMismatch",
+          "expected": "No draft for unavailable or incoherent resource",
+          "actual": {
+            "project_id": 102,
+            "group_id": 143,
+            "milestone_id": 139,
+            "task_id": 149,
+            "status": "SUBMITTED",
+            "leader_reviewer_id": null,
+            "leader_reviewed_at": null,
+            "leader_comment": null,
+            "manager_reviewer_id": null,
+            "manager_reviewed_at": null,
+            "manager_comment": null
+          },
+          "caseIds": [
+            "R21"
+          ]
+        },
+        {
+          "requestId": "R21-leader-reportMilestoneMismatch-bc8cb17c-dacc-4975-96fa-f635c0afadce",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "R21-leader-reportMilestoneMismatch",
+          "expected": "No draft for unavailable or incoherent resource",
+          "actual": {
+            "project_id": 104,
+            "group_id": 144,
+            "milestone_id": 142,
+            "task_id": 151,
+            "status": "SUBMITTED",
+            "leader_reviewer_id": null,
+            "leader_reviewed_at": null,
+            "leader_comment": null,
+            "manager_reviewer_id": null,
+            "manager_reviewed_at": null,
+            "manager_comment": null
+          },
+          "caseIds": [
+            "R21"
+          ]
+        },
+        {
+          "requestId": "R21-manager-reportMilestoneMismatch-3f5d0613-71d9-4871-a8ce-9452de8b506c",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "R21-manager-reportMilestoneMismatch",
+          "expected": "No draft for unavailable or incoherent resource",
+          "actual": {
+            "project_id": 106,
+            "group_id": 146,
+            "milestone_id": 144,
+            "task_id": 153,
+            "status": "SUBMITTED",
+            "leader_reviewer_id": null,
+            "leader_reviewed_at": null,
+            "leader_comment": null,
+            "manager_reviewer_id": null,
+            "manager_reviewed_at": null,
+            "manager_comment": null
+          },
+          "caseIds": [
+            "R21"
+          ]
+        },
+        {
+          "requestId": "R21-leader-taskProjectMismatch-3eed7379-8432-4116-a1f3-78a68f94ad27",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "R21-leader-taskProjectMismatch",
+          "expected": "No draft for unavailable or incoherent resource",
+          "actual": {
+            "project_id": 108,
+            "group_id": 148,
+            "milestone_id": 145,
+            "task_id": 155,
+            "status": "SUBMITTED",
+            "leader_reviewer_id": null,
+            "leader_reviewed_at": null,
+            "leader_comment": null,
+            "manager_reviewer_id": null,
+            "manager_reviewed_at": null,
+            "manager_comment": null
+          },
+          "caseIds": [
+            "R21"
+          ]
+        },
+        {
+          "requestId": "R21-manager-taskProjectMismatch-680032d7-9fbe-4ef6-8ed5-8846f930c787",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "R21-manager-taskProjectMismatch",
+          "expected": "No draft for unavailable or incoherent resource",
+          "actual": {
+            "project_id": 110,
+            "group_id": 150,
+            "milestone_id": 147,
+            "task_id": 157,
+            "status": "SUBMITTED",
+            "leader_reviewer_id": null,
+            "leader_reviewed_at": null,
+            "leader_comment": null,
+            "manager_reviewer_id": null,
+            "manager_reviewed_at": null,
+            "manager_comment": null
+          },
+          "caseIds": [
+            "R21"
+          ]
+        },
+        {
+          "requestId": "R21-leader-taskGroupMismatch-0198ac25-b9c9-4b2a-b107-e2d184ca39cd",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "R21-leader-taskGroupMismatch",
+          "expected": "No draft for unavailable or incoherent resource",
+          "actual": {
+            "project_id": 112,
+            "group_id": 152,
+            "milestone_id": 149,
+            "task_id": 159,
+            "status": "SUBMITTED",
+            "leader_reviewer_id": null,
+            "leader_reviewed_at": null,
+            "leader_comment": null,
+            "manager_reviewer_id": null,
+            "manager_reviewed_at": null,
+            "manager_comment": null
+          },
+          "caseIds": [
+            "R21"
+          ]
+        },
+        {
+          "requestId": "R21-manager-taskGroupMismatch-682ae898-3480-45cf-8bd4-63285173814b",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "R21-manager-taskGroupMismatch",
+          "expected": "No draft for unavailable or incoherent resource",
+          "actual": {
+            "project_id": 114,
+            "group_id": 154,
+            "milestone_id": 151,
+            "task_id": 161,
+            "status": "SUBMITTED",
+            "leader_reviewer_id": null,
+            "leader_reviewed_at": null,
+            "leader_comment": null,
+            "manager_reviewer_id": null,
+            "manager_reviewed_at": null,
+            "manager_comment": null
+          },
+          "caseIds": [
+            "R21"
+          ]
+        },
+        {
+          "requestId": "R21-leader-taskMilestoneMismatch-f94ada29-c189-4f98-a8bb-63557491a8f7",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "R21-leader-taskMilestoneMismatch",
+          "expected": "No draft for unavailable or incoherent resource",
+          "actual": {
+            "project_id": 116,
+            "group_id": 156,
+            "milestone_id": 153,
+            "task_id": 163,
+            "status": "SUBMITTED",
+            "leader_reviewer_id": null,
+            "leader_reviewed_at": null,
+            "leader_comment": null,
+            "manager_reviewer_id": null,
+            "manager_reviewed_at": null,
+            "manager_comment": null
+          },
+          "caseIds": [
+            "R21"
+          ]
+        },
+        {
+          "requestId": "R21-manager-taskMilestoneMismatch-7acfdb6a-d9a6-4682-bbfe-2a27015ed692",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "R21-manager-taskMilestoneMismatch",
+          "expected": "No draft for unavailable or incoherent resource",
+          "actual": {
+            "project_id": 118,
+            "group_id": 158,
+            "milestone_id": 155,
+            "task_id": 165,
+            "status": "SUBMITTED",
+            "leader_reviewer_id": null,
+            "leader_reviewed_at": null,
+            "leader_comment": null,
+            "manager_reviewer_id": null,
+            "manager_reviewed_at": null,
+            "manager_comment": null
+          },
+          "caseIds": [
+            "R21"
+          ]
+        },
+        {
+          "requestId": "R21-leader-milestoneProjectMismatch-5eea6fe1-507c-4882-8327-6e212c3a4fc9",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "R21-leader-milestoneProjectMismatch",
+          "expected": "No draft for unavailable or incoherent resource",
+          "actual": {
+            "project_id": 120,
+            "group_id": 160,
+            "milestone_id": 157,
+            "task_id": 167,
+            "status": "SUBMITTED",
+            "leader_reviewer_id": null,
+            "leader_reviewed_at": null,
+            "leader_comment": null,
+            "manager_reviewer_id": null,
+            "manager_reviewed_at": null,
+            "manager_comment": null
+          },
+          "caseIds": [
+            "R21"
+          ]
+        },
+        {
+          "requestId": "R21-manager-milestoneProjectMismatch-5b797a91-5a36-43ae-93d5-d50b417887f1",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "R21-manager-milestoneProjectMismatch",
+          "expected": "No draft for unavailable or incoherent resource",
+          "actual": {
+            "project_id": 122,
+            "group_id": 162,
+            "milestone_id": 159,
+            "task_id": 169,
+            "status": "SUBMITTED",
+            "leader_reviewer_id": null,
+            "leader_reviewed_at": null,
+            "leader_comment": null,
+            "manager_reviewer_id": null,
+            "manager_reviewed_at": null,
+            "manager_comment": null
+          },
+          "caseIds": [
+            "R21"
+          ]
+        },
+        {
+          "requestId": "R21-leader-milestoneGroupMismatch-b8db7797-db9e-44bb-adfd-260fe96b152f",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "R21-leader-milestoneGroupMismatch",
+          "expected": "No draft for unavailable or incoherent resource",
+          "actual": {
+            "project_id": 124,
+            "group_id": 164,
+            "milestone_id": 161,
+            "task_id": 171,
+            "status": "SUBMITTED",
+            "leader_reviewer_id": null,
+            "leader_reviewed_at": null,
+            "leader_comment": null,
+            "manager_reviewer_id": null,
+            "manager_reviewed_at": null,
+            "manager_comment": null
+          },
+          "caseIds": [
+            "R21"
+          ]
+        },
+        {
+          "requestId": "R21-manager-milestoneGroupMismatch-de490f07-b6d2-4f8b-b46e-bd22e9e2d91d",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "R21-manager-milestoneGroupMismatch",
+          "expected": "No draft for unavailable or incoherent resource",
+          "actual": {
+            "project_id": 126,
+            "group_id": 166,
+            "milestone_id": 163,
+            "task_id": 173,
+            "status": "SUBMITTED",
+            "leader_reviewer_id": null,
+            "leader_reviewed_at": null,
+            "leader_comment": null,
+            "manager_reviewer_id": null,
+            "manager_reviewed_at": null,
+            "manager_comment": null
+          },
+          "caseIds": [
+            "R21"
+          ]
+        }
+      ],
+      "pendingReason": "",
+      "evidence": [
+        ".artifacts/ai-fixture-expansion-20261104/integration-final/fixture-assertions.jsonl",
+        ".artifacts/ai-fixture-expansion-20261104/integration-final/wire-results.jsonl",
+        ".artifacts/ai-fixture-expansion-20261104/integration-final/source-fingerprint.json",
+        ".artifacts/ai-fixture-expansion-20261104/integration-final/junit/mysql-http"
+      ],
+      "sourceZipSha256": "63aa1ca0e241d55a06f0074f3fd3b7a652cc10e2ed6121d43d094ecbbf61142f"
+    },
+    {
+      "caseId": "R26",
+      "scenario": "Thu hồi membership/assignment/manager giữa hai lượt",
+      "expected": "Context mới không còn dữ liệu ngoài quyền; history không bảo toàn quyền cũ.",
+      "before": "PENDING_FIXTURE",
+      "after": "PASS",
+      "actual": "Thu hồi group membership, assignment và manager giữa hai lượt: direct 403, unified cùng conversation REFUSED, official review không đổi; assignment trước đó có draft hợp lệ.",
+      "requiredVariants": [
+        "R26-assignment",
+        "R26-groupMembership",
+        "R26-manager"
+      ],
+      "requiredEvidenceLayers": [
+        "Spring/JWT/MySQL",
+        "production Python HTTP/parser/validator",
+        "SQL/context oracle"
+      ],
+      "backend": "SCRIPTED_TEST",
+      "modelSelectionVerifiedThisRun": false,
+      "requestIds": [
+        "R26-groupMembership-58bfe1cd-02d2-4bb7-8986-ce8936d932ec-before",
+        "R26-groupMembership-58bfe1cd-02d2-4bb7-8986-ce8936d932ec-direct",
+        "R26-groupMembership-58bfe1cd-02d2-4bb7-8986-ce8936d932ec-after",
+        "R26-assignment-8b2a89e7-f216-4ae5-841b-6349515956ea-before",
+        "R26-assignment-8b2a89e7-f216-4ae5-841b-6349515956ea-direct",
+        "R26-assignment-8b2a89e7-f216-4ae5-841b-6349515956ea-after",
+        "R26-manager-e3d1c7b1-f297-46c9-bdce-486647b3242a-before",
+        "R26-manager-e3d1c7b1-f297-46c9-bdce-486647b3242a-direct",
+        "R26-manager-e3d1c7b1-f297-46c9-bdce-486647b3242a-after"
+      ],
+      "assertions": [
+        {
+          "requestId": "R26-groupMembership-58bfe1cd-02d2-4bb7-8986-ce8936d932ec",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "R26-groupMembership",
+          "expected": "Two turns cannot preserve revoked groupMembership",
+          "actual": {
+            "project_id": 128,
+            "group_id": 168,
+            "milestone_id": 165,
+            "task_id": 175,
+            "status": "SUBMITTED",
+            "leader_reviewer_id": null,
+            "leader_reviewed_at": null,
+            "leader_comment": null,
+            "manager_reviewer_id": null,
+            "manager_reviewed_at": null,
+            "manager_comment": null
+          },
+          "caseIds": [
+            "R26"
+          ]
+        },
+        {
+          "requestId": "R26-assignment-8b2a89e7-f216-4ae5-841b-6349515956ea",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "R26-assignment",
+          "expected": "Two turns cannot preserve revoked assignment",
+          "actual": {
+            "project_id": 129,
+            "group_id": 169,
+            "milestone_id": 166,
+            "task_id": 176,
+            "status": "SUBMITTED",
+            "leader_reviewer_id": null,
+            "leader_reviewed_at": null,
+            "leader_comment": null,
+            "manager_reviewer_id": null,
+            "manager_reviewed_at": null,
+            "manager_comment": null
+          },
+          "caseIds": [
+            "R26"
+          ]
+        },
+        {
+          "requestId": "R26-manager-e3d1c7b1-f297-46c9-bdce-486647b3242a",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "R26-manager",
+          "expected": "Two turns cannot preserve revoked manager",
+          "actual": {
+            "project_id": 130,
+            "group_id": 170,
+            "milestone_id": 167,
+            "task_id": 177,
+            "status": "SUBMITTED",
+            "leader_reviewer_id": null,
+            "leader_reviewed_at": null,
+            "leader_comment": null,
+            "manager_reviewer_id": null,
+            "manager_reviewed_at": null,
+            "manager_comment": null
+          },
+          "caseIds": [
+            "R26"
+          ]
+        }
+      ],
+      "pendingReason": "",
+      "evidence": [
+        ".artifacts/ai-fixture-expansion-20261104/integration-final/fixture-assertions.jsonl",
+        ".artifacts/ai-fixture-expansion-20261104/integration-final/wire-results.jsonl",
+        ".artifacts/ai-fixture-expansion-20261104/integration-final/source-fingerprint.json",
+        ".artifacts/ai-fixture-expansion-20261104/integration-final/junit/mysql-http"
+      ],
+      "sourceZipSha256": "63aa1ca0e241d55a06f0074f3fd3b7a652cc10e2ed6121d43d094ecbbf61142f"
+    },
+    {
+      "caseId": "SEC02",
+      "scenario": "Actor inactive/deleted/locked sau lúc cấp JWT",
+      "expected": "Actor hiện tại không khả dụng; không tiếp tục quyền cũ.",
+      "before": "PENDING_FIXTURE",
+      "after": "PASS",
+      "actual": "9 tổ hợp 3 system role × inactive/deleted/suspended: JWT cấp trước thay đổi vẫn bị 403 tại direct và unified; DB actor giữ đúng state.",
+      "requiredVariants": [
+        "SEC02-ADMIN-deleted",
+        "SEC02-ADMIN-inactive",
+        "SEC02-ADMIN-locked",
+        "SEC02-LAB_MANAGER-deleted",
+        "SEC02-LAB_MANAGER-inactive",
+        "SEC02-LAB_MANAGER-locked",
+        "SEC02-STUDENT-deleted",
+        "SEC02-STUDENT-inactive",
+        "SEC02-STUDENT-locked"
+      ],
+      "requiredEvidenceLayers": [
+        "Spring/JWT/MySQL",
+        "production Python HTTP/parser/validator",
+        "SQL/context oracle"
+      ],
+      "backend": "SCRIPTED_TEST",
+      "modelSelectionVerifiedThisRun": false,
+      "requestIds": [
+        "SEC02-ADMIN-inactive-2e198b67-c0e6-4bcc-ae1e-4d1a6bda66ae-before",
+        "SEC02-ADMIN-inactive-2e198b67-c0e6-4bcc-ae1e-4d1a6bda66ae-after--1176157669",
+        "SEC02-ADMIN-inactive-2e198b67-c0e6-4bcc-ae1e-4d1a6bda66ae-after--746230320",
+        "SEC02-ADMIN-deleted-fcef6548-1c92-45bd-a5e9-575d7ad4916a-before",
+        "SEC02-ADMIN-deleted-fcef6548-1c92-45bd-a5e9-575d7ad4916a-after--1176157669",
+        "SEC02-ADMIN-deleted-fcef6548-1c92-45bd-a5e9-575d7ad4916a-after--746230320",
+        "SEC02-ADMIN-locked-bbe04ca1-54dc-468b-b67b-b450c7254d00-before",
+        "SEC02-ADMIN-locked-bbe04ca1-54dc-468b-b67b-b450c7254d00-after--1176157669",
+        "SEC02-ADMIN-locked-bbe04ca1-54dc-468b-b67b-b450c7254d00-after--746230320",
+        "SEC02-LAB_MANAGER-inactive-55c6752f-8dc4-46d5-8515-2c74578b4b6b-before",
+        "SEC02-LAB_MANAGER-inactive-55c6752f-8dc4-46d5-8515-2c74578b4b6b-after--1551663971",
+        "SEC02-LAB_MANAGER-inactive-55c6752f-8dc4-46d5-8515-2c74578b4b6b-after--746230320",
+        "SEC02-LAB_MANAGER-deleted-5f34ab9c-4bf1-4ff1-9a60-881acbaafbf1-before",
+        "SEC02-LAB_MANAGER-deleted-5f34ab9c-4bf1-4ff1-9a60-881acbaafbf1-after--1551663971",
+        "SEC02-LAB_MANAGER-deleted-5f34ab9c-4bf1-4ff1-9a60-881acbaafbf1-after--746230320",
+        "SEC02-LAB_MANAGER-locked-ce9f5b73-c1c5-40d7-98c5-5d7459a8dcea-before",
+        "SEC02-LAB_MANAGER-locked-ce9f5b73-c1c5-40d7-98c5-5d7459a8dcea-after--1551663971",
+        "SEC02-LAB_MANAGER-locked-ce9f5b73-c1c5-40d7-98c5-5d7459a8dcea-after--746230320",
+        "SEC02-STUDENT-inactive-f7cf853a-7179-4bc8-a147-f516d13111d8-before",
+        "SEC02-STUDENT-inactive-f7cf853a-7179-4bc8-a147-f516d13111d8-after--1551663971",
+        "SEC02-STUDENT-inactive-f7cf853a-7179-4bc8-a147-f516d13111d8-after--746230320",
+        "SEC02-STUDENT-deleted-3549c16b-e895-4a22-b750-9c125ad0378a-before",
+        "SEC02-STUDENT-deleted-3549c16b-e895-4a22-b750-9c125ad0378a-after--1551663971",
+        "SEC02-STUDENT-deleted-3549c16b-e895-4a22-b750-9c125ad0378a-after--746230320",
+        "SEC02-STUDENT-locked-fa89b4ed-1eff-4472-9076-1d1352fd854b-before",
+        "SEC02-STUDENT-locked-fa89b4ed-1eff-4472-9076-1d1352fd854b-after--1551663971",
+        "SEC02-STUDENT-locked-fa89b4ed-1eff-4472-9076-1d1352fd854b-after--746230320"
+      ],
+      "assertions": [
+        {
+          "requestId": "SEC02-ADMIN-inactive-2e198b67-c0e6-4bcc-ae1e-4d1a6bda66ae",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "SEC02-ADMIN-inactive",
+          "expected": "Old JWT denied by both entry points after inactive",
+          "actual": {
+            "active": false,
+            "deleted": false,
+            "status": "ACTIVE"
+          },
+          "caseIds": [
+            "SEC02"
+          ]
+        },
+        {
+          "requestId": "SEC02-ADMIN-deleted-fcef6548-1c92-45bd-a5e9-575d7ad4916a",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "SEC02-ADMIN-deleted",
+          "expected": "Old JWT denied by both entry points after deleted",
+          "actual": {
+            "active": true,
+            "deleted": true,
+            "status": "ACTIVE"
+          },
+          "caseIds": [
+            "SEC02"
+          ]
+        },
+        {
+          "requestId": "SEC02-ADMIN-locked-bbe04ca1-54dc-468b-b67b-b450c7254d00",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "SEC02-ADMIN-locked",
+          "expected": "Old JWT denied by both entry points after locked",
+          "actual": {
+            "active": true,
+            "deleted": false,
+            "status": "SUSPENDED"
+          },
+          "caseIds": [
+            "SEC02"
+          ]
+        },
+        {
+          "requestId": "SEC02-LAB_MANAGER-inactive-55c6752f-8dc4-46d5-8515-2c74578b4b6b",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "SEC02-LAB_MANAGER-inactive",
+          "expected": "Old JWT denied by both entry points after inactive",
+          "actual": {
+            "active": false,
+            "deleted": false,
+            "status": "ACTIVE"
+          },
+          "caseIds": [
+            "SEC02"
+          ]
+        },
+        {
+          "requestId": "SEC02-LAB_MANAGER-deleted-5f34ab9c-4bf1-4ff1-9a60-881acbaafbf1",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "SEC02-LAB_MANAGER-deleted",
+          "expected": "Old JWT denied by both entry points after deleted",
+          "actual": {
+            "active": true,
+            "deleted": true,
+            "status": "ACTIVE"
+          },
+          "caseIds": [
+            "SEC02"
+          ]
+        },
+        {
+          "requestId": "SEC02-LAB_MANAGER-locked-ce9f5b73-c1c5-40d7-98c5-5d7459a8dcea",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "SEC02-LAB_MANAGER-locked",
+          "expected": "Old JWT denied by both entry points after locked",
+          "actual": {
+            "active": true,
+            "deleted": false,
+            "status": "SUSPENDED"
+          },
+          "caseIds": [
+            "SEC02"
+          ]
+        },
+        {
+          "requestId": "SEC02-STUDENT-inactive-f7cf853a-7179-4bc8-a147-f516d13111d8",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "SEC02-STUDENT-inactive",
+          "expected": "Old JWT denied by both entry points after inactive",
+          "actual": {
+            "active": false,
+            "deleted": false,
+            "status": "ACTIVE"
+          },
+          "caseIds": [
+            "SEC02"
+          ]
+        },
+        {
+          "requestId": "SEC02-STUDENT-deleted-3549c16b-e895-4a22-b750-9c125ad0378a",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "SEC02-STUDENT-deleted",
+          "expected": "Old JWT denied by both entry points after deleted",
+          "actual": {
+            "active": true,
+            "deleted": true,
+            "status": "ACTIVE"
+          },
+          "caseIds": [
+            "SEC02"
+          ]
+        },
+        {
+          "requestId": "SEC02-STUDENT-locked-fa89b4ed-1eff-4472-9076-1d1352fd854b",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "SEC02-STUDENT-locked",
+          "expected": "Old JWT denied by both entry points after locked",
+          "actual": {
+            "active": true,
+            "deleted": false,
+            "status": "SUSPENDED"
+          },
+          "caseIds": [
+            "SEC02"
+          ]
+        }
+      ],
+      "pendingReason": "",
+      "evidence": [
+        ".artifacts/ai-fixture-expansion-20261104/integration-final/fixture-assertions.jsonl",
+        ".artifacts/ai-fixture-expansion-20261104/integration-final/wire-results.jsonl",
+        ".artifacts/ai-fixture-expansion-20261104/integration-final/source-fingerprint.json",
+        ".artifacts/ai-fixture-expansion-20261104/integration-final/junit/mysql-http"
+      ],
+      "sourceZipSha256": "63aa1ca0e241d55a06f0074f3fd3b7a652cc10e2ed6121d43d094ecbbf61142f"
+    },
+    {
+      "caseId": "G04",
+      "scenario": "LAB_MEMBERS: member, nonmember, revoked, Admin-only",
+      "expected": "Không lộ nội bộ từ public policy hoặc role Admin đơn thuần. P0, cần test runtime riêng.",
+      "before": "PARTIAL",
+      "after": "PARTIAL",
+      "actual": "10 biến thể direct/unified local: member có đúng private document/citation, nonmember và Admin-only không thấy; inactive/deleted membership mất canary ở lượt sau.",
+      "requiredVariants": [
+        "G04-G16-admin-false",
+        "G04-G16-admin-true",
+        "G04-G16-member-false",
+        "G04-G16-member-true",
+        "G04-G16-nonmember-false",
+        "G04-G16-nonmember-true",
+        "G04-G16-revokedDeleted-false",
+        "G04-G16-revokedDeleted-true",
+        "G04-G16-revokedInactive-false",
+        "G04-G16-revokedInactive-true"
+      ],
+      "requiredEvidenceLayers": [
+        "Spring/JWT/MySQL",
+        "production Python HTTP/parser/validator",
+        "SQL/context oracle",
+        "Kaggle model runtime, private history after revocation"
+      ],
+      "backend": "SCRIPTED_TEST",
+      "modelSelectionVerifiedThisRun": false,
+      "requestIds": [
+        "G04-G16-member-false-f309221d-9a85-4ff7-8e8d-0ea0b41a6148-before",
+        "G04-G16-nonmember-false-24045b64-7163-4b6f-a7d8-dd304e4179c1-before",
+        "G04-G16-admin-false-7ebe81a8-15f9-4db7-8f45-834281210218-before",
+        "G04-G16-revokedInactive-false-2e92a1a5-63c0-4252-9494-0e6de941a923-before",
+        "G04-G16-revokedInactive-false-2e92a1a5-63c0-4252-9494-0e6de941a923-after",
+        "G04-G16-revokedDeleted-false-073bce0e-3cfe-45af-a694-bbf57415d08f-before",
+        "G04-G16-revokedDeleted-false-073bce0e-3cfe-45af-a694-bbf57415d08f-after",
+        "G04-G16-member-true-7a6c51c8-7276-409a-9218-2649c881d829-before",
+        "G04-G16-nonmember-true-efcbd2e3-bca8-4509-a214-a29de4e50021-before",
+        "G04-G16-admin-true-536fa9b6-6ec6-4367-9cca-854e0ab918bf-before",
+        "G04-G16-revokedInactive-true-ee18dcd2-da09-4c89-869b-99c440290ba5-before",
+        "G04-G16-revokedInactive-true-ee18dcd2-da09-4c89-869b-99c440290ba5-after",
+        "G04-G16-revokedDeleted-true-6eba802a-28f2-4451-906e-cf71af2ba25a-before",
+        "G04-G16-revokedDeleted-true-6eba802a-28f2-4451-906e-cf71af2ba25a-after"
+      ],
+      "assertions": [
+        {
+          "requestId": "G04-G16-member-false-f309221d-9a85-4ff7-8e8d-0ea0b41a6148",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "G04-G16-member-false",
+          "expected": {
+            "privateAllowed": true
+          },
+          "actual": {
+            "citations": [
+              {
+                "documentId": 5,
+                "resourceId": "hybrid-rag-572f3442-eed6-4f08-a8f9-4428ace472c1",
+                "version": 1,
+                "chunkIndex": 0,
+                "pageNumber": 1,
+                "sourceType": "TEST_POLICY"
+              }
+            ]
+          },
+          "caseIds": [
+            "G04",
+            "G16"
+          ]
+        },
+        {
+          "requestId": "G04-G16-nonmember-false-24045b64-7163-4b6f-a7d8-dd304e4179c1",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "G04-G16-nonmember-false",
+          "expected": {
+            "privateAllowed": false
+          },
+          "actual": {
+            "citations": []
+          },
+          "caseIds": [
+            "G04",
+            "G16"
+          ]
+        },
+        {
+          "requestId": "G04-G16-admin-false-7ebe81a8-15f9-4db7-8f45-834281210218",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "G04-G16-admin-false",
+          "expected": {
+            "privateAllowed": false
+          },
+          "actual": {
+            "citations": []
+          },
+          "caseIds": [
+            "G04",
+            "G16"
+          ]
+        },
+        {
+          "requestId": "G04-G16-revokedInactive-false-2e92a1a5-63c0-4252-9494-0e6de941a923",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "G04-G16-revokedInactive-false",
+          "expected": "Private canary removed after revocation; stored history gives no authority",
+          "actual": {
+            "active": false,
+            "deleted": false
+          },
+          "caseIds": [
+            "G04",
+            "G16"
+          ]
+        },
+        {
+          "requestId": "G04-G16-revokedDeleted-false-073bce0e-3cfe-45af-a694-bbf57415d08f",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "G04-G16-revokedDeleted-false",
+          "expected": "Private canary removed after revocation; stored history gives no authority",
+          "actual": {
+            "active": true,
+            "deleted": true
+          },
+          "caseIds": [
+            "G04",
+            "G16"
+          ]
+        },
+        {
+          "requestId": "G04-G16-member-true-7a6c51c8-7276-409a-9218-2649c881d829",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "G04-G16-member-true",
+          "expected": {
+            "privateAllowed": true
+          },
+          "actual": {
+            "citations": [
+              {
+                "documentId": 10,
+                "resourceId": "hybrid-rag-3a3f90c9-0cae-4bb3-8e8f-126670adf309",
+                "version": 1,
+                "chunkIndex": 0,
+                "pageNumber": 1,
+                "sourceType": "TEST_POLICY"
+              }
+            ]
+          },
+          "caseIds": [
+            "G04",
+            "G16"
+          ]
+        },
+        {
+          "requestId": "G04-G16-nonmember-true-efcbd2e3-bca8-4509-a214-a29de4e50021",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "G04-G16-nonmember-true",
+          "expected": {
+            "privateAllowed": false
+          },
+          "actual": {
+            "citations": []
+          },
+          "caseIds": [
+            "G04",
+            "G16"
+          ]
+        },
+        {
+          "requestId": "G04-G16-admin-true-536fa9b6-6ec6-4367-9cca-854e0ab918bf",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "G04-G16-admin-true",
+          "expected": {
+            "privateAllowed": false
+          },
+          "actual": {
+            "citations": []
+          },
+          "caseIds": [
+            "G04",
+            "G16"
+          ]
+        },
+        {
+          "requestId": "G04-G16-revokedInactive-true-ee18dcd2-da09-4c89-869b-99c440290ba5",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "G04-G16-revokedInactive-true",
+          "expected": "Private canary removed after revocation; stored history gives no authority",
+          "actual": {
+            "active": false,
+            "deleted": false
+          },
+          "caseIds": [
+            "G04",
+            "G16"
+          ]
+        },
+        {
+          "requestId": "G04-G16-revokedDeleted-true-6eba802a-28f2-4451-906e-cf71af2ba25a",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "G04-G16-revokedDeleted-true",
+          "expected": "Private canary removed after revocation; stored history gives no authority",
+          "actual": {
+            "active": true,
+            "deleted": true
+          },
+          "caseIds": [
+            "G04",
+            "G16"
+          ]
+        }
+      ],
+      "pendingReason": "Đủ 10 biến thể local với parser/validator/context/RAG thật. Giữ PARTIAL vì tiêu chí P0 yêu cầu runtime riêng; chưa chạy model Kaggle cho private/unified/revoked cùng conversation.",
+      "evidence": [
+        ".artifacts/ai-fixture-expansion-20261104/integration-final/fixture-assertions.jsonl",
+        ".artifacts/ai-fixture-expansion-20261104/integration-final/wire-results.jsonl",
+        ".artifacts/ai-fixture-expansion-20261104/integration-final/source-fingerprint.json",
+        ".artifacts/ai-fixture-expansion-20261104/integration-final/junit/mysql-http"
+      ],
+      "sourceZipSha256": "63aa1ca0e241d55a06f0074f3fd3b7a652cc10e2ed6121d43d094ecbbf61142f"
+    },
+    {
+      "caseId": "G16",
+      "scenario": "Bỏ membership sau retrieval, hỏi lại cùng conversation",
+      "expected": "Không tái sử dụng chunk ngoài quyền từ lượt cũ.",
+      "before": "PENDING_FIXTURE",
+      "after": "PARTIAL",
+      "actual": "Đã revoke membership inactive/deleted sau retrieval, hỏi lại cùng conversation local: answer/citation không tái sử dụng private chunk; membership SQL không đổi.",
+      "requiredVariants": [
+        "G04-G16-admin-false",
+        "G04-G16-admin-true",
+        "G04-G16-member-false",
+        "G04-G16-member-true",
+        "G04-G16-nonmember-false",
+        "G04-G16-nonmember-true",
+        "G04-G16-revokedDeleted-false",
+        "G04-G16-revokedDeleted-true",
+        "G04-G16-revokedInactive-false",
+        "G04-G16-revokedInactive-true"
+      ],
+      "requiredEvidenceLayers": [
+        "Spring/JWT/MySQL",
+        "production Python HTTP/parser/validator",
+        "SQL/context oracle",
+        "Kaggle model runtime, private history after revocation"
+      ],
+      "backend": "SCRIPTED_TEST",
+      "modelSelectionVerifiedThisRun": false,
+      "requestIds": [
+        "G04-G16-member-false-f309221d-9a85-4ff7-8e8d-0ea0b41a6148-before",
+        "G04-G16-nonmember-false-24045b64-7163-4b6f-a7d8-dd304e4179c1-before",
+        "G04-G16-admin-false-7ebe81a8-15f9-4db7-8f45-834281210218-before",
+        "G04-G16-revokedInactive-false-2e92a1a5-63c0-4252-9494-0e6de941a923-before",
+        "G04-G16-revokedInactive-false-2e92a1a5-63c0-4252-9494-0e6de941a923-after",
+        "G04-G16-revokedDeleted-false-073bce0e-3cfe-45af-a694-bbf57415d08f-before",
+        "G04-G16-revokedDeleted-false-073bce0e-3cfe-45af-a694-bbf57415d08f-after",
+        "G04-G16-member-true-7a6c51c8-7276-409a-9218-2649c881d829-before",
+        "G04-G16-nonmember-true-efcbd2e3-bca8-4509-a214-a29de4e50021-before",
+        "G04-G16-admin-true-536fa9b6-6ec6-4367-9cca-854e0ab918bf-before",
+        "G04-G16-revokedInactive-true-ee18dcd2-da09-4c89-869b-99c440290ba5-before",
+        "G04-G16-revokedInactive-true-ee18dcd2-da09-4c89-869b-99c440290ba5-after",
+        "G04-G16-revokedDeleted-true-6eba802a-28f2-4451-906e-cf71af2ba25a-before",
+        "G04-G16-revokedDeleted-true-6eba802a-28f2-4451-906e-cf71af2ba25a-after"
+      ],
+      "assertions": [
+        {
+          "requestId": "G04-G16-member-false-f309221d-9a85-4ff7-8e8d-0ea0b41a6148",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "G04-G16-member-false",
+          "expected": {
+            "privateAllowed": true
+          },
+          "actual": {
+            "citations": [
+              {
+                "documentId": 5,
+                "resourceId": "hybrid-rag-572f3442-eed6-4f08-a8f9-4428ace472c1",
+                "version": 1,
+                "chunkIndex": 0,
+                "pageNumber": 1,
+                "sourceType": "TEST_POLICY"
+              }
+            ]
+          },
+          "caseIds": [
+            "G04",
+            "G16"
+          ]
+        },
+        {
+          "requestId": "G04-G16-nonmember-false-24045b64-7163-4b6f-a7d8-dd304e4179c1",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "G04-G16-nonmember-false",
+          "expected": {
+            "privateAllowed": false
+          },
+          "actual": {
+            "citations": []
+          },
+          "caseIds": [
+            "G04",
+            "G16"
+          ]
+        },
+        {
+          "requestId": "G04-G16-admin-false-7ebe81a8-15f9-4db7-8f45-834281210218",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "G04-G16-admin-false",
+          "expected": {
+            "privateAllowed": false
+          },
+          "actual": {
+            "citations": []
+          },
+          "caseIds": [
+            "G04",
+            "G16"
+          ]
+        },
+        {
+          "requestId": "G04-G16-revokedInactive-false-2e92a1a5-63c0-4252-9494-0e6de941a923",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "G04-G16-revokedInactive-false",
+          "expected": "Private canary removed after revocation; stored history gives no authority",
+          "actual": {
+            "active": false,
+            "deleted": false
+          },
+          "caseIds": [
+            "G04",
+            "G16"
+          ]
+        },
+        {
+          "requestId": "G04-G16-revokedDeleted-false-073bce0e-3cfe-45af-a694-bbf57415d08f",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "G04-G16-revokedDeleted-false",
+          "expected": "Private canary removed after revocation; stored history gives no authority",
+          "actual": {
+            "active": true,
+            "deleted": true
+          },
+          "caseIds": [
+            "G04",
+            "G16"
+          ]
+        },
+        {
+          "requestId": "G04-G16-member-true-7a6c51c8-7276-409a-9218-2649c881d829",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "G04-G16-member-true",
+          "expected": {
+            "privateAllowed": true
+          },
+          "actual": {
+            "citations": [
+              {
+                "documentId": 10,
+                "resourceId": "hybrid-rag-3a3f90c9-0cae-4bb3-8e8f-126670adf309",
+                "version": 1,
+                "chunkIndex": 0,
+                "pageNumber": 1,
+                "sourceType": "TEST_POLICY"
+              }
+            ]
+          },
+          "caseIds": [
+            "G04",
+            "G16"
+          ]
+        },
+        {
+          "requestId": "G04-G16-nonmember-true-efcbd2e3-bca8-4509-a214-a29de4e50021",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "G04-G16-nonmember-true",
+          "expected": {
+            "privateAllowed": false
+          },
+          "actual": {
+            "citations": []
+          },
+          "caseIds": [
+            "G04",
+            "G16"
+          ]
+        },
+        {
+          "requestId": "G04-G16-admin-true-536fa9b6-6ec6-4367-9cca-854e0ab918bf",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "G04-G16-admin-true",
+          "expected": {
+            "privateAllowed": false
+          },
+          "actual": {
+            "citations": []
+          },
+          "caseIds": [
+            "G04",
+            "G16"
+          ]
+        },
+        {
+          "requestId": "G04-G16-revokedInactive-true-ee18dcd2-da09-4c89-869b-99c440290ba5",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "G04-G16-revokedInactive-true",
+          "expected": "Private canary removed after revocation; stored history gives no authority",
+          "actual": {
+            "active": false,
+            "deleted": false
+          },
+          "caseIds": [
+            "G04",
+            "G16"
+          ]
+        },
+        {
+          "requestId": "G04-G16-revokedDeleted-true-6eba802a-28f2-4451-906e-cf71af2ba25a",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "G04-G16-revokedDeleted-true",
+          "expected": "Private canary removed after revocation; stored history gives no authority",
+          "actual": {
+            "active": true,
+            "deleted": true
+          },
+          "caseIds": [
+            "G04",
+            "G16"
+          ]
+        }
+      ],
+      "pendingReason": "Đã có fixture và hai lượt cùng conversation local cho inactive/deleted. Còn xác minh planner/model thật không tái dùng nội dung private trong history sau revoke trên Kaggle.",
+      "evidence": [
+        ".artifacts/ai-fixture-expansion-20261104/integration-final/fixture-assertions.jsonl",
+        ".artifacts/ai-fixture-expansion-20261104/integration-final/wire-results.jsonl",
+        ".artifacts/ai-fixture-expansion-20261104/integration-final/source-fingerprint.json",
+        ".artifacts/ai-fixture-expansion-20261104/integration-final/junit/mysql-http"
+      ],
+      "sourceZipSha256": "63aa1ca0e241d55a06f0074f3fd3b7a652cc10e2ed6121d43d094ecbbf61142f"
+    },
+    {
+      "caseId": "Q01",
+      "scenario": "Assistant enabled/disabled/missing config",
+      "expected": "Deny đúng availability, không fallback profile khác.",
+      "before": "PENDING_FIXTURE",
+      "after": "PASS",
+      "actual": "Cả ba assistant: enabled đọc được, disabled/missing config direct 403; unified theo contract hiện hành 403 hoặc REFUSED không assistant/citation/preview; config không bị tự khôi phục bởi request.",
+      "requiredVariants": [
+        "Q01-ADMIN_ASSISTANT-disabled",
+        "Q01-ADMIN_ASSISTANT-missing",
+        "Q01-LAB_ASSISTANT-disabled",
+        "Q01-LAB_ASSISTANT-missing",
+        "Q01-RESEARCH_ASSISTANT-disabled",
+        "Q01-RESEARCH_ASSISTANT-missing"
+      ],
+      "requiredEvidenceLayers": [
+        "Spring/JWT/MySQL",
+        "production Python HTTP/parser/validator",
+        "SQL/context oracle"
+      ],
+      "backend": "SCRIPTED_TEST",
+      "modelSelectionVerifiedThisRun": false,
+      "requestIds": [
+        "Q01-ADMIN_ASSISTANT-disabled-adce6f31-b268-4353-86ce-e91211a6c1f3-enabled",
+        "Q01-ADMIN_ASSISTANT-disabled-adce6f31-b268-4353-86ce-e91211a6c1f3-direct",
+        "Q01-ADMIN_ASSISTANT-disabled-adce6f31-b268-4353-86ce-e91211a6c1f3-unified",
+        "Q01-ADMIN_ASSISTANT-missing-919ff808-2a7c-4822-8b32-394d3a5cad7c-enabled",
+        "Q01-ADMIN_ASSISTANT-missing-919ff808-2a7c-4822-8b32-394d3a5cad7c-direct",
+        "Q01-ADMIN_ASSISTANT-missing-919ff808-2a7c-4822-8b32-394d3a5cad7c-unified",
+        "Q01-LAB_ASSISTANT-disabled-b024d733-7d67-4fe2-a200-29ea5aea867e-enabled",
+        "Q01-LAB_ASSISTANT-disabled-b024d733-7d67-4fe2-a200-29ea5aea867e-direct",
+        "Q01-LAB_ASSISTANT-disabled-b024d733-7d67-4fe2-a200-29ea5aea867e-unified",
+        "Q01-LAB_ASSISTANT-missing-5db4fca5-89fa-40ba-9506-208f0218ef52-enabled",
+        "Q01-LAB_ASSISTANT-missing-5db4fca5-89fa-40ba-9506-208f0218ef52-direct",
+        "Q01-LAB_ASSISTANT-missing-5db4fca5-89fa-40ba-9506-208f0218ef52-unified",
+        "Q01-RESEARCH_ASSISTANT-disabled-afeda175-693c-4c7a-85d1-e229f0e84ba4-enabled",
+        "Q01-RESEARCH_ASSISTANT-disabled-afeda175-693c-4c7a-85d1-e229f0e84ba4-direct",
+        "Q01-RESEARCH_ASSISTANT-disabled-afeda175-693c-4c7a-85d1-e229f0e84ba4-unified",
+        "Q01-RESEARCH_ASSISTANT-missing-ccfc8cd4-7e75-4166-8469-ad59ec05dc8e-enabled",
+        "Q01-RESEARCH_ASSISTANT-missing-ccfc8cd4-7e75-4166-8469-ad59ec05dc8e-direct",
+        "Q01-RESEARCH_ASSISTANT-missing-ccfc8cd4-7e75-4166-8469-ad59ec05dc8e-unified"
+      ],
+      "assertions": [
+        {
+          "requestId": "Q01-ADMIN_ASSISTANT-disabled-adce6f31-b268-4353-86ce-e91211a6c1f3",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "Q01-ADMIN_ASSISTANT-disabled",
+          "expected": "Disabled or missing configuration cannot fall back to another assistant",
+          "actual": [
+            {
+              "assistant_key": "ADMIN_ASSISTANT",
+              "enabled": false
+            }
+          ],
+          "caseIds": [
+            "Q01"
+          ]
+        },
+        {
+          "requestId": "Q01-ADMIN_ASSISTANT-missing-919ff808-2a7c-4822-8b32-394d3a5cad7c",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "Q01-ADMIN_ASSISTANT-missing",
+          "expected": "Disabled or missing configuration cannot fall back to another assistant",
+          "actual": [],
+          "caseIds": [
+            "Q01"
+          ]
+        },
+        {
+          "requestId": "Q01-LAB_ASSISTANT-disabled-b024d733-7d67-4fe2-a200-29ea5aea867e",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "Q01-LAB_ASSISTANT-disabled",
+          "expected": "Disabled or missing configuration cannot fall back to another assistant",
+          "actual": [
+            {
+              "assistant_key": "LAB_ASSISTANT",
+              "enabled": false
+            }
+          ],
+          "caseIds": [
+            "Q01"
+          ]
+        },
+        {
+          "requestId": "Q01-LAB_ASSISTANT-missing-5db4fca5-89fa-40ba-9506-208f0218ef52",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "Q01-LAB_ASSISTANT-missing",
+          "expected": "Disabled or missing configuration cannot fall back to another assistant",
+          "actual": [],
+          "caseIds": [
+            "Q01"
+          ]
+        },
+        {
+          "requestId": "Q01-RESEARCH_ASSISTANT-disabled-afeda175-693c-4c7a-85d1-e229f0e84ba4",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "Q01-RESEARCH_ASSISTANT-disabled",
+          "expected": "Disabled or missing configuration cannot fall back to another assistant",
+          "actual": [
+            {
+              "assistant_key": "RESEARCH_ASSISTANT",
+              "enabled": false
+            }
+          ],
+          "caseIds": [
+            "Q01"
+          ]
+        },
+        {
+          "requestId": "Q01-RESEARCH_ASSISTANT-missing-ccfc8cd4-7e75-4166-8469-ad59ec05dc8e",
+          "backend": "SCRIPTED_TEST",
+          "evidenceLayer": "Spring/JWT/MySQL/Python",
+          "sourceFingerprint": "source-fingerprint.json",
+          "status": "PASS",
+          "variant": "Q01-RESEARCH_ASSISTANT-missing",
+          "expected": "Disabled or missing configuration cannot fall back to another assistant",
+          "actual": [],
+          "caseIds": [
+            "Q01"
+          ]
+        }
+      ],
+      "pendingReason": "",
+      "evidence": [
+        ".artifacts/ai-fixture-expansion-20261104/integration-final/fixture-assertions.jsonl",
+        ".artifacts/ai-fixture-expansion-20261104/integration-final/wire-results.jsonl",
+        ".artifacts/ai-fixture-expansion-20261104/integration-final/source-fingerprint.json",
+        ".artifacts/ai-fixture-expansion-20261104/integration-final/junit/mysql-http"
+      ],
+      "sourceZipSha256": "63aa1ca0e241d55a06f0074f3fd3b7a652cc10e2ed6121d43d094ecbbf61142f"
+    }
+  ],
+  "measurementBoundary": "New proofs use real Spring/JWT/MySQL and production Python processing with controlled planner/generation outputs. Closing the 13 cases proves database facts and access boundaries. It does not establish new real-model language/inference coverage or Kaggle platform behavior.",
+  "retainedFailures": [
+    ".artifacts/ai-fixture-expansion-20261104/round-1",
+    ".artifacts/ai-fixture-expansion-20261104/round-2"
+  ],
+  "harnessCorrections": [
+    "Response omits null data; default unauthenticated Security entry point returns 403.",
+    "Unified requests must contain its own DTO fields, not direct-chat capability fields.",
+    "Second Lab membership keeps Portal admission open to exercise revocation at the target resource.",
+    "Scripted draft planner outputs must use OTHER_DRAFT, preserving the real semantic validator.",
+    "Disabled resource candidates yield established REFUSED responses; global Admin candidates are denied by the gateway."
+  ],
+  "productionChangesThisRun": [],
+  "paths": [
+    ".artifacts/ai-fixture-expansion-20261104/integration-final/fixture-assertions.jsonl",
+    ".artifacts/ai-fixture-expansion-20261104/integration-final/wire-results.jsonl",
+    ".artifacts/ai-fixture-expansion-20261104/integration-final/source-fingerprint.json",
+    ".artifacts/ai-fixture-expansion-20261104/integration-final/junit/mysql-http"
+  ],
+  "skippedGroups": [
+    {
+      "test": "liveReportGenerationUsesTheRealAuthorizedFixtureWithoutOfficialReviewWrite(String)",
+      "reason": "Environment variable [LAB_PORTAL_LIVE_AI_IT] with value [false] does not match regular expression [true]"
+    },
+    {
+      "test": "liveShiftFieldsAndApprovalClaimsKeepServerValidation(String, String)",
+      "reason": "Environment variable [LAB_PORTAL_LIVE_AI_IT] with value [false] does not match regular expression [true]"
+    },
+    {
+      "test": "liveC14_unifiedCreationCannotUseAnUnauthorizedOrForeignLab(String)",
+      "reason": "Environment variable [LAB_PORTAL_LIVE_AI_IT] with value [false] does not match regular expression [true]"
+    },
+    {
+      "test": "browserFlows",
+      "reason": "Environment variable [LAB_PORTAL_AI_UI_IT] does not exist"
+    }
+  ]
+}

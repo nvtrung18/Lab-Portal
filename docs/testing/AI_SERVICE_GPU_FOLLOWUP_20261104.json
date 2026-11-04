@@ -1,0 +1,691 @@
+{
+  "capturedAtUtc": "2026-11-04T17:16:25.656605+00:00",
+  "branch": "fix/ai-service-regressions",
+  "gitRevision": "be045a82c44c2eee33b6f016eba8c2af1912169d",
+  "sourceZipSha256": "63aa1ca0e241d55a06f0074f3fd3b7a652cc10e2ed6121d43d094ecbbf61142f",
+  "baseline": {
+    "total": 204,
+    "passed": 125
+  },
+  "after": {
+    "total": 204,
+    "passed": 135,
+    "newlyClosed": 10,
+    "percentage": 66.17647058823529,
+    "states": {
+      "PARTIAL": 27,
+      "PASS": 135,
+      "PENDING_FIXTURE": 37,
+      "PENDING_KAGGLE": 5
+    }
+  },
+  "closedCaseIds": [
+    "G04",
+    "G16",
+    "K09",
+    "K10",
+    "K11",
+    "K14",
+    "K15",
+    "K18",
+    "K21",
+    "Q14"
+  ],
+  "partiallyVerifiedCaseIds": [
+    "K05",
+    "K06",
+    "K07",
+    "K17"
+  ],
+  "codeEvidence": {
+    "kaggleRegression": {
+      "passed": 449,
+      "failed": 0
+    },
+    "localNotebookTests": {
+      "passed": 23,
+      "failed": 0
+    },
+    "springRuntimeFixtures": {
+      "tests": 23,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "kagglePlatform": {
+      "passed": 26,
+      "failed": 0,
+      "skipped": 0
+    },
+    "exactNotebookFaultGates": {
+      "passed": 5
+    },
+    "freshModelSmoke": {
+      "passed": 4
+    },
+    "gpu1RecoveryInference": {
+      "passed": 3
+    }
+  },
+  "measurementBoundary": "Code tests, model variants and business cases are separate. Prior 70-case corpus with the same source hash satisfied the RuntimeFixtures gate; it was not rerun. No browser tests rerun in this batch.",
+  "retainedFailures": [
+    {
+      "path": ".artifacts/ai-gpu-followup-20261104/kaggle-round1/platform-followup-1793810802704126745/platform-results.json",
+      "passed": 18,
+      "failed": 4,
+      "skipped": 4
+    }
+  ],
+  "harnessCorrections": [
+    "EXDEV hardlink fallback uses a symlink; mutated config replaces the mirror link and never writes through it.",
+    "Port preflight uses SO_REUSEADDR for sequential child restarts and still rejects a live listener.",
+    "Cloudflared Quick Tunnel ignores proxy environment variables; real --quick-service connection refusal exercises its no-URL guard.",
+    "Large model checksums stream rather than materializing the weights in RAM."
+  ],
+  "sessionShutdown": {
+    "status": "UNKNOWN",
+    "actual": "Earlier session reset lost globals/work. Current plain bootstrap, artifact check, dependency install, 449 tests, model, tunnel and GPU fault probes completed without reproducing shutdown. No causal OOM/platform log from the earlier reset is available."
+  },
+  "productionChangesThisGpuBatch": [],
+  "paths": [
+    ".artifacts/ai-gpu-followup-20261104/kaggle-round2/platform-followup-1793811429740116409/platform-results.json",
+    ".artifacts/ai-gpu-followup-20261104/kaggle-round2/notebook-fault-gates.json",
+    ".artifacts/ai-gpu-followup-20261104/spring-runtime-fixtures/fixture-assertions.jsonl",
+    ".artifacts/ai-gpu-followup-20261104/spring-runtime-fixtures/wire-results.jsonl",
+    ".artifacts/ai-gpu-followup-20261104/spring-runtime-fixtures/source-fingerprint.json",
+    ".artifacts/ai-gpu-followup-20261104/spring-runtime-fixtures/junit/spring-kaggle-fixtures"
+  ],
+  "servingProcessReadyAfterFaults": true,
+  "publicUrlObserved": "https://sweet-assumed-fax-retirement.trycloudflare.com",
+  "model": {
+    "identifier": "Qwen/Qwen3-4B-Instruct-2507",
+    "revision": "cdbee75f17c01a7cc42f958dc650907174af0554",
+    "researchAdapterLoaded": true
+  },
+  "cases": [
+    {
+      "caseId": "K05",
+      "scenario": "Secret blank/whitespace/non-ASCII/quá dài",
+      "expected": "Dừng theo validation; Spring/Python không dùng token sai.",
+      "before": "PENDING_KAGGLE",
+      "after": "PARTIAL",
+      "verifiedThisBatch": false,
+      "pendingReason": "5 giá trị token giả đã bị đúng validator notebook từ chối trên Kaggle; chưa thay giá trị Secret thật/đi qua UserSecretsClient cho từng biến thể.",
+      "evidence": [
+        "AI_SERVICE_REMEDIATION_REPORT_20261104.md",
+        ".artifacts/ai-gpu-followup-20261104/kaggle-round2/platform-followup-1793811429740116409/platform-results.json",
+        ".artifacts/ai-gpu-followup-20261104/kaggle-round2/notebook-fault-gates.json",
+        ".artifacts/ai-gpu-followup-20261104/spring-runtime-fixtures/fixture-assertions.jsonl",
+        ".artifacts/ai-gpu-followup-20261104/spring-runtime-fixtures/wire-results.jsonl",
+        ".artifacts/ai-gpu-followup-20261104/spring-runtime-fixtures/source-fingerprint.json",
+        ".artifacts/ai-gpu-followup-20261104/spring-runtime-fixtures/junit/spring-kaggle-fixtures"
+      ],
+      "sourceZipSha256": "63aa1ca0e241d55a06f0074f3fd3b7a652cc10e2ed6121d43d094ecbbf61142f",
+      "requiredVariants": [
+        "Secret blank/whitespace/non-ASCII/quá dài"
+      ],
+      "requiredEvidenceLayers": [
+        "original acceptance evidence; remaining variants recorded in pendingReason"
+      ],
+      "actual": "5 giá trị token giả đã bị đúng validator notebook từ chối trên Kaggle; chưa thay giá trị Secret thật/đi qua UserSecretsClient cho từng biến thể.",
+      "verifiedThisGpuBatch": false,
+      "backends": [
+        "KAGGLE_PLATFORM"
+      ],
+      "requestIds": [
+        "gpu-platform-a949baa4bcb845268b97443abbd69a2c",
+        "gpu-platform-ee7a538ab08f45fa8b9031ac6860f808",
+        "gpu-platform-d8d529f9cd2b417cbf8dc7e7283c0a1c",
+        "gpu-platform-b4088df9d2244cc890cab7045737dc53",
+        "gpu-platform-bfdd69c1bf0346f5b37480a5362ac12b"
+      ]
+    },
+    {
+      "caseId": "K06",
+      "scenario": "Không gắn Dataset",
+      "expected": "Không tìm được artifact, dừng trước startup.",
+      "before": "PENDING_KAGGLE",
+      "after": "PARTIAL",
+      "verifiedThisBatch": false,
+      "pendingReason": "Helper thật đã từ chối filesystem fixture rỗng trên Kaggle; chưa kiểm phiên không attach Dataset thật.",
+      "evidence": [
+        "AI_SERVICE_REMEDIATION_REPORT_20261104.md",
+        ".artifacts/ai-gpu-followup-20261104/kaggle-round2/platform-followup-1793811429740116409/platform-results.json",
+        ".artifacts/ai-gpu-followup-20261104/kaggle-round2/notebook-fault-gates.json",
+        ".artifacts/ai-gpu-followup-20261104/spring-runtime-fixtures/fixture-assertions.jsonl",
+        ".artifacts/ai-gpu-followup-20261104/spring-runtime-fixtures/wire-results.jsonl",
+        ".artifacts/ai-gpu-followup-20261104/spring-runtime-fixtures/source-fingerprint.json",
+        ".artifacts/ai-gpu-followup-20261104/spring-runtime-fixtures/junit/spring-kaggle-fixtures"
+      ],
+      "sourceZipSha256": "63aa1ca0e241d55a06f0074f3fd3b7a652cc10e2ed6121d43d094ecbbf61142f",
+      "requiredVariants": [
+        "Không gắn Dataset"
+      ],
+      "requiredEvidenceLayers": [
+        "original acceptance evidence; remaining variants recorded in pendingReason"
+      ],
+      "actual": "Helper thật đã từ chối filesystem fixture rỗng trên Kaggle; chưa kiểm phiên không attach Dataset thật.",
+      "verifiedThisGpuBatch": false,
+      "backends": [
+        "KAGGLE_PLATFORM"
+      ],
+      "requestIds": [
+        "gpu-platform-4bb640b4935d4cb388b2f2c1bec7e770"
+      ]
+    },
+    {
+      "caseId": "K07",
+      "scenario": "Hai Dataset artifacts cùng khớp",
+      "expected": "Yêu cầu ARTIFACT_INPUT, không tự chọn bản đầu.",
+      "before": "PENDING_KAGGLE",
+      "after": "PARTIAL",
+      "verifiedThisBatch": false,
+      "pendingReason": "Helper thật đã từ chối hai root fixture cùng khớp trên Kaggle; chưa attach hai Dataset thật để nghiệm thu mount/platform.",
+      "evidence": [
+        "AI_SERVICE_REMEDIATION_REPORT_20261104.md",
+        ".artifacts/ai-gpu-followup-20261104/kaggle-round2/platform-followup-1793811429740116409/platform-results.json",
+        ".artifacts/ai-gpu-followup-20261104/kaggle-round2/notebook-fault-gates.json",
+        ".artifacts/ai-gpu-followup-20261104/spring-runtime-fixtures/fixture-assertions.jsonl",
+        ".artifacts/ai-gpu-followup-20261104/spring-runtime-fixtures/wire-results.jsonl",
+        ".artifacts/ai-gpu-followup-20261104/spring-runtime-fixtures/source-fingerprint.json",
+        ".artifacts/ai-gpu-followup-20261104/spring-runtime-fixtures/junit/spring-kaggle-fixtures"
+      ],
+      "sourceZipSha256": "63aa1ca0e241d55a06f0074f3fd3b7a652cc10e2ed6121d43d094ecbbf61142f",
+      "requiredVariants": [
+        "Hai Dataset artifacts cùng khớp"
+      ],
+      "requiredEvidenceLayers": [
+        "original acceptance evidence; remaining variants recorded in pendingReason"
+      ],
+      "actual": "Helper thật đã từ chối hai root fixture cùng khớp trên Kaggle; chưa attach hai Dataset thật để nghiệm thu mount/platform.",
+      "verifiedThisGpuBatch": false,
+      "backends": [
+        "KAGGLE_PLATFORM"
+      ],
+      "requestIds": [
+        "gpu-platform-a29d522cac73452dba9f30bdd81e62e1"
+      ]
+    },
+    {
+      "caseId": "K09",
+      "scenario": "Thiếu một shard hoặc Research adapter",
+      "expected": "Checksum fail, không bật tunnel; chỉ rõ file lỗi.",
+      "before": "PENDING_KAGGLE",
+      "after": "PASS",
+      "verifiedThisBatch": false,
+      "pendingReason": "",
+      "evidence": [
+        "AI_SERVICE_REMEDIATION_REPORT_20261104.md",
+        ".artifacts/ai-gpu-followup-20261104/kaggle-round2/platform-followup-1793811429740116409/platform-results.json",
+        ".artifacts/ai-gpu-followup-20261104/kaggle-round2/notebook-fault-gates.json",
+        ".artifacts/ai-gpu-followup-20261104/spring-runtime-fixtures/fixture-assertions.jsonl",
+        ".artifacts/ai-gpu-followup-20261104/spring-runtime-fixtures/wire-results.jsonl",
+        ".artifacts/ai-gpu-followup-20261104/spring-runtime-fixtures/source-fingerprint.json",
+        ".artifacts/ai-gpu-followup-20261104/spring-runtime-fixtures/junit/spring-kaggle-fixtures"
+      ],
+      "sourceZipSha256": "63aa1ca0e241d55a06f0074f3fd3b7a652cc10e2ed6121d43d094ecbbf61142f",
+      "requiredVariants": [
+        "Thiếu một shard hoặc Research adapter"
+      ],
+      "requiredEvidenceLayers": [
+        "original acceptance evidence; remaining variants recorded in pendingReason"
+      ],
+      "actual": "Thiếu base shard và Research adapter trên mirror riêng: CLI và đúng cell artifact đều dừng, chỉ rõ file; không in ARTIFACT CHECK: PASS, link/bytes approved giữ nguyên.",
+      "verifiedThisGpuBatch": true,
+      "backends": [
+        "KAGGLE_PLATFORM"
+      ],
+      "requestIds": [
+        "gpu-platform-7b1a53e9dae64a588ef5b4dd6f83f13d",
+        "gpu-platform-47cd7f224a6f4f7392ebe3ee5374fcfb",
+        "notebook-gate-dde8e0baac804317842fcfb626b9d50d",
+        "notebook-gate-8972feedfe4d4521a8b2576cee002838"
+      ]
+    },
+    {
+      "caseId": "K10",
+      "scenario": "Sửa một byte; thử CRLF khác checksum",
+      "expected": "Từ chối ở Kaggle; chỉ export có đối chiếu đúng approved hash mới sửa line ending.",
+      "before": "PENDING_KAGGLE",
+      "after": "PASS",
+      "verifiedThisBatch": false,
+      "pendingReason": "",
+      "evidence": [
+        "AI_SERVICE_REMEDIATION_REPORT_20261104.md",
+        ".artifacts/ai-gpu-followup-20261104/kaggle-round2/platform-followup-1793811429740116409/platform-results.json",
+        ".artifacts/ai-gpu-followup-20261104/kaggle-round2/notebook-fault-gates.json",
+        ".artifacts/ai-gpu-followup-20261104/spring-runtime-fixtures/fixture-assertions.jsonl",
+        ".artifacts/ai-gpu-followup-20261104/spring-runtime-fixtures/wire-results.jsonl",
+        ".artifacts/ai-gpu-followup-20261104/spring-runtime-fixtures/source-fingerprint.json",
+        ".artifacts/ai-gpu-followup-20261104/spring-runtime-fixtures/junit/spring-kaggle-fixtures"
+      ],
+      "sourceZipSha256": "63aa1ca0e241d55a06f0074f3fd3b7a652cc10e2ed6121d43d094ecbbf61142f",
+      "requiredVariants": [
+        "Sửa một byte; thử CRLF khác checksum"
+      ],
+      "requiredEvidenceLayers": [
+        "original acceptance evidence; remaining variants recorded in pendingReason"
+      ],
+      "actual": "Đổi một byte và thêm CRLF vào config của mirror: CLI và đúng cell artifact đều từ chối checksum; bytes/hash nguồn approved không đổi.",
+      "verifiedThisGpuBatch": true,
+      "backends": [
+        "KAGGLE_PLATFORM"
+      ],
+      "requestIds": [
+        "gpu-platform-7fbf911d278c4ac7b329a14ca6b3e658",
+        "gpu-platform-5908721df7974cb398d83d650c1b5f73",
+        "notebook-gate-ad1ce020981845439d5b2fc943336a84",
+        "notebook-gate-4b1c011e9ed343c9b94905aa6b9ed5f7"
+      ]
+    },
+    {
+      "caseId": "K11",
+      "scenario": "ZIP hỏng/truncated hoặc entry traversal/symlink",
+      "expected": "Dừng an toàn, không ghi ngoài thư mục extraction.",
+      "before": "PENDING_KAGGLE",
+      "after": "PASS",
+      "verifiedThisBatch": false,
+      "pendingReason": "",
+      "evidence": [
+        "AI_SERVICE_REMEDIATION_REPORT_20261104.md",
+        ".artifacts/ai-gpu-followup-20261104/kaggle-round2/platform-followup-1793811429740116409/platform-results.json",
+        ".artifacts/ai-gpu-followup-20261104/kaggle-round2/notebook-fault-gates.json",
+        ".artifacts/ai-gpu-followup-20261104/spring-runtime-fixtures/fixture-assertions.jsonl",
+        ".artifacts/ai-gpu-followup-20261104/spring-runtime-fixtures/wire-results.jsonl",
+        ".artifacts/ai-gpu-followup-20261104/spring-runtime-fixtures/source-fingerprint.json",
+        ".artifacts/ai-gpu-followup-20261104/spring-runtime-fixtures/junit/spring-kaggle-fixtures"
+      ],
+      "sourceZipSha256": "63aa1ca0e241d55a06f0074f3fd3b7a652cc10e2ed6121d43d094ecbbf61142f",
+      "requiredVariants": [
+        "ZIP hỏng/truncated hoặc entry traversal/symlink"
+      ],
+      "requiredEvidenceLayers": [
+        "original acceptance evidence; remaining variants recorded in pendingReason"
+      ],
+      "actual": "Đúng helper extraction trên Kaggle từ chối garbage, truncated, traversal, absolute, drive và symlink trước khi ghi file ngoài extraction root.",
+      "verifiedThisGpuBatch": true,
+      "backends": [
+        "KAGGLE_PLATFORM"
+      ],
+      "requestIds": [
+        "gpu-platform-03193b1d6bfd4c6db3ef9e93efa8819d",
+        "gpu-platform-948f7c2884fa42268252e5eb6712efec",
+        "gpu-platform-6df0effd79f7441593b31d26b9adcb0c",
+        "gpu-platform-908ccab92c504e3aacf8d9293443ee46",
+        "gpu-platform-5691322f3f2c42db96f9cae09653b602",
+        "gpu-platform-9c10e94e6d82433988da593960ad8633"
+      ]
+    },
+    {
+      "caseId": "K14",
+      "scenario": "Model load OOM/process exit",
+      "expected": "Không READY; log xác định lỗi, không báo service live là model ready.",
+      "before": "PENDING_KAGGLE",
+      "after": "PASS",
+      "verifiedThisBatch": false,
+      "pendingReason": "",
+      "evidence": [
+        "AI_SERVICE_REMEDIATION_REPORT_20261104.md",
+        ".artifacts/ai-gpu-followup-20261104/kaggle-round2/platform-followup-1793811429740116409/platform-results.json",
+        ".artifacts/ai-gpu-followup-20261104/kaggle-round2/notebook-fault-gates.json",
+        ".artifacts/ai-gpu-followup-20261104/spring-runtime-fixtures/fixture-assertions.jsonl",
+        ".artifacts/ai-gpu-followup-20261104/spring-runtime-fixtures/wire-results.jsonl",
+        ".artifacts/ai-gpu-followup-20261104/spring-runtime-fixtures/source-fingerprint.json",
+        ".artifacts/ai-gpu-followup-20261104/spring-runtime-fixtures/junit/spring-kaggle-fixtures"
+      ],
+      "sourceZipSha256": "63aa1ca0e241d55a06f0074f3fd3b7a652cc10e2ed6121d43d094ecbbf61142f",
+      "requiredVariants": [
+        "Model load OOM/process exit"
+      ],
+      "requiredEvidenceLayers": [
+        "original acceptance evidence; remaining variants recorded in pendingReason"
+      ],
+      "actual": "Process exit thật được readiness guard phát hiện; model loader gặp torch.cuda.OutOfMemoryError thật trên GPU1, modelStatus ERROR và /ready 503.",
+      "verifiedThisGpuBatch": true,
+      "backends": [
+        "KAGGLE_PLATFORM"
+      ],
+      "requestIds": [
+        "gpu-platform-4c15402b03fd46dda2355c8eb74c2686",
+        "gpu-platform-5ed47cd4524b4e6b9206813ffa692439"
+      ]
+    },
+    {
+      "caseId": "K15",
+      "scenario": "/health 200, /ready 503",
+      "expected": "Không tạo tunnel/không cho cấu hình Spring như đã sẵn sàng.",
+      "before": "PENDING_KAGGLE",
+      "after": "PASS",
+      "verifiedThisBatch": false,
+      "pendingReason": "",
+      "evidence": [
+        "AI_SERVICE_REMEDIATION_REPORT_20261104.md",
+        ".artifacts/ai-gpu-followup-20261104/kaggle-round2/platform-followup-1793811429740116409/platform-results.json",
+        ".artifacts/ai-gpu-followup-20261104/kaggle-round2/notebook-fault-gates.json",
+        ".artifacts/ai-gpu-followup-20261104/spring-runtime-fixtures/fixture-assertions.jsonl",
+        ".artifacts/ai-gpu-followup-20261104/spring-runtime-fixtures/wire-results.jsonl",
+        ".artifacts/ai-gpu-followup-20261104/spring-runtime-fixtures/source-fingerprint.json",
+        ".artifacts/ai-gpu-followup-20261104/spring-runtime-fixtures/junit/spring-kaggle-fixtures"
+      ],
+      "sourceZipSha256": "63aa1ca0e241d55a06f0074f3fd3b7a652cc10e2ed6121d43d094ecbbf61142f",
+      "requiredVariants": [
+        "/health 200, /ready 503"
+      ],
+      "requiredEvidenceLayers": [
+        "original acceptance evidence; remaining variants recorded in pendingReason"
+      ],
+      "actual": "Child thật có /health 200, /ready 503, modelLoaded=false; đúng require_ready và cell tunnel từ chối trước tạo process tunnel.",
+      "verifiedThisGpuBatch": true,
+      "backends": [
+        "KAGGLE_PLATFORM"
+      ],
+      "requestIds": [
+        "gpu-platform-ed3b7533b8444b20bf5cceb73cca0f3a",
+        "notebook-gate-9f6e2802af4c49129e900cb02a54f94d"
+      ]
+    },
+    {
+      "caseId": "K17",
+      "scenario": "Run All; chạy lại start khi process còn sống",
+      "expected": "Service không bị cell cuối kill; lần start trùng báo rõ.",
+      "before": "PENDING_KAGGLE",
+      "after": "PARTIAL",
+      "verifiedThisBatch": false,
+      "pendingReason": "Duplicate-start guard và stop flag đã chạy với process thật; chưa Run All từ đầu notebook chuẩn trong phiên mới để nghiệm thu đủ workflow.",
+      "evidence": [
+        "AI_SERVICE_REMEDIATION_REPORT_20261104.md",
+        ".artifacts/ai-gpu-followup-20261104/kaggle-round2/platform-followup-1793811429740116409/platform-results.json",
+        ".artifacts/ai-gpu-followup-20261104/kaggle-round2/notebook-fault-gates.json",
+        ".artifacts/ai-gpu-followup-20261104/spring-runtime-fixtures/fixture-assertions.jsonl",
+        ".artifacts/ai-gpu-followup-20261104/spring-runtime-fixtures/wire-results.jsonl",
+        ".artifacts/ai-gpu-followup-20261104/spring-runtime-fixtures/source-fingerprint.json",
+        ".artifacts/ai-gpu-followup-20261104/spring-runtime-fixtures/junit/spring-kaggle-fixtures"
+      ],
+      "sourceZipSha256": "63aa1ca0e241d55a06f0074f3fd3b7a652cc10e2ed6121d43d094ecbbf61142f",
+      "requiredVariants": [
+        "Run All; chạy lại start khi process còn sống"
+      ],
+      "requiredEvidenceLayers": [
+        "original acceptance evidence; remaining variants recorded in pendingReason"
+      ],
+      "actual": "Duplicate-start guard và stop flag đã chạy với process thật; chưa Run All từ đầu notebook chuẩn trong phiên mới để nghiệm thu đủ workflow.",
+      "verifiedThisGpuBatch": false,
+      "backends": [
+        "KAGGLE_PLATFORM"
+      ],
+      "requestIds": [
+        "gpu-platform-da583bac6b8a4f32ae749c3f874ad881"
+      ]
+    },
+    {
+      "caseId": "K18",
+      "scenario": "Tunnel không sinh URL hoặc public /ready fail",
+      "expected": "Không in thông báo kết nối thành công.",
+      "before": "PENDING_KAGGLE",
+      "after": "PASS",
+      "verifiedThisBatch": false,
+      "pendingReason": "",
+      "evidence": [
+        "AI_SERVICE_REMEDIATION_REPORT_20261104.md",
+        ".artifacts/ai-gpu-followup-20261104/kaggle-round2/platform-followup-1793811429740116409/platform-results.json",
+        ".artifacts/ai-gpu-followup-20261104/kaggle-round2/notebook-fault-gates.json",
+        ".artifacts/ai-gpu-followup-20261104/spring-runtime-fixtures/fixture-assertions.jsonl",
+        ".artifacts/ai-gpu-followup-20261104/spring-runtime-fixtures/wire-results.jsonl",
+        ".artifacts/ai-gpu-followup-20261104/spring-runtime-fixtures/source-fingerprint.json",
+        ".artifacts/ai-gpu-followup-20261104/spring-runtime-fixtures/junit/spring-kaggle-fixtures"
+      ],
+      "sourceZipSha256": "63aa1ca0e241d55a06f0074f3fd3b7a652cc10e2ed6121d43d094ecbbf61142f",
+      "requiredVariants": [
+        "Tunnel không sinh URL hoặc public /ready fail"
+      ],
+      "requiredEvidenceLayers": [
+        "original acceptance evidence; remaining variants recorded in pendingReason"
+      ],
+      "actual": "Cloudflared thật lỗi provisioning nên không sinh URL; tunnel khác có URL nhưng origin /ready 503. Đúng cell tunnel từ chối cả hai, không báo PUBLIC READY: PASS.",
+      "verifiedThisGpuBatch": true,
+      "backends": [
+        "KAGGLE_PLATFORM"
+      ],
+      "requestIds": [
+        "gpu-platform-f3dcf97eedee4285a558ef546dcfe13a",
+        "gpu-platform-8fee378fc88d4eafbb35be928101eb4f"
+      ]
+    },
+    {
+      "caseId": "K21",
+      "scenario": "Chạy cell stop khi chủ động bật flag",
+      "expected": "Chỉ dừng process notebook sở hữu; không kill tiến trình khác.",
+      "before": "PENDING_KAGGLE",
+      "after": "PASS",
+      "verifiedThisBatch": false,
+      "pendingReason": "",
+      "evidence": [
+        "AI_SERVICE_REMEDIATION_REPORT_20261104.md",
+        ".artifacts/ai-gpu-followup-20261104/kaggle-round2/platform-followup-1793811429740116409/platform-results.json",
+        ".artifacts/ai-gpu-followup-20261104/kaggle-round2/notebook-fault-gates.json",
+        ".artifacts/ai-gpu-followup-20261104/spring-runtime-fixtures/fixture-assertions.jsonl",
+        ".artifacts/ai-gpu-followup-20261104/spring-runtime-fixtures/wire-results.jsonl",
+        ".artifacts/ai-gpu-followup-20261104/spring-runtime-fixtures/source-fingerprint.json",
+        ".artifacts/ai-gpu-followup-20261104/spring-runtime-fixtures/junit/spring-kaggle-fixtures"
+      ],
+      "sourceZipSha256": "63aa1ca0e241d55a06f0074f3fd3b7a652cc10e2ed6121d43d094ecbbf61142f",
+      "requiredVariants": [
+        "Chạy cell stop khi chủ động bật flag"
+      ],
+      "requiredEvidenceLayers": [
+        "original acceptance evidence; remaining variants recorded in pendingReason"
+      ],
+      "actual": "Đúng cell stop với flag False giữ service/tunnel thật; flag True dừng cả hai process thuộc probe. Service chính vẫn /ready 200 sau thử nghiệm.",
+      "verifiedThisGpuBatch": true,
+      "backends": [
+        "KAGGLE_PLATFORM"
+      ],
+      "requestIds": [
+        "gpu-platform-fe7fd9f2d0744f0ea9d872989af36311"
+      ]
+    },
+    {
+      "caseId": "G04",
+      "scenario": "LAB_MEMBERS: member, nonmember, revoked, Admin-only",
+      "expected": "Không lộ nội bộ từ public policy hoặc role Admin đơn thuần. P0, cần test runtime riêng.",
+      "before": "PARTIAL",
+      "after": "PASS",
+      "verifiedThisBatch": false,
+      "pendingReason": "",
+      "evidence": [
+        "../../.artifacts/ai-live-remediation-20261104/probes.jsonl",
+        ".artifacts/ai-fixture-expansion-20261104/integration-final/fixture-assertions.jsonl",
+        ".artifacts/ai-fixture-expansion-20261104/integration-final/wire-results.jsonl",
+        ".artifacts/ai-fixture-expansion-20261104/integration-final/source-fingerprint.json",
+        ".artifacts/ai-fixture-expansion-20261104/integration-final/junit/mysql-http",
+        ".artifacts/ai-gpu-followup-20261104/kaggle-round2/platform-followup-1793811429740116409/platform-results.json",
+        ".artifacts/ai-gpu-followup-20261104/kaggle-round2/notebook-fault-gates.json",
+        ".artifacts/ai-gpu-followup-20261104/spring-runtime-fixtures/fixture-assertions.jsonl",
+        ".artifacts/ai-gpu-followup-20261104/spring-runtime-fixtures/wire-results.jsonl",
+        ".artifacts/ai-gpu-followup-20261104/spring-runtime-fixtures/source-fingerprint.json",
+        ".artifacts/ai-gpu-followup-20261104/spring-runtime-fixtures/junit/spring-kaggle-fixtures"
+      ],
+      "sourceZipSha256": "63aa1ca0e241d55a06f0074f3fd3b7a652cc10e2ed6121d43d094ecbbf61142f",
+      "requiredVariants": [
+        "G04-G16-admin-false",
+        "G04-G16-admin-true",
+        "G04-G16-member-false",
+        "G04-G16-member-true",
+        "G04-G16-nonmember-false",
+        "G04-G16-nonmember-true",
+        "G04-G16-revokedDeleted-false",
+        "G04-G16-revokedDeleted-true",
+        "G04-G16-revokedInactive-false",
+        "G04-G16-revokedInactive-true"
+      ],
+      "requiredEvidenceLayers": [
+        "Spring/JWT/MySQL",
+        "production Python HTTP/parser/validator",
+        "SQL/context oracle",
+        "Kaggle model runtime, private history after revocation"
+      ],
+      "actual": "10 biến thể Spring/JWT/MySQL → Kaggle thật: member, nonmember, Admin-only, revoke inactive/deleted qua direct/unified; nội dung và citation đúng quyền.",
+      "requestIds": [
+        "G04-G16-member-false-f309221d-9a85-4ff7-8e8d-0ea0b41a6148-before",
+        "G04-G16-nonmember-false-24045b64-7163-4b6f-a7d8-dd304e4179c1-before",
+        "G04-G16-admin-false-7ebe81a8-15f9-4db7-8f45-834281210218-before",
+        "G04-G16-revokedInactive-false-2e92a1a5-63c0-4252-9494-0e6de941a923-before",
+        "G04-G16-revokedInactive-false-2e92a1a5-63c0-4252-9494-0e6de941a923-after",
+        "G04-G16-revokedDeleted-false-073bce0e-3cfe-45af-a694-bbf57415d08f-before",
+        "G04-G16-revokedDeleted-false-073bce0e-3cfe-45af-a694-bbf57415d08f-after",
+        "G04-G16-member-true-7a6c51c8-7276-409a-9218-2649c881d829-before",
+        "G04-G16-nonmember-true-efcbd2e3-bca8-4509-a214-a29de4e50021-before",
+        "G04-G16-admin-true-536fa9b6-6ec6-4367-9cca-854e0ab918bf-before",
+        "G04-G16-revokedInactive-true-ee18dcd2-da09-4c89-869b-99c440290ba5-before",
+        "G04-G16-revokedInactive-true-ee18dcd2-da09-4c89-869b-99c440290ba5-after",
+        "G04-G16-revokedDeleted-true-6eba802a-28f2-4451-906e-cf71af2ba25a-before",
+        "G04-G16-revokedDeleted-true-6eba802a-28f2-4451-906e-cf71af2ba25a-after",
+        "G04-G16-member-false-7becf8c3-276a-4e41-83e6-54ca45b1713f-before",
+        "G04-G16-nonmember-false-114c6a8e-f2a9-4983-9f24-9727137b7623-before",
+        "G04-G16-admin-false-afe54214-8665-476b-b8d4-92e7357e3942-before",
+        "G04-G16-revokedInactive-false-a4eddf8b-bea5-4522-a8de-a1c4ca642eb7-before",
+        "G04-G16-revokedInactive-false-a4eddf8b-bea5-4522-a8de-a1c4ca642eb7-after",
+        "G04-G16-revokedDeleted-false-480388b3-efcf-4702-8107-417c2beada40-before",
+        "G04-G16-revokedDeleted-false-480388b3-efcf-4702-8107-417c2beada40-after",
+        "G04-G16-member-true-21e2e797-aa1e-4d4d-b3b3-9953eb7d8547-before",
+        "G04-G16-nonmember-true-b6ba7687-adc4-4cf6-840c-255896ffcb1e-before",
+        "G04-G16-admin-true-4d3aba29-3e03-4d51-bc17-75b6f8793d1c-before",
+        "G04-G16-revokedInactive-true-0254f2ab-0203-4648-8b7b-2945046ed867-before",
+        "G04-G16-revokedInactive-true-0254f2ab-0203-4648-8b7b-2945046ed867-after",
+        "G04-G16-revokedDeleted-true-fa8b72f6-82a3-4aa5-9176-15f6dd8be922-before",
+        "G04-G16-revokedDeleted-true-fa8b72f6-82a3-4aa5-9176-15f6dd8be922-after"
+      ],
+      "sourceFingerprints": [
+        ".artifacts/ai-fixture-expansion-20261104/integration-final/source-fingerprint.json"
+      ],
+      "wireEvidence": [
+        ".artifacts/ai-fixture-expansion-20261104/integration-final/wire-results.jsonl"
+      ],
+      "fixtureEvidence": ".artifacts/ai-fixture-expansion-20261104/integration-final/fixture-assertions.jsonl",
+      "backends": [
+        "SCRIPTED_TEST",
+        "REAL_KAGGLE_MODEL"
+      ],
+      "verifiedThisGpuBatch": true
+    },
+    {
+      "caseId": "G16",
+      "scenario": "Bỏ membership sau retrieval, hỏi lại cùng conversation",
+      "expected": "Không tái sử dụng chunk ngoài quyền từ lượt cũ.",
+      "before": "PENDING_FIXTURE",
+      "after": "PASS",
+      "verifiedThisBatch": false,
+      "pendingReason": "",
+      "evidence": [
+        "AI_SERVICE_REMEDIATION_REPORT_20261104.md",
+        ".artifacts/ai-fixture-expansion-20261104/integration-final/fixture-assertions.jsonl",
+        ".artifacts/ai-fixture-expansion-20261104/integration-final/wire-results.jsonl",
+        ".artifacts/ai-fixture-expansion-20261104/integration-final/source-fingerprint.json",
+        ".artifacts/ai-fixture-expansion-20261104/integration-final/junit/mysql-http",
+        ".artifacts/ai-gpu-followup-20261104/kaggle-round2/platform-followup-1793811429740116409/platform-results.json",
+        ".artifacts/ai-gpu-followup-20261104/kaggle-round2/notebook-fault-gates.json",
+        ".artifacts/ai-gpu-followup-20261104/spring-runtime-fixtures/fixture-assertions.jsonl",
+        ".artifacts/ai-gpu-followup-20261104/spring-runtime-fixtures/wire-results.jsonl",
+        ".artifacts/ai-gpu-followup-20261104/spring-runtime-fixtures/source-fingerprint.json",
+        ".artifacts/ai-gpu-followup-20261104/spring-runtime-fixtures/junit/spring-kaggle-fixtures"
+      ],
+      "sourceZipSha256": "63aa1ca0e241d55a06f0074f3fd3b7a652cc10e2ed6121d43d094ecbbf61142f",
+      "requiredVariants": [
+        "G04-G16-admin-false",
+        "G04-G16-admin-true",
+        "G04-G16-member-false",
+        "G04-G16-member-true",
+        "G04-G16-nonmember-false",
+        "G04-G16-nonmember-true",
+        "G04-G16-revokedDeleted-false",
+        "G04-G16-revokedDeleted-true",
+        "G04-G16-revokedInactive-false",
+        "G04-G16-revokedInactive-true"
+      ],
+      "requiredEvidenceLayers": [
+        "Spring/JWT/MySQL",
+        "production Python HTTP/parser/validator",
+        "SQL/context oracle",
+        "Kaggle model runtime, private history after revocation"
+      ],
+      "actual": "Hỏi lại cùng conversation sau revoke inactive/deleted: model/planner thật không tái dùng canary/citation riêng; membership SQL không đổi.",
+      "requestIds": [
+        "G04-G16-member-false-f309221d-9a85-4ff7-8e8d-0ea0b41a6148-before",
+        "G04-G16-nonmember-false-24045b64-7163-4b6f-a7d8-dd304e4179c1-before",
+        "G04-G16-admin-false-7ebe81a8-15f9-4db7-8f45-834281210218-before",
+        "G04-G16-revokedInactive-false-2e92a1a5-63c0-4252-9494-0e6de941a923-before",
+        "G04-G16-revokedInactive-false-2e92a1a5-63c0-4252-9494-0e6de941a923-after",
+        "G04-G16-revokedDeleted-false-073bce0e-3cfe-45af-a694-bbf57415d08f-before",
+        "G04-G16-revokedDeleted-false-073bce0e-3cfe-45af-a694-bbf57415d08f-after",
+        "G04-G16-member-true-7a6c51c8-7276-409a-9218-2649c881d829-before",
+        "G04-G16-nonmember-true-efcbd2e3-bca8-4509-a214-a29de4e50021-before",
+        "G04-G16-admin-true-536fa9b6-6ec6-4367-9cca-854e0ab918bf-before",
+        "G04-G16-revokedInactive-true-ee18dcd2-da09-4c89-869b-99c440290ba5-before",
+        "G04-G16-revokedInactive-true-ee18dcd2-da09-4c89-869b-99c440290ba5-after",
+        "G04-G16-revokedDeleted-true-6eba802a-28f2-4451-906e-cf71af2ba25a-before",
+        "G04-G16-revokedDeleted-true-6eba802a-28f2-4451-906e-cf71af2ba25a-after",
+        "G04-G16-member-false-7becf8c3-276a-4e41-83e6-54ca45b1713f-before",
+        "G04-G16-nonmember-false-114c6a8e-f2a9-4983-9f24-9727137b7623-before",
+        "G04-G16-admin-false-afe54214-8665-476b-b8d4-92e7357e3942-before",
+        "G04-G16-revokedInactive-false-a4eddf8b-bea5-4522-a8de-a1c4ca642eb7-before",
+        "G04-G16-revokedInactive-false-a4eddf8b-bea5-4522-a8de-a1c4ca642eb7-after",
+        "G04-G16-revokedDeleted-false-480388b3-efcf-4702-8107-417c2beada40-before",
+        "G04-G16-revokedDeleted-false-480388b3-efcf-4702-8107-417c2beada40-after",
+        "G04-G16-member-true-21e2e797-aa1e-4d4d-b3b3-9953eb7d8547-before",
+        "G04-G16-nonmember-true-b6ba7687-adc4-4cf6-840c-255896ffcb1e-before",
+        "G04-G16-admin-true-4d3aba29-3e03-4d51-bc17-75b6f8793d1c-before",
+        "G04-G16-revokedInactive-true-0254f2ab-0203-4648-8b7b-2945046ed867-before",
+        "G04-G16-revokedInactive-true-0254f2ab-0203-4648-8b7b-2945046ed867-after",
+        "G04-G16-revokedDeleted-true-fa8b72f6-82a3-4aa5-9176-15f6dd8be922-before",
+        "G04-G16-revokedDeleted-true-fa8b72f6-82a3-4aa5-9176-15f6dd8be922-after"
+      ],
+      "sourceFingerprints": [
+        ".artifacts/ai-fixture-expansion-20261104/integration-final/source-fingerprint.json"
+      ],
+      "wireEvidence": [
+        ".artifacts/ai-fixture-expansion-20261104/integration-final/wire-results.jsonl"
+      ],
+      "fixtureEvidence": ".artifacts/ai-fixture-expansion-20261104/integration-final/fixture-assertions.jsonl",
+      "backends": [
+        "SCRIPTED_TEST",
+        "REAL_KAGGLE_MODEL"
+      ],
+      "verifiedThisGpuBatch": true
+    },
+    {
+      "caseId": "Q14",
+      "scenario": "Artifact/model load failure sau restart",
+      "expected": "Chưa ready không phục vụ false response; log đúng owning layer.",
+      "before": "PENDING_KAGGLE",
+      "after": "PASS",
+      "verifiedThisBatch": false,
+      "pendingReason": "",
+      "evidence": [
+        "../../.artifacts/ai-live-remediation-20261104/kaggle-observed-summary.json",
+        ".artifacts/ai-gpu-followup-20261104/kaggle-round2/platform-followup-1793811429740116409/platform-results.json",
+        ".artifacts/ai-gpu-followup-20261104/kaggle-round2/notebook-fault-gates.json",
+        ".artifacts/ai-gpu-followup-20261104/spring-runtime-fixtures/fixture-assertions.jsonl",
+        ".artifacts/ai-gpu-followup-20261104/spring-runtime-fixtures/wire-results.jsonl",
+        ".artifacts/ai-gpu-followup-20261104/spring-runtime-fixtures/source-fingerprint.json",
+        ".artifacts/ai-gpu-followup-20261104/spring-runtime-fixtures/junit/spring-kaggle-fixtures"
+      ],
+      "sourceZipSha256": "63aa1ca0e241d55a06f0074f3fd3b7a652cc10e2ed6121d43d094ecbbf61142f",
+      "requiredVariants": [
+        "Artifact/model load failure sau restart"
+      ],
+      "requiredEvidenceLayers": [
+        "original acceptance evidence; remaining variants recorded in pendingReason"
+      ],
+      "actual": "Restart thiếu artifacts thoát ARTIFACT_FILE_MISSING; model-load OOM thật không ready; process mới trên GPU1 phục hồi /ready 200 và 3/3 inference hợp lệ.",
+      "verifiedThisGpuBatch": true,
+      "backends": [
+        "KAGGLE_PLATFORM"
+      ],
+      "requestIds": [
+        "gpu-platform-2ee259c47e684e0884b42d0c158d7a74",
+        "gpu-platform-5ed47cd4524b4e6b9206813ffa692439",
+        "gpu-platform-3dfac07614d7436eb0f82193da765950"
+      ]
+    }
+  ]
+}
