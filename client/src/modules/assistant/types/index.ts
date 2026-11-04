@@ -41,6 +41,7 @@ export interface AssistantChatResponse {
   promptTokens: number;
   completionTokens: number;
   citations: AssistantCitation[];
+  safeRefusal?: boolean;
 }
 
 export type UnifiedChatResponseType =

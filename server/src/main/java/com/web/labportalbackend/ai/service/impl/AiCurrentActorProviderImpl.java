@@ -43,7 +43,8 @@ public class AiCurrentActorProviderImpl implements AiCurrentActorProvider {
                 .findFirst()
                 .orElseThrow(() -> new AiAssistantAvailabilityException(
                         AiAssistantAvailabilityFailure.ROLE_NOT_ALLOWED));
-        return new AiCurrentActor(actor.getId(), role);
+        return new AiCurrentActor(actor.getId(), role, Arrays.stream(AiAssistantSystemRole.values())
+                .filter(candidate -> actor.hasRole(candidate.name())).collect(java.util.stream.Collectors.toSet()));
     }
 
     private static boolean usable(User actor) {

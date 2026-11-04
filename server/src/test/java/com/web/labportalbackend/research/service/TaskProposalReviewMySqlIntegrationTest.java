@@ -646,6 +646,10 @@ class TaskProposalReviewMySqlIntegrationTest {
                 fixture.labId()
         );
         jdbcTemplate.update(
+                "DELETE FROM notifications WHERE recipient_id = ?",
+                fixture.actorId()
+        );
+        jdbcTemplate.update(
                 "DELETE FROM user_roles WHERE user_id = ?",
                 fixture.actorId()
         );

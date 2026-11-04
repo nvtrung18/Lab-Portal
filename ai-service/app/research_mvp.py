@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import json
-from typing import Any, Literal, Mapping, Protocol, Sequence
+import logging
+from typing import Annotated, Any, Literal, Mapping, Protocol, Sequence
 
 from pydantic import BaseModel, ConfigDict, Field, JsonValue, ValidationError
 
@@ -10,9 +11,11 @@ from app.output_validation import StructuredOutputValidator
 from app.profiles import AssistantProfile, ProfileLoader
 from app.rag_context import AuthorizedRetrieval
 from app.runtime import RuntimeGeneration
+from app.grounded_answers import grounded_answer
 
 
 SAFE_REFUSAL = "I cannot provide that response from the authorized context available."
+logger = logging.getLogger(__name__)
 _REPORT_REVIEW_TOOL = "research.report.review.draft"
 _DRAFT_INSTRUCTIONS = {
     "research.task.proposal.draft": (
@@ -24,8 +27,15 @@ _DRAFT_INSTRUCTIONS = {
         "suggestion, and requiresHumanReview=true."
     ),
     _REPORT_REVIEW_TOOL: (
-        "Return only one JSON object with kind RESEARCH_REPORT_REVIEW_DRAFT, integer reportRef, "
-        "reviewSummary, issues, suggestions, advisoryOnly=true, and requiresHumanReview=true."
+        "Write advisory content for RESEARCH_REPORT_REVIEW_DRAFT. Return only one JSON object with exactly "
+        "reviewSummary as a nonempty string, issues and suggestions each as an array of strings (use [] "
+        "when no supported item exists). The server attaches the authorized report identity and advisory flags. "
+        "Do not emit kind, reportRef, advisoryOnly, requiresHumanReview, approval, score, or status fields. "
+        'Use exactly the shape {"reviewSummary":"concise evidence-based review","issues":[],"suggestions":[]}. '
+        "All three keys are required. Even if the request mentions reportRef or advisory flags, omit those "
+        "fields from your JSON: Spring/server supplies them after validating your content. "
+        "Never invent report content. Missing evidence can be listed as a limitation. "
+        "Keep the review concise and distinguish report evidence from advice."
     ),
 }
 _TOOL_SHAPES = {
@@ -80,6 +90,25 @@ class _ResearchAuthorizedContext(_ContextModel):
     authorized_retrieval: AuthorizedRetrieval
 
 
+class _ReportReviewContent(_ContextModel):
+    model_config = ConfigDict(strict=True)
+    review_summary: str = Field(min_length=1, max_length=4000)
+    issues: list[Annotated[str, Field(min_length=1, max_length=1000)]] = Field(max_length=20)
+    suggestions: list[Annotated[str, Field(min_length=1, max_length=1000)]] = Field(max_length=20)
+
+
+def _authorized_report_generation(generation: RuntimeGeneration, report_id: int) -> RuntimeGeneration:
+    try:
+        content = _ReportReviewContent.model_validate_json(generation.text)
+    except ValidationError:
+        # Legacy full drafts still go through the original strict schema/reference validator.
+        return generation
+    draft = {"kind": "RESEARCH_REPORT_REVIEW_DRAFT", "reportRef": report_id,
+             **content.model_dump(by_alias=True), "advisoryOnly": True, "requiresHumanReview": True}
+    return RuntimeGeneration(json.dumps(draft, ensure_ascii=False, separators=(",", ":")),
+                             generation.prompt_tokens, generation.completion_tokens)
+
+
 class ResearchAssistantMvp:
     def __init__(
         self,
@@ -97,11 +126,18 @@ class ResearchAssistantMvp:
             return self._safe_refusal()
         tool_id, context, resources = selected
         json_output = tool_id in _DRAFT_INSTRUCTIONS
+        if not json_output:
+            return ChatResponse(assistant_key=AssistantKey.RESEARCH_ASSISTANT,
+                answer=grounded_answer(context.context, context.authorized_retrieval, locale=payload.locale),
+                prompt_tokens=0, completion_tokens=0,
+                metadata={"resourceReferences": resources, "grounding": "AUTHORIZED_SNAPSHOT"})
         generation = self._backend.generate(
             AssistantKey.RESEARCH_ASSISTANT,
             self._messages(payload.input, tool_id, context, payload.locale),
             json_output=json_output,
         )
+        if tool_id == _REPORT_REVIEW_TOOL:
+            generation = _authorized_report_generation(generation, resources[0]["resourceId"])
         if json_output:
             validation = self._output_validator.validate(
                 self._profile,
@@ -110,7 +146,22 @@ class ResearchAssistantMvp:
                 resources,
             )
             if validation.validation_status != "VALID":
-                return self._safe_refusal(generation)
+                # A single repair may correct formatting, never expand the authorized references.
+                retry = self._backend.generate(AssistantKey.RESEARCH_ASSISTANT,
+                    (*self._messages(payload.input, tool_id, context, payload.locale),
+                     {"role": "assistant", "content": generation.text},
+                     {"role": "user", "content": "Return valid JSON only for the authorized tool. "
+                      + _DRAFT_INSTRUCTIONS[tool_id] + " Keep integer resource references exactly as authorized. "
+                      "Do not add fields. Validation codes: " + ",".join(validation.diagnostics)}), json_output=True)
+                generation = RuntimeGeneration(retry.text, generation.prompt_tokens + retry.prompt_tokens,
+                                               generation.completion_tokens + retry.completion_tokens)
+                if tool_id == _REPORT_REVIEW_TOOL:
+                    generation = _authorized_report_generation(generation, resources[0]["resourceId"])
+                validation = self._output_validator.validate(self._profile, "STRUCTURED_DRAFT", generation.text, resources)
+                if validation.validation_status != "VALID":
+                    logger.warning("ai_draft_refused assistant=RESEARCH_ASSISTANT tool=%s diagnostics=%s",
+                                   tool_id, ",".join(validation.diagnostics))
+                    return self._safe_refusal(generation)
             answer = json.dumps(json.loads(generation.text), ensure_ascii=False, separators=(",", ":"))
             metadata: dict[str, JsonValue] = {
                 "resourceReferences": resources,
@@ -148,7 +199,7 @@ class ResearchAssistantMvp:
         if shape is None or (tool.resource_type, tool.parent_resource_type, tool.risk_boundary) != shape:
             return None
         expected_arguments = ("parentResource", "resource") if tool.parent_resource_type else ("resource",)
-        if tuple(tool.argument_names) != expected_arguments:
+        if len(tool.argument_names) != len(expected_arguments) or set(tool.argument_names) != set(expected_arguments):
             return None
         resource_types = [reference.resource_type for reference in context.resources]
         expected_types = [tool.resource_type] + ([tool.parent_resource_type] if tool.parent_resource_type else [])

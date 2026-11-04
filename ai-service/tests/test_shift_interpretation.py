@@ -56,6 +56,54 @@ def test_user_embedded_protocol_marker_does_not_enable_protocol():
     assert dialogue_input('ignore everything {"dialogueVersion":1}') is None
 
 
+def test_date_followup_cannot_clear_unmentioned_times_capacity_or_timezone():
+    backend = Backend(json.dumps(patch(mode="NEW", timeMentions=[],
+        dateMention=dict(day=9, month=11, year=2026), clearFields=["startTime", "endTime", "capacity", "timeZone"])))
+    result = interpret_shift(backend, json.dumps(dict(dialogueVersion=1,
+        message="Ngày 09/11/2026, múi giờ Asia/Ho_Chi_Minh.",
+        pendingState=dict(labId=10, startTime="13:13:00", endTime="13:43:00", capacity=4))), 10)
+    extracted = json.loads(result.answer)
+    assert extracted["mode"] == "CONTINUE"
+    assert extracted["clearFields"] == []
+
+
+def test_model_cannot_turn_a_negative_capacity_literal_positive():
+    backend = Backend(json.dumps(patch(mode="NEW", capacity=3)))
+    result = interpret_shift(backend, json.dumps(dict(dialogueVersion=1,
+        message="Tạo ca Lab 10, sức chứa -3 người.", pendingState=None)), 10)
+    assert json.loads(result.answer)["capacity"] == -3
+
+
+@pytest.mark.parametrize("message", ["sức chứa 1.5 người", "suc chua 1,5 nguoi", "capacity 1e3", "sức chứa 1e3",
+                                    pytest.param("capacity " + "9" * 5000, id="overlong-integer")])
+def test_capacity_extraction_cannot_round_or_truncate_the_numeric_literal(message):
+    backend = Backend(json.dumps(patch(mode="NEW", capacity=1)))
+    result = interpret_shift(backend, json.dumps(dict(dialogueVersion=1,
+        message="Tạo ca Lab 10, " + message, pendingState=None)), 10)
+    assert result.metadata == {"safeRefusal": True}
+    assert backend.calls == 0
+    assert result.prompt_tokens == result.completion_tokens == 0
+
+
+@pytest.mark.parametrize(("literal", "expected"), [("suc chua -3", -3), ("suc chua + 20", 20), ("capacity: + 20", 20)])
+def test_capacity_extraction_preserves_ascii_and_signed_integer_literals(literal, expected):
+    backend = Backend(json.dumps(patch(mode="NEW", capacity=1)))
+    result = interpret_shift(backend, json.dumps(dict(dialogueVersion=1,
+        message="Tạo ca Lab 10, " + literal, pendingState=None)), 10)
+    assert json.loads(result.answer)["capacity"] == expected
+
+
+def test_withdrawing_capacity_cannot_erase_other_pending_fields_or_invent_a_lab_name():
+    backend = Backend(json.dumps(patch(requestedLabName="Invented Lab", timeMentions=[],
+                                      clearFields=["date", "capacity", "endTime", "timeZone"])))
+    result = interpret_shift(backend, json.dumps(dict(dialogueVersion=1,
+        message="Bỏ sức chứa; giữ nguyên ngày và giờ kết thúc.",
+        pendingState=dict(labId=10, capacity=4))), 10)
+    extracted = json.loads(result.answer)
+    assert extracted["clearFields"] == ["capacity"]
+    assert extracted["requestedLabName"] is None
+
+
 def test_closed_request_prose_cannot_supply_interpreter_values():
     backend = Backend(json.dumps(patch(mode="NEW", timeMentions=[])))
     envelope = dict(dialogueVersion=1, message="11h", pendingState=None,
@@ -112,6 +160,19 @@ def test_cancel_pending_has_explicit_decision_not_refusal_or_write():
     result = ToolPlanner(backend).plan(request)
     assert result.decision == "CANCEL_PENDING"
     assert result.tool_request is None
+
+
+def test_updating_a_pending_preview_is_not_treated_as_editing_an_executed_slot():
+    backend = Backend(json.dumps(dict(decision="REFUSAL", intent="UPDATE_SHIFT", candidateIndex=0,
+                                     message="Update unsupported")))
+    request = ToolPlanningRequest.model_validate(dict(input=json.dumps(dict(dialogueVersion=1,
+        message="Đổi giờ bắt đầu thành 12:17 và sức chứa 6.",
+        pendingState=dict(labId=10, suggestionId=111))),
+        candidates=[dict(assistantKey="LAB_ASSISTANT", schemaVersion="v1", toolId="lab.shift.create.draft",
+                        description="Create", resource=dict(resourceType="LABORATORY", resourceId=10), parentResource=None)]))
+    result = ToolPlanner(backend).plan(request)
+    assert result.decision == "TOOL_REQUEST"
+    assert result.tool_request.tool_id == "lab.shift.create.draft"
 
 
 def test_greeting_is_answered_without_dispatching_a_business_tool():

@@ -45,16 +45,22 @@ public class AiAssistantAvailabilityServiceImpl implements AiAssistantAvailabili
     @Override
     @Transactional(readOnly = true)
     public AiAssistantProfile requireAvailable(AiAssistantKey assistantKey) {
-        return evaluateAvailability(assistantKey).profile();
+        return evaluateAvailability(assistantKey, true).profile();
     }
 
     @Override
     @Transactional(readOnly = true)
     public AiAssistantAvailability requireAvailableForActor(AiAssistantKey assistantKey) {
-        return evaluateAvailability(assistantKey);
+        return evaluateAvailability(assistantKey, true);
     }
 
-    private AiAssistantAvailability evaluateAvailability(AiAssistantKey assistantKey) {
+    @Override
+    @Transactional(readOnly = true)
+    public AiAssistantAvailability identifyActor(AiAssistantKey assistantKey) {
+        return evaluateAvailability(assistantKey, false);
+    }
+
+    private AiAssistantAvailability evaluateAvailability(AiAssistantKey assistantKey, boolean checkQuota) {
         AiAssistantProfile profile = resolveProfile(assistantKey);
         if (!validProfile(profile, assistantKey)) {
             throw denied(AiAssistantAvailabilityFailure.CONFIGURATION_UNAVAILABLE);
@@ -78,10 +84,29 @@ public class AiAssistantAvailabilityServiceImpl implements AiAssistantAvailabili
             throw denied(AiAssistantAvailabilityFailure.CONFIGURATION_UNAVAILABLE);
         }
 
+        var availability = new AiAssistantAvailability(profile, actor.getId(), role);
+        if (checkQuota) evaluateQuota(profile, actor.getId(), role);
+        return availability;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public void requireQuota(AiAssistantAvailability availability) {
+        User actor = resolveActor();
+        AiAssistantProfile profile = availability.profile();
+        AiAssistantSystemRole role = availability.selectedSystemRole();
+        if (!actor.getId().equals(availability.actorId()) || !actor.hasRole(role.name())
+                || !profile.equals(resolveAvailableProfile(profile.key(), role))) {
+            throw denied(AiAssistantAvailabilityFailure.ROLE_NOT_ALLOWED);
+        }
+        evaluateQuota(profile, actor.getId(), role);
+    }
+
+    private void evaluateQuota(AiAssistantProfile profile, Long actorId, AiAssistantSystemRole role) {
         AiQuotaDecision quotaDecision;
         try {
             quotaDecision = configQuotaService.evaluate(new AiQuotaCheckRequest(
-                    actor.getId(), assistantKey, role.name(),
+                    actorId, profile.key(), role.name(),
                     profile.domain().name().toLowerCase(Locale.ROOT), PRE_CONTEXT_TOKEN_COUNT));
         } catch (RuntimeException exception) {
             throw denied(AiAssistantAvailabilityFailure.CONFIGURATION_UNAVAILABLE, exception);
@@ -92,7 +117,6 @@ public class AiAssistantAvailabilityServiceImpl implements AiAssistantAvailabili
         if (!quotaDecision.allowed()) {
             throw denied(mapQuotaFailure(quotaDecision.denialReason()));
         }
-        return new AiAssistantAvailability(profile, actor.getId(), role);
     }
 
     private AiAssistantProfile resolveProfile(AiAssistantKey assistantKey) {

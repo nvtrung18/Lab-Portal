@@ -10,6 +10,8 @@ import com.web.labportalbackend.ai.rag.service.AiAuthorizedRetrieval;
 import com.web.labportalbackend.ai.rag.service.AiRagRetrievalService;
 import com.web.labportalbackend.ai.service.AiAssistantProfile;
 import com.web.labportalbackend.ai.service.AiCapabilityDecision;
+import com.web.labportalbackend.lab.repository.LaboratoryRepository;
+import com.web.labportalbackend.lab.repository.MembershipRepository;
 import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -30,9 +32,15 @@ public class AiRagRetrievalServiceImpl implements AiRagRetrievalService {
     private static final Pattern TERM_PATTERN = Pattern.compile("[\\p{L}\\p{N}]{2,}");
 
     private final AiRagChunkRepository chunkRepository;
+    private final MembershipRepository membershipRepository;
+    private final LaboratoryRepository laboratoryRepository;
 
-    public AiRagRetrievalServiceImpl(AiRagChunkRepository chunkRepository) {
+    public AiRagRetrievalServiceImpl(AiRagChunkRepository chunkRepository,
+                                     MembershipRepository membershipRepository,
+                                     LaboratoryRepository laboratoryRepository) {
         this.chunkRepository = chunkRepository;
+        this.membershipRepository = membershipRepository;
+        this.laboratoryRepository = laboratoryRepository;
     }
 
     @Override
@@ -55,9 +63,15 @@ public class AiRagRetrievalServiceImpl implements AiRagRetrievalService {
                 namespace, PageRequest.of(0, MAX_CANDIDATES,
                         Sort.by(Sort.Order.desc("documentVersion"), Sort.Order.asc("chunkIndex"))));
         AiCapabilityDecision.ResolvedResource resource = authorizedContext.resource();
+        // Policy access alone does not establish membership in the laboratory.
+        boolean labKnowledgeAllowed = resource.labId() != null
+                && (membershipRepository.existsByUserIdAndLaboratoryIdAndActiveTrueAndDeletedFalse(
+                        actorId, resource.labId())
+                    || selectedRole == AiAssistantSystemRole.LAB_MANAGER
+                        && laboratoryRepository.existsAiContextManagedLab(actorId, resource.labId(), selectedRole.name()));
         List<AiAuthorizedRetrieval.Chunk> chunks = candidates.stream()
                 .filter(candidate -> validMetadata(candidate, profile.domain(), namespace))
-                .filter(candidate -> isAuthorized(candidate, actorId, selectedRole, resource))
+                .filter(candidate -> isAuthorized(candidate, actorId, selectedRole, resource, labKnowledgeAllowed))
                 .map(candidate -> new RankedChunk(candidate, score(candidate.getContent(), terms)))
                 .filter(candidate -> candidate.score() > 0)
                 .sorted(Comparator.comparingInt(RankedChunk::score).reversed()
@@ -111,14 +125,15 @@ public class AiRagRetrievalServiceImpl implements AiRagRetrievalService {
     private static boolean isAuthorized(AiRagChunkEntity chunk,
                                         Long actorId,
                                         AiAssistantSystemRole selectedRole,
-                                        AiCapabilityDecision.ResolvedResource resource) {
+                                        AiCapabilityDecision.ResolvedResource resource,
+                                        boolean labKnowledgeAllowed) {
         if (!matchesDeclaredScope(chunk, resource)) {
             return false;
         }
         return switch (chunk.getVisibility()) {
             case ADMIN_ONLY -> selectedRole == AiAssistantSystemRole.ADMIN;
             case OWNER -> actorId.equals(chunk.getOwnerId());
-            case LAB_MEMBERS -> chunk.getLabId().equals(resource.labId());
+            case LAB_MEMBERS -> labKnowledgeAllowed && chunk.getLabId().equals(resource.labId());
             case PROJECT_MEMBERS -> chunk.getProjectId().equals(resource.projectId());
             case GROUP_MEMBERS -> chunk.getGroupId().equals(resource.groupId());
         };

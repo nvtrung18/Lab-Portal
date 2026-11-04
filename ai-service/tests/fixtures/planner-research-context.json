@@ -1,0 +1,42 @@
+{
+  "input": "{\"dialogueVersion\":1,\"message\":\"Soạn một đề xuất task cho nhóm 19 dự án 16, chỉ draft, không tạo record.\",\"pendingState\":null,\"temporalContext\":{\"currentDate\":\"2026-11-04\",\"defaultTimeZone\":\"Asia/Ho_Chi_Minh\"},\"history\":[]}",
+  "locale": "vi",
+  "candidates": [
+    {
+      "assistantKey": "RESEARCH_ASSISTANT",
+      "schemaVersion": "v1",
+      "toolId": "research.project.summary",
+      "description": "Authorized RESEARCH_PROJECT_SUMMARY for PROJECT #16",
+      "resource": {
+        "resourceType": "PROJECT",
+        "resourceId": 16
+      },
+      "parentResource": null
+    },
+    {
+      "assistantKey": "RESEARCH_ASSISTANT",
+      "schemaVersion": "v1",
+      "toolId": "research.group.summary",
+      "description": "Authorized RESEARCH_GROUP_SUMMARY for GROUP #19",
+      "resource": {
+        "resourceType": "GROUP",
+        "resourceId": 19
+      },
+      "parentResource": null
+    },
+    {
+      "assistantKey": "RESEARCH_ASSISTANT",
+      "schemaVersion": "v1",
+      "toolId": "research.task.proposal.draft",
+      "description": "Authorized RESEARCH_TASK_PROPOSAL_DRAFT for GROUP #19",
+      "resource": {
+        "resourceType": "GROUP",
+        "resourceId": 19
+      },
+      "parentResource": {
+        "resourceType": "PROJECT",
+        "resourceId": 16
+      }
+    }
+  ]
+}

@@ -12,6 +12,7 @@ from app.profiles import AssistantProfile, ProfileLoader
 from app.rag_context import AuthorizedRetrieval
 from app.research_mvp import GenerationBackend
 from app.runtime import RuntimeGeneration
+from app.grounded_answers import grounded_answer
 
 
 SAFE_REFUSAL = "I cannot provide that response from the authorized context available."
@@ -88,8 +89,16 @@ class _AuditBucket(_ContextModel):
 
 
 class _BoundedAuditBuckets(_ContextModel):
-    items: tuple[_AuditBucket, ...] = Field(max_length=14)
+    values: tuple[_AuditBucket, ...] = Field(max_length=14)
+    returned_count: int = Field(ge=0, le=14)
+    limit: Literal[14]
     truncated: bool
+
+    @model_validator(mode="after")
+    def count_matches_values(self) -> "_BoundedAuditBuckets":
+        if self.returned_count != len(self.values):
+            raise ValueError("audit bucket count does not match values")
+        return self
 
 
 class _AdminContext(_ContextModel):
@@ -125,6 +134,12 @@ class AdminAssistantMvp:
             return self._safe_refusal()
         tool_id, context, resources = selected
         json_output = tool_id in _DRAFT_TOOLS
+        if not json_output:
+            return ChatResponse(assistant_key=AssistantKey.ADMIN_ASSISTANT,
+                answer=grounded_answer(context.context.model_dump(by_alias=True, mode="json"),
+                                       context.authorized_retrieval, locale=payload.locale),
+                prompt_tokens=0, completion_tokens=0,
+                metadata={"resourceReferences": resources, "grounding": "AUTHORIZED_SNAPSHOT"})
         generation = self._backend.generate(
             AssistantKey.ADMIN_ASSISTANT,
             self._messages(payload.input, tool_id, context, payload.locale),
@@ -138,7 +153,20 @@ class AdminAssistantMvp:
                 resources,
             )
             if validation.validation_status != "VALID":
-                return self._safe_refusal(generation)
+                retry = self._backend.generate(AssistantKey.ADMIN_ASSISTANT,
+                    (*self._messages(payload.input, tool_id, context, payload.locale),
+                     {"role": "user", "content": "Return one JSON object with exactly kind, subject, actions, "
+                      "requiresHumanReview. subject must be a JSON string equal to "
+                      + json.dumps(self._expected_subject(tool_id, context.context))
+                      + ". actions must be a non-empty array of strings, not objects. "
+                      "Keep the original authority and request; do not execute any action. Validation codes: "
+                      + ",".join(validation.diagnostics)}), json_output=True)
+                generation = RuntimeGeneration(retry.text, generation.prompt_tokens + retry.prompt_tokens,
+                                               generation.completion_tokens + retry.completion_tokens)
+                validation = self._output_validator.validate(
+                    self._profile, "STRUCTURED_DRAFT", generation.text, resources)
+                if validation.validation_status != "VALID":
+                    return self._safe_refusal(generation)
             draft = json.loads(generation.text)
             if draft["subject"] != self._expected_subject(tool_id, context.context):
                 return self._safe_refusal(generation)
@@ -201,7 +229,7 @@ class AdminAssistantMvp:
             return False
 
         audit_expected = tool_id == _AUDIT_SUMMARY_TOOL
-        if not audit_expected and (context.audit_buckets.items or context.audit_buckets.truncated):
+        if not audit_expected and (context.audit_buckets.values or context.audit_buckets.truncated):
             return False
         return context.draft_only == (tool_id in _DRAFT_TOOLS)
 
@@ -223,16 +251,18 @@ class AdminAssistantMvp:
         response_language = "English" if locale == "en" else "Vietnamese"
         if tool_id == _CONFIG_DRAFT_TOOL:
             output_instruction = (
-                "Return only one JSON object with kind ADMIN_ACCOUNT_DRAFT, subject SYSTEM_CONFIG, a non-empty "
+                'Return only one JSON object with kind "ADMIN_ACCOUNT_DRAFT", subject "SYSTEM_CONFIG" as a JSON string, a non-empty '
                 "actions array containing template steps derived only from the request, and requiresHumanReview=true. "
                 "Do not assert any current configuration value, policy, eligibility, approval, or execution."
             )
         elif tool_id == _ACCOUNT_DRAFT_TOOL:
             output_instruction = (
                 "Return only one JSON object with kind ADMIN_ACCOUNT_DRAFT, subject equal to the authorized target "
-                "user's decimal id, a non-empty actions array, and requiresHumanReview=true. Do not assert account "
+                "user's decimal id encoded as a JSON string, a non-empty actions array of strings (not objects), "
+                "and requiresHumanReview=true. Do not assert account "
                 "policy, eligibility, approval, or execution beyond the supplied status projection."
             )
+            output_instruction += " The exact required subject is " + json.dumps(str(context.context.target_user.id)) + "."
         else:
             output_instruction = (
                 "Answer only from the supplied bounded context. If it is insufficient, use a safe refusal."

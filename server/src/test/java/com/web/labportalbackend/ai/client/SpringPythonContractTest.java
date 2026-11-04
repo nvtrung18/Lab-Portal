@@ -197,7 +197,10 @@ class SpringPythonContractTest {
         assertEquals(expected.path("answer").asText(), response.answer());
         assertEquals(expected.path("promptTokens").asInt(), response.promptTokens());
         assertEquals(expected.path("completionTokens").asInt(), response.completionTokens());
-        assertEquals(Set.of("resourceReferences"), response.metadata().keySet());
+        assertEquals(Set.of("resourceReferences", "grounding"), response.metadata().keySet());
+        assertEquals("AUTHORIZED_SNAPSHOT", response.metadata().get("grounding").asText());
+        assertEquals(0, response.promptTokens());
+        assertEquals(0, response.completionTokens());
     }
 
     private static AiGatewayClient client(ExchangeFunction exchangeFunction) {

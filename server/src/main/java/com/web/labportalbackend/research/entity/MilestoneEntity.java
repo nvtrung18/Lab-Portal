@@ -5,6 +5,8 @@ import com.web.labportalbackend.auth.entity.User;
 import com.web.labportalbackend.research.enums.MilestoneStatus;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDate;
 
@@ -36,9 +38,11 @@ public class MilestoneEntity extends BaseEntity {
     private String name;
 
     @Column(name = "start_date")
+    @JdbcTypeCode(SqlTypes.LOCAL_DATE)
     private LocalDate startDate;
 
     @Column(name = "end_date")
+    @JdbcTypeCode(SqlTypes.LOCAL_DATE)
     private LocalDate endDate;
 
     @Column(length = 200)
@@ -48,6 +52,7 @@ public class MilestoneEntity extends BaseEntity {
     private String description;
 
     @Column
+    @JdbcTypeCode(SqlTypes.LOCAL_DATE)
     private LocalDate deadline;
 
     @Builder.Default

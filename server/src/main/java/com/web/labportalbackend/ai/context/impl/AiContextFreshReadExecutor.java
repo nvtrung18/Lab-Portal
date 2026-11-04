@@ -88,7 +88,7 @@ public class AiContextFreshReadExecutor {
                 clock.instant());
         return new AiAuthorizedContext(requestId, current.assistantKey(), current.domain(), current.capability(),
                 current.resolvedResource(), policy, CONTEXT_VERSION, input.builtAt(),
-                AiAuthorizedContext.Freshness.LIVE_READ_NO_CACHE, builder.build(input));
+                AiAuthorizedContext.Freshness.LIVE_READ_NO_CACHE, builder.build(input), current.selectedSystemRole());
     }
 
     static boolean isValidDecision(AiCapabilityDecision decision, AiCapabilityRequest request) {

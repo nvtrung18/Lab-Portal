@@ -14,7 +14,8 @@ import org.springframework.stereotype.Repository;
 public interface AuditLogRepository extends JpaRepository<AuditLog, Long>, JpaSpecificationExecutor<AuditLog> {
 
     @Query("""
-            SELECT CAST(a.createdAt AS LocalDate) AS day, a.module AS module, a.action AS action, COUNT(a) AS count
+            SELECT CAST(CAST(a.createdAt AS LocalDate) AS string) AS day,
+                   a.module AS module, a.action AS action, COUNT(a) AS count
             FROM AuditLog a
             WHERE a.createdAt >= :cutoff
               AND a.deleted = false
@@ -22,8 +23,8 @@ public interface AuditLogRepository extends JpaRepository<AuditLog, Long>, JpaSp
                           WHERE u.id = :actorId AND u.active = true AND u.deleted = false
                             AND u.status = com.web.labportalbackend.common.enums.UserStatus.ACTIVE
                             AND r.name = 'ADMIN')
-            GROUP BY CAST(a.createdAt AS LocalDate), a.module, a.action
-            ORDER BY CAST(a.createdAt AS LocalDate) DESC, a.module ASC, a.action ASC
+            GROUP BY CAST(CAST(a.createdAt AS LocalDate) AS string), a.module, a.action
+            ORDER BY CAST(CAST(a.createdAt AS LocalDate) AS string) DESC, a.module ASC, a.action ASC
             """)
     List<AiAuditSummaryBucket> findAiContextAuditBuckets(
             @Param("actorId") Long actorId, @Param("cutoff") Instant cutoff, Pageable pageable);

@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 from enum import StrEnum
+import json
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, JsonValue, StringConstraints
+from pydantic import BaseModel, ConfigDict, Field, JsonValue, StringConstraints, model_validator
 
 
 def to_camel(value: str) -> str:
@@ -22,6 +23,7 @@ class AssistantKey(StrEnum):
 
 
 RequestInput = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=32_768)]
+RuntimeInput = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=262_144)]
 ReadinessStatus = Literal["READY", "NOT_READY"]
 ServiceStatus = Literal["READY", "NOT_READY"]
 SupportedLocale = Literal["vi", "en"]
@@ -36,10 +38,33 @@ ArtifactStatus = Literal[
 ]
 
 
-class AssistantRequest(ContractModel):
+class RuntimeRequest(ContractModel):
+    input: RuntimeInput
+
+    @model_validator(mode="after")
+    def validate_message_budget(self):
+        try:
+            envelope = json.loads(self.input)
+        except (ValueError, TypeError):
+            envelope = None
+        if isinstance(envelope, dict) and envelope.get("dialogueVersion") == 1:
+            message = envelope.get("message")
+            history = envelope.get("history", [])
+            if not isinstance(message, str) or not message.strip() or len(message) > 32768:
+                raise ValueError("invalid public message length")
+            if not isinstance(history, list) or len(history) > 6:
+                raise ValueError("invalid dialogue history bound")
+            if any(not isinstance(item, dict) or not isinstance(item.get("content"), str)
+                   or len(item["content"]) > 1500 for item in history):
+                raise ValueError("invalid dialogue history message")
+        elif len(self.input) > 32768:
+            raise ValueError("plain input exceeds public message limit")
+        return self
+
+
+class AssistantRequest(RuntimeRequest):
     assistant_key: AssistantKey
     locale: SupportedLocale = "vi"
-    input: RequestInput
     authorized_context: dict[str, JsonValue] = Field(default_factory=dict)
 
 
@@ -57,9 +82,8 @@ class ToolCandidate(ContractModel):
     parent_resource: ToolResourceReference | None
 
 
-class ToolPlanningRequest(ContractModel):
+class ToolPlanningRequest(RuntimeRequest):
     locale: SupportedLocale = "vi"
-    input: RequestInput
     candidates: tuple[ToolCandidate, ...] = Field(min_length=1, max_length=200)
 
 

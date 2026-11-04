@@ -4,6 +4,12 @@ import com.web.labportalbackend.ai.context.AiLabContext;
 import com.web.labportalbackend.ai.enums.AiAssistantKey;
 import com.web.labportalbackend.ai.enums.AiAssistantSystemRole;
 import com.web.labportalbackend.ai.enums.AiCapability;
+import com.web.labportalbackend.ai.enums.AiResourceType;
+import com.web.labportalbackend.ai.service.AiCapabilityResolver;
+import com.web.labportalbackend.ai.service.AiCapabilityRequest;
+import com.web.labportalbackend.ai.service.AiCapabilityDecision;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.web.labportalbackend.ai.service.AiCurrentActor;
 import com.web.labportalbackend.ai.service.AiCurrentActorProvider;
 import com.web.labportalbackend.ai.service.AiToolCandidate;
@@ -19,6 +25,12 @@ import com.web.labportalbackend.research.repository.ProjectRepository;
 import com.web.labportalbackend.research.repository.TaskRepository;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.LinkedHashSet;
+import java.util.LinkedHashMap;
+import java.util.EnumMap;
+import java.util.regex.Pattern;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,6 +49,17 @@ public class AiToolCandidateCatalogServiceImpl implements AiToolCandidateCatalog
     private final ProjectRepository projectRepository;
     private final GroupRepository groupRepository;
     private final TaskRepository taskRepository;
+    private final AiCapabilityResolver capabilityResolver;
+    private final ObjectMapper objectMapper;
+    private static final Map<AiResourceType, Pattern> EXPLICIT_IDS = Map.of(
+            AiResourceType.USER_ACCOUNT, idPattern("user|tài\\s*khoản|người\\s*dùng"),
+            AiResourceType.LABORATORY, idPattern("lab|phòng\\s*thí\\s*nghiệm"),
+            AiResourceType.TIME_SLOT, idPattern("slot|ca"),
+            AiResourceType.BOOKING, idPattern("booking|lịch\\s*đặt"),
+            AiResourceType.PROJECT, idPattern("project|dự\\s*án"),
+            AiResourceType.GROUP, idPattern("group|nhóm"),
+            AiResourceType.TASK, idPattern("task|công\\s*việc|nhiệm\\s*vụ"),
+            AiResourceType.REPORT, idPattern("report|báo\\s*cáo"));
 
     public AiToolCandidateCatalogServiceImpl(AiCurrentActorProvider currentActorProvider,
                                              AiToolRegistry toolRegistry,
@@ -44,7 +67,9 @@ public class AiToolCandidateCatalogServiceImpl implements AiToolCandidateCatalog
                                              BookingRepository bookingRepository,
                                              ProjectRepository projectRepository,
                                              GroupRepository groupRepository,
-                                             TaskRepository taskRepository) {
+                                             TaskRepository taskRepository,
+                                             AiCapabilityResolver capabilityResolver,
+                                             ObjectMapper objectMapper) {
         this.currentActorProvider = currentActorProvider;
         this.toolRegistry = toolRegistry;
         this.laboratoryRepository = laboratoryRepository;
@@ -52,17 +77,97 @@ public class AiToolCandidateCatalogServiceImpl implements AiToolCandidateCatalog
         this.projectRepository = projectRepository;
         this.groupRepository = groupRepository;
         this.taskRepository = taskRepository;
+        this.capabilityResolver = capabilityResolver;
+        this.objectMapper = objectMapper;
+    }
+
+    private static Pattern idPattern(String names) {
+        return Pattern.compile("(?iu)\\b(?:" + names + ")\\s*(?:ID\\s*[:#]?\\s*|[:#]\\s*)?([+-]?\\d+)\\b");
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<AiToolCandidate> candidates(String input) {
+        String message = input;
+        try {
+            var envelope = objectMapper.readTree(input);
+            if (envelope.path("dialogueVersion").asInt() == 1 && envelope.path("message").isTextual()) {
+                message = envelope.path("message").textValue();
+            }
+        } catch (JsonProcessingException ignored) {
+            // Plain input is supported by callers outside the conversation envelope.
+        }
+        Map<AiResourceType, Set<Long>> ids = new EnumMap<>(AiResourceType.class);
+        for (var entry : EXPLICIT_IDS.entrySet()) {
+            var matcher = entry.getValue().matcher(message);
+            while (matcher.find() && ids.values().stream().mapToInt(Set::size).sum() < 8) {
+                var values = ids.computeIfAbsent(entry.getKey(), key -> new LinkedHashSet<>());
+                try { values.add(Long.parseLong(matcher.group(1))); }
+                catch (NumberFormatException ignored) { /* An invalid explicit ID must not select another resource. */ }
+            }
+        }
+        if (ids.isEmpty()) return candidates();
+        AiCurrentActor actor = currentActorProvider.requireCurrentActor();
+        List<AiToolCandidate> resolved = new ArrayList<>();
+        Map<Long, Long> groupProjects = new LinkedHashMap<>();
+        // IDs seed lookup only; they never route a request or supply business authority.
+        for (AiCapability capability : AiCapability.values()) {
+            for (Long id : ids.getOrDefault(capability.resourceType(), Set.of())) {
+                Set<Long> parents = capability.parentResourceType() == null ? Set.of()
+                        : ids.getOrDefault(capability.parentResourceType(), Set.of());
+                // Multiple explicit parents require clarification, never an arbitrary first match.
+                if (parents.size() > 1) continue;
+                Long parent = capability.parentResourceType() == null ? null
+                        : parents.stream().findFirst().orElse(groupProjects.get(id));
+                AiAssistantKey assistant = switch (capability.domain()) {
+                    case ADMIN -> AiAssistantKey.ADMIN_ASSISTANT;
+                    case LAB -> AiAssistantKey.LAB_ASSISTANT;
+                    case RESEARCH -> AiAssistantKey.RESEARCH_ASSISTANT;
+                };
+                try {
+                    AiCapabilityDecision allowed = capabilityResolver.resolve(new AiCapabilityRequest(
+                            assistant, actor.id(), capability,
+                            new AiCapabilityRequest.ResourceReference(capability.resourceType(), id),
+                            capability.parentResourceType() == null ? null
+                                    : new AiCapabilityRequest.ResourceReference(capability.parentResourceType(), parent),
+                            capability.action()));
+                    if (allowed == null || !allowed.allowed()) continue;
+                    var resource = allowed.resolvedResource();
+                    if (resource == null || !matchesMention(ids, AiResourceType.LABORATORY, resource.labId())
+                            || !matchesMention(ids, AiResourceType.PROJECT, resource.projectId())
+                            || !matchesMention(ids, AiResourceType.GROUP, resource.groupId())) continue;
+                    if (capability == AiCapability.RESEARCH_GROUP_SUMMARY && resource.projectId() != null) {
+                        groupProjects.put(id, resource.projectId());
+                    }
+                    resolved.add(candidate(capability, "Authorized " + capability.name() + " for "
+                            + capability.resourceType() + " #" + id, id, parent));
+                } catch (IllegalArgumentException ignored) {
+                    // Omit unavailable/unauthorized IDs without disclosing whether they exist.
+                }
+            }
+        }
+        return resolved.stream().distinct().limit(200).toList();
+    }
+
+    private static boolean matchesMention(Map<AiResourceType, Set<Long>> ids, AiResourceType type, Long id) {
+        return id == null || !ids.containsKey(type) || ids.get(type).contains(id);
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<AiToolCandidate> candidates() {
         AiCurrentActor actor = currentActorProvider.requireCurrentActor();
-        return switch (actor.role()) {
-            case ADMIN -> adminCandidates();
-            case LAB_MANAGER -> appendResearch(managerCandidates(actor.id()), actor);
-            case STUDENT -> appendResearch(studentCandidates(actor.id()), actor);
-        };
+        List<AiToolCandidate> result = new ArrayList<>();
+        for (AiAssistantSystemRole role : AiAssistantSystemRole.values()) {
+            if (!actor.systemRoles().contains(role)) continue;
+            AiCurrentActor scopedActor = new AiCurrentActor(actor.id(), role, actor.systemRoles());
+            result.addAll(switch (role) {
+                case ADMIN -> adminCandidates();
+                case LAB_MANAGER -> appendResearch(managerCandidates(actor.id()), scopedActor);
+                case STUDENT -> appendResearch(studentCandidates(actor.id()), scopedActor);
+            });
+        }
+        return result.stream().distinct().limit(200).toList();
     }
 
     private List<AiToolCandidate> adminCandidates() {
@@ -73,24 +178,23 @@ public class AiToolCandidateCatalogServiceImpl implements AiToolCandidateCatalog
     }
 
     private List<AiToolCandidate> managerCandidates(Long actorId) {
-        Laboratory lab = laboratoryRepository.findFirstByManagerIdAndDeletedFalse(actorId).orElse(null);
-        if (lab == null || lab.getId() == null || !Boolean.TRUE.equals(lab.getActive())
-                || Boolean.TRUE.equals(lab.getDeleted())) {
-            return List.of();
-        }
-        String labLabel = safeLabel(lab.getLabName(), lab.getId());
-        return List.of(
+        List<AiToolCandidate> result = new ArrayList<>();
+        for (var lab : laboratoryRepository.findAiCandidateLabsForManager(actorId, PageRequest.of(0, 10))) {
+        String labLabel = safeLabel(lab.name(), lab.id());
+        result.addAll(List.of(
                 candidate(AiCapability.LAB_AVAILABLE_SLOTS_READ,
-                        "List future available time slots for managed Lab " + labLabel, lab.getId()),
+                        "List future available time slots for managed Lab " + labLabel, lab.id()),
                 candidate(AiCapability.LAB_MANAGED_SUMMARY,
-                        "List and summarize current time slots in managed Lab " + labLabel, lab.getId()),
+                        "List and summarize current time slots in managed Lab " + labLabel, lab.id()),
                 candidate(AiCapability.LAB_SHIFT_CREATE_DRAFT,
                         "Create a confirmation preview for a new time slot in managed Lab " + labLabel,
-                        lab.getId()),
+                        lab.id()),
                 candidate(AiCapability.LAB_POLICY_READ,
                         "Answer informational questions from authorized knowledge documents for managed Lab "
                                 + labLabel + ", including policies, procedures, equipment, materials, safety, and guidance",
-                        lab.getId()));
+                        lab.id())));
+        }
+        return List.copyOf(result);
     }
 
     private List<AiToolCandidate> studentCandidates(Long actorId) {
@@ -148,7 +252,7 @@ public class AiToolCandidateCatalogServiceImpl implements AiToolCandidateCatalog
         groupRepository.findAiToolCandidateGroups(actor.id(), role, page).forEach(group -> {
             result.add(candidate(AiCapability.RESEARCH_GROUP_SUMMARY,
                     "Summarize authorized research group " + safeLabel(group.label(), group.id()), group.id()));
-            if (actor.role() == AiAssistantSystemRole.STUDENT) {
+            if (actor.systemRoles().equals(Set.of(AiAssistantSystemRole.STUDENT))) {
                 result.add(candidate(AiCapability.RESEARCH_TASK_PROPOSAL_DRAFT,
                         "Draft a task proposal for research group " + safeLabel(group.label(), group.id()),
                         group.id(), group.projectId()));

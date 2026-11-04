@@ -98,7 +98,8 @@ public record AiPythonAuthorizedContext(
         }
     }
 
-    public record ResourceReference(AiResourceType resourceType, Long resourceId) {
+    public record ResourceReference(AiResourceType resourceType,
+                                    @JsonInclude(JsonInclude.Include.ALWAYS) Long resourceId) {
         public ResourceReference {
             if (resourceType == null || (isGlobal(resourceType) ? resourceId != null
                     : resourceId == null || resourceId <= 0)) {

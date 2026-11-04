@@ -1,0 +1,150 @@
+{
+  "assistantKey": "RESEARCH_ASSISTANT",
+  "locale": "vi",
+  "input": "Review only this authorized report. Return valid JSON with reportRef 19, advisoryOnly true and requiresHumanReview true. Do not approve it.",
+  "authorizedContext": {
+    "domain": "RESEARCH",
+    "contextVersion": "P5A-T5-v1",
+    "context": {
+      "research": {
+        "identity": {
+          "userId": 44,
+          "roles": []
+        },
+        "laboratory": {
+          "id": 17,
+          "name": "Remediation b080e135-50ad-4e48-aebf-cc5e977b77fe"
+        },
+        "project": {
+          "id": 10,
+          "code": null,
+          "title": "Report fixture project",
+          "status": "DRAFT",
+          "startDate": null,
+          "endDate": null
+        },
+        "groups": [
+          {
+            "id": 11,
+            "name": "Report fixture group",
+            "role": null
+          }
+        ],
+        "milestones": [
+          {
+            "id": 11,
+            "title": "Fixture milestone",
+            "name": "Fixture milestone",
+            "status": "NOT_STARTED",
+            "startDate": null,
+            "endDate": null,
+            "deadline": null,
+            "progressPercent": 0
+          }
+        ],
+        "tasks": [
+          {
+            "id": 11,
+            "title": "Fixture task",
+            "status": "TODO",
+            "priority": "MEDIUM",
+            "type": "TASK",
+            "dueDate": null,
+            "deadline": null,
+            "progressPercent": 0,
+            "blockedReason": null,
+            "overdue": false
+          }
+        ]
+      },
+      "groups": {
+        "values": [
+          {
+            "id": 11,
+            "name": "Report fixture group",
+            "role": null
+          }
+        ],
+        "returnedCount": 1,
+        "limit": 20,
+        "truncated": false
+      },
+      "milestones": {
+        "values": [
+          {
+            "id": 11,
+            "title": "Fixture milestone",
+            "name": "Fixture milestone",
+            "status": "NOT_STARTED",
+            "startDate": null,
+            "endDate": null,
+            "deadline": null,
+            "progressPercent": 0
+          }
+        ],
+        "returnedCount": 1,
+        "limit": 20,
+        "truncated": false
+      },
+      "tasks": {
+        "values": [
+          {
+            "id": 11,
+            "title": "Fixture task",
+            "status": "TODO",
+            "priority": "MEDIUM",
+            "type": "TASK",
+            "dueDate": null,
+            "deadline": null,
+            "progressPercent": 0,
+            "blockedReason": null,
+            "overdue": false
+          }
+        ],
+        "returnedCount": 1,
+        "limit": 25,
+        "truncated": false
+      },
+      "report": {
+        "id": 19,
+        "projectId": 10,
+        "groupId": 11,
+        "milestoneId": 11,
+        "taskId": 11,
+        "version": 1,
+        "title": "Authorized report fixture",
+        "contentDone": "Completed the bounded experiment.",
+        "result": "Observed a repeatable result.",
+        "difficulty": "The sample size is limited.",
+        "nextPlan": "Repeat with a larger bounded sample.",
+        "selfAssessment": "Needs additional evidence.",
+        "evidenceLink": null,
+        "status": "SUBMITTED"
+      },
+      "selectedResourceId": 19,
+      "draftOnly": true
+    },
+    "allowedTools": [
+      {
+        "toolId": "research.report.review.draft",
+        "schemaVersion": "v1",
+        "resourceType": "REPORT",
+        "parentResourceType": null,
+        "argumentNames": [
+          "resource"
+        ],
+        "riskBoundary": "DRAFT_ONLY"
+      }
+    ],
+    "resources": [
+      {
+        "resourceType": "REPORT",
+        "resourceId": 19
+      }
+    ],
+    "authorizedRetrieval": {
+      "namespace": "research-knowledge",
+      "chunks": []
+    }
+  }
+}

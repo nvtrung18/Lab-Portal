@@ -62,6 +62,19 @@ class AiShiftDialogueServiceTest {
     }
 
     @Test
+    void omittedLabNameRequiresClarificationWhenManagerHasMultipleLabs() {
+        when(labs.findAiCandidateLabsForManager(eq(7L), any())).thenReturn(java.util.List.of(
+                new AiLabContext.Laboratory(10L, "AI Research Lab", null, 30),
+                new AiLabContext.Laboratory(11L, "Robotics", null, 20)));
+        var p = completeTimes(withDate(patch("NEW"), 14, 9, 2026), 9, 11);
+        p.putNull("requestedLabName");
+        var result = service.resolve(10L, p.toString(), null);
+        assertNotNull(result.question());
+        assertNull(result.draft());
+        assertFalse(result.state().labConfirmed());
+    }
+
+    @Test
     void shortAnswerCompletesOnlyMissingEndTimeAndProducesDraft() {
         var previous = new AiShiftDialogueState(10L, "2026-09-14", "09:00:00", null, 20, "Asia/Ho_Chi_Minh");
         var p = withTime(patch("CONTINUE"), "END", 11, 0);

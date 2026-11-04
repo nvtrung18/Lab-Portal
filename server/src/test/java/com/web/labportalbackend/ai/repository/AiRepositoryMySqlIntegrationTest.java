@@ -104,9 +104,7 @@ class AiRepositoryMySqlIntegrationTest {
                 .projectId(fixture.project().getId()).groupId(fixture.group().getId()).title("AI conversation").build());
         AiMessageEntity message = messageRepository.saveAndFlush(AiMessageEntity.builder()
                 .conversationId(conversation.getId()).role(AiMessageRole.USER).content("hello").build());
-        AiAssistantConfigEntity assistantConfig = assistantConfigRepository.saveAndFlush(AiAssistantConfigEntity.builder()
-                .assistantKey(AiAssistantKey.LAB_ASSISTANT).systemPromptKey("mysql-it")
-                .maxRequestsPerDay(10).maxContextTokens(100).build());
+        AiAssistantConfigEntity assistantConfig = testConfig(AiAssistantKey.LAB_ASSISTANT, "mysql-it", 10, 100);
         AiActionSuggestionEntity suggestion = actionSuggestionRepository.saveAndFlush(AiActionSuggestionEntity.builder()
                 .requestedById(fixture.user().getId()).assistantKey(AiAssistantKey.LAB_ASSISTANT)
                 .actionType("CREATE_TASK").targetModule("research").targetId(fixture.project().getId())
@@ -184,8 +182,7 @@ class AiRepositoryMySqlIntegrationTest {
             AiConversationEntity conversation = conversationRepository.saveAndFlush(AiConversationEntity.builder()
                     .userId(fixture.user().getId()).assistantKey(key).moduleContext("catalog")
                     .title("catalog " + key).build());
-            AiAssistantConfigEntity config = assistantConfigRepository.saveAndFlush(AiAssistantConfigEntity.builder()
-                    .assistantKey(key).systemPromptKey("catalog-" + key).maxRequestsPerDay(1).maxContextTokens(1).build());
+            AiAssistantConfigEntity config = testConfig(key, "catalog-" + key, 1, 1);
             AiActionSuggestionEntity suggestion = actionSuggestionRepository.saveAndFlush(AiActionSuggestionEntity.builder()
                     .requestedById(fixture.user().getId()).assistantKey(key).actionType("CATALOG_CHECK")
                     .targetModule("catalog").payloadJson("{\"key\":\"" + key + "\"}").build());
@@ -266,6 +263,17 @@ class AiRepositoryMySqlIntegrationTest {
         String database = slash < 0 ? "" : url.substring(slash + 1, query < 0 ? url.length() : query);
         if (!database.toLowerCase(Locale.ROOT).endsWith("_it"))
             throw new IllegalStateException("LAB_PORTAL_MYSQL_IT_URL must target a disposable database ending in _it");
+    }
+
+    private AiAssistantConfigEntity testConfig(AiAssistantKey key, String prompt, int requests, int tokens) {
+        // Flyway seeds these unique keys; changes are rolled back with each test.
+        AiAssistantConfigEntity config = assistantConfigRepository.findByAssistantKeyAndActiveTrueAndDeletedFalse(key)
+                .orElseGet(() -> AiAssistantConfigEntity.builder().assistantKey(key).build());
+        config.setEnabled(true);
+        config.setSystemPromptKey(prompt);
+        config.setMaxRequestsPerDay(requests);
+        config.setMaxContextTokens(tokens);
+        return assistantConfigRepository.saveAndFlush(config);
     }
 
     private record Fixture(User user, User reviewer, Laboratory laboratory, ProjectEntity project, GroupEntity group) {

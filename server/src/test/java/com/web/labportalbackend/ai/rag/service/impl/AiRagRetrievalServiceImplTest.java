@@ -21,6 +21,8 @@ import com.web.labportalbackend.ai.rag.repository.AiRagChunkRepository;
 import com.web.labportalbackend.ai.rag.service.AiAuthorizedRetrieval;
 import com.web.labportalbackend.ai.service.AiAssistantProfile;
 import com.web.labportalbackend.ai.service.AiCapabilityDecision;
+import com.web.labportalbackend.lab.repository.LaboratoryRepository;
+import com.web.labportalbackend.lab.repository.MembershipRepository;
 import java.util.List;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
@@ -29,7 +31,9 @@ import org.springframework.data.domain.Pageable;
 class AiRagRetrievalServiceImplTest {
 
     private final AiRagChunkRepository repository = mock(AiRagChunkRepository.class);
-    private final AiRagRetrievalServiceImpl service = new AiRagRetrievalServiceImpl(repository);
+    private final MembershipRepository memberships = mock(MembershipRepository.class);
+    private final LaboratoryRepository labs = mock(LaboratoryRepository.class);
+    private final AiRagRetrievalServiceImpl service = new AiRagRetrievalServiceImpl(repository, memberships, labs);
 
     @Test
     void returnsOnlyAuthorizedGroupChunksAsUntrustedData() {
@@ -66,10 +70,44 @@ class AiRagRetrievalServiceImplTest {
     }
 
     @Test
+    void publicPolicyDoesNotGrantAnAdminAccessToLabMemberDocuments() {
+        AiAssistantProfile profile = new AiAssistantProfile(AiAssistantKey.LAB_ASSISTANT,
+                AiAssistantDomain.LAB, true, Set.of(AiAssistantSystemRole.ADMIN), "model", "prompt-v1",
+                null, "lab-knowledge", AiQuotaPolicyReference.AI_CONFIG_QUOTA,
+                Set.of(AiAssistantToolGroup.LAB_READ), "suite-v1");
+        AiAuthorizedContext context = authorizedContext(10L, null, null);
+        when(context.assistantKey()).thenReturn(AiAssistantKey.LAB_ASSISTANT);
+        when(context.domain()).thenReturn(AiAssistantDomain.LAB);
+        AiRagChunkEntity document = chunk(6L, AiAssistantDomain.LAB, AiRagVisibility.LAB_MEMBERS,
+                10L, null, null, "member-only canary");
+        document.setNamespace("lab-knowledge");
+        when(repository.findByNamespaceAndActiveTrueAndDeletedFalse(eq("lab-knowledge"), any(Pageable.class)))
+                .thenReturn(List.of(document));
+
+        assertEquals(List.of(), service.retrieve(profile, 7L, AiAssistantSystemRole.ADMIN,
+                context, "canary").chunks());
+    }
+
+    @Test
     void mismatchedProfileNamespaceFailsClosed() {
         assertThrows(AiContextReadDeniedException.class, () -> service.retrieve(
                 researchProfile("lab-knowledge"), 7L, AiAssistantSystemRole.STUDENT,
                 authorizedContext(10L, 20L, 30L), "policy"));
+    }
+
+    @Test
+    void labDocumentAccessIsRecheckedAfterMembershipRevocation() {
+        when(repository.findByNamespaceAndActiveTrueAndDeletedFalse(eq("research-knowledge"), any(Pageable.class)))
+                .thenReturn(List.of(chunk(8L, AiAssistantDomain.RESEARCH, AiRagVisibility.LAB_MEMBERS,
+                        10L, null, null, "safety policy")));
+        when(memberships.existsByUserIdAndLaboratoryIdAndActiveTrueAndDeletedFalse(7L, 10L))
+                .thenReturn(true, false);
+        AiAuthorizedContext context = authorizedContext(10L, 20L, 30L);
+
+        assertEquals(1, service.retrieve(researchProfile("research-knowledge"), 7L,
+                AiAssistantSystemRole.STUDENT, context, "safety").chunks().size());
+        assertEquals(List.of(), service.retrieve(researchProfile("research-knowledge"), 7L,
+                AiAssistantSystemRole.STUDENT, context, "safety").chunks());
     }
 
     @Test

@@ -1,11 +1,22 @@
 from __future__ import annotations
 
 from contextlib import nullcontext
+from contextvars import ContextVar
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Mapping, Sequence
+from threading import Lock
+from time import perf_counter
+import logging
 
 from app.models.contracts import AssistantKey
+
+generation_deadline: ContextVar[float | None] = ContextVar("generation_deadline", default=None)
+logger = logging.getLogger(__name__)
+
+
+class GenerationBudgetExceeded(RuntimeError):
+    """No completed answer may be returned after the request's inference budget."""
 
 
 @dataclass(frozen=True)
@@ -22,6 +33,8 @@ class TransformersRuntimeBackend:
         self.device = device
         self.model: Any | None = None
         self.tokenizer: Any | None = None
+        # ponytail: one shared GPU/model; serialize adapter switching with generation.
+        self._generation_lock = Lock()
 
     def load_base_model(self, artifact_path: Path, identifier: str, revision: str) -> None:
         del identifier, revision
@@ -79,7 +92,24 @@ class TransformersRuntimeBackend:
         *,
         json_output: bool,
     ) -> RuntimeGeneration:
-        del json_output
+        deadline = generation_deadline.get() or (perf_counter() + 90)
+        queued_at = perf_counter()
+        remaining = deadline - perf_counter()
+        if remaining <= 0 or not self._generation_lock.acquire(timeout=max(remaining, 0)):
+            raise GenerationBudgetExceeded("Inference queue deadline exceeded")
+        try:
+            if perf_counter() >= deadline:
+                raise GenerationBudgetExceeded("Inference deadline exceeded")
+            started_at = perf_counter()
+            result = self._generate(assistant_key, messages, json_output=json_output, deadline=deadline)
+            logger.info("ai_generation assistant=%s queueMs=%.1f generationMs=%.1f promptTokens=%d completionTokens=%d",
+                        assistant_key.value, (started_at - queued_at) * 1000,
+                        (perf_counter() - started_at) * 1000, result.prompt_tokens, result.completion_tokens)
+            return result
+        finally:
+            self._generation_lock.release()
+
+    def _generate(self, assistant_key, messages, *, json_output, deadline) -> RuntimeGeneration:
         if self.model is None or self.tokenizer is None:
             raise RuntimeError("Model runtime is not loaded.")
         set_adapter = getattr(self.model, "set_adapter", None)
@@ -102,13 +132,24 @@ class TransformersRuntimeBackend:
         ).to(self.device)
         input_ids = encoded["input_ids"]
         prompt_tokens = input_ids.shape[-1] if hasattr(input_ids, "shape") else len(input_ids[0])
+        remaining = deadline - perf_counter()
+        if remaining <= 0:
+            raise GenerationBudgetExceeded("Inference deadline exceeded")
         with adapter_context:
             generated = self.model.generate(
                 **encoded,
                 max_new_tokens=512,
+                max_time=remaining,
                 do_sample=False,
             )
         completion_ids = generated[0][prompt_tokens:]
+        eos = getattr(getattr(self.model, "generation_config", None), "eos_token_id", None)
+        if eos is None:
+            eos = getattr(self.tokenizer, "eos_token_id", None)
+        end_ids = eos if isinstance(eos, (list, tuple)) else [eos] if eos is not None else []
+        ended = bool(len(completion_ids)) and int(completion_ids[-1]) in end_ids
+        if perf_counter() >= deadline or len(completion_ids) >= 512 and not ended:
+            raise GenerationBudgetExceeded("Generation stopped before a complete answer")
         text = self.tokenizer.decode(completion_ids, skip_special_tokens=True).strip()
         if not text:
             raise RuntimeError("Model returned an empty response.")

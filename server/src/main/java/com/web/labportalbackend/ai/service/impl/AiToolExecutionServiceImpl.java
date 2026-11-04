@@ -99,7 +99,7 @@ public final class AiToolExecutionServiceImpl implements AiToolExecutionService 
                                                     ToolAuditState audit) {
         ParsedToolRequest parsed = parse(untrustedRequest, normalizedRequestId, audit);
 
-        AiAssistantAvailability availability = availabilityService.requireAvailableForActor(parsed.assistantKey());
+        AiAssistantAvailability availability = availabilityService.identifyActor(parsed.assistantKey());
         validateAssistant(parsed.assistantKey(), parsed.definition(), availability, normalizedRequestId);
         audit.authorized(availability);
 
@@ -117,6 +117,11 @@ public final class AiToolExecutionServiceImpl implements AiToolExecutionService 
         if (!matchesCurrentAuthority(parsed, availability, authorized, normalizedRequestId)) {
             throw denied(AiToolExecutionFailure.RESOURCE_NOT_AUTHORIZED, normalizedRequestId);
         }
+        if (authorized.selectedSystemRole() != null) {
+            availability = new AiAssistantAvailability(availability.profile(), availability.actorId(),
+                    authorized.selectedSystemRole());
+        }
+        availabilityService.requireQuota(availability);
         enforceActionGate(parsed.definition(), normalizedRequestId, audit);
 
         AiToolHandler handler = handlers.get(parsed.definition().id());
