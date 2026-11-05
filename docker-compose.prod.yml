@@ -147,8 +147,7 @@ services:
       APP_DOMAIN: ${APP_DOMAIN:?APP_DOMAIN is required}
       API_DOMAIN: ${API_DOMAIN:?API_DOMAIN is required}
     ports:
-      - "80:80"
-      - "443:443"
+      - "127.0.0.1:4080:80"
     volumes:
       - lab_portal_caddy_data:/data
       - lab_portal_caddy_config:/config
