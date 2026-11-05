@@ -1,4 +1,4 @@
-{$APP_DOMAIN} {
+http://{$APP_DOMAIN} {
     encode gzip
 
     root * /srv/frontend
@@ -13,7 +13,7 @@
     }
 }
 
-{$API_DOMAIN} {
+http://{$API_DOMAIN} {
     encode gzip
 
     request_body {
