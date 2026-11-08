@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
-import { useEffect, useMemo, useState, type ChangeEvent } from 'react';
+import { useEffect, useId, useMemo, useState, type ChangeEvent } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
@@ -63,6 +63,7 @@ function validateCvFile(file: File, t: ReturnType<typeof useI18n>['t']) {
 
 export function ApplyModal({ labId, labStatus, onClose }: ApplyModalProps) {
   const { t } = useI18n();
+  const formId = useId();
   const queryClient = useQueryClient();
   const applyMutation = useApplyLab();
   const applySchema = useMemo(() => z.object({
@@ -172,84 +173,83 @@ export function ApplyModal({ labId, labStatus, onClose }: ApplyModalProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)}>
-      <Modal
-        footer={(
-          <>
-            <Button disabled={applyMutation.isPending} onClick={onClose} variant="outline">
-              {t('common.cancel')}
-            </Button>
-            <Button
-              disabled={!hasCvPayload || Boolean(fileError)}
-              loading={applyMutation.isPending}
-              loadingText={t('lab.apply.submitting')}
-              type="submit"
-            >
-              {t('lab.apply.submit')}
-            </Button>
-          </>
-        )}
-        onClose={onClose}
-        size="md"
-        title={t('lab.apply.submitTitle')}
-      >
-        <div className="space-y-5">
-          <div>
-            <label
-              className="block text-sm font-medium text-slate-700"
-              htmlFor="cvUrl"
-            >
-              {t('lab.apply.cvUrl')}
-            </label>
-            <input
-              id="cvUrl"
-              className="mt-2 block min-h-11 w-full rounded-md border border-slate-300 px-3 py-2 text-base text-slate-950 shadow-sm outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
-              placeholder="https://drive.google.com/..."
-              disabled={applyMutation.isPending}
-              {...register('cvUrl')}
-            />
-            {errors.cvUrl ? (
-              <p className="mt-2 text-sm text-red-600">{errors.cvUrl.message}</p>
-            ) : null}
-          </div>
+    <Modal
+      footer={(
+        <>
+          <Button disabled={applyMutation.isPending} onClick={onClose} variant="outline">
+            {t('common.cancel')}
+          </Button>
+          <Button
+            disabled={!hasCvPayload || Boolean(fileError)}
+            loading={applyMutation.isPending}
+            loadingText={t('lab.apply.submitting')}
+            form={formId}
+            type="submit"
+          >
+            {t('lab.apply.submit')}
+          </Button>
+        </>
+      )}
+      onClose={onClose}
+      size="md"
+      title={t('lab.apply.submitTitle')}
+    >
+      <form id={formId} className="space-y-5" onSubmit={handleSubmit(onSubmit)}>
+        <div>
+          <label
+            className="block text-sm font-medium text-slate-700"
+            htmlFor="cvUrl"
+          >
+            {t('lab.apply.cvUrl')}
+          </label>
+          <input
+            id="cvUrl"
+            className="mt-2 block min-h-11 w-full rounded-md border border-slate-300 px-3 py-2 text-base text-slate-950 shadow-sm outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
+            placeholder="https://drive.google.com/..."
+            disabled={applyMutation.isPending}
+            {...register('cvUrl')}
+          />
+          {errors.cvUrl ? (
+            <p className="mt-2 text-sm text-red-600">{errors.cvUrl.message}</p>
+          ) : null}
+        </div>
 
-          <div>
-            <label
-              className="block text-sm font-medium text-slate-700"
-              htmlFor="cvFile"
-            >
-              {t('lab.apply.cvFile')}
-            </label>
-            <input
-              key={fileInputKey}
-              id="cvFile"
-              type="file"
-              accept=".pdf,.doc,.docx"
-              className="mt-2 block min-h-11 w-full rounded-md border border-slate-300 px-3 py-2 text-base text-slate-950 shadow-sm file:mr-3 file:rounded-md file:border-0 file:bg-slate-900 file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-white disabled:cursor-not-allowed disabled:bg-slate-50"
-              disabled={applyMutation.isPending}
-              onChange={handleFileChange}
-            />
-            {selectedFile ? (
-              <div className="mt-2 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
-                <span className="break-all font-medium text-slate-950">{selectedFile.name}</span>
-                <span className="ml-2 text-slate-500">
-                  ({formatFileSize(selectedFile.size)})
-                </span>
-              </div>
-            ) : null}
-            {fileError ? (
-              <p className="mt-2 text-sm text-red-600">{fileError}</p>
-            ) : null}
-          </div>
-
-          {serverError ? (
-            <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-              {serverError}
+        <div>
+          <label
+            className="block text-sm font-medium text-slate-700"
+            htmlFor="cvFile"
+          >
+            {t('lab.apply.cvFile')}
+          </label>
+          <input
+            key={fileInputKey}
+            id="cvFile"
+            type="file"
+            accept=".pdf,.doc,.docx"
+            className="mt-2 block min-h-11 w-full rounded-md border border-slate-300 px-3 py-2 text-base text-slate-950 shadow-sm file:mr-3 file:rounded-md file:border-0 file:bg-slate-900 file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-white disabled:cursor-not-allowed disabled:bg-slate-50"
+            disabled={applyMutation.isPending}
+            onChange={handleFileChange}
+          />
+          {selectedFile ? (
+            <div className="mt-2 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
+              <span className="break-all font-medium text-slate-950">{selectedFile.name}</span>
+              <span className="ml-2 text-slate-500">
+                ({formatFileSize(selectedFile.size)})
+              </span>
             </div>
           ) : null}
-
+          {fileError ? (
+            <p className="mt-2 text-sm text-red-600">{fileError}</p>
+          ) : null}
         </div>
-      </Modal>
-    </form>
+
+        {serverError ? (
+          <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+            {serverError}
+          </div>
+        ) : null}
+
+      </form>
+    </Modal>
   );
 }
