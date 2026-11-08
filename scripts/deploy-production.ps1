@@ -41,18 +41,18 @@ if (![string]::IsNullOrWhiteSpace($env:DEPLOY_SCHOLAR_SERPAPI_API_KEY)) {
 
 Push-Location $repoRoot
 try {
-    docker compose --env-file $envFile -f $composeFile config --quiet
+    docker.exe compose --env-file $envFile -f $composeFile config --quiet
     if ($LASTEXITCODE -ne 0) { throw 'Production Compose configuration is invalid.' }
 
     if ($Build) {
-        docker compose --env-file $envFile -f $composeFile build
+        docker.exe compose --env-file $envFile -f $composeFile build
         if ($LASTEXITCODE -ne 0) { throw 'Production image build failed.' }
     }
 
-    docker compose --env-file $envFile -f $composeFile up -d --remove-orphans --wait --wait-timeout 1800
+    docker.exe compose --env-file $envFile -f $composeFile up -d --remove-orphans --wait --wait-timeout 1800
     if ($LASTEXITCODE -ne 0) { throw 'Production Compose startup failed.' }
 
-    docker compose --env-file $envFile -f $composeFile ps
+    docker.exe compose --env-file $envFile -f $composeFile ps
 }
 finally {
     Pop-Location
