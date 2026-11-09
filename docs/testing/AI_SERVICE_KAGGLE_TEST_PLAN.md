@@ -57,7 +57,7 @@ Giới hạn discovery hiện tại: Manager lấy `findFirstByManagerIdAndDelet
 
 ### Notebook và artifacts
 
-1. Import [AI_Service_Kaggle.ipynb](../../AI_Service_Kaggle.ipynb). Notebook chứa snapshot source và hash; không cần upload `ai-service.zip` cũ.
+1. Import [AI_Service_Kaggle.ipynb](AI_Service_Kaggle.ipynb). Notebook chứa snapshot source và hash; không cần upload `ai-service.zip` cũ.
 2. Bật Internet và GPU NVIDIA. Bấm **Add Input** chọn Dataset **AI_Service_Dataset** bạn đã có; giữ `ARTIFACT_INPUT = ""` để notebook tự tìm thư mục artifacts ở mọi cấp dưới `/kaggle/input`. Không cần tải lại từ thư mục Drive nếu Dataset này đầy đủ. Checksum vẫn phải khớp `ai-service/config/model-artifacts.runtime-t4.json`.
 3. Tạo và cấp quyền Kaggle Secret `AI_INTERNAL_SERVICE_TOKEN`; dùng cùng token trên Spring. Không dùng user JWT làm internal token.
 4. Chạy notebook từ trên xuống: SOURCE CHECK → ARTIFACT CHECK (19 file) → dependency check → regression → LOCAL READY → PUBLIC READY → PUBLIC SMOKE.
@@ -464,7 +464,7 @@ Các bài MySQL integration cần môi trường tương ứng; một lần Mave
 | `server/.../ai/rag/service/impl/AiRagRetrievalServiceImpl.java` | Namespace, visibility, bounded retrieval |
 | `server/src/main/resources/application-local.yml`, `docker-compose.yml`, `client/src/modules/assistant/api/assistant.api.ts` | Wiring thực tế UI→Spring→Python |
 
-`server/...` trong bảng là `server/src/main/java/com/web/labportalbackend`. File `AI_Assistant_Prompt_Test_Cases.md` đang có là local context tham khảo; các kỳ vọng khác baseline main không được coi là oracle hoặc tự động mang vào kế hoạch này.
+`server/...` trong bảng là `server/src/main/java/com/web/labportalbackend`. File [AI_Assistant_Prompt_Test_Cases.md](AI_Assistant_Prompt_Test_Cases.md) đang có là local context tham khảo; các kỳ vọng khác baseline main không được coi là oracle hoặc tự động mang vào kế hoạch này.
 
 ## 20. Bằng chứng của khâu chuẩn bị ngày 04/11/2026
 

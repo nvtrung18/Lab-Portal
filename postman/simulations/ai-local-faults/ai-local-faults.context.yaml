@@ -21,7 +21,7 @@ assumptions:
     claim: The new runtime returns correct complete answers for four concurrent users on the user's Kaggle T4 session.
     reason: The mock has no GPU, adapter, authorization logic or persistent business state. A synthetic success or fault does not establish Kaggle behavior.
     verification: Use independent Kaggle and Spring evidence in docs/testing/AI_SERVICE_HYBRID_REPORT_20261104.json; this stand-in cannot certify model behavior or end-user concurrency.
-    source: ai-service/app/runtime.py; AI_Service_Kaggle.ipynb; docs/testing/AI_SERVICE_REMEDIATION_REPORT_20261104.md
+    source: ai-service/app/runtime.py; docs/testing/AI_Service_Kaggle.ipynb; docs/testing/AI_SERVICE_REMEDIATION_REPORT_20261104.md
     updated_at: '2026-11-04'
 fingerprints:
   - id: remediation20261104

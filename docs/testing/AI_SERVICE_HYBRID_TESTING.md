@@ -36,7 +36,7 @@ UI dùng Playwright `webServer` với `reuseExistingServer: false` và `cwd` là
 python scripts/prepare-ai-service-kaggle.py
 ```
 
-Import `AI_Service_Kaggle.ipynb`, chạy các cell từ trên xuống. Notebook kiểm SHA-256 source, 19 file model/adapter, readiness, regression, public smoke, corpus 88 biến thể, tải chức năng 1/2/4 request và planner/generation đồng thời. Trong corpus có 17 yêu cầu workflow chưa hỗ trợ, bắt buộc từ chối rõ giới hạn thay vì chọn công cụ đọc khác. Có 18 biến thể sức chứa bổ sung; giá trị thập phân/số mũ và literal 5000 chữ số không hợp lệ được kiểm deterministic với 0 token, còn planner và nội dung draft hợp lệ vẫn phải có bằng chứng model thật. Các phép thử tải này không chứng minh SLA hoặc giới hạn GPU production.
+Import [AI_Service_Kaggle.ipynb](AI_Service_Kaggle.ipynb), chạy các cell từ trên xuống. Notebook kiểm SHA-256 source, 19 file model/adapter, readiness, regression, public smoke, corpus 88 biến thể, tải chức năng 1/2/4 request và planner/generation đồng thời. Trong corpus có 17 yêu cầu workflow chưa hỗ trợ, bắt buộc từ chối rõ giới hạn thay vì chọn công cụ đọc khác. Có 18 biến thể sức chứa bổ sung; giá trị thập phân/số mũ và literal 5000 chữ số không hợp lệ được kiểm deterministic với 0 token, còn planner và nội dung draft hợp lệ vẫn phải có bằng chứng model thật. Các phép thử tải này không chứng minh SLA hoặc giới hạn GPU production.
 
 CLI đã nằm trong bundle, có thể chạy lại ngay trong Kaggle mà không tải model lần nữa:
 
@@ -91,7 +91,7 @@ import base64, json
 from pathlib import Path
 
 root = Path.cwd()
-notebook = json.loads((root / "AI_Service_Kaggle.ipynb").read_text(encoding="utf-8"))
+notebook = json.loads((root / "docs/testing/AI_Service_Kaggle.ipynb").read_text(encoding="utf-8"))
 cells = {cell["id"]: "".join(cell["source"]) for cell in notebook["cells"]}
 fragments = {name: cells[cell_id] for name, cell_id in {
     "helpers": "bootstrap-helpers", "start": "start-service",
