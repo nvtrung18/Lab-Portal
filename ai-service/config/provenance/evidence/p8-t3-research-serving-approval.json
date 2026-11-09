@@ -1,0 +1,26 @@
+{
+  "approval": {
+    "approvedBy": "19thMarch",
+    "decision": "APPROVED",
+    "recordedAt": "2026-11-06"
+  },
+  "approvalAuthority": "RESEARCH_MODEL_PROMOTION_APPROVAL_AUTHORITY",
+  "artifactType": "P8-T3-RESEARCH-SERVING-APPROVAL",
+  "authorization": {
+    "servingLoadAllowed": true
+  },
+  "candidateId": "3cd324ad97530ce535073be761e1713cb627e15d55cb9395d55729cd93595de4",
+  "modelManifestIdentity": "5091a85f6da4b9081239837ffc7624c766bc32acac67f7a8c285c9a18c991105",
+  "priorPromotionApprovalIdentity": "07ed190878b7c32a4c8b448b5cfae29bf75be051b13326ba4e49a8f0bac57047",
+  "priorPromotionDecisionIdentity": "3918488ca342a2b5bc6cd73c1d2a56e42358f758c4c2f50b759b99f14548619e",
+  "requestIdentity": "beac0e2396a7e5589884187bc7153052c76f9f95f1ee53de5d45201cc0e9c861",
+  "requestReference": "config/p8-t3-research-serving/request.json",
+  "revocation": {
+    "active": false,
+    "reason": null,
+    "revokedAt": null
+  },
+  "schemaVersion": "1.0.0",
+  "status": "APPROVED",
+  "artifactIdentity": "0f5242964f56ca813f2ed58a055a2a1208d265cdad97c7e36b210de71ae29159"
+}

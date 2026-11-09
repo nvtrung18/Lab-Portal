@@ -89,17 +89,19 @@
         "identity": "8c080cac001798a0826d5c72b553b791c31b7e32f9b10d4dd8b93d4f4f92830d"
       },
       "sourceDecision": {
-        "identity": "3918488ca342a2b5bc6cd73c1d2a56e42358f758c4c2f50b759b99f14548619e",
+        "identity": "5a183e3906917ce295f97051432ef56c85d76b10197bd44162e820cb0cdb543c",
         "outcome": "ADAPTER_APPROVED",
-        "reference": "ai-service/config/provenance/evidence/p7-t5-research-promotion/decision.json"
+        "reference": "ai-service/config/provenance/evidence/p8-t3-research-serving/decision.json",
+        "servingLoadAllowed": true
       },
       "sourceRegistryReference": "ai-service/config/provenance/config/p7-t5-research-promotion/model-registry.json"
     }
   },
   "sourceDecision": {
-    "identity": "3918488ca342a2b5bc6cd73c1d2a56e42358f758c4c2f50b759b99f14548619e",
+    "identity": "5a183e3906917ce295f97051432ef56c85d76b10197bd44162e820cb0cdb543c",
     "outcome": "ADAPTER_APPROVED",
-    "reference": "ai-service/config/provenance/evidence/p7-t5-research-promotion/decision.json"
+    "reference": "ai-service/config/provenance/evidence/p8-t3-research-serving/decision.json",
+    "servingLoadAllowed": true
   },
   "sourceRegistryReference": "ai-service/config/provenance/config/p7-t5-research-promotion/model-registry.json"
 }
