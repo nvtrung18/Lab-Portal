@@ -45,7 +45,7 @@ Bucket audit cũng bị lệch ngày: SQL Nov04 nhưng answer Nov03. Query chuy�
 
 **Verified:** cùng prompt proposal và3candidate canonical: plain input chọn đúng tool; Spring envelope lại fallback clarification. [Repro](../../.artifacts/ai-live-remediation-20261104/planner-catalog-repro.log), [payload](../../.artifacts/ai-live-remediation-20261104/planner-spring-envelope-request.json). Khác biệt gồm envelope metadata/temporalContext. Routing được chuẩn hóa chỉ dùng pendingState/history và latest message; interpreter tạo ca vẫn nhận temporal context như trước. Regression kiểm model messages của plain/envelope giống nhau, giữ đủ3candidate và identity.
 
-Notebook [AI_Service_Kaggle.ipynb](../../AI_Service_Kaggle.ipynb) mới chứa63file, ZIP129956byte, hash **`9d45286c18a2faa198cbddad0459951807343ddd6acab0db335fc1e12dd274c1`**. Smoke có Admin draft, report Spring fixture, canonical planner và đủ3candidate trong Spring envelope. **Inference:** URL hiện tại là phiên người dùng vừa cập nhật; chưa nhận hash/log PUBLIC SMOKE từ kernel, nên không gọi là byte-for-byte remote source verification. **Unknown:** phiên9d4528 chưa được cấp URL để replay.
+Notebook [AI_Service_Kaggle.ipynb](AI_Service_Kaggle.ipynb) mới chứa63file, ZIP129956byte, hash **`9d45286c18a2faa198cbddad0459951807343ddd6acab0db335fc1e12dd274c1`**. Smoke có Admin draft, report Spring fixture, canonical planner và đủ3candidate trong Spring envelope. **Inference:** URL hiện tại là phiên người dùng vừa cập nhật; chưa nhận hash/log PUBLIC SMOKE từ kernel, nên không gọi là byte-for-byte remote source verification. **Unknown:** phiên9d4528 chưa được cấp URL để replay.
 
 ## Dữ liệu test và phần còn thiếu
 

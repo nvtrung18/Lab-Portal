@@ -19,7 +19,7 @@ import pytest
 
 
 ROOT = Path(__file__).resolve().parents[2]
-NOTEBOOK = ROOT / "AI_Service_Kaggle.ipynb"
+NOTEBOOK = ROOT / "docs/testing/AI_Service_Kaggle.ipynb"
 
 
 def _cell(cell_id: str) -> str:

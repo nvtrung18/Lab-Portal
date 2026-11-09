@@ -130,7 +130,7 @@ Mục tiêu là4 request có answer đúng, không nhiễm adapter; chưa có SL
 ### T22 — regression và notebook
 
 1. Chạy focused tests sau từng increment; cuối cùng full Python, Java và5 MySQL opt-in. Client tests/build khi thay public DTO/UI; notebook self-check riêng.
-2. Tái tạo `AI_Service_Kaggle.ipynb` bằng script hiện có sau thay đổi Python/contract. Source ZIP/hash phải phản ánh nhánh sửa; giữ manifest/weights đã duyệt.
+2. Tái tạo `docs/testing/AI_Service_Kaggle.ipynb` bằng script hiện có sau thay đổi Python/contract. Source ZIP/hash phải phản ánh nhánh sửa; giữ manifest/weights đã duyệt.
 3. Chạy source mới trên Kaggle/test GPU; verify source fingerprint,19 artifact files, readiness, model/adapter identity và inference. URL mới không tự chứng minh code Python mới.
 4. Restart đúng process Spring local để nạp code/config mới; nối URL/token hiện hành; replay request gốc và biến thể.
 

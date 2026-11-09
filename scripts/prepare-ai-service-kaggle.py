@@ -15,6 +15,7 @@ import zipfile
 
 
 ROOT = Path(__file__).resolve().parents[1]
+NOTEBOOK = ROOT / "docs/testing/AI_Service_Kaggle.ipynb"
 
 
 def artifact_zip(manifest_path: Path, source: Path, output: Path) -> int:
@@ -91,13 +92,13 @@ def source_bundle(root: Path) -> tuple[bytes, dict]:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--output", type=Path, default=ROOT / "AI_Service_Kaggle.ipynb")
+    parser.add_argument("--output", type=Path, default=NOTEBOOK)
     parser.add_argument("--artifact-source", type=Path, help="Existing runtime-artifacts directory; original files remain unchanged")
     parser.add_argument("--artifact-zip", type=Path, help="New ZIP64 output path; requires --artifact-source")
     args = parser.parse_args()
     if bool(args.artifact_source) != bool(args.artifact_zip):
         parser.error("--artifact-source and --artifact-zip must be provided together")
-    notebook = json.loads((ROOT / "AI_Service_Kaggle.ipynb").read_text(encoding="utf-8"))
+    notebook = json.loads(NOTEBOOK.read_text(encoding="utf-8"))
     archive, manifest = source_bundle(ROOT)
     digest = hashlib.sha256(archive).hexdigest()
     encoded = base64.b64encode(archive).decode("ascii")

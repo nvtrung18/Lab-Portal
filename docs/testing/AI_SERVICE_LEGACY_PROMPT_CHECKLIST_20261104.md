@@ -1,6 +1,6 @@
 # Đối chiếu đủ126 prompt đã có — 04/11/2026
 
-Nguồn: [AI_Assistant_Prompt_Test_Cases.md](../../AI_Assistant_Prompt_Test_Cases.md). IDs trong file này thuộc bộ cũ; ví dụA03 ở đây khácA03 trong kế hoạch204case. Không cộng hai bộ thành330test độc lập.
+Nguồn: [AI_Assistant_Prompt_Test_Cases.md](AI_Assistant_Prompt_Test_Cases.md). IDs trong file này thuộc bộ cũ; ví dụA03 ở đây khácA03 trong kế hoạch204case. Không cộng hai bộ thành330test độc lập.
 
 Bộ cũ yêu cầu chạy UI và có nhiều snapshot/contextual lookup không tồn tại ở main hiện tại. Bảng này giữ nguyên126IDs, chỉ rõ hạn chế; direct API đúng không tự đổi prompt UI thànhPASS. Xem [báo cáo runtime](AI_SERVICE_LOCAL_TEST_REPORT_20261104.md) và [checklist204case](AI_SERVICE_LOCAL_TEST_CHECKLIST_20261104.md).
 

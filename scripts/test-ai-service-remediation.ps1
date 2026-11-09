@@ -67,7 +67,7 @@ function Start-Owned([string]$Exe, [string[]]$CommandArgs, [string]$Directory, [
 
 try {
     $sourceFiles = @(& git -C $repo ls-files --cached --others --exclude-standard) |
-        Where-Object { $_ -match '^(ai-service/(app|config|scripts|tests)/|server/src/|client/(src|tests)/|scripts/|contracts/|AI_Service_Kaggle\.ipynb$)' } |
+        Where-Object { $_ -match '^(ai-service/(app|config|scripts|tests)/|server/src/|client/(src|tests)/|scripts/|contracts/|docs/testing/AI_Service_Kaggle\.ipynb$)' } |
         Sort-Object -Unique
     $fingerprints = [ordered]@{}
     foreach ($relativePath in $sourceFiles) {
@@ -84,7 +84,7 @@ try {
         $uri = [uri]$KaggleUrl
         if ($uri.Scheme -ne 'https' -or !$uri.Host.EndsWith('.trycloudflare.com') -or $uri.UserInfo -or $uri.Query) { throw 'Expected the supplied HTTPS Cloudflare origin without credentials/query.' }
         $runtime = Get-Content -LiteralPath $RuntimeEvidence -Raw -Encoding UTF8 | ConvertFrom-Json
-        $notebook = Get-Content -LiteralPath (Join-Path $repo 'AI_Service_Kaggle.ipynb') -Raw -Encoding UTF8 | ConvertFrom-Json
+        $notebook = Get-Content -LiteralPath (Join-Path $repo 'docs/testing/AI_Service_Kaggle.ipynb') -Raw -Encoding UTF8 | ConvertFrom-Json
         $corpus = Get-Content -LiteralPath (Join-Path $repo 'ai-service/tests/fixtures/runtime-corpus.json') -Raw -Encoding UTF8 | ConvertFrom-Json
         $expectedIds = @($corpus.cases.id | Sort-Object)
         $actualIds = @($runtime.results.id | Sort-Object)

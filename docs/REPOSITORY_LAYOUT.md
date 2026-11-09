@@ -11,11 +11,10 @@ Both branches keep the same application layout. Retain source, tests, migrations
 | `face-service/` | Face API, tests, requirements and model download tooling |
 | `contracts/` | Shared website and AI contracts consumed by source/build/tests |
 | `docker/` | Dockerfiles, Caddy and container configuration |
-| `scripts/` | Deployment, backup, demo import and AI infrastructure operations |
+| `scripts/` | Production deployment, backup, demo import and AI packaging operations |
 | `docs/` | Deployment runbooks, repository policy and website content templates |
-| `infra/` | AWS template consumed by the retained AI deployment helper |
 
-The retained `AI_Service_Kaggle.ipynb` starts the AI API on Kaggle. It is an operational notebook. Its presence does not establish which platform is currently hosting production AI.
+The operational notebook at `docs/testing/AI_Service_Kaggle.ipynb` starts the AI API on Kaggle. It is an operational notebook. Its presence does not establish which platform is currently hosting production AI.
 
 ## Local files
 

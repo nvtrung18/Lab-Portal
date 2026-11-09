@@ -4,7 +4,7 @@
 
 **Verified trên Kaggle:** 307 test pass, 0 fail; PUBLIC SMOKE: PASS; generation 1/2/4 và mixed planner/generation đều PASS. Bằng chứng tải từ notebook đã chạy, không lấy kết quả test local thay cho Kaggle.
 
-[Notebook dùng lại](../../AI_Service_Kaggle.ipynb) · [Checklist 204 case](AI_SERVICE_REMEDIATION_CHECKLIST_20261104.md) · [CSV](AI_SERVICE_REMEDIATION_CHECKLIST_20261104.csv) · [Summary](../../.artifacts/ai-live-remediation-20261104/kaggle-observed-summary.json) · [Notebook giữ output thực tế](../../.artifacts/ai-live-remediation-20261104/kaggle-executed.ipynb).
+[Notebook dùng lại](AI_Service_Kaggle.ipynb) · [Checklist 204 case](AI_SERVICE_REMEDIATION_CHECKLIST_20261104.md) · [CSV](AI_SERVICE_REMEDIATION_CHECKLIST_20261104.csv) · [Summary](../../.artifacts/ai-live-remediation-20261104/kaggle-observed-summary.json) · [Notebook giữ output thực tế](../../.artifacts/ai-live-remediation-20261104/kaggle-executed.ipynb).
 
 Nhánh `fix/ai-service-regressions`, base `be045a82c44c2eee33b6f016eba8c2af1912169d`; chưa commit/push. Source SHA256 **`3242c2a5729c5f87ff3fe3bb6972509c2afe492cb11495b63521fbbfb3932ce8`**, SOURCE CHECK: PASS 63 file.
 
