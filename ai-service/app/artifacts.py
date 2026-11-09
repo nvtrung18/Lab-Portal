@@ -81,6 +81,7 @@ class SourceDecision(ArtifactModel):
     reference: LogicalReference
     identity: Sha256Digest | None
     outcome: LogicalReference
+    serving_load_allowed: bool = False
 
 
 class BaseModelDescriptor(ArtifactModel):
@@ -411,9 +412,21 @@ class ArtifactLoader:
     def ready(self) -> bool:
         return self.model_loaded and all(state.ready for state in self._states.values())
 
+    def _serving_load_authorized(self) -> bool:
+        if self._bundle.source_decision is None or not self._bundle.source_decision.serving_load_allowed:
+            return False
+        return all(
+            adapter.source_decision is not None and adapter.source_decision.serving_load_allowed
+            for adapter in self._bundle.assistant_adapters.values()
+            if adapter.status == "APPROVED"
+        )
+
     def activate(self, backend: RuntimeArtifactBackend) -> bool:
         if self.ready:
             return True
+        if not self._serving_load_authorized():
+            self._runtime_activation_failed = True
+            return False
         base_artifact = self._bundle.base_model.artifact
         if not self._base_artifact_validated or base_artifact is None:
             self._runtime_activation_failed = True

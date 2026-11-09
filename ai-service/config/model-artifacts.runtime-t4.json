@@ -55,10 +55,10 @@
           {"path": "research-assistant/1.0.0/vocab.json", "sha256": "ca10d7e9fb3ed18575dd1e277a2579c16d108e32f27439684afa0e10b1440910"}
         ]
       },
-      "sourceDecision": {"reference": "ai-service/config/provenance/evidence/p7-t5-research-promotion/decision.json", "identity": "3918488ca342a2b5bc6cd73c1d2a56e42358f758c4c2f50b759b99f14548619e", "outcome": "ADAPTER_APPROVED"},
+      "sourceDecision": {"reference": "ai-service/config/provenance/evidence/p8-t3-research-serving/decision.json", "identity": "5a183e3906917ce295f97051432ef56c85d76b10197bd44162e820cb0cdb543c", "outcome": "ADAPTER_APPROVED", "servingLoadAllowed": true},
       "sourceRegistryReference": "ai-service/config/provenance/config/p7-t5-research-promotion/model-registry.json"
     }
   },
-  "sourceDecision": {"reference": "ai-service/config/provenance/evidence/p7-t5-research-promotion/decision.json", "identity": "3918488ca342a2b5bc6cd73c1d2a56e42358f758c4c2f50b759b99f14548619e", "outcome": "ADAPTER_APPROVED"},
+  "sourceDecision": {"reference": "ai-service/config/provenance/evidence/p8-t3-research-serving/decision.json", "identity": "5a183e3906917ce295f97051432ef56c85d76b10197bd44162e820cb0cdb543c", "outcome": "ADAPTER_APPROVED", "servingLoadAllowed": true},
   "sourceRegistryReference": "ai-service/config/provenance/config/p7-t5-research-promotion/model-registry.json"
 }
